@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project default="all" name="Tripod" basedir=".">
+
+    <!-- load shell environment -->
+    <property environment="ENV" />
+
+    <!-- other properties -->
+    <property name="vendor.dir" location="vendor" />
+    <property name="lib.dir" location="lib" />
+    <property name="test.dir" location="test" />
+    <property name="output.dir" location="output" />
+    <property name="codecoverage.dir" location="${output.dir}/codecoverage" />
+    <property name="unit.test.dir" location="${test.dir}/unit" />
+    <property name="integration.test.dir" location="${test.dir}/integration" />
+    <property name="test" value="**" />
+
+    <!-- targets -->
+    <target name="all" depends="init, test" description="Run full build"/>
+
+    <target name="init" depends="check-config, install-composer" description="Re-Initialise, removes and recreates output folder">
+        <delete dir="${output.dir}" />
+        <mkdir dir="${output.dir}" />
+
+        <!-- Check for updates to Composer -->
+        <exec executable="php" failonerror="true">
+            <arg value="composer.phar"/>
+            <arg value="self-update"/>
+        </exec>
+
+        <!-- Install dependencies through Composer -->
+        <exec executable="php" failonerror="true">
+            <arg value="composer.phar"/>
+            <arg value="install"/>
+        </exec>
+
+        <!-- Update dependencies through Composer -->
+        <exec executable="php" failonerror="true">
+            <arg value="composer.phar"/>
+            <arg value="update"/>
+        </exec>
+
+    </target>
+
+    <target name="check-composer">
+        <echo>Checking to see if composer.phar exists...</echo>
+        <available file="composer.phar" property="composer.exists"/>
+    </target>
+
+    <target name="install-composer" depends="check-composer" unless="composer.exists">
+        <echo>Installing composer...</echo>
+        <exec executable="sh">
+            <arg value="-c"/>
+            <arg value="curl -sS https://getcomposer.org/installer | php"/>
+        </exec>
+    </target>
+
+
+    <target name="check-config" description="Checks configuration meets requirements to run a build">
+        <!--<fail unless="env.TDL_STORE" message="Environment Variable TDL_STORE should be set" />-->
+        <!--<fail unless="env.TDL_USER" message="Environment Variable TDL_USER should be set" />-->
+        <!--<fail unless="env.TDL_PASSWORD" message="Environment Variable TDL_PASSWORD should be set" />-->
+        <!--<echo>-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-</echo>-->
+        <!--<echo>tdl.store: ${tdl.store}</echo>-->
+        <!--<echo>tdl.user: ${tdl.user}</echo>-->
+        <!--<echo>tdl.password: ${tdl.password}</echo>-->
+        <!--<echo>-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-</echo>-->
+    </target>
+
+   <target name="test" depends="init, unittest, integrationtest"  description="Runs all tests"/>
+
+   <target name="unittest" depends="init" description="Runs the Unit test suite">
+        <exec dir="${unit.test.dir}" executable="${vendor.dir}/bin/phpunit" failonerror="true">
+            <arg line="--filter ${test} --log-junit ${output.dir}/unittest-report.xml" />
+        </exec>
+    </target>
+
+    <target name="integrationtest" depends="init" description="Runs the Integration test suite">
+        <exec dir="${integration.test.dir}" executable="${vendor.dir}/bin/phpunit" failonerror="true">
+            <arg line="--log-junit ${output.dir}/integrationtest-report.xml" />
+        </exec>
+    </target>
+
+    <target name="codecoverage" depends="init" description="Runs the unit tests and generates code coverage report">
+        <exec dir="${unit.test.dir}" executable="${vendor.dir}/bin/phpunit" failonerror="true">
+            <arg line="--filter ${test} --coverage-html ${codecoverage.dir}/all" />
+        </exec>
+    </target>
+</project>

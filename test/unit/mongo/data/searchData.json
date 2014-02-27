@@ -1,0 +1,385 @@
+[
+    {
+        "_id": {
+            "r":"http://talisaspire.com/resources/doc1",
+            "c":"http://talisaspire.com/"
+        },
+        "_version": 0,
+        "dct:title": {
+            "l": "Physics for Engineers and Scientists"
+        },
+        "rdf:type": [
+            {
+                "u": "http://purl.org/ontology/bibo/Book"
+            },
+            {
+                "u": "http://talisaspire.com/schema#Resource"
+            }
+        ],
+        "dct:creator":{
+            "u": "http://talisaspire.com/authors/1"
+        },
+        "dct:subject":[
+            {
+                "l": "physics"
+            },
+            {
+                "l": "science"
+            }
+        ]
+    },
+    {
+        "_id": {
+            "r":"http://talisaspire.com/resources/doc2",
+            "c":"http://talisaspire.com/"
+        },
+        "_version": 0,
+        "dct:title": {
+            "l": "Astrophysics for Beginners"
+        },
+        "rdf:type": [
+            {
+                "u": "http://purl.org/ontology/bibo/Book"
+            },
+            {
+                "u": "http://talisaspire.com/schema#Resource"
+            }
+        ],
+        "dct:creator":{
+            "u": "http://talisaspire.com/authors/1"
+        },
+        "dct:subject":[
+            {
+                "l": "astrophysics"
+            },
+            {
+                "l": "science"
+            }
+        ]
+    },
+    {
+        "_id": {
+            "r":"http://talisaspire.com/resources/doc3",
+            "c":"http://talisaspire.com/"
+        },
+        "_version": 0,
+        "dct:title": {
+            "l": "Fundementals of Heat and Mass Transfers"
+        },
+        "rdf:type": [
+            {
+                "u": "http://purl.org/ontology/bibo/Book"
+            },
+            {
+                "u": "http://talisaspire.com/schema#Resource"
+            }
+        ],
+        "dct:creator":{
+            "u": "http://talisaspire.com/authors/1"
+        },
+        "dct:subject":[
+            {
+                "l": "engineering"
+            },
+            {
+                "l": "science"
+            }
+        ]
+    },
+    {
+        "_id": {
+            "r":"http://talisaspire.com/resources/doc4",
+            "c":"http://talisaspire.com/"
+        },
+        "_version": 0,
+        "dct:title": {
+            "l": "Paradise Lost"
+        },
+        "rdf:type": [
+            {
+                "u": "http://purl.org/ontology/bibo/Book"
+            },
+            {
+                "u": "http://talisaspire.com/schema#Resource"
+            }
+        ],
+        "dct:creator":{
+            "u": "http://talisaspire.com/authors/2"
+        },
+        "dct:subject":[
+            {
+                "l": "english literature"
+            },
+            {
+                "l": "poetry"
+            },
+            {
+                "l": "classics"
+            }
+        ]
+    },
+    {
+        "_id": {
+            "r":"http://talisaspire.com/resources/doc5",
+            "c":"http://talisaspire.com/"
+        },
+        "_version": 0,
+        "dct:title": [
+            {
+                "l": "The Divine Comedy"
+            },
+            {
+                "l": "Dante's The Divine Comedy"
+            }
+        ],
+        "rdf:type": [
+            {
+                "u": "http://purl.org/ontology/bibo/Book"
+            },
+            {
+                "u": "http://talisaspire.com/schema#Resource"
+            }
+        ],
+        "dct:creator":{
+            "u": "http://talisaspire.com/authors/2"
+        },
+        "dct:subject":[
+            {
+                "l": "english literature"
+            },
+            {
+                "l": "poetry"
+            },
+            {
+                "l": "classics"
+            }
+        ]
+    },
+    {
+        "_id": {
+            "r":"http://talisaspire.com/resources/doc6",
+            "c":"http://talisaspire.com/"
+        },
+        "_version": 0,
+        "dct:title": {
+            "l": "A Light in the Attic"
+        },
+        "rdf:type": [
+            {
+                "u": "http://purl.org/ontology/bibo/Book"
+            },
+            {
+                "u": "http://talisaspire.com/schema#Resource"
+            }
+        ],
+        "dct:creator":{
+            "u": "http://talisaspire.com/authors/2"
+        },
+        "dct:subject":[
+            {
+                "l": "english literature"
+            },
+            {
+                "l": "poetry"
+            }
+        ]
+    },
+    {
+        "_id": {
+            "r":"http://talisaspire.com/resources/doc7",
+            "c":"http://talisaspire.com/"
+        },
+        "_version": 0,
+        "dct:title": {
+            "l": "Revolting Rhymes"
+        },
+        "rdf:type": [
+            {
+                "u": "http://purl.org/ontology/bibo/Book"
+            },
+            {
+                "u": "http://talisaspire.com/schema#Resource"
+            }
+        ],
+        "dct:creator":{
+            "u": "http://talisaspire.com/authors/2"
+        },
+        "dct:subject":[
+            {
+                "l": "poetry"
+            }
+        ]
+    },
+    {
+        "_id": {
+            "r":"http://talisaspire.com/resources/doc8",
+            "c":"http://talisaspire.com/"
+        },
+        "_version": 0,
+        "dct:title": {
+            "l": "The Owl and the Pussycat"
+        },
+        "rdf:type": [
+            {
+                "u": "http://purl.org/ontology/bibo/Book"
+            },
+            {
+                "u": "http://talisaspire.com/schema#Resource"
+            }
+        ],
+        "dct:creator":{
+            "u": "http://talisaspire.com/authors/2"
+        },
+        "dct:subject":[
+            {
+                "l": "poetry"
+            }
+        ]
+    },
+    {
+        "_id": {
+            "r":"http://talisaspire.com/resources/doc9",
+            "c":"http://talisaspire.com/"
+        },
+        "_version": 0,
+        "dct:title": {
+            "l": "When We Were Very Young"
+        },
+        "rdf:type": [
+            {
+                "u": "http://purl.org/ontology/bibo/Book"
+            },
+            {
+                "u": "http://talisaspire.com/schema#Resource"
+            }
+        ],
+        "dct:creator":{
+            "u": "http://talisaspire.com/authors/2"
+        },
+        "dct:subject":[
+            {
+                "l": "poetry"
+            }
+        ]
+    },
+    {
+        "_id": {
+            "r":"http://talisaspire.com/resources/doc10",
+            "c":"http://talisaspire.com/"
+        },
+        "_version": 0,
+        "dct:title": {
+            "l": "Love That Dog"
+        },
+        "rdf:type": [
+            {
+                "u": "http://purl.org/ontology/bibo/Book"
+            },
+            {
+                "u": "http://talisaspire.com/schema#Resource"
+            }
+        ],
+        "dct:creator":{
+            "u": "http://talisaspire.com/authors/3"
+        },
+        "dct:subject":[
+            {
+                "l": "poetry"
+            }
+        ]
+    },
+    {
+        "_id": {
+            "r":"http://talisaspire.com/resources/doc11",
+            "c":"http://talisaspire.com/"
+        },
+        "_version": 0,
+        "dct:title": {
+            "l": "Where the Sidewalk Ends"
+        },
+        "rdf:type": [
+            {
+                "u": "http://purl.org/ontology/bibo/Book"
+            },
+            {
+                "u": "http://talisaspire.com/schema#Resource"
+            }
+        ],
+        "dct:creator":{
+            "u": "http://talisaspire.com/authors/3"
+        },
+        "dct:subject":[
+            {
+                "l": "poetry"
+            }
+        ]
+    },
+    {
+        "_id": {
+            "r":"http://talisaspire.com/resources/doc12",
+            "c":"http://talisaspire.com/"
+        },
+        "_version": 0,
+        "dct:title": {
+            "l": "The Rime of the Ancient Mariner"
+        },
+        "rdf:type": [
+            {
+                "u": "http://purl.org/ontology/bibo/Book"
+            },
+            {
+                "u": "http://talisaspire.com/schema#Resource"
+            }
+        ],
+        "dct:creator":{
+            "u": "http://talisaspire.com/authors/3"
+        },
+        "dct:subject":[
+            {
+                "l": "poetry"
+            },
+            {
+                "l": "poetry"
+            }
+        ]
+    },
+    {
+        "_id": {
+            "r":"http://talisaspire.com/authors/1",
+            "c":"http://talisaspire.com/"
+        },
+        "_version": 0,
+        "foaf:name": {
+            "l": "Sayid Jarrah"
+        },
+        "rdf:type": {
+                "u": "http://xmlns.com/foaf/0.1/Person"
+        }
+    },
+    {
+        "_id": {
+            "r":"http://talisaspire.com/authors/2",
+            "c":"http://talisaspire.com/"
+        },
+        "_version": 0,
+        "foaf:name": {
+            "l": "John Locke"
+        },
+        "rdf:type": {
+                "u": "http://xmlns.com/foaf/0.1/Person"
+        }
+    },
+    {
+        "_id": {
+            "r":"http://talisaspire.com/authors/3",
+            "c":"http://talisaspire.com/"
+        },
+        "_version": 0,
+        "foaf:name": {
+            "l": "Jack Shephard"
+        },
+        "rdf:type": {
+                "u": "http://xmlns.com/foaf/0.1/Person"
+        }
+    }
+]

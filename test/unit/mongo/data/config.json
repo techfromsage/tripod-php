@@ -1,0 +1,316 @@
+{
+    "namespaces" : {
+        "rdf":"http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "dct":"http://purl.org/dc/terms/",
+        "resourcelist":"http://purl.org/vocab/resourcelist/schema#",
+        "temp":"http://lists.talis.com/schema/temp#",
+        "spec":"http://rdfs.org/sioc/spec/",
+        "events":"http://schemas.talis.com/2009/events/",
+        "acorn":"http://talisaspire.com/schema#",
+        "searchterms":"http://talisaspire.com/searchTerms/schema#",
+        "opensearch":"http://a9.com/-/opensearch/extensions/relevance/1.0/",
+        "sioc":"http://rdfs.org/sioc/ns#",
+        "aiiso":"http://purl.org/vocab/aiiso/schema#",
+        "user":"http://schemas.talis.com/2005/user/schema#",
+        "changeset":"http://purl.org/vocab/changeset/schema#",
+        "bibo":"http://purl.org/ontology/bibo/",
+        "foaf":"http://xmlns.com/foaf/0.1/",
+        "baseData":"http://basedata.com/b/"
+    },
+    "defaultContext":"http://talisaspire.com/",
+    "databases" : {
+        "testing" : {
+            "collections" : {
+                "CBD_testing" : {
+                    "cardinality" : {
+                        "dct:created" : 1
+                    },
+                    "indexes" : {
+                        "index1": {
+                            "dct:subject.u":1
+                        },
+                        "index2" : {
+                            "rdf:type.u":1
+                        }
+                    }
+                },
+                "CBD_testing_2" : {
+                    "cardinality" : {
+                        "dct:created.l" : 1
+                    },
+                    "indexes" : {
+                        "index1": {
+                            "rdf:type.u":1
+                        }
+                    }
+                }
+            },
+            "connStr" : "mongodb://localhost"
+        }
+    },
+    "view_specifications" : [
+        {
+            "_id": "v_resource_full",
+            "_version": "0.1",
+            "from":"CBD_testing",
+            "ensureIndexes":[
+                {"value._graphs.sioc:has_container.u":1,"value._graphs.sioc:topic.u":1}
+            ],
+            "type": "acorn:Resource",
+            "include": ["rdf:type", "searchterms:topic"],
+            "joins": {
+                "dct:isVersionOf": {
+                    "include": ["dct:subject","rdf:type"]
+                }
+            }
+        },
+        {
+            "_id": "v_resource_full_ttl",
+            "type": "acorn:Resource",
+            "from":"CBD_testing",
+            "ttl": 300,
+            "include": ["rdf:type", "searchterms:topic"],
+            "joins": {
+                "dct:isVersionOf": {
+                    "include": ["dct:subject","rdf:type"]
+                }
+            }
+        },
+        {
+            "_id":"v_resource_to_single_source",
+            "type":"acorn:Resource",
+            "from":"CBD_testing",
+            "include": ["rdf:type"],
+            "joins": {
+                "dct:source" : {
+                    "maxJoins" : 1
+                }
+            }
+        },
+        {
+            "_id": "v_work_see_also",
+            "type": "acorn:Work",
+            "from":"CBD_testing",
+            "joins": {
+                "acorn:seeAlso" : {}
+            }
+        },
+        {
+            "_id": "v_work2_see_also",
+            "type": "http://talisaspire.com/schema#Work2",
+            "from":"CBD_testing",
+            "joins": {
+                "acorn:seeAlso" : {}
+            }
+        },
+        {
+            "_id": "v_counts",
+            "type": "acorn:Work",
+            "from":"CBD_testing",
+            "include": ["rdf:type"],
+            "ttl": 300,
+            "counts" : {
+                "acorn:resourceCount": {
+                    "filter" : {
+                        "rdf:type" : {"u" : "acorn:Resource"}
+                    },
+                    "property" : "dct:isVersionOf"
+                },
+                "acorn:resourceCountAlt": {
+                    "from" : "CBD_someOtherCollection",
+                    "filter" : {
+                        "rdf:type" : {"u" : "acorn:Resource"}
+                    },
+                    "property" : "dct:isVersionOf"
+                },
+                "acorn:isbnCount" : {
+                    "property" : "bibo:isbn13"
+                }
+            },
+            "joins": {
+                "acorn:seeAlso": {
+                    "include": ["rdf:type"],
+                    "counts" : {
+                        "acorn:resourceCount": {
+                            "filter" : {
+                                "rdf:type" : { "u" : "acorn:Resource"}
+                            },
+                            "property" : "dct:isVersionOf"
+                        },
+                        "acorn:isbnCount" : {
+                            "property" : "bibo:isbn13"
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "search_config":{
+        "search_provider":"MongoSearchProvider",
+        "search_specifications":[
+            {
+                "_id":"i_search_list",
+                "type":["resourcelist:List"],
+                "from":"CBD_testing",
+                "filter":[
+                    {
+                        "condition":{
+                            "spec:name.l":{
+                                "$exists":true
+                            }
+                        }
+                    }
+                ],
+                "indices":[
+                    {
+                        "fieldName": "search_terms",
+                        "predicates": ["spec:name", "resourcelist:description"]
+                    }
+                ],
+                "fields":[
+                    {
+                        "fieldName":"result.title",
+                        "predicates":["spec:name"],
+                        "limit" : 1
+                    },
+                    {
+                        "fieldName":"result.link",
+                        "value":"_link_"
+                    }
+                ],
+                "joins":{
+                    "resourcelist:usedBy":{
+                        "indices":[
+                            {
+                                "fieldName":"search_terms",
+                                "predicates":["aiiso:name", "aiiso:code"]
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "_id":"i_search_resource",
+                "type":["bibo:Book"],
+                "from":"CBD_testing",
+                "filter":[
+                    {
+                        "condition":{
+                            "dct:title.l":{
+                                "$exists":true
+                            }
+                        }
+                    }
+                ],
+                "indices":[
+                    {
+                        "fieldName": "search_terms",
+                        "predicates": ["dct:title", "dct:subject"]
+                    },
+                    {
+                        "fieldName": "other_terms",
+                        "predicates": ["rdf:type"]
+                    }
+
+                ],
+                "fields":[
+                    {
+                        "fieldName":"result.title",
+                        "predicates":["dct:title"],
+                        "limit" : 1
+                    },
+                    {
+                        "fieldName":"result.link",
+                        "value":"_link_"
+                    },
+                    {
+                        "fieldName":"rdftype",
+                        "predicates":["rdf:type"],
+                        "limit": 1
+                    }
+                ],
+                "joins":{
+                    "dct:creator":{
+                        "indices":[
+                            {
+                                "fieldName":"search_terms",
+                                "predicates":["foaf:name"]
+                            }
+                        ],
+                        "fields":[
+                            {
+                                "fieldName":"result.author",
+                                "predicates":["foaf:name"],
+                                "limit" : 1
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+    },
+    "table_specifications" : [
+        {
+            "_id": "t_resource",
+            "type":"acorn:Resource",
+            "from":"CBD_testing",
+            "ensureIndexes":[
+                {
+                    "value.isbn": 1
+                }
+            ],
+            "fields": [
+                {
+                    "fieldName": "type",
+                    "predicates": ["rdf:type"]
+                },
+                {
+                    "fieldName": "isbn",
+                    "predicates": ["bibo:isbn13"]
+                }
+            ],
+            "joins" : {
+                "dct:isVersionOf" : {
+                    "fields": [
+                        {
+                            "fieldName":"isbn13",
+                            "predicates":["bibo:isbn13"]
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "_id": "t_work2",
+            "type": "acorn:Work2",
+            "from":"CBD_testing",
+            "fields": [
+                {
+                    "fieldName": "type",
+                    "predicates": ["rdf:type"]
+                }
+            ],
+            "joins" : {
+                "acorn:seeAlso" : {
+                    "fields" : [
+                        {
+                            "fieldName" : "seeAlsoType",
+                            "predicates": ["rdf:type"]
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "transaction_log" : {
+        "database" : "testing",
+        "collection" : "transaction_log",
+        "connStr" : "mongodb://localhost"
+    },
+    "queue" : {
+        "database" : "testing",
+        "collection" : "q_queue",
+        "connStr" : "mongodb://localhost"
+    }
+
+}

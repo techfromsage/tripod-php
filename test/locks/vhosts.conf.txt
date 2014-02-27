@@ -1,0 +1,14 @@
+<VirtualHost *:80>
+        ServerName locks
+        ServerAdmin webmaster@localhost
+        DocumentRoot "/var/www/tripod/test/locks"
+
+        <Directory "/var/www/tripod/test/locks">
+                Options Indexes FollowSymLinks MultiViews
+                AllowOverride FileInfo
+                Order allow,deny
+                allow from all
+        </Directory>
+        LogLevel info
+        ServerSignature On
+</VirtualHost>

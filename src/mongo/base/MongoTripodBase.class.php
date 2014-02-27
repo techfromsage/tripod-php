@@ -1,0 +1,274 @@
+<?php
+
+require_once TRIPOD_DIR.'ITripodStat.php';
+
+$TOTAL_TIME=0;
+
+abstract class MongoTripodBase
+{
+    //todo: I don't like this being public, can we hide it?
+    /**
+     * @var MongoDB
+     */
+    public $db;
+
+    /**
+     * @var MongoCollection
+     */
+    public $collection;
+
+    protected $dbName;
+    protected $collectionName;
+
+    protected $defaultContext;
+
+    protected $stat = null;
+
+    /**
+     * @return ITripodStat
+     */
+    public function getStat()
+    {
+        return ($this->stat==null) ? NoStat::getInstance() : $this->stat;
+    }
+
+    /**
+     * @var MongoTripodLabeller
+     */
+    protected $labeller;
+
+    /**
+     * @var MongoTripodConfig
+     */
+    protected $config = null;
+
+    protected function getExpirySecFromNow($secs)
+    {
+        return (time()+$secs);
+    }
+
+    protected function getContextAlias($context=null)
+    {
+        $contextAlias = $this->labeller->uri_to_alias((empty($context)) ? $this->defaultContext : $context);
+        return (empty($contextAlias)) ? MongoTripodConfig::getInstance()->getDefaultContextAlias() : $contextAlias;
+    }
+
+    /**
+     * @param $query
+     * @param $type
+     * @param null $collectionName
+     * @param array $includeProperties
+     * @param int $cursorSize
+     * @return MongoGraph
+     */
+    protected function fetchGraph($query, $type, $collectionName=null,$includeProperties=array(), $cursorSize=101)
+    {
+        $graph = new MongoGraph();
+
+        $t = new Timer();
+        $t->start();
+
+        if ($collectionName==null)
+        {
+            $collection = $this->collection;
+            $collectionName = $collection->getName();
+        }
+        else
+        {
+            $collection = $this->db->selectCollection($collectionName);
+        }
+
+        if (empty($includeProperties))
+        {
+            $cursor = $collection->find($query);
+        }
+        else
+        {
+            $fields = array();
+            foreach ($includeProperties as $property)
+            {
+                $fields[$this->labeller->uri_to_alias($property)] = true;
+            }
+            $cursor = $collection->find($query,$fields);
+        }
+
+        $ttlExpiredResources = false;
+        $cursor->batchSize($cursorSize);
+        while($cursor->hasNext()) {
+            $result = $cursor->getNext();
+            // handle MONGO_VIEWS that have expired due to ttl. These are expired
+            // on read (lazily) rather than on write
+            if ($type==MONGO_VIEW && array_key_exists(_EXPIRES,$result['value']))
+            {
+                // if expires < current date, regenerate view..
+                $currentDate = new MongoDate();
+                if ($result['value'][_EXPIRES]<$currentDate)
+                {
+                    // regenerate!
+                    $this->generateView($result['_id']['type'],$result['_id']['r']);
+                }
+            }
+            $graph->add_tripod_array($result);
+        }
+        if ($ttlExpiredResources)
+        {
+            // generate views and retry...
+            $this->debugLog("One or more view had exceeded TTL was regenerated - request again...");
+            $graph = $this->fetchGraph($query,$type,$collection);
+        }
+
+        $t->stop();
+        $this->timingLog($type, array('duration'=>$t->result(), 'query'=>$query, 'collection'=>$collectionName));
+        if ($type==MONGO_VIEW)
+        {
+            if (array_key_exists("_id.type",$query))
+            {
+                $this->getStat()->timer("$type.{$query["_id.type"]}",$t->result());
+            }
+            else if (array_key_exists("_id",$query) && array_key_exists("type",$query["_id"]))
+            {
+                $this->getStat()->timer("$type.{$query["_id"]["type"]}",$t->result());
+            }
+        }
+        else
+        {
+            $this->getStat()->timer("$type.$collectionName",$t->result());
+        }
+
+        return $graph;
+    }
+
+    public function getDBName()
+    {
+        return $this->dbName;
+    }
+
+    public function getCollectionName()
+    {
+        return $this->collectionName;
+    }
+
+    ///////// LOGGING METHODS BELOW ////////
+
+    // @codeCoverageIgnoreStart
+
+    // todo: tidy up logging mess and make it work consistently between projects
+    public function timingLog($type, $params)
+    {
+        global $TOTAL_TIME;
+        if (array_key_exists("duration",$params))
+        {
+            $TOTAL_TIME += $params["duration"];
+            $params['cumulative'] = $TOTAL_TIME;
+        }
+
+        if (self::getLogger()!=null)
+            self::getLogger()->getInstance()->debug('[TRIPOD_TIMING:'.$type.']', $params);
+    }
+
+    public function debugLog($message, $params=null)
+    {
+        if (self::getLogger()!=null)
+        {
+            ($params==null) ? self::getLogger()->getInstance()->debug("[TRIPOD_DEBUG] $message") : self::getLogger()->getInstance()->debug("[TRIPOD_DEBUG] $message", $params);
+        }
+        else
+        {
+            echo "$message\n";
+            if ($params) print_r($params);
+        }
+    }
+
+    public function errorLog($message, $params=null)
+    {
+        if (self::getLogger()!=null)
+        {
+            self::getLogger()->getInstance()->error("[TRIPOD_ERR] $message",$params);
+        }
+        else
+        {
+            echo "$message\n";
+            if ($params)
+            {
+                echo "Params: \n";
+                foreach ($params as $key=>$value)
+                {
+                    echo "$key: $value\n";
+                }
+            }
+        }
+    }
+
+
+    public static $logger;
+
+    /**
+     * @static
+     * @return object a Logger
+     */
+    public static function getLogger()
+    {
+        if (self::$logger)
+        {
+            return self::$logger;
+        }
+        else
+        {
+            return null;
+        }
+    }
+    // @codeCoverageIgnoreEnd
+
+    /**
+     * Expands an RDF sequence into proper tripod join clauses
+     * @param $joins
+     * @param $source
+     */
+    protected function expandSequence(&$joins, $source)
+    {
+        if(!empty($joins) && isset($joins['followSequence'])){
+            // add any rdf:_x style properties in the source to the joins array,
+            // up to rdf:_1000 (unless a max is specified in the spec)
+            $max = (isset($joins['followSequence']['maxJoins'])) ? $joins['followSequence']['maxJoins'] : 1000;
+            for($i=0; $i<$max; $i++) {
+                $r = 'rdf:_' . ($i+1);
+
+                if(isset($source[$r])){
+                    $joins[$r] = array();
+                    foreach($joins['followSequence'] as $k=>$v){
+                        if($k != 'maxJoins') {
+                            $joins[$r][$k] = $joins['followSequence'][$k];
+                        } else {
+                            continue;
+                        }
+                    }
+                }
+            }
+            unset($joins['followSequence']);
+        }
+    }
+
+}
+
+final class NoStat implements ITripodStat
+{
+    public static $instance = null;
+    public function increment($operation)
+    {
+        // do nothing
+    }
+    public function timer($operation, $duration)
+    {
+        // do nothing
+    }
+
+    public static function getInstance()
+    {
+        if (self::$instance == null)
+        {
+            self::$instance = new NoStat();
+        }
+        return self::$instance;
+    }
+}
+

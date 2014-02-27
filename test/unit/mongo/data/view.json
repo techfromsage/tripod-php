@@ -1,0 +1,95 @@
+{
+	"_id" : {
+		"r" : "http://example.com/resources/1",
+		"c" : "http://talisaspire.com/",
+		"type" : "v_bib_resource_full"
+	},
+	"value" : {
+		"_graphs" : [
+			{
+				"_id" : {
+					"r" : "http://example.com/resources/1/authors",
+					"c" : "http://talisaspire.com/"
+				},
+				"rdf:_1" : {
+					"u" : "http://example.com/people/1"
+				},
+				"rdf:type" : {
+					"u" : "rdf:Seq"
+				}
+			},
+			{
+				"_id" : {
+					"r" : "http://example.com/people/1",
+					"c" : "http://talisaspire.com/"
+				},
+				"rdf:type" : {
+					"u" : "foaf:Person"
+				},
+				"foaf:name" : {
+					"l" : "Miller, Daniel"
+				}
+			},
+			{
+				"_id" : {
+					"r" : "http://example.com/organisations/1",
+					"c" : "http://talisaspire.com/"
+				},
+				"rdf:type" : {
+					"u" : "foaf:Organization"
+				},
+				"foaf:name" : {
+					"l" : "Routledge"
+				}
+			},
+			{
+				"_id" : {
+					"r" : "http://example.com/resources/1",
+					"c" : "http://talisaspire.com/"
+				},
+				"dct:date" : {
+					"l" : "2003"
+				},
+				"dct:publisher" : {
+					"u" : "http://example.com/organisations/1"
+				},
+				"dct:source" : {
+					"u" : "http://example.com/catalog/542114"
+				},
+				"dct:title" : {
+					"l" : "Material cultures: why some things matter"
+				},
+				"bibo:authorList" : {
+					"u" : "http://example.com/resources/1/authors"
+				},
+				"bibo:isbn10" : {
+					"l" : "1857286863"
+				},
+				"bibo:volume" : {
+					"l" : "Consumption and space"
+				},
+				"rdf:type" : {
+					"u" : "bibo:Book"
+				}
+			}
+		],
+		"_impactIndex" : [
+			{
+				"r" : "http://example.com/resources/1",
+				"c" : "http://talisaspire.com/"
+			},
+			{
+				"r" : "http://example.com/resources/1/authors",
+				"c" : "http://talisaspire.com/"
+			},
+			{
+				"r" : "http://example.com/people/1",
+				"c" : "http://talisaspire.com/"
+			},
+			{
+				"r" : "http://example.com/organisations/1",
+				"c" : "http://talisaspire.com/"
+			}
+		]
+	}
+}

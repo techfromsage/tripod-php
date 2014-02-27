@@ -1,0 +1,20 @@
+<phpunit>
+    <php>
+        <ini name="memory_limit" value="512M" />
+    </php>
+
+    <filter>
+        <whitelist addUncoveredFilesFromWhitelist="true">
+            <directory suffix=".php">../../src</directory>
+        </whitelist>
+        <blacklist>
+            <directory suffix=".php">../../lib</directory>
+        </blacklist>
+    </filter>
+
+    <testsuites>
+        <testsuite name="Tripod_Unit_Tests">
+            <directory>.</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>
