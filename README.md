@@ -5,6 +5,39 @@ tripod-php
 
 Object Graph Mapper for managing RDF data in Mongo.
 
+Quickstart
+----
+
+```php
+MongoTripodConfig::setConfig($conf);
+
+// describe
+$tripod = new MongoTripod("CBD_users","usersdb");
+$graph = $tripod->describe("http://example.com/user/1");
+echo $graph->get_first_literal("http://example.com/user/1","http://xmlns.com/foaf/0.1/name"); 
+
+// select
+$data = $tripod->select(
+  array("_id.r"=>"http://example.com/user/1"),
+  array("foaf:name"=>true);
+);
+if ($data['head']['count']>0) {
+  foreach($data['results'] as $result) {
+    echo $data['results']['foaf:name'];
+  }
+}
+
+
+// save
+$newGraph = new ExtendedGraph();
+$newGraph->add_literal_value("http://example.com/user/2","http://xmlns.com/foaf/0.1/name","John Smith");
+$tripod->saveChanges(
+  new ExtendedGraph(), // the before state, here there was no before (new data)
+  $newGraph // the desired after state
+);
+
+```
+
 Features
 ----
 
