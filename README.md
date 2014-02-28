@@ -12,7 +12,7 @@ Features
 * Production-hardened for datasets of 100 million triples and up
 * Does not support SPARQL queries, instead SPARQL-like ```DESCRIBE/SELECT``` style operations are provided in two flavours
   * Ad-hoc queries where graph traversal is not required
-  * Fixed-specification materialised views and tables provide extremely high performance graph traversal queries
+  * Fixed-specification materialised views where graph traversal is required
 * Trade speed with consistency on writes - views and tables can be updated immediately or in the background for eventual consistency
 * Limited transaction support for updates over multiple [CBDs](http://www.w3.org/Submission/CBD/)
 * Modest hardware clusters can support > 500MT by sharding datasets
