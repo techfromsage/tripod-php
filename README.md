@@ -15,13 +15,11 @@ Features
 * Trade speed with consistency on writes - views and tables can be updated immediately or in the background for eventual consistency
 * Define indexes on predicates to speed up queries
 * Page tabular data with counts multi-value cells (hurrah!)
-* (Very) simple search within datasets [1]
+* (Very) simple search within datasets. Prior to the public release we supported an ElasticSearch search provider, this went beyond our requirements and was removed as we had no desire to maintain it.
 * Generic swiss army graph object ```ExtendedGraph``` which your application models can wrap or extend
 * Supports [transactions](https://github.com/talis/tripod-php/blob/master/README.md#transactions) for updates over multiple [CBDs](http://www.w3.org/Submission/CBD/)
 * Named graph support
 * Instruments using counters and timers to systems like graphite/carbon
-
-[1] Prior to the MIT licened release we had supported an ElasticSearch search provider, this went beyond our initial (limited) requirements and was therefore stripped as we had no desire to maintain it.
 
 Quickstart
 ----
