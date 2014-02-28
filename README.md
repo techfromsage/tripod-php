@@ -59,6 +59,16 @@ $tripod->saveChanges(
   $newGraph // the desired after state
 );
 
+// save, but background all the expensive view/table generation
+$tripod = new MongoTripodMongoTripod( "CBD_users",  "usersdb", array(
+    'async' = array(OP_VIEWS,OP_TABLES,OP_SEARCH) // async opt says what to do later via a queue rather than as part of the save
+  )
+);
+$tripod->saveChanges(
+  new ExtendedGraph(), // the before state, here there was no before (new data)
+  $newGraph // the desired after state
+);
+
 ```
 
 Requirements
