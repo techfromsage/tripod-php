@@ -75,6 +75,51 @@ $tripod->saveChanges(
 
 ```
 
+Data model
+----
+
+Data is stored in Mongo collections, one CBD per document. Typically you would choose to put all the data of a given object type in a distinct collection prefixed with ```CBD_```, e.g. ```CBD_users``` although this is more convention than requirement. 
+
+These CBD collections are considered read and write from your application, and are subject to transactions recorded in the tlog (see Transactions below).
+
+A CBD might look like this:
+
+```javascript
+{
+	"_id" : {
+		"r" : "http://example.com/user/2",
+		"c" : "http://example.com/defaultContext"
+	},
+	"siocAccess:Role" : {
+		"l" : "an undergraduate"
+	},
+	"siocAccess:has_status" : {
+		"l" : "public"
+	},
+	"spec:email" : {
+		"l" : "me@example.com"
+	},
+	"rdf:type" : [
+		{
+			"u" : "foaf:Person"
+		},
+		{
+			"u" : "sioc:User"
+		}
+	],
+	"foaf:name" : {
+		"l" : "John Smith"
+	}
+}
+```
+
+A brief guide:
+
+* Anything prefixed by underscore is a special field and managed exclusively by tripod. Here, ```_id``` is the composite of the subject (```r``` property for resource) and the named graph (```c```` property for context) for this CBD.
+* Predicates are properties and are always namespaced, e.g. ```foaf:name```
+* The value of the predicate fields are either an object or an array of objects (for multivalues). The object has exactly one property, either ```u``` (for uri, these are RDF resource object values) or ```l``` (for literal, these are RDF literal object values)
+
+
 Requirements
 ----
 
@@ -127,6 +172,7 @@ In production we run a small 2nd cluster in EC2 which stores up to 7 days of tlo
 Coming soon (roadmap)
 ----
 
+* More docs
 * Improvements to the background queue, currently this is a long running php script working from a queue of updates held in mongo. Only ever intended for the PoC but it's still here 2 years later!
 * An alternative persistence technology for the tlog. Memory mapped databases are not good for datasets with rapid turnover as the data files grow even if the data set is pruned. Implement a more specialist append-only database or even a RDBMS for the tlog persistence
 * PHP >5.3.0 only. We still have some legacy servers on PHP 5.2 which is the only reason we continue support.
