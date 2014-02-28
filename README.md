@@ -8,7 +8,7 @@ A library for managing RDF data in Mongo.
 Features
 ----
 
-* High performance single-ms query response time
+* High performance single-ms query response time on reasonable hardware
 * Production-hardened for datasets of 100M triples and up
 * Does not support SPARQL queries, instead SPARQL-like ```DESCRIBE/SELECT``` style operations are provided in two flavours
   * Ad-hoc queries where graph traversal is not required
