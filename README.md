@@ -62,7 +62,7 @@ $tripod->saveChanges(
 );
 
 // save, but background all the expensive view/table/search generation
-$tripod = new MongoTripodMongoTripod( "CBD_users",  "usersdb", array(
+$tripod = new MongoTripodMongoTripod("CBD_users",  "usersdb", array(
     'async' = array(OP_VIEWS,OP_TABLES,OP_SEARCH) // async opt says what to do later via a queue rather than as part of the save
   )
 );
