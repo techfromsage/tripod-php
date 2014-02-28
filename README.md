@@ -165,38 +165,6 @@ Before you can do anything with tripod you need to initialise the config via the
             }
         }
     ],
-    "search_config":{
-        "search_provider":"MongoSearchProvider",
-        "search_specifications":[
-            {
-                "_id":"i_users",
-                "type":["foaf:Person"],
-                "from":"CBD_user",
-                "filter":[
-                    {
-                        "condition":{
-                            "foaf:name.l":{
-                                "$exists":true
-                            }
-                        }
-                    }
-                ],
-                "indices":[
-                    {
-                        "fieldName": "name",
-                        "predicates": ["foaf:name", "foaf:firstName","foaf:surname"]
-                    }
-                ],
-                "fields":[
-                    {
-                        "fieldName":"result.name",
-                        "predicates":["foaf:name"],
-                        "limit" : 1
-                    }
-                ]
-            }
-        ]
-    },
     "table_specifications" : [
         {
             "_id": "t_users",
@@ -233,6 +201,38 @@ Before you can do anything with tripod you need to initialise the config via the
             }
         }
     ],
+    "search_config":{
+        "search_provider":"MongoSearchProvider",
+        "search_specifications":[
+            {
+                "_id":"i_users",
+                "type":["foaf:Person"],
+                "from":"CBD_user",
+                "filter":[
+                    {
+                        "condition":{
+                            "foaf:name.l":{
+                                "$exists":true
+                            }
+                        }
+                    }
+                ],
+                "indices":[
+                    {
+                        "fieldName": "name",
+                        "predicates": ["foaf:name", "foaf:firstName","foaf:surname"]
+                    }
+                ],
+                "fields":[
+                    {
+                        "fieldName":"result.name",
+                        "predicates":["foaf:name"],
+                        "limit" : 1
+                    }
+                ]
+            }
+        ]
+    },
     "transaction_log" : {
         "database" : "testing",
         "collection" : "transaction_log",
