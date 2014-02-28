@@ -15,12 +15,6 @@
 
     <!-- targets -->
     <target name="all" depends="init, test" description="Run full build"/>
-    <target name="all52" depends="init52, test" description="Run full build"/>
-
-    <target name="init52" description="Re-Initialise, removes and recreates output folder">
-        <delete dir="${output.dir}" />
-        <mkdir dir="${output.dir}" />
-    </target>
 
     <target name="init" depends="install-composer" description="Re-Initialise, removes and recreates output folder">
         <delete dir="${output.dir}" />
