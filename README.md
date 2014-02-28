@@ -67,6 +67,8 @@ PHP =>5.2, although not for long, future releases are soon to be >5.3.0
 
 Mongo 2.x and up, although at least 2.2 is recommended to take advantage of database level locking, especially in the case of shared datasets.
 
+We make use of the excellent [ARC](https://github.com/semsol/arc2) and elements of Tripod are based on the [Moriarty](https://code.google.com/p/moriarty/) library, the fruit of some earlier work by Talis to provide a PHP library for Talis' own proprietary cloud triple store (no longer in operation).
+
 In production we run with datasets of > 500M triples over 70 databases on modest 3-node clusters (2 data nodes) with Dell R710 mid-range servers, 12 cores 96Gb RAM, RAID-10 array of non-SSD disks, m1.small arbitur in EC2.
 
 Limitations
@@ -74,7 +76,7 @@ Limitations
 
 * Ad-hoc complex queries are a no as materialised views and tables are pre-specified. Changing these specifications requires that you re-generate materialised docments in their entirity.
 * Relies heavy on namespaces. Inside the database predicates are always namespaced, infact it is a requirement to know and specify all your namespaces upfront in config, so working with arbitury unknown data is not a strong point
-* Writes are expensive because they trigger invalidation of 
+* Writes are expensive because they trigger invalidation of views and tables. The more view and table specifications you have, the slower writes are (or the slower data in views and tables becomes consistent, if you are backgrounding their generation)
 
 Why/when would I use this?
 ----
@@ -105,3 +107,9 @@ Tripod maintains a transaction log (tlog) of updates to allow rollback in the ca
 
 In production we run a small 2nd cluster in EC2 which stores up to 7 days of tlog, we prune and flush this periodically to S3. 
 
+Coming soon (roadmap)
+----
+
+* Improvements to the background queue, currently this is a long running php script working of a queue held in mongo. Only ever intended for the PoC but it's still here 2 years later!
+* An alternative persistence technology for the tlog. Memory mapped databases are not good for datasets with rapid turnover as the data files grow even if the data set is pruned. Implement a more specialist append-only database or even a RDBMS for the tlog persistence
+* PHP >5.3.0 only. We still have some legacy servers on PHP 5.2 which is the only reason we continue support.
