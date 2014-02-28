@@ -51,6 +51,10 @@ if ($data['head']['count']>0) {
   }
 }
 
+// an expensive pre-defined graph traversal query
+$graph = $tripod->getViewForResource("http://example.com/users","v_users");
+$allUsers = $graph->get_subjects_of_type("http://xmlns.com/foaf/0.1/Person");
+
 // save
 $newGraph = new ExtendedGraph();
 $newGraph->add_literal_value("http://example.com/user/2","http://xmlns.com/foaf/0.1/name","John Smith");
@@ -59,7 +63,7 @@ $tripod->saveChanges(
   $newGraph // the desired after state
 );
 
-// save, but background all the expensive view/table generation
+// save, but background all the expensive view/table/search generation
 $tripod = new MongoTripodMongoTripod( "CBD_users",  "usersdb", array(
     'async' = array(OP_VIEWS,OP_TABLES,OP_SEARCH) // async opt says what to do later via a queue rather than as part of the save
   )
