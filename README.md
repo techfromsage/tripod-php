@@ -21,6 +21,13 @@ Features
 
 [1] Prior to the MIT licened release we had supported an ElasticSearch search provider, this went beyond our initial (limited) requirements and was therefore stripped as we had no desire to maintain it.
 
+Requirements
+----
+
+Mongo 2.x and up, although at least 2.2 is recommended to take advantage of database level locking, especially in the case of shared datasets.
+
+In production we run with datasets of > 500M triples over 50 databases on modest 3-node clusters (2 data nodes) with Dell R710 mid-range servers, 12 cores 96Gb RAM, RAID-10 array of non-SSD disks, m1.small arbitur in EC2.
+
 Limitations
 ----
 
@@ -42,12 +49,10 @@ Why/when shouldn't I use this?
 * You need to run ad-hoc graph traversal queries
 * You need SPARQL support
 
-Requirements
+What have you built with this?
 ----
 
-Mongo 2.x and up, although at least 2.2 is recommended to take advantage of database level locking, especially in the case of shared datasets.
-
-In production we run with a dataset of > 500M triples over 50 databases on modest 3-node cluster (2 data nodes) with Dell R710 mid-range servers, 12 cores 96Gb RAM, RAID-10 array of non-SSD disks, m1.small arbitur in EC2.
+The majority of the datasets underpinning [Talis Aspire](http://www.talis.com), an enterprise SaaS course management system serving 1M students in over 50 universities worldwide, are powered using graph data stored in MongoDB via the Tripod library.
 
 Transactions
 ----
