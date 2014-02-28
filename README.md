@@ -9,7 +9,7 @@ Quickstart
 ----
 
 ```php
-MongoTripodConfig::setConfig($conf);
+MongoTripodConfig::setConfig($conf); // set the config
 
 // describe
 $tripod = new MongoTripod("CBD_users","usersdb");
