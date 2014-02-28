@@ -117,6 +117,135 @@ A brief guide:
 * Predicates are properties and are always namespaced, e.g. ```foaf:name```
 * The value of the predicate fields are either an object or an array of objects (for multivalues). The object has exactly one property, either ```u``` (for uri, these are RDF resource object values) or ```l``` (for literal, these are RDF literal object values)
 
+What does the config look like?
+----
+
+Before you can do anything with tripod you need to initialise the config via the ```MongoTripodConfig::setConfig()``` method. This takes an associative array which can generally be decoded from a JSON string. Here's an example:
+
+```javascript
+{
+    "namespaces" : {
+        "rdf":"http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "foaf":"http://xmlns.com/foaf/0.1/",
+        "exampleapp":"http://example.com/properties/"
+    },
+    "defaultContext":"http://talisaspire.com/",
+    "databases" : {
+        "users" : {
+            "collections" : {
+                "CBD_users" : {
+                    "cardinality" : {
+                        "foaf:name" : 1
+                    },
+                    "indexes" : {
+                        "names": {
+                            "foaf:name.l":1
+                        }
+                    }
+                }
+            },
+            "connStr" : "mongodb://localhost"
+        }
+    },
+    "view_specifications" : [
+        {
+            "_id": "v_users",
+            "from":"CBD_users",
+            "type": "exampleapp:AllUsers",
+            "include": ["rdf:type"],
+            "joins": {
+                "exampleapp:hasUser": {
+                    "include": ["foaf:name","rdf:type"]
+                    "joins": {
+                    	"foaf:knows" : {
+	                    "include": ["foaf:name","rdf:type"]
+                    	}
+                    }
+                }
+            }
+        }
+    ],
+    "search_config":{
+        "search_provider":"MongoSearchProvider",
+        "search_specifications":[
+            {
+                "_id":"i_users",
+                "type":["foaf:Person"],
+                "from":"CBD_user",
+                "filter":[
+                    {
+                        "condition":{
+                            "foaf:name.l":{
+                                "$exists":true
+                            }
+                        }
+                    }
+                ],
+                "indices":[
+                    {
+                        "fieldName": "name",
+                        "predicates": ["foaf:name", "foaf:firstName","foaf:surname"]
+                    }
+                ],
+                "fields":[
+                    {
+                        "fieldName":"result.name",
+                        "predicates":["foaf:name"],
+                        "limit" : 1
+                    }
+                ]
+            }
+        ]
+    },
+    "table_specifications" : [
+        {
+            "_id": "t_users",
+            "type":"foaf:Person",
+            "from":"CBD_user",
+            "ensureIndexes":[
+                {
+                    "value.name": 1
+                }
+            ],
+            "fields": [
+                {
+                    "fieldName": "type",
+                    "predicates": ["rdf:type"]
+                },
+                {
+                    "fieldName": "name",
+                    "predicates": ["foaf:name"]
+                },
+                {
+                    "fieldName": "knows",
+                    "predicates": ["foaf:knows"]
+                }
+            ],
+            "joins" : {
+                "foaf:knows" : {
+                    "fields": [
+                        {
+                            "fieldName":"knows_name",
+                            "predicates":["foaf:name"]
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "transaction_log" : {
+        "database" : "testing",
+        "collection" : "transaction_log",
+        "connStr" : "mongodb://localhost"
+    },
+    "queue" : {
+        "database" : "testing",
+        "collection" : "q_queue",
+        "connStr" : "mongodb://localhost"
+    }
+}
+
+```
 
 Requirements
 ----
