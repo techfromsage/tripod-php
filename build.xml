@@ -15,8 +15,14 @@
 
     <!-- targets -->
     <target name="all" depends="init, test" description="Run full build"/>
+    <target name="all52" depends="init52, test" description="Run full build"/>
 
-    <target name="init" depends="check-config, install-composer" description="Re-Initialise, removes and recreates output folder">
+    <target name="init52" depends="install-composer" description="Re-Initialise, removes and recreates output folder">
+        <delete dir="${output.dir}" />
+        <mkdir dir="${output.dir}" />
+    </target>
+
+    <target name="init" depends="install-composer" description="Re-Initialise, removes and recreates output folder">
         <delete dir="${output.dir}" />
         <mkdir dir="${output.dir}" />
 
@@ -51,18 +57,6 @@
             <arg value="-c"/>
             <arg value="curl -sS https://getcomposer.org/installer | php"/>
         </exec>
-    </target>
-
-
-    <target name="check-config" description="Checks configuration meets requirements to run a build">
-        <!--<fail unless="env.TDL_STORE" message="Environment Variable TDL_STORE should be set" />-->
-        <!--<fail unless="env.TDL_USER" message="Environment Variable TDL_USER should be set" />-->
-        <!--<fail unless="env.TDL_PASSWORD" message="Environment Variable TDL_PASSWORD should be set" />-->
-        <!--<echo>-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-</echo>-->
-        <!--<echo>tdl.store: ${tdl.store}</echo>-->
-        <!--<echo>tdl.user: ${tdl.user}</echo>-->
-        <!--<echo>tdl.password: ${tdl.password}</echo>-->
-        <!--<echo>-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-</echo>-->
     </target>
 
    <target name="test" depends="init, unittest"  description="Runs all tests"/>
