@@ -265,14 +265,14 @@ We built tripod when we needed to migrate away from our own in-house proprietary
 
 We've been using it for 2 years in production.
 
-Why/when would I use this?
+Why would I use this?
 ----
 
 * Your query volumes are high but the number of distinct graph-traversal type queries required by your application is low (you'd be surprised how few distinct queries an application might need)
 * The balance of your read/writes are in the order of >10:1
 * Your datasets are probably in the range of no more than 100MT each (we've not tested beyond this)
 
-Why/when shouldn't I use this?
+When shouldn't I use this?
 ----
 
 * You don't know the shape of your data
