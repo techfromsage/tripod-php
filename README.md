@@ -83,7 +83,7 @@ What have you built with this?
 
 The majority of the datasets underpinning [Talis Aspire](http://www.talis.com), an enterprise SaaS course management system serving 1M students in over 50 universities worldwide, are powered using graph data stored in MongoDB via the Tripod library.
 
-We built tripod when we needed to migrate away from our own in-house proprietary triple store (incidently built around early versions of [Apache JENA](https://jena.apache.org/))
+We built tripod when we needed to migrate away from our own in-house proprietary triple store (incidently built around early versions of [Apache JENA](https://jena.apache.org/)).
 
 Why/when would I use this?
 ----
