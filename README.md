@@ -40,7 +40,7 @@ echo $graph->get_first_literal("http://example.com/user/1","http://xmlns.com/foa
 
 // select
 $data = $tripod->select(
-  array("_id.r"=>"http://example.com/user/1"),
+  array("rdf:type.u"=>"http://xmlns.com/foaf/0.1/Person"),
   array("foaf:name"=>true);
 );
 if ($data['head']['count']>0) {
