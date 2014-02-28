@@ -129,13 +129,6 @@ Mongo 2.x and up, although at least 2.2 is recommended to take advantage of data
 
 In production we run with datasets of > 500M triples over 70 databases on modest 3-node clusters (2 data nodes) with Dell R710 mid-range servers, 12 cores 96Gb RAM, RAID-10 array of non-SSD disks, m1.small arbitur in EC2.
 
-Limitations
-----
-
-* Ad-hoc complex queries are a no as materialised views and tables are pre-specified. Changing these specifications requires that you re-generate materialised docments in their entirity.
-* Relies heavy on namespaces. Inside the database predicates are always namespaced, infact it is a requirement to know and specify all your namespaces upfront in config, so working with arbitury unknown data is not a strong point
-* Writes are expensive because they trigger invalidation of views and tables. The more view and table specifications you have, the slower writes are (or the slower data in views and tables becomes consistent, if you are backgrounding their generation)
-
 What have you built with this?
 ----
 
@@ -158,6 +151,13 @@ Why/when shouldn't I use this?
 * You don't know the shape of your data
 * You need to run ad-hoc graph traversal queries
 * You need SPARQL support
+
+Some further limitations
+----
+
+* Ad-hoc complex queries are a no as materialised views and tables are pre-specified. Changing these specifications requires that you re-generate materialised docments in their entirity.
+* Relies heavy on namespaces. Inside the database predicates are always namespaced, infact it is a requirement to know and specify all your namespaces upfront in config, so working with arbitury unknown data is not a strong point
+* Writes are expensive because they trigger invalidation of views and tables. The more view and table specifications you have, the slower writes are (or the slower data in views and tables becomes consistent, if you are backgrounding their generation)
 
 Transactions
 ----
