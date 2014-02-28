@@ -115,7 +115,7 @@ A CBD might look like this:
 
 A brief guide:
 
-* Anything prefixed by underscore is a special field and managed exclusively by tripod. Here, ```_id``` is the composite of the subject (```r``` property for resource) and the named graph (```c```` property for context) for this CBD.
+* Anything prefixed by underscore is a special field and managed exclusively by tripod. Here, ```_id``` is the composite of the subject (```r``` property for resource) and the named graph (```c``` property for context) for this CBD.
 * Predicates are properties and are always namespaced, e.g. ```foaf:name```
 * The value of the predicate fields are either an object or an array of objects (for multivalues). The object has exactly one property, either ```u``` (for uri, these are RDF resource object values) or ```l``` (for literal, these are RDF literal object values)
 
