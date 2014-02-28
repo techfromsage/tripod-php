@@ -5,6 +5,23 @@ tripod-php
 
 Object Graph Mapper for managing RDF data in Mongo.
 
+Features
+----
+
+* High performance single-ms query response time on reasonable hardware with datasets >100MT
+* Does not support SPARQL queries, instead SPARQL-like ```DESCRIBE/SELECT``` style operations are provided in two flavours
+  * Ad-hoc queries where graph traversal is not required
+  * Fixed-specification materialised views (```DESCRIBE```) or tables (```SELECT```) where graph traversal is required
+* Trade speed with consistency on writes - views and tables can be updated immediately or in the background for eventual consistency
+* Define indexes on predicates to speed up queries
+* Page tabular data with counts multi-value cells (hurrah!)
+* (Very) simple search within datasets [1]
+* Supports transactions for updates over multiple [CBDs](http://www.w3.org/Submission/CBD/)
+* Named graph support
+* Instruments using counters and timers to systems like graphite/carbon
+
+[1] Prior to the MIT licened release we had supported an ElasticSearch search provider, this went beyond our initial (limited) requirements and was therefore stripped as we had no desire to maintain it.
+
 Quickstart
 ----
 
@@ -41,23 +58,6 @@ $tripod->saveChanges(
 );
 
 ```
-
-Features
-----
-
-* High performance single-ms query response time on reasonable hardware with datasets >100MT
-* Does not support SPARQL queries, instead SPARQL-like ```DESCRIBE/SELECT``` style operations are provided in two flavours
-  * Ad-hoc queries where graph traversal is not required
-  * Fixed-specification materialised views (```DESCRIBE```) or tables (```SELECT```) where graph traversal is required
-* Trade speed with consistency on writes - views and tables can be updated immediately or in the background for eventual consistency
-* Define indexes on predicates to speed up queries
-* Page tabular data with counts multi-value cells (hurrah!)
-* (Very) simple search within datasets [1]
-* Supports transactions for updates over multiple [CBDs](http://www.w3.org/Submission/CBD/)
-* Named graph support
-* Instruments using counters and timers to systems like graphite/carbon
-
-[1] Prior to the MIT licened release we had supported an ElasticSearch search provider, this went beyond our initial (limited) requirements and was therefore stripped as we had no desire to maintain it.
 
 Requirements
 ----
