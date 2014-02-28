@@ -78,6 +78,13 @@ Limitations
 * Relies heavy on namespaces. Inside the database predicates are always namespaced, infact it is a requirement to know and specify all your namespaces upfront in config, so working with arbitury unknown data is not a strong point
 * Writes are expensive because they trigger invalidation of views and tables. The more view and table specifications you have, the slower writes are (or the slower data in views and tables becomes consistent, if you are backgrounding their generation)
 
+What have you built with this?
+----
+
+The majority of the datasets underpinning [Talis Aspire](http://www.talis.com), an enterprise SaaS course management system serving 1M students in over 50 universities worldwide, are powered using graph data stored in MongoDB via the Tripod library.
+
+We built tripod when we needed to migrate away from our own in-house proprietary triple store (incidently built around early versions of [Apache JENA](https://jena.apache.org/))
+
 Why/when would I use this?
 ----
 
@@ -92,11 +99,6 @@ Why/when shouldn't I use this?
 * You don't know the shape of your data
 * You need to run ad-hoc graph traversal queries
 * You need SPARQL support
-
-What have you built with this?
-----
-
-The majority of the datasets underpinning [Talis Aspire](http://www.talis.com), an enterprise SaaS course management system serving 1M students in over 50 universities worldwide, are powered using graph data stored in MongoDB via the Tripod library.
 
 Transactions
 ----
