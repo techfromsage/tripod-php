@@ -305,6 +305,7 @@ Coming soon (roadmap)
 * PHP >5.3.0 only. We still have some legacy servers on PHP 5.2 which is the only reason we continue support.
 * Performance improvements for ```ExtendedGraph```. The internal structure of this object is a relic from the days of Talis' own proprietary triple store and how it used to return data. We bootstrap onto that using the ```MongoGraph``` object to marshal data in and out. This relies heavily on regex and we know that from our own data gathered in the field this is a single point of optimisation that would cut CPU cycles and memory usage. On the bright side it's nice to have such targetted, low hanging fruit to pick.
 * Versioned config. This will allow views and tables to self-heal when their specs are updated. At present you have to delete and re-gen the lot when specs change.
+* Publish updates to a spout for [Apache Storm](http://storm.incubator.apache.org/)
 * We've learnt a lot since starting this project two years ago. Now the library is functionally stable we could do with rearchitecting the object structure and responsibilites. That's one of the reasons we've open sourced - hopefully we'll be embarressed into having a long over due tidy up.
 
 Presentations
