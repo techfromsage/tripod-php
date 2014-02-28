@@ -57,6 +57,8 @@ The majority of the datasets underpinning [Talis Aspire](http://www.talis.com), 
 Transactions
 ----
 
+MongoDB is only atomic at the document level. Tripod datasets store one [CBD])((http://www.w3.org/Submission/CBD/)) per document. Therefore an update to a graph of data can impact 1..n documents.
+
 Tripod maintains a transaction log (tlog) of updates to allow rollback in the case of multi-document writes. It is possible (and recommended) to run this on a seperate cluster to your main data. For disaster recovery, You can use the tlog to replay transactions on top of a known-good backup.
 
 In production we run a small 2nd cluster in EC2 which stores up to 7 days of tlog, we prune and flush this periodically to S3. 
