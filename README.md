@@ -31,7 +31,7 @@ MongoTripodConfig::setConfig($conf); // set the config, usually read in as JSON 
 
 $tripod = new MongoTripod(
   "CBD_users", // collection we're working with
-  "usersdb" // db we're working with
+  "myapp" // db we're working with
 );
 
 // describe
@@ -131,7 +131,7 @@ Before you can do anything with tripod you need to initialise the config via the
     },
     "defaultContext":"http://talisaspire.com/",
     "databases" : {
-        "users" : {
+        "myapp" : {
             "collections" : {
                 "CBD_users" : {
                     "cardinality" : {
