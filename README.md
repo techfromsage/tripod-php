@@ -51,7 +51,6 @@ if ($data['head']['count']>0) {
   }
 }
 
-
 // save
 $newGraph = new ExtendedGraph();
 $newGraph->add_literal_value("http://example.com/user/2","http://xmlns.com/foaf/0.1/name","John Smith");
