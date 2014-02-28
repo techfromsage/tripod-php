@@ -85,6 +85,8 @@ The majority of the datasets underpinning [Talis Aspire](http://www.talis.com), 
 
 We built tripod when we needed to migrate away from our own in-house proprietary triple store (incidently built around early versions of [Apache JENA](https://jena.apache.org/)).
 
+We've been using it for 2 years in production.
+
 Why/when would I use this?
 ----
 
@@ -112,6 +114,6 @@ In production we run a small 2nd cluster in EC2 which stores up to 7 days of tlo
 Coming soon (roadmap)
 ----
 
-* Improvements to the background queue, currently this is a long running php script working of a queue held in mongo. Only ever intended for the PoC but it's still here 2 years later!
+* Improvements to the background queue, currently this is a long running php script working from a queue of updates held in mongo. Only ever intended for the PoC but it's still here 2 years later!
 * An alternative persistence technology for the tlog. Memory mapped databases are not good for datasets with rapid turnover as the data files grow even if the data set is pruned. Implement a more specialist append-only database or even a RDBMS for the tlog persistence
 * PHP >5.3.0 only. We still have some legacy servers on PHP 5.2 which is the only reason we continue support.
