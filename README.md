@@ -73,49 +73,13 @@ $tripod->saveChanges(
 
 ```
 
-Data model
+Requirements
 ----
 
-Data is stored in Mongo collections, one CBD per document. Typically you would choose to put all the data of a given object type in a distinct collection prefixed with ```CBD_```, e.g. ```CBD_users``` although this is more convention than requirement. 
+PHP =>5.2, although not for long, future releases are soon to be >5.3.0
 
-These CBD collections are considered read and write from your application, and are subject to transactions recorded in the tlog (see Transactions below).
+Mongo 2.x and up, although at least 2.2 is recommended to take advantage of database level locking, especially in the case of shared datasets.
 
-A CBD might look like this:
-
-```javascript
-{
-	"_id" : {
-		"r" : "http://example.com/user/2",
-		"c" : "http://example.com/defaultContext"
-	},
-	"siocAccess:Role" : {
-		"l" : "an undergraduate"
-	},
-	"siocAccess:has_status" : {
-		"l" : "public"
-	},
-	"spec:email" : {
-		"l" : "me@example.com"
-	},
-	"rdf:type" : [
-		{
-			"u" : "foaf:Person"
-		},
-		{
-			"u" : "sioc:User"
-		}
-	],
-	"foaf:name" : {
-		"l" : "John Smith"
-	}
-}
-```
-
-A brief guide:
-
-* Anything prefixed by underscore is a special field and managed exclusively by tripod. Here, ```_id``` is the composite of the subject (```r``` property for resource) and the named graph (```c``` property for context) for this CBD.
-* Predicates are properties and are always namespaced, e.g. ```foaf:name```
-* The value of the predicate fields are either an object or an array of objects (for multivalues). The object has exactly one property, either ```u``` (for uri, these are RDF resource object values) or ```l``` (for literal, these are RDF literal object values)
 
 What does the config look like?
 ----
@@ -247,14 +211,49 @@ Before you can do anything with tripod you need to initialise the config via the
 
 ```
 
-Requirements
+Internal data model
 ----
 
-PHP =>5.2, although not for long, future releases are soon to be >5.3.0
+Data is stored in Mongo collections, one CBD per document. Typically you would choose to put all the data of a given object type in a distinct collection prefixed with ```CBD_```, e.g. ```CBD_users``` although this is more convention than requirement. 
 
-Mongo 2.x and up, although at least 2.2 is recommended to take advantage of database level locking, especially in the case of shared datasets.
+These CBD collections are considered read and write from your application, and are subject to transactions recorded in the tlog (see Transactions below).
 
-In production we run with datasets of > 500M triples over 70 databases on modest 3-node clusters (2 data nodes) with Dell R710 mid-range servers, 12 cores 96Gb RAM, RAID-10 array of non-SSD disks, m1.small arbitur in EC2.
+A CBD might look like this:
+
+```javascript
+{
+	"_id" : {
+		"r" : "http://example.com/user/2",
+		"c" : "http://example.com/defaultContext"
+	},
+	"siocAccess:Role" : {
+		"l" : "an undergraduate"
+	},
+	"siocAccess:has_status" : {
+		"l" : "public"
+	},
+	"spec:email" : {
+		"l" : "me@example.com"
+	},
+	"rdf:type" : [
+		{
+			"u" : "foaf:Person"
+		},
+		{
+			"u" : "sioc:User"
+		}
+	],
+	"foaf:name" : {
+		"l" : "John Smith"
+	}
+}
+```
+
+A brief guide:
+
+* Anything prefixed by underscore is a special field and managed exclusively by tripod. Here, ```_id``` is the composite of the subject (```r``` property for resource) and the named graph (```c``` property for context) for this CBD.
+* Predicates are properties and are always namespaced, e.g. ```foaf:name```
+* The value of the predicate fields are either an object or an array of objects (for multivalues). The object has exactly one property, either ```u``` (for uri, these are RDF resource object values) or ```l``` (for literal, these are RDF literal object values)
 
 What have you built with this?
 ----
@@ -263,7 +262,8 @@ The majority of the datasets underpinning [Talis Aspire](http://www.talis.com), 
 
 We built tripod when we needed to migrate away from our own in-house proprietary triple store (incidently built around early versions of [Apache JENA](https://jena.apache.org/)).
 
-We've been using it for 2 years in production.
+We've been using it for 2 years in production. Our data volume is > 500M triples over 70 databases on modest 3-node clusters (2 data nodes) with Dell R710 mid-range servers, 12 cores 96Gb RAM, RAID-10 array of non-SSD disks, m1.small arbitur in EC2.
+
 
 Why would I use this?
 ----
