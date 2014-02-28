@@ -8,7 +8,7 @@ Object Graph Mapper for managing [RDF](http://www.w3.org/TR/rdf-primer/) data st
 Features
 ----
 
-* High performance single-ms query response time on reasonable hardware with datasets >100MT
+* High performance single-ms query response time on reasonable hardware with datasets >100M triples
 * Does not support SPARQL queries, instead SPARQL-like ```DESCRIBE/SELECT``` style operations are provided in two flavours
   * Ad-hoc queries where graph traversal is not required
   * Fixed-specification materialised views (```DESCRIBE```) or tables (```SELECT```) where graph traversal is required
