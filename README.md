@@ -27,6 +27,8 @@ Quickstart
 ----
 
 ```php
+require_once("tripod.inc.php");
+
 MongoTripodConfig::setConfig($conf); // set the config, usually read in as JSON from a file
 
 $tripod = new MongoTripod(
