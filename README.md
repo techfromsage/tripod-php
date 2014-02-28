@@ -12,7 +12,10 @@ Quickstart
 MongoTripodConfig::setConfig($conf); // set the config, usually read in as JSON from a file
 
 // describe
-$tripod = new MongoTripod("CBD_users","usersdb");
+$tripod = new MongoTripod(
+  "CBD_users", // collection we're working with
+  "usersdb" // db we're working with
+);
 $graph = $tripod->describe("http://example.com/user/1");
 echo $graph->get_first_literal("http://example.com/user/1","http://xmlns.com/foaf/0.1/name"); 
 
