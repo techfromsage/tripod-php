@@ -35,6 +35,13 @@ Why/when would I use this?
 * ...and the number of high performance complex queries required by your application is low (you'd be surprised how few complex queries an application might need)
 * ...and the balance of your read/writes are in the order of >10:1
 
+Why/when shouldn't I use this?
+----
+
+* You don't know the shape of your data
+* You need to run ad-hoc graph traversal queries
+* You need SPARQL support
+
 Requirements
 ----
 
