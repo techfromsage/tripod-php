@@ -16,6 +16,7 @@ Features
 * Define indexes on predicates to speed up queries
 * Page tabular data with counts multi-value cells (hurrah!)
 * (Very) simple search within datasets [1]
+* Generic swiss army graph object ```ExtendedGraph``` which your application models can wrap or extend
 * Supports transactions for updates over multiple [CBDs](http://www.w3.org/Submission/CBD/)
 * Named graph support
 * Instruments using counters and timers to systems like graphite/carbon
