@@ -14,9 +14,26 @@ Features
   * Ad-hoc queries where graph traversal is not required
   * Fixed-specification materialised views (```DESCRIBE```) or tables (```SELECT```) where graph traversal is required
 * Trade speed with consistency on writes - views and tables can be updated immediately or in the background for eventual consistency
+* (Very) simple search within datasets [1]
 * Limited transaction support for updates over multiple [CBDs](http://www.w3.org/Submission/CBD/)
 * Modest hardware clusters can support > 500M triples by sharding datasets
 * Named graph support
+
+[1] Previously we supported ElasticSearch but before we made the MIT licenced release this was stripped out because it was a complexity we did not require
+
+Limitations
+----
+
+* Ad-hoc complex queries are a no as materialised views and tables are pre-specified. Changing these specifications requires that you re-generate materialised docments in their entirity.
+* Relies heavy on namespaces. Inside the database predicates are always namespaced, infact it is a requirement to know and specify all your namespaces upfront in config, so working with arbitury unknown data is not a strong point
+* Writes are expensive because they trigger invalidation of 
+
+Why/when would I use this?
+----
+
+* You require high performance graph datastore 
+* ...and the number of high performance complex queries required by your application is low (you'd be surprised how few complex queries an application might need)
+* ...and the balance of your read/writes are in the order of >10:1
 
 Requirements
 ----
