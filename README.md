@@ -19,7 +19,7 @@ Features
 * Modest hardware clusters can support > 500M triples by sharding datasets
 * Named graph support
 
-[1] Previously we supported ElasticSearch but before we made the MIT licenced release this was stripped out because it was a complexity we did not require
+[1] Prior to the MIT licened release we had supported an ElasticSearch search provider, this went beyond our initial (limited) requirements and was therefore stripped as we had no desire to maintain it.
 
 Limitations
 ----
