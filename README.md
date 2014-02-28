@@ -45,7 +45,7 @@ $data = $tripod->select(
 );
 if ($data['head']['count']>0) {
   foreach($data['results'] as $result) {
-    echo $data['results']['foaf:name'];
+    echo $result['foaf:name'];
   }
 }
 
