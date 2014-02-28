@@ -15,7 +15,7 @@ Features
   * Fixed-specification materialised views (```DESCRIBE```) or tables (```SELECT```) where graph traversal is required
 * Trade speed with consistency on writes - views and tables can be updated immediately or in the background for eventual consistency
 * (Very) simple search within datasets [1]
-* Limited transaction support for updates over multiple [CBDs](http://www.w3.org/Submission/CBD/)
+* Supports transactions for updates over multiple [CBDs](http://www.w3.org/Submission/CBD/)
 * Modest hardware clusters can support > 500M triples by sharding datasets
 * Named graph support
 
