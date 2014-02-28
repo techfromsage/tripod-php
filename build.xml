@@ -11,7 +11,6 @@
     <property name="output.dir" location="output" />
     <property name="codecoverage.dir" location="${output.dir}/codecoverage" />
     <property name="unit.test.dir" location="${test.dir}/unit" />
-    <property name="integration.test.dir" location="${test.dir}/integration" />
     <property name="test" value="**" />
 
     <!-- targets -->
@@ -66,17 +65,11 @@
         <!--<echo>-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-/-</echo>-->
     </target>
 
-   <target name="test" depends="init, unittest, integrationtest"  description="Runs all tests"/>
+   <target name="test" depends="init, unittest"  description="Runs all tests"/>
 
    <target name="unittest" depends="init" description="Runs the Unit test suite">
         <exec dir="${unit.test.dir}" executable="${vendor.dir}/bin/phpunit" failonerror="true">
             <arg line="--filter ${test} --log-junit ${output.dir}/unittest-report.xml" />
-        </exec>
-    </target>
-
-    <target name="integrationtest" depends="init" description="Runs the Integration test suite">
-        <exec dir="${integration.test.dir}" executable="${vendor.dir}/bin/phpunit" failonerror="true">
-            <arg line="--log-junit ${output.dir}/integrationtest-report.xml" />
         </exec>
     </target>
 
