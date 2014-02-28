@@ -23,7 +23,7 @@ Requirements
 
 Mongo 2.x and up, although at least 2.2 is recommended to take advantage of database level locking, especially in the case of shared datasets.
 
-We have run for 2 years in production with a dataset of > 500M triples over 50 databases on modest 3-node cluster (2 data nodes) with Dell commodity servers, 12 cores 96Gb RAM, RAID-10 array of non-SSD disks.
+In production we run with a dataset of > 500M triples over 50 databases on modest 3-node cluster (2 data nodes) with Dell R710 mid-range servers, 12 cores 96Gb RAM, RAID-10 array of non-SSD disks.
 
 Transactions
 ----
