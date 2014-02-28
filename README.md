@@ -9,7 +9,7 @@ Quickstart
 ----
 
 ```php
-MongoTripodConfig::setConfig($conf); // set the config
+MongoTripodConfig::setConfig($conf); // set the config, usually read in as JSON from a file
 
 // describe
 $tripod = new MongoTripod("CBD_users","usersdb");
