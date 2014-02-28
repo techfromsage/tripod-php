@@ -63,6 +63,8 @@ $tripod->saveChanges(
 Requirements
 ----
 
+PHP =>5.2, although not for long, future releases are soon to be >5.3.0
+
 Mongo 2.x and up, although at least 2.2 is recommended to take advantage of database level locking, especially in the case of shared datasets.
 
 In production we run with datasets of > 500M triples over 70 databases on modest 3-node clusters (2 data nodes) with Dell R710 mid-range servers, 12 cores 96Gb RAM, RAID-10 array of non-SSD disks, m1.small arbitur in EC2.
