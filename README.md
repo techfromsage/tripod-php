@@ -295,7 +295,7 @@ Some further limitations
 * Relies heavy on namespaces. Inside the database predicates are always namespaced, infact it is a requirement to know and specify all your namespaces upfront in config, so working with arbitrary unknown data is not a strong point
 * Writes are expensive because they trigger invalidation of views and tables. The more view and table specifications you have, the slower writes are (or the slower data in views and tables becomes consistent, if you are backgrounding their generation)
 
-Coming soon (roadmap)
+Coming soon (aka a loose roadmap)
 ----
 
 * More docs
