@@ -255,6 +255,15 @@ A brief guide:
 * Predicates are properties and are always namespaced, e.g. ```foaf:name```
 * The value of the predicate fields are either an object or an array of objects (for multivalues). The object has exactly one property, either ```u``` (for uri, these are RDF resource object values) or ```l``` (for literal, these are RDF literal object values)
 
+Transactions
+----
+
+MongoDB is only atomic at the document level. Tripod datasets store one [CBD](http://www.w3.org/Submission/CBD/) per document. Therefore an update to a graph of data can impact 1..n documents.
+
+Tripod maintains a transaction log (tlog) of updates to allow rollback in the case of multi-document writes. It is possible (and recommended) to run this on a separate cluster to your main data. For disaster recovery, You can use the tlog to replay transactions on top of a known-good backup.
+
+In production we run a small 2nd cluster in EC2 which stores up to 7 days of tlog, we prune and flush this periodically to S3. 
+
 What have you built with this?
 ----
 
@@ -285,15 +294,6 @@ Some further limitations
 * Ad-hoc complex queries are a no as materialised views and tables are pre-specified. Changing these specifications requires that you re-generate materialised documents in their entirety.
 * Relies heavy on namespaces. Inside the database predicates are always namespaced, infact it is a requirement to know and specify all your namespaces upfront in config, so working with arbitrary unknown data is not a strong point
 * Writes are expensive because they trigger invalidation of views and tables. The more view and table specifications you have, the slower writes are (or the slower data in views and tables becomes consistent, if you are backgrounding their generation)
-
-Transactions
-----
-
-MongoDB is only atomic at the document level. Tripod datasets store one [CBD](http://www.w3.org/Submission/CBD/) per document. Therefore an update to a graph of data can impact 1..n documents.
-
-Tripod maintains a transaction log (tlog) of updates to allow rollback in the case of multi-document writes. It is possible (and recommended) to run this on a separate cluster to your main data. For disaster recovery, You can use the tlog to replay transactions on top of a known-good backup.
-
-In production we run a small 2nd cluster in EC2 which stores up to 7 days of tlog, we prune and flush this periodically to S3. 
 
 Coming soon (roadmap)
 ----
