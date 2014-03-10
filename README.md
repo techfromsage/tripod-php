@@ -311,7 +311,13 @@ Coming soon (aka a loose roadmap)
 Presentations
 ----
 
-[We presented](http://www.slideshare.net/robotrobot/mongodb-uk) on an earlier version at MongoUK 2012. 
+[We presented](http://www.slideshare.net/robotrobot/mongodb-uk) on an earlier version at MongoUK 2012. Since that time we have resolved the following todos: 
+
+* Started the [node-js port](https://github.com/talis/tripod-node)
+* Eliminated dependancy on map-reduce
+* Added named graph support (context)
+* Optimised the data model
+* Open sourced the code
  
 Credits
 ----
