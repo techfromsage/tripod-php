@@ -299,7 +299,7 @@ Coming soon (aka a loose roadmap)
 ----
 
 * More docs
-* Node version - probably read-only subset in the first instance.
+* ~~Node version - probably read-only subset in the first instance~~ It's [here](https://github.com/talis/tripod-node).
 * Improvements to the background queue, currently this is a long running php script working from a queue of updates held in mongo. Only ever intended for the PoC but it's still here 2 years later!
 * An alternative persistence technology for the tlog. Memory mapped databases are not good for datasets with rapid turnover as the data files grow even if the data set is pruned. Implement a more specialist append-only database or even a RDBMS for the tlog persistence
 * PHP >5.3.0 only. We still have some legacy servers on PHP 5.2 which is the only reason we continue support.
