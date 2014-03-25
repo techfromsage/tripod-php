@@ -435,8 +435,93 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
                         }
                     }
                 }
+
+                // Allow the value to be modified after generation
+                if(isset($f['modifiers']))
+                {
+                    foreach($f['modifiers'] as $m)
+                    {
+                        if(isset($dest[$f['fieldName']]))
+                        {
+                            $dest[$f['fieldName']] = $this->applyModifiers($m, $dest[$f['fieldName']]);
+                        }
+                    }
+                }
+
+                // Allow URI linking to the ID
+                if(isset($f['value']))
+                {
+                    if(strpos($f['value'], ':') !== false)
+                    {
+                        list($fieldValue, $type) = explode(':', $f['value']);
+                        if($fieldValue == '_link_')
+                        {
+                            switch($type)
+                            {
+                                case '_user_':
+                                    $value = $this->labeller->qname_to_alias($dest['_id']['r']);
+                                    break;
+                            }
+                            $dest[$f['fieldName']] = $value;
+                        }
+                    } else
+                    {
+                        $dest[$f['fieldName']] = '';
+                    }
+                }
+
             }
         }
+    }
+
+    /**
+     * Loop through modifiers and apply each one in turn to the value
+     * @param array $modifiers
+     * @param mixed $value
+     * @access protected
+     * @return string
+     */
+    protected function applyModifiers(array $modifiers, $value)
+    {
+        // Modifiers has to be an array
+        if(is_array($modifiers))
+        {
+            foreach($modifiers as $modifier => $options)
+            {
+                // Apply the modifier
+                $value = $this->applyModifier($modifier, $value, $options);
+            }
+        }
+        return $value;
+    }
+
+    /**
+     * Apply a specific modifier
+     * Options you can use are
+     *      lowerCase - no options
+     *      join - pass in "glue":" " to specify what to glue multiple values together with
+     *      mongoDate - no options
+     * @param string $modifier
+     * @param string $value
+     * @param array $options
+     * @return mixed
+     */
+    private function applyModifier($modifier, $value, $options = array())
+    {
+        switch($modifier)
+        {
+            case 'lowerCase':
+                if(is_string($value)) $value = strtolower($value);
+                break;
+            case 'join':
+                if(is_array($value)) $value = implode($options['glue'], $value);
+                break;
+            case 'mongoDate':
+                $value = new MongoDate(strtotime($value));
+                break;
+        }
+
+        return $value;
     }
 
 //        // this is the javascript function that will do most of the work. Based on the viewspec, it will

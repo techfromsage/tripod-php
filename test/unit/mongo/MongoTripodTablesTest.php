@@ -244,4 +244,20 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $mockTripodTables->generateTableRowsForType("acorn:Resource");
     }
 
+    /**
+     * Test modifiers on table specs - testing join, lowerCase and mongoDate
+     * @access public
+     * @return void
+     */
+    public function testGenerateTableRowsForUsersWithModifiers()
+    {
+        $this->tripodTables->generateTableRows("t_users");
+        $rows = $this->tripodTables->getTableRows("t_users");
+
+        // We should have 1 result and it should have modified fields
+        $this->assertTrue($rows["head"]["count"]==1,"Expected one row");
+        $this->assertEquals('Harry Potter',$rows['results'][0]['join']);
+        $this->assertEquals('harry potter',$rows['results'][0]['joinLowerCase']);
+        $this->assertInstanceOf('MongoDate', $rows['results'][0]['mongoDate']);
+    }
 }
