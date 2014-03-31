@@ -1,5 +1,6 @@
 <?php
 
+require_once(ARC_DIR.'ARC2.php');
 /**
  * This class is based on SimpleGraph, part of Moriaty: https://code.google.com/p/moriarty/
  * @see https://code.google.com/p/moriarty/source/browse/trunk/labeller.class.php
