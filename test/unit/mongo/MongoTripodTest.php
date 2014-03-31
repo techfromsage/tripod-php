@@ -655,19 +655,19 @@ class MongoTripodTest extends MongoTripodTestBase
 //        $mockTripod = $this->getMock('MongoTripod', array('queueASyncOperations','processSyncOperations'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/','async'=>array(OP_TABLES=>true,OP_VIEWS=>true,OP_SEARCH=>true))));
 //        $mockTripod->expects($this->once())->method('queueASyncOperations')->with(array('http://example.com/1', 'http://example.com/2'), array(), 'http://talisaspire.com/', array(OP_TABLES,OP_VIEWS,OP_SEARCH));
 //        $mockTripod->expects($this->never())->method('processSyncOperations');
-//        $mockTripod->saveChanges(new SimpleGraph(), $oG,"http://talisaspire.com/");
+//        $mockTripod->saveChanges(new ExtendedGraph(), $oG,"http://talisaspire.com/");
 //
 //        // just deletes, search only
 //        $mockTripod = $this->getMock('MongoTripod', array('queueASyncOperations','processSyncOperations'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/','async'=>array(OP_TABLES=>false,OP_VIEWS=>false,OP_SEARCH=>true))));
 //        $mockTripod->expects($this->once())->method('queueASyncOperations')->with(array(), array('http://example.com/1', 'http://example.com/2'),'http://talisaspire.com/', array(OP_SEARCH));
 //        $mockTripod->expects($this->once())->method('processSyncOperations')->with(array(), array('http://example.com/1', 'http://example.com/2'),'http://talisaspire.com/', array(OP_TABLES,OP_VIEWS));
-//        $mockTripod->saveChanges($oG, new SimpleGraph(),"http://talisaspire.com/");
+//        $mockTripod->saveChanges($oG, new ExtendedGraph(),"http://talisaspire.com/");
 //
 //        // add data back into store, default async (should be tables and search)
 //        $mockTripod = $this->getMock('MongoTripod', array('queueASyncOperations','processSyncOperations'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/')));
 //        $mockTripod->expects($this->once())->method('processSyncOperations')->with(array('http://example.com/1', 'http://example.com/2'), array(),'http://talisaspire.com/', array(OP_VIEWS));
 //        $mockTripod->expects($this->once())->method('queueASyncOperations')->with(array('http://example.com/1', 'http://example.com/2'), array(),'http://talisaspire.com/', array(OP_TABLES,OP_SEARCH));
-//        $mockTripod->saveChanges(new SimpleGraph(), $oG,"http://talisaspire.com/");
+//        $mockTripod->saveChanges(new ExtendedGraph(), $oG,"http://talisaspire.com/");
 //
 //        // a delete and an update
 //        $nG = new MongoGraph();
@@ -780,7 +780,7 @@ class MongoTripodTest extends MongoTripodTestBase
 //        $mockTripod = $this->getMock('MongoTripod', array('queueASyncOperations','processSyncOperations'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/',"async"=>array(OP_TABLES=>true,OP_VIEWS=>true,OP_SEARCH=>true))));
 //        $mockTripod->expects($this->once())->method('queueASyncOperations')->with(array('http://example.com/1'), array(), 'http://talisaspire.com/', array(OP_VIEWS, OP_TABLES));
 //        $mockTripod->expects($this->never())->method('processSyncOperations');
-//        $mockTripod->saveChanges(new SimpleGraph(), $oG,"http://talisaspire.com/");
+//        $mockTripod->saveChanges(new ExtendedGraph(), $oG,"http://talisaspire.com/");
 //    }
 
     public function testSelectSingleValueWithNamespaceContextQueryDoesntContainID()
@@ -1106,13 +1106,13 @@ class MongoTripodTest extends MongoTripodTestBase
 
     /** END: removeInertLocks tests */
 
-//TODO Need to discuss the switch from a db->find() to get types to looking in SimpleGraph a bit more
+//TODO Need to discuss the switch from a db->find() to get types to looking in ExtendedGraph a bit more
 //     before enabling this test otherwise we'll have a create another resource that gets loaded into
 //     mongo to query or change the code to make the db->find() mockable.
 //    public function testSaveChangesCallsGenerateIndexWhenOneType()
 //    {
-//        $oldGraph = new SimpleGraph();
-//        $newGraph = new SimpleGraph();
+//        $oldGraph = new ExtendedGraph();
+//        $newGraph = new ExtendedGraph();
 //
 //        $oldGraph->add_literal_triple('http://talisaspire.com/foo/1', 'http://talisaspire.com/schema#foo1', 'foo1');
 //        $oldGraph->add_resource_triple('http://talisaspire.com/foo/1', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'http://purl.org/ontology/bibo/Book');

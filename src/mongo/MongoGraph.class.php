@@ -117,7 +117,7 @@ class MongoGraph extends ExtendedGraph {
             if($key[0] != '_')
             {
                 $predicate = $this->qname_to_uri($key);
-                $predObjects[$predicate] = $this->toSimpleGraphValueObject($value);
+                $predObjects[$predicate] = $this->toGraphValueObject($value);
             }
         }
         $_i[$this->_labeller->qname_to_alias($tarray["_id"][_ID_RESOURCE])] = $predObjects;
@@ -125,11 +125,11 @@ class MongoGraph extends ExtendedGraph {
     }
 
     /**
-     * Convert from MongoTripod value object format (comapct) to SimpleGraph format (verbose)
+     * Convert from MongoTripod value object format (comapct) to ExtendedGraph format (verbose)
      * @param $mongoValueObject
      * @return array
      */
-    private function toSimpleGraphValueObject($mongoValueObject)
+    private function toGraphValueObject($mongoValueObject)
     {
         $simpleGraphValueObject = null;
 
@@ -163,7 +163,7 @@ class MongoGraph extends ExtendedGraph {
     }
 
     /**
-     * Convert from SimpleGraph value object format (verbose) to MongoTripod format (compact)
+     * Convert from ExtendedGraph value object format (verbose) to MongoTripod format (compact)
      * @param $simpleGraphValueObject
      * @return array
      */
