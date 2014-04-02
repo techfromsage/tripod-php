@@ -519,6 +519,9 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
             case 'mongoDate':
                 $value = new MongoDate(strtotime($value));
                 break;
+            default:
+                $this->errorLog('Could not apply modifier:'.$modifier);
+                break;
         }
 
         return $value;
