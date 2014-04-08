@@ -536,7 +536,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
     }
 
     /**
-     * Modifier config - used to generate a regex of valid modifiers
+     * Modifier config - used to validate functions on generation
      * @todo validate this in the mongotripodconfig.class.php object
      * @access private
      * @return array
@@ -554,9 +554,9 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
     /**
      * Apply a specific modifier
      * Options you can use are
-     *      lowerCase - no options
+     *      lowercase - no options
      *      join - pass in "glue":" " to specify what to glue multiple values together with
-     *      mongoDate - no options
+     *      date - no options
      * @param string $modifier
      * @param string $value
      * @param array $options
