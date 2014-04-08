@@ -308,15 +308,31 @@
             "fields":[
                 {
                     "fieldName":"join",
-                    "predicates":["join(\" \", foaf:firstName, foaf:surname)"]
+                    "predicates":[{
+                        "join":{
+                            "glue":" ",
+                            "predicates":["foaf:firstName", "foaf:surname"]
+                        }
+                    }]
                 },
                 {
                     "fieldName":"joinLowerCase",
-                    "predicates":["lowercase(join(\" \", foaf:firstName, foaf:surname))"]
+                    "predicates":[{
+                        "lowercase":{
+                            "join":{
+                                "glue":" ",
+                                "predicates":["foaf:firstName", "foaf:surname"]
+                            }
+                        }
+                    }]
                 },
                 {
                     "fieldName":"mongoDate",
-                    "predicates":["date(temp:last_login)"]
+                    "predicates":[{
+                        "date":{
+                            "predicates":["temp:last_login"]
+                        }
+                    }]
                 },
                 {
                     "fieldName":"userProfileLink",
