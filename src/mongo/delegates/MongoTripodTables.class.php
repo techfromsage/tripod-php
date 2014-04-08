@@ -6,6 +6,13 @@ require_once TRIPOD_DIR . 'mongo/base/MongoTripodBase.class.php';
 class MongoTripodTables extends MongoTripodBase implements SplObserver
 {
     /**
+     * List of functions that are applied to predicates
+     * @access private
+     * @var array
+     */
+    private $predicateFunctions = array();
+
+    /**
      * Construct accepts actual objects rather than strings as this class is a delegate of
      * MongoTripod and should inherit connections set up there
      * @param MongoDB $db
@@ -373,6 +380,14 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
 //        }
 //        }");
 
+    /**
+     * Add fields to a table row
+     * @param array $source
+     * @param array $spec
+     * @param array $dest
+     * @access protected
+     * @return void
+     */
     protected function addFields($source,$spec,&$dest)
     {
         if (isset($spec['fields']))
@@ -383,67 +398,41 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
                 {
                     if (isset($source[$p]))
                     {
-                        $values = array();
-                        if (isset($source[$p][VALUE_URI]) && !empty($source[$p][VALUE_URI]))
-                        {
-                            $values[] = $source[$p][VALUE_URI];
-                        }
-                        else if (isset($source[$p][VALUE_LITERAL]) && !empty($source[$p][VALUE_LITERAL]))
-                        {
-                            $values[] = $source[$p][VALUE_LITERAL];
-                        }
-                        else if (isset($source[$p][_ID_RESOURCE])) // field being joined is the _id, will have _id{r:'',c:''}
-                        {
-                            $values[] = $source[$p][_ID_RESOURCE];
-                        }
-                        else
-                        {
-                            foreach ($source[$p] as $v)
-                            {
-                                if (isset($v[VALUE_LITERAL]) && !empty($v[VALUE_LITERAL]))
-                                {
-                                    $values[] = $v[VALUE_LITERAL];
-                                }
-                                else if (isset($v[VALUE_URI]) && !empty($v[VALUE_URI]))
-                                {
-                                    $values[] = $v[VALUE_URI];
-                                }
-                                // _id's shouldn't appear in value arrays, so no need for third condition here
-                            }
-                        }
-                        // now add all the values
-                        foreach ($values as $v)
-                        {
-                            if (!isset($dest[$f['fieldName']]))
-                            {
-                                // single value
-                                $dest[$f['fieldName']] = $v;
-                            }
-                            else if (is_array($dest[$f['fieldName']]))
-                            {
-                                // add to existing array of values
-                                $dest[$f['fieldName']][] = $v;
-                            }
-                            else
-                            {
-                                // convert from single value to array of values
-                                $existingVal = $dest[$f['fieldName']];
-                                $dest[$f['fieldName']] = array();
-                                $dest[$f['fieldName']][] = $existingVal;
-                                $dest[$f['fieldName']][] = $v;
-                            }
-                        }
-                    }
-                }
-
-                // Allow the value to be modified after generation
-                if(isset($f['modifiers']))
-                {
-                    foreach($f['modifiers'] as $m)
+                        // Predicate is referenced directly
+                        $this->generateValues($source, $f, $p, $dest);
+                    } else
                     {
-                        if(isset($dest[$f['fieldName']]))
+                        // No predicate found - see if we're using functions to modify the values
+                        if(preg_match($this->modifierConfigRegex(), $p))
                         {
-                            $dest[$f['fieldName']] = $this->applyModifiers($m, $dest[$f['fieldName']]);
+                            // Clear down functions
+                            $this->predicateFunctions = array();
+
+                            // Get a list of functions to run over a predicate
+                            $this->getPredicateFunctions($p);
+
+                            foreach($this->predicateFunctions as $function => $functionOptions)
+                            {
+                                // If we've got values then we're the innermost function, so we need to get the values
+                                if($function == 'values' && !empty($functionOptions))
+                                {
+                                    foreach($functionOptions as $v)
+                                    {
+                                        $v = trim($v);
+                                        if (isset($source[$v]))
+                                        {
+                                            $this->generateValues($source, $f, $v, $dest);
+                                        }
+                                    }
+                                // Otherwise apply a modifier
+                                } else
+                                {
+                                    if(isset($dest[$f['fieldName']]))
+                                    {
+                                        $dest[$f['fieldName']] =$this->applyModifier($function, $dest[$f['fieldName']], $functionOptions);
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -451,48 +440,153 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
                 // Allow URI linking to the ID
                 if(isset($f['value']))
                 {
-                    if(strpos($f['value'], ':') !== false)
+                    if($f['value'] == '_link_')
                     {
-                        list($fieldValue, $type) = explode(':', $f['value']);
-                        if($fieldValue == '_link_')
-                        {
-                            switch($type)
-                            {
-                                case '_user_':
-                                    $value = $this->labeller->qname_to_alias($dest['_id']['r']);
-                                    break;
-                            }
-                            $dest[$f['fieldName']] = $value;
-                        }
-                    } else
-                    {
-                        $dest[$f['fieldName']] = '';
+                        $dest[$f['fieldName']] = $this->labeller->qname_to_alias($dest['_id']['r']);
                     }
                 }
-
             }
         }
     }
 
     /**
-     * Loop through modifiers and apply each one in turn to the value
-     * @param array $modifiers
-     * @param mixed $value
+     * Generate values for a given predicate
+     * @param array $source
+     * @param array $f
+     * @param string $predicate
+     * @param array $dest
      * @access protected
-     * @return string
+     * @return void
      */
-    protected function applyModifiers(array $modifiers, $value)
+    protected function generateValues($source, $f, $predicate, &$dest)
     {
-        // Modifiers has to be an array
-        if(is_array($modifiers))
+        $values = array();
+        if (isset($source[$predicate][VALUE_URI]) && !empty($source[$predicate][VALUE_URI]))
         {
-            foreach($modifiers as $modifier => $options)
+            $values[] = $source[$predicate][VALUE_URI];
+        }
+        else if (isset($source[$predicate][VALUE_LITERAL]) && !empty($source[$predicate][VALUE_LITERAL]))
+        {
+            $values[] = $source[$predicate][VALUE_LITERAL];
+        }
+        else if (isset($source[$predicate][_ID_RESOURCE])) // field being joined is the _id, will have _id{r:'',c:''}
+        {
+            $values[] = $source[$predicate][_ID_RESOURCE];
+        }
+        else
+        {
+            foreach ($source[$predicate] as $v)
             {
-                // Apply the modifier
-                $value = $this->applyModifier($modifier, $value, $options);
+                if (isset($v[VALUE_LITERAL]) && !empty($v[VALUE_LITERAL]))
+                {
+                    $values[] = $v[VALUE_LITERAL];
+                }
+                else if (isset($v[VALUE_URI]) && !empty($v[VALUE_URI]))
+                {
+                    $values[] = $v[VALUE_URI];
+                }
+                // _id's shouldn't appear in value arrays, so no need for third condition here
             }
         }
-        return $value;
+
+        // now add all the values
+        foreach ($values as $v)
+        {
+            if (!isset($dest[$f['fieldName']]))
+            {
+                // single value
+                $dest[$f['fieldName']] = $v;
+            }
+            else if (is_array($dest[$f['fieldName']]))
+            {
+                // add to existing array of values
+                $dest[$f['fieldName']][] = $v;
+            }
+            else
+            {
+                // convert from single value to array of values
+                $existingVal = $dest[$f['fieldName']];
+                $dest[$f['fieldName']] = array();
+                $dest[$f['fieldName']][] = $existingVal;
+                $dest[$f['fieldName']][] = $v;
+            }
+        }
+    }
+
+    /**
+     * Recursively get functions that can modify a predicate
+     * @param $string
+     * @param int $level
+     * @access protected
+     * @return void
+     */
+    protected function getPredicateFunctions($string, $level = 1)
+    {
+        preg_match($this->modifierConfigRegex(), $string, $matches);
+
+        if(isset($matches[2]))
+        {
+            if(preg_match($this->modifierConfigRegex(), $matches[2]))
+            {
+                $this->getPredicateFunctions($matches[2], $level++);
+            }
+
+            if($level == 1)
+            {
+                $this->applyModifierConfig($matches[1], explode(',',$matches[2]));
+            } else
+            {
+                $this->applyModifierConfig($matches[1]);
+            }
+        }
+    }
+
+    /**
+     * Modifier config - used to generate a regex of valid modifiers
+     * @todo validate this in the mongotripodconfig.class.php object
+     * @access private
+     * @return array
+     */
+    private function modifierConfig()
+    {
+        return array(
+            'values' => array(),
+            'join' => array(),
+            'lowercase' => array(),
+            'date' => array()
+        );
+    }
+
+    /**
+     * Return a regex of valid config based on the modifier configuration
+     * @access private
+     * @return string
+     */
+    private function modifierConfigRegex()
+    {
+        $regex = '/('.implode('|', array_keys($this->modifierConfig())).')+\((.*)\)/i';
+        return $regex;
+    }
+
+    /**
+     * @param $function
+     * @param array $values
+     */
+    private function applyModifierConfig($function, $values = array())
+    {
+        $options = array();
+        switch($function)
+        {
+            case 'join':
+                $options['glue'] = str_replace(array("'", "\""), '', array_shift($values));
+        }
+
+        if(!empty($values))
+        {
+            $this->predicateFunctions['values'] = $values;
+        }
+
+        $this->predicateFunctions[$function] = $options;
     }
 
     /**
@@ -508,22 +602,38 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
      */
     private function applyModifier($modifier, $value, $options = array())
     {
-        switch($modifier)
+        try
         {
-            case 'lowerCase':
-                if(is_string($value)) $value = strtolower($value);
-                break;
-            case 'join':
-                if(is_array($value)) $value = implode($options['glue'], $value);
-                break;
-            case 'mongoDate':
-                $value = new MongoDate(strtotime($value));
-                break;
-            default:
-                $this->errorLog('Could not apply modifier:'.$modifier);
-                break;
-        }
+            switch($modifier)
+            {
+                case 'values':
+                    // Used to generate a list of values - does nothing here
+                    break;
+                case 'lowercase':
+                    if(is_string($value))
+                    {
+                        $value = strtolower($value);
+                    } else
+                    {
+                        $value = array_map('strtolower', $value);
+                    }
+                    break;
+                case 'join':
+                    if(is_array($value)) $value = implode($options['glue'], $value);
+                    break;
+                case 'date':
+                    $value = new MongoDate(strtotime($value));
+                    break;
+                default:
+                    throw new Exception("Could not apply modifier:".$modifier);
+                    break;
+            }
+        } catch(Exception $e)
+        {
+            echo $e->getMessage()."\n\n";
+            exit;
 
+        }
         return $value;
     }
 

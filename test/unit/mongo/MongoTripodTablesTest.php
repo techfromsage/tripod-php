@@ -246,6 +246,9 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
     /**
      * Test modifiers on table specs - testing join, lowerCase and mongoDate
+     * @todo Add some more tests in here:
+     *      - join but with a single predicate
+     *      - test for data that doesn't exist
      * @access public
      * @return void
      */
