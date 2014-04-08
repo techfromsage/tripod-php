@@ -245,10 +245,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
     }
 
     /**
-     * Test modifiers on table specs - testing join, lowerCase and mongoDate
-     * @todo Add some more tests in here:
-     *      - join but with a single predicate
-     *      - test for data that doesn't exist
+     * Test modifiers on table specs - testing join, lowercase and date
      * @access public
      * @return void
      */
@@ -260,7 +257,16 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         // We should have 1 result and it should have modified fields
         $this->assertTrue($rows["head"]["count"]==1,"Expected one row");
         $this->assertEquals('Harry Potter',$rows['results'][0]['join']);
+        $this->assertEquals('Harry', $rows['results'][0]['joinSingle']);
         $this->assertEquals('harry potter',$rows['results'][0]['joinLowerCase']);
         $this->assertInstanceOf('MongoDate', $rows['results'][0]['mongoDate']);
+
+        // Test for data that doesn't exist
+        $this->assertArrayNotHasKey('mongoDateDoesNotExist', $rows['results'][0]);
+
+        $this->assertArrayHasKey('joinLowerCaseANDExtraField', $rows['results'][0]);
+        $this->assertInternalType('array', $rows['results'][0]['joinLowerCaseANDExtraField']);
+        $this->assertEquals('harry potter', $rows['results'][0]['joinLowerCaseANDExtraField'][0]);
+        $this->assertEquals('Harry', $rows['results'][0]['joinLowerCaseANDExtraField'][1]);
     }
 }

@@ -316,6 +316,15 @@
                     }]
                 },
                 {
+                    "fieldName":"joinSingle",
+                    "predicates":[{
+                        "join":{
+                            "glue":" ",
+                            "predicates":["foaf:firstName"]
+                        }
+                    }]
+                },
+                {
                     "fieldName":"joinLowerCase",
                     "predicates":[{
                         "lowercase":{
@@ -327,10 +336,31 @@
                     }]
                 },
                 {
+                    "fieldName":"joinLowerCaseANDExtraField",
+                    "predicates":[
+                        {
+                            "lowercase":{
+                                "join":{
+                                    "glue":" ",
+                                    "predicates":["foaf:firstName", "foaf:surname"]
+                                }
+                            }
+
+                        }, "foaf:firstName"]
+                },
+                {
                     "fieldName":"mongoDate",
                     "predicates":[{
                         "date":{
                             "predicates":["temp:last_login"]
+                        }
+                    }]
+                },
+                {
+                    "fieldName":"mongoDateDoesNotExist",
+                    "predicates":[{
+                        "date":{
+                            "predicates":["temp:last_login_DOES_NOT_EXIST"]
                         }
                     }]
                 },
