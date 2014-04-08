@@ -396,41 +396,38 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
             {
                 foreach ($f['predicates'] as $p)
                 {
-                    if (isset($source[$p]))
+                    if (is_string($p) && isset($source[$p]))
                     {
                         // Predicate is referenced directly
                         $this->generateValues($source, $f, $p, $dest);
                     } else
                     {
-                        // No predicate found - see if we're using functions to modify the values
-                        if(preg_match($this->modifierConfigRegex(), $p))
+                        // Clear down list of functions to run
+                        $this->predicateFunctions = array();
+
+                        // Get a list of functions to run over a predicate - reverse it
+                        $this->getPredicateFunctions($p);
+                        $this->predicateFunctions = array_reverse($this->predicateFunctions);
+
+                        foreach($this->predicateFunctions as $function => $functionOptions)
                         {
-                            // Clear down functions
-                            $this->predicateFunctions = array();
-
-                            // Get a list of functions to run over a predicate
-                            $this->getPredicateFunctions($p);
-
-                            foreach($this->predicateFunctions as $function => $functionOptions)
+                            // If we've got values then we're the innermost function, so we need to get the values
+                            if($function == 'predicates')
                             {
-                                // If we've got values then we're the innermost function, so we need to get the values
-                                if($function == 'values' && !empty($functionOptions))
+                                foreach($functionOptions as $v)
                                 {
-                                    foreach($functionOptions as $v)
+                                    $v = trim($v);
+                                    if (isset($source[$v]))
                                     {
-                                        $v = trim($v);
-                                        if (isset($source[$v]))
-                                        {
-                                            $this->generateValues($source, $f, $v, $dest);
-                                        }
+                                        $this->generateValues($source, $f, $v, $dest);
                                     }
-                                // Otherwise apply a modifier
-                                } else
+                                }
+                            // Otherwise apply a modifier
+                            } else
+                            {
+                                if(isset($dest[$f['fieldName']]))
                                 {
-                                    if(isset($dest[$f['fieldName']]))
-                                    {
-                                        $dest[$f['fieldName']] =$this->applyModifier($function, $dest[$f['fieldName']], $functionOptions);
-                                    }
+                                    $dest[$f['fieldName']] = $this->applyModifier($function, $dest[$f['fieldName']], $functionOptions);
                                 }
                             }
                         }
@@ -515,28 +512,25 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
 
     /**
      * Recursively get functions that can modify a predicate
-     * @param $string
-     * @param int $level
+     * @param array $array
      * @access protected
      * @return void
      */
-    protected function getPredicateFunctions($string, $level = 1)
+    protected function getPredicateFunctions($array)
     {
-        preg_match($this->modifierConfigRegex(), $string, $matches);
-
-        if(isset($matches[2]))
+        if(is_array($array))
         {
-            if(preg_match($this->modifierConfigRegex(), $matches[2]))
+            if(isset($array['predicates']))
             {
-                $this->getPredicateFunctions($matches[2], $level++);
-            }
-
-            if($level == 1)
-            {
-                $this->applyModifierConfig($matches[1], explode(',',$matches[2]));
+                $this->predicateFunctions['predicates'] = $array['predicates'];
             } else
             {
-                $this->applyModifierConfig($matches[1]);
+                // Check it's a valid function
+                if(array_key_exists(key($array), $this->modifierConfig()))
+                {
+                    $this->predicateFunctions[key($array)] = $array[key($array)];
+                    $this->getPredicateFunctions($array[key($array)]);
+                }
             }
         }
     }
@@ -558,38 +552,6 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
     }
 
     /**
-     * Return a regex of valid config based on the modifier configuration
-     * @access private
-     * @return string
-     */
-    private function modifierConfigRegex()
-    {
-        $regex = '/('.implode('|', array_keys($this->modifierConfig())).')+\((.*)\)/i';
-        return $regex;
-    }
-
-    /**
-     * @param $function
-     * @param array $values
-     */
-    private function applyModifierConfig($function, $values = array())
-    {
-        $options = array();
-        switch($function)
-        {
-            case 'join':
-                $options['glue'] = str_replace(array("'", "\""), '', array_shift($values));
-        }
-
-        if(!empty($values))
-        {
-            $this->predicateFunctions['values'] = $values;
-        }
-
-        $this->predicateFunctions[$function] = $options;
-    }
-
-    /**
      * Apply a specific modifier
      * Options you can use are
      *      lowerCase - no options
@@ -606,7 +568,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         {
             switch($modifier)
             {
-                case 'values':
+                case 'predicates':
                     // Used to generate a list of values - does nothing here
                     break;
                 case 'lowercase':
@@ -622,7 +584,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
                     if(is_array($value)) $value = implode($options['glue'], $value);
                     break;
                 case 'date':
-                    $value = new MongoDate(strtotime($value));
+                    if(is_string($value)) $value = new MongoDate(strtotime($value));
                     break;
                 default:
                     throw new Exception("Could not apply modifier:".$modifier);
