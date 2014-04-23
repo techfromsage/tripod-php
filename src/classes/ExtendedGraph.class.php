@@ -1,16 +1,5 @@
 <?php
 
-if(!defined('TRIPOD_DIR')) define('TRIPOD_DIR', dirname(__FILE__) . '/' );
-
-if (version_compare(phpversion(), '5.3.0', '<')) {
-    // php version isn't high enough for ARC, use legacy <5.3.0 version
-    if(!defined('ARC_DIR')) define('ARC_DIR', TRIPOD_DIR. '../lib/arc/' );
-}
-else
-{
-    // use latest brought in via composer
-    if(!defined('ARC_DIR')) define('ARC_DIR', TRIPOD_DIR. '../vendor/semsol/arc2/' );
-}
 require_once(ARC_DIR.'ARC2.php');
 /**
  * This class is based on SimpleGraph, part of Moriaty: https://code.google.com/p/moriarty/
