@@ -6,13 +6,6 @@ require_once TRIPOD_DIR . 'mongo/base/MongoTripodBase.class.php';
 class MongoTripodTables extends MongoTripodBase implements SplObserver
 {
     /**
-     * List of functions that are applied to predicates
-     * @access private
-     * @var array
-     */
-    private $predicateFunctions = array();
-
-    /**
      * Construct accepts actual objects rather than strings as this class is a delegate of
      * MongoTripod and should inherit connections set up there
      * @param MongoDB $db
@@ -402,14 +395,11 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
                         $this->generateValues($source, $f, $p, $dest);
                     } else
                     {
-                        // Clear down list of functions to run
-                        $this->predicateFunctions = array();
-
                         // Get a list of functions to run over a predicate - reverse it
-                        $this->getPredicateFunctions($p);
-                        $this->predicateFunctions = array_reverse($this->predicateFunctions);
+                        $predicateFunctions = $this->getPredicateFunctions($p);
+                        $predicateFunctions = array_reverse($predicateFunctions);
 
-                        foreach($this->predicateFunctions as $function => $functionOptions)
+                        foreach($predicateFunctions as $function => $functionOptions)
                         {
                             // If we've got values then we're the innermost function, so we need to get the values
                             if($function == 'predicates')
@@ -518,21 +508,23 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
      */
     protected function getPredicateFunctions($array)
     {
+        $predicateFunctions = array();
         if(is_array($array))
         {
             if(isset($array['predicates']))
             {
-                $this->predicateFunctions['predicates'] = $array['predicates'];
+                $predicateFunctions['predicates'] = $array['predicates'];
             } else
             {
                 // Check it's a valid function
                 if(array_key_exists(key($array), $this->modifierConfig()))
                 {
-                    $this->predicateFunctions[key($array)] = $array[key($array)];
-                    $this->getPredicateFunctions($array[key($array)]);
+                    $predicateFunctions[key($array)] = $array[key($array)];
+                    $predicateFunctions = array_merge($predicateFunctions, $this->getPredicateFunctions($array[key($array)]));
                 }
             }
         }
+        return $predicateFunctions;
     }
 
     /**
