@@ -214,8 +214,8 @@ class MongoTripod extends MongoTripodBase implements ITripod
 
     /**
      * Create and apply a changeset which is the delta between $oldGraph and $newGraph
-     * @param SimpleGraph $oldGraph
-     * @param SimpleGraph $newGraph
+     * @param ExtendedGraph $oldGraph
+     * @param ExtendedGraph $newGraph
      * @param $context
      * @param null $description
      * @return bool
@@ -663,7 +663,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
     /**
      * Ensure that the graph we want to persist has data with valid cardinality.
      *
-     * @param SimpleGraph $graph
+     * @param ExtendedGraph $graph
      * @throws TripodCardinalityException
      */
     protected function validateGraphCardinality(ExtendedGraph $graph)

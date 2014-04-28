@@ -13,6 +13,8 @@ else
 
 require_once ARC_DIR.'ARC2.php';
 
+require_once TRIPOD_DIR.'/mongo/MongoTripod.class.php';
+
 define('RDF_TYPE', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
 define('RDF_SUBJECT', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#subject');
 define('RDF_PREDICATE', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#predicate');

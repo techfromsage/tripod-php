@@ -440,14 +440,6 @@ class ExtendedGraphTest extends PHPUnit_Framework_TestCase
         $this->assertFalse($graph2->is_equal_to($graph5), 'graph2 should not equal graph5');
         $this->assertFalse($graph5->is_equal_to($graph2), 'graph5 should not equal graph2');
 
-
-//		 * Following test will fail with current SimpleGraph code.
-//		 * Need to decide what importance we place on lang differences?
-//		 *
-//		// Different language
-//		$this->assertFalse($graph2->is_equal_to($graph6), 'graph2 should not equal graph6');
-//		$this->assertFalse($graph6->is_equal_to($graph2), 'graph6 should not equal graph2');
-
     }
 
     function testIsEqualToIgnoresNamespaceDifferences()
