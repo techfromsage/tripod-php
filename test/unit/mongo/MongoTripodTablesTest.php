@@ -244,6 +244,60 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $mockTripodTables->generateTableRowsForType("acorn:Resource");
     }
 
+
+    /**
+     * Test invalid table specification predicate modifier config
+     * @access public
+     * @return void
+     */
+    public function testGenerateTableRowsForUsersWithModifiersInvalidConfig()
+    {
+        $this->setExpectedException(
+            'MongoTripodConfigException',
+            'Missing key: glue2'
+        );
+
+        $config = array();
+        $config["defaultContext"] = "http://talisaspire.com/";
+        $config["databases"] = array(
+            "testing" => array(
+                "connStr" => "mongodb://localhost",
+                "collections" => array(
+                    "CBD_testing" => array()
+                )
+            )
+        );
+        $config['queue'] = array("database"=>"queue","collection"=>"q_queue","connStr"=>"mongodb://localhost");
+        $config["transaction_log"] = array(
+            "database"=>"transactions",
+            "collection"=>"transaction_log",
+            "connStr"=>"mongodb://tloghost:27017,tloghost:27018"
+        );
+
+        // Create some dodgy config ("glue2") and see if an exception is thrown
+        $tableSpecifications = array(
+            array(
+                'fields' => array(
+                    array(
+                        'fieldName' => 'name',
+                        'predicates' => array(
+                            'join' => array(
+                                'glue2' => ';',
+                                'predicates' => array(
+                                    'foaf:firstName',
+                                    'foaf:surname'
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        );
+
+        $tripodConfig = new MongoTripodConfig($config);
+        $tripodConfig->checkModifierFunctions($tableSpecifications[0]['fields'][0]['predicates'], MongoTripodTables::$predicateModifiers);
+    }
+
     /**
      * Test modifiers on table specs - testing join, lowercase and date
      * @access public
