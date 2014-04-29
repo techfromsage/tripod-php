@@ -244,6 +244,81 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $mockTripodTables->generateTableRowsForType("acorn:Resource");
     }
 
+    /**
+     * Test table specification predicate modifier config
+     * @access public
+     * @return void
+     */
+    public function testGenerateTableRowsForUsersWithModifiersValidConfig()
+    {
+        $config = array();
+        $config["defaultContext"] = "http://talisaspire.com/";
+        $config["databases"] = array(
+            "testing" => array(
+                "connStr" => "mongodb://localhost",
+                "collections" => array(
+                    "CBD_testing" => array()
+                )
+            )
+        );
+        $config['queue'] = array("database"=>"queue","collection"=>"q_queue","connStr"=>"mongodb://localhost");
+        $config["transaction_log"] = array(
+            "database"=>"transactions",
+            "collection"=>"transaction_log",
+            "connStr"=>"mongodb://tloghost:27017,tloghost:27018"
+        );
+
+        // Create some dodgy config ("glue2") and see if an exception is thrown
+        $tableSpecifications = array(
+            'fields' => array(
+                array(
+                    'fieldName' => 'test1',
+                    'predicates' => array(
+                        'join' => array(
+                            'glue' => ';',
+                            'predicates' => array('foaf:name')
+                        )
+                    )
+                ),
+                array(
+                    'fieldName' => 'test2',
+                    'predicates' => array(
+                        'lowercase' => array(
+                            'predicates' => array('foaf:name')
+                        )
+                    )
+                ),
+                array(
+                    'fieldName' => 'test3',
+                    'predicates' => array(
+                        'lowercase' => array(
+                            'join' => array(
+                                'glue' => ';',
+                                'predicates' => array('foaf:name')
+                            )
+                        )
+                    )
+                ),
+                array(
+                    'fieldName' => 'test4',
+                    'predicates' => array(
+                        'date' => array(
+                            'predicates' => array('temp:last_login')
+                        )
+                    )
+                )
+            )
+        );
+
+        $tripodConfig = new MongoTripodConfig($config);
+
+        foreach($tableSpecifications['fields'] as $field)
+        {
+            // If there is invalid config, an exception will be thrown
+            $this->assertNull($tripodConfig->checkModifierFunctions($field['predicates'], MongoTripodTables::$predicateModifiers), 'Invalid tablespec config');
+        }
+
+    }
 
     /**
      * Test invalid table specification predicate modifier config
