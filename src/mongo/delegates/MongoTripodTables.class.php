@@ -6,6 +6,24 @@ require_once TRIPOD_DIR . 'mongo/base/MongoTripodBase.class.php';
 class MongoTripodTables extends MongoTripodBase implements SplObserver
 {
     /**
+     * Modifier config - list of allowed functions and their attributes that can be passed through in tablespecs.json
+     * @var array
+     * @static
+     */
+    public static $predicateModifiers = array(
+        'join' => array(
+            'glue' => true,
+            'predicates' => true
+        ),
+        'lowercase' => array(
+            'predicates' => true
+        ),
+        'date' => array(
+            'predicates' => true
+        )
+    );
+
+    /**
      * Construct accepts actual objects rather than strings as this class is a delegate of
      * MongoTripod and should inherit connections set up there
      * @param MongoDB $db
@@ -516,31 +534,11 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
                 $predicateFunctions['predicates'] = $array['predicates'];
             } else
             {
-                // Check it's a valid function
-                if(array_key_exists(key($array), $this->modifierConfig()))
-                {
-                    $predicateFunctions[key($array)] = $array[key($array)];
-                    $predicateFunctions = array_merge($predicateFunctions, $this->getPredicateFunctions($array[key($array)]));
-                }
+                $predicateFunctions[key($array)] = $array[key($array)];
+                $predicateFunctions = array_merge($predicateFunctions, $this->getPredicateFunctions($array[key($array)]));
             }
         }
         return $predicateFunctions;
-    }
-
-    /**
-     * Modifier config - used to validate functions on generation
-     * @todo validate this in the mongotripodconfig.class.php object
-     * @access private
-     * @return array
-     */
-    private function modifierConfig()
-    {
-        return array(
-            'values' => array(),
-            'join' => array(),
-            'lowercase' => array(),
-            'date' => array()
-        );
     }
 
     /**

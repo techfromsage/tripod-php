@@ -6,6 +6,7 @@ class MongoTripodConfig
 {
     private static $instance = null;
     private static $config = null;
+    private static $fields = array();
     private $labeller = null;
 
     private $defaultContext = null;
@@ -71,6 +72,37 @@ class MongoTripodConfig
         $tableSpecs = (array_key_exists("table_specifications",$config)) ? $config["table_specifications"] : array();
         foreach ($tableSpecs as $spec)
         {
+            // Get all "fields" in the spec
+            $this->findFieldsInSpec('fields', $spec);
+
+            // Loop through fields and validate
+            foreach(self::getFields() as $fields)
+            {
+                foreach($fields as $field)
+                {
+                    if(isset($field['predicates']))
+                    {
+                        foreach($field['predicates'] as $p)
+                        {
+                            if(is_array($p))
+                            {
+                                try
+                                {
+                                    // checkModifierFunctions will check if each predicate modifier is valid - it will
+                                    //     check recursively through the predicate
+                                    $this->checkModifierFunctions($p, MongoTripodTables::$predicateModifiers);
+                                } catch(MongoTripodConfigException $e)
+                                {
+                                    echo $e->getMessage()."\n";
+                                    exit;
+                                }
+
+                            }
+                        }
+                    }
+                }
+            }
+
             $this->ifCountExistsWithoutTTLThrowException($spec);
             $this->tableSpecs[$spec["_id"]] = $spec;
         }
@@ -146,6 +178,83 @@ class MongoTripodConfig
             }
         }
 
+    }
+
+
+    /**
+     * Find all keys in a recursive array
+     * @param string $fieldName
+     * @param array $array
+     * @access private
+     * @return void
+     */
+    private function findFieldsInSpec($fieldName, $array)
+    {
+        if(is_array($array) && !empty($array))
+        {
+            if(array_key_exists($fieldName, $array))
+            {
+                self::$fields[] = $array[$fieldName];
+                unset($array[$fieldName]);
+            }
+
+            foreach($array as $v)
+            {
+                if(is_array($v))
+                {
+                    $this->findFieldsInSpec($fieldName, $v);
+                }
+            }
+        }
+    }
+
+    /**
+     * Check modifier functions against fields
+     * @param array $array
+     * @param mixed $parent
+     * @access public
+     * @return void
+     */
+    public function checkModifierFunctions(array $array, $parent)
+    {
+        foreach($array as $k => $v)
+        {
+            if(is_array($v))
+            {
+                // Check config
+                if(!array_key_exists($k, $parent) && !array_key_exists($k, MongoTripodTables::$predicateModifiers))
+                {
+                    throw new MongoTripodConfigException("Missing key: ".$k);
+                }
+
+                if(array_key_exists($k, MongoTripodTables::$predicateModifiers))
+                {
+                    $this->checkModifierFunctions($v, MongoTripodTables::$predicateModifiers[$k]);
+                } else
+                {
+                    $this->checkModifierFunctions($v, $parent[$k]);
+                }
+
+
+            } else if(is_string($k) && $k)
+            {
+                // Check key
+                if(!array_key_exists($k, $parent))
+                {
+                    throw new MongoTripodConfigException("Missing key: ".$k);
+                }
+            }
+        }
+    }
+
+    /**
+     * Get spec fields
+     * @static
+     * @return array
+     */
+    public static function getFields()
+    {
+        return self::$fields;
     }
 
     /**
