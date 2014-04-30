@@ -84,6 +84,7 @@ class MongoTripodConfig
                     {
                         foreach($field['predicates'] as $p)
                         {
+                            // If predicates is an array we've got modifiers
                             if(is_array($p))
                             {
                                 try
@@ -219,14 +220,18 @@ class MongoTripodConfig
     {
         foreach($array as $k => $v)
         {
+            // You can have recursive modifiers so we check if the value is an array.
             if(is_array($v))
             {
                 // Check config
+                // Valid configs can be top level modifiers and their attributes inside - you can have a top level modifier
+                //      inside a top level modifier - that's why we also check MongoTripodTables::$predicatesModifiers direct
                 if(!array_key_exists($k, $parent) && !array_key_exists($k, MongoTripodTables::$predicateModifiers))
                 {
-                    throw new MongoTripodConfigException("Missing key: ".$k);
+                    throw new MongoTripodConfigException("Invalid modifier: ".$k);
                 }
 
+                // If this config value is a top level modifier, use that as the parent so that we can check the attributes
                 if(array_key_exists($k, MongoTripodTables::$predicateModifiers))
                 {
                     $this->checkModifierFunctions($v, MongoTripodTables::$predicateModifiers[$k]);
@@ -241,7 +246,7 @@ class MongoTripodConfig
                 // Check key
                 if(!array_key_exists($k, $parent))
                 {
-                    throw new MongoTripodConfigException("Missing key: ".$k);
+                    throw new MongoTripodConfigException("Invalid modifier: ".$k);
                 }
             }
         }

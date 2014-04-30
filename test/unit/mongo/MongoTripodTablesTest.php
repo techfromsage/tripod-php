@@ -329,7 +329,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
     {
         $this->setExpectedException(
             'MongoTripodConfigException',
-            'Missing key: glue2'
+            'Invalid modifier: glue2'
         );
 
         $config = array();
