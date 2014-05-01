@@ -584,9 +584,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
             }
         } catch(Exception $e)
         {
-            echo $e->getMessage()."\n\n";
-            exit;
-
+            throw $e;
         }
         return $value;
     }
