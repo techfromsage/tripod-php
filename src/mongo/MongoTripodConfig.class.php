@@ -94,8 +94,7 @@ class MongoTripodConfig
                                     $this->checkModifierFunctions($p, MongoTripodTables::$predicateModifiers);
                                 } catch(MongoTripodConfigException $e)
                                 {
-                                    echo $e->getMessage()."\n";
-                                    exit;
+                                    throw $e;
                                 }
 
                             }
@@ -216,7 +215,7 @@ class MongoTripodConfig
      * @access public
      * @return void
      */
-    public function checkModifierFunctions(array $array, $parent)
+    public function checkModifierFunctions(array $array, $parent, $parentKey = null)
     {
         foreach($array as $k => $v)
         {
@@ -228,25 +227,25 @@ class MongoTripodConfig
                 //      inside a top level modifier - that's why we also check MongoTripodTables::$predicatesModifiers direct
                 if(!array_key_exists($k, $parent) && !array_key_exists($k, MongoTripodTables::$predicateModifiers))
                 {
-                    throw new MongoTripodConfigException("Invalid modifier: ".$k);
+                    throw new MongoTripodConfigException("Invalid modifier: '".$k."' in key '".$parentKey."'");
                 }
 
                 // If this config value is a top level modifier, use that as the parent so that we can check the attributes
                 if(array_key_exists($k, MongoTripodTables::$predicateModifiers))
                 {
-                    $this->checkModifierFunctions($v, MongoTripodTables::$predicateModifiers[$k]);
+                    $this->checkModifierFunctions($v, MongoTripodTables::$predicateModifiers[$k], $k);
                 } else
                 {
-                    $this->checkModifierFunctions($v, $parent[$k]);
+                    $this->checkModifierFunctions($v, $parent[$k], $k);
                 }
 
 
-            } else if(is_string($k) && $k)
+            } else if(is_string($k))
             {
                 // Check key
                 if(!array_key_exists($k, $parent))
                 {
-                    throw new MongoTripodConfigException("Invalid modifier: ".$k);
+                    throw new MongoTripodConfigException("Invalid modifier: '".$k."' in key '".$parentKey."'");
                 }
             }
         }

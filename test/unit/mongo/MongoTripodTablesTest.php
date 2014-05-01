@@ -1,8 +1,8 @@
 <?php
-    require_once 'MongoTripodTestBase.php';
-    require_once 'src/mongo/delegates/MongoTripodTables.class.php';
-    require_once 'src/mongo/MongoTripod.class.php';
-    require_once 'src/mongo/MongoGraph.class.php';
+require_once 'MongoTripodTestBase.php';
+require_once 'src/mongo/delegates/MongoTripodTables.class.php';
+require_once 'src/mongo/MongoTripod.class.php';
+require_once 'src/mongo/MongoGraph.class.php';
 
 
 class MongoTripodTablesTest extends MongoTripodTestBase
@@ -48,6 +48,46 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         // purge tables
         $this->tripodTables->db->selectCollection("table_rows")->drop();
+    }
+
+    /**
+     * Generate dummy config that we can use for creating a MongoTripodConfig object
+     * @access private
+     * @return array
+     */
+    private function generateMongoTripodTestConfig()
+    {
+        $config = array();
+        $config["defaultContext"] = "http://talisaspire.com/";
+        $config["databases"] = array(
+            "testing" => array(
+                "connStr" => "mongodb://localhost",
+                "collections" => array(
+                    "CBD_testing" => array()
+                )
+            )
+        );
+        $config['queue'] = array("database"=>"queue","collection"=>"q_queue","connStr"=>"mongodb://localhost");
+        $config["transaction_log"] = array(
+            "database"=>"transactions",
+            "collection"=>"transaction_log",
+            "connStr"=>"mongodb://tloghost:27017,tloghost:27018"
+        );
+        return $config;
+    }
+
+    /**
+     * Generate table rows based off an id
+     * @param string $id
+     * @access private
+     * @return array
+     */
+    private function generateTableRows($id)
+    {
+        $this->tripodTables->generateTableRows($id);
+        $rows = $this->tripodTables->getTableRows($id);
+
+        return $rows;
     }
 
     public function testTripodSaveChangesUpdatesLiteralTripleInTable()
@@ -251,24 +291,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
      */
     public function testGenerateTableRowsForUsersWithModifiersValidConfig()
     {
-        $config = array();
-        $config["defaultContext"] = "http://talisaspire.com/";
-        $config["databases"] = array(
-            "testing" => array(
-                "connStr" => "mongodb://localhost",
-                "collections" => array(
-                    "CBD_testing" => array()
-                )
-            )
-        );
-        $config['queue'] = array("database"=>"queue","collection"=>"q_queue","connStr"=>"mongodb://localhost");
-        $config["transaction_log"] = array(
-            "database"=>"transactions",
-            "collection"=>"transaction_log",
-            "connStr"=>"mongodb://tloghost:27017,tloghost:27018"
-        );
-
-        // Create some dodgy config ("glue2") and see if an exception is thrown
+        // All config defined here should be valid
         $tableSpecifications = array(
             'fields' => array(
                 array(
@@ -310,7 +333,9 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             )
         );
 
-        $tripodConfig = new MongoTripodConfig($config);
+        // Note that you need some config in order to create the MongoTripodConfig object successfully.
+        // Once that object has been created, we use our own table specifications to test against.
+        $tripodConfig = new MongoTripodConfig($this->generateMongoTripodTestConfig());
 
         foreach($tableSpecifications['fields'] as $field)
         {
@@ -321,81 +346,170 @@ class MongoTripodTablesTest extends MongoTripodTestBase
     }
 
     /**
-     * Test invalid table specification predicate modifier config
+     * Test invalid table specification predicate modifier config - use a bad attribute
      * @access public
      * @return void
      */
-    public function testGenerateTableRowsForUsersWithModifiersInvalidConfig()
+    public function testGenerateTableRowsForUsersWithModifiersInvalidConfigBadGlue()
     {
         $this->setExpectedException(
             'MongoTripodConfigException',
-            'Invalid modifier: glue2'
-        );
-
-        $config = array();
-        $config["defaultContext"] = "http://talisaspire.com/";
-        $config["databases"] = array(
-            "testing" => array(
-                "connStr" => "mongodb://localhost",
-                "collections" => array(
-                    "CBD_testing" => array()
-                )
-            )
-        );
-        $config['queue'] = array("database"=>"queue","collection"=>"q_queue","connStr"=>"mongodb://localhost");
-        $config["transaction_log"] = array(
-            "database"=>"transactions",
-            "collection"=>"transaction_log",
-            "connStr"=>"mongodb://tloghost:27017,tloghost:27018"
+            "Invalid modifier: 'glue2' in key 'join'"
         );
 
         // Create some dodgy config ("glue2") and see if an exception is thrown
         $tableSpecifications = array(
-            array(
-                'fields' => array(
-                    array(
-                        'fieldName' => 'name',
-                        'predicates' => array(
-                            'join' => array(
-                                'glue2' => ';',
-                                'predicates' => array(
-                                    'foaf:firstName',
-                                    'foaf:surname'
-                                )
-                            )
-                        )
-                    )
+            'fieldName' => 'test1',
+            'predicates' => array(
+                'join' => array(
+                    'glue2' => ';',
+                    'predicates' => array('foaf:name')
                 )
             )
         );
 
-        $tripodConfig = new MongoTripodConfig($config);
-        $tripodConfig->checkModifierFunctions($tableSpecifications[0]['fields'][0]['predicates'], MongoTripodTables::$predicateModifiers);
+        // Note that you need some config in order to create the MongoTripodConfig object successfully.
+        // Once that object has been created, we use our own table specifications to test against.
+        $tripodConfig = new MongoTripodConfig($this->generateMongoTripodTestConfig());
+        $tripodConfig->checkModifierFunctions($tableSpecifications['predicates'], MongoTripodTables::$predicateModifiers);
     }
 
     /**
-     * Test modifiers on table specs - testing join, lowercase and date
+     * Test table rows have been generated successfully for a "join" modifier
      * @access public
      * @return void
      */
-    public function testGenerateTableRowsForUsersWithModifiers()
+    public function testGenerateTableRowsForUsersWithModifiersJoin()
     {
-        $this->tripodTables->generateTableRows("t_users");
-        $rows = $this->tripodTables->getTableRows("t_users");
+        // Get table rows
+        $rows = $this->generateTableRows("t_users");
 
         // We should have 1 result and it should have modified fields
         $this->assertTrue($rows["head"]["count"]==1,"Expected one row");
+
         $this->assertEquals('Harry Potter',$rows['results'][0]['join']);
+    }
+
+    /**
+     * Test table rows have been generated for a "join" modifier but with a single value rather than an array
+     * @access public
+     * @return void
+     */
+    public function testGenerateTableRowsForUsersWithModifiersJoinSingle()
+    {
+        // Get table rows
+        $rows = $this->generateTableRows("t_users");
+
+        // We should have 1 result and it should have modified fields
+        $this->assertTrue($rows["head"]["count"]==1,"Expected one row");
+
         $this->assertEquals('Harry', $rows['results'][0]['joinSingle']);
+    }
+
+    /**
+     * Test table rows have been generated for a "lowercase" modifier with a "join" inside it
+     * @access public
+     * @return void
+     */
+    public function testGenerateTableRowsForUsersWithModifiersJoinLowerCase()
+    {
+        // Get table rows
+        $rows = $this->generateTableRows("t_users");
+
+        // We should have 1 result and it should have modified fields
+        $this->assertTrue($rows["head"]["count"]==1,"Expected one row");
+
         $this->assertEquals('harry potter',$rows['results'][0]['joinLowerCase']);
+    }
+
+    /**
+     * Test table rows have been generated for a "date" modifier
+     * @access public
+     * @return void
+     */
+    public function testGenerateTableRowsForUsersWithModifiersMongoDate()
+    {
+        // Get table rows
+        $rows = $this->generateTableRows("t_users");
+
+        // We should have 1 result and it should have modified fields
+        $this->assertTrue($rows["head"]["count"]==1,"Expected one row");
+
         $this->assertInstanceOf('MongoDate', $rows['results'][0]['mongoDate']);
+    }
+
+    /**
+     * Test table rows have been generated for a "date" modifier but with a value that does not exist
+     * @access public
+     * @return void
+     */
+    public function testGenerateTableRowsForUsersWithModifiersMongoDateDoesNotExist()
+    {
+        // Get table rows
+        $rows = $this->generateTableRows("t_users");
+
+        // We should have 1 result and it should have modified fields
+        $this->assertTrue($rows["head"]["count"]==1,"Expected one row");
 
         // Test for data that doesn't exist
         $this->assertArrayNotHasKey('mongoDateDoesNotExist', $rows['results'][0]);
+    }
+
+    /**
+     * Test table rows have been generated for a "lowercase" modifier wtih a "join" modifier inside. It also has an
+     * extra field attached to the row as well
+     * @access public
+     * @return void
+     */
+    public function testGenerateTableRowsForUsersWithModifiersJoinLowerCaseAndExtraField()
+    {
+        // Get table rows
+        $rows = $this->generateTableRows("t_users");
+
+        // We should have 1 result and it should have modified fields
+        $this->assertTrue($rows["head"]["count"]==1,"Expected one row");
 
         $this->assertArrayHasKey('joinLowerCaseANDExtraField', $rows['results'][0]);
         $this->assertInternalType('array', $rows['results'][0]['joinLowerCaseANDExtraField']);
         $this->assertEquals('harry potter', $rows['results'][0]['joinLowerCaseANDExtraField'][0]);
         $this->assertEquals('Harry', $rows['results'][0]['joinLowerCaseANDExtraField'][1]);
+    }
+
+    /**
+     * Test table rows have been generated for a "date" modifier but with an invalid date string
+     * @access public
+     * @return void
+     */
+    public function testGenerateTableRowsForUsersWithModifiersDateInvalid()
+    {
+        // Get table rows
+        $rows = $this->generateTableRows("t_users");
+
+        // We should have 1 result and it should have modified fields
+        $this->assertTrue($rows["head"]["count"]==1,"Expected one row");
+
+        // Check borked data
+        // Trying to use date but passed in a string - should default to 0 for sec and usec
+        $this->assertInstanceOf('MongoDate', $rows['results'][0]['mongoDateInvalid']);
+        $this->assertEquals(0, $rows['results'][0]['mongoDateInvalid']->sec);
+        $this->assertEquals(0, $rows['results'][0]['mongoDateInvalid']->usec);
+
+    }
+
+    /**
+     * Test table rows have been generated for a "lowercase" modifier around a "date" modifier
+     * @access public
+     * @return void
+     */
+    public function testGenerateTableRowsForUsersWithModifiersLowercaseDate()
+    {
+        // Get table rows
+        $rows = $this->generateTableRows("t_users");
+
+        // We should have 1 result and it should have modified fields
+        $this->assertTrue($rows["head"]["count"]==1,"Expected one row");
+
+        // Lowercasing a mongodate object should be the same as running a __toString() on the date object
+        $this->assertEquals($rows['results'][0]['mongoDate']->__toString(), $rows['results'][0]['lowercaseDate']);
     }
 }

@@ -307,6 +307,24 @@
             "from":"CBD_testing",
             "fields":[
                 {
+                    "fieldName":"lowercase",
+                    "predicates":[{
+                        "lowercase":{
+                            "predicates":["foaf:firstName"]
+                        }
+                    }]
+                },
+                {
+                    "fieldName":"lowercaseDate",
+                    "predicates":[{
+                        "lowercase":{
+                            "date":{
+                                "predicates":["temp:last_login"]
+                            }
+                        }
+                    }]
+                },
+                {
                     "fieldName":"join",
                     "predicates":[{
                         "join":{
@@ -353,6 +371,14 @@
                     "predicates":[{
                         "date":{
                             "predicates":["temp:last_login"]
+                        }
+                    }]
+                },
+                {
+                    "fieldName":"mongoDateInvalid",
+                    "predicates":[{
+                        "date":{
+                            "predicates":["temp:last_login_invalid"]
                         }
                     }]
                 },

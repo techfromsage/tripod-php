@@ -379,6 +379,9 @@
         },
         "temp:last_login" : {
             "l" : "2014-03-25T15:07:12+00:00"
+        },
+        "temp:last_login_invalid" : {
+            "l" : "invalid"
         }
     }
 

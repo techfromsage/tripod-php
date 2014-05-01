@@ -7,6 +7,8 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
 {
     /**
      * Modifier config - list of allowed functions and their attributes that can be passed through in tablespecs.json
+     * Note about the "true" value - this is so that the keys are defined as keys rather than values. If we move to
+     * a json schema we could define the types of attribute and whether they are required or not
      * @var array
      * @static
      */
@@ -562,12 +564,12 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
                     // Used to generate a list of values - does nothing here
                     break;
                 case 'lowercase':
-                    if(is_string($value))
-                    {
-                        $value = strtolower($value);
-                    } else
+                    if(is_array($value))
                     {
                         $value = array_map('strtolower', $value);
+                    } else
+                    {
+                        $value = strtolower($value);
                     }
                     break;
                 case 'join':
