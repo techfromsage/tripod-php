@@ -72,7 +72,7 @@ while (($line = fgets(STDIN)) !== false) {
 load($loader,$currentSubject,$triples,$errors,$collectionName,$dbName);
 
 $timer->stop();
-print "This script ran in ".$timer->result()." seconds\n";
+print "This script ran in ".$timer->result()." milliseconds\n";
 
 echo "Processed ".($i)." triples";
 if (count($errors)>0)
@@ -80,6 +80,3 @@ if (count($errors)>0)
     echo "Insert errors on ".count($errors)." subjects\n";
     var_dump($errors); //todo: decide what to do with errors...
 }
-
-?>
-

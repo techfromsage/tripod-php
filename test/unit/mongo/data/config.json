@@ -300,6 +300,102 @@
                     ]
                 }
             }
+        },
+        {
+            "_id":"t_users",
+            "type":"spec:User",
+            "from":"CBD_testing",
+            "fields":[
+                {
+                    "fieldName":"lowercase",
+                    "predicates":[{
+                        "lowercase":{
+                            "predicates":["foaf:firstName"]
+                        }
+                    }]
+                },
+                {
+                    "fieldName":"lowercaseDate",
+                    "predicates":[{
+                        "lowercase":{
+                            "date":{
+                                "predicates":["temp:last_login"]
+                            }
+                        }
+                    }]
+                },
+                {
+                    "fieldName":"join",
+                    "predicates":[{
+                        "join":{
+                            "glue":" ",
+                            "predicates":["foaf:firstName", "foaf:surname"]
+                        }
+                    }]
+                },
+                {
+                    "fieldName":"joinSingle",
+                    "predicates":[{
+                        "join":{
+                            "glue":" ",
+                            "predicates":["foaf:firstName"]
+                        }
+                    }]
+                },
+                {
+                    "fieldName":"joinLowerCase",
+                    "predicates":[{
+                        "lowercase":{
+                            "join":{
+                                "glue":" ",
+                                "predicates":["foaf:firstName", "foaf:surname"]
+                            }
+                        }
+                    }]
+                },
+                {
+                    "fieldName":"joinLowerCaseANDExtraField",
+                    "predicates":[
+                        {
+                            "lowercase":{
+                                "join":{
+                                    "glue":" ",
+                                    "predicates":["foaf:firstName", "foaf:surname"]
+                                }
+                            }
+
+                        }, "foaf:firstName"]
+                },
+                {
+                    "fieldName":"mongoDate",
+                    "predicates":[{
+                        "date":{
+                            "predicates":["temp:last_login"]
+                        }
+                    }]
+                },
+                {
+                    "fieldName":"mongoDateInvalid",
+                    "predicates":[{
+                        "date":{
+                            "predicates":["temp:last_login_invalid"]
+                        }
+                    }]
+                },
+                {
+                    "fieldName":"mongoDateDoesNotExist",
+                    "predicates":[{
+                        "date":{
+                            "predicates":["temp:last_login_DOES_NOT_EXIST"]
+                        }
+                    }]
+                },
+                {
+                    "fieldName":"userProfileLink",
+                    "predicates":[""],
+                    "value": "_link_"
+                }
+            ]
         }
     ],
     "transaction_log" : {

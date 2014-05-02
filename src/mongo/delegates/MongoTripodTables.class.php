@@ -6,6 +6,26 @@ require_once TRIPOD_DIR . 'mongo/base/MongoTripodBase.class.php';
 class MongoTripodTables extends MongoTripodBase implements SplObserver
 {
     /**
+     * Modifier config - list of allowed functions and their attributes that can be passed through in tablespecs.json
+     * Note about the "true" value - this is so that the keys are defined as keys rather than values. If we move to
+     * a json schema we could define the types of attribute and whether they are required or not
+     * @var array
+     * @static
+     */
+    public static $predicateModifiers = array(
+        'join' => array(
+            'glue' => true,
+            'predicates' => true
+        ),
+        'lowercase' => array(
+            'predicates' => true
+        ),
+        'date' => array(
+            'predicates' => true
+        )
+    );
+
+    /**
      * Construct accepts actual objects rather than strings as this class is a delegate of
      * MongoTripod and should inherit connections set up there
      * @param MongoDB $db
@@ -373,6 +393,14 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
 //        }
 //        }");
 
+    /**
+     * Add fields to a table row
+     * @param array $source
+     * @param array $spec
+     * @param array $dest
+     * @access protected
+     * @return void
+     */
     protected function addFields($source,$spec,&$dest)
     {
         if (isset($spec['fields']))
@@ -381,62 +409,184 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
             {
                 foreach ($f['predicates'] as $p)
                 {
-                    if (isset($source[$p]))
+                    if (is_string($p) && isset($source[$p]))
                     {
-                        $values = array();
-                        if (isset($source[$p][VALUE_URI]) && !empty($source[$p][VALUE_URI]))
+                        // Predicate is referenced directly
+                        $this->generateValues($source, $f, $p, $dest);
+                    } else
+                    {
+                        // Get a list of functions to run over a predicate - reverse it
+                        $predicateFunctions = $this->getPredicateFunctions($p);
+                        $predicateFunctions = array_reverse($predicateFunctions);
+
+                        foreach($predicateFunctions as $function => $functionOptions)
                         {
-                            $values[] = $source[$p][VALUE_URI];
-                        }
-                        else if (isset($source[$p][VALUE_LITERAL]) && !empty($source[$p][VALUE_LITERAL]))
-                        {
-                            $values[] = $source[$p][VALUE_LITERAL];
-                        }
-                        else if (isset($source[$p][_ID_RESOURCE])) // field being joined is the _id, will have _id{r:'',c:''}
-                        {
-                            $values[] = $source[$p][_ID_RESOURCE];
-                        }
-                        else
-                        {
-                            foreach ($source[$p] as $v)
+                            // If we've got values then we're the innermost function, so we need to get the values
+                            if($function == 'predicates')
                             {
-                                if (isset($v[VALUE_LITERAL]) && !empty($v[VALUE_LITERAL]))
+                                foreach($functionOptions as $v)
                                 {
-                                    $values[] = $v[VALUE_LITERAL];
+                                    $v = trim($v);
+                                    if (isset($source[$v]))
+                                    {
+                                        $this->generateValues($source, $f, $v, $dest);
+                                    }
                                 }
-                                else if (isset($v[VALUE_URI]) && !empty($v[VALUE_URI]))
+                            // Otherwise apply a modifier
+                            } else
+                            {
+                                if(isset($dest[$f['fieldName']]))
                                 {
-                                    $values[] = $v[VALUE_URI];
+                                    $dest[$f['fieldName']] = $this->applyModifier($function, $dest[$f['fieldName']], $functionOptions);
                                 }
-                                // _id's shouldn't appear in value arrays, so no need for third condition here
-                            }
-                        }
-                        // now add all the values
-                        foreach ($values as $v)
-                        {
-                            if (!isset($dest[$f['fieldName']]))
-                            {
-                                // single value
-                                $dest[$f['fieldName']] = $v;
-                            }
-                            else if (is_array($dest[$f['fieldName']]))
-                            {
-                                // add to existing array of values
-                                $dest[$f['fieldName']][] = $v;
-                            }
-                            else
-                            {
-                                // convert from single value to array of values
-                                $existingVal = $dest[$f['fieldName']];
-                                $dest[$f['fieldName']] = array();
-                                $dest[$f['fieldName']][] = $existingVal;
-                                $dest[$f['fieldName']][] = $v;
                             }
                         }
                     }
                 }
+
+                // Allow URI linking to the ID
+                if(isset($f['value']))
+                {
+                    if($f['value'] == '_link_')
+                    {
+                        $dest[$f['fieldName']] = $this->labeller->qname_to_alias($dest['_id']['r']);
+                    }
+                }
             }
         }
+    }
+
+    /**
+     * Generate values for a given predicate
+     * @param array $source
+     * @param array $f
+     * @param string $predicate
+     * @param array $dest
+     * @access protected
+     * @return void
+     */
+    protected function generateValues($source, $f, $predicate, &$dest)
+    {
+        $values = array();
+        if (isset($source[$predicate][VALUE_URI]) && !empty($source[$predicate][VALUE_URI]))
+        {
+            $values[] = $source[$predicate][VALUE_URI];
+        }
+        else if (isset($source[$predicate][VALUE_LITERAL]) && !empty($source[$predicate][VALUE_LITERAL]))
+        {
+            $values[] = $source[$predicate][VALUE_LITERAL];
+        }
+        else if (isset($source[$predicate][_ID_RESOURCE])) // field being joined is the _id, will have _id{r:'',c:''}
+        {
+            $values[] = $source[$predicate][_ID_RESOURCE];
+        }
+        else
+        {
+            foreach ($source[$predicate] as $v)
+            {
+                if (isset($v[VALUE_LITERAL]) && !empty($v[VALUE_LITERAL]))
+                {
+                    $values[] = $v[VALUE_LITERAL];
+                }
+                else if (isset($v[VALUE_URI]) && !empty($v[VALUE_URI]))
+                {
+                    $values[] = $v[VALUE_URI];
+                }
+                // _id's shouldn't appear in value arrays, so no need for third condition here
+            }
+        }
+
+        // now add all the values
+        foreach ($values as $v)
+        {
+            if (!isset($dest[$f['fieldName']]))
+            {
+                // single value
+                $dest[$f['fieldName']] = $v;
+            }
+            else if (is_array($dest[$f['fieldName']]))
+            {
+                // add to existing array of values
+                $dest[$f['fieldName']][] = $v;
+            }
+            else
+            {
+                // convert from single value to array of values
+                $existingVal = $dest[$f['fieldName']];
+                $dest[$f['fieldName']] = array();
+                $dest[$f['fieldName']][] = $existingVal;
+                $dest[$f['fieldName']][] = $v;
+            }
+        }
+    }
+
+    /**
+     * Recursively get functions that can modify a predicate
+     * @param array $array
+     * @access protected
+     * @return void
+     */
+    protected function getPredicateFunctions($array)
+    {
+        $predicateFunctions = array();
+        if(is_array($array))
+        {
+            if(isset($array['predicates']))
+            {
+                $predicateFunctions['predicates'] = $array['predicates'];
+            } else
+            {
+                $predicateFunctions[key($array)] = $array[key($array)];
+                $predicateFunctions = array_merge($predicateFunctions, $this->getPredicateFunctions($array[key($array)]));
+            }
+        }
+        return $predicateFunctions;
+    }
+
+    /**
+     * Apply a specific modifier
+     * Options you can use are
+     *      lowercase - no options
+     *      join - pass in "glue":" " to specify what to glue multiple values together with
+     *      date - no options
+     * @param string $modifier
+     * @param string $value
+     * @param array $options
+     * @return mixed
+     */
+    private function applyModifier($modifier, $value, $options = array())
+    {
+        try
+        {
+            switch($modifier)
+            {
+                case 'predicates':
+                    // Used to generate a list of values - does nothing here
+                    break;
+                case 'lowercase':
+                    if(is_array($value))
+                    {
+                        $value = array_map('strtolower', $value);
+                    } else
+                    {
+                        $value = strtolower($value);
+                    }
+                    break;
+                case 'join':
+                    if(is_array($value)) $value = implode($options['glue'], $value);
+                    break;
+                case 'date':
+                    if(is_string($value)) $value = new MongoDate(strtotime($value));
+                    break;
+                default:
+                    throw new Exception("Could not apply modifier:".$modifier);
+                    break;
+            }
+        } catch(Exception $e)
+        {
+            throw $e;
+        }
+        return $value;
     }
 
 //        // this is the javascript function that will do most of the work. Based on the viewspec, it will
