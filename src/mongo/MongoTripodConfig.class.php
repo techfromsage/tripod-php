@@ -152,9 +152,9 @@ class MongoTripodConfig
     /**
      * Check modifier functions against fields
      * @param array $array
-     * @param mixed $parent
-     * @access public
-     * @return void
+     * @param $parent
+     * @param null $parentKey
+     * @throws MongoTripodConfigException
      */
     public function checkModifierFunctions(array $array, $parent, $parentKey = null)
     {
@@ -205,7 +205,7 @@ class MongoTripodConfig
     /**
      * @codeCoverageIgnore
      * @static
-     * @return MongoTripodConfig
+     * @return Array|null
      */
     public static function getConfig()
     {
@@ -551,7 +551,7 @@ class MongoTripodConfig
      */
     public function validate()
     {
-        foreach($this->viewSpecs as $spec)
+        foreach($this->tableSpecs as $spec)
         {
             // Get all "fields" in the spec
             $this->findFieldsInSpec('fields', $spec);
@@ -570,8 +570,10 @@ class MongoTripodConfig
                             {
                                 try
                                 {
-                                    // checkModifierFunctions will check if each predicate modifier is valid - it will
-                                    //     check recursively through the predicate
+                                    /*
+                                     * checkModifierFunctions will check if each predicate modifier is valid - it will
+                                     * check recursively through the predicate
+                                     */
                                     $this->checkModifierFunctions($p, MongoTripodTables::$predicateModifiers);
                                 } catch(MongoTripodConfigException $e)
                                 {
