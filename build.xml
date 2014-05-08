@@ -53,11 +53,17 @@
         </exec>
     </target>
 
-   <target name="test" depends="init, unittest"  description="Runs all tests"/>
+   <target name="test" depends="init, unittest, perftest"  description="Runs all tests"/>
 
    <target name="unittest" depends="init" description="Runs the Unit test suite">
         <exec dir="${unit.test.dir}" executable="${vendor.dir}/bin/phpunit" failonerror="true">
             <arg line="--filter ${test} --log-junit ${output.dir}/unittest-report.xml" />
+        </exec>
+    </target>
+
+    <target name="perftest" depends="init" description="Runs the performance test suite">
+        <exec dir="${test.dir}/performance" executable="${vendor.dir}/bin/phpunit" failonerror="true">
+            <arg line="--filter ${test} --log-junit ${output.dir}/performanceTest-report.xml" />
         </exec>
     </target>
 

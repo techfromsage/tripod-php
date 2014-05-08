@@ -6,7 +6,6 @@ class MongoTripodConfig
 {
     private static $instance = null;
     private static $config = null;
-    private static $fields = array();
     private $labeller = null;
 
     private $defaultContext = null;
@@ -73,10 +72,10 @@ class MongoTripodConfig
         foreach ($tableSpecs as $spec)
         {
             // Get all "fields" in the spec
-            $this->findFieldsInSpec('fields', $spec);
+            $fieldsInTableSpec = $this->findFieldsInTableSpec('fields', $spec);
 
             // Loop through fields and validate
-            foreach(self::getFields() as $fields)
+            foreach($fieldsInTableSpec as $fields)
             {
                 foreach($fields as $field)
                 {
@@ -89,8 +88,10 @@ class MongoTripodConfig
                             {
                                 try
                                 {
-                                    // checkModifierFunctions will check if each predicate modifier is valid - it will
-                                    //     check recursively through the predicate
+                                    /*
+                                     * checkModifierFunctions will check if each predicate modifier is valid - it will
+                                     * check recursively through the predicate
+                                     */
                                     $this->checkModifierFunctions($p, MongoTripodTables::$predicateModifiers);
                                 } catch(MongoTripodConfigException $e)
                                 {
@@ -180,40 +181,12 @@ class MongoTripodConfig
 
     }
 
-
-    /**
-     * Find all keys in a recursive array
-     * @param string $fieldName
-     * @param array $array
-     * @access private
-     * @return void
-     */
-    private function findFieldsInSpec($fieldName, $array)
-    {
-        if(is_array($array) && !empty($array))
-        {
-            if(array_key_exists($fieldName, $array))
-            {
-                self::$fields[] = $array[$fieldName];
-                unset($array[$fieldName]);
-            }
-
-            foreach($array as $v)
-            {
-                if(is_array($v))
-                {
-                    $this->findFieldsInSpec($fieldName, $v);
-                }
-            }
-        }
-    }
-
     /**
      * Check modifier functions against fields
      * @param array $array
-     * @param mixed $parent
-     * @access public
-     * @return void
+     * @param $parent
+     * @param null $parentKey
+     * @throws MongoTripodConfigException
      */
     public function checkModifierFunctions(array $array, $parent, $parentKey = null)
     {
@@ -252,19 +225,9 @@ class MongoTripodConfig
     }
 
     /**
-     * Get spec fields
-     * @static
-     * @return array
-     */
-    public static function getFields()
-    {
-        return self::$fields;
-    }
-
-    /**
      * @codeCoverageIgnore
      * @static
-     * @return MongoTripodConfig
+     * @return Array|null
      */
     public static function getConfig()
     {
@@ -591,7 +554,6 @@ class MongoTripodConfig
         return array_unique($this->getSpecificationTypes($this->getSearchDocumentSpecifications(), $collectionName));
     }
 
-
     /**
      * This method was added to allow us to test the getInstance() method
      * @codeCoverageIgnore
@@ -684,6 +646,31 @@ class MongoTripodConfig
         }
     }
 
+    /**
+     * Finds fields in a table specification
+     * @param $fieldName
+     * @param $spec, a part of space ot complete spec
+     * @return array
+     */
+    private function findFieldsInTableSpec($fieldName, $spec)
+    {
+        $fields = array();
+        if(is_array($spec) && !empty($spec))
+        {
+            if(array_key_exists($fieldName, $spec))
+            {
+                $fields[] = $spec[$fieldName];
+            }
 
+            if(isset($spec['joins']))
+            {
+                foreach($spec['joins'] as $join)
+                {
+                    $fields = array_merge($fields, $this->findFieldsInTableSpec($fieldName, $join));
+                }
+            }
+        }
+        return $fields;
+    }
 }
 class MongoTripodConfigException extends Exception {}
