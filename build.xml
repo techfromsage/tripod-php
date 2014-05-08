@@ -61,6 +61,12 @@
         </exec>
     </target>
 
+    <target name="perftest" depends="init" description="Runs the performance test suite">
+        <exec dir="${test.dir}/performance" executable="${vendor.dir}/bin/phpunit" failonerror="true">
+            <arg line="--filter ${test} --log-junit ${output.dir}/performanceTest-report.xml" />
+        </exec>
+    </target>
+
     <target name="codecoverage" depends="init" description="Runs the unit tests and generates code coverage report">
         <exec dir="${unit.test.dir}" executable="${vendor.dir}/bin/phpunit" failonerror="true">
             <arg line="--filter ${test} --coverage-html ${codecoverage.dir}/all" />
