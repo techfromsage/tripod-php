@@ -17,7 +17,7 @@ class MongoTripodConfigTest extends PHPUnit_Framework_TestCase
     /**
      * time in ms (milli-seconds) anything below which is acceptable.
      */
-    const BENCHMARK_OBJECT_CREATE_TIME = 4000;
+    const BENCHMARK_OBJECT_CREATE_TIME = 6000;
 
     /**
      * Number of iterations should to be ran to test
@@ -37,6 +37,11 @@ class MongoTripodConfigTest extends PHPUnit_Framework_TestCase
     protected function setUp()
     {
         parent::setup();
+
+        $className = get_class($this);
+        $testName = $this->getName();
+        echo "\nTest: {$className}->{$testName}\n";
+        
         $this->config = json_decode(file_get_contents(dirname(__FILE__) . '/tripodConfig.json'), true);
     }
 
@@ -50,7 +55,7 @@ class MongoTripodConfigTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * Note: Current version of this test tried to create 1000 objects within 4000ms which is reasonable at this time.
+     * Note: Current version of this test tried to create 1000 objects within 6000ms which is reasonable at this time.
      *       Any change to this class if make it a more a big number it should be validated and tested to ensure performance impact.
      *
      * Create some instances of TripodConfig to see what amount of time is taken in creating instance and processing in constructor.
@@ -65,10 +70,10 @@ class MongoTripodConfigTest extends PHPUnit_Framework_TestCase
         }
 
         $testEndTime = microtime();
-        $this->$this->assertLessThan(
-            self::BENCHMARK_TIME_OBJECT_CREATE,
+        $this->assertLessThan(
+            self::BENCHMARK_OBJECT_CREATE_TIME,
             $this->getTimeDifference($testStartTime, $testEndTime),
-            "It should always take less than " . self::BENCHMARK_TIME_OBJECT_CREATE . "ms to create " . self::BENCHMARK_OBJECT_CREATE_ITERATIONS . " objects of MongoTripodConfig class"
+            "It should always take less than " . self::BENCHMARK_OBJECT_CREATE_TIME . "ms to create " . self::BENCHMARK_OBJECT_CREATE_ITERATIONS . " objects of MongoTripodConfig class"
         );
     }
 
