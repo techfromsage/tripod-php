@@ -53,7 +53,7 @@
         </exec>
     </target>
 
-   <target name="test" depends="init, unittest"  description="Runs all tests"/>
+   <target name="test" depends="init, unittest, perftest"  description="Runs all tests"/>
 
    <target name="unittest" depends="init" description="Runs the Unit test suite">
         <exec dir="${unit.test.dir}" executable="${vendor.dir}/bin/phpunit" failonerror="true">
