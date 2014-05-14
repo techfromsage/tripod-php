@@ -51,6 +51,11 @@ class MongoTripod extends MongoTripodBase implements ITripod
      */
     private $queue = null;
 
+    /**
+     * @var array The original read preference gets stored here
+     *            when changing for a write.
+     */
+    private $originalReadPreference = array();
 
     /**
      * @var array
@@ -213,6 +218,32 @@ class MongoTripod extends MongoTripodBase implements ITripod
     }
 
     /**
+     * Change the read preference to RP_PRIMARY
+     * Used for a write operation
+     */
+    protected function setReadPreferenceToPrimary(){
+        $this->originalReadPreference = $this->collection->getReadPreference();
+        $this->collection->setReadPreference(MongoClient::RP_PRIMARY);
+    }
+
+    /**
+     * Reset the original read preference after changing with setReadPreferenceToPrimary
+     */
+    protected function resetOriginalReadPreference(){
+        // If the read preference has not been changed then simply return
+        if($this->originalReadPreference === array()){
+            return;
+        }
+
+        // Make the change.
+        $preferencesTagsets = isset($this->originalReadPreference['tagsets']) ? $this->originalReadPreference['tagsets'] : array();
+        $this->collection->setReadPreference($this->originalReadPreference['type'], $preferencesTagsets);
+
+        // Reset the orignal read preference var so we know it is back to normal
+        $this->originalReadPreference = array();
+    }
+
+    /**
      * Create and apply a changeset which is the delta between $oldGraph and $newGraph
      * @param ExtendedGraph $oldGraph
      * @param ExtendedGraph $newGraph
@@ -227,6 +258,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
         $context=null,
         $description=null)
     {
+        $this->setReadPreferenceToPrimary();
         $contextAlias = $this->getContextAlias($context);
 
         if (!$this->config->isCollectionWithinConfig($this->dbName,$this->collectionName))
@@ -306,6 +338,8 @@ class MongoTripod extends MongoTripodBase implements ITripod
                 $this->queueASyncOperations($asyncModifiedSubjects);
             }
         }
+
+        $this->resetOriginalReadPreference();
 
         return true;
     }

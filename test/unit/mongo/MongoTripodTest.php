@@ -495,6 +495,22 @@ class MongoTripodTest extends MongoTripodTestBase
         $this->assertTrue($g->has_literal_triple( $uri, $g->qname_to_uri("dct:title"), "New Title seven"), "Graph should contain literal triple we added");
     }
 
+    public function testSetReadPreferenceWhenSavingChanges(){
+        $subjectOne = "http://talisaspire.com/works/checkReadPreferencesWrite";
+        /** @var $tripodMock MongoTripod **/
+        $tripodMock = $this->getMock('MongoTripod', array('addToSearchIndexQueue','setReadPreferenceToPrimary','resetOriginalReadPreference'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/')));
+
+        $tripodMock ->expects($this->at(0))
+                    ->method('setReadPreferenceToPrimary');
+
+        $tripodMock ->expects($this->once())
+                    ->method('resetOriginalReadPreference');
+
+        $g = new MongoGraph();
+        $g->add_literal_triple($subjectOne, $g->qname_to_uri("dct:title"), "Title one");
+        $tripodMock->saveChanges(new MongoGraph(), $g,"http://talisaspire.com/");
+    }
+
     public function testSaveChangesToLockedDocument()
     {
         $subjectOne = "http://talisaspire.com/works/lockedDoc";
