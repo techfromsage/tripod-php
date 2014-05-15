@@ -501,10 +501,30 @@ class MongoTripodTest extends MongoTripodTestBase
         $tripodMock = $this->getMock('MongoTripod', array('addToSearchIndexQueue','setReadPreferenceToPrimary','resetOriginalReadPreference'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/')));
 
         $tripodMock ->expects($this->at(0))
-                    ->method('setReadPreferenceToPrimary');
+            ->method('setReadPreferenceToPrimary');
 
         $tripodMock ->expects($this->once())
-                    ->method('resetOriginalReadPreference');
+            ->method('resetOriginalReadPreference');
+
+        $g = new MongoGraph();
+        $g->add_literal_triple($subjectOne, $g->qname_to_uri("dct:title"), "Title one");
+        $tripodMock->saveChanges(new MongoGraph(), $g,"http://talisaspire.com/");
+    }
+
+    /**
+     * @expectedException Exception
+     */
+    public function testReadPreferencesAreRestoredWhenErrorSavingChanges(){
+        $subjectOne = "http://talisaspire.com/works/checkReadPreferencesAreRestoredOnError";
+        /** @var $tripodMock MongoTripod **/
+        $tripodMock = $this->getMock('MongoTripod', array('addToSearchIndexQueue','resetOriginalReadPreference','getContextAlias'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/')));
+
+        $tripodMock ->expects($this->once())
+            ->method('getContextAlias')
+            ->will($this->throwException(new Exception("A Test Exception")));
+
+        $tripodMock ->expects($this->once())
+            ->method('resetOriginalReadPreference');
 
         $g = new MongoGraph();
         $g->add_literal_triple($subjectOne, $g->qname_to_uri("dct:title"), "Title one");
