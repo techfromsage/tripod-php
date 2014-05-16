@@ -222,8 +222,10 @@ class MongoTripod extends MongoTripodBase implements ITripod
      * Used for a write operation
      */
     protected function setReadPreferenceToPrimary(){
-        $this->originalReadPreference = $this->collection->getReadPreference();
-        $this->collection->setReadPreference(MongoClient::RP_PRIMARY);
+        if($this->collection->getReadPreference() !== MongoClient::RP_PRIMARY){
+            $this->originalReadPreference = $this->collection->getReadPreference();
+            $this->collection->setReadPreference(MongoClient::RP_PRIMARY);
+        }
     }
 
     /**
