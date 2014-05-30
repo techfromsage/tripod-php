@@ -543,10 +543,7 @@ class MongoTripodTest extends MongoTripodTestBase
 
         $tripodMock->expects($this->any())->method('addToSearchIndexQueue');
 
-        $matcher = $this->atLeastOnce();
-
-        $this->currentMatcher = $matcher;
-        $tripodMock ->expects($matcher)
+        $tripodMock ->expects($this->exactly(3))
             ->method('validateGraphCardinality')
             ->will($this->onConsecutiveCalls(null, $this->throwException(new Exception('Test')), null)
             );
