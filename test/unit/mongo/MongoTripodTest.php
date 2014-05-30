@@ -577,23 +577,6 @@ class MongoTripodTest extends MongoTripodTestBase
         $this->assertEquals($expectedReadPreference, $tripodMock->getReadPreference());
     }
 
-    protected $currentMatcher = null;
-
-    public function callbackReadPreferencesOverMultipleSaves_validateGraphCardinality(){
-        switch($this->currentMatcher->getInvocationCount()){
-            case 0:
-                return null;
-                break;
-            case 1:
-                throw new Exception("NOPE");
-                //return null;
-                break;
-            case 2:
-                return null;
-                break;
-        }
-    }
-
     public function testSaveChangesToLockedDocument()
     {
         $subjectOne = "http://talisaspire.com/works/lockedDoc";
