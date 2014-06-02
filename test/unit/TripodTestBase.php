@@ -7,8 +7,8 @@ set_include_path(
   . PATH_SEPARATOR . dirname(dirname(dirname(dirname(__FILE__)))).'/src');
 
 require_once('tripod.inc.php');
-require_once TRIPOD_DIR.'mongo/MongoTripodConfig.class.php';
-require_once TRIPOD_DIR.'mongo/base/MongoTripodBase.class.php';
+require_once TRIPOD_DIR . 'mongo/MongoTripodConfig.class.php';
+require_once TRIPOD_DIR . 'mongo/base/MongoTripodBase.class.php';
 
 /**
  * Mongo Config For Main DB
@@ -41,7 +41,7 @@ class AnonymousLogger
     }
 }
 
-class MongoTripodTestBase extends PHPUnit_Framework_TestCase
+class TripodTestBase extends PHPUnit_Framework_TestCase
 {
 
     /**
@@ -96,6 +96,7 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
 
         $config = json_decode(file_get_contents($configFileName), true);
         MongoTripodConfig::setConfig($config);
+
 
         $className = get_class($this);
         $testName = $this->getName();

@@ -1,5 +1,7 @@
 <?php
-class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
+require_once dirname(__FILE__).'/../TripodTestBase.php';
+
+class MongoTripodSearchDocumentsTest extends TripodTestBase
 {
 	protected function setUp()
 	{

@@ -1,9 +1,7 @@
 <?php
-require_once 'MongoTripodTestBase.php';
-require_once 'src/mongo/MongoGraph.class.php';
-require_once 'src/mongo/serializers/MongoTripodNQuadSerializer.class.php';
+require_once dirname(__FILE__).'/../TripodTestBase.php';
 
-class MongoTripodNQuadSerializerTest extends MongoTripodTestBase
+class MongoTripodNQuadSerializerTest extends TripodTestBase
 {
     protected function setUp()
     {
@@ -28,7 +26,7 @@ class MongoTripodNQuadSerializerTest extends MongoTripodTestBase
     public function testSerializerWithMultipleSubjects()
     {
         $g = new MongoGraph();
-        $docs = json_decode(file_get_contents(dirname(__FILE__).'/data/resources.json'), true);
+        $docs = json_decode(file_get_contents(dirname(__FILE__).'/../data/resources.json'), true);
         foreach ($docs as $d)
         {
             $g->add_tripod_array($d);

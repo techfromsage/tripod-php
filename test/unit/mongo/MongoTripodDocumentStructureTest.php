@@ -1,8 +1,7 @@
 <?php
-require_once 'MongoTripodTestBase.php';
-require_once 'src/mongo/MongoTripod.class.php';
+require_once dirname(__FILE__).'/../TripodTestBase.php';
 
-class MongoTripodDocumentStructureTest extends MongoTripodTestBase
+class MongoTripodDocumentStructureTest extends TripodTestBase
 {
     /**
      * @var MongoTripod|PHPUnit_Framework_MockObject_MockObject

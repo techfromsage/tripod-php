@@ -1,11 +1,7 @@
 <?php
-    require_once 'MongoTripodTestBase.php';
-    require_once 'src/mongo/delegates/MongoTripodTables.class.php';
-    require_once 'src/mongo/MongoTripod.class.php';
-    require_once 'src/mongo/MongoGraph.class.php';
+require_once dirname(__FILE__).'/../TripodTestBase.php';
 
-
-class MongoTripodTablesTest extends MongoTripodTestBase
+class MongoTripodTablesTest extends TripodTestBase
 {
     /**
      * @var MongoTripod

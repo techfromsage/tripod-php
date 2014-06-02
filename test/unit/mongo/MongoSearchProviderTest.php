@@ -1,10 +1,7 @@
 <?php
-    require_once 'MongoTripodTestBase.php';
-    require_once 'src/mongo/MongoTripod.class.php';
-    require_once 'src/mongo/delegates/MongoTripodSearchIndexer.class.php';
-    require_once 'src/mongo/providers/MongoSearchProvider.class.php';
+require_once dirname(__FILE__).'/../TripodTestBase.php';
 
-class MongoSearchProviderTest extends MongoTripodTestBase
+class MongoSearchProviderTest extends TripodTestBase
 {
     /** @var $indexer MongoTripodSearchIndexer */
     private $indexer;

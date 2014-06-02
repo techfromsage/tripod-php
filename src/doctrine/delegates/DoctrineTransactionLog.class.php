@@ -1,12 +1,13 @@
 <?php
 use Doctrine\ORM\Tools\Setup;
 use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\Tools\SchemaTool;
 
 require_once TRIPOD_DIR . 'mongo/MongoTripodConfig.class.php';
 require_once TRIPOD_DIR . 'doctrine/entitites/TransactionLogEntry.class.php';
 require_once TRIPOD_DIR . 'ITransactionLog.php';
 
-class PostgresTransactionLog implements ITransactionLog
+class DoctrineTransactionLog implements ITransactionLog
 {
     private $entityManager = null;
     public function __construct()
@@ -15,13 +16,25 @@ class PostgresTransactionLog implements ITransactionLog
         // the connection configuration
         $this->entityManager = EntityManager::create(
             array(
-                'driver'   => 'pdo_pgsql',
-                'user'     => 'root',
-                'password' => '',
-                'dbname'   => 'tlog',
+                'driver'   => $config->getTransactionLogDriver(),
+                'user'     => $config->getTransactionLogUser(),
+                'password' => $config->getTransactionLogPassword(),
+                'dbname'   => $config->getTransactionLogDatabase(),
             ),
             Setup::createAnnotationMetadataConfiguration(array(TRIPOD_DIR.'/doctrine/entities'), false)
         );
+
+        try
+        {
+            $tool = new SchemaTool($this->entityManager);
+            $tool->createSchema(array(
+                $this->entityManager->getClassMetadata('TransactionLogEntry')
+            ));
+        }
+        catch (Exception $e)
+        {
+            // ignore
+        }
     }
 
     /**
@@ -154,6 +167,13 @@ class PostgresTransactionLog implements ITransactionLog
     public function getTransaction($transaction_id)
     {
         // todo
+        /* @var $transactionLogEntry TransactionLogEntry */
+        $transactionLogEntry = $this->entityManager->find("TransactionLogEntry",$transaction_id);
+
+        return array(
+            "_id"=>$transactionLogEntry->getId(),
+            "status"=>$transactionLogEntry->getStatus()
+        );
 //        return $this->transaction_collection->findOne(array("_id"=>$transaction_id));
     }
 
@@ -162,13 +182,12 @@ class PostgresTransactionLog implements ITransactionLog
      */
     public function purgeAllTransactions()
     {
-        // todo: more efficient way of doing this??
-        $repository = $this->entityManager->getRepository('TransactionLogEntry');
-        foreach($repository->findAll() as $entry) {
-            $this->entityManager->remove($entry);
-        }
-        $this->entityManager->flush();
-//        $this->transaction_collection->drop();
+        $classes = array(
+            $this->entityManager->getClassMetadata('TransactionLogEntry')
+        );
+        $tool = new SchemaTool($this->entityManager);
+        $tool->dropSchema($classes);
+        $tool->createSchema($classes);
     }
 
     /**
@@ -182,6 +201,8 @@ class PostgresTransactionLog implements ITransactionLog
     public function getCompletedTransactions($dbName=null, $collectionName=null, $fromDate=null, $toDate=null)
     {
         // todo
+        throw new Exception("Not implemented yet");
+
 //        $query = array();
 //        $query['status'] = 'completed';
 //
@@ -211,6 +232,7 @@ class PostgresTransactionLog implements ITransactionLog
     public function getTotalTransactionCount()
     {
         // todo
+        throw new Exception("Not implemented yet");
 //        return $this->transaction_collection->count(array());
     }
 
@@ -223,6 +245,7 @@ class PostgresTransactionLog implements ITransactionLog
     public function getCompletedTransactionCount($dbName=null, $collectionName=null)
     {
         // todo
+        throw new Exception("Not implemented yet");
 //        if(!empty($dbName) && !empty($collectionName))
 //        {
 //            return $this->transaction_collection->count(array('status'=>'completed','dbName'=>$dbName, 'collectionName'=>$collectionName));

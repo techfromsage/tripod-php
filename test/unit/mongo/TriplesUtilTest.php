@@ -1,9 +1,8 @@
 <?php
-require_once 'MongoTripodTestBase.php';
-require_once 'src/mongo/MongoTripodConfig.class.php';
-require_once 'src/mongo/util/TriplesUtil.class.php';
+require_once dirname(__FILE__).'/../TripodTestBase.php';
+require_once dirname(__FILE__).'/../../../src/mongo/util/TriplesUtil.class.php';
 
-class TriplesUtilTest extends MongoTripodTestBase
+class TriplesUtilTest extends TripodTestBase
 {
     protected function setUp()
     {

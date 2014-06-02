@@ -1,8 +1,7 @@
 <?php
-require_once 'MongoTripodTestBase.php';
-require_once 'src/mongo/MongoGraph.class.php';
+require_once dirname(__FILE__).'/../TripodTestBase.php';
 
-class MongoGraphTest extends MongoTripodTestBase
+class MongoGraphTest extends TripodTestBase
 {
     protected function setUp()
     {
@@ -102,7 +101,7 @@ class MongoGraphTest extends MongoTripodTestBase
     public function testAddTripodArrayWhenAddingViews()
     {
         // view contains 4 subgraphs
-        $view = json_decode(file_get_contents(dirname(__FILE__)."/data/view.json"), true);
+        $view = json_decode(file_get_contents(dirname(__FILE__)."/../data/view.json"), true);
         $g = new MongoGraph();
         $g->add_tripod_array($view);
 

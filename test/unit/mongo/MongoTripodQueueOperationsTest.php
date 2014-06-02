@@ -1,7 +1,5 @@
 <?php
-require_once 'MongoTripodTestBase.php';
-require_once 'src/mongo/MongoTripod.class.php';
-require_once 'src/mongo/queue/MongoTripodQueue.class.php';
+require_once dirname(__FILE__).'/../TripodTestBase.php';
 
 /**
  * Class MongoTripodQueueOperationsTest
@@ -12,7 +10,7 @@ require_once 'src/mongo/queue/MongoTripodQueue.class.php';
  * the results are as we would expect. For that reason this suite is more than just a series of unit tests, feels more like a set of integration tests since we
  * are testing a chained flow of events.
  */
-class MongoTripodQueueOperationsTest extends MongoTripodTestBase
+class MongoTripodQueueOperationsTest extends TripodTestBase
 {
     /**
      * @var MongoTripod
@@ -32,7 +30,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
     {
         // this test suite uses a different config that is better suited for testing the scenarios we need to
         date_default_timezone_set('Europe/London');
-        $configFileName = dirname(__FILE__).'/data/configQueueOperations.json';
+        $configFileName = dirname(__FILE__).'/../data/configQueueOperations.json';
 
         $config = json_decode(file_get_contents($configFileName), true);
         MongoTripodConfig::setConfig($config);

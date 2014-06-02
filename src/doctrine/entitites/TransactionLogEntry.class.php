@@ -1,10 +1,10 @@
 <?php
 /**
- * @Entity @Table(name="transaction_log")
- **/
+ * @Entity @Table(name="transaction_log",indexes={@index(name="status_idx", columns={"status"})})
+ */
 class TransactionLogEntry
 {
-    /** @Id @Column(type="integer") **/
+    /** @Id @Column(type="string") **/
     protected $id;
 
     /** @Column(type="string") **/
@@ -13,7 +13,7 @@ class TransactionLogEntry
     /** @Column(type="string") **/
     protected $collectionName;
 
-    /** @Column(type="string") **/
+    /** @Column(type="text") **/
     protected $changes;
 
     /** @Column(type="string") **/
@@ -22,19 +22,19 @@ class TransactionLogEntry
     /** @Column(type="datetime") **/
     protected $startTime;
 
-    /** @Column(type="datetime") **/
+    /** @Column(type="datetime", nullable=true) **/
     protected $endTime;
 
-    /** @Column(type="datetime") **/
+    /** @Column(type="datetime", nullable=true) **/
     protected $failedTime;
 
-    /** @Column(type="string") **/
+    /** @Column(type="text") **/
     protected $originalCBDs;
 
-    /** @Column(type="string") **/
+    /** @Column(type="string", nullable=true) **/
     protected $sessionId;
 
-    /** @Column(type="string") **/
+    /** @Column(type="text", nullable=true) **/
     protected $error;
 
     public function setChanges($changes)
