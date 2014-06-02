@@ -16,7 +16,7 @@ require_once TRIPOD_DIR.'ITripod.php';
 require_once TRIPOD_DIR.'classes/ChangeSet.class.php';
 
 if (version_compare(phpversion(), '5.3.3', '>=')) {
-    require_once TRIPOD_DIR.'postgres/delegates/PostgresTransactionLog.class.php';
+    require_once TRIPOD_DIR . 'doctrine/delegates/DoctrineTransactionLog.class.php';
 }
 
 /** @noinspection PhpIncludeInspection */

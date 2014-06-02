@@ -3,30 +3,25 @@ use Doctrine\ORM\Tools\Setup;
 use Doctrine\ORM\EntityManager;
 
 require_once TRIPOD_DIR . 'mongo/MongoTripodConfig.class.php';
+require_once TRIPOD_DIR . 'doctrine/entitites/TransactionLogEntry.class.php';
 require_once TRIPOD_DIR . 'ITransactionLog.php';
 
 class PostgresTransactionLog implements ITransactionLog
 {
-    private $transaction_db = null;
-    private $transaction_collection = null;
-
+    private $entityManager = null;
     public function __construct()
     {
-//        $config = MongoTripodConfig::getInstance();
-//        // connect to transaction db
-//        $connStr = $config->getTransactionLogConnStr();
-//
-//        $dbconn = pg_connect("host=localhost dbname=publishing user=www password=foo")
-//            or die('Could not connect: ' . pg_last_error());
-//        $m = null;
-//        if(isset($config->tConfig['replicaSet']) && !empty($config->tConfig['replicaSet'])) {
-//            $m = new MongoClient($connStr, array("replicaSet"=>$config->tConfig['replicaSet']));
-//        } else {
-//            $m = new MongoClient($connStr);
-//        }
-//
-//        $this->transaction_db = $m->selectDB($config->tConfig['database']);
-//        $this->transaction_collection = $this->transaction_db->selectCollection($config->tConfig['collection']);
+        $config = MongoTripodConfig::getInstance(); //todo: read config, from config
+        // the connection configuration
+        $this->entityManager = EntityManager::create(
+            array(
+                'driver'   => 'pdo_pgsql',
+                'user'     => 'root',
+                'password' => '',
+                'dbname'   => 'tlog',
+            ),
+            Setup::createAnnotationMetadataConfiguration(array(TRIPOD_DIR.'/doctrine/entities'), false)
+        );
     }
 
     /**
@@ -39,22 +34,25 @@ class PostgresTransactionLog implements ITransactionLog
      */
     public function createNewTransaction($transaction_id, $changes, $originalCBDs, $dbName, $collectionName)
     {
-//        $transaction = array(
-//            "_id" => $transaction_id,
-//            "dbName"=>$dbName,
-//            "collectionName"=>$collectionName,
-//            "changes" => $changes,
-//            "status" => "in_progress",
-//            "startTime" => new MongoDate(),
-//            "originalCBDs"=>$originalCBDs,
-//            "sessionId" => ((session_id() != '') ? session_id() : '')
-//        );
-//
-//        $ret = $this->insertTransaction($transaction);
-//
-//        if(isset($ret['err']) && $ret['err'] != NULL ){
-//            throw new TripodException("Error creating new transaction: " . var_export($ret,true));
-//        }
+        $transactionLogEntry = new TransactionLogEntry();
+        $transactionLogEntry->setId($transaction_id);
+        $transactionLogEntry->setDbName($dbName);
+        $transactionLogEntry->setCollectionName($collectionName);
+        $transactionLogEntry->setChanges(json_encode($changes));
+        $transactionLogEntry->setStatus("in_progress");
+        $transactionLogEntry->setStartTime(new DateTime("now"));
+        $transactionLogEntry->setOriginalCBDs(json_encode($originalCBDs));
+        $transactionLogEntry->setSessionId(((session_id() != '') ? session_id() : ''));
+
+        try
+        {
+            $this->entityManager->persist($transactionLogEntry);
+            $this->entityManager->flush();
+        }
+        catch (Exception $e)
+        {
+            throw new TripodException("Error creating new transaction: " . $e->getMessage());
+        }
     }
 
     /**

@@ -43,7 +43,7 @@ class MongoTripodConfig
         if(array_key_exists("type", $transactionConfig) && !empty($transactionConfig["type"])) {
             switch ($transactionConfig["type"]) {
                 case "MongoTransactionLog":
-                case "PostgresTransactionLog":
+                case "DoctrineTransactionLog":
                     $this->tConfig['type'] = $transactionConfig["type"];
                     break;
                 default:
