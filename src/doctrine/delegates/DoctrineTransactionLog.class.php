@@ -64,10 +64,21 @@ class PostgresTransactionLog implements ITransactionLog
      */
     public function cancelTransaction($transaction_id, Exception $error=null)
     {
+        /* @var $transactionLogEntry TransactionLogEntry */
+        $transactionLogEntry = $this->entityManager->find("TransactionLogEntry",$transaction_id);
+
+        $transactionLogEntry->setStatus("cancelling");
+        if ($error!=null)
+        {
+            $transactionLogEntry->setError(json_encode(array('reason'=>$error->getMessage(), 'trace'=>$error->getTraceAsString())));
+        }
+
+        $this->entityManager->persist($transactionLogEntry);
+        $this->entityManager->flush();
 //        $params = array('status' => 'cancelling');
 //        if($error!=null)
 //        {
-//            $params['error'] = array('reason'=>$error->getMessage(), 'trace'=>$error->getTraceAsString());
+//            $params['error'] =
 //        }
 //
 //        $this->updateTransaction(
@@ -86,6 +97,18 @@ class PostgresTransactionLog implements ITransactionLog
      */
     public function failTransaction($transaction_id, Exception $error=null)
     {
+        /* @var $transactionLogEntry TransactionLogEntry */
+        $transactionLogEntry = $this->entityManager->find("TransactionLogEntry",$transaction_id);
+
+        $transactionLogEntry->setStatus("failed");
+        $transactionLogEntry->setFailedTime(new DateTime("now"));
+        if ($error!=null)
+        {
+            $transactionLogEntry->setError(json_encode(array('reason'=>$error->getMessage(), 'trace'=>$error->getTraceAsString())));
+        }
+
+        $this->entityManager->persist($transactionLogEntry);
+        $this->entityManager->flush();
 //        $params = array('status' => 'failed', 'failedTime' => new MongoDate());
 //        if($error!=null)
 //        {
@@ -107,6 +130,14 @@ class PostgresTransactionLog implements ITransactionLog
      */
     public function completeTransaction($transaction_id, $newCBDs)
     {
+        /* @var $transactionLogEntry TransactionLogEntry */
+        $transactionLogEntry = $this->entityManager->find("TransactionLogEntry",$transaction_id);
+
+        $transactionLogEntry->setStatus("completed");
+        $transactionLogEntry->setEndTime(new DateTime("now"));
+
+        $this->entityManager->persist($transactionLogEntry);
+        $this->entityManager->flush();
 //        $this->updateTransaction(
 //            array("_id" => $transaction_id),
 //            array('$set' => array('status' => 'completed', 'endTime' => new MongoDate(), 'newCBDs'=>$newCBDs)),
@@ -122,6 +153,7 @@ class PostgresTransactionLog implements ITransactionLog
      */
     public function getTransaction($transaction_id)
     {
+        // todo
 //        return $this->transaction_collection->findOne(array("_id"=>$transaction_id));
     }
 
@@ -130,6 +162,12 @@ class PostgresTransactionLog implements ITransactionLog
      */
     public function purgeAllTransactions()
     {
+        // todo: more efficient way of doing this??
+        $repository = $this->entityManager->getRepository('TransactionLogEntry');
+        foreach($repository->findAll() as $entry) {
+            $this->entityManager->remove($entry);
+        }
+        $this->entityManager->flush();
 //        $this->transaction_collection->drop();
     }
 
@@ -143,6 +181,7 @@ class PostgresTransactionLog implements ITransactionLog
      */
     public function getCompletedTransactions($dbName=null, $collectionName=null, $fromDate=null, $toDate=null)
     {
+        // todo
 //        $query = array();
 //        $query['status'] = 'completed';
 //
@@ -171,6 +210,7 @@ class PostgresTransactionLog implements ITransactionLog
      */
     public function getTotalTransactionCount()
     {
+        // todo
 //        return $this->transaction_collection->count(array());
     }
 
@@ -182,6 +222,7 @@ class PostgresTransactionLog implements ITransactionLog
      */
     public function getCompletedTransactionCount($dbName=null, $collectionName=null)
     {
+        // todo
 //        if(!empty($dbName) && !empty($collectionName))
 //        {
 //            return $this->transaction_collection->count(array('status'=>'completed','dbName'=>$dbName, 'collectionName'=>$collectionName));
@@ -191,32 +232,4 @@ class PostgresTransactionLog implements ITransactionLog
 //            return $this->transaction_collection->count(array('status'=>'completed'));
 //        }
     }
-
-    /* PROTECTED Functions */
-
-    /**
-     * Proxy method to help with test mocking
-     * @param $transaction
-     * @return array|bool
-     * @codeCoverageIgnore
-     */
-    protected function insertTransaction($transaction)
-    {
-//        return $this->transaction_collection->insert($transaction, array("w" => 1));
-    }
-
-    /**
-     * Proxy method to help with test mocking
-     * @param $query
-     * @param $update
-     * @param $options
-     * @return bool
-     * @codeCoverageIgnore
-     */
-    protected function updateTransaction($query, $update, $options)
-    {
-//        return $this->transaction_collection->update($query, $update, $options);
-    }
-
-
 }

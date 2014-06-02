@@ -22,11 +22,20 @@ class TransactionLogEntry
     /** @Column(type="datetime") **/
     protected $startTime;
 
+    /** @Column(type="datetime") **/
+    protected $endTime;
+
+    /** @Column(type="datetime") **/
+    protected $failedTime;
+
     /** @Column(type="string") **/
     protected $originalCBDs;
 
     /** @Column(type="string") **/
     protected $sessionId;
+
+    /** @Column(type="string") **/
+    protected $error;
 
     public function setChanges($changes)
     {
@@ -106,6 +115,36 @@ class TransactionLogEntry
     public function getStatus()
     {
         return $this->status;
+    }
+
+    public function setError($error)
+    {
+        $this->error = $error;
+    }
+
+    public function getError()
+    {
+        return $this->error;
+    }
+
+    public function setEndTime($endTime)
+    {
+        $this->endTime = $endTime;
+    }
+
+    public function getEndTime()
+    {
+        return $this->endTime;
+    }
+
+    public function setFailedTime($failedTime)
+    {
+        $this->failedTime = $failedTime;
+    }
+
+    public function getFailedTime()
+    {
+        return $this->failedTime;
     }
 
 
