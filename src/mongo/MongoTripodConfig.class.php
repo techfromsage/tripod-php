@@ -40,6 +40,20 @@ class MongoTripodConfig
         if(array_key_exists("replicaSet", $transactionConfig) && !empty($transactionConfig["replicaSet"])) {
             $this->tConfig['replicaSet'] = $transactionConfig["replicaSet"];
         }
+        if(array_key_exists("type", $transactionConfig) && !empty($transactionConfig["type"])) {
+            switch ($transactionConfig["type"]) {
+                case "MongoTransactionLog":
+                case "PostgresTransactionLog":
+                    $this->tConfig['type'] = $transactionConfig["type"];
+                    break;
+                default:
+                    throw new MongoTripodConfigException("Unrecognised transaction log type: ".$transactionConfig["type"]);
+                    break;
+            }
+        } else {
+            $this->tConfig['type'] = "MongoTransactionLog";
+        }
+
 
         $searchConfig = (array_key_exists("search_config",$config)) ? $config["search_config"] : array();
         if(!empty($searchConfig)){
@@ -298,6 +312,10 @@ class MongoTripodConfig
         {
             throw new MongoTripodConfigException("Database $dbName does not exist in configuration");
         }
+    }
+
+    public function getTransactionLogType() {
+        return $this->tConfig['type'];
     }
 
     public function getTransactionLogConnStr() {

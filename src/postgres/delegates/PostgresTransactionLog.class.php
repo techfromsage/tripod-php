@@ -1,27 +1,32 @@
 <?php
+use Doctrine\ORM\Tools\Setup;
+use Doctrine\ORM\EntityManager;
 
 require_once TRIPOD_DIR . 'mongo/MongoTripodConfig.class.php';
 require_once TRIPOD_DIR . 'ITransactionLog.php';
 
-class MongoTransactionLog implements ITransactionLog
+class PostgresTransactionLog implements ITransactionLog
 {
     private $transaction_db = null;
     private $transaction_collection = null;
 
     public function __construct()
     {
-        $config = MongoTripodConfig::getInstance();
-        // connect to transaction db
-        $connStr = $config->getTransactionLogConnStr();
-        $m = null;
-        if(isset($config->tConfig['replicaSet']) && !empty($config->tConfig['replicaSet'])) {
-            $m = new MongoClient($connStr, array("replicaSet"=>$config->tConfig['replicaSet']));
-        } else {
-            $m = new MongoClient($connStr);
-        }
-
-        $this->transaction_db = $m->selectDB($config->tConfig['database']);
-        $this->transaction_collection = $this->transaction_db->selectCollection($config->tConfig['collection']);
+//        $config = MongoTripodConfig::getInstance();
+//        // connect to transaction db
+//        $connStr = $config->getTransactionLogConnStr();
+//
+//        $dbconn = pg_connect("host=localhost dbname=publishing user=www password=foo")
+//            or die('Could not connect: ' . pg_last_error());
+//        $m = null;
+//        if(isset($config->tConfig['replicaSet']) && !empty($config->tConfig['replicaSet'])) {
+//            $m = new MongoClient($connStr, array("replicaSet"=>$config->tConfig['replicaSet']));
+//        } else {
+//            $m = new MongoClient($connStr);
+//        }
+//
+//        $this->transaction_db = $m->selectDB($config->tConfig['database']);
+//        $this->transaction_collection = $this->transaction_db->selectCollection($config->tConfig['collection']);
     }
 
     /**
@@ -34,22 +39,22 @@ class MongoTransactionLog implements ITransactionLog
      */
     public function createNewTransaction($transaction_id, $changes, $originalCBDs, $dbName, $collectionName)
     {
-        $transaction = array(
-            "_id" => $transaction_id,
-            "dbName"=>$dbName,
-            "collectionName"=>$collectionName,
-            "changes" => $changes,
-            "status" => "in_progress",
-            "startTime" => new MongoDate(),
-            "originalCBDs"=>$originalCBDs,
-            "sessionId" => ((session_id() != '') ? session_id() : '')
-        );
-
-        $ret = $this->insertTransaction($transaction);
-
-        if(isset($ret['err']) && $ret['err'] != NULL ){
-            throw new TripodException("Error creating new transaction: " . var_export($ret,true));
-        }
+//        $transaction = array(
+//            "_id" => $transaction_id,
+//            "dbName"=>$dbName,
+//            "collectionName"=>$collectionName,
+//            "changes" => $changes,
+//            "status" => "in_progress",
+//            "startTime" => new MongoDate(),
+//            "originalCBDs"=>$originalCBDs,
+//            "sessionId" => ((session_id() != '') ? session_id() : '')
+//        );
+//
+//        $ret = $this->insertTransaction($transaction);
+//
+//        if(isset($ret['err']) && $ret['err'] != NULL ){
+//            throw new TripodException("Error creating new transaction: " . var_export($ret,true));
+//        }
     }
 
     /**
@@ -61,17 +66,17 @@ class MongoTransactionLog implements ITransactionLog
      */
     public function cancelTransaction($transaction_id, Exception $error=null)
     {
-        $params = array('status' => 'cancelling');
-        if($error!=null)
-        {
-            $params['error'] = array('reason'=>$error->getMessage(), 'trace'=>$error->getTraceAsString());
-        }
-
-        $this->updateTransaction(
-            array("_id" => $transaction_id),
-            array('$set' => $params),
-            array("w" => 1, 'upsert'=>true)
-        );
+//        $params = array('status' => 'cancelling');
+//        if($error!=null)
+//        {
+//            $params['error'] = array('reason'=>$error->getMessage(), 'trace'=>$error->getTraceAsString());
+//        }
+//
+//        $this->updateTransaction(
+//            array("_id" => $transaction_id),
+//            array('$set' => $params),
+//            array("w" => 1, 'upsert'=>true)
+//        );
     }
 
     /**
@@ -83,17 +88,17 @@ class MongoTransactionLog implements ITransactionLog
      */
     public function failTransaction($transaction_id, Exception $error=null)
     {
-        $params = array('status' => 'failed', 'failedTime' => new MongoDate());
-        if($error!=null)
-        {
-            $params['error'] = array('reason'=>$error->getMessage(), 'trace'=>$error->getTraceAsString());
-        }
-
-        $this->updateTransaction(
-            array("_id" => $transaction_id),
-            array('$set' => $params),
-            array('w' => 1, 'upsert'=>true)
-        );
+//        $params = array('status' => 'failed', 'failedTime' => new MongoDate());
+//        if($error!=null)
+//        {
+//            $params['error'] = array('reason'=>$error->getMessage(), 'trace'=>$error->getTraceAsString());
+//        }
+//
+//        $this->updateTransaction(
+//            array("_id" => $transaction_id),
+//            array('$set' => $params),
+//            array('w' => 1, 'upsert'=>true)
+//        );
     }
 
     /**
@@ -104,12 +109,11 @@ class MongoTransactionLog implements ITransactionLog
      */
     public function completeTransaction($transaction_id, $newCBDs)
     {
-
-        $this->updateTransaction(
-            array("_id" => $transaction_id),
-            array('$set' => array('status' => 'completed', 'endTime' => new MongoDate(), 'newCBDs'=>$newCBDs)),
-            array('w' => 1)
-        );
+//        $this->updateTransaction(
+//            array("_id" => $transaction_id),
+//            array('$set' => array('status' => 'completed', 'endTime' => new MongoDate(), 'newCBDs'=>$newCBDs)),
+//            array('w' => 1)
+//        );
     }
 
     /**
@@ -120,8 +124,7 @@ class MongoTransactionLog implements ITransactionLog
      */
     public function getTransaction($transaction_id)
     {
-        return $this->transaction_collection->findOne(array("_id"=>$transaction_id));
-
+//        return $this->transaction_collection->findOne(array("_id"=>$transaction_id));
     }
 
     /**
@@ -129,7 +132,7 @@ class MongoTransactionLog implements ITransactionLog
      */
     public function purgeAllTransactions()
     {
-        $this->transaction_collection->drop();
+//        $this->transaction_collection->drop();
     }
 
     /**
@@ -142,27 +145,27 @@ class MongoTransactionLog implements ITransactionLog
      */
     public function getCompletedTransactions($dbName=null, $collectionName=null, $fromDate=null, $toDate=null)
     {
-        $query = array();
-        $query['status'] = 'completed';
-
-        if(!empty($dbName) && !empty($collectionName))
-        {
-            $query['dbName'] = $dbName;
-            $query['collectionName'] = $collectionName;
-        }
-
-        if(!empty($fromDate)) {
-            $q = array();
-            $q['$gte'] = new MongoDate(strtotime($fromDate));
-
-            if(!empty($toDate)){
-                $q['$lte'] = new MongoDate(strtotime($toDate));
-            }
-
-            $query['endTime'] = $q;
-        }
-
-        return $this->transaction_collection->find($query)->sort(array('endTime'=>1));
+//        $query = array();
+//        $query['status'] = 'completed';
+//
+//        if(!empty($dbName) && !empty($collectionName))
+//        {
+//            $query['dbName'] = $dbName;
+//            $query['collectionName'] = $collectionName;
+//        }
+//
+//        if(!empty($fromDate)) {
+//            $q = array();
+//            $q['$gte'] = new MongoDate(strtotime($fromDate));
+//
+//            if(!empty($toDate)){
+//                $q['$lte'] = new MongoDate(strtotime($toDate));
+//            }
+//
+//            $query['endTime'] = $q;
+//        }
+//
+//        return $this->transaction_collection->find($query)->sort(array('endTime'=>1));
     }
 
     /**
@@ -170,7 +173,7 @@ class MongoTransactionLog implements ITransactionLog
      */
     public function getTotalTransactionCount()
     {
-        return $this->transaction_collection->count(array());
+//        return $this->transaction_collection->count(array());
     }
 
     /**
@@ -181,14 +184,14 @@ class MongoTransactionLog implements ITransactionLog
      */
     public function getCompletedTransactionCount($dbName=null, $collectionName=null)
     {
-        if(!empty($dbName) && !empty($collectionName))
-        {
-            return $this->transaction_collection->count(array('status'=>'completed','dbName'=>$dbName, 'collectionName'=>$collectionName));
-        }
-        else
-        {
-            return $this->transaction_collection->count(array('status'=>'completed'));
-        }
+//        if(!empty($dbName) && !empty($collectionName))
+//        {
+//            return $this->transaction_collection->count(array('status'=>'completed','dbName'=>$dbName, 'collectionName'=>$collectionName));
+//        }
+//        else
+//        {
+//            return $this->transaction_collection->count(array('status'=>'completed'));
+//        }
     }
 
     /* PROTECTED Functions */
@@ -201,7 +204,7 @@ class MongoTransactionLog implements ITransactionLog
      */
     protected function insertTransaction($transaction)
     {
-        return $this->transaction_collection->insert($transaction, array("w" => 1));
+//        return $this->transaction_collection->insert($transaction, array("w" => 1));
     }
 
     /**
@@ -214,7 +217,7 @@ class MongoTransactionLog implements ITransactionLog
      */
     protected function updateTransaction($query, $update, $options)
     {
-        return $this->transaction_collection->update($query, $update, $options);
+//        return $this->transaction_collection->update($query, $update, $options);
     }
 
 

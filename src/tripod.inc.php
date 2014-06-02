@@ -9,6 +9,8 @@ else
 {
     // use latest brought in via composer
     if(!defined('ARC_DIR')) define('ARC_DIR', TRIPOD_DIR. '../vendor/semsol/arc2/' );
+
+    require_once TRIPOD_DIR."../vendor/autoload.php";
 }
 
 require_once ARC_DIR.'ARC2.php';
