@@ -545,7 +545,7 @@ class MongoTripodTest extends MongoTripodTestBase
 
         $tripodMock ->expects($this->exactly(3))
             ->method('validateGraphCardinality')
-            ->will($this->onConsecutiveCalls(null, $this->throwException(new Exception('Test')), null)
+            ->will($this->onConsecutiveCalls(null, $this->throwException(new Exception('readPreferenceOverMultipleSavesTestException')), null)
             );
 
         $expectedReadPreference = $tripodMock->getReadPreference();
@@ -564,6 +564,7 @@ class MongoTripodTest extends MongoTripodTestBase
         }
         catch(Exception $e){
             $exceptionThrown = true;
+            $this->assertEquals("readPreferenceOverMultipleSavesTestException", $e->getMessage());
         }
         $this->assertTrue($exceptionThrown);
         $this->assertEquals($expectedReadPreference, $tripodMock->getReadPreference());
