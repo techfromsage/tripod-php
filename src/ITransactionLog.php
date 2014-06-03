@@ -55,7 +55,7 @@ interface ITransactionLog
      * @param string $collectionName
      * @param string|null $fromDate only transactions after this specified date will be replayed. This must be a datetime string i.e. '2010-01-15 00:00:00'
      * @param string|null $toDate only transactions after this specified date will be replayed. This must be a datetime string i.e. '2010-01-15 00:00:00'
-     * @return MongoCursor
+     * @return Iterator todo: no good for Doctrine
      * @throws InvalidArgumentException
      */
     public function getCompletedTransactions($dbName=null, $collectionName=null, $fromDate=null, $toDate=null);

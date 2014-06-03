@@ -24,7 +24,8 @@ class MongoTripodTablesTest extends TripodTestBase
         parent::setup();
         //Mongo::setPoolSize(200);
 
-        $this->tripodTransactionLog = new MongoTransactionLog();
+        $type = MongoTripodConfig::getInstance()->getTransactionLogType();
+        $this->tripodTransactionLog = new $type();
         $this->tripodTransactionLog->purgeAllTransactions();
 
         $this->tripod = new MongoTripod("CBD_testing", "testing", array("async"=>array(OP_VIEWS=>false, OP_TABLES=>false, OP_SEARCH=>false)));

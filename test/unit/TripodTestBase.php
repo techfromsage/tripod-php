@@ -31,7 +31,14 @@ class AnonymousLogger
         {
             foreach ($params as $key=>$value)
             {
-                echo "$key: $value\n";
+                if (is_array($value))
+                {
+                    echo "$key: ".var_export($value,true)."\n";
+                }
+                else
+                {
+                    echo "$key: $value\n";
+                }
             }
         }
     }
@@ -91,10 +98,12 @@ class TripodTestBase extends PHPUnit_Framework_TestCase
 
     protected function setUp()
     {
-        date_default_timezone_set('Europe/London');
-        $configFileName = dirname(__FILE__).'/data/config.json';
+        $configLocation = getenv("TRIPOD_CONFIG");
+        if (empty($configLocation)) die("Please set environmental variable TRIPOD_CONFIG");
 
-        $config = json_decode(file_get_contents($configFileName), true);
+        date_default_timezone_set('Europe/London');
+
+        $config = json_decode(file_get_contents($configLocation), true);
         MongoTripodConfig::setConfig($config);
 
 

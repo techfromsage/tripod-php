@@ -38,25 +38,27 @@ class MongoTripodConfig
             $this->tConfig['replicaSet'] = $transactionConfig["replicaSet"];
         }
         if(array_key_exists("type", $transactionConfig) && !empty($transactionConfig["type"])) {
+            $this->tConfig['type'] = $transactionConfig["type"];
             switch ($transactionConfig["type"]) {
                 case "MongoTransactionLog":
                     $this->tConfig["database"] = $this->getMandatoryKey("database",$transactionConfig,'transaction_log');
                     $this->tConfig["collection"] = $this->getMandatoryKey("collection",$transactionConfig,'transaction_log');
                     $this->tConfig["connStr"] = $this->getMandatoryKey("connStr",$transactionConfig,'transaction_log');
-                    $this->tConfig['type'] = $transactionConfig["type"];
                     break;
                 case "DoctrineTransactionLog":
                     $this->tConfig["database"] = $this->getMandatoryKey("database",$transactionConfig,'transaction_log');
-                    $this->tConfig["driver"] = $this->getMandatoryKey("database",$transactionConfig,'transaction_log');
-                    $this->tConfig["user"] = $this->getMandatoryKey("database",$transactionConfig,'transaction_log');
-                    $this->tConfig["password"] = $this->getMandatoryKey("database",$transactionConfig,'transaction_log');
-                    $this->tConfig['type'] = $transactionConfig["type"];
+                    $this->tConfig["driver"] = $this->getMandatoryKey("driver",$transactionConfig,'transaction_log');
+                    $this->tConfig["user"] = $this->getMandatoryKey("user",$transactionConfig,'transaction_log');
+                    $this->tConfig["password"] = $this->getMandatoryKey("password",$transactionConfig,'transaction_log');
                     break;
                 default:
                     throw new MongoTripodConfigException("Unrecognised transaction log type: ".$transactionConfig["type"]);
                     break;
             }
         } else {
+            $this->tConfig["database"] = $this->getMandatoryKey("database",$transactionConfig,'transaction_log');
+            $this->tConfig["collection"] = $this->getMandatoryKey("collection",$transactionConfig,'transaction_log');
+            $this->tConfig["connStr"] = $this->getMandatoryKey("connStr",$transactionConfig,'transaction_log');
             $this->tConfig['type'] = "MongoTransactionLog";
         }
 

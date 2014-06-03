@@ -42,8 +42,8 @@ class MongoTripodQueueOperationsTest extends TripodTestBase
         // make sure log statements don't go to stdout during tests...
         MongoTripodBase::$logger = new AnonymousLogger();
 
-
-        $this->tripodTransactionLog = new MongoTransactionLog();
+        $type = MongoTripodConfig::getInstance()->getTransactionLogType();
+        $this->tripodTransactionLog = new $type();
         $this->tripodTransactionLog->purgeAllTransactions();
 
         $this->tripodQueue = new MongoTripodQueue();

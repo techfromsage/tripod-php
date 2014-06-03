@@ -147,5 +147,13 @@ class TransactionLogEntry
         return $this->failedTime;
     }
 
-
+    /**
+     * Returns an array that matches the MongoTransactionLog doc format
+     * @return array
+     */
+    public function toArray()
+    {
+        //todo: implement
+        throw new Exception("Not implemented yet");
+    }
 }

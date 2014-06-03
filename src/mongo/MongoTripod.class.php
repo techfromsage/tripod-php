@@ -31,7 +31,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
     public $lCollection;
 
     /**
-     * $var MongoTransactionLog
+     * $var ITransactionLog
      */
     private $transaction_log = null;
 
@@ -1528,9 +1528,9 @@ class MongoTripod extends MongoTripodBase implements ITripod
     }
 
     /**
-     * @param MongoTransactionLog $transactionLog
+     * @param ITransactionLog $transactionLog
      */
-    public function setTransactionLog(MongoTransactionLog $transactionLog)
+    public function setTransactionLog(ITransactionLog $transactionLog)
     {
         $this->transaction_log = $transactionLog;
     }
@@ -1676,18 +1676,17 @@ class MongoTripod extends MongoTripodBase implements ITripod
      */
     public function replayTransactionLog($fromDate=null, $toDate=null)
     {
-
-        $cursor = $this->getTransactionLog()->getCompletedTransactions($this->dbName, $this->collectionName, $fromDate, $toDate);
-        while($cursor->hasNext()) {
-            $result = $cursor->getNext();
-            $this->applyTransaction($result);
+        $transactions = $this->getTransactionLog()->getCompletedTransactions($this->dbName, $this->collectionName, $fromDate, $toDate);
+        foreach($transactions as $transaction) {
+            $this->applyTransaction($transaction);
         }
-
         return true;
     }
 
     public function applyTransaction($transaction)
     {
+        if (!is_array($transaction)) $transaction = $transaction->toArray();
+
         $changes = $transaction['changes'];
         $newCBDs = $transaction['newCBDs'];
 

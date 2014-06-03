@@ -7,8 +7,9 @@ class MongoTripodDocumentStructureTest extends TripodTestBase
      * @var MongoTripod|PHPUnit_Framework_MockObject_MockObject
      */
     protected $tripod = null;
+
     /**
-     * @var MongoTransactionLog
+     * @var ITransactionLog
      */
     protected $tripodTransactionLog = null;
 
@@ -17,7 +18,8 @@ class MongoTripodDocumentStructureTest extends TripodTestBase
         parent::setup();
         //Mongo::setPoolSize(200);
 
-        $this->tripodTransactionLog = new MongoTransactionLog();
+        $type = MongoTripodConfig::getInstance()->getTransactionLogType();
+        $this->tripodTransactionLog = new $type();
         $this->tripodTransactionLog->purgeAllTransactions();
 
         // Stub ouf 'addToElastic' search to prevent writes into Elastic Search happening by default.

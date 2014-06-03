@@ -55,9 +55,22 @@ class MongoTripodConfigTest extends TripodTestBase
     public function testTConfig()
     {
         $config = MongoTripodConfig::getInstance();
-        $this->assertEquals('testing',$config->tConfig['database']);
-        $this->assertEquals('transaction_log',$config->tConfig['collection']);
-        $this->assertEquals('mongodb://localhost',$config->getTransactionLogConnStr());
+        switch ($config->tConfig['type']) {
+            case "MongoTransactionLog":
+                $this->assertEquals('testing',$config->tConfig['database']);
+                $this->assertEquals('transaction_log',$config->tConfig['collection']);
+                $this->assertEquals('mongodb://localhost',$config->getTransactionLogConnStr());
+                break;
+            case "DoctrineTransactionLog":
+                $this->assertEquals('pdo_pgsql',$config->tConfig['driver']);
+                $this->assertEquals('tlog',$config->tConfig['database']);
+                $this->assertEquals('chris',$config->tConfig['user']);
+                $this->assertEquals('',$config->tConfig['password']);
+                break;
+            default:
+                $this->fail("Unexpected type: ".$config->tConfig['type']);
+                break;
+        }
     }
 
     public function testTConfigRepSetConnStr()

@@ -13,7 +13,8 @@ class MongoSearchProviderTest extends TripodTestBase
     {
         parent::setUp();
 
-        $this->tripodTransactionLog = new MongoTransactionLog();
+        $type = MongoTripodConfig::getInstance()->getTransactionLogType();
+        $this->tripodTransactionLog = new $type();
         $this->tripodTransactionLog->purgeAllTransactions();
 
         $this->tripod = new MongoTripod('CBD_testing', 'testing');

@@ -53,11 +53,24 @@
         </exec>
     </target>
 
-   <target name="test" depends="init, unittest"  description="Runs all tests"/>
+    <target name="test" depends="init, unittest"  description="Runs all tests"/>
 
-   <target name="unittest" depends="init" description="Runs the Unit test suite">
+    <target name="unittest" depends="init" description="Runs the Unit test suite">
+       <antcall target="_unittestPostgresTLog"/>
+        <antcall target="_unittestMongoTlog"/>
+    </target>
+
+    <target name="_unittestPostgresTLog" description="Runs the Unit test suite against a TransactionLog backed by Postgres">
         <exec dir="${unit.test.dir}" executable="${vendor.dir}/bin/phpunit" failonerror="true">
-            <arg line="--filter ${test} --log-junit ${output.dir}/unittest-report.xml" />
+            <env key="TRIPOD_CONFIG" value="${unit.test.dir}/data/configPostgresTLog.json"/>
+            <arg line="--filter ${test} --log-junit ${output.dir}/postgres_tlog/unittest-report.xml" />
+        </exec>
+    </target>
+
+    <target name="_unittestMongoTlog" description="Runs the Unit test suite against a TransactionLog backed by Mongo">
+        <exec dir="${unit.test.dir}" executable="${vendor.dir}/bin/phpunit" failonerror="true">
+            <env key="TRIPOD_CONFIG" value="${unit.test.dir}/data/config.json"/>
+            <arg line="--filter ${test} --log-junit ${output.dir}/mongo_tlog/unittest-report.xml" />
         </exec>
     </target>
 

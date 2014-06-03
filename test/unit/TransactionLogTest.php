@@ -1,7 +1,7 @@
 <?php
-require_once dirname(__FILE__).'/../TripodTestBase.php';
+require_once dirname(__FILE__) . '/TripodTestBase.php';
 
-class MongoTransactionLogTest extends TripodTestBase
+class TransactionLogTest extends TripodTestBase // todo: rename TransactionLogTest
 {
     /**
      * @var MongoTripod
@@ -27,10 +27,11 @@ class MongoTransactionLogTest extends TripodTestBase
 
         $this->loadBaseDataViaTripod();
 
-        $this->tripodTransactionLog = new MongoTransactionLog();
+        $type = MongoTripodConfig::getInstance()->getTransactionLogType();
+        $this->tripodTransactionLog = new $type();
+
         $this->tripodTransactionLog->purgeAllTransactions();
         $this->tripod->setTransactionLog($this->tripodTransactionLog);
-
     }
 
     public function testReplayLog_Simple_ChangesSinglePropertyOnExistingDocument()
