@@ -9,6 +9,7 @@ require_once TRIPOD_DIR . 'ITransactionLog.php';
 
 class DoctrineTransactionLog implements ITransactionLog
 {
+    const TRANSACTION_LOG_ENTRY = 'TransactionLogEntry';
     private $entityManager = null;
     public function __construct()
     {
@@ -28,7 +29,7 @@ class DoctrineTransactionLog implements ITransactionLog
         {
             $tool = new SchemaTool($this->entityManager);
             $tool->createSchema(array(
-                $this->entityManager->getClassMetadata('TransactionLogEntry')
+                $this->entityManager->getClassMetadata(self::TRANSACTION_LOG_ENTRY)
             ));
         }
         catch (Exception $e)
@@ -78,7 +79,7 @@ class DoctrineTransactionLog implements ITransactionLog
     public function cancelTransaction($transaction_id, Exception $error=null)
     {
         /* @var $transactionLogEntry TransactionLogEntry */
-        $transactionLogEntry = $this->entityManager->find("TransactionLogEntry",$transaction_id);
+        $transactionLogEntry = $this->entityManager->find(self::TRANSACTION_LOG_ENTRY,$transaction_id);
 
         $transactionLogEntry->setStatus("cancelling");
         if ($error!=null)
@@ -111,7 +112,7 @@ class DoctrineTransactionLog implements ITransactionLog
     public function failTransaction($transaction_id, Exception $error=null)
     {
         /* @var $transactionLogEntry TransactionLogEntry */
-        $transactionLogEntry = $this->entityManager->find("TransactionLogEntry",$transaction_id);
+        $transactionLogEntry = $this->entityManager->find(self::TRANSACTION_LOG_ENTRY,$transaction_id);
 
         $transactionLogEntry->setStatus("failed");
         $transactionLogEntry->setFailedTime(new DateTime("now"));
@@ -144,7 +145,7 @@ class DoctrineTransactionLog implements ITransactionLog
     public function completeTransaction($transaction_id, $newCBDs)
     {
         /* @var $transactionLogEntry TransactionLogEntry */
-        $transactionLogEntry = $this->entityManager->find("TransactionLogEntry",$transaction_id);
+        $transactionLogEntry = $this->entityManager->find(self::TRANSACTION_LOG_ENTRY,$transaction_id);
 
         $transactionLogEntry->setStatus("completed");
         $transactionLogEntry->setEndTime(new DateTime("now"));
@@ -168,7 +169,7 @@ class DoctrineTransactionLog implements ITransactionLog
     {
         // todo
         /* @var $transactionLogEntry TransactionLogEntry */
-        $transactionLogEntry = $this->entityManager->find("TransactionLogEntry",$transaction_id);
+        $transactionLogEntry = $this->entityManager->find(self::TRANSACTION_LOG_ENTRY,$transaction_id);
 
         return array(
             "_id"=>$transactionLogEntry->getId(),
@@ -183,7 +184,7 @@ class DoctrineTransactionLog implements ITransactionLog
     public function purgeAllTransactions()
     {
         $classes = array(
-            $this->entityManager->getClassMetadata('TransactionLogEntry')
+            $this->entityManager->getClassMetadata(self::TRANSACTION_LOG_ENTRY)
         );
         $tool = new SchemaTool($this->entityManager);
         $tool->dropSchema($classes);
