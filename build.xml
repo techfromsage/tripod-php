@@ -56,18 +56,35 @@
     <target name="test" depends="init, unittest"  description="Runs all tests"/>
 
     <target name="unittest" depends="init" description="Runs the Unit test suite">
-       <antcall target="_unittestPostgresTLog"/>
-        <antcall target="_unittestMongoTlog"/>
+       <antcall target="unittestPostgresTLog"/>
+        <antcall target="unittestMongoTlog"/>
     </target>
 
-    <target name="_unittestPostgresTLog" description="Runs the Unit test suite against a TransactionLog backed by Postgres">
+    <target name="unittestPostgresTLog" description="Runs the Unit test suite against a TransactionLog backed by Postgres">
+        <echo>Ensure postgres is runnign and $POSTGRESS_HOME/bin is in path</echo>
+        <echo>  Dropping tripod_testing db</echo>
+        <exec executable="dropdb" failonerror="false">
+                <arg line="tripod_testing"/>
+        </exec>
+        <echo>  Dropping tripod user</echo>
+        <exec executable="dropuser" failonerror="false">
+                <arg line="tripod"/>
+        </exec>
+        <echo>  Creating tripod user</echo>
+        <exec executable="createuser" failonerror="false">
+                <arg line="-d tripod"/>
+        </exec>
+        <echo>  Creating tripod_testing db</echo>
+        <exec executable="createdb" failonerror="false">
+                <arg line="--owner=tripod tripod_testing"/>
+        </exec>
         <exec dir="${unit.test.dir}" executable="${vendor.dir}/bin/phpunit" failonerror="true">
             <env key="TRIPOD_CONFIG" value="${unit.test.dir}/data/configPostgresTLog.json"/>
             <arg line="--filter ${test} --log-junit ${output.dir}/postgres_tlog/unittest-report.xml" />
         </exec>
     </target>
 
-    <target name="_unittestMongoTlog" description="Runs the Unit test suite against a TransactionLog backed by Mongo">
+    <target name="unittestMongoTlog" description="Runs the Unit test suite against a TransactionLog backed by Mongo">
         <exec dir="${unit.test.dir}" executable="${vendor.dir}/bin/phpunit" failonerror="true">
             <env key="TRIPOD_CONFIG" value="${unit.test.dir}/data/config.json"/>
             <arg line="--filter ${test} --log-junit ${output.dir}/mongo_tlog/unittest-report.xml" />

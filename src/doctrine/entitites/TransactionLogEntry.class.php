@@ -13,7 +13,7 @@ class TransactionLogEntry
     /** @Column(type="string") **/
     protected $collectionName;
 
-    /** @Column(type="text") **/
+    /** @Column(type="json_array") **/
     protected $changes;
 
     /** @Column(type="string") **/
@@ -28,13 +28,13 @@ class TransactionLogEntry
     /** @Column(type="datetime", nullable=true) **/
     protected $failedTime;
 
-    /** @Column(type="text") **/
+    /** @Column(type="json_array", nullable=true) **/
     protected $originalCBDs;
 
     /** @Column(type="string", nullable=true) **/
     protected $sessionId;
 
-    /** @Column(type="text", nullable=true) **/
+    /** @Column(type="json_array", nullable=true) **/
     protected $error;
 
     public function setChanges($changes)

@@ -305,9 +305,9 @@
     "transaction_log" : {
         "type" : "DoctrineTransactionLog",
         "driver": "pdo_pgsql",
-        "user" : "chris",
+        "user" : "tripod",
         "password" : "",
-        "database" : "tlog"
+        "database" : "tripod_testing"
     },
     "queue" : {
         "database" : "testing",

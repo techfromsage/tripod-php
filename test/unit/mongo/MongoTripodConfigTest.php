@@ -63,8 +63,8 @@ class MongoTripodConfigTest extends TripodTestBase
                 break;
             case "DoctrineTransactionLog":
                 $this->assertEquals('pdo_pgsql',$config->tConfig['driver']);
-                $this->assertEquals('tlog',$config->tConfig['database']);
-                $this->assertEquals('chris',$config->tConfig['user']);
+                $this->assertEquals('tripod_testing',$config->tConfig['database']);
+                $this->assertEquals('tripod',$config->tConfig['user']);
                 $this->assertEquals('',$config->tConfig['password']);
                 break;
             default:

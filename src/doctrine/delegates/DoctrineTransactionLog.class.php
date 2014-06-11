@@ -51,10 +51,10 @@ class DoctrineTransactionLog implements ITransactionLog
         $transactionLogEntry->setId($transaction_id);
         $transactionLogEntry->setDbName($dbName);
         $transactionLogEntry->setCollectionName($collectionName);
-        $transactionLogEntry->setChanges(json_encode($changes));
+        $transactionLogEntry->setChanges($changes);
         $transactionLogEntry->setStatus("in_progress");
         $transactionLogEntry->setStartTime(new DateTime("now"));
-        $transactionLogEntry->setOriginalCBDs(json_encode($originalCBDs));
+        $transactionLogEntry->setOriginalCBDs($originalCBDs);
         $transactionLogEntry->setSessionId(((session_id() != '') ? session_id() : ''));
 
         try
@@ -83,7 +83,7 @@ class DoctrineTransactionLog implements ITransactionLog
         $transactionLogEntry->setStatus("cancelling");
         if ($error!=null)
         {
-            $transactionLogEntry->setError(json_encode(array('reason'=>$error->getMessage(), 'trace'=>$error->getTraceAsString())));
+            $transactionLogEntry->setError(array('reason'=>$error->getMessage(), 'trace'=>$error->getTraceAsString()));
         }
 
         $this->entityManager->persist($transactionLogEntry);
@@ -117,7 +117,7 @@ class DoctrineTransactionLog implements ITransactionLog
         $transactionLogEntry->setFailedTime(new DateTime("now"));
         if ($error!=null)
         {
-            $transactionLogEntry->setError(json_encode(array('reason'=>$error->getMessage(), 'trace'=>$error->getTraceAsString())));
+            $transactionLogEntry->setError(array('reason'=>$error->getMessage(), 'trace'=>$error->getTraceAsString()));
         }
 
         $this->entityManager->persist($transactionLogEntry);
