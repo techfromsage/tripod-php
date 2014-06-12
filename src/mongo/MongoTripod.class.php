@@ -1677,7 +1677,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
     public function replayTransactionLog($fromDate=null, $toDate=null)
     {
         $transactions = $this->getTransactionLog()->getCompletedTransactions($this->dbName, $this->collectionName, $fromDate, $toDate);
-        foreach($transactions as $i=>$transaction) {
+        foreach($transactions as $transaction) {
             $this->applyTransaction($transaction);
         }
         return true;
