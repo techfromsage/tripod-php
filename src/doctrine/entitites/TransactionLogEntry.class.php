@@ -37,6 +37,9 @@ class TransactionLogEntry
     /** @Column(type="json_array", nullable=true) **/
     protected $error;
 
+    /** @Column(type="json_array", nullable=true) **/
+    protected $newCBDs;
+
     public function setChanges($changes)
     {
         $this->changes = $changes;
@@ -102,6 +105,9 @@ class TransactionLogEntry
         $this->startTime = $startTime;
     }
 
+    /**
+     * @return DateTime
+     */
     public function getStartTime()
     {
         return $this->startTime;
@@ -132,6 +138,9 @@ class TransactionLogEntry
         $this->endTime = $endTime;
     }
 
+    /**
+     * @return DateTime
+     */
     public function getEndTime()
     {
         return $this->endTime;
@@ -147,13 +156,38 @@ class TransactionLogEntry
         return $this->failedTime;
     }
 
+    public function setNewCBDs($newCBDs)
+    {
+        $this->newCBDs = $newCBDs;
+    }
+
+    public function getNewCBDs()
+    {
+        return $this->newCBDs;
+    }
+
+
     /**
      * Returns an array that matches the MongoTransactionLog doc format
      * @return array
      */
     public function toArray()
     {
-        //todo: implement
-        throw new Exception("Not implemented yet");
+        $doc = array(
+            "_id"=>$this->getId(),
+            "changes"=>$this->getChanges(),
+            "collectionName"=>$this->getCollectionName(),
+            "dbName"=>$this->getDbName(),
+            "newCBDs"=>$this->getNewCBDs(),
+            "originalCBDs"=>$this->getOriginalCBDs(),
+            "sessionId"=>$this->getSessionId(),
+            "startTime"=>new MongoDate($this->getStartTime()->getTimestamp()),
+            "status"=>$this->getStatus()
+        );
+        if ($this->getEndTime()!=null)
+        {
+            $doc["endTime"] = new MongoDate($this->getEndTime()->getTimestamp());
+        }
+        return $doc;
     }
 }

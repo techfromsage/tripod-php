@@ -4,6 +4,7 @@ use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Tools\SchemaTool;
 
 require_once TRIPOD_DIR . 'mongo/MongoTripodConfig.class.php';
+require_once TRIPOD_DIR . 'doctrine/entitites/TransactionLogEntries.class.php';
 require_once TRIPOD_DIR . 'doctrine/entitites/TransactionLogEntry.class.php';
 require_once TRIPOD_DIR . 'ITransactionLog.php';
 
@@ -27,9 +28,9 @@ class DoctrineTransactionLog implements ITransactionLog
 
         try
         {
-            $tool = new SchemaTool($this->entityManager);
+            $tool = new SchemaTool($this->getEntityManager());
             $tool->createSchema(array(
-                $this->entityManager->getClassMetadata(self::TRANSACTION_LOG_ENTRY)
+                $this->getEntityManager()->getClassMetadata(self::TRANSACTION_LOG_ENTRY)
             ));
         }
         catch (Exception $e)
@@ -60,8 +61,8 @@ class DoctrineTransactionLog implements ITransactionLog
 
         try
         {
-            $this->entityManager->persist($transactionLogEntry);
-            $this->entityManager->flush();
+            $this->getEntityManager()->persist($transactionLogEntry);
+            $this->getEntityManager()->flush();
         }
         catch (Exception $e)
         {
@@ -79,7 +80,7 @@ class DoctrineTransactionLog implements ITransactionLog
     public function cancelTransaction($transaction_id, Exception $error=null)
     {
         /* @var $transactionLogEntry TransactionLogEntry */
-        $transactionLogEntry = $this->entityManager->find(self::TRANSACTION_LOG_ENTRY,$transaction_id);
+        $transactionLogEntry = $this->getEntityManager()->find(self::TRANSACTION_LOG_ENTRY,$transaction_id);
 
         $transactionLogEntry->setStatus("cancelling");
         if ($error!=null)
@@ -87,19 +88,8 @@ class DoctrineTransactionLog implements ITransactionLog
             $transactionLogEntry->setError(array('reason'=>$error->getMessage(), 'trace'=>$error->getTraceAsString()));
         }
 
-        $this->entityManager->persist($transactionLogEntry);
-        $this->entityManager->flush();
-//        $params = array('status' => 'cancelling');
-//        if($error!=null)
-//        {
-//            $params['error'] =
-//        }
-//
-//        $this->updateTransaction(
-//            array("_id" => $transaction_id),
-//            array('$set' => $params),
-//            array("w" => 1, 'upsert'=>true)
-//        );
+        $this->getEntityManager()->persist($transactionLogEntry);
+        $this->getEntityManager()->flush();
     }
 
     /**
@@ -112,7 +102,7 @@ class DoctrineTransactionLog implements ITransactionLog
     public function failTransaction($transaction_id, Exception $error=null)
     {
         /* @var $transactionLogEntry TransactionLogEntry */
-        $transactionLogEntry = $this->entityManager->find(self::TRANSACTION_LOG_ENTRY,$transaction_id);
+        $transactionLogEntry = $this->getEntityManager()->find(self::TRANSACTION_LOG_ENTRY,$transaction_id);
 
         $transactionLogEntry->setStatus("failed");
         $transactionLogEntry->setFailedTime(new DateTime("now"));
@@ -121,61 +111,40 @@ class DoctrineTransactionLog implements ITransactionLog
             $transactionLogEntry->setError(array('reason'=>$error->getMessage(), 'trace'=>$error->getTraceAsString()));
         }
 
-        $this->entityManager->persist($transactionLogEntry);
-        $this->entityManager->flush();
-//        $params = array('status' => 'failed', 'failedTime' => new MongoDate());
-//        if($error!=null)
-//        {
-//            $params['error'] = array('reason'=>$error->getMessage(), 'trace'=>$error->getTraceAsString());
-//        }
-//
-//        $this->updateTransaction(
-//            array("_id" => $transaction_id),
-//            array('$set' => $params),
-//            array('w' => 1, 'upsert'=>true)
-//        );
+        $this->getEntityManager()->persist($transactionLogEntry);
+        $this->getEntityManager()->flush();
     }
 
     /**
      * Update the status of a transaction to completed, and adds an end time
      *
-     * @param $transaction_id - the id of the transaction you want to mark as completed
-     * @param $newCBDs array of CBD's that represent the after state for each modified entity
+     * @param string $transaction_id - the id of the transaction you want to mark as completed
+     * @param array $newCBDs CBDs that represent the after state for each modified entity
      */
     public function completeTransaction($transaction_id, $newCBDs)
     {
         /* @var $transactionLogEntry TransactionLogEntry */
-        $transactionLogEntry = $this->entityManager->find(self::TRANSACTION_LOG_ENTRY,$transaction_id);
+        $transactionLogEntry = $this->getEntityManager()->find(self::TRANSACTION_LOG_ENTRY,$transaction_id);
 
         $transactionLogEntry->setStatus("completed");
         $transactionLogEntry->setEndTime(new DateTime("now"));
+        $transactionLogEntry->setNewCBDs($newCBDs);
 
-        $this->entityManager->persist($transactionLogEntry);
-        $this->entityManager->flush();
-//        $this->updateTransaction(
-//            array("_id" => $transaction_id),
-//            array('$set' => array('status' => 'completed', 'endTime' => new MongoDate(), 'newCBDs'=>$newCBDs)),
-//            array('w' => 1)
-//        );
+        $this->getEntityManager()->persist($transactionLogEntry);
+        $this->getEntityManager()->flush();
     }
 
     /**
      * Retrieves a transaction from the transaction based on its id.  The transaction is returned as an array
      *
      * @param $transaction_id - the id of the transaction you wish to retrieve from the transaction log
-     * @return Array representing the transaction document
+     * @return array representing the transaction document
      */
     public function getTransaction($transaction_id)
     {
-        // todo
         /* @var $transactionLogEntry TransactionLogEntry */
-        $transactionLogEntry = $this->entityManager->find(self::TRANSACTION_LOG_ENTRY,$transaction_id);
-
-        return array(
-            "_id"=>$transactionLogEntry->getId(),
-            "status"=>$transactionLogEntry->getStatus()
-        );
-//        return $this->transaction_collection->findOne(array("_id"=>$transaction_id));
+        $transactionLogEntry = $this->getEntityManager()->find(self::TRANSACTION_LOG_ENTRY,$transaction_id);
+        return $transactionLogEntry->toArray();
     }
 
     /**
@@ -184,9 +153,9 @@ class DoctrineTransactionLog implements ITransactionLog
     public function purgeAllTransactions()
     {
         $classes = array(
-            $this->entityManager->getClassMetadata(self::TRANSACTION_LOG_ENTRY)
+            $this->getEntityManager()->getClassMetadata(self::TRANSACTION_LOG_ENTRY)
         );
-        $tool = new SchemaTool($this->entityManager);
+        $tool = new SchemaTool($this->getEntityManager());
         $tool->dropSchema($classes);
         $tool->createSchema($classes);
     }
@@ -201,32 +170,44 @@ class DoctrineTransactionLog implements ITransactionLog
      */
     public function getCompletedTransactions($dbName=null, $collectionName=null, $fromDate=null, $toDate=null)
     {
-        // todo
-//        $query = $this->entityManager->createQuery("SELECT ....");
-//        return $query->iterate();
-        throw new Exception("Not implemented yet");
+        $params = array("status"=>"completed");
+        $qb = $this->getEntityManager()->createQueryBuilder()
+            ->select('tlog')
+            ->from(self::TRANSACTION_LOG_ENTRY,'tlog');
 
-//        $query = array();
-//        $query['status'] = 'completed';
-//
-//        if(!empty($dbName) && !empty($collectionName))
-//        {
-//            $query['dbName'] = $dbName;
-//            $query['collectionName'] = $collectionName;
-//        }
-//
-//        if(!empty($fromDate)) {
-//            $q = array();
-//            $q['$gte'] = new MongoDate(strtotime($fromDate));
-//
-//            if(!empty($toDate)){
-//                $q['$lte'] = new MongoDate(strtotime($toDate));
-//            }
-//
-//            $query['endTime'] = $q;
-//        }
-//
-//        return $this->transaction_collection->find($query)->sort(array('endTime'=>1));
+        $whereExpr = array($qb->expr()->eq("tlog.status",":status"));
+
+        if(!empty($dbName))
+        {
+            $params['dbName'] = $dbName;
+            $whereExpr[] =  $qb->expr()->eq('tlog.dbName',':dbName');
+        }
+        if (!empty($collectionName))
+        {
+            $params["collectionName"] = $collectionName;
+            $whereExpr[] =  $qb->expr()->eq('tlog.collectionName',':collectionName');
+        }
+
+        if(!empty($fromDate)) {
+            $params['fromDate'] = $fromDate;
+            $whereExpr[] =  $qb->expr()->gte('tlog.endTime',':fromDate');
+            if(!empty($toDate)){
+                $params['toDate'] = $toDate;
+                $whereExpr[] =  $qb->expr()->lte('tlog.endTime',':toDate');
+            }
+        }
+
+        if (count($whereExpr)>1)
+        {
+            $qb->where(call_user_func_array(array($qb->expr(),'andX'), $whereExpr));
+        }
+        else
+        {
+            $qb->where($whereExpr);
+        }
+        $qb->setParameters($params);
+
+        return new TransactionLogEntries($qb->getQuery()->iterate());
     }
 
     /**
@@ -234,9 +215,10 @@ class DoctrineTransactionLog implements ITransactionLog
      */
     public function getTotalTransactionCount()
     {
-        // todo
-        throw new Exception("Not implemented yet");
-//        return $this->transaction_collection->count(array());
+        $qb = $this->getEntityManager()->createQueryBuilder();
+        $qb->select('count(tlog.id)');
+        $qb->from(self::TRANSACTION_LOG_ENTRY,'tlog');
+        return $qb->getQuery()->getSingleScalarResult();
     }
 
     /**
@@ -247,15 +229,20 @@ class DoctrineTransactionLog implements ITransactionLog
      */
     public function getCompletedTransactionCount($dbName=null, $collectionName=null)
     {
-        // todo
-        throw new Exception("Not implemented yet");
-//        if(!empty($dbName) && !empty($collectionName))
-//        {
-//            return $this->transaction_collection->count(array('status'=>'completed','dbName'=>$dbName, 'collectionName'=>$collectionName));
-//        }
-//        else
-//        {
-//            return $this->transaction_collection->count(array('status'=>'completed'));
-//        }
+        $qb = $this->getEntityManager()->createQueryBuilder()
+            ->select('count(tlog.id)')
+            ->from(self::TRANSACTION_LOG_ENTRY,'tlog')
+            ->where("tlog.status = :status")
+            ->setParameter('status','completed');
+        return $qb->getQuery()->getSingleScalarResult();
+    }
+
+    /**
+     * For mocking and data manipulation in tests
+     * @return Doctrine\ORM\EntityManager|null
+     */
+    public function getEntityManager()
+    {
+        return $this->entityManager;
     }
 }
