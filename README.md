@@ -309,6 +309,7 @@ Coming soon (aka a loose roadmap)
 * Versioned config. This will allow views and tables to self-heal when their specs are updated. At present you have to delete and re-gen the lot when specs change.
 * Publish updates to a spout for [Apache Storm](http://storm.incubator.apache.org/)
 * Push the config inside the database, and version it. This will mean that multiple apps can work from the same database with the same config.
+* Ability to specify specially annotated Entities in the fashion of Doctrine et al. These would be a way to implement models without the complexity of having to worry about `ExtendedGraph`. A lot of the config could be derived from the annotations on the Entity classes themselves.
 * We've learnt a lot since starting this project two years ago. Now the library is functionally stable we could do with re-architecting the object structure and responsibilities. That's one of the reasons we've open sourced - hopefully we'll be embarrassed into having a long over due tidy up.
 
 Presentations
