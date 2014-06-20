@@ -310,88 +310,24 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
             {
                 $this->doJoins($doc,$tableSpec['joins'],$value,$from,$contextAlias);
             }
+            if (isset($tableSpec['counts']))
+            {
+                $this->doCounts($doc,$tableSpec['counts'],$value);
+            }
 
             $generatedRow['value'] = $value;
             $this->db->selectCollection(TABLE_ROWS_COLLECTION)->save($generatedRow);
         }
 
-
-            $t->stop();
+        $t->stop();
         $this->timingLog(MONGO_CREATE_TABLE, array(
             'type'=>$tableSpec['type'],
             'duration'=>$t->result(),
             'filter'=>$filter,
             'from'=>$from));
         $this->getStat()->timer(MONGO_CREATE_TABLE.".$tableType",$t->result());
-//        return $result;
     }
 
-    // a helper function that returns an object with properties included from the source,
-    // as per the view spec
-//$fn_addFields = new MongoCode("function (source,indexSpec,dest) {
-//        if (indexSpec.fields)
-//        {
-//            for each (f in indexSpec.fields)
-//            {
-//                for each (p in f.predicates)
-//                {
-//                    if (source[p])
-//                    {
-//                        values = new Array();
-//                        if (source[p]['".VALUE_URI."'])
-//                        {
-//                            values.push(source[p]['".VALUE_URI."']);
-//                        }
-//                        else if (source[p]['".VALUE_LITERAL."'])
-//                        {
-//                            values.push(source[p]['".VALUE_LITERAL."']);
-//                        }
-//                        else if (source[p]['"._ID_RESOURCE."']) // field being joined is the _id, will have _id{r:'',c:''}
-//                        {
-//                            values.push(source[p]['"._ID_RESOURCE."']);
-//                        }
-//                        else
-//                        {
-//                            for each (v in source[p])
-//                            {
-//                                if (v['".VALUE_LITERAL."'])
-//                                {
-//                                    values.push(v['".VALUE_LITERAL."']);
-//                                }
-//                                else if (v['".VALUE_URI."'])
-//                                {
-//                                    values.push(v['".VALUE_URI."']);
-//                                }
-//                                // _id's shouldn't appear in value arrays, so no need for third condition here
-//                            }
-//                        }
-//                        // now add all the values
-//                        for each (v in values)
-//                        {
-//                            if (!dest[f.fieldName])
-//                            {
-//                                // single value
-//                                dest[f.fieldName] = v;
-//                            }
-//                            else if (dest[f.fieldName] instanceof Array)
-//                            {
-//                                // add to existing array of values
-//                                dest[f.fieldName].push(v);
-//                            }
-//                            else
-//                            {
-//                                // convert from single value to array of values
-//                                existingVal = dest[f.fieldName];
-//                                dest[f.fieldName] = new Array();
-//                                dest[f.fieldName].push(existingVal);
-//                                dest[f.fieldName].push(v);
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//        }");
 
     /**
      * Add fields to a table row
@@ -749,5 +685,50 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
                 }
             }
         }
+    }
+
+    protected function doCounts($source, $counts, &$dest)
+    {
+        // process count aggregate function
+        foreach ($counts as $fieldName=>$c)
+        {
+            $regex = (isset($c['regex'])) ? : null;
+            $count = 0;
+            // just count predicates at current location
+            if (isset($source[$c['property']]))
+            {
+                if (isset($source[$c['property']][VALUE_URI]) || isset($source[$c['property']][VALUE_LITERAL]))
+                {
+                    if ($regex != null)
+                    {
+                        $count = $this->applyRegexToValue($regex,$source[$c['property']]);
+                    } else {
+                        $count = 1;
+                    }
+                }
+                else
+                {
+                    if ($regex != null)
+                    {
+                        foreach ($source[$c['property']] as $value) {
+                            if ($this->applyRegexToValue($regex,$value)) {
+                                $count++;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        $count = count($source[$c['property']]).''; // make sure it's a string
+                    }
+                }
+            }
+            $dest[$fieldName] = $count;
+        }
+    }
+
+    private function applyRegexToValue($regex, $value)
+    {
+        $v = ($value[VALUE_URI]) ? $value[VALUE_URI] : $value[VALUE_LITERAL];
+        return preg_match($regex, $value);
     }
 }

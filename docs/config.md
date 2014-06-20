@@ -192,6 +192,8 @@ Each of the specifications above are built from a specification language defined
 
 ### maxJoins
 
+### followSequence
+
 ### predicates
 
 ### limit
