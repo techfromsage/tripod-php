@@ -104,7 +104,7 @@ class MongoTripodConfig
                 }
             }
 
-            $this->ifCountExistsWithoutTTLThrowException($spec);
+            $this->ifNestedCountExistsThrowException($spec);
             $this->tableSpecs[$spec["_id"]] = $spec;
         }
 
@@ -579,6 +579,27 @@ class MongoTripodConfig
     }
 
     /* PRIVATE FUNCTIONS */
+
+    private function ifNestedCountExistsThrowException($spec)
+    {
+        if (!array_key_exists("joins",$spec))
+        {
+            return; // no joins
+        }
+        else
+        {
+            foreach ($spec['joins'] as $predicate=>$joinSpec)
+            {
+                if (array_key_exists("counts",$joinSpec))
+                {
+                    throw new MongoTripodConfigException("Aggregate function counts exists within join in table spec, this is not allowed");
+                }
+                if (array_key_exists("joins",$joinSpec)) {
+                    $this->ifNestedCountExistsThrowException($joinSpec);
+                }
+            }
+        }
+    }
 
     private function getSpecificationTypes(Array $specifications, $collectionName=null)
     {

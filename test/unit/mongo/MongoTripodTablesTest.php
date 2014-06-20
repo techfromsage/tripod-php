@@ -139,6 +139,22 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 //        $mockTables->update($queuedItem);
 //    }
 
+    public function testGenerateTableRowsWithCount()
+    {
+        $this->tripodTables->generateTableRows("t_resource_count");
+
+        $t1 = $this->tripodTables->getTableRows("t_resource_count");
+
+        // expecting two rows
+        $this->assertEquals(count($t1['results']),2);
+        $result = $t1['results'][0];
+
+        // check out the columns
+        $this->assertTrue(isset($result['type']),"Result does not contain type");
+        $this->assertTrue(isset($result['isbn']),"Result does not contain isbn");
+        $this->assertTrue(isset($result['isbn13']),"Result does not contain isbn13");
+    }
+
     public function testUpdateWillDeleteItem()
     {
         $mockTables = $this->getMock('MongoTripodTables', array('deleteTableRowsForResource','generateTableRowsForResource'), $this->tablesConstParams);

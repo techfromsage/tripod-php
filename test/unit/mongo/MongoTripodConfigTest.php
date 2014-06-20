@@ -460,6 +460,79 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $mtc = new MongoTripodConfig($config);
     }
 
+    public function testTableSpecNestedCountThrowsException()
+    {
+        $this->setExpectedException(
+            'MongoTripodConfigException',
+            'Aggregate function counts exists within join in table spec, this is not allowed');
+        $config = array();
+        $config["defaultContext"] = "http://talisaspire.com/";
+        $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
+        $config["databases"] = array(
+            "testing"=>array(
+                "connStr"=>"sometestval",
+                "collections"=>array(
+                    "CBD_testing"=>array(
+                    )
+                )
+            )
+        );
+
+        $config["table_specifications"] = array(
+            array(
+                "_id"=>"t_illegal_counts",
+                "type"=>"http://talisaspire.com/schema#Work",
+                "joins"=>array(
+                    "acorn:resourceCount"=>array(
+                        "filter"=>array("rdf:type.value"=>"http://talisaspire.com/schema#Resource"),
+                        "property"=>"dct:isVersionOf",
+                        "counts"=>array("some"=>"value")
+                    )
+                )
+            )
+        );
+        $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
+        $mtc = new MongoTripodConfig($config);
+    }
+
+    public function testTableSpecNested2ndLevelCountThrowsException()
+    {
+        $this->setExpectedException(
+            'MongoTripodConfigException',
+            'Aggregate function counts exists within join in table spec, this is not allowed');
+        $config = array();
+        $config["defaultContext"] = "http://talisaspire.com/";
+        $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
+        $config["databases"] = array(
+            "testing"=>array(
+            "connStr"=>"sometestval",
+                "collections"=>array(
+                    "CBD_testing"=>array()
+                )
+            )
+        );
+
+        $config["table_specifications"] = array(
+            array(
+                "_id"=>"t_illegal_counts",
+                "type"=>"http://talisaspire.com/schema#Work",
+                "joins"=>array(
+                     "acorn:resourceCount"=>array(
+                         "filter"=>array("rdf:type.value"=>"http://talisaspire.com/schema#Resource"),
+                         "property"=>"dct:isVersionOf",
+                         "joins"=>array(
+                             "another:property"=>array(
+                                 "counts"=>array("some"=>"value")
+                             )
+                         )
+                     )
+                )
+            )
+        );
+        $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
+        $mtc = new MongoTripodConfig($config);
+    }
+
     public function testConfigWithoutDefaultNamespaceThrowsException()
     {
         $this->setExpectedException(

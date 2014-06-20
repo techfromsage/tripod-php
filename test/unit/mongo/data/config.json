@@ -281,7 +281,33 @@
             }
         },
         {
-            "_id": "t_work2",
+            "_id": "t_source_count",
+            "type":"acorn:Resource",
+            "from":"CBD_testing",
+            "fields": [
+                {
+                    "fieldName": "type",
+                    "predicates": ["rdf:type"]
+                }
+            ],
+            "joins" : {
+                "dct:isVersionOf" : {
+                    "fields": [
+                        {
+                            "fieldName":"isbn13",
+                            "predicates":["bibo:isbn13"]
+                        }
+                    ]
+                }
+            },
+            "counts" : {
+                "dct:source": {
+                    "fieldName": "source_count",
+                    "property" : "dct:isVersionOf"
+                }
+            }
+        },
+        {            "_id": "t_work2",
             "type": "acorn:Work2",
             "from":"CBD_testing",
             "fields": [
