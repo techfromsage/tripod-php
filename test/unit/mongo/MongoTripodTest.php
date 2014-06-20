@@ -1,8 +1,7 @@
 <?php
-require_once 'MongoTripodTestBase.php';
-require_once 'src/mongo/MongoTripod.class.php';
+require_once dirname(__FILE__).'/../TripodTestBase.php';
 
-class MongoTripodTest extends MongoTripodTestBase
+class MongoTripodTest extends TripodTestBase
 {
     /**
      * @var MongoTripod | PHPUnit_Framework_MockObject_MockObject
@@ -17,7 +16,8 @@ class MongoTripodTest extends MongoTripodTestBase
     {
         parent::setup();
 
-        $this->tripodTransactionLog = new MongoTransactionLog();
+        $type = MongoTripodConfig::getInstance()->getTransactionLogType();
+        $this->tripodTransactionLog = new $type();
         $this->tripodTransactionLog->purgeAllTransactions();
 
         // Stub ouf 'addToElastic' search to prevent writes into Elastic Search happening by default.

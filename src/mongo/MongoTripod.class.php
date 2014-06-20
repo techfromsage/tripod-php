@@ -15,6 +15,10 @@ require_once TRIPOD_DIR.'mongo/queue/MongoTripodQueue.class.php';
 require_once TRIPOD_DIR.'ITripod.php';
 require_once TRIPOD_DIR.'classes/ChangeSet.class.php';
 
+if (version_compare(phpversion(), '5.3.3', '>=')) {
+    require_once TRIPOD_DIR . 'doctrine/delegates/DoctrineTransactionLog.class.php';
+}
+
 /** @noinspection PhpIncludeInspection */
 
 $TOTAL_TIME=0;
@@ -27,7 +31,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
     public $lCollection;
 
     /**
-     * $var MongoTransactionLog
+     * $var ITransactionLog
      */
     private $transaction_log = null;
 
@@ -1517,13 +1521,14 @@ class MongoTripod extends MongoTripodBase implements ITripod
     // getters and setters for the delegates
 
     /**
-     * @return MongoTransactionLog
+     * @return ITransactionLog
      */
     public function getTransactionLog()
     {
         if($this->transaction_log==null)
         {
-            $this->transaction_log = new MongoTransactionLog();
+            $type = $this->config->getTransactionLogType();
+            $this->transaction_log = new $type();
         }
         return $this->transaction_log;
     }
@@ -1575,9 +1580,9 @@ class MongoTripod extends MongoTripodBase implements ITripod
     }
 
     /**
-     * @param MongoTransactionLog $transactionLog
+     * @param ITransactionLog $transactionLog
      */
-    public function setTransactionLog(MongoTransactionLog $transactionLog)
+    public function setTransactionLog(ITransactionLog $transactionLog)
     {
         $this->transaction_log = $transactionLog;
     }
@@ -1723,18 +1728,17 @@ class MongoTripod extends MongoTripodBase implements ITripod
      */
     public function replayTransactionLog($fromDate=null, $toDate=null)
     {
-
-        $cursor = $this->getTransactionLog()->getCompletedTransactions($this->dbName, $this->collectionName, $fromDate, $toDate);
-        while($cursor->hasNext()) {
-            $result = $cursor->getNext();
-            $this->applyTransaction($result);
+        $transactions = $this->getTransactionLog()->getCompletedTransactions($this->dbName, $this->collectionName, $fromDate, $toDate);
+        foreach($transactions as $transaction) {
+            $this->applyTransaction($transaction);
         }
-
         return true;
     }
 
     public function applyTransaction($transaction)
     {
+        if (!is_array($transaction)) $transaction = $transaction->toArray();
+
         $changes = $transaction['changes'];
         $newCBDs = $transaction['newCBDs'];
 

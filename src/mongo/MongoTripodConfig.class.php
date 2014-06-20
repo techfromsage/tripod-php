@@ -34,12 +34,34 @@ class MongoTripodConfig
         $this->defaultContext = $this->getMandatoryKey("defaultContext",$config);
 
         $transactionConfig = $this->getMandatoryKey("transaction_log",$config);
-        $this->tConfig["database"] = $this->getMandatoryKey("database",$transactionConfig,'transaction_log');
-        $this->tConfig["collection"] = $this->getMandatoryKey("collection",$transactionConfig,'transaction_log');
-        $this->tConfig["connStr"] = $this->getMandatoryKey("connStr",$transactionConfig,'transaction_log');
         if(array_key_exists("replicaSet", $transactionConfig) && !empty($transactionConfig["replicaSet"])) {
             $this->tConfig['replicaSet'] = $transactionConfig["replicaSet"];
         }
+        if(array_key_exists("type", $transactionConfig) && !empty($transactionConfig["type"])) {
+            $this->tConfig['type'] = $transactionConfig["type"];
+            switch ($transactionConfig["type"]) {
+                case "MongoTransactionLog":
+                    $this->tConfig["database"] = $this->getMandatoryKey("database",$transactionConfig,'transaction_log');
+                    $this->tConfig["collection"] = $this->getMandatoryKey("collection",$transactionConfig,'transaction_log');
+                    $this->tConfig["connStr"] = $this->getMandatoryKey("connStr",$transactionConfig,'transaction_log');
+                    break;
+                case "DoctrineTransactionLog":
+                    $this->tConfig["database"] = $this->getMandatoryKey("database",$transactionConfig,'transaction_log');
+                    $this->tConfig["driver"] = $this->getMandatoryKey("driver",$transactionConfig,'transaction_log');
+                    $this->tConfig["user"] = $this->getMandatoryKey("user",$transactionConfig,'transaction_log');
+                    $this->tConfig["password"] = $this->getMandatoryKey("password",$transactionConfig,'transaction_log');
+                    break;
+                default:
+                    throw new MongoTripodConfigException("Unrecognised transaction log type: ".$transactionConfig["type"]);
+                    break;
+            }
+        } else {
+            $this->tConfig["database"] = $this->getMandatoryKey("database",$transactionConfig,'transaction_log');
+            $this->tConfig["collection"] = $this->getMandatoryKey("collection",$transactionConfig,'transaction_log');
+            $this->tConfig["connStr"] = $this->getMandatoryKey("connStr",$transactionConfig,'transaction_log');
+            $this->tConfig['type'] = "MongoTransactionLog";
+        }
+
 
         $searchConfig = (array_key_exists("search_config",$config)) ? $config["search_config"] : array();
         if(!empty($searchConfig)){
@@ -374,6 +396,44 @@ class MongoTripodConfig
         {
             throw new MongoTripodConfigException("Database $dbName does not exist in configuration");
         }
+    }
+
+    public function getTransactionLogType() {
+        return $this->tConfig['type'];
+    }
+
+    // todo parse the following 4 out of a DSN instead
+
+    /**
+     * For Doctrine tlog only
+     * @return mixed
+     */
+    public function getTransactionLogDatabase() {
+        return $this->tConfig['database'];
+    }
+
+    /**
+     * For Doctrine tlog only
+     * @return mixed
+     */
+    public function getTransactionLogUser() {
+        return $this->tConfig['user'];
+    }
+
+    /**
+     * For Doctrine tlog only
+     * @return mixed
+     */
+    public function getTransactionLogPassword() {
+        return $this->tConfig['password'];
+    }
+
+    /**
+     * For Doctrine tlog only
+     * @return mixed
+     */
+    public function getTransactionLogDriver() {
+        return $this->tConfig['driver'];
     }
 
     public function getTransactionLogConnStr() {

@@ -1,8 +1,9 @@
 <?php
 
 require_once TRIPOD_DIR . 'mongo/MongoTripodConfig.class.php';
+require_once TRIPOD_DIR . 'ITransactionLog.php';
 
-class MongoTransactionLog
+class MongoTransactionLog implements ITransactionLog
 {
     private $transaction_db = null;
     private $transaction_collection = null;

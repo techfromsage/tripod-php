@@ -1,7 +1,6 @@
 <?php
-require_once 'MongoTripodTestBase.php';
+require_once dirname(__FILE__).'/../TripodTestBase.php';
 /** @noinspection PhpIncludeInspection */
-require_once 'src/mongo/MongoTripod.class.php';
 
 /**
  * This test suite was added to specifically verify behaviour of code
@@ -10,7 +9,7 @@ require_once 'src/mongo/MongoTripod.class.php';
  *
  * Class MongoTripodTransactionRollbackTest
  */
-class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
+class MongoTripodTransactionRollbackTest extends TripodTestBase
 {
     /**
      * @var MongoTripod
@@ -27,7 +26,8 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
     {
         parent::setup();
 
-        $this->tripodTransactionLog = new MongoTransactionLog();
+        $type = MongoTripodConfig::getInstance()->getTransactionLogType();
+        $this->tripodTransactionLog = new $type();
         $this->tripodTransactionLog->purgeAllTransactions();
 
         $this->labeller = new MongoTripodLabeller();

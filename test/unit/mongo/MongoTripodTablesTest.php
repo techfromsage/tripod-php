@@ -1,11 +1,7 @@
 <?php
-require_once 'MongoTripodTestBase.php';
-require_once 'src/mongo/delegates/MongoTripodTables.class.php';
-require_once 'src/mongo/MongoTripod.class.php';
-require_once 'src/mongo/MongoGraph.class.php';
+require_once dirname(__FILE__).'/../TripodTestBase.php';
 
-
-class MongoTripodTablesTest extends MongoTripodTestBase
+class MongoTripodTablesTest extends TripodTestBase
 {
     /**
      * @var MongoTripod
@@ -28,7 +24,8 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         parent::setup();
         //Mongo::setPoolSize(200);
 
-        $this->tripodTransactionLog = new MongoTransactionLog();
+        $type = MongoTripodConfig::getInstance()->getTransactionLogType();
+        $this->tripodTransactionLog = new $type();
         $this->tripodTransactionLog->purgeAllTransactions();
 
         $this->tripod = new MongoTripod("CBD_testing", "testing", array("async"=>array(OP_VIEWS=>false, OP_TABLES=>false, OP_SEARCH=>false)));

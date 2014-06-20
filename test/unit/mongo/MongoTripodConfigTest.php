@@ -1,8 +1,7 @@
 <?php
-require_once 'MongoTripodTestBase.php';
-require_once 'src/mongo/MongoTripodConfig.class.php';
+require_once dirname(__FILE__).'/../TripodTestBase.php';
 
-class MongoTripodConfigTest extends MongoTripodTestBase
+class MongoTripodConfigTest extends TripodTestBase
 {
     /**
      * @var MongoTripodConfig
@@ -56,9 +55,22 @@ class MongoTripodConfigTest extends MongoTripodTestBase
     public function testTConfig()
     {
         $config = MongoTripodConfig::getInstance();
-        $this->assertEquals('testing',$config->tConfig['database']);
-        $this->assertEquals('transaction_log',$config->tConfig['collection']);
-        $this->assertEquals('mongodb://localhost',$config->getTransactionLogConnStr());
+        switch ($config->tConfig['type']) {
+            case "MongoTransactionLog":
+                $this->assertEquals('testing',$config->tConfig['database']);
+                $this->assertEquals('transaction_log',$config->tConfig['collection']);
+                $this->assertEquals('mongodb://localhost',$config->getTransactionLogConnStr());
+                break;
+            case "DoctrineTransactionLog":
+                $this->assertEquals('pdo_pgsql',$config->tConfig['driver']);
+                $this->assertEquals('tripod_testing',$config->tConfig['database']);
+                $this->assertEquals('tripod',$config->tConfig['user']);
+                $this->assertEquals('',$config->tConfig['password']);
+                break;
+            default:
+                $this->fail("Unexpected type: ".$config->tConfig['type']);
+                break;
+        }
     }
 
     public function testTConfigRepSetConnStr()

@@ -1,10 +1,7 @@
 <?php
-    require_once 'MongoTripodTestBase.php';
-    require_once 'src/mongo/MongoTripod.class.php';
-    require_once 'src/mongo/delegates/MongoTripodSearchIndexer.class.php';
-    require_once 'src/mongo/providers/MongoSearchProvider.class.php';
+require_once dirname(__FILE__).'/../TripodTestBase.php';
 
-class MongoSearchProviderTest extends MongoTripodTestBase
+class MongoSearchProviderTest extends TripodTestBase
 {
     /** @var $indexer MongoTripodSearchIndexer */
     private $indexer;
@@ -16,7 +13,8 @@ class MongoSearchProviderTest extends MongoTripodTestBase
     {
         parent::setUp();
 
-        $this->tripodTransactionLog = new MongoTransactionLog();
+        $type = MongoTripodConfig::getInstance()->getTransactionLogType();
+        $this->tripodTransactionLog = new $type();
         $this->tripodTransactionLog->purgeAllTransactions();
 
         $this->tripod = new MongoTripod('CBD_testing', 'testing');

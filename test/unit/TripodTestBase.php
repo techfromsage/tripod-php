@@ -7,8 +7,8 @@ set_include_path(
   . PATH_SEPARATOR . dirname(dirname(dirname(dirname(__FILE__)))).'/src');
 
 require_once('tripod.inc.php');
-require_once TRIPOD_DIR.'mongo/MongoTripodConfig.class.php';
-require_once TRIPOD_DIR.'mongo/base/MongoTripodBase.class.php';
+require_once TRIPOD_DIR . 'mongo/MongoTripodConfig.class.php';
+require_once TRIPOD_DIR . 'mongo/base/MongoTripodBase.class.php';
 
 /**
  * Mongo Config For Main DB
@@ -31,7 +31,14 @@ class AnonymousLogger
         {
             foreach ($params as $key=>$value)
             {
-                echo "$key: $value\n";
+                if (is_array($value))
+                {
+                    echo "$key: ".var_export($value,true)."\n";
+                }
+                else
+                {
+                    echo "$key: $value\n";
+                }
             }
         }
     }
@@ -41,7 +48,7 @@ class AnonymousLogger
     }
 }
 
-class MongoTripodTestBase extends PHPUnit_Framework_TestCase
+class TripodTestBase extends PHPUnit_Framework_TestCase
 {
 
     /**
@@ -91,11 +98,14 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
 
     protected function setUp()
     {
-        date_default_timezone_set('Europe/London');
-        $configFileName = dirname(__FILE__).'/data/config.json';
+        $configLocation = getenv("TRIPOD_CONFIG");
+        if (empty($configLocation)) die("Please set environmental variable TRIPOD_CONFIG");
 
-        $config = json_decode(file_get_contents($configFileName), true);
+        date_default_timezone_set('Europe/London');
+
+        $config = json_decode(file_get_contents($configLocation), true);
         MongoTripodConfig::setConfig($config);
+
 
         $className = get_class($this);
         $testName = $this->getName();
@@ -111,8 +121,45 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
     protected function addDocument($doc, $toTransactionLog=false)
     {
         if($toTransactionLog == true){
-            $tripod = new MongoTripod('transaction_log', 'testing');
-            return $tripod->collection->insert($doc, array("safe"=>true));
+            if (MongoTripodConfig::getInstance()->getTransactionLogType()=="DoctrineTransactionLog")
+            {
+                $tlog = new DoctrineTransactionLog();
+                $entry = new TransactionLogEntry();
+                $entry->setId(@$doc['_id']);
+                if (isset($doc['endTime']))
+                {
+                    $d = new DateTime();
+                    $d->setTimestamp($doc['endTime']->sec);
+                    $entry->setEndTime($d);
+                }
+                if (isset($doc['failedTime']))
+                {
+                    $d = new DateTime();
+                    $d->setTimestamp($doc['failedTime']->sec);
+                    $entry->setFailedTime($d);
+                }
+                $entry->setNewCBDs(@$doc['newCBDs']);
+                $entry->setChanges(@$doc['changes']);
+                $entry->setCollectionName(@$doc['collectionName']);
+                $entry->setDbName(@$doc['dbName']);
+                $entry->setError(@$doc['error']);
+                $entry->setOriginalCBDs(@$doc['originalCBDs']);
+                $entry->setSessionId(@$doc['sessionId']);
+                if (isset($doc['startTime']))
+                {
+                    $d = new DateTime();
+                    $d->setTimestamp($doc['startTime']->sec);
+                    $entry->setStartTime($d);
+                }
+                $entry->setStatus(@$doc['status']);
+                $tlog->getEntityManager()->persist($entry);
+                $tlog->getEntityManager()->flush();
+            }
+            else
+            {
+                $tripod = new MongoTripod('transaction_log', 'testing');
+                return $tripod->collection->insert($doc, array("safe"=>true));
+            }
         } else {
             return $this->tripod->collection->insert($doc, array("safe"=>true));
         }

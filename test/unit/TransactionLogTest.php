@@ -1,11 +1,7 @@
 <?php
-require_once 'MongoTripodTestBase.php';
-require_once 'src/mongo/MongoTripod.class.php';
-require_once 'src/mongo/delegates/MongoTransactionLog.class.php';
-require_once 'src/mongo/MongoGraph.class.php';
+require_once dirname(__FILE__) . '/TripodTestBase.php';
 
-
-class MongoTransactionLogTest extends MongoTripodTestBase
+class TransactionLogTest extends TripodTestBase // todo: rename TransactionLogTest
 {
     /**
      * @var MongoTripod
@@ -31,10 +27,11 @@ class MongoTransactionLogTest extends MongoTripodTestBase
 
         $this->loadBaseDataViaTripod();
 
-        $this->tripodTransactionLog = new MongoTransactionLog();
+        $type = MongoTripodConfig::getInstance()->getTransactionLogType();
+        $this->tripodTransactionLog = new $type();
+
         $this->tripodTransactionLog->purgeAllTransactions();
         $this->tripod->setTransactionLog($this->tripodTransactionLog);
-
     }
 
     public function testReplayLog_Simple_ChangesSinglePropertyOnExistingDocument()
