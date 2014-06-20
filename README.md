@@ -84,6 +84,8 @@ Mongo 2.x and up, although at least 2.2 is recommended to take advantage of data
 What does the config look like?
 ----
 
+[Read the full docs](/docs/config.md)
+
 Before you can do anything with tripod you need to initialise the config via the ```MongoTripodConfig::setConfig()``` method. This takes an associative array which can generally be decoded from a JSON string. Here's an example:
 
 ```javascript
