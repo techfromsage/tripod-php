@@ -88,15 +88,84 @@ This example defines one database with two `CBD_` collections along with associa
 View specifications
 ---------------
 
+View specifications define the shape of the materialised views that Mongo manages. For a full explanation of views, [read the primer](primers/views.md).
+
+The convention for view spec identifiers is to prefix them with `v_`.
+
+Specs are defined as an array at the top level of the config document:
+
+```javascript
+{
+  "view_specifications": [
+    {
+      "_id": "v_spec_1"
+    },
+    {
+      "_id": "v_spec_2"
+    }
+  ]
+}
+```
+
 Table specifications
 ---------------
 
-Search specifications
+Table specifications define the shape of the tabular data that Mongo manages. For a full explanation of tables, [read the primer](primers/tables.md).
+
+The convention for table spec identifiers is to prefix them with `t_`.
+
+Specs are defined as an array at the top level of the config document:
+
+```javascript
+{
+  "table_specifications": [
+    {
+      "_id": "t_spec_1"
+    },
+    {
+      "_id": "t_spec_2"
+    }
+  ]
+}
+```
+
+Search config
 ---------------
 
+Previous versions of Tripod integrated with ElasticSearch to provide indexing and search over data. This was deprecated early on, but some primitive regex-style searching is still provided.  For a full explanation of views, [read the primer](primers/search.md).
+
+The search config is defined at the top level and consists of two parts - the `search_provider` and `search_specifications`.
+
+The provider was intended to allow pluggable implementations of search services (ElasticSearch, straight Lucene, Solr perhaps) but today the only option is `MongoSearchProvider`.
+
+The search specifications define the shape of the the data that underpins searches.
+
+The convention for search spec identifiers is to prefix them with `i_`.
+
+```javascript
+{
+  "search_config": {
+    "search_provider" : "MongoSearchProvider",
+    "search_specifications" :   [
+      {
+        "_id": "i_spec_1"
+      },
+      {
+        "_id": "i_spec_2"
+      }
+    ]
+  }
+}
+```
 
 Specification keyword reference
 ---------------
+
+Each of the specifications above are built from a specification language defined by the keywords below
+
+### _id
+
+### _version
 
 ### from
 
@@ -108,6 +177,12 @@ Specification keyword reference
 
 ### maxJoins
 
+### predicates
+
+### limit
+
+### condition
+
 ### counts
 
 #### counts / property
@@ -115,6 +190,8 @@ Specification keyword reference
 #### counts / filter
 
 #### counts / regex
+
+### ttl
 
 ### ensureIndexes
 
