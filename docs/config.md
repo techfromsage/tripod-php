@@ -88,7 +88,7 @@ This example defines one database with two `CBD_` collections along with associa
 View specifications
 ---------------
 
-View specifications define the shape of the materialised views that Mongo manages. For a full explanation of views, [read the primer](primers/views.md).
+View specifications define the shape of the materialised views that Mongo manages. For a full explanation of views, [read the primer](primers/views.md). In short, they mimic the functionality of `DESCRIBE` or `CONSTRUCT`-style SPARQL queries.
 
 The convention for view spec identifiers is to prefix them with `v_`.
 
@@ -107,10 +107,14 @@ Specs are defined as an array at the top level of the config document:
 }
 ```
 
+TODO: 
+
+* Implement versioned view specifications to allow automatic migration of data that meets an earlier specification
+
 Table specifications
 ---------------
 
-Table specifications define the shape of the tabular data that Mongo manages. For a full explanation of tables, [read the primer](primers/tables.md).
+Table specifications define the shape of the tabular data that Mongo manages. For a full explanation of tables, [read the primer](primers/tables.md). In short, they mimic the functionality of `SELECT`-style SPARQL queries.
 
 The convention for table spec identifiers is to prefix them with `t_`.
 
@@ -129,10 +133,15 @@ Specs are defined as an array at the top level of the config document:
 }
 ```
 
+TODO: 
+
+* Implement versioned table specifications to allow automatic migration of data that meets an earlier specification
+
+
 Search config
 ---------------
 
-Previous versions of Tripod integrated with ElasticSearch to provide indexing and search over data. This was deprecated early on, but some primitive regex-style searching is still provided.  For a full explanation of views, [read the primer](primers/search.md).
+Previous versions of Tripod integrated with ElasticSearch to provide indexing and full-text search. This was removed early on whilst Tripod was still closed source within Talis, as the complexity was not required. However some primitive regex-style searching is still provided.  For a full explanation of views, [read the primer](primers/search.md).
 
 The search config is defined at the top level and consists of two parts - the `search_provider` and `search_specifications`.
 
@@ -157,6 +166,12 @@ The convention for search spec identifiers is to prefix them with `i_`.
   }
 }
 ```
+
+TODO:
+
+* Clean up the search specifications as they are not quite in line with tables and views (notably filter/condition)
+* At some point re-instate full-text capability via ElasticSearch or similar.
+
 
 Specification keyword reference
 ---------------
@@ -187,11 +202,15 @@ Each of the specifications above are built from a specification language defined
 
 #### counts / property
 
-#### counts / filter
-
 #### counts / regex
 
+### filter
+
+#### filter/condition
+
 ### ttl
+
+### indicies
 
 ### ensureIndexes
 
