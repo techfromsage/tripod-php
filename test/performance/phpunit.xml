@@ -1,0 +1,7 @@
+<phpunit>
+    <testsuites>
+        <testsuite name="Tripod_Performance_Tests">
+            <directory>.</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>

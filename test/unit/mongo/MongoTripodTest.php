@@ -495,6 +495,86 @@ class MongoTripodTest extends TripodTestBase
         $this->assertTrue($g->has_literal_triple( $uri, $g->qname_to_uri("dct:title"), "New Title seven"), "Graph should contain literal triple we added");
     }
 
+    public function testSetReadPreferenceWhenSavingChanges(){
+        $subjectOne = "http://talisaspire.com/works/checkReadPreferencesWrite";
+        /** @var $tripodMock MongoTripod **/
+        $tripodMock = $this->getMock('MongoTripod', array('addToSearchIndexQueue','setReadPreferenceToPrimary','resetOriginalReadPreference'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/')));
+
+        $tripodMock ->expects($this->once(0))
+            ->method('setReadPreferenceToPrimary');
+
+        $tripodMock ->expects($this->once())
+            ->method('resetOriginalReadPreference');
+
+        $g = new MongoGraph();
+        $g->add_literal_triple($subjectOne, $g->qname_to_uri("dct:title"), "Title one");
+        $tripodMock->saveChanges(new MongoGraph(), $g,"http://talisaspire.com/");
+    }
+
+    /**
+     * @expectedException Exception
+     */
+    public function testReadPreferencesAreRestoredWhenErrorSavingChanges(){
+        $subjectOne = "http://talisaspire.com/works/checkReadPreferencesAreRestoredOnError";
+        /** @var $tripodMock MongoTripod **/
+        $tripodMock = $this->getMock('MongoTripod', array('addToSearchIndexQueue','resetOriginalReadPreference','getContextAlias'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/')));
+
+        $tripodMock ->expects($this->once())
+            ->method('getContextAlias')
+            ->will($this->throwException(new Exception("A Test Exception")));
+
+        $tripodMock ->expects($this->once())
+            ->method('resetOriginalReadPreference');
+
+        $g = new MongoGraph();
+        $g->add_literal_triple($subjectOne, $g->qname_to_uri("dct:title"), "Title one");
+        $tripodMock->saveChanges(new MongoGraph(), $g,"http://talisaspire.com/");
+    }
+
+    public function testReadPreferencesOverMultipleSaves(){
+        $subjectOne = "http://talisaspire.com/works/checkReadPreferencesOverMultipleSaves";
+        /** @var $tripodMock MongoTripod **/
+        $tripodMock = $this->getMock(
+            'MongoTripod',
+            array('addToSearchIndexQueue', 'validateGraphCardinality'),
+            array('CBD_testing','testing',
+                array('defaultContext'=>'http://talisaspire.com/', 'readPreference'=>MongoClient::RP_SECONDARY_PREFERRED))
+        );
+
+        $tripodMock->expects($this->any())->method('addToSearchIndexQueue');
+
+        $tripodMock ->expects($this->exactly(3))
+            ->method('validateGraphCardinality')
+            ->will($this->onConsecutiveCalls(null, $this->throwException(new Exception('readPreferenceOverMultipleSavesTestException')), null)
+            );
+
+        $expectedReadPreference = $tripodMock->getReadPreference();
+        $this->assertEquals($expectedReadPreference['type'], MongoClient::RP_SECONDARY_PREFERRED);
+
+        $g = new MongoGraph();
+        $g->add_literal_triple($subjectOne, $g->qname_to_uri("dct:title"), "Title one");
+        $tripodMock->saveChanges(new MongoGraph(), $g,"http://talisaspire.com/");
+        $this->assertEquals($expectedReadPreference, $tripodMock->getReadPreference());
+
+        $g = new MongoGraph();
+        $g->add_literal_triple($subjectOne, $g->qname_to_uri("dct:title2"), "Title two");
+        $exceptionThrown = false;
+        try{
+            $tripodMock->saveChanges(new MongoGraph(), $g,"http://talisaspire.com/");
+        }
+        catch(Exception $e){
+            $exceptionThrown = true;
+            $this->assertEquals("readPreferenceOverMultipleSavesTestException", $e->getMessage());
+        }
+        $this->assertTrue($exceptionThrown);
+        $this->assertEquals($expectedReadPreference, $tripodMock->getReadPreference());
+
+        $g = new MongoGraph();
+        $g->add_literal_triple($subjectOne, $g->qname_to_uri("dct:title3"), "Title three");
+        $tripodMock->saveChanges(new MongoGraph(), $g,"http://talisaspire.com/");
+        $this->assertEquals($expectedReadPreference, $tripodMock->getReadPreference());
+    }
+
     public function testSaveChangesToLockedDocument()
     {
         $subjectOne = "http://talisaspire.com/works/lockedDoc";

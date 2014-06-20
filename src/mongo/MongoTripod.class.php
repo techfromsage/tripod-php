@@ -55,6 +55,11 @@ class MongoTripod extends MongoTripodBase implements ITripod
      */
     private $queue = null;
 
+    /**
+     * @var array The original read preference gets stored here
+     *            when changing for a write.
+     */
+    private $originalReadPreference = array();
 
     /**
      * @var array
@@ -217,6 +222,43 @@ class MongoTripod extends MongoTripodBase implements ITripod
     }
 
     /**
+     * Get the current read preference
+     *
+     * @return array {@link http://www.php.net/manual/en/mongoclient.getreadpreference.php}
+     */
+    public function getReadPreference(){
+        return $this->collection->getReadPreference();
+    }
+
+    /**
+     * Change the read preference to RP_PRIMARY
+     * Used for a write operation
+     */
+    protected function setReadPreferenceToPrimary(){
+        $currReadPreference = $this->getReadPreference();
+        if($currReadPreference !== MongoClient::RP_PRIMARY){
+            $this->originalReadPreference = $currReadPreference;
+            $this->collection->setReadPreference(MongoClient::RP_PRIMARY);
+        }
+    }
+
+    /**
+     * Reset the original read preference after changing with setReadPreferenceToPrimary
+     */
+    protected function resetOriginalReadPreference(){
+        // If the read preference has not been changed then simply return
+        if($this->originalReadPreference === array()){
+            return;
+        }
+        // Make the change.
+        $preferencesTagsets = isset($this->originalReadPreference['tagsets']) ? $this->originalReadPreference['tagsets'] : array();
+        $this->collection->setReadPreference($this->originalReadPreference['type'], $preferencesTagsets);
+
+        // Reset the orignal read preference var so we know it is back to normal
+        $this->originalReadPreference = array();
+    }
+
+    /**
      * Create and apply a changeset which is the delta between $oldGraph and $newGraph
      * @param ExtendedGraph $oldGraph
      * @param ExtendedGraph $newGraph
@@ -231,85 +273,95 @@ class MongoTripod extends MongoTripodBase implements ITripod
         $context=null,
         $description=null)
     {
-        $contextAlias = $this->getContextAlias($context);
+        $this->setReadPreferenceToPrimary();
+        try{
+            $contextAlias = $this->getContextAlias($context);
 
-        if (!$this->config->isCollectionWithinConfig($this->dbName,$this->collectionName))
-        {
-            throw new TripodException("database:collection {$this->dbName}:{$this->collectionName} is not referenced within config, so cannot be written to");
-        }
-
-        $this->validateGraphCardinality($newGraph);
-
-        $oldIndex = $oldGraph->get_index();
-        $newIndex = $newGraph->get_index();
-        $args = array('before' => $oldIndex, 'after' => $newIndex, 'changeReason' => $description);
-        $cs = new ChangeSet($args);
-
-        //file_put_contents("/tmp/cs.rdf.xml", $cs->to_rdfxml());
-
-        if ($cs->has_changes())
-        {
-            // how many subjects of change?
-            $subjectsOfChange = array();
-
-            /** @noinspection PhpParamsInspection */
-            $changes = $cs->get_subjects_of_type($oldGraph->qname_to_uri("cs:ChangeSet"));
-            foreach ($changes as $change)
+            if (!$this->config->isCollectionWithinConfig($this->dbName,$this->collectionName))
             {
-                $subjectsOfChange[] = $cs->get_first_resource($change,$oldGraph->qname_to_uri("cs:subjectOfChange"));
+                throw new TripodException("database:collection {$this->dbName}:{$this->collectionName} is not referenced within config, so cannot be written to");
             }
-            $subjectsOfChange = array_unique($subjectsOfChange);
-            $changes = $this->storeChanges($cs, $subjectsOfChange,$contextAlias);
 
-            // calculate what operations need performing, based on the subjects and anything they impact
-            $operationsToPerform  = $this->getApplicableOperations($subjectsOfChange, $contextAlias, $this->async);
+            $this->validateGraphCardinality($newGraph);
 
-            $impactedOperations   = $this->getImpactedOperations($subjectsOfChange, $contextAlias, $this->async);
+            $oldIndex = $oldGraph->get_index();
+            $newIndex = $newGraph->get_index();
+            $args = array('before' => $oldIndex, 'after' => $newIndex, 'changeReason' => $description);
+            $cs = new ChangeSet($args);
 
-            foreach($impactedOperations as $synckey=>$ops){
-                foreach($ops as $key=>$op){
-                    if(!array_key_exists($key, $operationsToPerform[$synckey])){
-                        $operationsToPerform[$synckey][$key] = $op;
+            //file_put_contents("/tmp/cs.rdf.xml", $cs->to_rdfxml());
+
+            if ($cs->has_changes())
+            {
+                // how many subjects of change?
+                $subjectsOfChange = array();
+
+                /** @noinspection PhpParamsInspection */
+                $changes = $cs->get_subjects_of_type($oldGraph->qname_to_uri("cs:ChangeSet"));
+                foreach ($changes as $change)
+                {
+                    $subjectsOfChange[] = $cs->get_first_resource($change,$oldGraph->qname_to_uri("cs:subjectOfChange"));
+                }
+                $subjectsOfChange = array_unique($subjectsOfChange);
+                $changes = $this->storeChanges($cs, $subjectsOfChange,$contextAlias);
+
+                // calculate what operations need performing, based on the subjects and anything they impact
+                $operationsToPerform  = $this->getApplicableOperations($subjectsOfChange, $contextAlias, $this->async);
+
+                $impactedOperations   = $this->getImpactedOperations($subjectsOfChange, $contextAlias, $this->async);
+
+                foreach($impactedOperations as $synckey=>$ops){
+                    foreach($ops as $key=>$op){
+                        if(!array_key_exists($key, $operationsToPerform[$synckey])){
+                            $operationsToPerform[$synckey][$key] = $op;
+                        }
                     }
                 }
-            }
 
-            // create subjects to process synchronously
-            $syncModifiedSubjects = array();
-            foreach($operationsToPerform['sync'] as $syncOp){
-                if(in_array($syncOp['id']['r'], $changes['deletedSubjects'])){
-                    $syncOp['delete'] = true;
-                } else {
-                    $syncOp['delete'] = false;
+                // create subjects to process synchronously
+                $syncModifiedSubjects = array();
+                foreach($operationsToPerform['sync'] as $syncOp){
+                    if(in_array($syncOp['id']['r'], $changes['deletedSubjects'])){
+                        $syncOp['delete'] = true;
+                    } else {
+                        $syncOp['delete'] = false;
+                    }
+
+                    foreach($syncOp['ops'] as $collectionName=>$ops){
+                        $syncModifiedSubjects[] = ModifiedSubject::create($syncOp['id'],array(),$ops, $this->dbName, $collectionName, $syncOp['delete']);
+                    }
                 }
 
-                foreach($syncOp['ops'] as $collectionName=>$ops){
-                    $syncModifiedSubjects[] = ModifiedSubject::create($syncOp['id'],array(),$ops, $this->dbName, $collectionName, $syncOp['delete']);
-                }
-            }
-
-            if(!empty($syncModifiedSubjects)){
-                $this->processSyncOperations($syncModifiedSubjects);
-            }
-
-            // now queue all async operations
-            $asyncModifiedSubjects = array();
-            foreach($operationsToPerform['async'] as $asyncOp){
-                if(in_array($asyncOp['id']['r'], $changes['deletedSubjects'])){
-                    $asyncOp['delete'] = true;
-                } else {
-                    $asyncOp['delete'] = false;
+                if(!empty($syncModifiedSubjects)){
+                    $this->processSyncOperations($syncModifiedSubjects);
                 }
 
-                foreach($asyncOp['ops'] as $collectionName=>$ops){
-                    $asyncModifiedSubjects[] = ModifiedSubject::create($asyncOp['id'],array(),$ops, $this->dbName, $collectionName, $asyncOp['delete']);
-                }
-            }
+                // now queue all async operations
+                $asyncModifiedSubjects = array();
+                foreach($operationsToPerform['async'] as $asyncOp){
+                    if(in_array($asyncOp['id']['r'], $changes['deletedSubjects'])){
+                        $asyncOp['delete'] = true;
+                    } else {
+                        $asyncOp['delete'] = false;
+                    }
 
-            if(!empty($asyncModifiedSubjects)){
-                $this->queueASyncOperations($asyncModifiedSubjects);
+                    foreach($asyncOp['ops'] as $collectionName=>$ops){
+                        $asyncModifiedSubjects[] = ModifiedSubject::create($asyncOp['id'],array(),$ops, $this->dbName, $collectionName, $asyncOp['delete']);
+                    }
+                }
+
+                if(!empty($asyncModifiedSubjects)){
+                    $this->queueASyncOperations($asyncModifiedSubjects);
+                }
             }
         }
+        catch(Exception $e){
+            // ensure we reset the original read preference in the event of an exception
+            $this->resetOriginalReadPreference();
+            throw $e;
+        }
+
+        $this->resetOriginalReadPreference();
 
         return true;
     }
