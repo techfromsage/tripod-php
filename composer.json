@@ -1,6 +1,6 @@
 {
     "name": "talis/tripod-php",
-    "type": "Tripod PHP",
+    "type": "library",
     "description": "A library for managing RDF data in Mongo",
     "keywords": ["rdf","sparql"],
     "homepage": "https://github.com/talis/tripod-php",
