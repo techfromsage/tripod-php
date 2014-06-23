@@ -569,12 +569,18 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
 
                     $this->addFields($linkMatch,$ruleset,$dest);
 
+                    if (isset($ruleset['counts']))
+                    {
+                        $this->doCounts($linkMatch,$ruleset['counts'],$dest);
+                    }
+
                     if (isset($ruleset['joins']))
                     {
                         // recursive joins must be done after this cursor has completed, otherwise things get messy
                         $recursiveJoins[] = array('data'=>$linkMatch, 'ruleset'=>$ruleset['joins']);
                     }
                 }
+
                 if (count($recursiveJoins)>0)
                 {
                     foreach ($recursiveJoins as $r)
@@ -586,10 +592,10 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         }
     }
 
-    protected function doCounts($source, $counts, &$dest)
+    protected function doCounts($source, $countSpec, &$dest)
     {
         // process count aggregate function
-        foreach ($counts as $c)
+        foreach ($countSpec as $c)
         {
             $fieldName = $c['fieldName'];
             $applyRegex = (isset($c['regex'])) ? : null;

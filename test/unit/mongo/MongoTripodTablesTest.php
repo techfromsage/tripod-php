@@ -259,7 +259,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $result = $t1['results'][0];
 
         // check out the columns
-        $this->assertTrue(isset($result['titles_count']),"Result does not contain source_count");
+        $this->assertTrue(isset($result['titles_count']),"Result does not contain titles_count");
         $this->assertEquals(3,$result['titles_count']);
 
         // add a title to f340...
@@ -276,7 +276,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $result = $t2['results'][0];
 
         // check out the columns
-        $this->assertTrue(isset($result['titles_count']),"Result does not contain source_count");
+        $this->assertTrue(isset($result['titles_count']),"Result does not contain titles_count");
         $this->assertEquals(4,$result['titles_count']);
     }
 

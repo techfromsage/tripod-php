@@ -90,6 +90,9 @@ class MongoTripodNQuadSerializerTest extends MongoTripodTestBase
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://purl.org/ontology/bibo/Book> <http://talisaspire.com/> .
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://talisaspire.com/schema#Resource> <http://talisaspire.com/> .
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2> <http://www.w3.org/2002/07/owl#sameAs> <http://talisaspire.com/isbn/9780393929690> <http://talisaspire.com/> .
+<http://jacs3.dataincubator.org/f300> <http://purl.org/dc/terms/title> \"First title\" <http://talisaspire.com/> .
+<http://jacs3.dataincubator.org/f300> <http://purl.org/dc/terms/title> \"Second title\" <http://talisaspire.com/> .
+<http://jacs3.dataincubator.org/f340> <http://purl.org/dc/terms/title> \"First title\" <http://talisaspire.com/> .
 <http://talisaspire.com/works/4d101f63c10a6> <http://purl.org/dc/terms/subject> <http://talisaspire.com/disciplines/physics> <http://talisaspire.com/> .
 <http://talisaspire.com/works/4d101f63c10a6> <http://purl.org/ontology/bibo/isbn13> \"9780393929691\" <http://talisaspire.com/> .
 <http://talisaspire.com/works/4d101f63c10a6> <http://purl.org/ontology/bibo/isbn13> \"9780393929691-2\" <http://talisaspire.com/> .
