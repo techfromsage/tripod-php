@@ -246,6 +246,29 @@
         }
     },
     {
+        "_id": {
+            "r" : "http://jacs3.dataincubator.org/f300",
+            "c":"http://talisaspire.com/"
+        },
+        "dct:title" : [
+            {
+                "l" : "First title"
+            },
+            {
+                "l" : "Second title"
+            }
+        ]
+    },
+    {
+        "_id": {
+            "r" : "http://jacs3.dataincubator.org/f340",
+            "c":"http://talisaspire.com/"
+        },
+        "dct:title" : {
+            "l" : "First title"
+        }
+    },
+    {
         "_id":
         {
            "r":"http://talisaspire.com/works/4d101f63c10a6",

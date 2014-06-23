@@ -347,18 +347,12 @@
             "_id": "t_join_source_count_regex",
             "type":"acorn:Resource",
             "from":"CBD_testing",
-            "fields": [
-                {
-                    "fieldName": "type",
-                    "predicates": ["rdf:type"]
-                }
-            ],
             "joins" : {
-                "dct:isVersionOf" : {
+                "acorn:jacsUri" : {
                     "counts": [
                         {
-                            "fieldName":"version_isbn13",
-                            "property":"bibo:isbn13"
+                            "fieldName":"titles_count",
+                            "property":"dct:title"
                         }
                     ]
                 }
