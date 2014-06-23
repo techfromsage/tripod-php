@@ -486,7 +486,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                     "acorn:resourceCount"=>array(
                         "filter"=>array("rdf:type.value"=>"http://talisaspire.com/schema#Resource"),
                         "property"=>"dct:isVersionOf",
-                        "counts"=>array("some"=>"value")
+                        "counts"=>array(array("fieldName"=>"some","property"=>"value"))
                     )
                 )
             )
@@ -522,9 +522,170 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                          "property"=>"dct:isVersionOf",
                          "joins"=>array(
                              "another:property"=>array(
-                                 "counts"=>array("some"=>"value")
+                                 "counts"=>array(array("fieldName"=>"some","property"=>"value"))
                              )
                          )
+                     )
+                )
+            )
+        );
+        $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
+        $mtc = new MongoTripodConfig($config);
+    }
+
+    public function testTableSpecFieldWithoutFieldName()
+    {
+        $this->setExpectedException(
+            'MongoTripodConfigException',
+            'Field spec does not contain fieldName');
+        $config = array();
+        $config["defaultContext"] = "http://talisaspire.com/";
+        $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
+        $config["databases"] = array(
+            "testing"=>array(
+            "connStr"=>"sometestval",
+                "collections"=>array(
+                    "CBD_testing"=>array()
+                )
+            )
+        );
+
+        $config["table_specifications"] = array(
+            array(
+                "_id"=>"t_illegal_spec",
+                "type"=>"http://talisaspire.com/schema#Work",
+                "fields"=>array(
+                     array(
+                         "predicates"=>array("rdf:type"),
+                     )
+                )
+            )
+        );
+        $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
+        $mtc = new MongoTripodConfig($config);
+    }
+
+    public function testTableSpecFieldWithoutPredicates()
+    {
+        $this->setExpectedException(
+            'MongoTripodConfigException',
+            'Field spec does not contain predicates');
+        $config = array();
+        $config["defaultContext"] = "http://talisaspire.com/";
+        $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
+        $config["databases"] = array(
+            "testing"=>array(
+            "connStr"=>"sometestval",
+                "collections"=>array(
+                    "CBD_testing"=>array()
+                )
+            )
+        );
+
+        $config["table_specifications"] = array(
+            array(
+                "_id"=>"t_illegal_spec",
+                "type"=>"http://talisaspire.com/schema#Work",
+                "fields"=>array(
+                     array(
+                         "fieldName"=>"some_field",
+                     )
+                )
+            )
+        );
+        $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
+        $mtc = new MongoTripodConfig($config);
+    }
+
+    public function testTableSpecCountWithoutProperty()
+    {
+        $this->setExpectedException(
+            'MongoTripodConfigException',
+            'Count spec does not contain property');
+        $config = array();
+        $config["defaultContext"] = "http://talisaspire.com/";
+        $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
+        $config["databases"] = array(
+            "testing"=>array(
+            "connStr"=>"sometestval",
+                "collections"=>array(
+                    "CBD_testing"=>array()
+                )
+            )
+        );
+
+        $config["table_specifications"] = array(
+            array(
+                "_id"=>"t_illegal_spec",
+                "type"=>"http://talisaspire.com/schema#Work",
+                "counts"=>array(
+                     array(
+                         "fieldName"=>"some_field",
+                     )
+                )
+            )
+        );
+        $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
+        $mtc = new MongoTripodConfig($config);
+    }
+
+    public function testTableSpecCountWithoutFieldName()
+    {
+        $this->setExpectedException(
+            'MongoTripodConfigException',
+            'Count spec does not contain fieldName');
+        $config = array();
+        $config["defaultContext"] = "http://talisaspire.com/";
+        $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
+        $config["databases"] = array(
+            "testing"=>array(
+            "connStr"=>"sometestval",
+                "collections"=>array(
+                    "CBD_testing"=>array()
+                )
+            )
+        );
+
+        $config["table_specifications"] = array(
+            array(
+                "_id"=>"t_illegal_spec",
+                "type"=>"http://talisaspire.com/schema#Work",
+                "counts"=>array(
+                     array(
+                         "property"=>"some:property",
+                     )
+                )
+            )
+        );
+        $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
+        $mtc = new MongoTripodConfig($config);
+    }
+
+    public function testTableSpecCountWithoutPropertyAsAString()
+    {
+        $this->setExpectedException(
+            'MongoTripodConfigException',
+            'Count spec property was not a string');
+        $config = array();
+        $config["defaultContext"] = "http://talisaspire.com/";
+        $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
+        $config["databases"] = array(
+            "testing"=>array(
+            "connStr"=>"sometestval",
+                "collections"=>array(
+                    "CBD_testing"=>array()
+                )
+            )
+        );
+
+        $config["table_specifications"] = array(
+            array(
+                "_id"=>"t_illegal_spec",
+                "type"=>"http://talisaspire.com/schema#Work",
+                "counts"=>array(
+                     array(
+                         "fieldName"=>"someField",
+                         "property"=>array("some:property"),
                      )
                 )
             )
@@ -738,4 +899,6 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             $this->assertContains($expected, $types, "List of types should have contained $expected");
         }
     }
+
+
 }

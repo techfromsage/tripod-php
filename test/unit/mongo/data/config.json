@@ -300,14 +300,16 @@
                     ]
                 }
             },
-            "counts" : {
-                "source_count": {
+            "counts" : [
+                {
+                    "fieldName" : "source_count",
                     "property" : "dct:isVersionOf"
                 },
-                "random_predicate_count": {
+                {
+                    "fieldName" : "random_predicate_count",
                     "property" : "dct:randomPredicate"
                 }
-            }
+            ]
         },
         {
             "_id": "t_source_count_regex",
@@ -329,15 +331,17 @@
                     ]
                 }
             },
-            "counts" : {
-                "source_count": {
+            "counts" : [
+                {
+                    "fieldName" : "source_count",
                     "property" : "dct:isVersionOf"
                 },
-                "regex_source_count": {
+                {
+                    "fieldName" : "regex_source_count",
                     "property" : "dct:isVersionOf",
                     "regex" : "/foobar/"
                 }
-            }
+            ]
         },
         {
             "_id": "t_work2",

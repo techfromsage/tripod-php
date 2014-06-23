@@ -75,6 +75,11 @@ class MongoTripodConfig
             // Loop through fields and validate
             foreach($fieldsInTableSpec as $field)
             {
+                if (!isset($field['fieldName']))
+                {
+                    throw new MongoTripodConfigException("Field spec does not contain fieldName");
+                }
+
                 if(isset($field['predicates']))
                 {
                     foreach($field['predicates'] as $p)
@@ -96,6 +101,33 @@ class MongoTripodConfig
 
                         }
                     }
+                }
+                else
+                {
+                    throw new MongoTripodConfigException("Field spec does not contain predicates");
+                }
+            }
+
+            // Get all "counts" in the spec
+            $fieldsInTableSpec = $this->findFieldsInTableSpec('counts', $spec);
+            // Loop through fields and validate
+            foreach($fieldsInTableSpec as $field)
+            {
+                if (!isset($field['fieldName']))
+                {
+                    throw new MongoTripodConfigException("Count spec does not contain fieldName");
+                }
+
+                if(isset($field['property']))
+                {
+                    if (!is_string($field['property']))
+                    {
+                        throw new MongoTripodConfigException("Count spec property was not a string");
+                    }
+                }
+                else
+                {
+                    throw new MongoTripodConfigException("Count spec does not contain property");
                 }
             }
 

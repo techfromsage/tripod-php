@@ -157,7 +157,51 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $this->assertTrue(isset($result['isbn13']),"Result does not contain isbn13");
     }
 
-    public function testGenerateTableRowsWithCountAndRegex()
+    public function testGenerateTableRowsWithCountUpdateAndRequery()
+    {
+        $this->tripodTables->generateTableRows("t_source_count");
+
+        $t1 = $this->tripodTables->getTableRows("t_source_count");
+
+        // expecting two rows
+        $this->assertEquals(count($t1['results']),2);
+        $result = $t1['results'][0];
+
+        // check out the columns
+        $this->assertTrue(isset($result['type']),"Result does not contain type");
+        $this->assertTrue(isset($result['source_count']),"Result does not contain source_count");
+        $this->assertEquals(1,$result['source_count']);
+        $this->assertTrue(isset($result['isbn13']),"Result does not contain isbn13");
+
+        $subject = $result['_id']['r'];
+
+        $subjectGraph = $this->tripod->describeResource($subject);
+        $newGraph = new ExtendedGraph();
+        $newGraph->add_graph($subjectGraph);
+        $newGraph->add_resource_triple($subject,'http://purl.org/dc/terms/isVersionOf','http://example.com');
+
+        $this->tripod->saveChanges($subjectGraph,$newGraph);
+
+        $t2 = $this->tripodTables->getTableRows("t_source_count");
+
+        $result = null;
+        $this->assertEquals(count($t2['results']),2);
+        foreach ($t2['results'] as $r)
+        {
+            if ($r['_id']['r'] = $subject) {
+                $result = $r;
+            }
+        }
+
+        $this->assertTrue(isset($result),"Cound not find table row for $subject");
+        // check out the columns
+        $this->assertTrue(isset($result['type']),"Result does not contain type");
+        $this->assertTrue(isset($result['source_count']),"Result does not contain source_count");
+        $this->assertEquals(2,$result['source_count']);
+        $this->assertTrue(isset($result['isbn13']),"Result does not contain isbn13");
+    }
+
+    public function testGenerateTableRowsWithCountAndRegexUpdateAndRequery()
     {
         $this->tripodTables->generateTableRows("t_source_count_regex");
 
@@ -201,50 +245,6 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $this->assertTrue(isset($result['source_count']),"Result does not contain source_count");
         $this->assertEquals(3,$result['source_count']);
         $this->assertEquals(2,$result['regex_source_count']);
-        $this->assertTrue(isset($result['isbn13']),"Result does not contain isbn13");
-    }
-
-    public function testGenerateTableRowsWithCountUpdateAndRequery()
-    {
-        $this->tripodTables->generateTableRows("t_source_count");
-
-        $t1 = $this->tripodTables->getTableRows("t_source_count");
-
-        // expecting two rows
-        $this->assertEquals(count($t1['results']),2);
-        $result = $t1['results'][0];
-
-        // check out the columns
-        $this->assertTrue(isset($result['type']),"Result does not contain type");
-        $this->assertTrue(isset($result['source_count']),"Result does not contain source_count");
-        $this->assertEquals(1,$result['source_count']);
-        $this->assertTrue(isset($result['isbn13']),"Result does not contain isbn13");
-
-        $subject = $result['_id']['r'];
-
-        $subjectGraph = $this->tripod->describeResource($subject);
-        $newGraph = new ExtendedGraph();
-        $newGraph->add_graph($subjectGraph);
-        $newGraph->add_resource_triple($subject,'http://purl.org/dc/terms/isVersionOf','http://example.com');
-
-        $this->tripod->saveChanges($subjectGraph,$newGraph);
-
-        $t2 = $this->tripodTables->getTableRows("t_source_count");
-
-        $result = null;
-        $this->assertEquals(count($t2['results']),2);
-        foreach ($t2['results'] as $r)
-        {
-            if ($r['_id']['r'] = $subject) {
-                $result = $r;
-            }
-        }
-
-        $this->assertTrue(isset($result),"Cound not find table row for $subject");
-        // check out the columns
-        $this->assertTrue(isset($result['type']),"Result does not contain type");
-        $this->assertTrue(isset($result['source_count']),"Result does not contain source_count");
-        $this->assertEquals(2,$result['source_count']);
         $this->assertTrue(isset($result['isbn13']),"Result does not contain isbn13");
     }
 
