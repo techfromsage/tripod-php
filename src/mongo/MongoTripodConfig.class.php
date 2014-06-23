@@ -23,7 +23,6 @@ class MongoTripodConfig
     public $searchDocSpecs = array();
     public $searchProvider = null;
 
-
     public function __construct(Array $config)
     {
         if (array_key_exists('namespaces',$config))
@@ -73,32 +72,28 @@ class MongoTripodConfig
         {
             // Get all "fields" in the spec
             $fieldsInTableSpec = $this->findFieldsInTableSpec('fields', $spec);
-
             // Loop through fields and validate
-            foreach($fieldsInTableSpec as $fields)
+            foreach($fieldsInTableSpec as $field)
             {
-                foreach($fields as $field)
+                if(isset($field['predicates']))
                 {
-                    if(isset($field['predicates']))
+                    foreach($field['predicates'] as $p)
                     {
-                        foreach($field['predicates'] as $p)
+                        // If predicates is an array we've got modifiers
+                        if(is_array($p))
                         {
-                            // If predicates is an array we've got modifiers
-                            if(is_array($p))
+                            try
                             {
-                                try
-                                {
-                                    /*
-                                     * checkModifierFunctions will check if each predicate modifier is valid - it will
-                                     * check recursively through the predicate
-                                     */
-                                    $this->checkModifierFunctions($p, MongoTripodTables::$predicateModifiers);
-                                } catch(MongoTripodConfigException $e)
-                                {
-                                    throw $e;
-                                }
-
+                                /*
+                                 * checkModifierFunctions will check if each predicate modifier is valid - it will
+                                 * check recursively through the predicate
+                                 */
+                                $this->checkModifierFunctions($p, MongoTripodTables::$predicateModifiers);
+                            } catch(MongoTripodConfigException $e)
+                            {
+                                throw $e;
                             }
+
                         }
                     }
                 }
@@ -680,7 +675,7 @@ class MongoTripodConfig
         {
             if(array_key_exists($fieldName, $spec))
             {
-                $fields[] = $spec[$fieldName];
+                $fields = $spec[$fieldName];
             }
 
             if(isset($spec['joins']))
