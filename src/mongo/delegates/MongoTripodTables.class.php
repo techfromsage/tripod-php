@@ -622,7 +622,8 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
                     }
                 }
             }
-            $dest[$fieldName] = $count;
+            if (!isset($dest[$fieldName])) $dest[$fieldName] = 0;
+            $dest[$fieldName] += $count;
         }
     }
 

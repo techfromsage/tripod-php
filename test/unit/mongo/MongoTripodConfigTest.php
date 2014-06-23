@@ -460,11 +460,11 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $mtc = new MongoTripodConfig($config);
     }
 
-    public function testTableSpecNestedCountThrowsException()
+    public function testTableSpecNestedCountWithoutPropertyThrowsException()
     {
         $this->setExpectedException(
             'MongoTripodConfigException',
-            'Aggregate function counts exists within join in table spec, this is not allowed');
+            'Count spec does not contain property');
         $config = array();
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
@@ -486,7 +486,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                     "acorn:resourceCount"=>array(
                         "filter"=>array("rdf:type.value"=>"http://talisaspire.com/schema#Resource"),
                         "property"=>"dct:isVersionOf",
-                        "counts"=>array(array("fieldName"=>"some","property"=>"value"))
+                        "counts"=>array(array("fieldName"=>"someField"))
                     )
                 )
             )
@@ -495,11 +495,11 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $mtc = new MongoTripodConfig($config);
     }
 
-    public function testTableSpecNested2ndLevelCountThrowsException()
+    public function testTableSpecNested2ndLevelCountWithoutFieldNameThrowsException()
     {
         $this->setExpectedException(
             'MongoTripodConfigException',
-            'Aggregate function counts exists within join in table spec, this is not allowed');
+            'Count spec does not contain fieldName');
         $config = array();
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
@@ -522,7 +522,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                          "property"=>"dct:isVersionOf",
                          "joins"=>array(
                              "another:property"=>array(
-                                 "counts"=>array(array("fieldName"=>"some","property"=>"value"))
+                                 "counts"=>array(array("property"=>"value"))
                              )
                          )
                      )

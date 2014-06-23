@@ -344,6 +344,27 @@
             ]
         },
         {
+            "_id": "t_join_source_count_regex",
+            "type":"acorn:Resource",
+            "from":"CBD_testing",
+            "fields": [
+                {
+                    "fieldName": "type",
+                    "predicates": ["rdf:type"]
+                }
+            ],
+            "joins" : {
+                "dct:isVersionOf" : {
+                    "counts": [
+                        {
+                            "fieldName":"version_isbn13",
+                            "property":"bibo:isbn13"
+                        }
+                    ]
+                }
+            }
+        },
+        {
             "_id": "t_work2",
             "type": "acorn:Work2",
             "from":"CBD_testing",
