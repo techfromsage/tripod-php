@@ -622,7 +622,8 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
                 {
                     if ($applyRegex != null)
                     {
-                        foreach ($source[$c['property']] as $value) {
+                        foreach ($source[$c['property']] as $value)
+                        {
                             if ($this->applyRegexToValue($c['regex'],$value)) {
                                 $count++;
                             }
