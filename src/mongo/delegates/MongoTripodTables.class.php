@@ -648,7 +648,14 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
      */
     private function applyRegexToValue($regex, $value)
     {
-        $v = ($value[VALUE_URI]) ? $value[VALUE_URI] : $value[VALUE_LITERAL];
-        return preg_match($regex, $v);
+        if (isset($value[VALUE_URI]) || isset($value[VALUE_LITERAL]))
+        {
+            $v = ($value[VALUE_URI]) ? $value[VALUE_URI] : $value[VALUE_LITERAL];
+            return preg_match($regex, $v);
+        }
+        else
+        {
+            throw new TripodException("Was expecting either VALUE_URI or VALUE_LITERAL when applying regex to value - possible data corruption with: ".var_export($value,true));
+        }
     }
 }
