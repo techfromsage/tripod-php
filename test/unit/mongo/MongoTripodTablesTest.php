@@ -150,11 +150,11 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $result = $t1['results'][0];
 
         // check out the columns
-        $this->assertTrue(isset($result['type']),"Result does not contain type");
-        $this->assertTrue(isset($result['source_count']),"Result does not contain source_count");
+        $this->assertArrayHasKey('type',$result,"Result does not contain type");
+        $this->assertArrayHasKey('source_count',$result,"Result does not contain source_count");
         $this->assertEquals(1,$result['source_count']);
         $this->assertEquals(0,$result['random_predicate_count']);
-        $this->assertTrue(isset($result['isbn13']),"Result does not contain isbn13");
+        $this->assertArrayHasKey('isbn13',$result,"Result does not contain isbn13");
     }
 
     public function testGenerateTableRowsWithCountUpdateAndRequery()
@@ -168,10 +168,10 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $result = $t1['results'][0];
 
         // check out the columns
-        $this->assertTrue(isset($result['type']),"Result does not contain type");
-        $this->assertTrue(isset($result['source_count']),"Result does not contain source_count");
+        $this->assertArrayHasKey('type',$result,"Result does not contain type");
+        $this->assertArrayHasKey('source_count',$result,"Result does not contain source_count");
         $this->assertEquals(1,$result['source_count']);
-        $this->assertTrue(isset($result['isbn13']),"Result does not contain isbn13");
+        $this->assertArrayHasKey('isbn13',$result,"Result does not contain isbn13");
 
         $subject = $result['_id']['r'];
 
@@ -193,12 +193,12 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             }
         }
 
-        $this->assertTrue(isset($result),"Cound not find table row for $subject");
+        $this->assertNotNull($result,"Cound not find table row for $subject");
         // check out the columns
-        $this->assertTrue(isset($result['type']),"Result does not contain type");
-        $this->assertTrue(isset($result['source_count']),"Result does not contain source_count");
+        $this->assertArrayHasKey('type',$result,"Result does not contain type");
+        $this->assertArrayHasKey('source_count',$result,"Result does not contain source_count");
         $this->assertEquals(2,$result['source_count']);
-        $this->assertTrue(isset($result['isbn13']),"Result does not contain isbn13");
+        $this->assertArrayHasKey('isbn13',$result,"Result does not contain isbn13");
     }
 
     public function testGenerateTableRowsWithCountAndRegexUpdateAndRequery()
@@ -212,11 +212,11 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $result = $t1['results'][0];
 
         // check out the columns
-        $this->assertTrue(isset($result['type']),"Result does not contain type");
-        $this->assertTrue(isset($result['source_count']),"Result does not contain source_count");
+        $this->assertArrayHasKey('type',$result,"Result does not contain type");
+        $this->assertArrayHasKey('source_count',$result,"Result does not contain source_count");
         $this->assertEquals(1,$result['source_count']);
         $this->assertEquals(0,$result['regex_source_count']);
-        $this->assertTrue(isset($result['isbn13']),"Result does not contain isbn13");
+        $this->assertArrayHasKey('isbn13',$result,"Result does not contain isbn13");
 
         $subject = $result['_id']['r'];
 
@@ -239,13 +239,13 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             }
         }
 
-        $this->assertTrue(isset($result),"Cound not find table row for $subject");
+        $this->assertNotNull($result,"Cound not find table row for $subject");
         // check out the columns
-        $this->assertTrue(isset($result['type']),"Result does not contain type");
-        $this->assertTrue(isset($result['source_count']),"Result does not contain source_count");
+        $this->assertArrayHasKey('type',$result,"Result does not contain type");
+        $this->assertArrayHasKey('source_count',$result,"Result does not contain source_count");
         $this->assertEquals(3,$result['source_count']);
         $this->assertEquals(2,$result['regex_source_count']);
-        $this->assertTrue(isset($result['isbn13']),"Result does not contain isbn13");
+        $this->assertArrayHasKey('isbn13',$result,"Result does not contain isbn13");
     }
 
     public function testGenerateTableRowsWithCountOnJoinAndRegexUpdateAndRequery()
@@ -259,7 +259,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $result = $t1['results'][0];
 
         // check out the columns
-        $this->assertTrue(isset($result['titles_count']),"Result does not contain titles_count");
+        $this->assertArrayHasKey('titles_count',$result,"Result does not contain titles_count");
         $this->assertEquals(3,$result['titles_count']);
 
         // add a title to f340...
@@ -276,7 +276,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $result = $t2['results'][0];
 
         // check out the columns
-        $this->assertTrue(isset($result['titles_count']),"Result does not contain titles_count");
+        $this->assertArrayHasKey('titles_count',$result,"Result does not contain titles_count");
         $this->assertEquals(4,$result['titles_count']);
     }
 

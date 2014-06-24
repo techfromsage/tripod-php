@@ -592,13 +592,19 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         }
     }
 
+    /**
+     * Add counts to $dest by counting what is in $source according to $countSpec
+     * @param $source
+     * @param $countSpec
+     * @param $dest
+     */
     protected function doCounts($source, $countSpec, &$dest)
     {
         // process count aggregate function
         foreach ($countSpec as $c)
         {
             $fieldName = $c['fieldName'];
-            $applyRegex = (isset($c['regex'])) ? : null;
+            $applyRegex = (isset($c['regex'])) ? isset($c['regex']) : null;
             $count = 0;
             // just count predicates at current location
             if (isset($source[$c['property']]))
@@ -624,7 +630,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
                     }
                     else
                     {
-                        $count = count($source[$c['property']]).''; // make sure it's a string
+                        $count = count($source[$c['property']]);
                     }
                 }
             }
@@ -633,6 +639,12 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         }
     }
 
+    /**
+     * Apply a regex to the RDF property value defined in $value
+     * @param $regex
+     * @param $value
+     * @return int
+     */
     private function applyRegexToValue($regex, $value)
     {
         $v = ($value[VALUE_URI]) ? $value[VALUE_URI] : $value[VALUE_LITERAL];

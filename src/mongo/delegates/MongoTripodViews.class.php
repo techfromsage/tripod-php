@@ -628,10 +628,10 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
                         }
                         else
                         {
-                            $count = count($source[$c['property']]).''; // make sure it's a string
+                            $count = count($source[$c['property']]);
                         }
                     }
-                    $obj[$predicate] = array(VALUE_LITERAL=>$count);
+                    $obj[$predicate] = array(VALUE_LITERAL=>(string)$count);
                 }
             }
         }
