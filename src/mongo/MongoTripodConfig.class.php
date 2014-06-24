@@ -87,18 +87,11 @@ class MongoTripodConfig
                         // If predicates is an array we've got modifiers
                         if(is_array($p))
                         {
-                            try
-                            {
-                                /*
-                                 * checkModifierFunctions will check if each predicate modifier is valid - it will
-                                 * check recursively through the predicate
-                                 */
-                                $this->checkModifierFunctions($p, MongoTripodTables::$predicateModifiers);
-                            } catch(MongoTripodConfigException $e)
-                            {
-                                throw $e;
-                            }
-
+                            /*
+                             * checkModifierFunctions will check if each predicate modifier is valid - it will
+                             * check recursively through the predicate
+                             */
+                            $this->checkModifierFunctions($p, MongoTripodTables::$predicateModifiers);
                         }
                     }
                 }
