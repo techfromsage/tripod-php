@@ -281,6 +281,84 @@
             }
         },
         {
+            "_id": "t_source_count",
+            "type":"acorn:Resource",
+            "from":"CBD_testing",
+            "fields": [
+                {
+                    "fieldName": "type",
+                    "predicates": ["rdf:type"]
+                }
+            ],
+            "joins" : {
+                "dct:isVersionOf" : {
+                    "fields": [
+                        {
+                            "fieldName":"isbn13",
+                            "predicates":["bibo:isbn13"]
+                        }
+                    ]
+                }
+            },
+            "counts" : [
+                {
+                    "fieldName" : "source_count",
+                    "property" : "dct:isVersionOf"
+                },
+                {
+                    "fieldName" : "random_predicate_count",
+                    "property" : "dct:randomPredicate"
+                }
+            ]
+        },
+        {
+            "_id": "t_source_count_regex",
+            "type":"acorn:Resource",
+            "from":"CBD_testing",
+            "fields": [
+                {
+                    "fieldName": "type",
+                    "predicates": ["rdf:type"]
+                }
+            ],
+            "joins" : {
+                "dct:isVersionOf" : {
+                    "fields": [
+                        {
+                            "fieldName":"isbn13",
+                            "predicates":["bibo:isbn13"]
+                        }
+                    ]
+                }
+            },
+            "counts" : [
+                {
+                    "fieldName" : "source_count",
+                    "property" : "dct:isVersionOf"
+                },
+                {
+                    "fieldName" : "regex_source_count",
+                    "property" : "dct:isVersionOf",
+                    "regex" : "/foobar/"
+                }
+            ]
+        },
+        {
+            "_id": "t_join_source_count_regex",
+            "type":"acorn:Resource",
+            "from":"CBD_testing",
+            "joins" : {
+                "acorn:jacsUri" : {
+                    "counts": [
+                        {
+                            "fieldName":"titles_count",
+                            "property":"dct:title"
+                        }
+                    ]
+                }
+            }
+        },
+        {
             "_id": "t_work2",
             "type": "acorn:Work2",
             "from":"CBD_testing",

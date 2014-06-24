@@ -310,88 +310,24 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
             {
                 $this->doJoins($doc,$tableSpec['joins'],$value,$from,$contextAlias);
             }
+            if (isset($tableSpec['counts']))
+            {
+                $this->doCounts($doc,$tableSpec['counts'],$value);
+            }
 
             $generatedRow['value'] = $value;
             $this->db->selectCollection(TABLE_ROWS_COLLECTION)->save($generatedRow);
         }
 
-
-            $t->stop();
+        $t->stop();
         $this->timingLog(MONGO_CREATE_TABLE, array(
             'type'=>$tableSpec['type'],
             'duration'=>$t->result(),
             'filter'=>$filter,
             'from'=>$from));
         $this->getStat()->timer(MONGO_CREATE_TABLE.".$tableType",$t->result());
-//        return $result;
     }
 
-    // a helper function that returns an object with properties included from the source,
-    // as per the view spec
-//$fn_addFields = new MongoCode("function (source,indexSpec,dest) {
-//        if (indexSpec.fields)
-//        {
-//            for each (f in indexSpec.fields)
-//            {
-//                for each (p in f.predicates)
-//                {
-//                    if (source[p])
-//                    {
-//                        values = new Array();
-//                        if (source[p]['".VALUE_URI."'])
-//                        {
-//                            values.push(source[p]['".VALUE_URI."']);
-//                        }
-//                        else if (source[p]['".VALUE_LITERAL."'])
-//                        {
-//                            values.push(source[p]['".VALUE_LITERAL."']);
-//                        }
-//                        else if (source[p]['"._ID_RESOURCE."']) // field being joined is the _id, will have _id{r:'',c:''}
-//                        {
-//                            values.push(source[p]['"._ID_RESOURCE."']);
-//                        }
-//                        else
-//                        {
-//                            for each (v in source[p])
-//                            {
-//                                if (v['".VALUE_LITERAL."'])
-//                                {
-//                                    values.push(v['".VALUE_LITERAL."']);
-//                                }
-//                                else if (v['".VALUE_URI."'])
-//                                {
-//                                    values.push(v['".VALUE_URI."']);
-//                                }
-//                                // _id's shouldn't appear in value arrays, so no need for third condition here
-//                            }
-//                        }
-//                        // now add all the values
-//                        for each (v in values)
-//                        {
-//                            if (!dest[f.fieldName])
-//                            {
-//                                // single value
-//                                dest[f.fieldName] = v;
-//                            }
-//                            else if (dest[f.fieldName] instanceof Array)
-//                            {
-//                                // add to existing array of values
-//                                dest[f.fieldName].push(v);
-//                            }
-//                            else
-//                            {
-//                                // convert from single value to array of values
-//                                existingVal = dest[f.fieldName];
-//                                dest[f.fieldName] = new Array();
-//                                dest[f.fieldName].push(existingVal);
-//                                dest[f.fieldName].push(v);
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//        }");
 
     /**
      * Add fields to a table row
@@ -433,7 +369,8 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
                                     }
                                 }
                             // Otherwise apply a modifier
-                            } else
+                            }
+                            else
                             {
                                 if(isset($dest[$f['fieldName']]))
                                 {
@@ -524,7 +461,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
      * Recursively get functions that can modify a predicate
      * @param array $array
      * @access protected
-     * @return void
+     * @return array
      */
     protected function getPredicateFunctions($array)
     {
@@ -589,110 +526,8 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         return $value;
     }
 
-//        // this is the javascript function that will do most of the work. Based on the viewspec, it will
-//        // query the DB and follow joins (recursively) to build the view.
-//        $fn_doJoin = new MongoCode("function (source,joins,dest) {
-////         uncomment the following two lines if you need debug in the output...
-////                 if (!dest.log)
-////                     dest.log = new Array();
-//        if (joins.followSequence)
-//        {
-//            // add any rdf:_x style properties in the source to the joins array,
-//            // up to rdf:_1000 (unless a max is specified in the spec)
-//            var max = (joins.followSequence.maxJoins) ? joins.followSequence.maxJoins : 1000;
-//            for (var i=0;i<max;i++)
-//            {
-//                if (source['rdf:_'+(i+1)])
-//                {
-//                    joins['rdf:_'+(i+1)] = joins.followSequence;
-//                }
-//                else
-//                {
-//                    // no more sequence properties
-//                    break;
-//                }
-//            }
-//        }
-//
-//        for (predicate in joins) {
-//            ruleset = joins[predicate];
-//            if (ruleset['include'])
-//            {
-//                properties = ruleset['include'];
-//            }
-//            else
-//            {
-//                properties = null;
-//            }
-//
-//            if (source[predicate])
-//            {
-//                // todo: perhaps we can get better performance by detecting whether or not
-//                // the uri to join on is already in the impact index, and if so not attempting
-//                // to join on it. However, we need to think about different combinations of
-//                // nested joins in different points of the view spec and see if this would
-//                // complicate things. Needs a unit test or two.
-//                joinUris = new Array();
-//                if (source[predicate]['".VALUE_URI."'])
-//                {
-//                    // single value for join
-//                    joinUris.push({"._ID_RESOURCE.":source[predicate]['".VALUE_URI."'],"._ID_CONTEXT.":'$contextAlias'});
-//                }
-//                else if(predicate == '_id')
-//                {
-//                    // single value for join
-//                    joinUris.push({"._ID_RESOURCE.":source[predicate]['"._ID_RESOURCE."'],"._ID_CONTEXT.":'$contextAlias'});
-//                }
-//                else
-//                {
-//                    // multiple values for join
-//                    for each (var v in source[predicate])
-//                    {
-//                        joinUris.push({"._ID_RESOURCE.":v['".VALUE_URI."'],"._ID_CONTEXT.":'$contextAlias'});
-//                    }
-//                }
-//                recursiveJoins = new Array();
-//                var collection = (ruleset.from) ? db.getCollection(ruleset.from) : db.getCollection('$from');
-//                for( var c = collection.find({'_id':{\$in:joinUris}}); c.hasNext(); ) {
-//                    linkMatch = c.next();
-//
-//                    if (!dest['"._IMPACT_INDEX."'])
-//                      dest['"._IMPACT_INDEX."'] = new Array();
-//
-//                    // add linkMatch if there isn't already a graph for it in the dest obj
-//                    if (dest['"._IMPACT_INDEX."'].indexOf(linkMatch['_id'])==-1)
-//                    {
-//                        dest['"._IMPACT_INDEX."'].push(linkMatch['_id']);
-//                    }
-//
-//                    addFields(linkMatch,ruleset,dest);
-//
-//                    if (ruleset.joins)
-//                    {
-//                        // recursive joins must be done after this cursor has completed, otherwise things get messy
-//                        recursiveJoins.push({data: linkMatch, ruleset: ruleset.joins});
-//                    }
-//                }
-//                if (recursiveJoins.length>0)
-//                {
-//                    for each (var r in recursiveJoins)
-//                    {
-//                        fn_doJoin(r.data,r.ruleset,dest);
-//                    }
-//                }
-//            }
-//        }
-//        return;
-//        }");
-
     protected function doJoins($source,$joins,&$dest,$from,$contextAlias)
     {
-//        // this is the javascript function that will do most of the work. Based on the viewspec, it will
-//        // query the DB and follow joins (recursively) to build the view.
-//        $fn_doJoin = new MongoCode("function (source,joins,dest) {
-////         uncomment the following two lines if you need debug in the output...
-////                 if (!dest.log)
-////                     dest.log = new Array();
         $this->expandSequence($joins,$source);
         foreach ($joins as $predicate=>$ruleset)
         {
@@ -734,12 +569,18 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
 
                     $this->addFields($linkMatch,$ruleset,$dest);
 
+                    if (isset($ruleset['counts']))
+                    {
+                        $this->doCounts($linkMatch,$ruleset['counts'],$dest);
+                    }
+
                     if (isset($ruleset['joins']))
                     {
                         // recursive joins must be done after this cursor has completed, otherwise things get messy
                         $recursiveJoins[] = array('data'=>$linkMatch, 'ruleset'=>$ruleset['joins']);
                     }
                 }
+
                 if (count($recursiveJoins)>0)
                 {
                     foreach ($recursiveJoins as $r)
@@ -748,6 +589,73 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Add counts to $dest by counting what is in $source according to $countSpec
+     * @param $source
+     * @param $countSpec
+     * @param $dest
+     */
+    protected function doCounts($source, $countSpec, &$dest)
+    {
+        // process count aggregate function
+        foreach ($countSpec as $c)
+        {
+            $fieldName = $c['fieldName'];
+            $applyRegex = (isset($c['regex'])) ? isset($c['regex']) : null;
+            $count = 0;
+            // just count predicates at current location
+            if (isset($source[$c['property']]))
+            {
+                if (isset($source[$c['property']][VALUE_URI]) || isset($source[$c['property']][VALUE_LITERAL]))
+                {
+                    if ($applyRegex != null)
+                    {
+                        $count = $this->applyRegexToValue($c['regex'],$source[$c['property']]);
+                    } else {
+                        $count = 1;
+                    }
+                }
+                else
+                {
+                    if ($applyRegex != null)
+                    {
+                        foreach ($source[$c['property']] as $value)
+                        {
+                            if ($this->applyRegexToValue($c['regex'],$value)) {
+                                $count++;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        $count = count($source[$c['property']]);
+                    }
+                }
+            }
+            if (!isset($dest[$fieldName])) $dest[$fieldName] = 0;
+            $dest[$fieldName] += $count;
+        }
+    }
+
+    /**
+     * Apply a regex to the RDF property value defined in $value
+     * @param $regex
+     * @param $value
+     * @return int
+     */
+    private function applyRegexToValue($regex, $value)
+    {
+        if (isset($value[VALUE_URI]) || isset($value[VALUE_LITERAL]))
+        {
+            $v = ($value[VALUE_URI]) ? $value[VALUE_URI] : $value[VALUE_LITERAL];
+            return preg_match($regex, $v);
+        }
+        else
+        {
+            throw new TripodException("Was expecting either VALUE_URI or VALUE_LITERAL when applying regex to value - possible data corruption with: ".var_export($value,true));
         }
     }
 }

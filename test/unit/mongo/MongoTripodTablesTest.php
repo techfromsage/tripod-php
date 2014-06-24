@@ -139,6 +139,147 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 //        $mockTables->update($queuedItem);
 //    }
 
+    public function testGenerateTableRowsWithCounts()
+    {
+        $this->tripodTables->generateTableRows("t_source_count");
+
+        $t1 = $this->tripodTables->getTableRows("t_source_count");
+
+        // expecting two rows
+        $this->assertEquals(count($t1['results']),2);
+        $result = $t1['results'][0];
+
+        // check out the columns
+        $this->assertArrayHasKey('type',$result,"Result does not contain type");
+        $this->assertArrayHasKey('source_count',$result,"Result does not contain source_count");
+        $this->assertEquals(1,$result['source_count']);
+        $this->assertEquals(0,$result['random_predicate_count']);
+        $this->assertArrayHasKey('isbn13',$result,"Result does not contain isbn13");
+    }
+
+    public function testGenerateTableRowsWithCountUpdateAndRequery()
+    {
+        $this->tripodTables->generateTableRows("t_source_count");
+
+        $t1 = $this->tripodTables->getTableRows("t_source_count");
+
+        // expecting two rows
+        $this->assertEquals(count($t1['results']),2);
+        $result = $t1['results'][0];
+
+        // check out the columns
+        $this->assertArrayHasKey('type',$result,"Result does not contain type");
+        $this->assertArrayHasKey('source_count',$result,"Result does not contain source_count");
+        $this->assertEquals(1,$result['source_count']);
+        $this->assertArrayHasKey('isbn13',$result,"Result does not contain isbn13");
+
+        $subject = $result['_id']['r'];
+
+        $subjectGraph = $this->tripod->describeResource($subject);
+        $newGraph = new ExtendedGraph();
+        $newGraph->add_graph($subjectGraph);
+        $newGraph->add_resource_triple($subject,'http://purl.org/dc/terms/isVersionOf','http://example.com');
+
+        $this->tripod->saveChanges($subjectGraph,$newGraph);
+
+        $t2 = $this->tripodTables->getTableRows("t_source_count");
+
+        $result = null;
+        $this->assertEquals(count($t2['results']),2);
+        foreach ($t2['results'] as $r)
+        {
+            if ($r['_id']['r'] = $subject) {
+                $result = $r;
+            }
+        }
+
+        $this->assertNotNull($result,"Cound not find table row for $subject");
+        // check out the columns
+        $this->assertArrayHasKey('type',$result,"Result does not contain type");
+        $this->assertArrayHasKey('source_count',$result,"Result does not contain source_count");
+        $this->assertEquals(2,$result['source_count']);
+        $this->assertArrayHasKey('isbn13',$result,"Result does not contain isbn13");
+    }
+
+    public function testGenerateTableRowsWithCountAndRegexUpdateAndRequery()
+    {
+        $this->tripodTables->generateTableRows("t_source_count_regex");
+
+        $t1 = $this->tripodTables->getTableRows("t_source_count_regex");
+
+        // expecting two rows
+        $this->assertEquals(count($t1['results']),2);
+        $result = $t1['results'][0];
+
+        // check out the columns
+        $this->assertArrayHasKey('type',$result,"Result does not contain type");
+        $this->assertArrayHasKey('source_count',$result,"Result does not contain source_count");
+        $this->assertEquals(1,$result['source_count']);
+        $this->assertEquals(0,$result['regex_source_count']);
+        $this->assertArrayHasKey('isbn13',$result,"Result does not contain isbn13");
+
+        $subject = $result['_id']['r'];
+
+        $subjectGraph = $this->tripod->describeResource($subject);
+        $newGraph = new ExtendedGraph();
+        $newGraph->add_graph($subjectGraph);
+        $newGraph->add_resource_triple($subject,'http://purl.org/dc/terms/isVersionOf','http://foobarbaz.com');
+        $newGraph->add_resource_triple($subject,'http://purl.org/dc/terms/isVersionOf','http://example.com/foobarbaz');
+
+        $this->tripod->saveChanges($subjectGraph,$newGraph);
+
+        $t2 = $this->tripodTables->getTableRows("t_source_count_regex");
+
+        $result = null;
+        $this->assertEquals(count($t2['results']),2);
+        foreach ($t2['results'] as $r)
+        {
+            if ($r['_id']['r'] = $subject) {
+                $result = $r;
+            }
+        }
+
+        $this->assertNotNull($result,"Cound not find table row for $subject");
+        // check out the columns
+        $this->assertArrayHasKey('type',$result,"Result does not contain type");
+        $this->assertArrayHasKey('source_count',$result,"Result does not contain source_count");
+        $this->assertEquals(3,$result['source_count']);
+        $this->assertEquals(2,$result['regex_source_count']);
+        $this->assertArrayHasKey('isbn13',$result,"Result does not contain isbn13");
+    }
+
+    public function testGenerateTableRowsWithCountOnJoinAndRegexUpdateAndRequery()
+    {
+        $this->tripodTables->generateTableRows("t_join_source_count_regex");
+
+        $t1 = $this->tripodTables->getTableRows("t_join_source_count_regex",array("_id.r"=>"http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2"));
+
+        // expecting two rows
+        $this->assertEquals(count($t1['results']),1);
+        $result = $t1['results'][0];
+
+        // check out the columns
+        $this->assertArrayHasKey('titles_count',$result,"Result does not contain titles_count");
+        $this->assertEquals(3,$result['titles_count']);
+
+        // add a title to f340...
+        $subjectGraph = $this->tripod->describeResource("http://jacs3.dataincubator.org/f340");
+        $newGraph = new ExtendedGraph();
+        $newGraph->add_graph($subjectGraph);
+        $newGraph->add_resource_triple("http://jacs3.dataincubator.org/f340",'http://purl.org/dc/terms/title','Another title');
+
+        $this->tripod->saveChanges($subjectGraph,$newGraph);
+
+        $t2 = $this->tripodTables->getTableRows("t_join_source_count_regex",array("_id.r"=>"http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2"));
+
+        $this->assertEquals(count($t2['results']),1);
+        $result = $t2['results'][0];
+
+        // check out the columns
+        $this->assertArrayHasKey('titles_count',$result,"Result does not contain titles_count");
+        $this->assertEquals(4,$result['titles_count']);
+    }
+
     public function testUpdateWillDeleteItem()
     {
         $mockTables = $this->getMock('MongoTripodTables', array('deleteTableRowsForResource','generateTableRowsForResource'), $this->tablesConstParams);
