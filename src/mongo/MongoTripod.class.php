@@ -98,7 +98,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
 
         $this->config = $this->getMongoTripodConfigInstance();
 
-        $this->labeller = new MongoTripodLabeller();
+        $this->labeller = $this->getLabeller();
 
         // default context
         $this->defaultContext = $opts['defaultContext'];
@@ -1812,6 +1812,15 @@ class MongoTripod extends MongoTripodBase implements ITripod
     protected function getMongoTripodConfigInstance()
     {
         return MongoTripodConfig::getInstance();
+    }
+
+    /**
+     * For mocking
+     * @return MongoTripodLabeller
+     */
+    protected function getLabeller()
+    {
+        return new MongoTripodLabeller();
     }
 
 }
