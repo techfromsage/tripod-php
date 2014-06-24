@@ -96,7 +96,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
         $this->collectionName = $collectionName;
         $this->dbName = $dbName;
 
-        $this->config = MongoTripodConfig::getInstance();
+        $this->config = $this->getMongoTripodConfigInstance();
 
         $this->labeller = new MongoTripodLabeller();
 
@@ -1803,6 +1803,15 @@ class MongoTripod extends MongoTripodBase implements ITripod
     protected function getMongoDate()
     {
         return new MongoDate();
+    }
+
+    /**
+     * For mocking
+     * @return MongoTripodConfig
+     */
+    protected function getMongoTripodConfigInstance()
+    {
+        return MongoTripodConfig::getInstance();
     }
 
 }
