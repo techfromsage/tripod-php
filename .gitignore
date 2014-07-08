@@ -2,3 +2,5 @@
 composer.phar
 output
 vendor
+
+atlassian-ide-plugin.xml

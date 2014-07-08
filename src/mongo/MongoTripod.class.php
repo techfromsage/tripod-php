@@ -108,7 +108,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
 
         // connect
         /* @var $m MongoClient */
-        $connectionOptions = array('timeout'=>20000); // set a 20 second timeout on establishing a connection
+        $connectionOptions = array('connectTimeoutMS'=>20000); // set a 20 second timeout on establishing a connection
         if($this->config->isReplicaSet($dbName)) {
             $connectionOptions['replicaSet'] = $this->config->getReplicaSetName($dbName);
         }
