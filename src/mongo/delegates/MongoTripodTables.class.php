@@ -386,7 +386,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
                 {
                     if($f['value'] == '_link_')
                     {
-                        $dest[$f['fieldName']] = $this->labeller->qname_to_alias($dest['_id']['r']);
+                        $dest[$f['fieldName']] = $this->labeller->qname_to_alias($source['_id']['r']);
                     }
                 }
             }

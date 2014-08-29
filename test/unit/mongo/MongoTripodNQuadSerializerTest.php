@@ -117,6 +117,10 @@ class MongoTripodNQuadSerializerTest extends MongoTripodTestBase
 <tenantUsers:s2123> <http://xmlns.com/foaf/0.1/surname> \"Potter\" <http://talisaspire.com/> .
 <tenantUsers:s2123> <http://lists.talis.com/schema/temp#last_login> \"2014-03-25T15:07:12+00:00\" <http://talisaspire.com/> .
 <tenantUsers:s2123> <http://lists.talis.com/schema/temp#last_login_invalid> \"invalid\" <http://talisaspire.com/> .
+<http://basedata.com/b/foo1234> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://purl.org/ontology/bibo/Document> <http://talisaspire.com/> .
+<http://basedata.com/b/foo1234> <http://purl.org/dc/terms/creator> <http://schemas.talis.com/2005/user/schema#10101> <http://talisaspire.com/> .
+<http://schemas.talis.com/2005/user/schema#10101> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> <http://talisaspire.com/> .
+<http://schemas.talis.com/2005/user/schema#10101> <http://xmlns.com/foaf/0.1/name> \"A. Person\" <http://talisaspire.com/> .
 ";
         
         $serializer = new MongoTripodNQuadSerializer();

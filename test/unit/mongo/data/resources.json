@@ -406,6 +406,40 @@
         "temp:last_login_invalid" : {
             "l" : "invalid"
         }
+    },
+    {
+        "_id":
+        {
+            "r":"baseData:foo1234",
+            "c":"baseData:DefaultGraph"
+        },
+        "rdf:type":
+            [
+                {
+                    "u":"bibo:Document"
+                }
+            ],
+        "dct:creator" : {
+            "u":"user:10101"
+        }
+
+    },
+    {
+        "_id":
+        {
+            "r":"user:10101",
+            "c":"user:DefaultGraph"
+        },
+        "rdf:type":
+            [
+                {
+                    "u":"foaf:Person"
+                }
+            ],
+        "foaf:name" : {
+            "l":"A. Person"
+        }
+
     }
 
 ]

@@ -474,6 +474,28 @@
                     "value": "_link_"
                 }
             ]
+        },
+        {
+            "_id": "t_join_link",
+            "type":"bibo:Document",
+            "from":"CBD_testing",
+            "fields" : [
+                {
+                    "fieldName":"bookLink",
+                    "predicates":[""],
+                    "value": "_link_"
+                }
+            ],
+            "joins" : {
+                "dct:creator" : {
+                    "fields" : [
+                        {
+                            "fieldName":"authorLink",
+                            "predicates":["foaf:name"]
+                        }
+                    ]
+                }
+            }
         }
     ],
     "transaction_log" : {
