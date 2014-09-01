@@ -252,7 +252,8 @@ abstract class MongoTripodBase
      * Adds an _id object (or array of _id objects) to the target document's impact index
      *
      * @param array $id
-     * @param $dest
+     * @param array &$target
+     * @throws InvalidArgumentException
      */
     protected function addIdToImpactIndex(array $id, &$target)
     {
