@@ -484,6 +484,14 @@
                     "fieldName":"bookLink",
                     "predicates":[""],
                     "value": "_link_"
+                },
+                {
+                    "fieldName":"authorUri",
+                    "predicates":["dct:creator"]
+                },
+                {
+                    "fieldName" : "workUri",
+                    "predicates" : ["dct:isVersionOf"]
                 }
             ],
             "joins" : {
@@ -491,7 +499,32 @@
                     "fields" : [
                         {
                             "fieldName":"authorLink",
-                            "predicates":["foaf:name"]
+                            "predicates" : [""],
+                            "value" : "_link_"
+                        },
+                        {
+                            "fieldName":"knowsUri",
+                            "predicates":["foaf:knows"]
+                        }
+                    ],
+                    "joins" : {
+                        "foaf:knows" : {
+                            "fields" : [
+                                {
+                                    "fieldName" : "knowsLink",
+                                    "predicates" : [""],
+                                    "value" : "_link_"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "dct:isVersionOf" : {
+                    "fields" :[
+                        {
+                            "fieldName" : "workLink",
+                            "predicates" : [""],
+                            "value" : "_link_"
                         }
                     ]
                 }

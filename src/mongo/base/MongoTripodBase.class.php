@@ -248,6 +248,39 @@ abstract class MongoTripodBase
         }
     }
 
+    /**
+     * Adds an _id object (or array of _id objects) to the target document's impact index
+     *
+     * @param array $id
+     * @param $dest
+     */
+    protected function addIdToImpactIndex(array $id, &$target)
+    {
+        if(isset($id[_ID_RESOURCE]))
+        {
+            // Ensure that our id is curie'd
+            $id[_ID_RESOURCE] = $this->labeller->uri_to_alias($id[_ID_RESOURCE]);
+            if (!isset($target[_IMPACT_INDEX]))
+            {
+                $target[_IMPACT_INDEX] = array();
+            }
+            if(!in_array($id, $target[_IMPACT_INDEX]))
+            {
+                $target[_IMPACT_INDEX][] = $id;
+            }
+        }
+        else // Assume this is an array of ids
+        {
+            foreach($id as $i)
+            {
+                if(!isset($i[_ID_RESOURCE]))
+                {
+                    throw new InvalidArgumentException("Invalid id format");
+                }
+                $this->addIdToImpactIndex($i, $target);
+            }
+        }
+    }
 }
 
 final class NoStat implements ITripodStat

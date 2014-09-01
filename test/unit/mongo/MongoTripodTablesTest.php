@@ -653,4 +653,70 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         // Lowercasing a mongodate object should be the same as running a __toString() on the date object
         $this->assertEquals($rows['results'][0]['mongoDate']->__toString(), $rows['results'][0]['lowercaseDate']);
     }
+
+    /**
+     * Test that _link_ modifier is derived from the joined resource id, rather than base
+     * @access public
+     * @return void
+     */
+    public function testJoinLinkValueIsForJoinedResource()
+    {
+        $this->tripodTables->generateTableRows("t_join_link");
+        $rows = $this->tripodTables->getTableRows("t_join_link",array("_id.r"=>"baseData:foo1234"));
+        $this->assertEquals(1, $rows['head']['count']);
+        $this->assertArrayHasKey('authorLink', $rows['results'][0]);
+        $this->assertArrayHasKey('knowsLink', $rows['results'][0]);
+        $this->assertArrayHasKey('workLink', $rows['results'][0]);
+        // Check bookLink values
+        $this->assertEquals("baseData:foo1234", $rows['results'][0]['_id']['r']);
+        $this->assertEquals("http://basedata.com/b/foo1234", $rows['results'][0]['bookLink']);
+
+        // Check authorLink values
+        $this->assertEquals("user:10101", $rows['results'][0]['authorUri']);
+        $this->assertEquals("http://schemas.talis.com/2005/user/schema#10101", $rows['results'][0]['authorLink']);
+
+        // Check knowsLink values
+        $this->assertEquals("user:10102", $rows['results'][0]['knowsUri']);
+        $this->assertEquals("http://schemas.talis.com/2005/user/schema#10102", $rows['results'][0]['knowsLink']);
+
+        // Check workLink values
+        $this->assertEquals("http://talisaspire.com/works/4d101f63c10a6", $rows['results'][0]['workUri']); // Already a fq URI
+        $this->assertEquals("http://talisaspire.com/works/4d101f63c10a6", $rows['results'][0]['workLink']);
+    }
+
+    /**
+     * Test to ensure that impact index contains joined ids for resources that do not yet exist in the database (i.e.
+     * allow open world model)
+     * @access public
+     * @return void
+     */
+    public function testImpactIndexEntriesDoNotRequireJoinsToMatchData()
+    {
+        $this->tripodTables->generateTableRows("t_join_link");
+        $rows = $this->tripodTables->getTableRows("t_join_link",array("_id.r"=>"baseData:bar1234"));
+        $this->assertEquals(1, $rows['head']['count']);
+        $this->assertEquals("user:10103", $rows['results'][0]['authorUri']);
+        // Author link should not appear because resource has not yet been created
+        $this->assertArrayNotHasKey('authorLink', $rows['results'][0]);
+
+        $uri = 'http://schemas.talis.com/2005/user/schema#10103';
+        // Confirm this user does not exist
+        $this->assertFalse($this->tripod->describeResource($uri)->has_triples_about($uri));
+
+        $g = new MongoGraph();
+        $g->add_resource_triple($uri, $g->qname_to_uri("rdf:type"), $g->qname_to_uri("foaf:Person"));
+        $g->add_literal_triple($uri, $g->qname_to_uri("foaf:name"), "A. Nonymous");
+        $this->tripod->saveChanges(new MongoGraph(), $g,"http://talisaspire.com/", "This resource didn't exist at join time");
+
+        $userGraph = $this->tripod->describeResource($uri);
+
+        $this->assertTrue($userGraph->has_triples_about($uri), "new entity we created was not saved");
+
+        // Get our table rows again
+        $rows = $this->tripodTables->getTableRows("t_join_link",array("_id.r"=>"baseData:bar1234"));
+
+        // authorLink should now be populated
+        $this->assertArrayHasKey('authorLink', $rows['results'][0]);
+        $this->assertEquals($uri, $rows['results'][0]['authorLink']);
+    }
 }
