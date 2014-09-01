@@ -690,7 +690,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
      * @access public
      * @return void
      */
-    public function testImpactIndexEntriesDoNotRequireJoinsToMatchData()
+    public function testPreviouslyUnavailableDataBecomesPresentAndTriggersTableRegen()
     {
         $this->tripodTables->generateTableRows("t_join_link");
         $rows = $this->tripodTables->getTableRows("t_join_link",array("_id.r"=>"baseData:bar1234"));
