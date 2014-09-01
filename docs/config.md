@@ -178,48 +178,90 @@ Specification keyword reference
 
 Each of the specifications above are built from a specification language defined by the keywords below
 
-### _id
+<dl>
+<dt>
+_id
+</dt>
+<dt>_version</dt>
 
-### _version
+<dt>from</dt>
 
-### from
+<dt>type</dt>
 
-### type
+<dt>include</dt>
+<dt>joins</dt>
 
-### include
+<dt>maxJoins</dt>
 
-### joins 
+<dt>followSequence</dt>
 
-### maxJoins
+<dt>predicates</dt>
 
-### followSequence
+<dt>limit</dt>
 
-### predicates
+<dt>condition</dt>
 
-### limit
+<dt>counts</dt>
 
-### condition
+<dl><dt>counts / property</dt></dl>
 
-### counts
+<dl><dt>counts / regex</dt></dl>
 
-#### counts / property
+<dt>filter</dt>
 
-#### counts / regex
+<dl><dt>filter/condition</dt></dl>
 
-### filter
+<dt>ttl</dt>
 
-#### filter/condition
+<dt>indicies</dt>
 
-### ttl
+<dt>ensureIndexes</dt>
 
-### indicies
+<dt>lowercase</dt>
 
-### ensureIndexes
+<dt>glue</dt>
 
-### lowercase
-
-### glue
-
-### value
-
-`"value" : "_link_"`
+<dt>value</dt>
+<dd>
+"value" defines a function to run on the property data.  Currently defined value functions:
+<dl>
+<dt>
+"value" : "_link_"
+</dt>
+<dd>Creates a fully qualified URI from the alias value of the _current_ resource.  E.g.:
+```javascript
+{
+    "id" : "t_foo",
+    "from" : "fooCollection",
+    "fields" : [
+       {
+            "fieldName" : "fooLink",
+            "predicates" : [""],
+            "value" : "_link_"
+       }
+    ]
+}
+```
+would give the fully qualified URI of the base resource in field ``` fooLink ``` .  In a join:
+```javascript
+{
+    "id" : "t_foo",
+    "from" : "fooCollection",
+    "joins" : {
+        "foo:bar" :  {
+            "from" : "barCollection",
+            "fields" : [
+               {
+                    "fieldName" : "barLink",
+                    "predicates" : [""],
+                    "value" : "_link_"
+               }]
+        }
+    }
+}
+```
+\_link\_ would provide the fully qualified URI of the resource joined at ``` foo:bar ``` in the field ``` barLink ```
+</dd>
+</dl>
+</dd>
+</dl>
