@@ -884,7 +884,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
     public function testGetAllTypesInSpecifications()
     {
         $types = $this->tripodConfig->getAllTypesInSpecifications();
-        $this->assertEquals(8, count($types), "There should be 7 types based on the configured view, table and search specifications in config.json");
+        $this->assertEquals(8, count($types), "There should be 8 types based on the configured view, table and search specifications in config.json");
         $expectedValues = array(
             "acorn:Resource",
             "acorn:Work",
