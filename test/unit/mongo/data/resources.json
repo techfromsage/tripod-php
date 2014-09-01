@@ -410,7 +410,8 @@
     {
         "_id":
         {
-            "r":"baseData:foo1234"
+            "r":"baseData:foo1234",
+            "c":"http://talisaspire.com/"
         },
         "rdf:type":
             [
@@ -432,7 +433,8 @@
     {
         "_id":
         {
-            "r":"user:10101"
+            "r":"user:10101",
+            "c":"http://talisaspire.com/"
         },
         "rdf:type":
             [
@@ -451,7 +453,8 @@
     {
         "_id":
         {
-            "r":"user:10102"
+            "r":"user:10102",
+            "c":"http://talisaspire.com/"
         },
         "rdf:type":
             [
@@ -467,7 +470,8 @@
     {
         "_id":
         {
-            "r":"baseData:bar1234"
+            "r":"baseData:bar1234",
+            "c":"http://talisaspire.com/"
         },
         "rdf:type":
             [
