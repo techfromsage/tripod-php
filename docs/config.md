@@ -178,57 +178,109 @@ Specification keyword reference
 
 Each of the specifications above are built from a specification language defined by the keywords below
 
-<dl>
-<dt>
-_id
-</dt>
-<dt>_version</dt>
+### _id
 
-<dt>from</dt>
+### _version
 
-<dt>type</dt>
+### from
 
-<dt>include</dt>
-<dt>joins</dt>
+### type
 
-<dt>maxJoins</dt>
+If _type_ is defined, will limit the resources to those that have the specified rdf:type.  The value can be a curie
+string or array of curie strings.
 
-<dt>followSequence</dt>
+ex.
+```javascript
+{
+    "_id" : "v_people",
+    "type" : ["foaf:Agent", "foaf:Person"],
+    "from" : "CBD_people"
+}
 
-<dt>predicates</dt>
+{
+    "_id" : "t_books",
+    "type" : "bibo:Books",
+    "from" : "CBD_resources"
+}
 
-<dt>limit</dt>
+```
+etc.
 
-<dt>condition</dt>
+### include
 
-<dt>counts</dt>
+### joins
 
-<dl><dt>counts / property</dt></dl>
+joins the current resource to another.  The keys of the "joins" object correspond with the predicate whose object URI you
+ wish to join on.  The "right join" will be on the \_id property in the joined resource.  You can specify the collection
+ to join on with the "from" property (defaults to the current collection).
 
-<dl><dt>counts / regex</dt></dl>
+Note: you can *only* join a URI object (or \_id) to an \_id.
 
-<dt>filter</dt>
+ Example:
+```javascript
+{
+    "_id" : "t_people",
+    "type" : "foaf:Person",
+    "from" : "CBD_people",
+    "fields" : [
+        {
+            "fieldName" : "name",
+            "predicates" : ["foaf:name"]
+        }
+    ],
+    "joins" : {
+        "foaf:knows" : [
+            {
+                "fieldName" : "knows",
+                "predicates" : ["foaf:name"]
+            }
+        ]
 
-<dl><dt>filter/condition</dt></dl>
+    }
+}
 
-<dt>ttl</dt>
+```
 
-<dt>indicies</dt>
+### maxJoins
 
-<dt>ensureIndexes</dt>
+### followSequence
 
-<dt>lowercase</dt>
+### predicates
 
-<dt>glue</dt>
+An array of predicates to use in the current action.  There are a few functions that work with "predicates", as well,
+that do post processing on the results, such as "lowercase" and "join".
 
-<dt>value</dt>
-<dd>
-"value" defines a function to run on the property data.  Currently defined value functions:
-<dl>
-<dt>
-"value" : "_link_"
-</dt>
-<dd>Creates a fully qualified URI from the alias value of the _current_ resource.  E.g.:
+### limit
+
+### condition
+
+### counts
+
+### counts / property
+
+### counts / regex
+
+### filter
+
+### filter/condition
+
+### ttl
+
+### indicies
+
+### ensureIndexes
+
+### lowercase
+
+### glue
+
+### value
+
+"value" defines a function to run on the property data.
+
+### "value" : "_link_"
+
+Creates a fully qualified URI from the alias value of the _current_ resource.  E.g.:
 ```javascript
 {
     "id" : "t_foo",
@@ -261,7 +313,6 @@ would give the fully qualified URI of the base resource in field ``` fooLink ```
 }
 ```
 \_link\_ would provide the fully qualified URI of the resource joined at ``` foo:bar ``` in the field ``` barLink ```
-</dd>
-</dl>
-</dd>
-</dl>
+
+the "predicates" property is required, but ignored, so use an array with a single empty string: [""]
+
