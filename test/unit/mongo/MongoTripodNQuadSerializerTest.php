@@ -128,6 +128,8 @@ class MongoTripodNQuadSerializerTest extends MongoTripodTestBase
 <http://schemas.talis.com/2005/user/schema#10102> <http://xmlns.com/foaf/0.1/name> \"Anne O'ther\" <http://talisaspire.com/> .
 <http://basedata.com/b/bar1234> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://purl.org/ontology/bibo/Document> <http://talisaspire.com/> .
 <http://basedata.com/b/bar1234> <http://purl.org/dc/terms/creator> <http://schemas.talis.com/2005/user/schema#10103> <http://talisaspire.com/> .
+<http://basedata.com/b/bar1234> <http://purl.org/dc/terms/contributor> <http://schemas.talis.com/2005/user/schema#10101> <http://talisaspire.com/> .
+<http://basedata.com/b/bar1234> <http://purl.org/dc/terms/contributor> <http://schemas.talis.com/2005/user/schema#10102> <http://talisaspire.com/> .
 <http://basedata.com/b/bar1234> <http://purl.org/dc/terms/title> \"Another document title\" <http://talisaspire.com/> .
 ";
         

@@ -719,4 +719,21 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $this->assertArrayHasKey('authorLink', $rows['results'][0]);
         $this->assertEquals($uri, $rows['results'][0]['authorLink']);
     }
+
+    /**
+     * Ensure that an array of links is returned if there are multiple resources matched by the join
+     * @access public
+     * @return void
+     */
+    public function testLinkWorksOnRepeatingPredicatesForResource()
+    {
+        $this->tripodTables->generateTableRows("t_link_multiple");
+        $rows = $this->tripodTables->getTableRows("t_link_multiple",array("_id.r"=>"baseData:bar1234"));
+        $this->assertEquals(1, $rows['head']['count']);
+        $this->assertArrayHasKey('contributorLink', $rows['results'][0]);
+        $this->assertTrue(is_array($rows['results'][0]['contributorLink']));
+        $this->assertEquals(2, count($rows['results'][0]['contributorLink']));
+        $this->assertEquals('http://schemas.talis.com/2005/user/schema#10101', $rows['results'][0]['contributorLink'][0]);
+        $this->assertEquals('http://schemas.talis.com/2005/user/schema#10102', $rows['results'][0]['contributorLink'][1]);
+    }
 }

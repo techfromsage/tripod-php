@@ -482,6 +482,14 @@
         "dct:creator" : {
             "u":"user:10103"
         },
+        "dct:contributor" : [
+            {
+                "u" : "user:10101"
+            },
+            {
+                "u" : "user:10102"
+            }
+        ],
         "dct:title" : {
             "l" : "Another document title"
         }

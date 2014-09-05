@@ -529,6 +529,22 @@
                     ]
                 }
             }
+        },
+        {
+            "_id": "t_link_multiple",
+            "type":"bibo:Document",
+            "from":"CBD_testing",
+            "joins" : {
+                "dct:contributor" : {
+                    "fields" : [
+                        {
+                            "fieldName":"contributorLink",
+                            "predicates" : [""],
+                            "value" : "_link_"
+                        }
+                    ]
+                }
+            }
         }
     ],
     "transaction_log" : {
