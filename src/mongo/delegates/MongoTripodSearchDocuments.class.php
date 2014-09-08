@@ -93,8 +93,7 @@ class MongoTripodSearchDocuments extends MongoTripodBase
 
         // build the document
         $generatedDocument = array();
-        $generatedDocument[_IMPACT_INDEX] = array();
-        $generatedDocument[_IMPACT_INDEX][] = $_id;
+        $this->addIdToImpactIndex($_id, $generatedDocument);
 
         $_id['type'] = $specId;
         $generatedDocument['_id'] = $_id;
@@ -170,6 +169,8 @@ class MongoTripodSearchDocuments extends MongoTripodBase
                 $recursiveJoins = array();
                 $collection = (isset($rules['from'])) ? $this->db->selectCollection($rules['from']) : $this->db->selectCollection($from);
                 $cursor = $collection->find(array('_id'=>array('$in'=>$joinUris)));
+                // add to impact index
+                $this->addIdToImpactIndex($joinUris, $target);
                 while($cursor->hasNext()){
                     $linkMatch = $cursor->getNext();
 
@@ -183,14 +184,6 @@ class MongoTripodSearchDocuments extends MongoTripodBase
 
                     if(isset($rules['join'])){
                         $recursiveJoins[] = array('data'=> $linkMatch, 'ruleset'=> $rules['joins']);
-                    }
-
-                    // add to impact index
-                    if(!isset($target[_IMPACT_INDEX])){
-                        $target[_IMPACT_INDEX] = array();
-                    }
-                    if(!in_array($linkMatch['_id'], $target[_IMPACT_INDEX])){
-                        $target[_IMPACT_INDEX][] = $linkMatch['_id'];
                     }
                 }
 

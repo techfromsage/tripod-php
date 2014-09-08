@@ -406,6 +406,92 @@
         "temp:last_login_invalid" : {
             "l" : "invalid"
         }
-    }
+    },
+    {
+        "_id":
+        {
+            "r":"baseData:foo1234",
+            "c":"http://talisaspire.com/"
+        },
+        "rdf:type":
+            [
+                {
+                    "u":"bibo:Document"
+                }
+            ],
+        "dct:creator" : {
+            "u":"user:10101"
+        },
+        "dct:title" : {
+            "l" : "A document title"
+        },
+        "dct:isVersionOf" : {
+            "u" : "http://talisaspire.com/works/4d101f63c10a6"
+        }
 
+    },
+    {
+        "_id":
+        {
+            "r":"user:10101",
+            "c":"http://talisaspire.com/"
+        },
+        "rdf:type":
+            [
+                {
+                    "u":"foaf:Person"
+                }
+            ],
+        "foaf:name" : {
+            "l":"A. Person"
+        },
+        "foaf:knows" : {
+            "u" : "user:10102"
+        }
+
+    },
+    {
+        "_id":
+        {
+            "r":"user:10102",
+            "c":"http://talisaspire.com/"
+        },
+        "rdf:type":
+            [
+                {
+                    "u":"foaf:Person"
+                }
+            ],
+        "foaf:name" : {
+            "l":"Anne O'ther"
+        }
+
+    },
+    {
+        "_id":
+        {
+            "r":"baseData:bar1234",
+            "c":"http://talisaspire.com/"
+        },
+        "rdf:type":
+            [
+                {
+                    "u":"bibo:Document"
+                }
+            ],
+        "dct:creator" : {
+            "u":"user:10103"
+        },
+        "dct:contributor" : [
+            {
+                "u" : "user:10101"
+            },
+            {
+                "u" : "user:10102"
+            }
+        ],
+        "dct:title" : {
+            "l" : "Another document title"
+        }
+    }
 ]

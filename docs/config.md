@@ -186,9 +186,60 @@ Each of the specifications above are built from a specification language defined
 
 ### type
 
+If _type_ is defined, will limit the resources to those that have the specified rdf:type.  The value can be a curie
+string or array of curie strings.
+
+ex.
+```javascript
+{
+    "_id" : "v_people",
+    "type" : ["foaf:Agent", "foaf:Person"],
+    "from" : "CBD_people"
+}
+
+{
+    "_id" : "t_books",
+    "type" : "bibo:Books",
+    "from" : "CBD_resources"
+}
+
+```
+etc.
+
 ### include
 
-### joins 
+### joins
+
+joins the current resource to another.  The keys of the "joins" object correspond with the predicate whose object URI you
+ wish to join on.  The "right join" will be on the \_id property in the joined resource.  You can specify the collection
+ to join on with the "from" property (defaults to the current collection).
+
+Note: you can *only* join a URI object (or \_id) to an \_id.
+
+ Example:
+```javascript
+{
+    "_id" : "t_people",
+    "type" : "foaf:Person",
+    "from" : "CBD_people",
+    "fields" : [
+        {
+            "fieldName" : "name",
+            "predicates" : ["foaf:name"]
+        }
+    ],
+    "joins" : {
+        "foaf:knows" : [
+            {
+                "fieldName" : "knows",
+                "predicates" : ["foaf:name"]
+            }
+        ]
+
+    }
+}
+
+```
 
 ### maxJoins
 
@@ -196,19 +247,22 @@ Each of the specifications above are built from a specification language defined
 
 ### predicates
 
+An array of predicates to use in the current action.  There are a few functions that work with "predicates", as well,
+that do post processing on the results, such as "lowercase" and "join".
+
 ### limit
 
 ### condition
 
 ### counts
 
-#### counts / property
+### counts / property
 
-#### counts / regex
+### counts / regex
 
 ### filter
 
-#### filter/condition
+### filter/condition
 
 ### ttl
 
@@ -222,4 +276,43 @@ Each of the specifications above are built from a specification language defined
 
 ### value
 
-`"value" : "_link_"`
+"value" defines a function to run on the property data.
+
+### "value" : "_link_"
+
+Creates a fully qualified URI from the alias value of the _current_ resource.  E.g.:
+```javascript
+{
+    "id" : "t_foo",
+    "from" : "fooCollection",
+    "fields" : [
+       {
+            "fieldName" : "fooLink",
+            "predicates" : [""],
+            "value" : "_link_"
+       }
+    ]
+}
+```
+would give the fully qualified URI of the base resource in field ``` fooLink ``` .  In a join:
+```javascript
+{
+    "id" : "t_foo",
+    "from" : "fooCollection",
+    "joins" : {
+        "foo:bar" :  {
+            "from" : "barCollection",
+            "fields" : [
+               {
+                    "fieldName" : "barLink",
+                    "predicates" : [""],
+                    "value" : "_link_"
+               }]
+        }
+    }
+}
+```
+\_link\_ would provide the fully qualified URI of the resource joined at ``` foo:bar ``` in the field ``` barLink ```
+
+the "predicates" property is required, but ignored, so use an array with a single empty string: [""]
+

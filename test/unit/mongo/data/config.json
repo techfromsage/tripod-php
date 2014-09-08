@@ -474,6 +474,77 @@
                     "value": "_link_"
                 }
             ]
+        },
+        {
+            "_id": "t_join_link",
+            "type":"bibo:Document",
+            "from":"CBD_testing",
+            "fields" : [
+                {
+                    "fieldName":"bookLink",
+                    "predicates":[""],
+                    "value": "_link_"
+                },
+                {
+                    "fieldName":"authorUri",
+                    "predicates":["dct:creator"]
+                },
+                {
+                    "fieldName" : "workUri",
+                    "predicates" : ["dct:isVersionOf"]
+                }
+            ],
+            "joins" : {
+                "dct:creator" : {
+                    "fields" : [
+                        {
+                            "fieldName":"authorLink",
+                            "predicates" : [""],
+                            "value" : "_link_"
+                        },
+                        {
+                            "fieldName":"knowsUri",
+                            "predicates":["foaf:knows"]
+                        }
+                    ],
+                    "joins" : {
+                        "foaf:knows" : {
+                            "fields" : [
+                                {
+                                    "fieldName" : "knowsLink",
+                                    "predicates" : [""],
+                                    "value" : "_link_"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "dct:isVersionOf" : {
+                    "fields" :[
+                        {
+                            "fieldName" : "workLink",
+                            "predicates" : [""],
+                            "value" : "_link_"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "_id": "t_link_multiple",
+            "type":"bibo:Document",
+            "from":"CBD_testing",
+            "joins" : {
+                "dct:contributor" : {
+                    "fields" : [
+                        {
+                            "fieldName":"contributorLink",
+                            "predicates" : [""],
+                            "value" : "_link_"
+                        }
+                    ]
+                }
+            }
         }
     ],
     "transaction_log" : {

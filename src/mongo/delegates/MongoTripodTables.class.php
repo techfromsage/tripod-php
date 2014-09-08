@@ -304,7 +304,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
             $generatedRow = array("_id"=>array(_ID_RESOURCE=>$doc["_id"][_ID_RESOURCE],_ID_CONTEXT=>$doc["_id"][_ID_CONTEXT],_ID_TYPE=>$tableSpec['_id']));
 
             $value = array('_id'=>$doc['_id']); // everything must go in the value object todo: this is a hang over from map reduce days, engineer out once we have stability on new PHP method for M/R
-            $value[_IMPACT_INDEX] = array($doc['_id']); // need to add the doc to the impact index to be consistent with views/search etc. this is needed for discovering impacted operations
+            $this->addIdToImpactIndex($doc['_id'], $value); // need to add the doc to the impact index to be consistent with views/search etc. this is needed for discovering impacted operations
             $this->addFields($doc,$tableSpec,$value);
             if (isset($tableSpec['joins']))
             {
@@ -386,7 +386,17 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
                 {
                     if($f['value'] == '_link_')
                     {
-                        $dest[$f['fieldName']] = $this->labeller->qname_to_alias($dest['_id']['r']);
+                        // If value exists, set as array
+                        if(isset($dest[$f['fieldName']]))
+                        {
+                            if(!is_array($dest[$f['fieldName']]))
+                            {
+                                $dest[$f['fieldName']] = array($dest[$f['fieldName']]);
+                            }
+                            $dest[$f['fieldName']][] = $this->labeller->qname_to_alias($source['_id']['r']);
+                        } else {
+                            $dest[$f['fieldName']] = $this->labeller->qname_to_alias($source['_id']['r']);
+                        }
                     }
                 }
             }
@@ -561,11 +571,9 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
                 $recursiveJoins = array();
                 $collection = (isset($ruleset['from'])) ? $this->db->selectCollection($ruleset['from']) : $this->db->selectCollection($from);
                 $cursor = $collection->find(array('_id'=>array('$in'=>$joinUris)));
-                foreach($cursor as $linkMatch) {
-                    if (!isset($dest[_IMPACT_INDEX])) $dest[_IMPACT_INDEX] = array();
 
-                    // add linkMatch if there isn't already a graph for it in the dest obj
-                    $dest[_IMPACT_INDEX][] = $linkMatch['_id']; // todo: only add if doesn't already exist
+                $this->addIdToImpactIndex($joinUris, $dest);
+                foreach($cursor as $linkMatch) {
 
                     $this->addFields($linkMatch,$ruleset,$dest);
 
