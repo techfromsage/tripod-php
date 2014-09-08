@@ -105,8 +105,8 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
     /**
      * Returns the distinct values for a table column, optionally filtered by query
      *
-     * @param $tableSpecId
-     * @param $fieldName
+     * @param string $tableSpecId
+     * @param string $fieldName
      * @param array $filter
      * @return array
      */
