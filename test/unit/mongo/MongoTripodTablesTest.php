@@ -736,4 +736,52 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $this->assertEquals('http://schemas.talis.com/2005/user/schema#10101', $rows['results'][0]['contributorLink'][0]);
         $this->assertEquals('http://schemas.talis.com/2005/user/schema#10102', $rows['results'][0]['contributorLink'][1]);
     }
+
+    /**
+     * Return the distinct values of a table column
+     * @access public
+     * @return void
+     */
+    public function testDistinct()
+    {
+        // Get table rows
+        $table = 't_distinct';
+        $this->generateTableRows($table);
+        $rows = $this->tripodTables->getTableRows($table, array(), array(), 0, 0);
+        $this->assertEquals(7, $rows['head']['count']);
+        $results = $this->tripodTables->distinct($table, "value.title");
+
+        $this->assertArrayHasKey('head', $results);
+        $this->assertArrayHasKey('count', $results['head']);
+        $this->assertEquals(3, $results['head']['count']);
+        $this->assertArrayHasKey('results', $results);
+        $this->assertEquals(3, count($results['results']));
+        $this->assertContains('Physics 3rd Edition: Physics for Engineers and Scientists', $results['results']);
+        $this->assertContains('A document title', $results['results']);
+        $this->assertContains('Another document title', $results['results']);
+
+        // Supply a filter
+        $results = $this->tripodTables->distinct($table, "value.title", array('value.type'=>"bibo:Document"));
+        $this->assertArrayHasKey('head', $results);
+        $this->assertArrayHasKey('count', $results['head']);
+        $this->assertEquals(2, $results['head']['count']);
+        $this->assertArrayHasKey('results', $results);
+        $this->assertEquals(2, count($results['results']));
+        $this->assertNotContains('Physics 3rd Edition: Physics for Engineers and Scientists', $results['results']);
+        $this->assertContains('A document title', $results['results']);
+        $this->assertContains('Another document title', $results['results']);
+
+        $results = $this->tripodTables->distinct($table, "value.type");
+        $this->assertArrayHasKey('head', $results);
+        $this->assertArrayHasKey('count', $results['head']);
+        $this->assertEquals(4, $results['head']['count']);
+        $this->assertArrayHasKey('results', $results);
+        $this->assertEquals(4, count($results['results']));
+        $this->assertContains('acorn:Resource', $results['results']);
+        $this->assertContains('acorn:Work', $results['results']);
+        $this->assertContains('bibo:Book', $results['results']);
+        $this->assertContains('bibo:Document', $results['results']);
+
+
+    }
 }
