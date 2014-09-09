@@ -74,7 +74,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         $t = new Timer();
         $t->start();
 
-        $filter["_id.type"] = $tableSpecId;
+        $filter["_id." . _ID_TYPE] = $tableSpecId;
 
         $collection = $this->db->selectCollection(TABLE_ROWS_COLLECTION);
         $results = (empty($limit)) ? $collection->find($filter) : $collection->find($filter)->skip($offset)->limit($limit);
@@ -110,12 +110,12 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
      * @param array $filter
      * @return array
      */
-    public function distinct($tableSpecId, $fieldName, $filter=array())
+    public function distinct($tableSpecId, $fieldName, array $filter=array())
     {
         $t = new Timer();
         $t->start();
 
-        $filter["_id.type"] = $tableSpecId;
+        $filter['_id.'._ID_TYPE] = $tableSpecId;
 
         $collection = $this->db->selectCollection(TABLE_ROWS_COLLECTION);
         $results = $collection->distinct($fieldName, $filter);
@@ -149,7 +149,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         $tableSpec = MongoTripodConfig::getInstance()->getTableSpecification($tableId);
         if ($tableSpec==null)
         {
-            $this->debugLog("Cound not find a table specification for $tableId");
+            $this->debugLog("Could not find a table specification for $tableId");
             return;
         }
 
