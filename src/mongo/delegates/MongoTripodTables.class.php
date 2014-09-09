@@ -74,7 +74,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         $t = new Timer();
         $t->start();
 
-        $filter["_id.type"] = $tableSpecId;
+        $filter["_id." . _ID_TYPE] = $tableSpecId;
 
         $collection = $this->db->selectCollection(TABLE_ROWS_COLLECTION);
         $results = (empty($limit)) ? $collection->find($filter) : $collection->find($filter)->skip($offset)->limit($limit);
@@ -102,6 +102,37 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
             "results"=>$rows);
     }
 
+    /**
+     * Returns the distinct values for a table column, optionally filtered by query
+     *
+     * @param string $tableSpecId
+     * @param string $fieldName
+     * @param array $filter
+     * @return array
+     */
+    public function distinct($tableSpecId, $fieldName, array $filter=array())
+    {
+        $t = new Timer();
+        $t->start();
+
+        $filter['_id.'._ID_TYPE] = $tableSpecId;
+
+        $collection = $this->db->selectCollection(TABLE_ROWS_COLLECTION);
+        $results = $collection->distinct($fieldName, $filter);
+
+        $t->stop();
+        $query = array('distinct'=>$fieldName, 'filter'=>$filter);
+        $this->timingLog(MONGO_TABLE_ROWS, array('duration'=>$t->result(), 'query'=>$query, 'collection'=>TABLE_ROWS_COLLECTION));
+        $this->getStat()->timer(MONGO_TABLE_ROWS.".$tableSpecId",$t->result());
+
+        return array(
+            "head"=>array(
+                "count"=>count($results)
+            ),
+            "results"=>$results
+        );
+    }
+
     protected function deleteTableRowsForResource($resource, $context=null)
     {
         $resourceAlias = $this->labeller->uri_to_alias($resource);
@@ -118,7 +149,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         $tableSpec = MongoTripodConfig::getInstance()->getTableSpecification($tableId);
         if ($tableSpec==null)
         {
-            $this->debugLog("Cound not find a table specification for $tableId");
+            $this->debugLog("Could not find a table specification for $tableId");
             return;
         }
 

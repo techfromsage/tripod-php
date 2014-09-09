@@ -545,6 +545,27 @@
                     ]
                 }
             }
+        },
+        {
+            "_id": "t_distinct",
+            "type": ["bibo:Book","bibo:Document"],
+            "from": "CBD_testing",
+            "fields": [
+                {
+                    "fieldName": "title",
+                    "predicates": ["dct:title",
+                        {"join":{
+                            "glue":": ",
+                            "predicates":["searchterms:title"]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "fieldName": "type",
+                    "predicates": ["rdf:type"]
+                }
+            ]
         }
     ],
     "transaction_log" : {
