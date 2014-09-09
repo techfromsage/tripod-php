@@ -61,7 +61,7 @@ $tripod->getTripodTables()->getTableRows($tableSpec, array('value.baz'=>'foo:coe
         array(
             '_id' => array(
                 'r'=>'foo:5678',
-                'c'=>'http://example.com/
+                'c'=>'http://example.com/'
             ),
             'foo' => 'something else',
             'baz' => 'foo:coelacanth'
