@@ -781,7 +781,53 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $this->assertContains('acorn:Work', $results['results']);
         $this->assertContains('bibo:Book', $results['results']);
         $this->assertContains('bibo:Document', $results['results']);
+    }
 
+    /**
+     * Return no results for tablespec that doesn't exist
+     * @access public
+     * @return void
+     */
+    public function testDistinctOnTableSpecThatDoesNotExist()
+    {
+        $table = "t_nothing_to_see_here";
+        $rows = $this->tripodTables->getTableRows($table, array(), array(), 0, 0);
+        $this->assertEquals(0, $rows['head']['count']);
+        $results = $this->tripodTables->distinct($table, "value.foo");
+        $this->assertEquals(0, $results['head']['count']);
+        $this->assertArrayHasKey('results', $results);
+        $this->assertEmpty($results['results']);
+    }
 
+    /**
+     * Return no results for distinct on a fieldname that is not defined in tableSpec
+     * @access public
+     * @return void
+     */
+    public function testDistinctOnFieldNameThatIsNotInTableSpec()
+    {
+        // Get table rows
+        $table = 't_distinct';
+        $this->generateTableRows($table);
+        $results = $this->tripodTables->distinct($table, "value.foo");
+        $this->assertEquals(0, $results['head']['count']);
+        $this->assertArrayHasKey('results', $results);
+        $this->assertEmpty($results['results']);
+    }
+
+    /**
+     * Return no results for filters that match no table rows
+     * @access public
+     * @return void
+     */
+    public function testDistinctForFilterWithNoMatches()
+    {
+        // Get table rows
+        $table = 't_distinct';
+        $this->generateTableRows($table);
+        $results = $this->tripodTables->distinct($table, "value.title", array('value.foo'=>"wibble"));
+        $this->assertEquals(0, $results['head']['count']);
+        $this->assertArrayHasKey('results', $results);
+        $this->assertEmpty($results['results']);
     }
 }
