@@ -218,6 +218,17 @@ class MongoTripod extends MongoTripodBase implements ITripod
     }
 
     /**
+     * @param string $tableType
+     * @param string $fieldName
+     * @param array $filter
+     * @return array
+     */
+    public function getDistinctTableValues($tableType, $fieldName, array $filter = array())
+    {
+        return $this->tripod_tables->distinct($tableType, $fieldName, $filter);
+    }
+
+    /**
      * Get the current read preference
      *
      * @return array {@link http://www.php.net/manual/en/mongoclient.getreadpreference.php}
