@@ -223,9 +223,9 @@ class MongoTripod extends MongoTripodBase implements ITripod
      * @param array $filter
      * @return array
      */
-    public function getDistinctTableValues($tableType, $fieldName, array $filter = array())
+    public function getDistinctTableColumnValues($tableType, $fieldName, array $filter = array())
     {
-        return $this->tripod_tables->distinct($tableType, $fieldName, $filter);
+        return $this->getTripodTables()->distinct($tableType, $fieldName, $filter);
     }
 
     /**

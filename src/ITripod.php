@@ -28,7 +28,7 @@ interface ITripod
     public function getTableRows($tableType,$filter=array(),$sortBy=array(),$offset=0,$limit=10);
     public function generateTableRows($tableType,$resource=null,$context=null);
 
-    public function getDistinctTableValues($tableType, $fieldName, array $filter = array());
+    public function getDistinctTableColumnValues($tableType, $fieldName, array $filter = array());
 
     // aggregate, save and search functions
 

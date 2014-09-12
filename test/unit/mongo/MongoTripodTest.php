@@ -994,7 +994,7 @@ class MongoTripodTest extends MongoTripodTestBase
         $this->tripod->generateTableRows($table);
         $rows = $this->tripod->getTableRows($table, array(), array(), 0, 0);
         $this->assertEquals(7, $rows['head']['count']);
-        $results = $this->tripod->getDistinctTableValues($table, "title");
+        $results = $this->tripod->getDistinctTableColumnValues($table, "value.title");
 
         $this->assertArrayHasKey('head', $results);
         $this->assertArrayHasKey('count', $results['head']);
@@ -1006,7 +1006,7 @@ class MongoTripodTest extends MongoTripodTestBase
         $this->assertContains('Another document title', $results['results']);
 
         // Supply a filter
-        $results = $this->tripod->getDistinctTableValues($table, "title", array('value.type'=>"bibo:Document"));
+        $results = $this->tripod->getDistinctTableColumnValues($table, "value.title", array('value.type'=>"bibo:Document"));
         $this->assertArrayHasKey('head', $results);
         $this->assertArrayHasKey('count', $results['head']);
         $this->assertEquals(2, $results['head']['count']);
@@ -1016,7 +1016,7 @@ class MongoTripodTest extends MongoTripodTestBase
         $this->assertContains('A document title', $results['results']);
         $this->assertContains('Another document title', $results['results']);
 
-        $results = $this->tripod->getDistinctTableValues($table, "value.type");
+        $results = $this->tripod->getDistinctTableColumnValues($table, "value.type");
         $this->assertArrayHasKey('head', $results);
         $this->assertArrayHasKey('count', $results['head']);
         $this->assertEquals(4, $results['head']['count']);
@@ -1038,7 +1038,7 @@ class MongoTripodTest extends MongoTripodTestBase
         $table = "t_nothing_to_see_here";
         $rows = $this->tripod->getTableRows($table, array(), array(), 0, 0);
         $this->assertEquals(0, $rows['head']['count']);
-        $results = $this->tripod->getDistinctTableValues($table, "value.foo");
+        $results = $this->tripod->getDistinctTableColumnValues($table, "value.foo");
         $this->assertEquals(0, $results['head']['count']);
         $this->assertArrayHasKey('results', $results);
         $this->assertEmpty($results['results']);
@@ -1054,7 +1054,7 @@ class MongoTripodTest extends MongoTripodTestBase
         // Get table rows
         $table = 't_distinct';
         $this->tripod->generateTableRows($table);
-        $results = $this->tripod->getDistinctTableValues($table, "value.foo");
+        $results = $this->tripod->getDistinctTableColumnValues($table, "value.foo");
         $this->assertEquals(0, $results['head']['count']);
         $this->assertArrayHasKey('results', $results);
         $this->assertEmpty($results['results']);
@@ -1070,7 +1070,7 @@ class MongoTripodTest extends MongoTripodTestBase
         // Get table rows
         $table = 't_distinct';
         $this->tripod->generateTableRows($table);
-        $results = $this->tripod->getDistinctTableValues($table, "value.title", array('value.foo'=>"wibble"));
+        $results = $this->tripod->getDistinctTableColumnValues($table, "value.title", array('value.foo'=>"wibble"));
         $this->assertEquals(0, $results['head']['count']);
         $this->assertArrayHasKey('results', $results);
         $this->assertEmpty($results['results']);
