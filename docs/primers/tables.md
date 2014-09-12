@@ -20,7 +20,7 @@ $tripod = MongoTripod("CBD_resources", "resources", array("async"=>array(OP_VIEW
 $tableSpec = 't_resources';
 
 // This would return all table rows
-$tripod->getTripodTables()->getTableRows($tableSpec);
+$tripod->getTableRows($tableSpec);
 
 => array('head'=>array(
     'count'=>500,
@@ -50,7 +50,7 @@ $tripod->getTripodTables()->getTableRows($tableSpec);
 
 // You can filter the results with Mongo queries: note that the table data is actually stored in a 'value' object
 
-$tripod->getTripodTables()->getTableRows($tableSpec, array('value.baz'=>'foo:coelacanth'));
+$tripod->getTableRows($tableSpec, array('value.baz'=>'foo:coelacanth'));
 
 => array('head'=>array(
     'count'=>1,
@@ -71,7 +71,7 @@ $tripod->getTripodTables()->getTableRows($tableSpec, array('value.baz'=>'foo:coe
 
 // You can also get back the distinct values of a table column
 
-$tripod->getTripodTables()->distinct($tableSpec, 'values.foo');
+$tripod->getDistinctTableValues($tableSpec, 'value.foo');
 
 => array('head'=>array(
     'count'=>2
@@ -84,7 +84,7 @@ $tripod->getTripodTables()->distinct($tableSpec, 'values.foo');
 
 // Or a filtered subset
 
-$tripod->getTripodTables()->distinct($tableSpec, 'values.foo', array('value.baz'=>'foo:wibble'));
+$tripod->getDistinctTableValues($tableSpec, 'value.foo', array('value.baz'=>'foo:wibble'));
 
 => array('head'=>array(
     'count'=>1

@@ -982,6 +982,100 @@ class MongoTripodTest extends MongoTripodTestBase
         $this->assertEquals($expectedResult,$actualResult);
     }
 
+    /**
+     * Return the distinct values of a table column
+     * @access public
+     * @return void
+     */
+    public function testGetDistinctTableValues()
+    {
+        // Get table rows
+        $table = 't_distinct';
+        $this->tripod->generateTableRows($table);
+        $rows = $this->tripod->getTableRows($table, array(), array(), 0, 0);
+        $this->assertEquals(7, $rows['head']['count']);
+        $results = $this->tripod->getDistinctTableColumnValues($table, "value.title");
+
+        $this->assertArrayHasKey('head', $results);
+        $this->assertArrayHasKey('count', $results['head']);
+        $this->assertEquals(3, $results['head']['count']);
+        $this->assertArrayHasKey('results', $results);
+        $this->assertEquals(3, count($results['results']));
+        $this->assertContains('Physics 3rd Edition: Physics for Engineers and Scientists', $results['results']);
+        $this->assertContains('A document title', $results['results']);
+        $this->assertContains('Another document title', $results['results']);
+
+        // Supply a filter
+        $results = $this->tripod->getDistinctTableColumnValues($table, "value.title", array('value.type'=>"bibo:Document"));
+        $this->assertArrayHasKey('head', $results);
+        $this->assertArrayHasKey('count', $results['head']);
+        $this->assertEquals(2, $results['head']['count']);
+        $this->assertArrayHasKey('results', $results);
+        $this->assertEquals(2, count($results['results']));
+        $this->assertNotContains('Physics 3rd Edition: Physics for Engineers and Scientists', $results['results']);
+        $this->assertContains('A document title', $results['results']);
+        $this->assertContains('Another document title', $results['results']);
+
+        $results = $this->tripod->getDistinctTableColumnValues($table, "value.type");
+        $this->assertArrayHasKey('head', $results);
+        $this->assertArrayHasKey('count', $results['head']);
+        $this->assertEquals(4, $results['head']['count']);
+        $this->assertArrayHasKey('results', $results);
+        $this->assertEquals(4, count($results['results']));
+        $this->assertContains('acorn:Resource', $results['results']);
+        $this->assertContains('acorn:Work', $results['results']);
+        $this->assertContains('bibo:Book', $results['results']);
+        $this->assertContains('bibo:Document', $results['results']);
+    }
+
+    /**
+     * Return no results for tablespec that doesn't exist
+     * @access public
+     * @return void
+     */
+    public function testDistinctOnTableSpecThatDoesNotExist()
+    {
+        $table = "t_nothing_to_see_here";
+        $rows = $this->tripod->getTableRows($table, array(), array(), 0, 0);
+        $this->assertEquals(0, $rows['head']['count']);
+        $results = $this->tripod->getDistinctTableColumnValues($table, "value.foo");
+        $this->assertEquals(0, $results['head']['count']);
+        $this->assertArrayHasKey('results', $results);
+        $this->assertEmpty($results['results']);
+    }
+
+    /**
+     * Return no results for distinct on a fieldname that is not defined in tableSpec
+     * @access public
+     * @return void
+     */
+    public function testDistinctOnFieldNameThatIsNotInTableSpec()
+    {
+        // Get table rows
+        $table = 't_distinct';
+        $this->tripod->generateTableRows($table);
+        $results = $this->tripod->getDistinctTableColumnValues($table, "value.foo");
+        $this->assertEquals(0, $results['head']['count']);
+        $this->assertArrayHasKey('results', $results);
+        $this->assertEmpty($results['results']);
+    }
+
+    /**
+     * Return no results for filters that match no table rows
+     * @access public
+     * @return void
+     */
+    public function testDistinctForFilterWithNoMatches()
+    {
+        // Get table rows
+        $table = 't_distinct';
+        $this->tripod->generateTableRows($table);
+        $results = $this->tripod->getDistinctTableColumnValues($table, "value.title", array('value.foo'=>"wibble"));
+        $this->assertEquals(0, $results['head']['count']);
+        $this->assertArrayHasKey('results', $results);
+        $this->assertEmpty($results['results']);
+    }
+
     /**  START: getLockedDocuments tests */
 
     public function testGetLockedDocuments()
