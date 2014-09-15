@@ -232,7 +232,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         foreach ($resources as $resource=>$resourcePredicates)
         {
             $resourceAlias = $this->labeller->uri_to_alias($resource);
-            $id = array("r"=>$resourceAlias,"c"=>$contextAlias);
+            $id = array(_ID_RESOURCE=>$resourceAlias,_ID_CONTEXT=>$contextAlias);
             // If we don't have a working config or there are no predicates listed, remove all
             // rows associated with the resource in all tables
             if(empty($tablePredicates) || empty($resourcePredicates))
