@@ -95,9 +95,9 @@ class MongoTripodConfig
                         }
                     }
                 }
-                else
+                elseif((!isset($field['value'])) || empty($field['value']))
                 {
-                    throw new MongoTripodConfigException("Field spec does not contain predicates");
+                    throw new MongoTripodConfigException("Field spec does not contain predicates or value");
                 }
             }
 

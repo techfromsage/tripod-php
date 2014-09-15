@@ -216,17 +216,69 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
     {
         $contextAlias = $this->getContextAlias($context);
 
-        // build a filter - will be used for impactIndex detection and finding direct views to re-gen
-        $filter = array();
-        foreach ($resources as $resource)
+        $tablePredicates = array();
+
+        foreach($this->getConfig()->getTableSpecifications() as $tableSpec)
         {
-            $resourceAlias = $this->labeller->uri_to_alias($resource);
-            // build $filter for queries to impact index
-            $filter[] = array("r"=>$resourceAlias,"c"=>$contextAlias);
+            if(isset($tableSpec['_id']))
+            {
+                $tablePredicates[$tableSpec['_id']] = array_unique($this->getDefinedPredicatesInTableSpecBlock($tableSpec));
+            }
         }
 
-        // first re-gen views where resources appear in the impact index
-        $query = array("value."._IMPACT_INDEX=>array('$in'=>$filter));
+        // build a filter - will be used for impactIndex detection and finding direct tables to re-gen
+        $tableFilters = array();
+        $filter = array();
+        foreach ($resources as $resource=>$resourcePredicates)
+        {
+            $resourceAlias = $this->labeller->uri_to_alias($resource);
+            $id = array("r"=>$resourceAlias,"c"=>$contextAlias);
+            if(empty($tablePredicates))
+            {
+                // build $filter for queries to impact index
+                $filter[] = $id;
+            }
+            else
+            {
+                foreach($tablePredicates as $tableType=>$predicates)
+                {
+                    // Only look for table rows if the changed predicates are actually defined in the tablespec
+                    if(array_intersect($resourcePredicates, $predicates))
+                    {
+                        if(!isset($tableFilters[$tableType]))
+                        {
+                            $tableFilters[$tableType] = array();
+                        }
+                        // build $filter for queries to impact index
+                        $tableFilters[$tableType][] = $id;
+                    }
+                }
+            }
+
+        }
+
+        if(empty($tablePredicates))
+        {
+            $query = array("value."._IMPACT_INDEX=>array('$in'=>$filter));
+        }
+        else
+        {
+            $query = array();
+            foreach($tableFilters as $tableType=>$filters)
+            {
+                // first re-gen views where resources appear in the impact index
+                $query[] = array("value."._IMPACT_INDEX=>array('$in'=>$filters), '_id'._ID_TYPE=>$tableType);
+            }
+
+            if(count(array_keys($tableFilters)) > 1)
+            {
+                $query = array('$or'=>$query);
+            }
+        }
+        if(empty($query))
+        {
+            return array();
+        }
         $tableRows = $this->db->selectCollection(TABLE_ROWS_COLLECTION)->find($query,array("_id"=>true));
 
         $affectedTableRows = array();
@@ -235,8 +287,81 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         {
             $affectedTableRows[] = $t;
         }
-
         return $affectedTableRows;
+    }
+
+    /**
+     * @todo Move this to MongoTripodConfig?
+     * @param $tableSpecId
+     * @return array
+     */
+    protected function getDefinedPredicatesInTableSpec($tableSpecId)
+    {
+        $tableSpecCfg = $this->getConfig()->getTableSpecification($tableSpecId);
+        if(!$tableSpecCfg)
+        {
+            return array();
+        }
+        $predicates = $this->getDefinedPredicatesInTableSpecBlock($tableSpecCfg);
+
+        return array_unique($predicates);
+    }
+
+    /**
+     * @todo Move this to MongoTripodConfig? requires access to $this->getPredicateFunctions() somehow
+     * @param array $block
+     * @return array
+     */
+    protected function getDefinedPredicatesInTableSpecBlock(array $block)
+    {
+        $predicates = array();
+        if(isset($block['fields']))
+        {
+            foreach($block['fields'] as $field)
+            {
+                if(isset($field['predicates']))
+                {
+                    foreach($field['predicates'] as $p)
+                    {
+                        if(!empty($p))
+                        {
+                            $predicates = array_merge($predicates, $this->getPredicateAliasFromTablePredicate($p));
+                        }
+                    }
+                }
+            }
+        }
+
+        if(isset($block['joins']))
+        {
+            foreach($block['joins'] as $predicate=>$join)
+            {
+                $predicates[] = $this->labeller->uri_to_alias($predicate);
+                $predicates = array_merge($predicates, $this->getDefinedPredicatesInTableSpecBlock($join));
+            }
+        }
+        return $predicates;
+    }
+
+    protected function getPredicateAliasFromTablePredicate($predicate)
+    {
+        $predicates = array();
+        if(is_string($predicate) && !empty($predicate))
+        {
+            $predicates[] = $this->labeller->uri_to_alias($predicate);
+        } elseif(is_array($predicate))
+        {
+            $functions = $this->getPredicateFunctions($predicate);
+            if(isset($functions['predicates']))
+            {
+                foreach($functions['predicates'] as $p)
+                {
+                    $predicates[] = $this->labeller->uri_to_alias($p);
+                }
+            }
+        }
+
+        return $predicates;
     }
 
 

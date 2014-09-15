@@ -309,16 +309,24 @@ class MongoTripod extends MongoTripodBase implements ITripod
                 {
 //                    $subjectsOfChange[] = $cs->get_first_resource($change,$oldGraph->qname_to_uri("cs:subjectOfChange"));
                     $subject = $cs->get_first_resource($change,$oldGraph->qname_to_uri("cs:subjectOfChange"));
+
                     if(!isset($subjectsAndPredicatesOfChange[$subject]))
                     {
                         $subjectsAndPredicatesOfChange[$subject] = array();
                     }
-                    foreach($cs->get_subject_properties($subject, true) as $property)
+                    foreach($cs->get_subjects_where_resource(RDF_SUBJECT, $subject) as $changeNode)
                     {
-                        $subjectsAndPredicatesOfChange[$subject][] = $property;
+                        foreach($cs->get_resource_triple_values($changeNode, RDF_PREDICATE) as $property)
+                        {
+                            $subjectsAndPredicatesOfChange[$subject][] = $this->labeller->uri_to_alias($property);
+                        }
                     }
                 }
 
+                foreach($subjectsAndPredicatesOfChange as $subject=>$predicates)
+                {
+                    $subjectsAndPredicatesOfChange[$subject] = array_unique($predicates);
+                }
 //                $subjectsOfChange = array_unique($subjectsOfChange);
                 $changes = $this->storeChanges($cs, array_keys($subjectsAndPredicatesOfChange),$contextAlias);
 
@@ -596,7 +604,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
     protected function getApplicableOperations(Array $subjectsOfChange, $contextAlias, $asyncConfig)
     {
         $filter = array();
-        foreach(array_keys($subjectsOfChange) as $s){
+        foreach($subjectsOfChange as $s){
             $resourceAlias = $this->labeller->uri_to_alias($s);
             // build $filter for queries to impact index
             $filter[] = array("r"=>$resourceAlias,"c"=>$contextAlias);
