@@ -714,7 +714,6 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         // Get our table rows again
         $rows = $this->tripodTables->getTableRows("t_join_link",array("_id.r"=>"baseData:bar1234"));
-
         // authorLink should now be populated
         $this->assertArrayHasKey('authorLink', $rows['results'][0]);
         $this->assertEquals($uri, $rows['results'][0]['authorLink']);

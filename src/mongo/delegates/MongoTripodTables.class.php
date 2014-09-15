@@ -228,15 +228,17 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
 
         // build a filter - will be used for impactIndex detection and finding direct tables to re-gen
         $tableFilters = array();
-        $filter = array();
+        $resourceFilters = array();
         foreach ($resources as $resource=>$resourcePredicates)
         {
             $resourceAlias = $this->labeller->uri_to_alias($resource);
             $id = array("r"=>$resourceAlias,"c"=>$contextAlias);
-            if(empty($tablePredicates))
+            // If we don't have a working config or there are no predicates listed, remove all
+            // rows associated with the resource in all tables
+            if(empty($tablePredicates) || empty($resourcePredicates))
             {
                 // build $filter for queries to impact index
-                $filter[] = $id;
+                $resourceFilters[] = $id;
             }
             else
             {
@@ -257,9 +259,9 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
 
         }
 
-        if(empty($tablePredicates))
+        if(empty($tableFilters) && !empty($resourceFilters))
         {
-            $query = array("value."._IMPACT_INDEX=>array('$in'=>$filter));
+            $query = array("value."._IMPACT_INDEX=>array('$in'=>$resourceFilters));
         }
         else
         {
@@ -270,7 +272,12 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
                 $query[] = array("value."._IMPACT_INDEX=>array('$in'=>$filters), '_id'._ID_TYPE=>$tableType);
             }
 
-            if(count(array_keys($tableFilters)) > 1)
+            if(!empty($resourceFilters))
+            {
+                $query[] = array("value."._IMPACT_INDEX=>array('$in'=>$resourceFilters));
+            }
+
+            if(count(array_keys($query)) > 1)
             {
                 $query = array('$or'=>$query);
             }
@@ -279,6 +286,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         {
             return array();
         }
+
         $tableRows = $this->db->selectCollection(TABLE_ROWS_COLLECTION)->find($query,array("_id"=>true));
 
         $affectedTableRows = array();

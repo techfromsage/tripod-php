@@ -314,11 +314,15 @@ class MongoTripod extends MongoTripodBase implements ITripod
                     {
                         $subjectsAndPredicatesOfChange[$subject] = array();
                     }
-                    foreach($cs->get_subjects_where_resource(RDF_SUBJECT, $subject) as $changeNode)
+                    // If resource is not either completely new or deleted, specify the predicates affected
+                    if(!(empty($cs->before) || empty($cs->after)))
                     {
-                        foreach($cs->get_resource_triple_values($changeNode, RDF_PREDICATE) as $property)
+                        foreach($cs->get_subjects_where_resource(RDF_SUBJECT, $subject) as $changeNode)
                         {
-                            $subjectsAndPredicatesOfChange[$subject][] = $this->labeller->uri_to_alias($property);
+                            foreach($cs->get_resource_triple_values($changeNode, RDF_PREDICATE) as $property)
+                            {
+                                $subjectsAndPredicatesOfChange[$subject][] = $this->labeller->uri_to_alias($property);
+                            }
                         }
                     }
                 }
