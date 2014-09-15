@@ -302,20 +302,30 @@ class MongoTripod extends MongoTripodBase implements ITripod
             {
                 // how many subjects of change?
                 $subjectsOfChange = array();
-
+                $subjectsAndPredicatesOfChange = array();
                 /** @noinspection PhpParamsInspection */
                 $changes = $cs->get_subjects_of_type($oldGraph->qname_to_uri("cs:ChangeSet"));
                 foreach ($changes as $change)
                 {
-                    $subjectsOfChange[] = $cs->get_first_resource($change,$oldGraph->qname_to_uri("cs:subjectOfChange"));
+//                    $subjectsOfChange[] = $cs->get_first_resource($change,$oldGraph->qname_to_uri("cs:subjectOfChange"));
+                    $subject = $cs->get_first_resource($change,$oldGraph->qname_to_uri("cs:subjectOfChange"));
+                    if(!isset($subjectsAndPredicatesOfChange[$subject]))
+                    {
+                        $subjectsAndPredicatesOfChange[$subject] = array();
+                    }
+                    foreach($cs->get_subject_properties($subject, true) as $property)
+                    {
+                        $subjectsAndPredicatesOfChange[$subject][] = $property;
+                    }
                 }
-                $subjectsOfChange = array_unique($subjectsOfChange);
-                $changes = $this->storeChanges($cs, $subjectsOfChange,$contextAlias);
+
+//                $subjectsOfChange = array_unique($subjectsOfChange);
+                $changes = $this->storeChanges($cs, array_keys($subjectsAndPredicatesOfChange),$contextAlias);
 
                 // calculate what operations need performing, based on the subjects and anything they impact
-                $operationsToPerform  = $this->getApplicableOperations($subjectsOfChange, $contextAlias, $this->async);
+                $operationsToPerform  = $this->getApplicableOperations(array_keys($subjectsAndPredicatesOfChange), $contextAlias, $this->async);
 
-                $impactedOperations   = $this->getImpactedOperations($subjectsOfChange, $contextAlias, $this->async);
+                $impactedOperations   = $this->getImpactedOperations($subjectsAndPredicatesOfChange, $contextAlias, $this->async);
 
                 foreach($impactedOperations as $synckey=>$ops){
                     foreach($ops as $key=>$op){
@@ -487,13 +497,13 @@ class MongoTripod extends MongoTripodBase implements ITripod
         return true;
     }
 
-    protected function getImpactedOperations(Array $subjectsOfChange, $contextAlias, $asyncConfig)
+    protected function getImpactedOperations(Array $subjectsAndPredicatesOfChange, $contextAlias, $asyncConfig)
     {
         $operations = array();
         $operations['sync']  = array();
         $operations['async'] = array();
 
-        foreach($this->getTripodViews()->findImpactedViews($subjectsOfChange, $contextAlias) as $doc) {
+        foreach($this->getTripodViews()->findImpactedViews(array_keys($subjectsAndPredicatesOfChange), $contextAlias) as $doc) {
             $spec = $this->config->getViewSpecification($doc['_id']['type']);
             if(!empty($spec)){
                 $fromCollection = $spec['from'];
@@ -524,7 +534,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
             }
         }
 
-        foreach($this->getTripodTables()->findImpactedTableRows($subjectsOfChange, $contextAlias) as $doc) {
+        foreach($this->getTripodTables()->findImpactedTableRows($subjectsAndPredicatesOfChange, $contextAlias) as $doc) {
             $spec = $this->config->getTableSpecification($doc['_id']['type']);
             $fromCollection = $spec['from'];
 
@@ -552,7 +562,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
         }
 
         if($this->config->searchProvider !== null) {
-            foreach($this->getSearchIndexer()->findImpactedSearchDocuments($subjectsOfChange, $contextAlias) as $doc) {
+            foreach($this->getSearchIndexer()->findImpactedSearchDocuments(array_keys($subjectsAndPredicatesOfChange), $contextAlias) as $doc) {
                 $spec = $this->config->getSearchDocumentSpecification($doc['_id']['type']);
                 $fromCollection = $spec['from'];
 
@@ -586,7 +596,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
     protected function getApplicableOperations(Array $subjectsOfChange, $contextAlias, $asyncConfig)
     {
         $filter = array();
-        foreach($subjectsOfChange as $s){
+        foreach(array_keys($subjectsOfChange) as $s){
             $resourceAlias = $this->labeller->uri_to_alias($s);
             // build $filter for queries to impact index
             $filter[] = array("r"=>$resourceAlias,"c"=>$contextAlias);
