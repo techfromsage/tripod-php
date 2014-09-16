@@ -14,6 +14,7 @@ define("SEARCH_PROVIDER_ELASTIC_SEARCH", 'es');
 
 
 // MongoTripod document properties
+define('_ID_KEY', '_id');
 define('_ID_RESOURCE','r');
 define('_ID_CONTEXT','c');
 define('_ID_TYPE','type');
@@ -32,6 +33,8 @@ define('_CREATED_TS', '_cts');
 define('OP_VIEWS','generate_views');
 define('OP_TABLES','generate_table_rows');
 define('OP_SEARCH','generate_search_index_docs');
+define('OP_SYNC', 'sync');
+define('OP_ASYNC', 'async');
 
 // query types, used mainly for logging
 define('MONGO_SELECT','MONGO_SELECT');

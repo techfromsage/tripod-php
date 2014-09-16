@@ -81,7 +81,8 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             "replicaSet" => "tlogrepset"
         );
 
-        $mtc = new MongoTripodConfig($config);
+        MongoTripodConfig::setConfig($config);
+        $mtc = MongoTripodConfig::getInstance();
         $this->assertEquals("mongodb://tloghost:27017,tloghost:27018/admin",$mtc->getTransactionLogConnStr());
     }
 
@@ -109,7 +110,9 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             "replicaSet" => "tlogrepset"
         );
 
-        $mtc = new MongoTripodConfig($config);
+        MongoTripodConfig::setConfig($config);
+        $mtc = MongoTripodConfig::getInstance();
+
         $connStr = $mtc->getTransactionLogConnStr();
     }
 
@@ -150,7 +153,9 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         );
         $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
 
-        $mtc = new MongoTripodConfig($config);
+        MongoTripodConfig::setConfig($config);
+        $mtc = MongoTripodConfig::getInstance();
+
         $this->assertEquals("mongodb://localhost:27017,localhost:27018/admin",$mtc->getConnStr("testing"));
     }
 
@@ -172,7 +177,9 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         );
         $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
 
-        $mtc = new MongoTripodConfig($config);
+        MongoTripodConfig::setConfig($config);
+        $mtc = MongoTripodConfig::getInstance();
+
         $mtc->getConnStr("testing");
     }
 
@@ -200,7 +207,8 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         );
         $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
 
-        $mtc = new MongoTripodConfig($config);
+        MongoTripodConfig::setConfig($config);
+        $mtc = MongoTripodConfig::getInstance();
     }
 
     public function testSearchConfig()
@@ -238,7 +246,8 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             "replicaSet" => "myrepset"
         );
 
-        $mtc = new MongoTripodConfig($config);
+        MongoTripodConfig::setConfig($config);
+        $mtc = MongoTripodConfig::getInstance();
         $this->assertEquals("mongodb://qhost:27017,qhost:27018/admin",$mtc->getQueueConnStr());
     }
 
@@ -266,7 +275,8 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             "replicaSet" => "myrepset"
         );
 
-        $mtc = new MongoTripodConfig($config);
+        MongoTripodConfig::setConfig($config);
+        $mtc = MongoTripodConfig::getInstance();
         $connStr = $mtc->getQueueConnStr();
     }
 
@@ -290,7 +300,8 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
         $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
-        $mtc = new MongoTripodConfig($config);
+        MongoTripodConfig::setConfig($config);
+        $mtc = MongoTripodConfig::getInstance();
     }
 
     public function testGetSearchDocumentSpecificationsByType()
@@ -420,7 +431,8 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
         $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
-        $mtc = new MongoTripodConfig($config);
+        MongoTripodConfig::setConfig($config);
+        $mtc = MongoTripodConfig::getInstance();
     }
 
     public function testViewSpecCountNestedInJoinWithoutTTLThrowsException()
@@ -457,7 +469,8 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
         $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
-        $mtc = new MongoTripodConfig($config);
+        MongoTripodConfig::setConfig($config);
+        $mtc = MongoTripodConfig::getInstance();
     }
 
     public function testTableSpecNestedCountWithoutPropertyThrowsException()
@@ -492,7 +505,8 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
         $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
-        $mtc = new MongoTripodConfig($config);
+        MongoTripodConfig::setConfig($config);
+        $mtc = MongoTripodConfig::getInstance();
     }
 
     public function testTableSpecNested2ndLevelCountWithoutFieldNameThrowsException()
@@ -530,7 +544,8 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
         $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
-        $mtc = new MongoTripodConfig($config);
+        MongoTripodConfig::setConfig($config);
+        $mtc = MongoTripodConfig::getInstance();
     }
 
     public function testTableSpecFieldWithoutFieldName()
@@ -562,7 +577,8 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
         $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
-        $mtc = new MongoTripodConfig($config);
+        MongoTripodConfig::setConfig($config);
+        $mtc = MongoTripodConfig::getInstance();
     }
 
     public function testTableSpecFieldWithoutPredicates()
@@ -594,7 +610,8 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
         $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
-        $mtc = new MongoTripodConfig($config);
+        MongoTripodConfig::setConfig($config);
+        $mtc = MongoTripodConfig::getInstance();
     }
 
     public function testTableSpecCountWithoutProperty()
@@ -626,7 +643,8 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
         $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
-        $mtc = new MongoTripodConfig($config);
+        MongoTripodConfig::setConfig($config);
+        $mtc = MongoTripodConfig::getInstance();
     }
 
     public function testTableSpecCountWithoutFieldName()
@@ -658,7 +676,8 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
         $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
-        $mtc = new MongoTripodConfig($config);
+        MongoTripodConfig::setConfig($config);
+        $mtc = MongoTripodConfig::getInstance();
     }
 
     public function testTableSpecCountWithoutPropertyAsAString()
@@ -691,7 +710,8 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
         $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
-        $mtc = new MongoTripodConfig($config);
+        MongoTripodConfig::setConfig($config);
+        $mtc = MongoTripodConfig::getInstance();
     }
 
     public function testConfigWithoutDefaultNamespaceThrowsException()
@@ -727,7 +747,8 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
         $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
-        $mtc = new MongoTripodConfig($config);
+        MongoTripodConfig::setConfig($config);
+        $mtc = MongoTripodConfig::getInstance();
     }
 
     /**
@@ -783,7 +804,8 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
         $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
-        $mtc = new MongoTripodConfig($config);
+        MongoTripodConfig::setConfig($config);
+        $mtc = MongoTripodConfig::getInstance();
         $this->assertEquals("myreplicaset", $mtc->getReplicaSetName("testing"));
 
         $this->assertNull($mtc->getReplicaSetName("testing_2"));
@@ -876,7 +898,8 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             "replicaSet" => "myrepset"
         );
 
-        $mtc = new MongoTripodConfig($config);
+        MongoTripodConfig::setConfig($config);
+        $mtc = MongoTripodConfig::getInstance();
         $this->assertNull($mtc->searchProvider);
         $this->assertEquals(array(), $mtc->searchDocSpecs);
     }

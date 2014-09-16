@@ -23,7 +23,10 @@ class MongoTripodConfig
     public $searchDocSpecs = array();
     public $searchProvider = null;
 
-    public function __construct(Array $config)
+    protected $specPredicates;
+
+    private function __construct() {}
+    private function loadConfig(Array $config)
     {
         if (array_key_exists('namespaces',$config))
         {
@@ -64,12 +67,16 @@ class MongoTripodConfig
         foreach ($viewSpecs as $spec)
         {
             $this->ifCountExistsWithoutTTLThrowException($spec);
-            $this->viewSpecs[$spec["_id"]] = $spec;
+            $this->viewSpecs[$spec[_ID_KEY]] = $spec;
         }
-
         $tableSpecs = (array_key_exists("table_specifications",$config)) ? $config["table_specifications"] : array();
         foreach ($tableSpecs as $spec)
         {
+            if(!isset($spec[_ID_KEY]))
+            {
+                throw new MongoTripodConfigException("Table spec does not contain " . _ID_KEY);
+            }
+
             // Get all "fields" in the spec
             $fieldsInTableSpec = $this->findFieldsInTableSpec('fields', $spec);
             // Loop through fields and validate
@@ -200,6 +207,108 @@ class MongoTripodConfig
     }
 
     /**
+     * @return array
+     */
+    protected function getDefinedPredicatesInSpecs()
+    {
+        $predicates = array();
+        $specs = array_merge($this->getTableSpecifications(), $this->getSearchDocumentSpecifications());
+        foreach($specs as $spec)
+        {
+            if(!isset($spec[_ID_KEY]))
+            {
+                continue;
+            }
+            $predicates[$spec[_ID_KEY]] = array_unique($this->getDefinedPredicatesInSpecBlock($spec));
+        }
+
+        return $predicates;
+    }
+
+    /**
+     * @param array $block
+     * @return array
+     */
+    protected function getDefinedPredicatesInSpecBlock(array $block)
+    {
+        $predicates = array();
+        if(isset($block['fields']))
+        {
+            foreach($block['fields'] as $field)
+            {
+                if(isset($field['predicates']))
+                {
+                    foreach($field['predicates'] as $p)
+                    {
+                        if(!empty($p))
+                        {
+                            $predicates = array_merge($predicates, $this->getPredicateAliasesFromPredicateProperty($p));
+                        }
+                    }
+                }
+            }
+        }
+
+        if(isset($block['joins']))
+        {
+            foreach($block['joins'] as $predicate=>$join)
+            {
+                $predicates[] = $this->getLabeller()->uri_to_alias($predicate);
+                $predicates = array_merge($predicates, $this->getDefinedPredicatesInSpecBlock($join));
+            }
+        }
+        return $predicates;
+    }
+
+    protected function getPredicateAliasesFromPredicateProperty($predicate)
+    {
+        $predicates = array();
+        if(is_string($predicate) && !empty($predicate))
+        {
+            $predicates[] = $this->getLabeller()->uri_to_alias($predicate);
+        }
+        elseif(is_array($predicate))
+        {
+            foreach($this->getPredicatesFromPredicateFunctions($predicate) as $p)
+            {
+                $predicates[] = $this->getLabeller()->uri_to_alias($p);
+            }
+        }
+
+        return $predicates;
+    }
+
+    protected function getPredicatesFromPredicateFunctions($array)
+    {
+        $predicates = array();
+        if(is_array($array))
+        {
+            if(isset($array['predicates']))
+            {
+                $predicates = $array['predicates'];
+            } else
+            {
+                $predicates = array_merge($predicates, $this->getPredicatesFromPredicateFunctions($array[key($array)]));
+            }
+        }
+        return $predicates;
+    }
+
+
+    public function getDefinedPredicatesInSpec($specId)
+    {
+        if(!isset($this->specPredicates))
+        {
+            $this->specPredicates = $this->getDefinedPredicatesInSpecs();
+        }
+        if(isset($this->specPredicates[$specId]))
+        {
+            return $this->specPredicates[$specId];
+        }
+        return array();
+    }
+
+    /**
      * Check modifier functions against fields
      * @param array $array
      * @param $parent
@@ -271,7 +380,8 @@ class MongoTripodConfig
         }
         if (self::$instance == null)
         {
-            self::$instance = new MongoTripodConfig(self::$config);
+            self::$instance = new MongoTripodConfig();
+            self::$instance->loadConfig(self::$config);
         }
         return self::$instance;
     }

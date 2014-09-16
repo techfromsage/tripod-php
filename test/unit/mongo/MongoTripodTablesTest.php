@@ -434,6 +434,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
     {
         // All config defined here should be valid
         $tableSpecifications = array(
+            _ID_KEY => 't_testGenerateTableRowsForUsersWithModifiersValidConfig',
             'fields' => array(
                 array(
                     'fieldName' => 'test1',
@@ -476,7 +477,8 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         // Note that you need some config in order to create the MongoTripodConfig object successfully.
         // Once that object has been created, we use our own table specifications to test against.
-        $tripodConfig = new MongoTripodConfig($this->generateMongoTripodTestConfig());
+        MongoTripodConfig::setConfig($this->generateMongoTripodTestConfig());
+        $tripodConfig = MongoTripodConfig::getInstance();
 
         foreach($tableSpecifications['fields'] as $field)
         {
@@ -500,6 +502,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         // Create some dodgy config ("glue2") and see if an exception is thrown
         $tableSpecifications = array(
+            _ID_KEY => 't_foo',
             'fieldName' => 'test1',
             'predicates' => array(
                 'join' => array(
@@ -511,7 +514,9 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         // Note that you need some config in order to create the MongoTripodConfig object successfully.
         // Once that object has been created, we use our own table specifications to test against.
-        $tripodConfig = new MongoTripodConfig($this->generateMongoTripodTestConfig());
+        MongoTripodConfig::setConfig($this->generateMongoTripodTestConfig());
+        $tripodConfig = MongoTripodConfig::getInstance();
+
         $tripodConfig->checkModifierFunctions($tableSpecifications['predicates'], MongoTripodTables::$predicateModifiers);
     }
 

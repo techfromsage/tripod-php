@@ -88,7 +88,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
     {
         $opts = array_merge(array(
                 'defaultContext'=>null,
-                'async'=>array(OP_VIEWS=>false,OP_TABLES=>true,OP_SEARCH=>true),
+                OP_ASYNC=>array(OP_VIEWS=>false,OP_TABLES=>true,OP_SEARCH=>true),
                 'stat'=>null,
                 'readPreference'=>MongoClient::RP_PRIMARY_PREFERRED,
                 'retriesToGetLock' => 20)
@@ -130,7 +130,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
         $this->lCollection = $this->db->selectCollection(LOCKS_COLLECTION);
 
         // fill in and default any missing keys for $async array
-        $async = $opts['async'];
+        $async = $opts[OP_ASYNC];
         if (!array_key_exists(OP_VIEWS,$async))
         {
             $async[OP_VIEWS] = false;
@@ -349,7 +349,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
 
                 // create subjects to process synchronously
                 $syncModifiedSubjects = array();
-                foreach($operationsToPerform['sync'] as $syncOp){
+                foreach($operationsToPerform[OP_SYNC] as $syncOp){
                     if(in_array($syncOp['id']['r'], $changes['deletedSubjects'])){
                         $syncOp['delete'] = true;
                     } else {
@@ -367,7 +367,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
 
                 // now queue all async operations
                 $asyncModifiedSubjects = array();
-                foreach($operationsToPerform['async'] as $asyncOp){
+                foreach($operationsToPerform[OP_ASYNC] as $asyncOp){
                     if(in_array($asyncOp['id']['r'], $changes['deletedSubjects'])){
                         $asyncOp['delete'] = true;
                     } else {
@@ -512,8 +512,8 @@ class MongoTripod extends MongoTripodBase implements ITripod
     protected function getImpactedOperations(Array $subjectsAndPredicatesOfChange, $contextAlias, $asyncConfig)
     {
         $operations = array();
-        $operations['sync']  = array();
-        $operations['async'] = array();
+        $operations[OP_SYNC]  = array();
+        $operations[OP_ASYNC] = array();
 
         foreach($this->getTripodViews()->findImpactedViews(array_keys($subjectsAndPredicatesOfChange), $contextAlias) as $doc) {
             $spec = $this->config->getViewSpecification($doc['_id']['type']);
@@ -523,25 +523,25 @@ class MongoTripod extends MongoTripodBase implements ITripod
                 $docHash = md5($doc['_id']['r'] . $doc['_id']['c']);
 
                 if($asyncConfig[OP_VIEWS] == true) {
-                    if(!array_key_exists($docHash, $operations['async'])){
-                        $operations['async'][$docHash] = array('id'=>array('r'=>$doc['_id']['r'], 'c'=>$doc['_id']['c']), 'ops'=>array());
+                    if(!array_key_exists($docHash, $operations[OP_ASYNC])){
+                        $operations[OP_ASYNC][$docHash] = array('id'=>array('r'=>$doc['_id']['r'], 'c'=>$doc['_id']['c']), 'ops'=>array());
                     }
-                    if(!array_key_exists($fromCollection, $operations['async'][$docHash]['ops'])) {
-                        $operations['async'][$docHash]['ops'][$fromCollection] = array();
+                    if(!array_key_exists($fromCollection, $operations[OP_ASYNC][$docHash]['ops'])) {
+                        $operations[OP_ASYNC][$docHash]['ops'][$fromCollection] = array();
                     }
 
-                    array_push($operations['async'][$docHash]['ops'][$fromCollection], OP_VIEWS);
+                    array_push($operations[OP_ASYNC][$docHash]['ops'][$fromCollection], OP_VIEWS);
 
                 } else {
 
-                    if(!array_key_exists($docHash, $operations['sync'])){
-                        $operations['sync'][$docHash] = array('id'=>array('r'=>$doc['_id']['r'], 'c'=>$doc['_id']['c']), 'ops'=>array());
+                    if(!array_key_exists($docHash, $operations[OP_SYNC])){
+                        $operations[OP_SYNC][$docHash] = array('id'=>array('r'=>$doc['_id']['r'], 'c'=>$doc['_id']['c']), 'ops'=>array());
                     }
-                    if(!array_key_exists($fromCollection, $operations['sync'][$docHash]['ops'])) {
-                        $operations['sync'][$docHash]['ops'][$fromCollection] = array();
+                    if(!array_key_exists($fromCollection, $operations[OP_SYNC][$docHash]['ops'])) {
+                        $operations[OP_SYNC][$docHash]['ops'][$fromCollection] = array();
                     }
 
-                    array_push($operations['sync'][$docHash]['ops'][$fromCollection], OP_VIEWS);
+                    array_push($operations[OP_SYNC][$docHash]['ops'][$fromCollection], OP_VIEWS);
                 }
             }
         }
@@ -553,23 +553,23 @@ class MongoTripod extends MongoTripodBase implements ITripod
             $docHash = md5($doc['_id']['r'] . $doc['_id']['c']);
 
             if($asyncConfig[OP_TABLES] == true) {
-                if(!array_key_exists($docHash, $operations['async'])){
-                    $operations['async'][$docHash] = array('id'=>array('r'=>$doc['_id']['r'], 'c'=>$doc['_id']['c']), 'ops'=>array());
+                if(!array_key_exists($docHash, $operations[OP_ASYNC])){
+                    $operations[OP_ASYNC][$docHash] = array('id'=>array('r'=>$doc['_id']['r'], 'c'=>$doc['_id']['c']), 'ops'=>array());
                 }
-                if(!array_key_exists($fromCollection, $operations['async'][$docHash]['ops'])) {
-                    $operations['async'][$docHash]['ops'][$fromCollection] = array();
+                if(!array_key_exists($fromCollection, $operations[OP_ASYNC][$docHash]['ops'])) {
+                    $operations[OP_ASYNC][$docHash]['ops'][$fromCollection] = array();
                 }
 
-                array_push($operations['async'][$docHash]['ops'][$fromCollection], OP_TABLES);
+                array_push($operations[OP_ASYNC][$docHash]['ops'][$fromCollection], OP_TABLES);
             } else {
-                if(!array_key_exists($docHash, $operations['sync'])){
-                    $operations['sync'][$docHash] = array('id'=>array('r'=>$doc['_id']['r'], 'c'=>$doc['_id']['c']), 'ops'=>array());
+                if(!array_key_exists($docHash, $operations[OP_SYNC])){
+                    $operations[OP_SYNC][$docHash] = array('id'=>array('r'=>$doc['_id']['r'], 'c'=>$doc['_id']['c']), 'ops'=>array());
                 }
-                if(!array_key_exists($fromCollection, $operations['sync'][$docHash]['ops'])) {
-                    $operations['sync'][$docHash]['ops'][$fromCollection] = array();
+                if(!array_key_exists($fromCollection, $operations[OP_SYNC][$docHash]['ops'])) {
+                    $operations[OP_SYNC][$docHash]['ops'][$fromCollection] = array();
                 }
 
-                array_push($operations['sync'][$docHash]['ops'][$fromCollection], OP_TABLES);
+                array_push($operations[OP_SYNC][$docHash]['ops'][$fromCollection], OP_TABLES);
             }
         }
 
@@ -581,23 +581,23 @@ class MongoTripod extends MongoTripodBase implements ITripod
                 $docHash = md5($doc['_id']['r'] . $doc['_id']['c']);
 
                 if($asyncConfig[OP_SEARCH] == true) {
-                    if(!array_key_exists($docHash, $operations['async'])){
-                        $operations['async'][$docHash] = array('id'=>array('r'=>$doc['_id']['r'], 'c'=>$doc['_id']['c']), 'ops'=>array());
+                    if(!array_key_exists($docHash, $operations[OP_ASYNC])){
+                        $operations[OP_ASYNC][$docHash] = array('id'=>array('r'=>$doc['_id']['r'], 'c'=>$doc['_id']['c']), 'ops'=>array());
                     }
-                    if(!array_key_exists($fromCollection, $operations['async'][$docHash]['ops'])) {
-                        $operations['async'][$docHash]['ops'][$fromCollection] = array();
+                    if(!array_key_exists($fromCollection, $operations[OP_ASYNC][$docHash]['ops'])) {
+                        $operations[OP_ASYNC][$docHash]['ops'][$fromCollection] = array();
                     }
 
-                    array_push($operations['async'][$docHash]['ops'][$fromCollection], OP_SEARCH);
+                    array_push($operations[OP_ASYNC][$docHash]['ops'][$fromCollection], OP_SEARCH);
                 } else {
-                    if(!array_key_exists($docHash, $operations['sync'])){
-                        $operations['sync'][$docHash] = array('id'=>array('r'=>$doc['_id']['r'], 'c'=>$doc['_id']['c']), 'ops'=>array());
+                    if(!array_key_exists($docHash, $operations[OP_SYNC])){
+                        $operations[OP_SYNC][$docHash] = array('id'=>array('r'=>$doc['_id']['r'], 'c'=>$doc['_id']['c']), 'ops'=>array());
                     }
-                    if(!array_key_exists($fromCollection, $operations['sync'][$docHash]['ops'])) {
-                        $operations['sync'][$docHash]['ops'][$fromCollection] = array();
+                    if(!array_key_exists($fromCollection, $operations[OP_SYNC][$docHash]['ops'])) {
+                        $operations[OP_SYNC][$docHash]['ops'][$fromCollection] = array();
                     }
 
-                    array_push($operations['sync'][$docHash]['ops'][$fromCollection], OP_SEARCH);
+                    array_push($operations[OP_SYNC][$docHash]['ops'][$fromCollection], OP_SEARCH);
                 }
             }
         }
@@ -621,8 +621,8 @@ class MongoTripod extends MongoTripodBase implements ITripod
         }
 
         $operations  = array();
-        $operations['sync']  = array();
-        $operations['async'] = array();
+        $operations[OP_SYNC]  = array();
+        $operations[OP_ASYNC] = array();
 
         $viewTypes   = $this->config->getTypesInViewSpecifications($this->getCollectionName());
         $tableTypes  = $this->config->getTypesInTableSpecifications($this->getCollectionName());
@@ -630,17 +630,20 @@ class MongoTripod extends MongoTripodBase implements ITripod
 
         foreach($docs as $doc)
         {
-            $docResource = $doc['_id']['r'];
-            $docContext  = $doc['_id']['c'];
+            $docResource = $doc['_id'][_ID_RESOURCE];
+            $docContext  = $doc['_id'][_ID_CONTEXT];
             $docHash     = md5($docResource.$docContext);
 
             $docTypes = array();
             if(isset($doc["rdf:type"])) {
-                if(isset($doc["rdf:type"]["u"])){
-                    $docTypes[] = $doc["rdf:type"]["u"];
+                if(isset($doc["rdf:type"][VALUE_URI])){
+                    $docTypes[] = $doc["rdf:type"][VALUE_URI];
                 } else {
                     foreach($doc["rdf:type"] as $t){
-                        $docTypes[] = $t['u'];
+                        if(isset($t[VALUE_URI]))
+                        {
+                            $docTypes[] = $t[VALUE_URI];
+                        }
                     }
                 }
             }
@@ -649,49 +652,49 @@ class MongoTripod extends MongoTripodBase implements ITripod
             {
                 if(in_array($type, $viewTypes)){
                     if($asyncConfig[OP_VIEWS] == true) {
-                        if(!array_key_exists($docHash, $operations['async'])){
-                            $operations['async'][$docHash] = array('id'=>$doc['_id'], 'ops'=>array());
-                            $operations['async'][$docHash]['ops'][$this->getCollectionName()] = array();
+                        if(!array_key_exists($docHash, $operations[OP_ASYNC])){
+                            $operations[OP_ASYNC][$docHash] = array('id'=>$doc['_id'], 'ops'=>array());
+                            $operations[OP_ASYNC][$docHash]['ops'][$this->getCollectionName()] = array();
                         }
-                        array_push($operations['async'][$docHash]['ops'][$this->getCollectionName()], OP_VIEWS);
+                        array_push($operations[OP_ASYNC][$docHash]['ops'][$this->getCollectionName()], OP_VIEWS);
                     } else{
-                        if(!array_key_exists($docHash, $operations['sync'])){
-                            $operations['sync'][$docHash] = array('id'=>$doc['_id'], 'ops'=>array());
-                            $operations['sync'][$docHash]['ops'][$this->getCollectionName()] = array();
+                        if(!array_key_exists($docHash, $operations[OP_SYNC])){
+                            $operations[OP_SYNC][$docHash] = array('id'=>$doc['_id'], 'ops'=>array());
+                            $operations[OP_SYNC][$docHash]['ops'][$this->getCollectionName()] = array();
                         }
-                        array_push($operations['sync'][$docHash]['ops'][$this->getCollectionName()], OP_VIEWS);
+                        array_push($operations[OP_SYNC][$docHash]['ops'][$this->getCollectionName()], OP_VIEWS);
                     }
                 }
 
                 if(in_array($type, $tableTypes)) {
                     if($asyncConfig[OP_TABLES] == true) {
-                        if(!array_key_exists($docHash, $operations['async'])){
-                            $operations['async'][$docHash] = array('id'=>$doc['_id'], 'ops'=>array());
-                            $operations['async'][$docHash]['ops'][$this->getCollectionName()] = array();
+                        if(!array_key_exists($docHash, $operations[OP_ASYNC])){
+                            $operations[OP_ASYNC][$docHash] = array('id'=>$doc['_id'], 'ops'=>array());
+                            $operations[OP_ASYNC][$docHash]['ops'][$this->getCollectionName()] = array();
                         }
-                        array_push($operations['async'][$docHash]['ops'][$this->getCollectionName()], OP_TABLES);
+                        array_push($operations[OP_ASYNC][$docHash]['ops'][$this->getCollectionName()], OP_TABLES);
                     } else{
-                        if(!array_key_exists($docHash, $operations['sync'])){
-                            $operations['sync'][$docHash] = array('id'=>$doc['_id'], 'ops'=>array());
-                            $operations['sync'][$docHash]['ops'][$this->getCollectionName()] = array();
+                        if(!array_key_exists($docHash, $operations[OP_SYNC])){
+                            $operations[OP_SYNC][$docHash] = array('id'=>$doc['_id'], 'ops'=>array());
+                            $operations[OP_SYNC][$docHash]['ops'][$this->getCollectionName()] = array();
                         }
-                        array_push($operations['sync'][$docHash]['ops'][$this->getCollectionName()], OP_TABLES);
+                        array_push($operations[OP_SYNC][$docHash]['ops'][$this->getCollectionName()], OP_TABLES);
                     }
                 }
 
                 if(in_array($type, $searchTypes)) {
                     if($asyncConfig[OP_SEARCH] == true) {
-                        if(!array_key_exists($docHash, $operations['async'])){
-                            $operations['async'][$docHash] = array('id'=>$doc['_id'], 'ops'=>array());
-                            $operations['async'][$docHash]['ops'][$this->getCollectionName()] = array();
+                        if(!array_key_exists($docHash, $operations[OP_ASYNC])){
+                            $operations[OP_ASYNC][$docHash] = array('id'=>$doc['_id'], 'ops'=>array());
+                            $operations[OP_ASYNC][$docHash]['ops'][$this->getCollectionName()] = array();
                         }
-                        array_push($operations['async'][$docHash]['ops'][$this->getCollectionName()], OP_SEARCH);
+                        array_push($operations[OP_ASYNC][$docHash]['ops'][$this->getCollectionName()], OP_SEARCH);
                     } else{
-                        if(!array_key_exists($docHash, $operations['sync'])){
-                            $operations['sync'][$docHash] = array('id'=>$doc['_id'], 'ops'=>array());
-                            $operations['sync'][$docHash]['ops'][$this->getCollectionName()] = array();
+                        if(!array_key_exists($docHash, $operations[OP_SYNC])){
+                            $operations[OP_SYNC][$docHash] = array('id'=>$doc['_id'], 'ops'=>array());
+                            $operations[OP_SYNC][$docHash]['ops'][$this->getCollectionName()] = array();
                         }
-                        array_push($operations['sync'][$docHash]['ops'][$this->getCollectionName()], OP_SEARCH);
+                        array_push($operations[OP_SYNC][$docHash]['ops'][$this->getCollectionName()], OP_SEARCH);
                     }
                 }
             }

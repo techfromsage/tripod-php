@@ -218,11 +218,11 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
 
         $tablePredicates = array();
 
-        foreach($this->getConfig()->getTableSpecifications() as $tableSpec)
+        foreach(MongoTripodConfig::getInstance()->getTableSpecifications() as $tableSpec)
         {
-            if(isset($tableSpec['_id']))
+            if(isset($tableSpec[_ID_KEY]))
             {
-                $tablePredicates[$tableSpec['_id']] = array_unique($this->getDefinedPredicatesInTableSpecBlock($tableSpec));
+                $tablePredicates[$tableSpec[_ID_KEY]] = MongoTripodConfig::getInstance()->getDefinedPredicatesInSpec($tableSpec[_ID_KEY]);
             }
         }
 
@@ -297,81 +297,6 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         }
         return $affectedTableRows;
     }
-
-    /**
-     * @todo Move this to MongoTripodConfig?
-     * @param $tableSpecId
-     * @return array
-     */
-    protected function getDefinedPredicatesInTableSpec($tableSpecId)
-    {
-        $tableSpecCfg = $this->getConfig()->getTableSpecification($tableSpecId);
-        if(!$tableSpecCfg)
-        {
-            return array();
-        }
-        $predicates = $this->getDefinedPredicatesInTableSpecBlock($tableSpecCfg);
-
-        return array_unique($predicates);
-    }
-
-    /**
-     * @todo Move this to MongoTripodConfig? requires access to $this->getPredicateFunctions() somehow
-     * @param array $block
-     * @return array
-     */
-    protected function getDefinedPredicatesInTableSpecBlock(array $block)
-    {
-        $predicates = array();
-        if(isset($block['fields']))
-        {
-            foreach($block['fields'] as $field)
-            {
-                if(isset($field['predicates']))
-                {
-                    foreach($field['predicates'] as $p)
-                    {
-                        if(!empty($p))
-                        {
-                            $predicates = array_merge($predicates, $this->getPredicateAliasFromTablePredicate($p));
-                        }
-                    }
-                }
-            }
-        }
-
-        if(isset($block['joins']))
-        {
-            foreach($block['joins'] as $predicate=>$join)
-            {
-                $predicates[] = $this->labeller->uri_to_alias($predicate);
-                $predicates = array_merge($predicates, $this->getDefinedPredicatesInTableSpecBlock($join));
-            }
-        }
-        return $predicates;
-    }
-
-    protected function getPredicateAliasFromTablePredicate($predicate)
-    {
-        $predicates = array();
-        if(is_string($predicate) && !empty($predicate))
-        {
-            $predicates[] = $this->labeller->uri_to_alias($predicate);
-        } elseif(is_array($predicate))
-        {
-            $functions = $this->getPredicateFunctions($predicate);
-            if(isset($functions['predicates']))
-            {
-                foreach($functions['predicates'] as $p)
-                {
-                    $predicates[] = $this->labeller->uri_to_alias($p);
-                }
-            }
-        }
-
-        return $predicates;
-    }
-
 
     /**
      * This method finds all the table specs for the given $rdfType and generates the table rows for the $subject one by one
@@ -507,38 +432,41 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         {
             foreach ($spec['fields'] as $f)
             {
-                foreach ($f['predicates'] as $p)
+                if(isset($f['predicates']))
                 {
-                    if (is_string($p) && isset($source[$p]))
+                    foreach ($f['predicates'] as $p)
                     {
-                        // Predicate is referenced directly
-                        $this->generateValues($source, $f, $p, $dest);
-                    } else
-                    {
-                        // Get a list of functions to run over a predicate - reverse it
-                        $predicateFunctions = $this->getPredicateFunctions($p);
-                        $predicateFunctions = array_reverse($predicateFunctions);
-
-                        foreach($predicateFunctions as $function => $functionOptions)
+                        if (is_string($p) && isset($source[$p]))
                         {
-                            // If we've got values then we're the innermost function, so we need to get the values
-                            if($function == 'predicates')
+                            // Predicate is referenced directly
+                            $this->generateValues($source, $f, $p, $dest);
+                        } else
+                        {
+                            // Get a list of functions to run over a predicate - reverse it
+                            $predicateFunctions = $this->getPredicateFunctions($p);
+                            $predicateFunctions = array_reverse($predicateFunctions);
+
+                            foreach($predicateFunctions as $function => $functionOptions)
                             {
-                                foreach($functionOptions as $v)
+                                // If we've got values then we're the innermost function, so we need to get the values
+                                if($function == 'predicates')
                                 {
-                                    $v = trim($v);
-                                    if (isset($source[$v]))
+                                    foreach($functionOptions as $v)
                                     {
-                                        $this->generateValues($source, $f, $v, $dest);
+                                        $v = trim($v);
+                                        if (isset($source[$v]))
+                                        {
+                                            $this->generateValues($source, $f, $v, $dest);
+                                        }
                                     }
+                                // Otherwise apply a modifier
                                 }
-                            // Otherwise apply a modifier
-                            }
-                            else
-                            {
-                                if(isset($dest[$f['fieldName']]))
+                                else
                                 {
-                                    $dest[$f['fieldName']] = $this->applyModifier($function, $dest[$f['fieldName']], $functionOptions);
+                                    if(isset($dest[$f['fieldName']]))
+                                    {
+                                        $dest[$f['fieldName']] = $this->applyModifier($function, $dest[$f['fieldName']], $functionOptions);
+                                    }
                                 }
                             }
                         }

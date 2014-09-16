@@ -53,15 +53,6 @@ abstract class MongoTripodBase
         return (empty($contextAlias)) ? MongoTripodConfig::getInstance()->getDefaultContextAlias() : $contextAlias;
     }
 
-    protected function getConfig()
-    {
-        if(!isset($this->config))
-        {
-            $this->config = MongoTripodConfig::getInstance();
-        }
-        return $this->config;
-    }
-
     /**
      * @param $query
      * @param $type
