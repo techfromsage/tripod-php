@@ -574,7 +574,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
         }
 
         if($this->config->searchProvider !== null) {
-            foreach($this->getSearchIndexer()->findImpactedSearchDocuments(array_keys($subjectsAndPredicatesOfChange), $contextAlias) as $doc) {
+            foreach($this->getSearchIndexer()->findImpactedSearchDocuments($subjectsAndPredicatesOfChange, $contextAlias) as $doc) {
                 $spec = $this->config->getSearchDocumentSpecification($doc['_id']['type']);
                 $fromCollection = $spec['from'];
 

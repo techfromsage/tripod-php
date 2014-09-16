@@ -23,11 +23,11 @@ interface ITripodSearchProvider
     /**
      * Returns the ids of all documents that contain and impact index entry
      * matching the resource and context specified
-     * @param string $resource
+     * @param $resource
      * @param string $context
      * @return array the ids of search documents that had matching entries in their impact index
      */
-    public function findImpactedDocuments($resource, $context);
+    public function findImpactedDocuments(array $resource, $context);
 
     /**
      * Executes the query and returns a structure representing a search results.

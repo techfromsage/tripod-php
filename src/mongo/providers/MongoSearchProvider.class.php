@@ -63,29 +63,87 @@ class MongoSearchProvider implements ITripodSearchProvider
     /**
      * Returns the ids of all documents that contain and impact index entry
      * matching the resource and context specified
-     * @param string $resource
+     * @param array $resourcesAndPredicates
      * @param string $context
      * @return array the ids of search documents that had matching entries in their impact index
      */
-    public function findImpactedDocuments($resource, $context)
+    public function findImpactedDocuments(array $resourcesAndPredicates, $context)
     {
-        $impactedDocuments = array();
+        $contextAlias = $this->labeller->uri_to_alias($context);
 
-        $filter = array();
-        if(is_array($resource)){
-            foreach($resource as $r){
-                $filter[] = array('r'=>$this->labeller->uri_to_alias($r), 'c'=>$context);
+        $specPredicates = array();
+
+        foreach(MongoTripodConfig::getInstance()->getSearchDocumentSpecifications() as $spec)
+        {
+            if(isset($spec[_ID_KEY]))
+            {
+                $spec[$spec[_ID_KEY]] = MongoTripodConfig::getInstance()->getDefinedPredicatesInSpec($spec[_ID_KEY]);
             }
-        } else {
-            $filter[] = array('r'=>$this->labeller->uri_to_alias($resource), 'c'=>$context);
         }
 
-        $query = array(_IMPACT_INDEX=>array('$in'=>$filter));
-        $cursor = $this->tripod->db->selectCollection($this->getSearchCollectionName())->find($query, array('_id'=>true));
-        foreach($cursor as $doc){
-            $impactedDocuments[] = $doc;
+        // build a filter - will be used for impactIndex detection and finding search types to re-gen
+        $searchDocFilters = array();
+        $resourceFilters = array();
+        foreach ($resourcesAndPredicates as $resource=>$resourcePredicates)
+        {
+            $resourceAlias = $this->labeller->uri_to_alias($resource);
+            $id = array(_ID_RESOURCE=>$resourceAlias,_ID_CONTEXT=>$contextAlias);
+            // If we don't have a working config or there are no predicates listed, remove all
+            // rows associated with the resource in all search types
+            if(empty($specPredicates) || empty($resourcePredicates))
+            {
+                // build $filter for queries to impact index
+                $resourceFilters[] = $id;
+            }
+            else
+            {
+                foreach($specPredicates as $searchDocType=>$predicates)
+                {
+                    // Only look for search rows if the changed predicates are actually defined in the searchDocspec
+                    if(array_intersect($resourcePredicates, $predicates))
+                    {
+                        if(!isset($searchDocFilters[$searchDocType]))
+                        {
+                            $searchDocFilters[$searchDocType] = array();
+                        }
+                        // build $filter for queries to impact index
+                        $searchDocFilters[$searchDocType][] = $id;
+                    }
+                }
+            }
+
         }
-        return $impactedDocuments;
+
+        if(empty($searchDocFilters) && !empty($resourceFilters))
+        {
+            $query = array("value."._IMPACT_INDEX=>array('$in'=>$resourceFilters));
+        }
+        else
+        {
+            $query = array();
+            foreach($searchDocFilters as $searchDocType=>$filters)
+            {
+                // first re-gen views where resources appear in the impact index
+                $query[] = array("value."._IMPACT_INDEX=>array('$in'=>$filters), '_id'._ID_TYPE=>$searchDocType);
+            }
+
+            if(!empty($resourceFilters))
+            {
+                $query[] = array("value."._IMPACT_INDEX=>array('$in'=>$resourceFilters));
+            }
+
+            if(count(array_keys($query)) > 1)
+            {
+                $query = array('$or'=>$query);
+            }
+        }
+        if(empty($query))
+        {
+            return array();
+        }
+        $cursor = $this->tripod->db->selectCollection($this->getSearchCollectionName())->find($query, array('_id'=>true));
+
+        return iterator_to_array($cursor);
     }
 
     public function search($q, $type, $indices=array(), $fields=array(), $limit=10, $offset=0)

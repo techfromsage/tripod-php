@@ -208,11 +208,11 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
      * Given a set of resources, this method returns the ids of the documents that are directly affected.
      * As a note remember that if ResourceA has a view associated with it, then the impactIndex for ResourceA, will contain
      * an entry for ResourceA as well as any other Resources.
-     * @param $resources
+     * @param $resourcesAndPredicates
      * @param null $context
      * @return array
      */
-    public function findImpactedTableRows($resources, $context = null)
+    public function findImpactedTableRows($resourcesAndPredicates, $context = null)
     {
         $contextAlias = $this->getContextAlias($context);
 
@@ -229,7 +229,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         // build a filter - will be used for impactIndex detection and finding direct tables to re-gen
         $tableFilters = array();
         $resourceFilters = array();
-        foreach ($resources as $resource=>$resourcePredicates)
+        foreach ($resourcesAndPredicates as $resource=>$resourcePredicates)
         {
             $resourceAlias = $this->labeller->uri_to_alias($resource);
             $id = array(_ID_RESOURCE=>$resourceAlias,_ID_CONTEXT=>$contextAlias);
