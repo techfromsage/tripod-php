@@ -277,7 +277,11 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
                 $query[] = array("value."._IMPACT_INDEX=>array('$in'=>$resourceFilters));
             }
 
-            if(count(array_keys($query)) > 1)
+            if(count($query) === 1)
+            {
+                $query = $query[0];
+            }
+            elseif(count($query) > 1)
             {
                 $query = array('$or'=>$query);
             }
@@ -315,11 +319,19 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         $tableSpecs = MongoTripodConfig::getInstance()->getTableSpecifications();
         foreach($tableSpecs as $key=>$tableSpec)
         {
-            if ($tableSpec["type"]==$rdfType || $tableSpec["type"]==$rdfTypeAlias)
+            if(isset($tableSpec["type"]))
             {
-                $foundSpec = true;
-                $this->debugLog("Processing {$tableSpec['_id']}");
-                $this->generateTableRows($key,$subject,$context);
+                $types = $tableSpec["type"];
+                if(!is_array($types))
+                {
+                    $types = array($types);
+                }
+                if (in_array($rdfType, $types) || in_array($rdfTypeAlias, $types))
+                {
+                    $foundSpec = true;
+                    $this->debugLog("Processing {$tableSpec[_ID_KEY]}");
+                    $this->generateTableRows($key,$subject,$context);
+                }
             }
         }
         if (!$foundSpec)

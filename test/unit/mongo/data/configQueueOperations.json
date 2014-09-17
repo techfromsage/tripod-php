@@ -173,6 +173,31 @@
                     ]
                 }
             }
+        },
+        {
+            "_id": "t_authors",
+            "type": "bibo:Book",
+            "from":"CBD_testing",
+            "fields": [
+                {
+                    "fieldName": "title",
+                    "predicates": ["dct:title"]
+                }
+            ],
+            "joins" : {
+                "dct:creator" : {
+                    "fields" : [
+                        {
+                            "fieldName" : "author",
+                            "predicates": ["foaf:name"]
+                        },
+                        {
+                            "fieldName": "dob",
+                            "predicates": ["foaf:dob"]
+                        }
+                    ]
+                }
+            }
         }
     ],
     "transaction_log" : {

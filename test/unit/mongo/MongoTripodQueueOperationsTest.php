@@ -98,6 +98,8 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
      */
     public function testSeveralItemsAddedToQueueForChangeToSubjectThatImpactsOthers()
     {
+        $this->tripod->getTripodTables()->generateTableRowsForType("bibo:Book");
+
         // create a tripod instance that will send all operations to the queue
         $tripod = new MongoTripod('CBD_testing','testing', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
         $g1 = $tripod->describeResource("http://talisaspire.com/authors/1");
@@ -111,16 +113,16 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
 
         $expectedItems = array(
             "http://talisaspire.com/authors/1" => array(
-                "operations"=> array(OP_SEARCH) // foaf:Person only has a search doc spec associated with it in config
+                "operations"=> array(OP_SEARCH) // foaf:Person has a search doc
             ),
             "http://talisaspire.com/resources/doc1" => array(
-                "operations"=> array(OP_VIEWS, OP_TABLES, OP_SEARCH)
+                "operations"=> array(OP_VIEWS, OP_TABLES) // foaf:dob is defined in t_authors
             ),
             "http://talisaspire.com/resources/doc2" => array(
-                "operations"=> array(OP_VIEWS, OP_TABLES, OP_SEARCH)
+                "operations"=> array(OP_VIEWS, OP_TABLES) // foaf:dob doesn't affect any tables or search
             ),
             "http://talisaspire.com/resources/doc3" => array(
-                "operations"=> array(OP_VIEWS, OP_TABLES, OP_SEARCH)
+                "operations"=> array(OP_VIEWS, OP_TABLES) // foaf:dob doesn't affect any tables or search
             ),
         );
 
@@ -133,8 +135,13 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
 
             // verify the number of operations is the same
             $queuedItemOpsCount   = count($queuedItem['operations']);
+
             $expectedItemOpsCount = count($expectedItems[$queuedItemRId]["operations"]);
-            $this->assertEquals($expectedItemOpsCount, $queuedItemOpsCount, "Queued Item does not contain the expected number of operations");
+            $this->assertEquals(
+                $expectedItems[$queuedItemRId]["operations"],
+                $queuedItem['operations'],
+                "Queued Item: ${queuedItemRId} does not contain the expected number of operations"
+            );
 
             // assert queued item operations appear in the expected item operations
             foreach($queuedItem['operations'] as $op){

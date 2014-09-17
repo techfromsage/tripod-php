@@ -136,9 +136,9 @@ class MongoTripodSearchIndexer extends MongoTripodBase implements SplObserver
         }
     }
 
-    public function findImpactedSearchDocuments($resources, $context)
+    public function findImpactedSearchDocuments($resourcesAndPredicates, $context)
     {
-        return $this->getSearchProvider()->findImpactedDocuments($resources, $context);
+        return $this->getSearchProvider()->findImpactedDocuments($resourcesAndPredicates, $context);
     }
 
     public function deleteSearchDocumentsByTypeId($typeId)

@@ -82,12 +82,16 @@ class ModifiedSubject implements SplSubject
         }
 
         $data = array(
-            "r"=>$resourceId['r'],
-            "c"=>$resourceId['c'],
+            _ID_RESOURCE=>$resourceId[_ID_RESOURCE],
+            _ID_CONTEXT=>$resourceId[_ID_CONTEXT],
             "database"=>$dbName,
             "collection"=>$collectionName,
             "operations"=>$operations
         );
+        if(isset($resourceId[_ID_TYPE]))
+        {
+            $data[_ID_TYPE] = $resourceId[_ID_TYPE];
+        }
 
         if(!empty($types))
         {

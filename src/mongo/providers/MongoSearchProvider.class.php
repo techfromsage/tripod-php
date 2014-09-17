@@ -77,7 +77,7 @@ class MongoSearchProvider implements ITripodSearchProvider
         {
             if(isset($spec[_ID_KEY]))
             {
-                $spec[$spec[_ID_KEY]] = MongoTripodConfig::getInstance()->getDefinedPredicatesInSpec($spec[_ID_KEY]);
+                $specPredicates[$spec[_ID_KEY]] = MongoTripodConfig::getInstance()->getDefinedPredicatesInSpec($spec[_ID_KEY]);
             }
         }
 
@@ -132,7 +132,11 @@ class MongoSearchProvider implements ITripodSearchProvider
                 $query[] = array("value."._IMPACT_INDEX=>array('$in'=>$resourceFilters));
             }
 
-            if(count(array_keys($query)) > 1)
+            if(count($query) === 1)
+            {
+                $query = $query[0];
+            }
+            elseif(count($query) > 1)
             {
                 $query = array('$or'=>$query);
             }
