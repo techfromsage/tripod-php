@@ -208,11 +208,11 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
      * Given a set of resources, this method returns the ids of the documents that are directly affected.
      * As a note remember that if ResourceA has a view associated with it, then the impactIndex for ResourceA, will contain
      * an entry for ResourceA as well as any other Resources.
-     * @param $resourcesAndPredicates
+     * @param array $resourcesAndPredicates
      * @param null $context
      * @return array
      */
-    public function findImpactedTableRows($resourcesAndPredicates, $context = null)
+    public function findImpactedTableRows(array $resourcesAndPredicates, $context = null)
     {
         $contextAlias = $this->getContextAlias($context);
 

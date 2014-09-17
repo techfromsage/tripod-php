@@ -26,7 +26,8 @@ class MongoTripodTest extends MongoTripodTestBase
 
         $this->tripod->collection->drop();
 
-        $this->tripod->lCollection->drop();
+        // Lock collection no longer available from MongoTripod, so drop it manually
+        $this->tripod->db->selectCollection(LOCKS_COLLECTION)->drop();
 
         $this->tripod->setTransactionLog($this->tripodTransactionLog);
 
@@ -337,8 +338,13 @@ class MongoTripodTest extends MongoTripodTestBase
         // canned response will simulate that the underlying data has changed
         $doc = array("_id"=>$uri, "rdf:type"=>array(array('value'=>$g->qname_to_uri("acorn:Resource"), 'type'=>'uri')));
 
-        $mockTripod = $this->getMock('MongoTripod', array('getDocumentForUpdate'), array('CBD_testing', 'testing', array('defaultContext'=>'http://talisaspire.com/')));
-        $mockTripod->expects($this->once())->method('getDocumentForUpdate')->will($this->returnValue($doc));
+        $mockTripod = $this->getMock('MongoTripod', array('getDataUpdateManager'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/')));
+
+        $mockTripodUpdate = $this->getMock('MongoTripodDataUpdateManager', array('getDocumentForUpdate'), array($mockTripod));
+        $mockTripodUpdate->expects($this->once())->method('getDocumentForUpdate')->with($uri)->will($this->returnValue($doc));
+        $mockTripod->expects($this->once())
+            ->method('getDataUpdateManager')
+            ->will($this->returnValue($mockTripodUpdate));
         $mockTripod->setTransactionLog($this->tripodTransactionLog);
 
         $oG = new MongoGraph();
@@ -363,8 +369,13 @@ class MongoTripodTest extends MongoTripodTestBase
         // canned response will simulate that the underlying data has changed
         $doc = array("_id"=>$uri, "_version"=>3,"rdf:type"=>array(array('value'=>$g->qname_to_uri("acorn:Resource"), 'type'=>'uri')));
 
-        $mockTripod = $this->getMock('MongoTripod', array('getDocumentForUpdate'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/')));
-        $mockTripod->expects($this->once())->method('getDocumentForUpdate')->with($uri)->will($this->returnValue($doc));
+        $mockTripod = $this->getMock('MongoTripod', array('getDataUpdateManager'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/')));
+
+        $mockTripodUpdate = $this->getMock('MongoTripodDataUpdateManager', array('getDocumentForUpdate'), array($mockTripod));
+        $mockTripodUpdate->expects($this->once())->method('getDocumentForUpdate')->with($uri)->will($this->returnValue($doc));
+        $mockTripod->expects($this->once())
+            ->method('getDataUpdateManager')
+            ->will($this->returnValue($mockTripodUpdate));
         $mockTripod->setTransactionLog($this->tripodTransactionLog);
 
         $oG = new MongoGraph();
@@ -498,13 +509,20 @@ class MongoTripodTest extends MongoTripodTestBase
     public function testSetReadPreferenceWhenSavingChanges(){
         $subjectOne = "http://talisaspire.com/works/checkReadPreferencesWrite";
         /** @var $tripodMock MongoTripod **/
-        $tripodMock = $this->getMock('MongoTripod', array('addToSearchIndexQueue','setReadPreferenceToPrimary','resetOriginalReadPreference'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/')));
-
-        $tripodMock ->expects($this->once(0))
+        $tripodMock = $this->getMock('MongoTripod', array('getDataUpdateManager'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/')));
+        $tripodUpdate = $this->getMock('MongoTripodDataUpdateManager',
+            array('addToSearchIndexQueue','setReadPreferenceToPrimary','resetOriginalReadPreference'), array($tripodMock));
+        $tripodUpdate
+            ->expects($this->once(0))
             ->method('setReadPreferenceToPrimary');
 
-        $tripodMock ->expects($this->once())
+        $tripodUpdate
+            ->expects($this->once())
             ->method('resetOriginalReadPreference');
+        $tripodMock
+            ->expects($this->once())
+            ->method('getDataUpdateManager')
+            ->will($this->returnValue($tripodUpdate));
 
         $g = new MongoGraph();
         $g->add_literal_triple($subjectOne, $g->qname_to_uri("dct:title"), "Title one");
@@ -517,14 +535,23 @@ class MongoTripodTest extends MongoTripodTestBase
     public function testReadPreferencesAreRestoredWhenErrorSavingChanges(){
         $subjectOne = "http://talisaspire.com/works/checkReadPreferencesAreRestoredOnError";
         /** @var $tripodMock MongoTripod **/
-        $tripodMock = $this->getMock('MongoTripod', array('addToSearchIndexQueue','resetOriginalReadPreference','getContextAlias'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/')));
+        $tripodMock = $this->getMock('MongoTripod', array('getDataUpdateManager'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/')));
+        $tripodUpdate = $this->getMock('MongoTripodDataUpdateManager',
+            array('addToSearchIndexQueue','resetOriginalReadPreference','getContextAlias'), array($tripodMock));
 
-        $tripodMock ->expects($this->once())
+        $tripodUpdate
+            ->expects($this->once())
             ->method('getContextAlias')
             ->will($this->throwException(new Exception("A Test Exception")));
 
-        $tripodMock ->expects($this->once())
+        $tripodUpdate
+            ->expects($this->once())
             ->method('resetOriginalReadPreference');
+
+        $tripodMock
+            ->expects($this->once())
+            ->method('getDataUpdateManager')
+            ->will($this->returnValue($tripodUpdate));
 
         $g = new MongoGraph();
         $g->add_literal_triple($subjectOne, $g->qname_to_uri("dct:title"), "Title one");
@@ -536,25 +563,35 @@ class MongoTripodTest extends MongoTripodTestBase
         /** @var $tripodMock MongoTripod **/
         $tripodMock = $this->getMock(
             'MongoTripod',
-            array('addToSearchIndexQueue', 'validateGraphCardinality'),
+            array('getDataUpdateManager'),
             array('CBD_testing','testing',
                 array('defaultContext'=>'http://talisaspire.com/', 'readPreference'=>MongoClient::RP_SECONDARY_PREFERRED))
         );
 
-        $tripodMock->expects($this->any())->method('addToSearchIndexQueue');
+        $tripodUpdate = $this->getMock('MongoTripodDataUpdateManager',
+            array('addToSearchIndexQueue', 'validateGraphCardinality'), array($tripodMock));
+        $tripodUpdate
+            ->expects($this->any())
+            ->method('addToSearchIndexQueue');
 
-        $tripodMock ->expects($this->exactly(3))
+        $tripodUpdate
+            ->expects($this->exactly(3))
             ->method('validateGraphCardinality')
             ->will($this->onConsecutiveCalls(null, $this->throwException(new Exception('readPreferenceOverMultipleSavesTestException')), null)
             );
 
-        $expectedReadPreference = $tripodMock->getReadPreference();
+        $tripodMock
+            ->expects($this->atLeastOnce())
+            ->method('getDataUpdateManager')
+            ->will($this->returnValue($tripodUpdate));
+
+        $expectedReadPreference = $tripodUpdate->getReadPreference();
         $this->assertEquals($expectedReadPreference['type'], MongoClient::RP_SECONDARY_PREFERRED);
 
         $g = new MongoGraph();
         $g->add_literal_triple($subjectOne, $g->qname_to_uri("dct:title"), "Title one");
         $tripodMock->saveChanges(new MongoGraph(), $g,"http://talisaspire.com/");
-        $this->assertEquals($expectedReadPreference, $tripodMock->getReadPreference());
+        $this->assertEquals($expectedReadPreference, $tripodUpdate->getReadPreference());
 
         $g = new MongoGraph();
         $g->add_literal_triple($subjectOne, $g->qname_to_uri("dct:title2"), "Title two");
@@ -567,23 +604,25 @@ class MongoTripodTest extends MongoTripodTestBase
             $this->assertEquals("readPreferenceOverMultipleSavesTestException", $e->getMessage());
         }
         $this->assertTrue($exceptionThrown);
-        $this->assertEquals($expectedReadPreference, $tripodMock->getReadPreference());
+        $this->assertEquals($expectedReadPreference, $tripodUpdate->getReadPreference());
 
         $g = new MongoGraph();
         $g->add_literal_triple($subjectOne, $g->qname_to_uri("dct:title3"), "Title three");
         $tripodMock->saveChanges(new MongoGraph(), $g,"http://talisaspire.com/");
-        $this->assertEquals($expectedReadPreference, $tripodMock->getReadPreference());
+        $this->assertEquals($expectedReadPreference, $tripodUpdate->getReadPreference());
     }
 
     public function testSaveChangesToLockedDocument()
     {
         $subjectOne = "http://talisaspire.com/works/lockedDoc";
+
         $this->lockDocument($subjectOne,"transaction_101");
 
         $this->setExpectedException('TripodException', "Error storing changes: Did not obtain locks on documents");
 
         $g = new MongoGraph();
         $g->add_literal_triple($subjectOne, $g->qname_to_uri("dct:title"), "Title one");
+
         $this->tripod->saveChanges(new MongoGraph(), $g,"http://talisaspire.com/");
 
     }
@@ -1163,11 +1202,17 @@ class MongoTripodTest extends MongoTripodTestBase
             ->will($this->throwException(new Exception('Some unexpected error occurred.')));
 
         /* @var $tripod PHPUnit_Framework_MockObject_MockObject */
-        $tripod = $this->getMock('MongoTripod', array('getAuditManualRollbacksCollection'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/')));
+        $tripod = $this->getMock('MongoTripod', array('getDataUpdateManager'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/')));
+        $tripodUpdate = $this->getMock('MongoTripodDataUpdateManager', array('getAuditManualRollbacksCollection'), array($tripod));
 
-        $tripod->expects($this->once())
+        $tripodUpdate
+            ->expects($this->once())
             ->method("getAuditManualRollbacksCollection")
             ->will($this->returnValue($auditManualRollbackCollection));
+
+        $tripod->expects($this->once())
+            ->method('getDataUpdateManager')
+            ->will($this->returnValue($tripodUpdate));
 
         $tripod->removeInertLocks("transaction_400", "Unit tests");
     }
@@ -1194,23 +1239,30 @@ class MongoTripodTest extends MongoTripodTestBase
             ->with(array("_id" => $mongoDocumentId), array('$set' => array("status" => AUDIT_STATUS_ERROR, _UPDATED_TS => $mongoDate, 'error' => 'Some unexpected error occurred.')));
 
         /* @var $tripod PHPUnit_Framework_MockObject_MockObject */
-        $tripod = $this->getMock('MongoTripod', array('unlockAllDocuments', 'generateIdForNewMongoDocument', 'getMongoDate', 'getAuditManualRollbacksCollection'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/')));
-
-        $tripod->expects($this->once())
+        $tripod = $this->getMock('MongoTripod', array('getDataUpdateManager'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/')));
+        $tripodUpdate = $this->getMock('MongoTripodDataUpdateManager',
+            array('unlockAllDocuments', 'generateIdForNewMongoDocument', 'getMongoDate', 'getAuditManualRollbacksCollection'),
+            array($tripod));
+        
+        $tripodUpdate->expects($this->once())
             ->method("generateIdForNewMongoDocument")
             ->will($this->returnValue($mongoDocumentId));
 
-        $tripod->expects($this->exactly(2))
+        $tripodUpdate->expects($this->exactly(2))
             ->method("getMongoDate")
             ->will($this->returnValue($mongoDate));
 
-        $tripod->expects($this->once())
+        $tripodUpdate->expects($this->once())
             ->method("getAuditManualRollbacksCollection")
             ->will($this->returnValue($auditManualRollbackCollection));
 
-        $tripod->expects($this->once())
+        $tripodUpdate->expects($this->once())
             ->method("unlockAllDocuments")
             ->will($this->throwException(new Exception('Some unexpected error occurred.')));
+
+        $tripod->expects($this->once())
+            ->method('getDataUpdateManager')
+            ->will($this->returnValue($tripodUpdate));
 
         $tripod->removeInertLocks("transaction_400", "Unit tests");
     }
@@ -1246,23 +1298,30 @@ class MongoTripodTest extends MongoTripodTestBase
             ->with(array("_id" => $mongoDocumentId), array('$set' => array("status" => AUDIT_STATUS_COMPLETED, _UPDATED_TS => $mongoDate)));
 
         /* @var MongoTripod PHPUnit_Framework_MockObject_MockObject */
-        $tripod = $this->getMock('MongoTripod', array('unlockAllDocuments', 'generateIdForNewMongoDocument', 'getMongoDate', 'getAuditManualRollbacksCollection'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/')));
-
-        $tripod->expects($this->once())
+        $tripod = $this->getMock('MongoTripod', array('getDataUpdateManager'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/')));
+        $tripodUpdate = $this->getMock('MongoTripodDataUpdateManager',
+            array('unlockAllDocuments', 'generateIdForNewMongoDocument', 'getMongoDate', 'getAuditManualRollbacksCollection'),
+            array($tripod));
+        
+        $tripodUpdate->expects($this->once())
             ->method("generateIdForNewMongoDocument")
             ->will($this->returnValue($mongoDocumentId));
 
-        $tripod->expects($this->once())
+        $tripodUpdate->expects($this->once())
             ->method("getAuditManualRollbacksCollection")
             ->will($this->returnValue($auditManualRollbackCollection));
 
-        $tripod->expects($this->exactly(2))
+        $tripodUpdate->expects($this->exactly(2))
             ->method("getMongoDate")
             ->will($this->returnValue($mongoDate));
 
-        $tripod->expects($this->once())
+        $tripodUpdate->expects($this->once())
             ->method("unlockAllDocuments")
             ->will($this->returnValue(true));
+
+        $tripod->expects($this->once())
+            ->method('getDataUpdateManager')
+            ->will($this->returnValue($tripodUpdate));
 
         $this->assertTrue($tripod->removeInertLocks("transaction_400", "Unit tests"));
     }
