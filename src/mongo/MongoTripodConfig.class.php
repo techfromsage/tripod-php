@@ -257,6 +257,16 @@ class MongoTripodConfig
                 $predicates = array_merge($predicates, $this->getDefinedPredicatesInSpecBlock($join));
             }
         }
+        if(isset($block['counts']))
+        {
+            foreach($block['counts'] as $property)
+            {
+                if(isset($property['property']))
+                {
+                    $predicates[] = $this->getLabeller()->uri_to_alias($property['property']);
+                }
+            }
+        }
         return $predicates;
     }
 

@@ -269,7 +269,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
             foreach($tableFilters as $tableType=>$filters)
             {
                 // first re-gen views where resources appear in the impact index
-                $query[] = array("value."._IMPACT_INDEX=>array('$in'=>$filters), '_id'._ID_TYPE=>$tableType);
+                $query[] = array("value."._IMPACT_INDEX=>array('$in'=>$filters), '_id.'._ID_TYPE=>$tableType);
             }
 
             if(!empty($resourceFilters))
@@ -282,11 +282,11 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
                 $query = array('$or'=>$query);
             }
         }
+
         if(empty($query))
         {
             return array();
         }
-
         $tableRows = $this->db->selectCollection(TABLE_ROWS_COLLECTION)->find($query,array("_id"=>true));
 
         $affectedTableRows = array();
@@ -295,6 +295,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         {
             $affectedTableRows[] = $t;
         }
+
         return $affectedTableRows;
     }
 
