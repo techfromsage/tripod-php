@@ -36,7 +36,7 @@ class MongoTripodQueueTest extends MongoTripodTestBase
     public function testAddToIndexQueue()
     {
         // add item to queue
-        $this->indexQueue->addItem(ModifiedSubject::create(array('r'=>'http://example.com/1','c'=>'http://talisaspire.com/'), array('http://talisaspire.com/schema#Resource'), array(OP_TABLES,OP_SEARCH), 'myDB', 'myCollection'));
+        $this->indexQueue->addItem(ModifiedSubject::create(array('r'=>'http://example.com/1','c'=>'http://talisaspire.com/'), array('http://talisaspire.com/schema#Resource'), array(OP_TABLES,OP_SEARCH), array(), 'myDB', 'myCollection'));
 
         // retrieve it and assert properties
         $data = $this->indexQueue->fetchNextQueuedItem()->getData();
@@ -53,7 +53,7 @@ class MongoTripodQueueTest extends MongoTripodTestBase
     public function testRemoveFromIndexQueue()
     {
         // add an item, verify that its there
-        $this->indexQueue->addItem(ModifiedSubject::create(array('r'=>'http://example.com/2','c'=>'http://talisaspire.com/'), array('http://talisaspire.com/schema#Resource'), array(OP_TABLES,OP_SEARCH), 'myDB', 'myCollection'));
+        $this->indexQueue->addItem(ModifiedSubject::create(array('r'=>'http://example.com/2','c'=>'http://talisaspire.com/'), array('http://talisaspire.com/schema#Resource'), array(OP_TABLES,OP_SEARCH), array(), 'myDB', 'myCollection'));
         $modifiedSubject = $this->indexQueue->fetchNextQueuedItem();
         $data = $modifiedSubject->getData();
         $this->assertEquals('http://example.com/2', $data['r']);
@@ -69,7 +69,7 @@ class MongoTripodQueueTest extends MongoTripodTestBase
     public function testUpdateQueuedItemStatusToFailed()
     {
         // add an item, verify that its there
-        $this->indexQueue->addItem(ModifiedSubject::create(array('r'=>'http://example.com/3','c'=>'http://talisaspire.com/'), array('http://talisaspire.com/schema#Resource'), array(OP_TABLES,OP_SEARCH), 'myDB', 'myCollection'));
+        $this->indexQueue->addItem(ModifiedSubject::create(array('r'=>'http://example.com/3','c'=>'http://talisaspire.com/'), array('http://talisaspire.com/schema#Resource'), array(OP_TABLES,OP_SEARCH), array(), 'myDB', 'myCollection'));
         $modifiedSubject = $this->indexQueue->fetchNextQueuedItem();
         $data = $modifiedSubject->getData();
         $this->assertEquals('http://example.com/3', $data['r']);
@@ -98,7 +98,7 @@ class MongoTripodQueueTest extends MongoTripodTestBase
         $mockQueue = $this->getMock('MongoTripodQueue', array('getUniqId'), array());
         $mockQueue->expects($this->any())->method('getUniqId')->will($this->returnValue($itemId));
 
-        $mockQueue->addItem(ModifiedSubject::create(array('r'=>'http://example.com/test','c'=>'http://talisaspire.com/'), array('http://talisaspire.com/schema#Resource'), array(OP_TABLES,OP_SEARCH), 'myDB', 'myCollection'));
+        $mockQueue->addItem(ModifiedSubject::create(array('r'=>'http://example.com/test','c'=>'http://talisaspire.com/'), array('http://talisaspire.com/schema#Resource'), array(OP_TABLES,OP_SEARCH), array(), 'myDB', 'myCollection'));
         $item = $mockQueue->getItem($itemId);
 
         $this->assertEquals('myDB', $item['database']);

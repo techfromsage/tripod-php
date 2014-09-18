@@ -74,11 +74,11 @@ class ModifiedSubject implements SplSubject
      * @return ModifiedSubject
      * @throws TripodException
      */
-    public static function create(Array $resourceId, Array $types, Array $operations, $dbName, $collectionName, $delete=false)
+    public static function create(Array $resourceId, Array $types, Array $operations, Array $specTypes, $dbName, $collectionName, $delete=false)
     {
-        if (!is_array($resourceId) || !array_key_exists("r",$resourceId) || !array_key_exists("c",$resourceId))
+        if (!is_array($resourceId) || !array_key_exists(_ID_RESOURCE,$resourceId) || !array_key_exists(_ID_CONTEXT,$resourceId))
         {
-            throw new TripodException('Parameter $resourceId needs to be of type array with r and c keys');
+            throw new TripodException('Parameter $resourceId needs to be of type array with ' . _ID_RESOURCE . ' and ' . _ID_CONTEXT . ' keys');
         }
 
         $data = array(
@@ -96,6 +96,11 @@ class ModifiedSubject implements SplSubject
         if(!empty($types))
         {
             $data['rdf:type'] = $types;
+        }
+
+        if(!empty($specTypes))
+        {
+            $data['specTypes'] = $specTypes;
         }
 
         if($delete==true)

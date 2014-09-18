@@ -59,9 +59,16 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         $resourceUri    = $queuedItem[_ID_RESOURCE];
         $context        = $queuedItem[_ID_CONTEXT];
 
+        $specTypes = null;
+
+        if(isset($queuedItem['specTypes']))
+        {
+            $specTypes = $queuedItem['specTypes'];
+        }
+
         if(isset($queuedItem['delete']))
         {
-            $this->deleteTableRowsForResource($resourceUri,$context);
+            $this->deleteTableRowsForResource($resourceUri,$context,$specTypes);
         }
         else
         {
@@ -133,12 +140,22 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         );
     }
 
-    protected function deleteTableRowsForResource($resource, $context=null)
+    protected function deleteTableRowsForResource($resource, $context=null, $specType = null)
     {
         $resourceAlias = $this->labeller->uri_to_alias($resource);
         $contextAlias = $this->getContextAlias($context);
-
-        $this->db->selectCollection(TABLE_ROWS_COLLECTION)->remove(array("_id.r"=>$resourceAlias,"_id.c"=>$contextAlias));
+        $query = array(_ID_KEY . '.' . _ID_RESOURCE => $this->labeller->uri_to_alias($resource),  _ID_KEY . '.' . _ID_CONTEXT => $context);
+        if (!empty($specType)) {
+            if(is_string($specType))
+            {
+                $query[_ID_KEY][_ID_TYPE] = $specType;
+            }
+            elseif(is_array($specType))
+            {
+                $query[_ID_KEY . '.' . _ID_TYPE] = array('$in'=>$specType);
+            }
+        }
+        $this->db->selectCollection(TABLE_ROWS_COLLECTION)->remove($query);
     }
 
     /**
@@ -157,18 +174,35 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
     }
 
     /**
-     * This method handles invalidation and regeneration of table rows based on impact index, before deligating to
+     * This method handles invalidation and regeneration of table rows based on impact index, before delegating to
      * generateTableRowsForType() for re-generation of any table rows for the $resource
      * @param $resource
-     * @param null $context
+     * @param string|null $context
+     * @param array $specTypes
      */
-    protected function generateTableRowsForResource($resource, $context=null)
+    protected function generateTableRowsForResource($resource, $context=null, Array $specTypes=array())
     {
         $resourceAlias = $this->labeller->uri_to_alias($resource);
         $contextAlias = $this->getContextAlias($context);
 
         // delete any rows with this resource and context in the key
-        foreach (MongoTripodConfig::getInstance()->getTableSpecifications() as $type=>$spec)
+        if(empty($specTypes))
+        {
+            $tableSpecs = MongoTripodConfig::getInstance()->getTableSpecifications();
+        }
+        else
+        {
+            $tableSpecs = array();
+            foreach($specTypes as $specType)
+            {
+                $spec = MongoTripodConfig::getInstance()->getTableSpecification($specType);
+                if($spec)
+                {
+                    $tableSpecs[$spec] = $spec;
+                }
+            }
+        }
+        foreach ($tableSpecs as $type=>$spec)
         {
             if ($spec['from']==$this->collectionName){
                 $this->db->selectCollection(TABLE_ROWS_COLLECTION)->remove(array("_id" => array("r"=>$resourceAlias,"c"=>$contextAlias,"type"=>$type)));
@@ -190,14 +224,14 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
                 if (array_key_exists('u',$rt["rdf:type"]))
                 {
                     // single type, not an array of values
-                    $this->generateTableRowsForType($rt["rdf:type"]['u'],$id[_ID_RESOURCE],$id[_ID_CONTEXT]);
+                    $this->generateTableRowsForType($rt["rdf:type"]['u'],$id[_ID_RESOURCE],$id[_ID_CONTEXT], $specTypes);
                 }
                 else
                 {
                     // an array of types
                     foreach ($rt["rdf:type"] as $type)
                     {
-                        $this->generateTableRowsForType($type['u'],$id[_ID_RESOURCE],$id[_ID_CONTEXT]);
+                        $this->generateTableRowsForType($type['u'],$id[_ID_RESOURCE],$id[_ID_CONTEXT], $specTypes);
                     }
                 }
             }
@@ -305,18 +339,35 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
 
     /**
      * This method finds all the table specs for the given $rdfType and generates the table rows for the $subject one by one
-     * @param $rdfType
-     * @param null $subject
-     * @param null $context
+     * @param string $rdfType
+     * @param string|null $subject
+     * @param string|null $context
+     * @param array $specTypes
      * @return mixed
-     * @throws Exception
      */
-    public function generateTableRowsForType($rdfType,$subject=null,$context=null)
+    public function generateTableRowsForType($rdfType,$subject=null,$context=null, Array $specTypes = array())
     {
         $rdfType = $this->labeller->qname_to_alias($rdfType);
         $rdfTypeAlias = $this->labeller->uri_to_alias($rdfType);
         $foundSpec = false;
-        $tableSpecs = MongoTripodConfig::getInstance()->getTableSpecifications();
+
+        if(empty($specTypes))
+        {
+            $tableSpecs = MongoTripodConfig::getInstance()->getTableSpecifications();
+        }
+        else
+        {
+            $tableSpecs = array();
+            foreach($specTypes as $specType)
+            {
+                $spec = MongoTripodConfig::getInstance()->getTableSpecification($specType);
+                if($spec)
+                {
+                    $tableSpecs[$spec] = $spec;
+                }
+            }
+        }
+
         foreach($tableSpecs as $key=>$tableSpec)
         {
             if(isset($tableSpec["type"]))
@@ -336,7 +387,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         }
         if (!$foundSpec)
         {
-            $this->debugLog("Cound not find any table specifications for $subject with resource type '$rdfType'");
+            $this->debugLog("Could not find any table specifications for $subject with resource type '$rdfType'");
             return;
         }
     }

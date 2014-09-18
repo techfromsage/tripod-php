@@ -41,18 +41,23 @@ class MongoSearchProvider implements ITripodSearchProvider
      * If spec id is not specified this method will delete all search documents that match the resource and context.
      * @param string $resource
      * @param string $context
-     * @param string|null $specId
+     * @param string|array|null $specId
      * @throws TripodSearchException if there was an error removing the document
      * @return mixed
      */
     public function deleteDocument($resource, $context, $specId = null)
     {
         try {
-            $query = null;
-            if (empty($specId)) {
-                $query = array('_id.r' => $this->labeller->uri_to_alias($resource), '_id.c' => $context);
-            } else {
-                $query = array('_id' => array('r' => $this->labeller->uri_to_alias($resource), 'c' => $context, 'type' => $specId));
+            $query = array(_ID_KEY . '.' . _ID_RESOURCE => $this->labeller->uri_to_alias($resource),  _ID_KEY . '.' . _ID_CONTEXT => $context);
+            if (!empty($specId)) {
+                if(is_string($specId))
+                {
+                    $query[_ID_KEY][_ID_TYPE] = $specId;
+                }
+                elseif(is_array($specId))
+                {
+                    $query[_ID_KEY . '.' . _ID_TYPE] = array('$in'=>$specId);
+                }
             }
             $this->tripod->db->selectCollection($this->getSearchCollectionName())->remove($query);
         } catch (Exception $e) {
@@ -116,7 +121,7 @@ class MongoSearchProvider implements ITripodSearchProvider
 
         if(empty($searchDocFilters) && !empty($resourceFilters))
         {
-            $query = array("value."._IMPACT_INDEX=>array('$in'=>$resourceFilters));
+            $query = array(_IMPACT_INDEX=>array('$in'=>$resourceFilters));
         }
         else
         {
@@ -124,12 +129,12 @@ class MongoSearchProvider implements ITripodSearchProvider
             foreach($searchDocFilters as $searchDocType=>$filters)
             {
                 // first re-gen views where resources appear in the impact index
-                $query[] = array("value."._IMPACT_INDEX=>array('$in'=>$filters), '_id'._ID_TYPE=>$searchDocType);
+                $query[] = array(_IMPACT_INDEX=>array('$in'=>$filters), '_id.'._ID_TYPE=>$searchDocType);
             }
 
             if(!empty($resourceFilters))
             {
-                $query[] = array("value."._IMPACT_INDEX=>array('$in'=>$resourceFilters));
+                $query[] = array(_IMPACT_INDEX=>array('$in'=>$resourceFilters));
             }
 
             if(count($query) === 1)
@@ -146,8 +151,14 @@ class MongoSearchProvider implements ITripodSearchProvider
             return array();
         }
         $cursor = $this->tripod->db->selectCollection($this->getSearchCollectionName())->find($query, array('_id'=>true));
+        $searchDocs = array();
 
-        return iterator_to_array($cursor);
+        foreach($cursor as $d)
+        {
+            $searchDocs[] = $d;
+        }
+
+        return $searchDocs;
     }
 
     public function search($q, $type, $indices=array(), $fields=array(), $limit=10, $offset=0)

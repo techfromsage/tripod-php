@@ -267,6 +267,22 @@ class MongoTripodConfig
                 }
             }
         }
+        if(isset($block['indices']))
+        {
+            foreach($block['indices'] as $index)
+            {
+                if(isset($index['predicates']))
+                {
+                    foreach($index['predicates'] as $p)
+                    {
+                        if(!empty($p))
+                        {
+                            $predicates = array_merge($predicates, $this->getPredicateAliasesFromPredicateProperty($p));
+                        }
+                    }
+                }
+            }
+        }
         return $predicates;
     }
 
