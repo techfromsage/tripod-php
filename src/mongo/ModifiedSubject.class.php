@@ -68,8 +68,9 @@ class ModifiedSubject implements SplSubject
      * @param array $resourceId
      * @param array $types
      * @param array $operations
-     * @param $dbName
-     * @param $collectionName
+     * @param array $specTypes
+     * @param string $dbName
+     * @param string $collectionName
      * @param bool $delete
      * @return ModifiedSubject
      * @throws TripodException
