@@ -62,6 +62,13 @@ class MongoTripodSearchIndexer extends MongoTripodBase implements SplObserver
         $this->generateAndIndexSearchDocuments($resourceUri, $context, $collectionName, $specTypes);
     }
 
+    /**
+     * Removes all existing documents for the supplied resource and regenerate the search documents
+     * @param string $resourceUri
+     * @param string $context
+     * @param string $collectionName
+     * @param array | string | null $specType
+     */
     public function generateAndIndexSearchDocuments($resourceUri, $context, $collectionName, $specType = null)
     {
         $mongoDb            = $this->tripod->db;

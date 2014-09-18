@@ -249,6 +249,9 @@ class MongoSearchProvider implements ITripodSearchProvider
         return $searchResults;
     }
 
+    /**
+     * @return string
+     */
     public function getSearchCollectionName()
     {
         return SEARCH_INDEX_COLLECTION;
@@ -272,7 +275,12 @@ class MongoSearchProvider implements ITripodSearchProvider
     	    	
     	return $this->tripod->db->selectCollection($this->getSearchCollectionName())->remove(array("_id.type" => $typeId));
     }
-    
+
+    /**
+     * Returns the search document specification for the supplied type
+     * @param string $typeId
+     * @return array|null
+     */
     protected function getSearchDocumentSpecification($typeId)
     {
     	return MongoTripodConfig::getInstance()->getSearchDocumentSpecification($typeId);

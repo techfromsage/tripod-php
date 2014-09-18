@@ -14,7 +14,7 @@ interface ITripodSearchProvider
      * If spec id is not specified this method will delete all search documents that match the resource and context.
      * @param string $resource
      * @param string $context
-     * @param string|null $specId
+     * @param array | string | null $specId
      * @throws TripodSearchException if there was an error removing the document
      * @return mixed
      */
@@ -23,11 +23,12 @@ interface ITripodSearchProvider
     /**
      * Returns the ids of all documents that contain and impact index entry
      * matching the resource and context specified
-     * @param $resource
+     * @param array $resourcesAndPredicates
      * @param string $context
+     * @internal param $resource
      * @return array the ids of search documents that had matching entries in their impact index
      */
-    public function findImpactedDocuments(array $resource, $context);
+    public function findImpactedDocuments(array $resourcesAndPredicates, $context);
 
     /**
      * Executes the query and returns a structure representing a search results.
