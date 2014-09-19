@@ -72,7 +72,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         }
         else
         {
-            $this->generateTableRowsForResource($resourceUri,$context);
+            $this->generateTableRowsForResource($resourceUri,$context,$specTypes);
         }
     }
 
@@ -180,7 +180,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
      * @param string|null $context
      * @param array $specTypes
      */
-    protected function generateTableRowsForResource($resource, $context=null, Array $specTypes=array())
+    protected function generateTableRowsForResource($resource, $context=null, $specTypes=array())
     {
         $resourceAlias = $this->labeller->uri_to_alias($resource);
         $contextAlias = $this->getContextAlias($context);
@@ -198,7 +198,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
                 $spec = MongoTripodConfig::getInstance()->getTableSpecification($specType);
                 if($spec)
                 {
-                    $tableSpecs[$spec] = $spec;
+                    $tableSpecs[$specType] = $spec;
                 }
             }
         }
@@ -345,7 +345,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
      * @param array $specTypes
      * @return mixed
      */
-    public function generateTableRowsForType($rdfType,$subject=null,$context=null, Array $specTypes = array())
+    public function generateTableRowsForType($rdfType,$subject=null,$context=null, $specTypes = array())
     {
         $rdfType = $this->labeller->qname_to_alias($rdfType);
         $rdfTypeAlias = $this->labeller->uri_to_alias($rdfType);
@@ -363,7 +363,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
                 $spec = MongoTripodConfig::getInstance()->getTableSpecification($specType);
                 if($spec)
                 {
-                    $tableSpecs[$spec] = $spec;
+                    $tableSpecs[$specType] = $spec;
                 }
             }
         }

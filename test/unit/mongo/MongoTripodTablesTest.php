@@ -834,4 +834,72 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $this->assertArrayHasKey('results', $results);
         $this->assertEmpty($results['results']);
     }
+
+//    public function testTableRowsGenerateWhenDefinedPredicateChanges()
+//    {
+//        // First make a change that affects a table
+//        $tripod = $this->getMock(
+//            'MongoTripod',
+//            array('getTripodTables', 'getDataUpdateManager'),
+//            array(
+//                'CBD_testing',
+//                'testing',
+//                array(
+//                    'defaultContext'=>'http://talisaspire.com/',
+//                    'async'=>array(
+//                        OP_VIEWS=>true,
+//                        OP_TABLES=>true,
+//                        OP_SEARCH=>false
+//                    )
+//                )
+//            )
+//        );
+//
+//        $tripodUpdate = $this->getMock(
+//            'MongoTripodDataUpdateManager',
+//            array('storeChanges'),
+//            array(
+//                $tripod,
+//                array(
+//                    'defaultContext'=>'http://talisaspire.com/',
+//                    'async'=>array(
+//                        OP_VIEWS=>true,
+//                        OP_TABLES=>false,
+//                        OP_SEARCH=>true
+//                    )
+//                )
+//            )
+//        );
+//        $tripodUpdate->expects($this->atLeastOnce())
+//            ->method('storeChanges')
+//            ->will($this->returnValue(array('deletedSubjects'=>array())));
+//
+//        $tripod->expects($this->atLeastOnce())
+//            ->method('getDataUpdateManager')
+//            ->will($this->returnValue($tripodUpdate));
+//
+//        $tables = $this->getMock('MongoTripodTables',
+//            array('deleteTableRowsForResource', 'generateTableRowsForResource'),
+//            array($tripod->db, $tripod->collection, "http://talisaspire.com/")
+//        );
+//        $tables->expects($this->exactly(3))
+//            ->method('deleteTableRowsForResource')
+//            ->with(
+//                $this->matchesRegularExpression("/http:\/\/talisaspire\.com\/resources\/doc(1|2|3)$/"),
+//                'http://talisaspire.com/',
+//                $this->equalTo(array('i_search_resource')))
+//        ;
+//
+//        $tables->expects($this->exactly(3))
+//            ->method('generateTableRowsForResource');
+//
+//        $tripod->expects($this->atLeastOnce())
+//            ->method('getTripodTables')
+//            ->will($this->returnValue($tables));
+//
+//        $g1 = $tripod->describeResource("http://talisaspire.com/authors/1");
+//        $g2 = $tripod->describeResource("http://talisaspire.com/authors/1");
+//        $g2->add_literal_triple("http://talisaspire.com/authors/1", $g2->qname_to_uri("foaf:name"),"Bill Shakespeare" );
+//        $tripod->saveChanges($g1, $g2);
+//    }
 }

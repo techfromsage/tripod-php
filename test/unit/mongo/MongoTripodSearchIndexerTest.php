@@ -219,6 +219,10 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             "http://talisaspire.com/",
             'CBD_testing'
         );
+    }
+
+    function testSearchDocumentsNotRegeneratedIfChangeIsNotInSearchSpec()
+    {
 
         // Now make a change that shouldn't affect any search docs
         $tripod = $this->getMock(
