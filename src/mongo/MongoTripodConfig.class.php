@@ -475,11 +475,11 @@ class MongoTripodConfig
     /**
      * Check modifier functions against fields
      * @param array $array
-     * @param array $parent
+     * @param mixed $parent
      * @param string|null $parentKey
      * @throws MongoTripodConfigException
      */
-    public function checkModifierFunctions(array $array, array $parent, $parentKey = null)
+    public function checkModifierFunctions(array $array, $parent, $parentKey = null)
     {
         foreach($array as $k => $v)
         {

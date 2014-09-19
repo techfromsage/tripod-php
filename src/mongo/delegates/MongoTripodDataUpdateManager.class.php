@@ -949,7 +949,7 @@ class MongoTripodDataUpdateManager {
                 if($data['collection'] == $this->tripod->getCollectionName()){
                     $observer = $this->tripod->getObserver($op);
                 } else {
-                    $observer =$this->getMongoTripod($data)->getObserver($op);
+                    $observer = $this->getMongoTripod($data)->getObserver($op);
                 }
                 $subject->attach($observer);
             }

@@ -69,4 +69,5 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
 		$this->assertNotNull($generatedDocuments);
 		$this->assertEquals('http://talisaspire.com/resources/doc1' , $generatedDocuments['_id']['r']);
 	}
+
 }
