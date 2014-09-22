@@ -350,28 +350,25 @@ class MongoTripodDataUpdateManager {
                 $fromCollection = $spec['from'];
 
                 $docHash = md5($doc[_ID_KEY][_ID_RESOURCE] . $doc[_ID_KEY][_ID_CONTEXT]);
+                $syncOrAsync = ($asyncConfig[OP_VIEWS] ? OP_ASYNC : OP_SYNC);
 
-                if($asyncConfig[OP_VIEWS] == true) {
-                    if(!array_key_exists($docHash, $operations[OP_ASYNC])){
-                        $operations[OP_ASYNC][$docHash] = array('id'=>array(_ID_RESOURCE=>$doc[_ID_KEY][_ID_RESOURCE], _ID_CONTEXT=>$doc[_ID_KEY][_ID_CONTEXT]), 'ops'=>array());
-                    }
-                    if(!array_key_exists($fromCollection, $operations[OP_ASYNC][$docHash]['ops'])) {
-                        $operations[OP_ASYNC][$docHash]['ops'][$fromCollection] = array();
-                    }
-
-                    array_push($operations[OP_ASYNC][$docHash]['ops'][$fromCollection], OP_VIEWS);
-
-                } else {
-
-                    if(!array_key_exists($docHash, $operations[OP_SYNC])){
-                        $operations[OP_SYNC][$docHash] = array('id'=>array(_ID_RESOURCE=>$doc[_ID_KEY][_ID_RESOURCE], _ID_CONTEXT=>$doc[_ID_KEY][_ID_CONTEXT]), 'ops'=>array());
-                    }
-                    if(!array_key_exists($fromCollection, $operations[OP_SYNC][$docHash]['ops'])) {
-                        $operations[OP_SYNC][$docHash]['ops'][$fromCollection] = array();
-                    }
-
-                    array_push($operations[OP_SYNC][$docHash]['ops'][$fromCollection], OP_VIEWS);
+                if(!array_key_exists($docHash, $operations[$syncOrAsync])){
+                    $operations[$syncOrAsync][$docHash] = array(
+                        'id'=>array(
+                            _ID_RESOURCE=>$doc[_ID_KEY][_ID_RESOURCE],
+                            _ID_CONTEXT=>$doc[_ID_KEY][_ID_CONTEXT],
+                        ),
+                        'ops'=>array()
+                    );
                 }
+                if(!array_key_exists($fromCollection, $operations[$syncOrAsync][$docHash]['ops'])) {
+                    $operations[$syncOrAsync][$docHash]['ops'][$fromCollection] = array();
+                }
+                if(!in_array(OP_VIEWS, $operations[$syncOrAsync][$docHash]['ops'][$fromCollection]))
+                {
+                    array_push($operations[$syncOrAsync][$docHash]['ops'][$fromCollection], OP_VIEWS);
+                }
+
             }
         }
 
@@ -395,7 +392,10 @@ class MongoTripodDataUpdateManager {
             if(!array_key_exists($fromCollection, $operations[$syncOrAsync][$docHash]['ops'])) {
                 $operations[$syncOrAsync][$docHash]['ops'][$fromCollection] = array();
             }
-            array_push($operations[$syncOrAsync][$docHash]['ops'][$fromCollection], OP_TABLES);
+            if(!in_array(OP_TABLES, $operations[$syncOrAsync][$docHash]['ops'][$fromCollection]))
+            {
+                array_push($operations[$syncOrAsync][$docHash]['ops'][$fromCollection], OP_TABLES);
+            }
 
             if(!array_key_exists('specTypes', $operations[$syncOrAsync][$docHash])) {
                 $operations[$syncOrAsync][$docHash]['specTypes'] = array();
@@ -431,7 +431,10 @@ class MongoTripodDataUpdateManager {
                 {
                     $operations[$syncOrAsync][$docHash]['ops'][$fromCollection] = array();
                 }
-                array_push($operations[$syncOrAsync][$docHash]['ops'][$fromCollection], OP_SEARCH);
+                if(!in_array(OP_SEARCH, $operations[$syncOrAsync][$docHash]['ops'][$fromCollection]))
+                {
+                    array_push($operations[$syncOrAsync][$docHash]['ops'][$fromCollection], OP_SEARCH);
+                }
 
                 if(!array_key_exists('specTypes', $operations[$syncOrAsync][$docHash]))
                 {

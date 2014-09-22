@@ -329,7 +329,21 @@ class MongoTripodConfig
     protected function getDefinedPredicatesInSpecBlock(array $block)
     {
         $predicates = array();
-
+        // If the spec has a "type" property, include rdf:type
+        if(isset($block['type']))
+        {
+            $predicates[] = $this->getLabeller()->uri_to_alias(RDF_TYPE);
+        }
+        if(isset($block['filter']))
+        {
+            foreach($block['filter'] as $filter)
+            {
+                if(isset($filter['condition']))
+                {
+                    $predicates = array_merge($predicates, $this->getPredicatesFromFilterCondition($filter['condition']));
+                }
+            }
+        }
         // Get the predicates out of the defined fields
         if(isset($block['fields']))
         {
@@ -446,6 +460,47 @@ class MongoTripodConfig
             } else
             {
                 $predicates = array_merge($predicates, $this->getPredicatesFromPredicateFunctions($array[key($array)]));
+            }
+        }
+        return $predicates;
+    }
+
+    /**
+     * Parses a specDocument's "filter" parameter for any predicates
+     * @param $filter
+     * @return array
+     */
+    protected function getPredicatesFromFilterCondition($filter)
+    {
+        $predicates = array();
+        $regex = "/(^|\b)(\w+\:\w+)\.(l|u)(\b|$)/";
+        foreach($filter as $key=>$condition)
+        {
+            if(is_string($key))
+            {
+                $numMatches = preg_match_all($regex, $key, $matches);
+                for($i = 0; $i < $numMatches; $i++)
+                {
+                    if(isset($matches[2][$i]))
+                    {
+                        $predicates[] = $matches[2][$i];
+                    }
+                }
+            }
+            if(is_string($condition))
+            {
+                $numMatches = preg_match_all($regex, $condition, $matches);
+                for($i = 0; $i < $numMatches; $i++)
+                {
+                    if(isset($matches[2][$i]))
+                    {
+                        $predicates[] = $matches[2][$i];
+                    }
+                }
+            }
+            elseif(is_array($condition))
+            {
+                array_merge($predicates, $this->getPredicatesFromFilterCondition($condition));
             }
         }
         return $predicates;

@@ -185,29 +185,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         $resourceAlias = $this->labeller->uri_to_alias($resource);
         $contextAlias = $this->getContextAlias($context);
 
-        // delete any rows with this resource and context in the key
-        if(empty($specTypes))
-        {
-            $tableSpecs = MongoTripodConfig::getInstance()->getTableSpecifications();
-        }
-        else
-        {
-            $tableSpecs = array();
-            foreach($specTypes as $specType)
-            {
-                $spec = MongoTripodConfig::getInstance()->getTableSpecification($specType);
-                if($spec)
-                {
-                    $tableSpecs[$specType] = $spec;
-                }
-            }
-        }
-        foreach ($tableSpecs as $type=>$spec)
-        {
-            if ($spec['from']==$this->collectionName){
-                $this->db->selectCollection(TABLE_ROWS_COLLECTION)->remove(array("_id" => array("r"=>$resourceAlias,"c"=>$contextAlias,"type"=>$type)));
-            }
-        }
+        $this->deleteTableRowsForResource($resource, $context, $specTypes);
 
         $filter = array();
         $filter[] = array("r"=>$resourceAlias,"c"=>$contextAlias);

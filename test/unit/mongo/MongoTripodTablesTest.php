@@ -835,71 +835,142 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $this->assertEmpty($results['results']);
     }
 
-//    public function testTableRowsGenerateWhenDefinedPredicateChanges()
-//    {
-//        // First make a change that affects a table
-//        $tripod = $this->getMock(
-//            'MongoTripod',
-//            array('getTripodTables', 'getDataUpdateManager'),
-//            array(
-//                'CBD_testing',
-//                'testing',
-//                array(
-//                    'defaultContext'=>'http://talisaspire.com/',
-//                    'async'=>array(
-//                        OP_VIEWS=>true,
-//                        OP_TABLES=>true,
-//                        OP_SEARCH=>false
-//                    )
-//                )
-//            )
-//        );
-//
-//        $tripodUpdate = $this->getMock(
-//            'MongoTripodDataUpdateManager',
-//            array('storeChanges'),
-//            array(
-//                $tripod,
-//                array(
-//                    'defaultContext'=>'http://talisaspire.com/',
-//                    'async'=>array(
-//                        OP_VIEWS=>true,
-//                        OP_TABLES=>false,
-//                        OP_SEARCH=>true
-//                    )
-//                )
-//            )
-//        );
-//        $tripodUpdate->expects($this->atLeastOnce())
-//            ->method('storeChanges')
-//            ->will($this->returnValue(array('deletedSubjects'=>array())));
-//
-//        $tripod->expects($this->atLeastOnce())
-//            ->method('getDataUpdateManager')
-//            ->will($this->returnValue($tripodUpdate));
-//
-//        $tables = $this->getMock('MongoTripodTables',
-//            array('deleteTableRowsForResource', 'generateTableRowsForResource'),
-//            array($tripod->db, $tripod->collection, "http://talisaspire.com/")
-//        );
-//        $tables->expects($this->exactly(3))
-//            ->method('deleteTableRowsForResource')
-//            ->with(
-//                $this->matchesRegularExpression("/http:\/\/talisaspire\.com\/resources\/doc(1|2|3)$/"),
-//                'http://talisaspire.com/',
-//                $this->equalTo(array('i_search_resource')))
-//        ;
-//
-//        $tables->expects($this->exactly(3))
-//            ->method('generateTableRowsForResource');
-//
-//        $tripod->expects($this->atLeastOnce())
-//            ->method('getTripodTables')
-//            ->will($this->returnValue($tables));
-//
-//        $g1 = $tripod->describeResource("http://talisaspire.com/authors/1");
-//        $g2 = $tripod->describeResource("http://talisaspire.com/authors/1");
-//        $g2->add_literal_triple("http://talisaspire.com/authors/1", $g2->qname_to_uri("foaf:name"),"Bill Shakespeare" );
-//        $tripod->saveChanges($g1, $g2);
-//    }
+    public function testTableRowsGenerateWhenDefinedPredicateChanges()
+    {
+        foreach(MongoTripodConfig::getInstance()->getTableSpecifications() as $specId=>$spec)
+        {
+            $this->generateTableRows($specId);
+        }
+
+        $tripod = $this->getMock(
+            'MongoTripod',
+            array('getTripodTables', 'getDataUpdateManager'),
+            array(
+                'CBD_testing',
+                'testing',
+                array(
+                    'defaultContext'=>'http://talisaspire.com/',
+                    'async'=>array(
+                        OP_VIEWS=>true,
+                        OP_TABLES=>true,
+                        OP_SEARCH=>false
+                    )
+                )
+            )
+        );
+
+        $tripodUpdate = $this->getMock(
+            'MongoTripodDataUpdateManager',
+            array('storeChanges'),
+            array(
+                $tripod,
+                array(
+                    'defaultContext'=>'http://talisaspire.com/',
+                    'async'=>array(
+                        OP_VIEWS=>true,
+                        OP_TABLES=>false,
+                        OP_SEARCH=>true
+                    )
+                )
+            )
+        );
+        $tripodUpdate->expects($this->atLeastOnce())
+            ->method('storeChanges')
+            ->will($this->returnValue(array('deletedSubjects'=>array())));
+
+        $tripod->expects($this->atLeastOnce())
+            ->method('getDataUpdateManager')
+            ->will($this->returnValue($tripodUpdate));
+
+        $tables = $this->getMock('MongoTripodTables',
+            array('generateTableRowsForResource'),
+            array($tripod->db, $tripod->collection, "http://talisaspire.com/")
+        );
+
+        $tables->expects($this->once())
+            ->method('generateTableRowsForResource')
+            ->with(
+                $this->equalTo("http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2"),
+                'http://talisaspire.com/',
+                $this->equalTo(array("t_distinct", "t_join_source_count_regex"))); // <- These are the specs with dct:title defined
+
+
+        $tripod->expects($this->atLeastOnce())
+            ->method('getTripodTables')
+            ->will($this->returnValue($tables));
+
+        /** @var MongoTripod $tripod */
+        $g1 = $tripod->describeResource("http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2");
+        $g2 = $tripod->describeResource("http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2");
+        $g2->add_literal_triple("http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2",$g2->qname_to_uri("dct:title"),"Physics 3rd Edition: Physics for Engineers and Scientists");
+        $tripod->saveChanges($g1, $g2);
+    }
+
+    public function testTableRowsNotGeneratedWhenUndefinedPredicateChanges()
+    {
+        foreach(MongoTripodConfig::getInstance()->getTableSpecifications() as $specId=>$spec)
+        {
+            $this->generateTableRows($specId);
+        }
+
+        $tripod = $this->getMock(
+            'MongoTripod',
+            array('getTripodTables', 'getDataUpdateManager'),
+            array(
+                'CBD_testing',
+                'testing',
+                array(
+                    'defaultContext'=>'http://talisaspire.com/',
+                    'async'=>array(
+                        OP_VIEWS=>true,
+                        OP_TABLES=>true,
+                        OP_SEARCH=>false
+                    )
+                )
+            )
+        );
+
+        $tripodUpdate = $this->getMock(
+            'MongoTripodDataUpdateManager',
+            array('storeChanges'),
+            array(
+                $tripod,
+                array(
+                    'defaultContext'=>'http://talisaspire.com/',
+                    'async'=>array(
+                        OP_VIEWS=>true,
+                        OP_TABLES=>false,
+                        OP_SEARCH=>true
+                    )
+                )
+            )
+        );
+        $tripodUpdate->expects($this->atLeastOnce())
+            ->method('storeChanges')
+            ->will($this->returnValue(array('deletedSubjects'=>array())));
+
+        $tripod->expects($this->atLeastOnce())
+            ->method('getDataUpdateManager')
+            ->will($this->returnValue($tripodUpdate));
+
+        $tables = $this->getMock('MongoTripodTables',
+            array('generateTableRowsForResource'),
+            array($tripod->db, $tripod->collection, "http://talisaspire.com/")
+        );
+
+        $tables->expects($this->never())
+            ->method('generateTableRowsForResource');
+
+
+        $tripod->expects($this->atLeastOnce())
+            ->method('getTripodTables')
+            ->will($this->returnValue($tables));
+
+        /** @var MongoTripod $tripod */
+        $g1 = $tripod->describeResource("http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2");
+        $g2 = $tripod->describeResource("http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2");
+        // No table spec uses dct:publisher
+        $g2->add_literal_triple("http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2",$g2->qname_to_uri("dct:publisher")," W. W. Norton & Co");
+        $tripod->saveChanges($g1, $g2);
+    }
 }

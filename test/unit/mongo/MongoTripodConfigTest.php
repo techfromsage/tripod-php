@@ -215,7 +215,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
     {
         $config = MongoTripodConfig::getInstance();
         $this->assertEquals('MongoSearchProvider', $config->searchProvider);
-        $this->assertEquals(2, count($config->searchDocSpecs));
+        $this->assertEquals(3, count($config->searchDocSpecs));
     }
 
     public function testQueueConfig()
@@ -907,7 +907,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
     public function testGetAllTypesInSpecifications()
     {
         $types = $this->tripodConfig->getAllTypesInSpecifications();
-        $this->assertEquals(8, count($types), "There should be 8 types based on the configured view, table and search specifications in config.json");
+        $this->assertEquals(9, count($types), "There should be 9 types based on the configured view, table and search specifications in config.json");
         $expectedValues = array(
             "acorn:Resource",
             "acorn:Work",
@@ -916,7 +916,8 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             "bibo:Book",
             "resourcelist:List",
             "spec:User",
-            "bibo:Document"
+            "bibo:Document",
+            "baseData:Wibble"
         );
 
         foreach($expectedValues as $expected){
@@ -924,5 +925,60 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         }
     }
 
+    public function testGetPredicatesForTableSpec()
+    {
+        $predicates = $this->tripodConfig->getDefinedPredicatesInSpec('t_users');
+        $this->assertEquals(6, count($predicates), "There should be 6 predicates defined in t_users in config.json");
+        $expectedValues = array(
+            'rdf:type',
+            'foaf:firstName',
+            'foaf:surname',
+            'temp:last_login',
+            'temp:last_login_invalid',
+            'temp:last_login_DOES_NOT_EXIST'
+        );
 
+        foreach($expectedValues as $expected){
+            $this->assertContains($expected, $predicates, "List of predicates should have contained $expected");
+        }
+    }
+
+    public function testGetPredicatesForSearchDocSpec()
+    {
+        $predicates = $this->tripodConfig->getDefinedPredicatesInSpec('i_search_list');
+        $this->assertEquals(6, count($predicates), "There should be 6 predicates defined in i_search_list in config.json");
+
+        $expectedValues = array(
+            'rdf:type',
+            'spec:name',
+            'resourcelist:description',
+            'resourcelist:usedBy', // defined in the join
+            'aiiso:name',
+            'aiiso:code'
+        );
+
+        foreach($expectedValues as $expected){
+            $this->assertContains($expected, $predicates, "List of predicates should have contained $expected");
+        }
+    }
+
+    public function testGetPredicatesForSpecFilter()
+    {
+        $predicates = $this->tripodConfig->getDefinedPredicatesInSpec('i_search_filter_parse');
+
+        $this->assertEquals(6, count($predicates), "There should be 6 predicates defined in i_search_filter_parse in config.json");
+
+        $expectedValues = array(
+            'rdf:type',
+            'spec:name',
+            'dct:title',
+            'dct:created', // defined only in the filter
+            'temp:numberOfThings', // defined only in the filter
+            'temp:amountOfTimeSpent' // defined only in the filter
+        );
+
+        foreach($expectedValues as $expected){
+            $this->assertContains($expected, $predicates, "List of predicates should have contained $expected");
+        }
+    }
 }
