@@ -8,7 +8,7 @@ require_once TRIPOD_DIR.'mongo/MongoGraph.class.php';
 require_once TRIPOD_DIR.'mongo/ModifiedSubject.class.php';
 require_once TRIPOD_DIR.'mongo/base/MongoTripodBase.class.php';
 require_once TRIPOD_DIR.'mongo/delegates/MongoTransactionLog.class.php';
-require_once TRIPOD_DIR.'mongo/delegates/MongoTripodDataUpdateManager.class.php';
+require_once TRIPOD_DIR.'mongo/delegates/MongoTripodUpdates.class.php';
 require_once TRIPOD_DIR.'mongo/delegates/MongoTripodViews.class.php';
 require_once TRIPOD_DIR.'mongo/delegates/MongoTripodTables.class.php';
 require_once TRIPOD_DIR.'mongo/delegates/MongoTripodSearchIndexer.class.php';
@@ -54,7 +54,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
     private $retriesToGetLock;
 
     /**
-     * @var MongoTripodDataUpdateManager
+     * @var MongoTripodUpdates
      */
     private $dataUpdateManager;
 
@@ -672,7 +672,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
                 'retriesToGetLock' => $this->retriesToGetLock
             );
 
-            $this->dataUpdateManager = new MongoTripodDataUpdateManager($this, $opts);
+            $this->dataUpdateManager = new MongoTripodUpdates($this, $opts);
         }
         return $this->dataUpdateManager;
     }

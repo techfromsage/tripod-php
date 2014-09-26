@@ -39,7 +39,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
         );
 
         $tripodUpdate = $this->getMock(
-            'MongoTripodDataUpdateManager',
+            'MongoTripodUpdates',
             array('storeChanges'),
             array(
                 $tripod,
@@ -243,7 +243,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
         );
 
         $tripodUpdate = $this->getMock(
-            'MongoTripodDataUpdateManager',
+            'MongoTripodUpdates',
             array('storeChanges'),
             array(
                 $tripod,

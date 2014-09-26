@@ -90,7 +90,7 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
 
         $mockTransactionId = 'transaction_1';
         $mockTripod = $this->getMock('MongoTripod', array('getDataUpdateManager'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/')));
-        $mockTripodUpdate = $this->getMock('MongoTripodDataUpdateManager', array('generateTransactionId','lockSingleDocument'), array($mockTripod));
+        $mockTripodUpdate = $this->getMock('MongoTripodUpdates', array('generateTransactionId','lockSingleDocument'), array($mockTripod));
 
         $mockTripodUpdate->expects($this->exactly(1))
             ->method('generateTransactionId')
@@ -155,7 +155,7 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
 
         $mockTransactionId = 'transaction_1';
         $mockTripod = $this->getMock('MongoTripod', array('getDataUpdateManager'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/')));
-        $mockTripodUpdate = $this->getMock('MongoTripodDataUpdateManager', array('generateTransactionId','lockSingleDocument'), array($mockTripod));
+        $mockTripodUpdate = $this->getMock('MongoTripodUpdates', array('generateTransactionId','lockSingleDocument'), array($mockTripod));
 
         $mockTripodUpdate->expects($this->exactly(1))
             ->method('generateTransactionId')
@@ -253,7 +253,7 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
             ->with($this->equalTo($mockTransactionId));
 
         $mockTripod = $this->getMock('MongoTripod', array('getDataUpdateManager', 'getTransactionLog'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/')));
-        $mockTripodUpdate = $this->getMock('MongoTripodDataUpdateManager', array('generateTransactionId','lockSingleDocument'), array($mockTripod));
+        $mockTripodUpdate = $this->getMock('MongoTripodUpdates', array('generateTransactionId','lockSingleDocument'), array($mockTripod));
 
         $mockTripodUpdate->expects($this->once())
             ->method('generateTransactionId')
@@ -341,7 +341,7 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
         $mockTransactionId = 'transaction_1';
         $mockTripod = $this->getMock('MongoTripod', array('getDataUpdateManager'),
             array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/')));
-        $mockTripodUpdate = $this->getMock('MongoTripodDataUpdateManager',
+        $mockTripodUpdate = $this->getMock('MongoTripodUpdates',
             array('generateTransactionId','lockSingleDocument','applyChangeSet'), array($mockTripod));
         $mockTripodUpdate->expects($this->exactly(1))
             ->method('generateTransactionId')

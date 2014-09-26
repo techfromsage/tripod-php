@@ -2,7 +2,7 @@
 
 require_once TRIPOD_DIR . 'mongo/MongoTripodConfig.class.php';
 
-class MongoTripodDataUpdateManager {
+class MongoTripodUpdates {
     /**
      * @var MongoTripodLabeller
      */

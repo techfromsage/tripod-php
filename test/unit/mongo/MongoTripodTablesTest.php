@@ -860,7 +860,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         );
 
         $tripodUpdate = $this->getMock(
-            'MongoTripodDataUpdateManager',
+            'MongoTripodUpdates',
             array('storeChanges'),
             array(
                 $tripod,
@@ -931,7 +931,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         );
 
         $tripodUpdate = $this->getMock(
-            'MongoTripodDataUpdateManager',
+            'MongoTripodUpdates',
             array('storeChanges'),
             array(
                 $tripod,
