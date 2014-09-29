@@ -23,7 +23,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
         // First make a change that affects a search document
         $tripod = $this->getMock(
             'MongoTripod',
-            array('getSearchIndexer', 'getDataUpdateManager'),
+            array('getSearchIndexer', 'getDataUpdater'),
             array(
                 'CBD_testing',
                 'testing',
@@ -58,7 +58,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             ->will($this->returnValue(array('deletedSubjects'=>array())));
 
         $tripod->expects($this->atLeastOnce())
-            ->method('getDataUpdateManager')
+            ->method('getDataUpdater')
             ->will($this->returnValue($tripodUpdate));
 
         $searchIndexer = $this->getMock('MongoTripodSearchIndexer',
@@ -227,7 +227,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
         // Now make a change that shouldn't affect any search docs
         $tripod = $this->getMock(
             'MongoTripod',
-            array('getSearchIndexer', 'getDataUpdateManager'),
+            array('getSearchIndexer', 'getDataUpdater'),
             array(
                 'CBD_testing',
                 'testing',
@@ -262,7 +262,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             ->will($this->returnValue(array('deletedSubjects'=>array())));
 
         $tripod->expects($this->atLeastOnce())
-            ->method('getDataUpdateManager')
+            ->method('getDataUpdater')
             ->will($this->returnValue($tripodUpdate));
 
         $searchIndexer = $this->getMock('MongoTripodSearchIndexer',

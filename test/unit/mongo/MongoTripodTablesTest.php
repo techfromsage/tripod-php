@@ -844,7 +844,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         $tripod = $this->getMock(
             'MongoTripod',
-            array('getTripodTables', 'getDataUpdateManager'),
+            array('getTripodTables', 'getDataUpdater'),
             array(
                 'CBD_testing',
                 'testing',
@@ -879,7 +879,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             ->will($this->returnValue(array('deletedSubjects'=>array())));
 
         $tripod->expects($this->atLeastOnce())
-            ->method('getDataUpdateManager')
+            ->method('getDataUpdater')
             ->will($this->returnValue($tripodUpdate));
 
         $tables = $this->getMock('MongoTripodTables',
@@ -915,7 +915,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         $tripod = $this->getMock(
             'MongoTripod',
-            array('getTripodTables', 'getDataUpdateManager'),
+            array('getTripodTables', 'getDataUpdater'),
             array(
                 'CBD_testing',
                 'testing',
@@ -950,7 +950,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             ->will($this->returnValue(array('deletedSubjects'=>array())));
 
         $tripod->expects($this->atLeastOnce())
-            ->method('getDataUpdateManager')
+            ->method('getDataUpdater')
             ->will($this->returnValue($tripodUpdate));
 
         $tables = $this->getMock('MongoTripodTables',

@@ -24,11 +24,6 @@ class MongoTripod extends MongoTripodBase implements ITripod
 {
 
     /**
-     * $var MongoTransactionLog
-     */
-    private $transaction_log = null;
-
-    /**
      * @var MongoTripodViews
      */
     private $tripod_views = null;
@@ -56,7 +51,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
     /**
      * @var MongoTripodUpdates
      */
-    private $dataUpdateManager;
+    private $dataUpdater;
 
     /**
      * Constructor for MongoTripod
@@ -231,7 +226,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
         $context=null,
         $description=null)
     {
-        return $this->getDataUpdateManager()->saveChanges($oldGraph, $newGraph, $context, $description);
+        return $this->getDataUpdater()->saveChanges($oldGraph, $newGraph, $context, $description);
     }
 
     /**
@@ -242,7 +237,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
      */
     public function getLockedDocuments($fromDateTime = null , $tillDateTime = null)
     {
-        return $this->getDataUpdateManager()->getLockedDocuments($fromDateTime, $tillDateTime);
+        return $this->getDataUpdater()->getLockedDocuments($fromDateTime, $tillDateTime);
     }
 
     /**
@@ -254,7 +249,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
      */
     public function removeInertLocks($transaction_id, $reason)
     {
-        return $this->getDataUpdateManager()->removeInertLocks($transaction_id, $reason);
+        return $this->getDataUpdater()->removeInertLocks($transaction_id, $reason);
     }
 
     /**
@@ -530,21 +525,6 @@ class MongoTripod extends MongoTripodBase implements ITripod
         return ($lastUpdatedDate==null) ? '' : $lastUpdatedDate->__toString();
     }
 
-
-    // getters and setters for the delegates
-
-    /**
-     * @return MongoTransactionLog
-     */
-    public function getTransactionLog()
-    {
-        if($this->transaction_log==null)
-        {
-            $this->transaction_log = new MongoTransactionLog();
-        }
-        return $this->transaction_log;
-    }
-
     /**
      * @return MongoTripodViews
      */
@@ -596,10 +576,8 @@ class MongoTripod extends MongoTripodBase implements ITripod
      */
     public function setTransactionLog(MongoTransactionLog $transactionLog)
     {
-        $this->transaction_log = $transactionLog;
+        $this->getDataUpdater()->setTransactionLog($transactionLog);
     }
-
-    ///////// REPLAY TRANSACTION LOG ///////
 
     /**
      * replays all transactions from the transaction log, use the function params to control the from and to date if you
@@ -608,16 +586,9 @@ class MongoTripod extends MongoTripodBase implements ITripod
      * @param null $toDate
      * @return bool
      */
-    public function replayTransactionLog($fromDate=null, $toDate=null)
+    public function replayTransactionLog($fromDate = null, $toDate = null)
     {
-
-        $cursor = $this->getTransactionLog()->getCompletedTransactions($this->dbName, $this->collectionName, $fromDate, $toDate);
-        while($cursor->hasNext()) {
-            $result = $cursor->getNext();
-            $this->getDataUpdateManager()->applyTransaction($result);
-        }
-
-        return true;
+        return $this->getDataUpdater()->replayTransactionLog($fromDate, $toDate);
     }
 
     /**
@@ -660,9 +631,9 @@ class MongoTripod extends MongoTripodBase implements ITripod
         return new MongoTripodLabeller();
     }
 
-    protected function getDataUpdateManager()
+    protected function getDataUpdater()
     {
-        if(!isset($this->dataUpdateManager))
+        if(!isset($this->dataUpdater))
         {
             $opts = array(
                 'defaultContext'=>$this->defaultContext,
@@ -672,9 +643,9 @@ class MongoTripod extends MongoTripodBase implements ITripod
                 'retriesToGetLock' => $this->retriesToGetLock
             );
 
-            $this->dataUpdateManager = new MongoTripodUpdates($this, $opts);
+            $this->dataUpdater = new MongoTripodUpdates($this, $opts);
         }
-        return $this->dataUpdateManager;
+        return $this->dataUpdater;
     }
 
 }

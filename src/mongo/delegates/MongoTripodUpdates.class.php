@@ -3,6 +3,12 @@
 require_once TRIPOD_DIR . 'mongo/MongoTripodConfig.class.php';
 
 class MongoTripodUpdates {
+
+    /**
+     * $var MongoTransactionLog
+     */
+    private $transaction_log = null;
+
     /**
      * @var MongoTripodLabeller
      */
@@ -470,7 +476,7 @@ class MongoTripodUpdates {
      *
      * @return array {@link http://www.php.net/manual/en/mongoclient.getreadpreference.php}
      */
-    public function getReadPreference(){
+    protected  function getReadPreference(){
         return $this->getCollection()->getReadPreference();
     }
 
@@ -572,11 +578,11 @@ class MongoTripodUpdates {
 
             $originalCBDs = $this->lockAllDocuments($subjectsOfChange, $transaction_id,$contextAlias);
 
-            $this->tripod->getTransactionLog()->createNewTransaction($transaction_id, $csDoc['value'][_GRAPHS], $originalCBDs, $this->tripod->getDBName(), $this->tripod->getCollectionName());
+            $this->getTransactionLog()->createNewTransaction($transaction_id, $csDoc['value'][_GRAPHS], $originalCBDs, $this->tripod->getDBName(), $this->tripod->getCollectionName());
 
             if(empty($originalCBDs)) // didn't get lock on documents
             {
-                $this->tripod->getTransactionLog()->failTransaction($transaction_id, new Exception('Did not obtain locks on documents'));
+                $this->getTransactionLog()->failTransaction($transaction_id, new Exception('Did not obtain locks on documents'));
                 throw new Exception('Did not obtain locks on documents');
             }
 
@@ -590,7 +596,7 @@ class MongoTripodUpdates {
             );
 
             $this->unlockAllDocuments($transaction_id);
-            $this->tripod->getTransactionLog()->completeTransaction($transaction_id, $changes['newCBDs']);
+            $this->getTransactionLog()->completeTransaction($transaction_id, $changes['newCBDs']);
 
             $t->stop();
             $this->tripod->timingLog(MONGO_WRITE, array('duration'=>$t->result(), 'subjectsOfChange'=>implode(", ",$subjectsOfChange)));
@@ -625,7 +631,7 @@ class MongoTripodUpdates {
     protected function rollbackTransaction($transaction_id, $originalCBDs, Exception $exception)
     {
         // set transaction to cancelling
-        $this->tripod->getTransactionLog()->cancelTransaction($transaction_id, $exception);
+        $this->getTransactionLog()->cancelTransaction($transaction_id, $exception);
 
         if (!empty($originalCBDs)) {  // restore the original CBDs
             foreach ($originalCBDs as $g)
@@ -660,7 +666,7 @@ class MongoTripodUpdates {
         $this->unlockAllDocuments($transaction_id);
 
         // set transaction to failed
-        $this->tripod->getTransactionLog()->failTransaction($transaction_id);
+        $this->getTransactionLog()->failTransaction($transaction_id);
         return true;
     }
 
@@ -1003,7 +1009,7 @@ class MongoTripodUpdates {
      * Returns the queue
      * @return MongoTripodQueue
      */
-    public function getQueue()
+    protected function getQueue()
     {
         if(empty($this->queue))
         {
@@ -1346,12 +1352,55 @@ class MongoTripodUpdates {
         return $this->tripod->collection;
     }
 
+    ///////// REPLAY TRANSACTION LOG ///////
+
+    /**
+     * replays all transactions from the transaction log, use the function params to control the from and to date if you
+     * only want to replay transactions created during specific window
+     * @param null $fromDate
+     * @param null $toDate
+     * @return bool
+     */
+    public function replayTransactionLog($fromDate=null, $toDate=null)
+    {
+
+        $cursor = $this->getTransactionLog()->getCompletedTransactions($this->dbName, $this->collectionName, $fromDate, $toDate);
+        while($cursor->hasNext()) {
+            $result = $cursor->getNext();
+            $this->applyTransaction($result);
+        }
+
+        return true;
+    }
+
+    // getters and setters for the delegates
+
+    /**
+     * @return MongoTransactionLog
+     */
+    public function getTransactionLog()
+    {
+        if($this->transaction_log==null)
+        {
+            $this->transaction_log = new MongoTransactionLog();
+        }
+        return $this->transaction_log;
+    }
+
+    /**
+     * @param MongoTransactionLog $transactionLog
+     */
+    public function setTransactionLog(MongoTransactionLog $transactionLog)
+    {
+        $this->transaction_log = $transactionLog;
+    }
+
+
     /**
      * Saves a transaction
-     * @todo should this be public?
      * @param array $transaction
      */
-    public function applyTransaction(Array $transaction)
+    protected function applyTransaction(Array $transaction)
     {
         $changes = $transaction['changes'];
         $newCBDs = $transaction['newCBDs'];
