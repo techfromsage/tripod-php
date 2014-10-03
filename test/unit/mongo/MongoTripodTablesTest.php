@@ -932,7 +932,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         $tripodUpdate = $this->getMock(
             'MongoTripodUpdates',
-            array('storeChanges'),
+            array('storeChanges', 'findImpactedTableRows'),
             array(
                 $tripod,
                 array(
@@ -949,6 +949,10 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             ->method('storeChanges')
             ->will($this->returnValue(array('deletedSubjects'=>array())));
 
+        $tripodUpdate->expects($this->atLeastOnce())
+            ->method('findImpactedTableRows')
+            ->will($this->returnValue(array()));
+
         $tripod->expects($this->atLeastOnce())
             ->method('getDataUpdater')
             ->will($this->returnValue($tripodUpdate));
@@ -962,7 +966,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             ->method('generateTableRowsForResource');
 
 
-        $tripod->expects($this->atLeastOnce())
+        $tripod->expects($this->never())
             ->method('getTripodTables')
             ->will($this->returnValue($tables));
 
