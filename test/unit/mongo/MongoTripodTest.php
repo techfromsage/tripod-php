@@ -548,13 +548,13 @@ class MongoTripodTest extends MongoTripodTestBase
             ->will($this->onConsecutiveCalls(null, $this->throwException(new Exception('readPreferenceOverMultipleSavesTestException')), null)
             );
 
-        $expectedReadPreference = $tripodMock->getReadPreference();
+        $expectedReadPreference = $tripodMock->getCollectionReadPreference();
         $this->assertEquals($expectedReadPreference['type'], MongoClient::RP_SECONDARY_PREFERRED);
 
         $g = new MongoGraph();
         $g->add_literal_triple($subjectOne, $g->qname_to_uri("dct:title"), "Title one");
         $tripodMock->saveChanges(new MongoGraph(), $g,"http://talisaspire.com/");
-        $this->assertEquals($expectedReadPreference, $tripodMock->getReadPreference());
+        $this->assertEquals($expectedReadPreference, $tripodMock->getCollectionReadPreference());
 
         $g = new MongoGraph();
         $g->add_literal_triple($subjectOne, $g->qname_to_uri("dct:title2"), "Title two");
@@ -567,12 +567,12 @@ class MongoTripodTest extends MongoTripodTestBase
             $this->assertEquals("readPreferenceOverMultipleSavesTestException", $e->getMessage());
         }
         $this->assertTrue($exceptionThrown);
-        $this->assertEquals($expectedReadPreference, $tripodMock->getReadPreference());
+        $this->assertEquals($expectedReadPreference, $tripodMock->getCollectionReadPreference());
 
         $g = new MongoGraph();
         $g->add_literal_triple($subjectOne, $g->qname_to_uri("dct:title3"), "Title three");
         $tripodMock->saveChanges(new MongoGraph(), $g,"http://talisaspire.com/");
-        $this->assertEquals($expectedReadPreference, $tripodMock->getReadPreference());
+        $this->assertEquals($expectedReadPreference, $tripodMock->getCollectionReadPreference());
     }
 
     public function testSaveChangesToLockedDocument()
