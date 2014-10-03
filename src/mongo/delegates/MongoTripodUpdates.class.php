@@ -2,7 +2,7 @@
 
 require_once TRIPOD_DIR . 'mongo/MongoTripodConfig.class.php';
 
-class MongoTripodUpdates {
+class MongoTripodUpdates extends MongoTripodBase {
 
     /**
      * $var MongoTransactionLog
@@ -43,6 +43,11 @@ class MongoTripodUpdates {
     public function __construct(MongoTripod $tripod,$opts=array())
     {
         $this->tripod = $tripod;
+        $this->db = $tripod->db;
+        $this->dbName = $tripod->getDBName();
+        $this->collection = $tripod->collection;
+        $this->collectionName = $this->collection->getName();
+        $this->stat = $tripod->getStat();
         
         $this->labeller = new MongoTripodLabeller();
         $opts = array_merge(array(
@@ -62,7 +67,7 @@ class MongoTripodUpdates {
         $this->retriesToGetLock = $opts['retriesToGetLock'];
 
         //select locks collection
-        $this->lCollection = $this->tripod->db->selectCollection(LOCKS_COLLECTION);
+        $this->lCollection = $this->db->selectCollection(LOCKS_COLLECTION);
 
         // fill in and default any missing keys for $async array
         $async = $opts[OP_ASYNC];
@@ -110,9 +115,9 @@ class MongoTripodUpdates {
         try{
             $contextAlias = $this->getContextAlias($context);
 
-            if (!MongoTripodConfig::getInstance()->isCollectionWithinConfig($this->tripod->getDBName(),$this->tripod->getCollectionName()))
+            if (!MongoTripodConfig::getInstance()->isCollectionWithinConfig($this->getDBName(),$this->getCollectionName()))
             {
-                throw new TripodException("database:collection {$this->tripod->getDBName()}:{$this->tripod->getCollectionName()} is not referenced within config, so cannot be written to");
+                throw new TripodException("database:collection {$this->getDBName()}:{$this->getCollectionName()} is not referenced within config, so cannot be written to");
             }
 
             $this->validateGraphCardinality($newGraph);
@@ -175,7 +180,7 @@ class MongoTripodUpdates {
 
                     foreach($syncOp['ops'] as $collectionName=>$ops){
                         $specTypes = (isset($syncOp['specTypes']) ? $syncOp['specTypes'] : array());
-                        $syncModifiedSubjects[] = ModifiedSubject::create($syncOp['id'],array(),$ops, $specTypes, $this->tripod->getDBName(), $collectionName, $syncOp['delete']);
+                        $syncModifiedSubjects[] = ModifiedSubject::create($syncOp['id'],array(),$ops, $specTypes, $this->getDBName(), $collectionName, $syncOp['delete']);
                     }
                 }
 
@@ -194,7 +199,7 @@ class MongoTripodUpdates {
 
                     foreach($asyncOp['ops'] as $collectionName=>$ops){
                         $specTypes = (isset($asyncOp['specTypes']) ? $asyncOp['specTypes'] : array());
-                        $asyncModifiedSubjects[] = ModifiedSubject::create($asyncOp['id'],array(),$ops, $specTypes, $this->tripod->getDBName(), $collectionName, $asyncOp['delete']);
+                        $asyncModifiedSubjects[] = ModifiedSubject::create($asyncOp['id'],array(),$ops, $specTypes, $this->getDBName(), $collectionName, $asyncOp['delete']);
                     }
                 }
 
@@ -252,9 +257,9 @@ class MongoTripodUpdates {
         }
 
 
-        $viewTypes   = $this->config->getTypesInViewSpecifications($this->tripod->getCollectionName());
-        $tableTypes  = $this->config->getTypesInTableSpecifications($this->tripod->getCollectionName());
-        $searchTypes = $this->config->getTypesInSearchSpecifications($this->tripod->getCollectionName());
+        $viewTypes   = $this->config->getTypesInViewSpecifications($this->getCollectionName());
+        $tableTypes  = $this->config->getTypesInTableSpecifications($this->getCollectionName());
+        $searchTypes = $this->config->getTypesInSearchSpecifications($this->getCollectionName());
 
         foreach($docs as $doc)
         {
@@ -282,15 +287,15 @@ class MongoTripodUpdates {
                     if($asyncConfig[OP_VIEWS] == true) {
                         if(!array_key_exists($docHash, $operations[OP_ASYNC])){
                             $operations[OP_ASYNC][$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
-                            $operations[OP_ASYNC][$docHash]['ops'][$this->tripod->getCollectionName()] = array();
+                            $operations[OP_ASYNC][$docHash]['ops'][$this->getCollectionName()] = array();
                         }
-                        array_push($operations[OP_ASYNC][$docHash]['ops'][$this->tripod->getCollectionName()], OP_VIEWS);
+                        array_push($operations[OP_ASYNC][$docHash]['ops'][$this->getCollectionName()], OP_VIEWS);
                     } else{
                         if(!array_key_exists($docHash, $operations[OP_SYNC])){
                             $operations[OP_SYNC][$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
-                            $operations[OP_SYNC][$docHash]['ops'][$this->tripod->getCollectionName()] = array();
+                            $operations[OP_SYNC][$docHash]['ops'][$this->getCollectionName()] = array();
                         }
-                        array_push($operations[OP_SYNC][$docHash]['ops'][$this->tripod->getCollectionName()], OP_VIEWS);
+                        array_push($operations[OP_SYNC][$docHash]['ops'][$this->getCollectionName()], OP_VIEWS);
                     }
                 }
 
@@ -298,15 +303,15 @@ class MongoTripodUpdates {
                     if($asyncConfig[OP_TABLES] == true) {
                         if(!array_key_exists($docHash, $operations[OP_ASYNC])){
                             $operations[OP_ASYNC][$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
-                            $operations[OP_ASYNC][$docHash]['ops'][$this->tripod->getCollectionName()] = array();
+                            $operations[OP_ASYNC][$docHash]['ops'][$this->getCollectionName()] = array();
                         }
-                        array_push($operations[OP_ASYNC][$docHash]['ops'][$this->tripod->getCollectionName()], OP_TABLES);
+                        array_push($operations[OP_ASYNC][$docHash]['ops'][$this->getCollectionName()], OP_TABLES);
                     } else{
                         if(!array_key_exists($docHash, $operations[OP_SYNC])){
                             $operations[OP_SYNC][$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
-                            $operations[OP_SYNC][$docHash]['ops'][$this->tripod->getCollectionName()] = array();
+                            $operations[OP_SYNC][$docHash]['ops'][$this->getCollectionName()] = array();
                         }
-                        array_push($operations[OP_SYNC][$docHash]['ops'][$this->tripod->getCollectionName()], OP_TABLES);
+                        array_push($operations[OP_SYNC][$docHash]['ops'][$this->getCollectionName()], OP_TABLES);
                     }
                 }
 
@@ -314,15 +319,15 @@ class MongoTripodUpdates {
                     if($asyncConfig[OP_SEARCH] == true) {
                         if(!array_key_exists($docHash, $operations[OP_ASYNC])){
                             $operations[OP_ASYNC][$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
-                            $operations[OP_ASYNC][$docHash]['ops'][$this->tripod->getCollectionName()] = array();
+                            $operations[OP_ASYNC][$docHash]['ops'][$this->getCollectionName()] = array();
                         }
-                        array_push($operations[OP_ASYNC][$docHash]['ops'][$this->tripod->getCollectionName()], OP_SEARCH);
+                        array_push($operations[OP_ASYNC][$docHash]['ops'][$this->getCollectionName()], OP_SEARCH);
                     } else{
                         if(!array_key_exists($docHash, $operations[OP_SYNC])){
                             $operations[OP_SYNC][$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
-                            $operations[OP_SYNC][$docHash]['ops'][$this->tripod->getCollectionName()] = array();
+                            $operations[OP_SYNC][$docHash]['ops'][$this->getCollectionName()] = array();
                         }
-                        array_push($operations[OP_SYNC][$docHash]['ops'][$this->tripod->getCollectionName()], OP_SEARCH);
+                        array_push($operations[OP_SYNC][$docHash]['ops'][$this->getCollectionName()], OP_SEARCH);
                     }
                 }
             }
@@ -350,7 +355,7 @@ class MongoTripodUpdates {
             $operations[OP_ASYNC] = array();
         }
 
-        foreach($this->tripod->getTripodViews()->findImpactedViews(array_keys($subjectsAndPredicatesOfChange), $contextAlias) as $doc) {
+        foreach($this->findImpactedViews(array_keys($subjectsAndPredicatesOfChange), $contextAlias) as $doc) {
             $spec = $this->config->getViewSpecification($doc[_ID_KEY]['type']);
             if(!empty($spec)){
                 $fromCollection = $spec['from'];
@@ -378,7 +383,7 @@ class MongoTripodUpdates {
             }
         }
 
-        foreach($this->tripod->getTripodTables()->findImpactedTableRows($subjectsAndPredicatesOfChange, $contextAlias) as $doc) {
+        foreach($this->findImpactedTableRows($subjectsAndPredicatesOfChange, $contextAlias) as $doc) {
             $spec = $this->config->getTableSpecification($doc[_ID_KEY][_ID_TYPE]);
             $fromCollection = $spec['from'];
 
@@ -506,7 +511,7 @@ class MongoTripodUpdates {
     protected function validateGraphCardinality(ExtendedGraph $graph)
     {
         $config = MongoTripodConfig::getInstance();
-        $cardinality = $config->getCardinality($this->tripod->getDBName(), $this->tripod->getCollectionName());
+        $cardinality = $config->getCardinality($this->getDBName(), $this->getCollectionName());
         $namespaces = $config->ns;
         $graphSubjects = $graph->get_subjects();
 
@@ -578,7 +583,7 @@ class MongoTripodUpdates {
 
             $originalCBDs = $this->lockAllDocuments($subjectsOfChange, $transaction_id,$contextAlias);
 
-            $this->getTransactionLog()->createNewTransaction($transaction_id, $csDoc['value'][_GRAPHS], $originalCBDs, $this->tripod->getDBName(), $this->tripod->getCollectionName());
+            $this->getTransactionLog()->createNewTransaction($transaction_id, $csDoc['value'][_GRAPHS], $originalCBDs, $this->getDBName(), $this->getCollectionName());
 
             if(empty($originalCBDs)) // didn't get lock on documents
             {
@@ -588,7 +593,7 @@ class MongoTripodUpdates {
 
             $changes = $this->applyChangeSet($cs,$originalCBDs,$contextAlias, $transaction_id);
 
-            $this->tripod->debugLog(MONGO_LOCK,
+            $this->debugLog(MONGO_LOCK,
                 array(
                     'description'=>'MongoTripod::storeChanges - Unlocking documents, apply change-set completed',
                     'transaction_id'=>$transaction_id,
@@ -599,20 +604,20 @@ class MongoTripodUpdates {
             $this->getTransactionLog()->completeTransaction($transaction_id, $changes['newCBDs']);
 
             $t->stop();
-            $this->tripod->timingLog(MONGO_WRITE, array('duration'=>$t->result(), 'subjectsOfChange'=>implode(", ",$subjectsOfChange)));
-            $this->tripod->getStat()->timer(MONGO_WRITE.".{$this->tripod->getCollectionName()}",$t->result());
+            $this->timingLog(MONGO_WRITE, array('duration'=>$t->result(), 'subjectsOfChange'=>implode(", ",$subjectsOfChange)));
+            $this->getStat()->timer(MONGO_WRITE.".{$this->getCollectionName()}",$t->result());
 
             return $changes;
         }
         catch(Exception $e)
         {
-            $this->tripod->getStat()->increment(MONGO_ROLLBACK);
-            $this->tripod->errorLog(MONGO_ROLLBACK,
+            $this->getStat()->increment(MONGO_ROLLBACK);
+            $this->errorLog(MONGO_ROLLBACK,
                 array(
                     'description'=>'Save Failed Rolling back transaction:' . $e->getMessage(),
                     'transaction_id'=>$transaction_id,
                     'subjectsOfChange'=>implode(",",$subjectsOfChange),
-                    'mongoDriverError' => $this->tripod->db->lastError()
+                    'mongoDriverError' => $this->db->lastError()
                 )
             );
             $this->rollbackTransaction($transaction_id, $originalCBDs, $e);
@@ -640,12 +645,12 @@ class MongoTripodUpdates {
                 if($result['err']!=NULL )
                 {
                     // Error log here
-                    $this->tripod->errorLog(MONGO_ROLLBACK,
+                    $this->errorLog(MONGO_ROLLBACK,
                         array(
                             'description' => 'MongoTripod::rollbackTransaction - Error updating transaction',
                             'exception_message' => $exception->getMessage(),
                             'transaction_id' => $transaction_id,
-                            'mongoDriverError' => $this->tripod->db->lastError()
+                            'mongoDriverError' => $this->db->lastError()
                         )
                     );
                     throw new Exception("Failed to restore Original CBDS for transaction: {$transaction_id} stopped at ".$g[_ID_KEY]);
@@ -654,12 +659,12 @@ class MongoTripodUpdates {
         }
         else
         {
-            $this->tripod->errorLog(MONGO_ROLLBACK,
+            $this->errorLog(MONGO_ROLLBACK,
                 array(
                     'description'=>'MongoTripod::rollbackTransaction - Unlocking documents',
                     'exception_message' => $exception->getMessage(),
                     'transaction_id'=>$transaction_id,
-                    'mongoDriverError' => $this->tripod->db->lastError()
+                    'mongoDriverError' => $this->db->lastError()
                 )
             );
         }
@@ -750,7 +755,7 @@ class MongoTripodUpdates {
 
                     if (!$valueExists)
                     {
-                        $this->tripod->errorLog("Removal value {$subjectOfChange} {$predicate} {$object[0]['value']} does not appear in target document to be updated",array("targetGraph"=>$targetGraph->to_ntriples()));
+                        $this->errorLog("Removal value {$subjectOfChange} {$predicate} {$object[0]['value']} does not appear in target document to be updated",array("targetGraph"=>$targetGraph->to_ntriples()));
                         throw new Exception("Removal value {$subjectOfChange} {$predicate} {$object[0]['value']} does not appear in target document to be updated");
                     }
                     else if ($isUri)
@@ -839,14 +844,14 @@ class MongoTripodUpdates {
                 );
 
                 try{
-                    $result = $this->tripod->db->command($command);
+                    $result = $this->db->command($command);
                 } catch (Exception $e) {
 
-                    $this->tripod->errorLog(MONGO_WRITE,
+                    $this->errorLog(MONGO_WRITE,
                         array(
                             'description'=>'Error with Mongo DB command:' . $e->getMessage(),
                             'transaction_id'=>$transaction_id,
-                            'mongoDriverError' => $this->tripod->db->lastError()
+                            'mongoDriverError' => $this->db->lastError()
                         )
                     );
                     throw new Exception($e);
@@ -854,13 +859,13 @@ class MongoTripodUpdates {
 
                 if (!$result["ok"])
                 {
-                    $this->tripod->errorLog("Update failed with err.", $result);
+                    $this->errorLog("Update failed with err.", $result);
                     throw new Exception("Update failed with err {$result['err']}");
                 }
 
                 if($result['value']==null)
                 {
-                    $this->tripod->errorLog(MONGO_WRITE,
+                    $this->errorLog(MONGO_WRITE,
                         array(
                             'description'=>'MongoTripod::storeChanges - Update failed we did not find a matching document (transaction_id - ' .$transaction_id .')',
                             $result
@@ -880,17 +885,17 @@ class MongoTripodUpdates {
                     "new"=>false
                 );
 
-                $result = $this->tripod->db->command($command);
+                $result = $this->db->command($command);
 
                 if (!$result["ok"])
                 {
-                    $this->tripod->errorLog("Delete failed with err.", $result);
+                    $this->errorLog("Delete failed with err.", $result);
                     throw new Exception("Delete failed with err {$result['err']}");
                 }
 
                 if($result['value']==null)
                 {
-                    $this->tripod->errorLog("Delete failed we did not find a matching document.", $result);
+                    $this->errorLog("Delete failed we did not find a matching document.", $result);
                     throw new Exception("Delete failed we did not find a matching document");
                 }
 
@@ -955,7 +960,7 @@ class MongoTripodUpdates {
             $operations = $data['operations'];
             foreach ($operations as $op)
             {
-                if($data['collection'] == $this->tripod->getCollectionName()){
+                if($data['collection'] == $this->getCollectionName()){
                     $observer = $this->tripod->getObserver($op);
                 } else {
                     $observer = $this->getMongoTripod($data)->getObserver($op);
@@ -968,14 +973,14 @@ class MongoTripodUpdates {
             $subject->notify();
 
             $t->stop();
-            $this->tripod->timingLog(MONGO_ON_THE_FLY_MR,array(
+            $this->timingLog(MONGO_ON_THE_FLY_MR,array(
                 "duration"=>$t->result(),
                 "operations"=>var_export($data['operations'],true),
                 "database"=>$data['database'],
                 "collection"=>$data['collection'],
                 "resource"=>$data[_ID_RESOURCE]
             ));
-            $this->tripod->getStat()->timer(MONGO_ON_THE_FLY_MR,$t->result());
+            $this->getStat()->timer(MONGO_ON_THE_FLY_MR,$t->result());
         }
     }
 
@@ -993,14 +998,14 @@ class MongoTripodUpdates {
         {
             /* @var $subject ModifiedSubject */
             $data = $subject->getData();
-            $this->tripod->debugLog(MONGO_ADD_TO_QUEUE,array(
+            $this->debugLog(MONGO_ADD_TO_QUEUE,array(
                     "operations"=>var_export($data['operations'],true),
                     "database"=>$data['database'],
                     "collection"=>$data['collection'],
                     "resource"=>$data[_ID_RESOURCE]
                 )
             );
-            $this->tripod->getStat()->increment(MONGO_ADD_TO_QUEUE);
+            $this->getStat()->increment(MONGO_ADD_TO_QUEUE);
             $this->getQueue()->addItem($subject);
         }
     }
@@ -1065,7 +1070,7 @@ class MongoTripodUpdates {
             $lockedSubjects = array();
             foreach ($subjectsOfChange as $s)
             {
-                $this->tripod->debugLog(MONGO_LOCK,
+                $this->debugLog(MONGO_LOCK,
                     array(
                         'description'=>'MongoTripod::lockAllDocuments - Attempting to get lock',
                         'transaction_id'=>$transaction_id,
@@ -1077,7 +1082,7 @@ class MongoTripodUpdates {
                 $document = $this->lockSingleDocument($s, $transaction_id, $contextAlias);
                 if(!empty($document)){
 
-                    $this->tripod->debugLog(MONGO_LOCK,
+                    $this->debugLog(MONGO_LOCK,
                         array(
                             'description'=>'MongoTripod::lockAllDocuments - Got the lock',
                             'transaction_id'=>$transaction_id,
@@ -1086,7 +1091,7 @@ class MongoTripodUpdates {
                         )
                     );
 
-                    $this->tripod->getStat()->increment(MONGO_LOCK);
+                    $this->getStat()->increment(MONGO_LOCK);
                     $originalCBDs[] = $document;
                     $lockedSubjects[] = $s;
                 }
@@ -1099,7 +1104,7 @@ class MongoTripodUpdates {
                 if(count($lockedSubjects)) //If any subject was locked, unlock it
                 $this->unlockAllDocuments($transaction_id);
 
-                $this->tripod->debugLog(MONGO_LOCK,
+                $this->debugLog(MONGO_LOCK,
                     array(
                         'description'=>"MongoTripod::lockAllDocuments - Unable to lock all ". count($subjectsOfChange) ."  documents, unlocked  " . count($lockedSubjects) . " locked documents",
                         'transaction_id'=>$transaction_id,
@@ -1112,13 +1117,13 @@ class MongoTripodUpdates {
             }
         }
 
-        $this->tripod->errorLog(MONGO_LOCK,
+        $this->errorLog(MONGO_LOCK,
             array(
                 'description'=>'Unable to lock all required documents. Exhausted retries',
                 'retries' => $this->retriesToGetLock,
                 'transaction_id'=>$transaction_id,
                 'subjectsOfChange'=>implode(", ",$subjectsOfChange),
-                'mongoDriverError' => $this->tripod->db->lastError()
+                'mongoDriverError' => $this->db->lastError()
             )
         );
         return NULL;
@@ -1165,7 +1170,7 @@ class MongoTripodUpdates {
                 }
             }
             catch(Exception $e) { //simply send false as status as we are unable to create audit entry
-                $this->tripod->errorLog(MONGO_LOCK,
+                $this->errorLog(MONGO_LOCK,
                     array(
                         'description'=>'MongoTripod::removeInertLocks - failed',
                         'transaction_id'=>$transaction_id,
@@ -1203,7 +1208,7 @@ class MongoTripodUpdates {
                     $logInfo['additional-error']=  "Failed to update audit entry with error message- " . $result['err'];
                 }
 
-                $this->tripod->errorLog(MONGO_LOCK, $logInfo);
+                $this->errorLog(MONGO_LOCK, $logInfo);
                 throw $e;
             }
         }
@@ -1222,10 +1227,10 @@ class MongoTripodUpdates {
 
         // I can't check $res['n']>0 here, because same method is called in rollback where there might be no locked subjects at all
         if(!$res["ok"] || $res['err']!=NULL){
-            $this->tripod->errorLog(MONGO_LOCK,
+            $this->errorLog(MONGO_LOCK,
                 array(
                     'description'=>'MongoTripod::unlockAllDocuments - Failed to unlock documents (transaction_id - ' .$transaction_id .')',
-                    'mongoDriverError' => $this->tripod->db->lastError(),
+                    'mongoDriverError' => $this->db->lastError(),
                     $res
                 )
             );
@@ -1265,7 +1270,7 @@ class MongoTripodUpdates {
                 }
             }
             catch(Exception $e) { //Subject is already locked or unable to lock
-                $this->tripod->debugLog(MONGO_LOCK,
+                $this->debugLog(MONGO_LOCK,
                     array(
                         'description'=>'MongoTripod::lockSingleDocument - failed with exception',
                         'transaction_id'=>$transaction_id,
@@ -1293,13 +1298,13 @@ class MongoTripodUpdates {
                     $document  = $this->getCollection()->findOne(array(_ID_KEY => array(_ID_RESOURCE => $this->labeller->uri_to_alias($s), _ID_CONTEXT => $contextAlias)));
                 }
                 catch(Exception $e){
-                    $this->tripod->errorLog(MONGO_LOCK,
+                    $this->errorLog(MONGO_LOCK,
                         array(
                             'description'=>'MongoTripod::lockSingleDocument - failed when creating new document',
                             'transaction_id'=>$transaction_id,
                             'subject'=>$s,
                             'exception-message' => $e->getMessage(),
-                            'mongoDriverError' => $this->tripod->db->lastError()
+                            'mongoDriverError' => $this->db->lastError()
                         )
                     );
                     return false;
@@ -1316,7 +1321,7 @@ class MongoTripodUpdates {
      */
     protected function getAuditManualRollbacksCollection()
     {
-        return $this->tripod->db->selectCollection(AUDIT_MANUAL_ROLLBACKS_COLLECTION);
+        return $this->db->selectCollection(AUDIT_MANUAL_ROLLBACKS_COLLECTION);
     }
     
     /**
@@ -1349,7 +1354,7 @@ class MongoTripodUpdates {
      */
     protected function getCollection()
     {
-        return $this->tripod->collection;
+        return $this->collection;
     }
 
     ///////// REPLAY TRANSACTION LOG ///////
@@ -1460,5 +1465,141 @@ class MongoTripodUpdates {
     {
         $contextAlias = $this->labeller->uri_to_alias((empty($context)) ? $this->defaultContext : $context);
         return (empty($contextAlias)) ? MongoTripodConfig::getInstance()->getDefaultContextAlias() : $contextAlias;
+    }
+
+
+    /**
+     * Given a set of resources, this method returns the ids of the documents that are directly affected.
+     * As a note remember that if ResourceA has a view associated with it, then the impactIndex for ResourceA, will contain
+     * an entry for ResourceA as well as any other Resources.
+     * @param array $resourcesAndPredicates
+     * @param null $context
+     * @return array
+     */
+    protected function findImpactedTableRows(array $resourcesAndPredicates, $context = null)
+    {
+        $contextAlias = $this->getContextAlias($context);
+
+        $tablePredicates = array();
+
+        foreach(MongoTripodConfig::getInstance()->getTableSpecifications() as $tableSpec)
+        {
+            if(isset($tableSpec[_ID_KEY]))
+            {
+                $tablePredicates[$tableSpec[_ID_KEY]] = MongoTripodConfig::getInstance()->getDefinedPredicatesInSpec($tableSpec[_ID_KEY]);
+            }
+        }
+
+        // build a filter - will be used for impactIndex detection and finding direct tables to re-gen
+        $tableFilters = array();
+        $resourceFilters = array();
+        foreach ($resourcesAndPredicates as $resource=>$resourcePredicates)
+        {
+            $resourceAlias = $this->labeller->uri_to_alias($resource);
+            $id = array(_ID_RESOURCE=>$resourceAlias,_ID_CONTEXT=>$contextAlias);
+            // If we don't have a working config or there are no predicates listed, remove all
+            // rows associated with the resource in all tables
+            if(empty($tablePredicates) || empty($resourcePredicates))
+            {
+                // build $filter for queries to impact index
+                $resourceFilters[] = $id;
+            }
+            else
+            {
+                foreach($tablePredicates as $tableType=>$predicates)
+                {
+                    // Only look for table rows if the changed predicates are actually defined in the tablespec
+                    if(array_intersect($resourcePredicates, $predicates))
+                    {
+                        if(!isset($tableFilters[$tableType]))
+                        {
+                            $tableFilters[$tableType] = array();
+                        }
+                        // build $filter for queries to impact index
+                        $tableFilters[$tableType][] = $id;
+                    }
+                }
+            }
+
+        }
+
+        if(empty($tableFilters) && !empty($resourceFilters))
+        {
+            $query = array("value."._IMPACT_INDEX=>array('$in'=>$resourceFilters));
+        }
+        else
+        {
+            $query = array();
+            foreach($tableFilters as $tableType=>$filters)
+            {
+                // first re-gen views where resources appear in the impact index
+                $query[] = array("value."._IMPACT_INDEX=>array('$in'=>$filters), '_id.'._ID_TYPE=>$tableType);
+            }
+
+            if(!empty($resourceFilters))
+            {
+                $query[] = array("value."._IMPACT_INDEX=>array('$in'=>$resourceFilters));
+            }
+
+            if(count($query) === 1)
+            {
+                $query = $query[0];
+            }
+            elseif(count($query) > 1)
+            {
+                $query = array('$or'=>$query);
+            }
+        }
+
+        if(empty($query))
+        {
+            return array();
+        }
+        $tableRows = $this->db->selectCollection(TABLE_ROWS_COLLECTION)->find($query,array("_id"=>true));
+
+        $affectedTableRows = array();
+
+        foreach($tableRows as $t)
+        {
+            $affectedTableRows[] = $t;
+        }
+
+        return $affectedTableRows;
+    }
+
+
+    /**
+     * Given a set of resources, this method returns the ids of the documents that are directly affected.
+     * As a note remember that if ResourceA has a view associated with it, then the impactIndex for ResourceA, will contain
+     * an entry for ResourceA as well as any other Resources.
+     * @param $resources
+     * @param null $context
+     * @return array
+     */
+    protected function findImpactedViews($resources, $context = null)
+    {
+        $contextAlias = $this->getContextAlias($context);
+
+        // build a filter - will be used for impactIndex detection and finding direct views to re-gen
+        $filter = array();
+        foreach ($resources as $resource)
+        {
+            $resourceAlias = $this->labeller->uri_to_alias($resource);
+            // build $filter for queries to impact index
+            $filter[] = array("r"=>$resourceAlias,"c"=>$contextAlias);
+        }
+
+        // first re-gen views where resources appear in the impact index
+        $query = array("value."._IMPACT_INDEX=>array('$in'=>$filter));
+        $views = $this->db->selectCollection(VIEWS_COLLECTION)->find($query,array("_id"=>true));
+
+        $affectedViews = array();
+
+        foreach($views as $v)
+        {
+            $affectedViews[] = $v;
+        }
+
+        return $affectedViews;
     }
 }

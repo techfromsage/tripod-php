@@ -197,7 +197,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
 
     public function generateTableRows($tableType, $resource = null, $context = null)
     {
-        $this->tripod_tables->generateTableRows($tableType,$resource,$context);
+        $this->getTripodTables()->generateTableRows($tableType,$resource,$context);
     }
 
     /**

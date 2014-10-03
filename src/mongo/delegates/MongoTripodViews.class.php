@@ -237,41 +237,6 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
     }
 
     /**
-     * Given a set of resources, this method returns the ids of the documents that are directly affected.
-     * As a note remember that if ResourceA has a view associated with it, then the impactIndex for ResourceA, will contain
-     * an entry for ResourceA as well as any other Resources.
-     * @param $resources
-     * @param null $context
-     * @return array
-     */
-    public function findImpactedViews($resources, $context = null)
-    {
-        $contextAlias = $this->getContextAlias($context);
-
-        // build a filter - will be used for impactIndex detection and finding direct views to re-gen
-        $filter = array();
-        foreach ($resources as $resource)
-        {
-            $resourceAlias = $this->labeller->uri_to_alias($resource);
-            // build $filter for queries to impact index
-            $filter[] = array("r"=>$resourceAlias,"c"=>$contextAlias);
-        }
-
-        // first re-gen views where resources appear in the impact index
-        $query = array("value."._IMPACT_INDEX=>array('$in'=>$filter));
-        $views = $this->db->selectCollection(VIEWS_COLLECTION)->find($query,array("_id"=>true));
-
-        $affectedViews = array();
-
-        foreach($views as $v)
-        {
-            $affectedViews[] = $v;
-        }
-
-        return $affectedViews;
-    }
-
-    /**
      * This method finds all the view specs for the given $rdfType and generates the views for the $resource one by one
      * @param $rdfType
      * @param null $resource
