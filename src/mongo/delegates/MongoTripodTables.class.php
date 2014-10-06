@@ -140,6 +140,11 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         );
     }
 
+    /**
+     * @param string $resource The URI or alias of the resource to delete from tables
+     * @param string|null $context Optional context
+     * @param array|string|null $specType Optional table type or array of table types to delete from
+     */
     protected function deleteTableRowsForResource($resource, $context=null, $specType = null)
     {
         $resourceAlias = $this->labeller->uri_to_alias($resource);
