@@ -39,6 +39,23 @@ class MongoTripod extends MongoTripodBase implements ITripod
     private $search_indexer = null;
 
     /**
+     * @var MongoTripodQueue
+     */
+    private $queue = null;
+
+    /**
+     * @var array The original read preference gets stored here
+     *            when changing for a write.
+     */
+    private $originalCollectionReadPreference = array();
+
+    /**
+     * @var array The original read preference gets stored here
+     *            when changing for a write.
+     */
+    private $originalDbReadPreference = array();
+
+    /**
      * @var array
      */
     private $async = null;
