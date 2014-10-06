@@ -55,7 +55,13 @@ class MongoTripod extends MongoTripodBase implements ITripod
      * @var array The original read preference gets stored here
      *            when changing for a write.
      */
-    private $originalReadPreference = array();
+    private $originalCollectionReadPreference = array();
+
+    /**
+     * @var array The original read preference gets stored here
+     *            when changing for a write.
+     */
+    private $originalDbReadPreference = array();
 
     /**
      * @var array
@@ -229,23 +235,22 @@ class MongoTripod extends MongoTripodBase implements ITripod
     }
 
     /**
-     * Get the current read preference
-     *
-     * @return array {@link http://www.php.net/manual/en/mongoclient.getreadpreference.php}
-     */
-    public function getReadPreference(){
-        return $this->collection->getReadPreference();
-    }
-
-    /**
-     * Change the read preference to RP_PRIMARY
+     * Change the read preferences to RP_PRIMARY
      * Used for a write operation
      */
     protected function setReadPreferenceToPrimary(){
-        $currReadPreference = $this->getReadPreference();
-        if($currReadPreference !== MongoClient::RP_PRIMARY){
-            $this->originalReadPreference = $currReadPreference;
+        // Set collection preference
+        $currCollectionReadPreference = $this->collection->getReadPreference();
+        if($currCollectionReadPreference !== MongoClient::RP_PRIMARY){
+            $this->originalCollectionReadPreference = $currCollectionReadPreference;
             $this->collection->setReadPreference(MongoClient::RP_PRIMARY);
+        }
+
+        // Set db preference
+        $currDbReadPreference = $this->db->getReadPreference();
+        if($currDbReadPreference !== MongoClient::RP_PRIMARY){
+            $this->originalDbReadPreference = $currDbReadPreference;
+            $this->db->setReadPreference(MongoClient::RP_PRIMARY);
         }
     }
 
@@ -253,16 +258,25 @@ class MongoTripod extends MongoTripodBase implements ITripod
      * Reset the original read preference after changing with setReadPreferenceToPrimary
      */
     protected function resetOriginalReadPreference(){
-        // If the read preference has not been changed then simply return
-        if($this->originalReadPreference === array()){
-            return;
-        }
-        // Make the change.
-        $preferencesTagsets = isset($this->originalReadPreference['tagsets']) ? $this->originalReadPreference['tagsets'] : array();
-        $this->collection->setReadPreference($this->originalReadPreference['type'], $preferencesTagsets);
+        // Reset collection object
+        if($this->originalCollectionReadPreference !== array()){
+            // Make the change.
+            $preferencesTagsets = isset($this->originalCollectionReadPreference['tagsets']) ? $this->originalCollectionReadPreference['tagsets'] : array();
+            $this->collection->setReadPreference($this->originalCollectionReadPreference['type'], $preferencesTagsets);
 
-        // Reset the orignal read preference var so we know it is back to normal
-        $this->originalReadPreference = array();
+            // Reset the original read preference var so we know it is back to normal
+            $this->originalCollectionReadPreference = array();
+        }
+
+        // Reset collection object
+        if($this->originalDbReadPreference !== array()){
+            // Make the change.
+            $preferencesTagsets = isset($this->originalDbReadPreference['tagsets']) ? $this->originalDbReadPreference['tagsets'] : array();
+            $this->db->setReadPreference($this->originalDbReadPreference['type'], $preferencesTagsets);
+
+            // Reset the original read preference var so we know it is back to normal
+            $this->originalDbReadPreference = array();
+        }
     }
 
     /**
