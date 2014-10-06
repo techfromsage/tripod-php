@@ -15,7 +15,7 @@ class MongoTripodLabeller extends Labeller {
             'cs' => 'http://purl.org/vocab/changeset/schema#',
         );
         $config = MongoTripodConfig::getInstance();
-        $ns = $config->ns;
+        $ns = $config->getNamespaces();
         foreach ($ns as $prefix=>$uri)
         {
             $this->set_namespace_mapping($prefix,$uri);

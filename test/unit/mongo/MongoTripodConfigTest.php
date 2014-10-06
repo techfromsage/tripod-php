@@ -29,7 +29,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
 
     public function testNamespaces()
     {
-        $ns = $this->tripodConfig->ns;
+        $ns = $this->tripodConfig->getNamespaces();
         $this->assertEquals(16,count($ns),"Incorrect number of namespaces");
 
         $expectedNs = array();
@@ -56,8 +56,9 @@ class MongoTripodConfigTest extends MongoTripodTestBase
     public function testTConfig()
     {
         $config = MongoTripodConfig::getInstance();
-        $this->assertEquals('testing',$config->tConfig['database']);
-        $this->assertEquals('transaction_log',$config->tConfig['collection']);
+        $tConfig = $config->getTransactionLogConfig();
+        $this->assertEquals('testing',$tConfig['database']);
+        $this->assertEquals('transaction_log',$tConfig['collection']);
         $this->assertEquals('mongodb://localhost',$config->getTransactionLogConnStr());
     }
 
@@ -214,15 +215,16 @@ class MongoTripodConfigTest extends MongoTripodTestBase
     public function testSearchConfig()
     {
         $config = MongoTripodConfig::getInstance();
-        $this->assertEquals('MongoSearchProvider', $config->searchProvider);
-        $this->assertEquals(3, count($config->searchDocSpecs));
+        $this->assertEquals('MongoSearchProvider', $config->getSearchProviderClassName());
+        $this->assertEquals(3, count($config->getSearchDocumentSpecifications()));
     }
 
     public function testQueueConfig()
     {
         $config = MongoTripodConfig::getInstance();
-        $this->assertEquals('testing',$config->queue['database']);
-        $this->assertEquals('q_queue',$config->queue['collection']);
+        $queueConfig = $config->getQueueConfig();
+        $this->assertEquals('testing',$queueConfig['database']);
+        $this->assertEquals('q_queue',$queueConfig['collection']);
         $this->assertEquals('mongodb://localhost',$config->getQueueConnStr());
     }
 
@@ -900,8 +902,8 @@ class MongoTripodConfigTest extends MongoTripodTestBase
 
         MongoTripodConfig::setConfig($config);
         $mtc = MongoTripodConfig::getInstance();
-        $this->assertNull($mtc->searchProvider);
-        $this->assertEquals(array(), $mtc->searchDocSpecs);
+        $this->assertNull($mtc->getSearchProviderClassName());
+        $this->assertEquals(array(), $mtc->getSearchDocumentSpecifications());
     }
 
     public function testGetAllTypesInSpecifications()

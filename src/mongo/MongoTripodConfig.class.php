@@ -37,7 +37,6 @@ class MongoTripodConfig
 
     /**
      * The connection strings for each defined database
-     * @todo why can't $this->dbs just be the array_keys of this?
      * @var array
      */
     private $dbConfig = array();
@@ -58,7 +57,7 @@ class MongoTripodConfig
      * All of the defined searchDocSpecs
      * @var array
      */
-    public $searchDocSpecs = array();
+    protected $searchDocSpecs = array();
 
     /**
      * Defined database configuration: dbname, collections, etc.
@@ -71,33 +70,25 @@ class MongoTripodConfig
      *
      * @var array
      */
-    public $ns = array();
-
-    /**
-     * A list of defined database names
-     * @todo why is this public?
-     * @var array
-     */
-    public $dbs = array();
+    protected $ns = array();
 
     /**
      * The transaction log db config
-     * @todo why is this public?
      * @var array
      */
-    public $tConfig = array();
+    protected $tConfig = array();
 
     /**
      * Queue db config
-     * @todo why is this public?
      * @var array
      */
-    public $queue = array();
+    protected $queueConfig = array();
 
     /**
-     * @var ITripodSearchProvider
+     * This should be the name of a class that implement iTripod
+     * @var string
      */
-    public $searchProvider = null;
+    protected $searchProviderClassName = null;
 
     /**
      * All of the predicates associated with a particular spec document
@@ -137,7 +128,7 @@ class MongoTripodConfig
 
         $searchConfig = (array_key_exists("search_config",$config)) ? $config["search_config"] : array();
         if(!empty($searchConfig)){
-            $this->searchProvider = $this->getMandatoryKey('search_provider', $searchConfig, 'search');
+            $this->searchProviderClassName = $this->getMandatoryKey('search_provider', $searchConfig, 'search');
             // Load search doc specs if search_config is set
             $searchDocSpecs = $this->getMandatoryKey('search_specifications', $searchConfig, 'search');
             foreach ($searchDocSpecs as $spec)
@@ -147,11 +138,11 @@ class MongoTripodConfig
         }
 
         $queueConfig = $this->getMandatoryKey("queue",$config);
-        $this->queue["database"] = $this->getMandatoryKey("database",$queueConfig,'queue');
-        $this->queue["collection"] = $this->getMandatoryKey("collection",$queueConfig,'queue');
-        $this->queue["connStr"] = $this->getMandatoryKey("connStr",$queueConfig,'queue');
+        $this->queueConfig["database"] = $this->getMandatoryKey("database",$queueConfig,'queue');
+        $this->queueConfig["collection"] = $this->getMandatoryKey("collection",$queueConfig,'queue');
+        $this->queueConfig["connStr"] = $this->getMandatoryKey("connStr",$queueConfig,'queue');
         if(array_key_exists("replicaSet", $queueConfig) && !empty($queueConfig["replicaSet"])) {
-            $this->queue['replicaSet'] = $queueConfig["replicaSet"];
+            $this->queueConfig['replicaSet'] = $queueConfig["replicaSet"];
         }
 
         // Load view specs
@@ -231,7 +222,6 @@ class MongoTripodConfig
         $this->databases = $this->getMandatoryKey("databases",$config);
         foreach ($this->databases as $dbName=>$db)
         {
-            $this->dbs[] = $dbName;
             $this->dbConfig[$dbName] = array ("connStr"=>$this->getMandatoryKey("connStr",$db));
             if(isset($db['replicaSet']) && !empty($db['replicaSet']))
             {
@@ -774,15 +764,15 @@ class MongoTripodConfig
      * @throws MongoTripodConfigException
      */
     public function getQueueConnStr() {
-        if(array_key_exists("replicaSet", $this->queue) && !empty($this->queue["replicaSet"])) {
-            $connStr = $this->queue['connStr'];
+        if(array_key_exists("replicaSet", $this->queueConfig) && !empty($this->queueConfig["replicaSet"])) {
+            $connStr = $this->queueConfig['connStr'];
             if ($this->isConnectionStringValidForRepSet($connStr)){
                 return $connStr;
             } else {
                 throw new MongoTripodConfigException("Connection string for Queue must include /admin database when connecting to Replica Set");
             }
         } else {
-            return $this->queue['connStr'];
+            return $this->queueConfig['connStr'];
         }
     }
 
@@ -983,6 +973,15 @@ class MongoTripodConfig
     }
 
     /**
+     * Returns an array of database names
+     * @return array
+     */
+    public function getDbs()
+    {
+        return array_keys($this->dbConfig);
+    }
+
+    /**
      * This method was added to allow us to test the getInstance() method
      * @codeCoverageIgnore
      */
@@ -1122,6 +1121,41 @@ class MongoTripodConfig
             }
         }
         return $fields;
+    }
+
+    /**
+     * Returns an array of defined namespaces
+     * @return array
+     */
+    public function getNamespaces()
+    {
+        return $this->ns;
+    }
+
+    /**
+     * Getter for transaction log connection config 
+     * @return array
+     */
+    public function getTransactionLogConfig()
+    {
+        return $this->tConfig;
+    }
+
+    /**
+     * Returns the MongoTripodQueue connection config
+     * @return array
+     */
+    public function getQueueConfig()
+    {
+        return $this->queueConfig;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSearchProviderClassName()
+    {
+        return $this->searchProviderClassName;
     }
 }
 class MongoTripodConfigException extends Exception {}

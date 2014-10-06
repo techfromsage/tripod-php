@@ -6,21 +6,23 @@ class MongoTransactionLog
 {
     private $transaction_db = null;
     private $transaction_collection = null;
+    protected $config = null;
 
     public function __construct()
     {
         $config = MongoTripodConfig::getInstance();
+        $this->config = $config->getTransactionLogConfig();
         // connect to transaction db
         $connStr = $config->getTransactionLogConnStr();
         $m = null;
-        if(isset($config->tConfig['replicaSet']) && !empty($config->tConfig['replicaSet'])) {
-            $m = new MongoClient($connStr, array("replicaSet"=>$config->tConfig['replicaSet']));
+        if(isset($this->config['replicaSet']) && !empty($this->config['replicaSet'])) {
+            $m = new MongoClient($connStr, array("replicaSet"=>$this->config['replicaSet']));
         } else {
             $m = new MongoClient($connStr);
         }
 
-        $this->transaction_db = $m->selectDB($config->tConfig['database']);
-        $this->transaction_collection = $this->transaction_db->selectCollection($config->tConfig['collection']);
+        $this->transaction_db = $m->selectDB($this->config['database']);
+        $this->transaction_collection = $this->transaction_db->selectCollection($this->config['collection']);
     }
 
     /**

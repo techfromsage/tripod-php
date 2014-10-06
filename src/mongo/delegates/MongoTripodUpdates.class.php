@@ -86,7 +86,7 @@ class MongoTripodUpdates extends MongoTripodBase {
         }
 
         // if there is no es configured then remove OP_SEARCH from async (no point putting these onto the queue) TRI-19
-        if($this->config->searchDocSpecs == null) {
+        if($this->config->getSearchDocumentSpecifications() == null) {
             unset($async[OP_SEARCH]);
         }
 
@@ -419,7 +419,7 @@ class MongoTripodUpdates extends MongoTripodBase {
 
         }
 
-        if($this->config->searchProvider !== null) {
+        if($this->config->getSearchProviderClassName() !== null) {
             foreach($this->tripod->getSearchIndexer()->findImpactedSearchDocuments($subjectsAndPredicatesOfChange, $contextAlias) as $doc) {
                 $spec = $this->config->getSearchDocumentSpecification($doc[_ID_KEY][_ID_TYPE]);
                 $fromCollection = $spec['from'];
@@ -512,7 +512,7 @@ class MongoTripodUpdates extends MongoTripodBase {
     {
         $config = MongoTripodConfig::getInstance();
         $cardinality = $config->getCardinality($this->getDBName(), $this->getCollectionName());
-        $namespaces = $config->ns;
+        $namespaces = $config->getNamespaces();
         $graphSubjects = $graph->get_subjects();
 
         if (empty($cardinality) || $graph->is_empty())

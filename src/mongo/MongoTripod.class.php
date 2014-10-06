@@ -129,7 +129,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
         }
 
         // if there is no es configured then remove OP_SEARCH from async (no point putting these onto the queue) TRI-19
-        if($this->config->searchDocSpecs == null) {
+        if($this->config->getSearchDocumentSpecifications() == null) {
             unset($async[OP_SEARCH]);
         }
 
@@ -279,7 +279,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
         $indices    = $params['indices'];
         $fields     = $params['fields'];
 
-        $provider = $this->config->searchProvider;
+        $provider = $this->config->getSearchProviderClassName();
 
         if(class_exists($provider)){
             $timer = new Timer();
@@ -631,6 +631,11 @@ class MongoTripod extends MongoTripodBase implements ITripod
         return new MongoTripodLabeller();
     }
 
+    /**
+     * Returns the delegate object for saving data in Mongo
+     *
+     * @return MongoTripodUpdates
+     */
     protected function getDataUpdater()
     {
         if(!isset($this->dataUpdater))

@@ -16,7 +16,7 @@ class IndexUtils
         //MongoCursor::$timeout = -1; // set this otherwise you'll see timeout errors for large indexes
 
         $config = MongoTripodConfig::getInstance();
-        $dbs = ($dbName==null) ? $config->dbs : array($dbName);
+        $dbs = ($dbName==null) ? $config->getDbs() : array($dbName);
         foreach ($dbs as $dbName)
         {
             $m = null;
