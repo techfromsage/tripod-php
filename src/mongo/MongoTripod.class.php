@@ -235,37 +235,19 @@ class MongoTripod extends MongoTripodBase implements ITripod
     }
 
     /**
-     * Get the current collection read preference
-     *
-     * @return array {@link http://www.php.net/manual/en/mongoclient.getreadpreference.php}
-     */
-    public function getCollectionReadPreference(){
-        return $this->collection->getReadPreference();
-    }
-
-    /**
-     * Get the current db read preference
-     *
-     * @return array {@link http://www.php.net/manual/en/mongoclient.getreadpreference.php}
-     */
-    public function getDbReadPreference(){
-        return $this->db->getReadPreference();
-    }
-
-    /**
      * Change the read preferences to RP_PRIMARY
      * Used for a write operation
      */
     protected function setReadPreferenceToPrimary(){
         // Set collection preference
-        $currCollectionReadPreference = $this->getCollectionReadPreference();
+        $currCollectionReadPreference = $this->collection->getReadPreference();
         if($currCollectionReadPreference !== MongoClient::RP_PRIMARY){
             $this->originalCollectionReadPreference = $currCollectionReadPreference;
             $this->collection->setReadPreference(MongoClient::RP_PRIMARY);
         }
 
         // Set db preference
-        $currDbReadPreference = $this->getDbReadPreference();
+        $currDbReadPreference = $this->db->getReadPreference();
         if($currDbReadPreference !== MongoClient::RP_PRIMARY){
             $this->originalDbReadPreference = $currDbReadPreference;
             $this->db->setReadPreference(MongoClient::RP_PRIMARY);

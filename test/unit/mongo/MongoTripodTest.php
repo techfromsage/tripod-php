@@ -548,14 +548,19 @@ class MongoTripodTest extends MongoTripodTestBase
             ->will($this->onConsecutiveCalls(null, $this->throwException(new Exception('readPreferenceOverMultipleSavesTestException')), null)
             );
 
-        $expectedReadPreference = $tripodMock->getCollectionReadPreference();
-        $this->assertEquals($expectedReadPreference['type'], MongoClient::RP_SECONDARY_PREFERRED);
+        $expectedCollectionReadPreference = $tripodMock->collection->getReadPreference();
+        $expectedDbReadPreference = $tripodMock->db->getReadPreference();
+        $this->assertEquals($expectedCollectionReadPreference['type'], MongoClient::RP_SECONDARY_PREFERRED);
+        $this->assertEquals($expectedDbReadPreference['type'], MongoClient::RP_SECONDARY_PREFERRED);
 
+        // Assert that a simple save results in read preferences being restored
         $g = new MongoGraph();
         $g->add_literal_triple($subjectOne, $g->qname_to_uri("dct:title"), "Title one");
         $tripodMock->saveChanges(new MongoGraph(), $g,"http://talisaspire.com/");
-        $this->assertEquals($expectedReadPreference, $tripodMock->getCollectionReadPreference());
+        $this->assertEquals($expectedCollectionReadPreference, $tripodMock->collection->getReadPreference());
+        $this->assertEquals($expectedDbReadPreference, $tripodMock->db->getReadPreference());
 
+        // Assert a thrown exception still results in read preferences being restored
         $g = new MongoGraph();
         $g->add_literal_triple($subjectOne, $g->qname_to_uri("dct:title2"), "Title two");
         $exceptionThrown = false;
@@ -567,12 +572,16 @@ class MongoTripodTest extends MongoTripodTestBase
             $this->assertEquals("readPreferenceOverMultipleSavesTestException", $e->getMessage());
         }
         $this->assertTrue($exceptionThrown);
-        $this->assertEquals($expectedReadPreference, $tripodMock->getCollectionReadPreference());
+        $this->assertEquals($expectedCollectionReadPreference, $tripodMock->collection->getReadPreference());
+        $this->assertEquals($expectedDbReadPreference, $tripodMock->db->getReadPreference());
 
+        // Assert that a new save after the exception still results in read preferences being restored
         $g = new MongoGraph();
         $g->add_literal_triple($subjectOne, $g->qname_to_uri("dct:title3"), "Title three");
         $tripodMock->saveChanges(new MongoGraph(), $g,"http://talisaspire.com/");
-        $this->assertEquals($expectedReadPreference, $tripodMock->getCollectionReadPreference());
+        $this->assertEquals($expectedCollectionReadPreference, $tripodMock->collection->getReadPreference());
+        $this->assertEquals($expectedDbReadPreference, $tripodMock->db->getReadPreference());
+
     }
 
     public function testSaveChangesToLockedDocument()
