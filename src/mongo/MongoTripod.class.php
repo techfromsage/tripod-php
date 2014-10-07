@@ -85,7 +85,6 @@ class MongoTripod extends MongoTripodBase implements ITripod
      */
     public function __construct(
         $collectionName=MONGO_MAIN_COLLECTION,
-        $dbName=MONGO_MAIN_DB,
         $opts=array()
     )
     {
@@ -98,9 +97,10 @@ class MongoTripod extends MongoTripodBase implements ITripod
             ,$opts);
         $this->collectionName = $collectionName;
 
-        $this->dbName = $dbName;
-
         $this->config = $this->getMongoTripodConfigInstance();
+
+        // TODO: do we still need this?
+        $this->dbName = $this->config->getDatabaseNameForCollectionName($collectionName);
 
         $this->labeller = $this->getLabeller();
 
@@ -111,23 +111,11 @@ class MongoTripod extends MongoTripodBase implements ITripod
         $this->retriesToGetLock = $opts['retriesToGetLock'];
 
         // connect
-        /* @var $m MongoClient */
-        $connectionOptions = array('connectTimeoutMS'=>20000); // set a 20 second timeout on establishing a connection
-        if($this->config->isReplicaSet($dbName)) {
-            $connectionOptions['replicaSet'] = $this->config->getReplicaSetName($dbName);
-        }
         try {
-            $m = new MongoClient($this->config->getConnStr($dbName), $connectionOptions);
+            $this->collection = $this->config->getCollectionForCBD($collectionName, $opts['readPreference']);
         } catch (Exception $e) {
             $this->getStat()->increment(MONGO_CONNECTION_ERROR);
             throw $e;
-        }
-        $m->setReadPreference($opts['readPreference']);
-        // select a database
-        $this->db = $m->selectDB($dbName);
-        if (!empty($collectionName))
-        {
-            $this->collection = $this->db->selectCollection($collectionName);
         }
 
         // fill in and default any missing keys for $async array
@@ -193,6 +181,11 @@ class MongoTripod extends MongoTripodBase implements ITripod
         return $this->fetchGraph($query,MONGO_MULTIDESCRIBE);
     }
 
+    /**
+     * @param string $resource
+     * @param string $viewType
+     * @return MongoGraph
+     */
     public function getViewForResource($resource, $viewType)
     {
         return $this->getTripodViews()->getViewForResource($resource,$viewType);

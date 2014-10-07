@@ -75,7 +75,7 @@ abstract class MongoTripodBase
         }
         else
         {
-            $collection = $this->db->selectCollection($collectionName);
+            $collection = $this->config->getCollectionForCBD($collectionName);
         }
 
         if (empty($includeProperties))
