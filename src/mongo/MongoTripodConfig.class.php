@@ -109,6 +109,11 @@ class MongoTripodConfig
     protected $collectionDatabases = array();
 
     /**
+     * @var array
+     */
+    protected $activeMongoConnections = array();
+
+    /**
      * Used to load the config from self::config when new instance is generated
      *
      * @param array $config
@@ -1245,6 +1250,104 @@ class MongoTripodConfig
     public function getSearchProviderClassName()
     {
         return $this->searchProviderClassName;
+    }
+
+    /**
+     * @param string $dbName
+     * @return MongoDB
+     * @throws MongoTripodConfigException
+     */
+    protected function getDatabase($dbName)
+    {
+        if(!isset($this->activeMongoConnections[$dbName]))
+        {
+            if(!isset($this->dbConfig[$dbName]))
+            {
+                throw new MongoTripodConfigException("Database name '{$dbName}' not in configuration");
+            }
+
+            $client = new MongoClient($this->dbConfig['connStr']);
+            $this->activeMongoConnections[$dbName] = $client->selectDB($dbName);
+        }
+        return $this->activeMongoConnections[$dbName];
+    }
+
+    /**
+     * @param MongoDB $db
+     * @param string $collectionName
+     * @return MongoCollection
+     */
+    protected function getMongoCollection(MongoDB $db, $collectionName)
+    {
+        return $db->selectCollection($collectionName);
+    }
+
+    /**
+     * @param string $name
+     * @return MongoCollection
+     * @throws MongoTripodConfigException
+     */
+    public function getCollectionForCBD($name)
+    {
+        if(isset($this->collectionDatabases[$name]))
+        {
+            return $this->getMongoCollection(
+                $this->getDatabase($this->collectionDatabases[$name]),
+                $name
+            );
+        }
+        throw new MongoTripodConfigException("Collection name '{$name}' not in configuration");
+    }
+
+    /**
+     * @param $viewId
+     * @return MongoCollection
+     * @throws MongoTripodConfigException
+     */
+    public function getCollectionForView($viewId)
+    {
+        if(isset($this->viewSpecs[$viewId]))
+        {
+            return $this->getMongoCollection(
+                $this->getDatabase($this->viewSpecs[$viewId]['to']),
+                $viewId
+            );
+        }
+        throw new MongoTripodConfigException("View id '{$viewId}' not in configuration");
+    }
+
+    /**
+     * @param $searchDocumentId
+     * @return MongoCollection
+     * @throws MongoTripodConfigException
+     */
+    public function getCollectionForSearchDocument($searchDocumentId)
+    {
+        if(isset($this->searchDocSpecs[$searchDocumentId]))
+        {
+            return $this->getMongoCollection(
+                $this->getDatabase($this->searchDocSpecs[$searchDocumentId]['to']),
+                $searchDocumentId
+            );
+        }
+        throw new MongoTripodConfigException("Search document id '{$searchDocumentId}' not in configuration");
+    }
+
+    /**
+     * @param $tableId
+     * @return MongoCollection
+     * @throws MongoTripodConfigException
+     */
+    public function getCollectionForTable($tableId)
+    {
+        if(isset($this->tableSpecs[$tableId]))
+        {
+            return $this->getMongoCollection(
+                $this->getDatabase($this->tableSpecs[$tableId]['to']),
+                $tableId
+            );
+        }
+        throw new MongoTripodConfigException("Table id '{$tableId}' not in configuration");
     }
 }
 class MongoTripodConfigException extends Exception {}
