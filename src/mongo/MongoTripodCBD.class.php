@@ -10,7 +10,7 @@ class MongoTripodCBD implements iTripodGraph, iTripodTable {
     }
     public function describe($query)
     {
-
+        $this->collection->find();
     }
 
     public function select(array $query, array $fields, $context=null)
