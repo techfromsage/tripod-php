@@ -103,6 +103,12 @@ class MongoTripodConfig
     private function __construct() {}
 
     /**
+     * A simple map between collection names and the database name they belong to
+     * @var array
+     */
+    protected $collectionDatabases = array();
+
+    /**
      * Used to load the config from self::config when new instance is generated
      *
      * @param array $config
@@ -126,17 +132,6 @@ class MongoTripodConfig
             $this->tConfig['replicaSet'] = $transactionConfig["replicaSet"];
         }
 
-        $searchConfig = (array_key_exists("search_config",$config)) ? $config["search_config"] : array();
-        if(!empty($searchConfig)){
-            $this->searchProviderClassName = $this->getMandatoryKey('search_provider', $searchConfig, 'search');
-            // Load search doc specs if search_config is set
-            $searchDocSpecs = $this->getMandatoryKey('search_specifications', $searchConfig, 'search');
-            foreach ($searchDocSpecs as $spec)
-            {
-                $this->searchDocSpecs[$spec[_ID_KEY]] = $spec;
-            }
-        }
-
         $queueConfig = $this->getMandatoryKey("queue",$config);
         $this->queueConfig["database"] = $this->getMandatoryKey("database",$queueConfig,'queue');
         $this->queueConfig["collection"] = $this->getMandatoryKey("collection",$queueConfig,'queue');
@@ -145,11 +140,153 @@ class MongoTripodConfig
             $this->queueConfig['replicaSet'] = $queueConfig["replicaSet"];
         }
 
+        $this->databases = $this->getMandatoryKey("databases",$config);
+        $distinctCollections = array();
+        $defaultDB = null;
+        foreach ($this->databases as $dbName=>$db)
+        {
+            $this->dbConfig[$dbName] = array ("connStr"=>$this->getMandatoryKey("connStr",$db));
+            if(isset($db['replicaSet']) && !empty($db['replicaSet']))
+            {
+                $this->dbConfig[$dbName]["replicaSet"]=$db['replicaSet'];
+            }
+            if(isset($db['default']) && $db['default'] == true)
+            {
+                if(!empty($defaultDB))
+                {
+                    throw new MongoTripodConfigException("'{$dbName}' is set to be default database, but '{$defaultDB}' already set as default");
+                }
+                $defaultDB = $dbName;
+            }
+            $this->cardinality[$dbName] = array();
+            $this->indexes[$dbName] = array();
+            foreach($db["collections"] as $collName=>$collection)
+            {
+                if(in_array($collName, $distinctCollections))
+                {
+                    throw new MongoTripodConfigException("Collection names must be distinct: '{$collName}' has already been defined");
+                }
+                $distinctCollections[] = $collName;
+                $this->collectionDatabases[$collName] = $dbName;
+                // Set cardinality, also checking against defined namespaces
+                if (array_key_exists('cardinality', $collection))
+                {
+                    // Test that the namespace exists for each cardinality rule defined
+                    $cardinality = $collection['cardinality'];
+                    foreach ($cardinality as $qname=>$cardinalityValue)
+                    {
+                        // just grab the first element
+                        $namespace  = array_shift(explode(':', $qname));
+
+                        if (array_key_exists($namespace, $this->ns))
+                        {
+                            $this->cardinality[$dbName][$collName][] = $cardinality;
+                        }
+                        else
+                        {
+                            throw new MongoTripodConfigException("Cardinality '{$qname}' does not have the namespace defined");
+                        }
+                    }
+                }
+                else
+                {
+                    $this->cardinality[$dbName][$collName] = array();
+                }
+
+                $this->cardinality[$dbName][$collName] = (array_key_exists("cardinality",$collection)) ? $collection['cardinality'] : array();
+
+                // Ensure indexes are legal
+                if (array_key_exists("indexes",$collection))
+                {
+                    $this->indexes[$dbName][$collName] = array();
+                    foreach($collection["indexes"] as $indexName=>$indexFields)
+                    {
+                        // check no more than 1 indexField is an array to ensure Mongo will be able to create compount indexes
+                        if (count($indexFields)>1)
+                        {
+                            $fieldsThatAreArrays = 0;
+                            foreach ($indexFields as $field=>$fieldVal)
+                            {
+                                $cardinalityField = preg_replace('/\.value/','',$field);
+                                if (!array_key_exists($cardinalityField,$this->cardinality[$dbName][$collName])||$this->cardinality[$dbName][$collName][$cardinalityField]!=1)
+                                {
+                                    $fieldsThatAreArrays++;
+                                }
+                                if ($fieldsThatAreArrays>1)
+                                {
+                                    throw new MongoTripodConfigException("Compound index $indexName has more than one field with cardinality > 1 - mongo will not be able to build this index");
+                                }
+                            }
+                        } // @codeCoverageIgnoreStart
+                        // @codeCoverageIgnoreEnd
+
+                        $this->indexes[$dbName][$collName][$indexName] = $indexFields;
+                    }
+                }
+            }
+        }
+
+        if(!$defaultDB)
+        {
+            if(count($this->databases) > 1)
+            {
+                throw new MongoTripodConfigException("Multiple databases defined, but none are set as default");
+            }
+            else
+            {
+                $defaultDB = array_pop(array_keys($this->databases));
+            }
+        }
+
+        $searchConfig = (array_key_exists("search_config",$config)) ? $config["search_config"] : array();
+        if(!empty($searchConfig)){
+            $this->searchProviderClassName = $this->getMandatoryKey('search_provider', $searchConfig, 'search');
+            // Load search doc specs if search_config is set
+            $searchDocSpecs = $this->getMandatoryKey('search_specifications', $searchConfig, 'search');
+            foreach ($searchDocSpecs as $spec)
+            {
+                if(!isset($spec[_ID_KEY]))
+                {
+                    throw new MongoTripodConfigException("Search document spec does not contain " . _ID_KEY);
+                }
+                if($this->searchProviderClassName == SEARCH_PROVIDER_MONGO)
+                {
+                    if(isset($spec['to']))
+                    {
+                        if(!isset($this->databases[$spec['to']]))
+                        {
+                            throw new MongoTripodConfigException("'{$spec[_ID_KEY]}[\"to\"]' property references an undefined database name");
+                        }
+                    }
+                    else
+                    {
+                        $spec['to'] = $defaultDB;
+                    }
+                }
+                $this->searchDocSpecs[$spec[_ID_KEY]] = $spec;
+            }
+        }
+
         // Load view specs
         $viewSpecs = (array_key_exists("view_specifications",$config)) ? $config["view_specifications"] : array();
         foreach ($viewSpecs as $spec)
         {
+            if(!isset($spec[_ID_KEY]))
+            {
+                throw new MongoTripodConfigException("View spec does not contain " . _ID_KEY);
+            }
             $this->ifCountExistsWithoutTTLThrowException($spec);
+            if(isset($spec['to']))
+            {
+                if(!isset($this->databases[$spec['to']]))
+                {
+                    throw new MongoTripodConfigException("'{$spec[_ID_KEY]}[\"to\"]' property references an undefined database name");
+                }
+            }
+            else
+            {
+                $spec['to'] = $defaultDB;
+            }
             $this->viewSpecs[$spec[_ID_KEY]] = $spec;
         }
 
@@ -216,79 +353,21 @@ class MongoTripodConfig
                     throw new MongoTripodConfigException("Count spec does not contain property");
                 }
             }
+
+            if(isset($spec['to']))
+            {
+                if(!isset($this->databases[$spec['to']]))
+                {
+                    throw new MongoTripodConfigException("'{$spec[_ID_KEY]}[\"to\"]' property references an undefined database name");
+                }
+            }
+            else
+            {
+                $spec['to'] = $defaultDB;
+            }
+
             $this->tableSpecs[$spec[_ID_KEY]] = $spec;
         }
-
-        $this->databases = $this->getMandatoryKey("databases",$config);
-        foreach ($this->databases as $dbName=>$db)
-        {
-            $this->dbConfig[$dbName] = array ("connStr"=>$this->getMandatoryKey("connStr",$db));
-            if(isset($db['replicaSet']) && !empty($db['replicaSet']))
-            {
-                $this->dbConfig[$dbName]["replicaSet"]=$db['replicaSet'];
-            }
-            $this->cardinality[$dbName] = array();
-            $this->indexes[$dbName] = array();
-            foreach($db["collections"] as $collName=>$collection)
-            {
-                // Set cardinality, also checking against defined namespaces
-                if (array_key_exists('cardinality', $collection))
-                {
-                    // Test that the namespace exists for each cardinality rule defined
-                    $cardinality = $collection['cardinality'];
-                    foreach ($cardinality as $qname=>$cardinalityValue)
-                    {
-                        // just grab the first element
-                        $namespace  = array_shift(explode(':', $qname));
-
-                        if (array_key_exists($namespace, $this->ns))
-                        {
-                            $this->cardinality[$dbName][$collName][] = $cardinality;
-                        }
-                        else
-                        {
-                            throw new MongoTripodConfigException("Cardinality '{$qname}' does not have the namespace defined");
-                        }
-                    }
-                }
-                else
-                {
-                    $this->cardinality[$dbName][$collName] = array();
-                }
-
-                $this->cardinality[$dbName][$collName] = (array_key_exists("cardinality",$collection)) ? $collection['cardinality'] : array();
-
-                // Ensure indexes are legal
-                if (array_key_exists("indexes",$collection))
-                {
-                    $this->indexes[$dbName][$collName] = array();
-                    foreach($collection["indexes"] as $indexName=>$indexFields)
-                    {
-                        // check no more than 1 indexField is an array to ensure Mongo will be able to create compount indexes
-                        if (count($indexFields)>1)
-                        {
-                            $fieldsThatAreArrays = 0;
-                            foreach ($indexFields as $field=>$fieldVal)
-                            {
-                                $cardinalityField = preg_replace('/\.value/','',$field);
-                                if (!array_key_exists($cardinalityField,$this->cardinality[$dbName][$collName])||$this->cardinality[$dbName][$collName][$cardinalityField]!=1)
-                                {
-                                    $fieldsThatAreArrays++;
-                                }
-                                if ($fieldsThatAreArrays>1)
-                                {
-                                    throw new MongoTripodConfigException("Compound index $indexName has more than one field with cardinality > 1 - mongo will not be able to build this index");
-                                }
-                            }
-                        } // @codeCoverageIgnoreStart
-                        // @codeCoverageIgnoreEnd
-
-                        $this->indexes[$dbName][$collName][$indexName] = $indexFields;
-                    }
-                }
-            }
-        }
-
     }
 
     /**
@@ -979,6 +1058,16 @@ class MongoTripodConfig
     public function getDbs()
     {
         return array_keys($this->dbConfig);
+    }
+
+    /**
+     * Returns the associated database name for a collection name
+     * @param $collectionName
+     * @return string|null
+     */
+    public function getDatabaseNameForCollectionName($collectionName)
+    {
+        return (isset($this->collectionDatabases[$collectionName]) ? $this->collectionDatabases[$collectionName] : null);
     }
 
     /**
