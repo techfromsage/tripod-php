@@ -1265,7 +1265,7 @@ class MongoTripodConfig
             {
                 throw new MongoTripodConfigException("Database name '{$dbName}' not in configuration");
             }
-
+            
             $client = new MongoClient($this->dbConfig['connStr']);
             $this->activeMongoConnections[$dbName] = $client->selectDB($dbName);
         }

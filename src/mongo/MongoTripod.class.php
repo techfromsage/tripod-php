@@ -97,6 +97,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
                 'retriesToGetLock' => 20)
             ,$opts);
         $this->collectionName = $collectionName;
+
         $this->dbName = $dbName;
 
         $this->config = $this->getMongoTripodConfigInstance();
@@ -523,7 +524,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
     }
 
     /**
-     * Retuns the eTag of the $resource, useful for cache control or optimistic concurrency control
+     * Returns the eTag of the $resource, useful for cache control or optimistic concurrency control
      * @param $resource
      * @param null $context
      * @return string
