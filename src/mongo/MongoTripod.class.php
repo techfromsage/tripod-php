@@ -70,6 +70,8 @@ class MongoTripod extends MongoTripodBase implements ITripod
      */
     private $dataUpdater;
 
+    protected $cbds = array();
+
     /**
      * Constructor for MongoTripod
      *
@@ -143,6 +145,15 @@ class MongoTripod extends MongoTripodBase implements ITripod
 
         // is a custom stat tracker passed in?
         if ($opts['stat']!=null) $this->stat = $opts['stat'];
+    }
+
+    public function cbds($collection)
+    {
+        if(!isset($this->cbds[$collection]))
+        {
+            $this->cbds[$collection] = new MongoTripodCBD($collection);
+        }
+        return $this->cbds[$collection];
     }
 
     /**
