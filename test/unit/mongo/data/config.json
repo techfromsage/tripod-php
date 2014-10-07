@@ -45,6 +45,22 @@
                     }
                 }
             },
+            "default" : true,
+            "connStr" : "mongodb://localhost"
+        },
+        "testing_alt" : {
+            "collections" : {
+                "CBD_testing_3" : {
+                    "cardinality" : {
+                        "dct:created.l" : 1
+                    },
+                    "indexes" : {
+                        "index1": {
+                            "rdf:type.u":1
+                        }
+                    }
+                }
+            },
             "connStr" : "mongodb://localhost"
         }
     },
@@ -107,6 +123,7 @@
             "_id": "v_counts",
             "type": "acorn:Work",
             "from":"CBD_testing",
+            "to":"testing_alt",
             "include": ["rdf:type"],
             "ttl": 300,
             "counts" : {
@@ -251,6 +268,7 @@
                 "_id":"i_search_filter_parse",
                 "type":["baseData:Wibble"],
                 "from":"CBD_testing",
+                "to":"testing_alt",
                 "filter":[
                     {
                         "condition":{
@@ -520,6 +538,7 @@
             "_id": "t_join_link",
             "type":"bibo:Document",
             "from":"CBD_testing",
+            "to":"testing_alt",
             "fields" : [
                 {
                     "fieldName":"bookLink",
