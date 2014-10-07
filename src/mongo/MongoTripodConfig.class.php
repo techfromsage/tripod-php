@@ -1254,10 +1254,11 @@ class MongoTripodConfig
 
     /**
      * @param string $dbName
-     * @return MongoDB
+     * @param string $readPreference
      * @throws MongoTripodConfigException
+     * @return MongoDB
      */
-    protected function getDatabase($dbName)
+    protected function getDatabase($dbName, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
     {
         if(!isset($this->activeMongoConnections[$dbName]))
         {
@@ -1265,11 +1266,17 @@ class MongoTripodConfig
             {
                 throw new MongoTripodConfigException("Database name '{$dbName}' not in configuration");
             }
-            
-            $client = new MongoClient($this->dbConfig['connStr']);
+            $connectionOptions = array('connectTimeoutMS'=>20000); // set a 20 second timeout on establishing a connection
+            if($this->isReplicaSet($dbName)) {
+                $connectionOptions['replicaSet'] = $this->getReplicaSetName($dbName);
+            }
+            $client = new MongoClient($this->dbConfig[$dbName]['connStr'], $connectionOptions);
             $this->activeMongoConnections[$dbName] = $client->selectDB($dbName);
         }
-        return $this->activeMongoConnections[$dbName];
+        /** @var MongoClient $db */
+        $db = $this->activeMongoConnections[$dbName];
+        $db->setReadPreference($readPreference);
+        return $db;
     }
 
     /**
@@ -1284,15 +1291,16 @@ class MongoTripodConfig
 
     /**
      * @param string $name
-     * @return MongoCollection
+     * @param string $readPreference
      * @throws MongoTripodConfigException
+     * @return MongoCollection
      */
-    public function getCollectionForCBD($name)
+    public function getCollectionForCBD($name, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
     {
         if(isset($this->collectionDatabases[$name]))
         {
             return $this->getMongoCollection(
-                $this->getDatabase($this->collectionDatabases[$name]),
+                $this->getDatabase($this->collectionDatabases[$name], $readPreference),
                 $name
             );
         }
@@ -1300,16 +1308,17 @@ class MongoTripodConfig
     }
 
     /**
-     * @param $viewId
-     * @return MongoCollection
+     * @param string $viewId
+     * @param string $readPreference
      * @throws MongoTripodConfigException
+     * @return MongoCollection
      */
-    public function getCollectionForView($viewId)
+    public function getCollectionForView($viewId, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
     {
         if(isset($this->viewSpecs[$viewId]))
         {
             return $this->getMongoCollection(
-                $this->getDatabase($this->viewSpecs[$viewId]['to']),
+                $this->getDatabase($this->viewSpecs[$viewId]['to'], $readPreference),
                 $viewId
             );
         }
@@ -1317,16 +1326,17 @@ class MongoTripodConfig
     }
 
     /**
-     * @param $searchDocumentId
-     * @return MongoCollection
+     * @param string $searchDocumentId
+     * @param string $readPreference
      * @throws MongoTripodConfigException
+     * @return MongoCollection
      */
-    public function getCollectionForSearchDocument($searchDocumentId)
+    public function getCollectionForSearchDocument($searchDocumentId, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
     {
         if(isset($this->searchDocSpecs[$searchDocumentId]))
         {
             return $this->getMongoCollection(
-                $this->getDatabase($this->searchDocSpecs[$searchDocumentId]['to']),
+                $this->getDatabase($this->searchDocSpecs[$searchDocumentId]['to'], $readPreference),
                 $searchDocumentId
             );
         }
@@ -1334,16 +1344,17 @@ class MongoTripodConfig
     }
 
     /**
-     * @param $tableId
-     * @return MongoCollection
+     * @param string $tableId
+     * @param string $readPreference
      * @throws MongoTripodConfigException
+     * @return MongoCollection
      */
-    public function getCollectionForTable($tableId)
+    public function getCollectionForTable($tableId, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
     {
         if(isset($this->tableSpecs[$tableId]))
         {
             return $this->getMongoCollection(
-                $this->getDatabase($this->tableSpecs[$tableId]['to']),
+                $this->getDatabase($this->tableSpecs[$tableId]['to'], $readPreference),
                 $tableId
             );
         }
