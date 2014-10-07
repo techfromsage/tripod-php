@@ -87,7 +87,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
         $queuedItemData = $this->tripodQueue->fetchNextQueuedItem()->getData();
         $this->assertEquals("http://talisaspire.com/resources/doc1",$queuedItemData['r'], "Queued Item should be the one we saved changes to");
         $this->assertContains(OP_VIEWS, $queuedItemData['operations'], "Operations should contain view gen");
-        $this->assertContains(OP_TABLES, $queuedItemData['operations'], "Operations should contain table gen");
+        $this->assertNotContains(OP_TABLES, $queuedItemData['operations'], "Operations should not contain table gen: dct:subject not a defined predicate");
         $this->assertContains(OP_SEARCH, $queuedItemData['operations'], "Operations should contain search gen");
     }
 
@@ -98,6 +98,8 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
      */
     public function testSeveralItemsAddedToQueueForChangeToSubjectThatImpactsOthers()
     {
+        $this->tripod->getTripodTables()->generateTableRowsForType("bibo:Book");
+
         // create a tripod instance that will send all operations to the queue
         $tripod = new MongoTripod('CBD_testing','testing', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
         $g1 = $tripod->describeResource("http://talisaspire.com/authors/1");
@@ -107,38 +109,49 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
         $tripod->saveChanges($g1, $g2);
 
         $queueCount = $this->tripodQueue->count();
-        $this->assertEquals(4, $queueCount, "There should only be 4 items on the queue");
+        $this->assertEquals(3, $queueCount, "There should only be 3 items on the queue");
 
         $expectedItems = array(
-            "http://talisaspire.com/authors/1" => array(
-                "operations"=> array(OP_SEARCH) // foaf:Person only has a search doc spec associated with it in config
-            ),
+
             "http://talisaspire.com/resources/doc1" => array(
-                "operations"=> array(OP_VIEWS, OP_TABLES, OP_SEARCH)
+                "operations"=> array(OP_VIEWS, OP_TABLES),
+                "specTypes"=>array('t_authors') // foaf:dob is defined in t_authors
             ),
             "http://talisaspire.com/resources/doc2" => array(
-                "operations"=> array(OP_VIEWS, OP_TABLES, OP_SEARCH)
+                "operations"=> array(OP_VIEWS, OP_TABLES),
+                "specTypes"=>array('t_authors')
             ),
             "http://talisaspire.com/resources/doc3" => array(
-                "operations"=> array(OP_VIEWS, OP_TABLES, OP_SEARCH)
+                "operations"=> array(OP_VIEWS, OP_TABLES),
+                "specTypes"=>array('t_authors')
             ),
         );
 
         for($i=0; $i<$queueCount; $i++){
             $queuedItem      = $this->tripodQueue->fetchNextQueuedItem()->getData();
-            $queuedItemRId   = $queuedItem['r'];
+            $queuedItemRId   = $queuedItem[_ID_RESOURCE];
             if(!array_key_exists( $queuedItemRId, $expectedItems)){
                 $this->fail("Queued Item was not found in the set of Expected Items");
             }
 
             // verify the number of operations is the same
             $queuedItemOpsCount   = count($queuedItem['operations']);
+
             $expectedItemOpsCount = count($expectedItems[$queuedItemRId]["operations"]);
-            $this->assertEquals($expectedItemOpsCount, $queuedItemOpsCount, "Queued Item does not contain the expected number of operations");
+            $this->assertEquals(
+                $expectedItems[$queuedItemRId]["operations"],
+                $queuedItem['operations'],
+                "Queued Item: ${queuedItemRId} does not contain the expected number of operations"
+            );
 
             // assert queued item operations appear in the expected item operations
             foreach($queuedItem['operations'] as $op){
                 $this->assertContains($op, $expectedItems[$queuedItemRId]["operations"], "$op was not found in set of Expected Operations for this queued item");
+            }
+
+            // assert queued item specTypes appear in the expected item operations
+            foreach($queuedItem['specTypes'] as $spec){
+                $this->assertContains($spec, $expectedItems[$queuedItemRId]["specTypes"], "$spec was not found in set of Expected Operations for this queued item");
             }
         }
    }
@@ -382,13 +395,14 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
         for($i=0; $i<$queueCount; $i++){
             $queuedItem      = $this->tripodQueue->fetchNextQueuedItem();
             $queuedItemData  = $queuedItem->getData();
-            $queuedItemRId   = $queuedItemData['r'];
+            $queuedItemRId   = $queuedItemData[_ID_RESOURCE];
             if(!array_key_exists( $queuedItemRId, $expectedQueuedItems)){
                 $this->fail("Queued Item was not found in the set of Expected Items");
             }
 
             // verify the number of operations is the same
             $queuedItemOpsCount   = count($queuedItemData['operations']);
+            $queuedItemData['operations'];
             $expectedItemOpsCount = count($expectedQueuedItems[$queuedItemRId]["operations"]);
             $this->assertEquals($expectedItemOpsCount, $queuedItemOpsCount, "Queued Item does not contain the expected number of operations");
 

@@ -59,13 +59,20 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         $resourceUri    = $queuedItem[_ID_RESOURCE];
         $context        = $queuedItem[_ID_CONTEXT];
 
+        $specTypes = null;
+
+        if(isset($queuedItem['specTypes']))
+        {
+            $specTypes = $queuedItem['specTypes'];
+        }
+
         if(isset($queuedItem['delete']))
         {
-            $this->deleteTableRowsForResource($resourceUri,$context);
+            $this->deleteTableRowsForResource($resourceUri,$context,$specTypes);
         }
         else
         {
-            $this->generateTableRowsForResource($resourceUri,$context);
+            $this->generateTableRowsForResource($resourceUri,$context,$specTypes);
         }
     }
 
@@ -133,12 +140,27 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         );
     }
 
-    protected function deleteTableRowsForResource($resource, $context=null)
+    /**
+     * @param string $resource The URI or alias of the resource to delete from tables
+     * @param string|null $context Optional context
+     * @param array|string|null $specType Optional table type or array of table types to delete from
+     */
+    protected function deleteTableRowsForResource($resource, $context=null, $specType = null)
     {
         $resourceAlias = $this->labeller->uri_to_alias($resource);
         $contextAlias = $this->getContextAlias($context);
-
-        $this->db->selectCollection(TABLE_ROWS_COLLECTION)->remove(array("_id.r"=>$resourceAlias,"_id.c"=>$contextAlias));
+        $query = array(_ID_KEY . '.' . _ID_RESOURCE => $this->labeller->uri_to_alias($resource),  _ID_KEY . '.' . _ID_CONTEXT => $context);
+        if (!empty($specType)) {
+            if(is_string($specType))
+            {
+                $query[_ID_KEY][_ID_TYPE] = $specType;
+            }
+            elseif(is_array($specType))
+            {
+                $query[_ID_KEY . '.' . _ID_TYPE] = array('$in'=>$specType);
+            }
+        }
+        $this->db->selectCollection(TABLE_ROWS_COLLECTION)->remove($query);
     }
 
     /**
@@ -157,23 +179,18 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
     }
 
     /**
-     * This method handles invalidation and regeneration of table rows based on impact index, before deligating to
+     * This method handles invalidation and regeneration of table rows based on impact index, before delegating to
      * generateTableRowsForType() for re-generation of any table rows for the $resource
      * @param $resource
-     * @param null $context
+     * @param string|null $context
+     * @param array $specTypes
      */
-    protected function generateTableRowsForResource($resource, $context=null)
+    protected function generateTableRowsForResource($resource, $context=null, $specTypes=array())
     {
         $resourceAlias = $this->labeller->uri_to_alias($resource);
         $contextAlias = $this->getContextAlias($context);
 
-        // delete any rows with this resource and context in the key
-        foreach (MongoTripodConfig::getInstance()->getTableSpecifications() as $type=>$spec)
-        {
-            if ($spec['from']==$this->collectionName){
-                $this->db->selectCollection(TABLE_ROWS_COLLECTION)->remove(array("_id" => array("r"=>$resourceAlias,"c"=>$contextAlias,"type"=>$type)));
-            }
-        }
+        $this->deleteTableRowsForResource($resource, $context, $specTypes);
 
         $filter = array();
         $filter[] = array("r"=>$resourceAlias,"c"=>$contextAlias);
@@ -190,14 +207,14 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
                 if (array_key_exists('u',$rt["rdf:type"]))
                 {
                     // single type, not an array of values
-                    $this->generateTableRowsForType($rt["rdf:type"]['u'],$id[_ID_RESOURCE],$id[_ID_CONTEXT]);
+                    $this->generateTableRowsForType($rt["rdf:type"]['u'],$id[_ID_RESOURCE],$id[_ID_CONTEXT], $specTypes);
                 }
                 else
                 {
                     // an array of types
                     foreach ($rt["rdf:type"] as $type)
                     {
-                        $this->generateTableRowsForType($type['u'],$id[_ID_RESOURCE],$id[_ID_CONTEXT]);
+                        $this->generateTableRowsForType($type['u'],$id[_ID_RESOURCE],$id[_ID_CONTEXT], $specTypes);
                     }
                 }
             }
@@ -205,67 +222,56 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
     }
 
     /**
-     * Given a set of resources, this method returns the ids of the documents that are directly affected.
-     * As a note remember that if ResourceA has a view associated with it, then the impactIndex for ResourceA, will contain
-     * an entry for ResourceA as well as any other Resources.
-     * @param $resources
-     * @param null $context
-     * @return array
-     */
-    public function findImpactedTableRows($resources, $context = null)
-    {
-        $contextAlias = $this->getContextAlias($context);
-
-        // build a filter - will be used for impactIndex detection and finding direct views to re-gen
-        $filter = array();
-        foreach ($resources as $resource)
-        {
-            $resourceAlias = $this->labeller->uri_to_alias($resource);
-            // build $filter for queries to impact index
-            $filter[] = array("r"=>$resourceAlias,"c"=>$contextAlias);
-        }
-
-        // first re-gen views where resources appear in the impact index
-        $query = array("value."._IMPACT_INDEX=>array('$in'=>$filter));
-        $tableRows = $this->db->selectCollection(TABLE_ROWS_COLLECTION)->find($query,array("_id"=>true));
-
-        $affectedTableRows = array();
-
-        foreach($tableRows as $t)
-        {
-            $affectedTableRows[] = $t;
-        }
-
-        return $affectedTableRows;
-    }
-
-
-    /**
      * This method finds all the table specs for the given $rdfType and generates the table rows for the $subject one by one
-     * @param $rdfType
-     * @param null $subject
-     * @param null $context
+     * @param string $rdfType
+     * @param string|null $subject
+     * @param string|null $context
+     * @param array $specTypes
      * @return mixed
-     * @throws Exception
      */
-    public function generateTableRowsForType($rdfType,$subject=null,$context=null)
+    public function generateTableRowsForType($rdfType,$subject=null,$context=null, $specTypes = array())
     {
         $rdfType = $this->labeller->qname_to_alias($rdfType);
         $rdfTypeAlias = $this->labeller->uri_to_alias($rdfType);
         $foundSpec = false;
-        $tableSpecs = MongoTripodConfig::getInstance()->getTableSpecifications();
+
+        if(empty($specTypes))
+        {
+            $tableSpecs = MongoTripodConfig::getInstance()->getTableSpecifications();
+        }
+        else
+        {
+            $tableSpecs = array();
+            foreach($specTypes as $specType)
+            {
+                $spec = MongoTripodConfig::getInstance()->getTableSpecification($specType);
+                if($spec)
+                {
+                    $tableSpecs[$specType] = $spec;
+                }
+            }
+        }
+
         foreach($tableSpecs as $key=>$tableSpec)
         {
-            if ($tableSpec["type"]==$rdfType || $tableSpec["type"]==$rdfTypeAlias)
+            if(isset($tableSpec["type"]))
             {
-                $foundSpec = true;
-                $this->debugLog("Processing {$tableSpec['_id']}");
-                $this->generateTableRows($key,$subject,$context);
+                $types = $tableSpec["type"];
+                if(!is_array($types))
+                {
+                    $types = array($types);
+                }
+                if (in_array($rdfType, $types) || in_array($rdfTypeAlias, $types))
+                {
+                    $foundSpec = true;
+                    $this->debugLog("Processing {$tableSpec[_ID_KEY]}");
+                    $this->generateTableRows($key,$subject,$context);
+                }
             }
         }
         if (!$foundSpec)
         {
-            $this->debugLog("Cound not find any table specifications for $subject with resource type '$rdfType'");
+            $this->debugLog("Could not find any table specifications for $subject with resource type '$rdfType'");
             return;
         }
     }
@@ -374,38 +380,41 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         {
             foreach ($spec['fields'] as $f)
             {
-                foreach ($f['predicates'] as $p)
+                if(isset($f['predicates']))
                 {
-                    if (is_string($p) && isset($source[$p]))
+                    foreach ($f['predicates'] as $p)
                     {
-                        // Predicate is referenced directly
-                        $this->generateValues($source, $f, $p, $dest);
-                    } else
-                    {
-                        // Get a list of functions to run over a predicate - reverse it
-                        $predicateFunctions = $this->getPredicateFunctions($p);
-                        $predicateFunctions = array_reverse($predicateFunctions);
-
-                        foreach($predicateFunctions as $function => $functionOptions)
+                        if (is_string($p) && isset($source[$p]))
                         {
-                            // If we've got values then we're the innermost function, so we need to get the values
-                            if($function == 'predicates')
+                            // Predicate is referenced directly
+                            $this->generateValues($source, $f, $p, $dest);
+                        } else
+                        {
+                            // Get a list of functions to run over a predicate - reverse it
+                            $predicateFunctions = $this->getPredicateFunctions($p);
+                            $predicateFunctions = array_reverse($predicateFunctions);
+
+                            foreach($predicateFunctions as $function => $functionOptions)
                             {
-                                foreach($functionOptions as $v)
+                                // If we've got values then we're the innermost function, so we need to get the values
+                                if($function == 'predicates')
                                 {
-                                    $v = trim($v);
-                                    if (isset($source[$v]))
+                                    foreach($functionOptions as $v)
                                     {
-                                        $this->generateValues($source, $f, $v, $dest);
+                                        $v = trim($v);
+                                        if (isset($source[$v]))
+                                        {
+                                            $this->generateValues($source, $f, $v, $dest);
+                                        }
                                     }
+                                // Otherwise apply a modifier
                                 }
-                            // Otherwise apply a modifier
-                            }
-                            else
-                            {
-                                if(isset($dest[$f['fieldName']]))
+                                else
                                 {
-                                    $dest[$f['fieldName']] = $this->applyModifier($function, $dest[$f['fieldName']], $functionOptions);
+                                    if(isset($dest[$f['fieldName']]))
+                                    {
+                                        $dest[$f['fieldName']] = $this->applyModifier($function, $dest[$f['fieldName']], $functionOptions);
+                                    }
                                 }
                             }
                         }

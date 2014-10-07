@@ -41,18 +41,23 @@ class MongoSearchProvider implements ITripodSearchProvider
      * If spec id is not specified this method will delete all search documents that match the resource and context.
      * @param string $resource
      * @param string $context
-     * @param string|null $specId
+     * @param string|array|null $specId
      * @throws TripodSearchException if there was an error removing the document
      * @return mixed
      */
     public function deleteDocument($resource, $context, $specId = null)
     {
         try {
-            $query = null;
-            if (empty($specId)) {
-                $query = array('_id.r' => $this->labeller->uri_to_alias($resource), '_id.c' => $context);
-            } else {
-                $query = array('_id' => array('r' => $this->labeller->uri_to_alias($resource), 'c' => $context, 'type' => $specId));
+            $query = array(_ID_KEY . '.' . _ID_RESOURCE => $this->labeller->uri_to_alias($resource),  _ID_KEY . '.' . _ID_CONTEXT => $context);
+            if (!empty($specId)) {
+                if(is_string($specId))
+                {
+                    $query[_ID_KEY][_ID_TYPE] = $specId;
+                }
+                elseif(is_array($specId))
+                {
+                    $query[_ID_KEY . '.' . _ID_TYPE] = array('$in'=>$specId);
+                }
             }
             $this->tripod->db->selectCollection($this->getSearchCollectionName())->remove($query);
         } catch (Exception $e) {
@@ -63,29 +68,97 @@ class MongoSearchProvider implements ITripodSearchProvider
     /**
      * Returns the ids of all documents that contain and impact index entry
      * matching the resource and context specified
-     * @param string $resource
+     * @param array $resourcesAndPredicates
      * @param string $context
      * @return array the ids of search documents that had matching entries in their impact index
      */
-    public function findImpactedDocuments($resource, $context)
+    public function findImpactedDocuments(array $resourcesAndPredicates, $context)
     {
-        $impactedDocuments = array();
+        $contextAlias = $this->labeller->uri_to_alias($context);
 
-        $filter = array();
-        if(is_array($resource)){
-            foreach($resource as $r){
-                $filter[] = array('r'=>$this->labeller->uri_to_alias($r), 'c'=>$context);
+        $specPredicates = array();
+
+        foreach(MongoTripodConfig::getInstance()->getSearchDocumentSpecifications() as $spec)
+        {
+            if(isset($spec[_ID_KEY]))
+            {
+                $specPredicates[$spec[_ID_KEY]] = MongoTripodConfig::getInstance()->getDefinedPredicatesInSpec($spec[_ID_KEY]);
             }
-        } else {
-            $filter[] = array('r'=>$this->labeller->uri_to_alias($resource), 'c'=>$context);
         }
 
-        $query = array(_IMPACT_INDEX=>array('$in'=>$filter));
-        $cursor = $this->tripod->db->selectCollection($this->getSearchCollectionName())->find($query, array('_id'=>true));
-        foreach($cursor as $doc){
-            $impactedDocuments[] = $doc;
+        // build a filter - will be used for impactIndex detection and finding search types to re-gen
+        $searchDocFilters = array();
+        $resourceFilters = array();
+        foreach ($resourcesAndPredicates as $resource=>$resourcePredicates)
+        {
+            $resourceAlias = $this->labeller->uri_to_alias($resource);
+            $id = array(_ID_RESOURCE=>$resourceAlias,_ID_CONTEXT=>$contextAlias);
+            // If we don't have a working config or there are no predicates listed, remove all
+            // rows associated with the resource in all search types
+            if(empty($specPredicates) || empty($resourcePredicates))
+            {
+                // build $filter for queries to impact index
+                $resourceFilters[] = $id;
+            }
+            else
+            {
+                foreach($specPredicates as $searchDocType=>$predicates)
+                {
+                    // Only look for search rows if the changed predicates are actually defined in the searchDocspec
+                    if(array_intersect($resourcePredicates, $predicates))
+                    {
+                        if(!isset($searchDocFilters[$searchDocType]))
+                        {
+                            $searchDocFilters[$searchDocType] = array();
+                        }
+                        // build $filter for queries to impact index
+                        $searchDocFilters[$searchDocType][] = $id;
+                    }
+                }
+            }
+
         }
-        return $impactedDocuments;
+
+        if(empty($searchDocFilters) && !empty($resourceFilters))
+        {
+            $query = array(_IMPACT_INDEX=>array('$in'=>$resourceFilters));
+        }
+        else
+        {
+            $query = array();
+            foreach($searchDocFilters as $searchDocType=>$filters)
+            {
+                // first re-gen views where resources appear in the impact index
+                $query[] = array(_IMPACT_INDEX=>array('$in'=>$filters), '_id.'._ID_TYPE=>$searchDocType);
+            }
+
+            if(!empty($resourceFilters))
+            {
+                $query[] = array(_IMPACT_INDEX=>array('$in'=>$resourceFilters));
+            }
+
+            if(count($query) === 1)
+            {
+                $query = $query[0];
+            }
+            elseif(count($query) > 1)
+            {
+                $query = array('$or'=>$query);
+            }
+        }
+        if(empty($query))
+        {
+            return array();
+        }
+        $cursor = $this->tripod->db->selectCollection($this->getSearchCollectionName())->find($query, array('_id'=>true));
+        $searchDocs = array();
+
+        foreach($cursor as $d)
+        {
+            $searchDocs[] = $d;
+        }
+
+        return $searchDocs;
     }
 
     public function search($q, $type, $indices=array(), $fields=array(), $limit=10, $offset=0)
@@ -176,6 +249,9 @@ class MongoSearchProvider implements ITripodSearchProvider
         return $searchResults;
     }
 
+    /**
+     * @return string
+     */
     public function getSearchCollectionName()
     {
         return SEARCH_INDEX_COLLECTION;
@@ -199,7 +275,12 @@ class MongoSearchProvider implements ITripodSearchProvider
     	    	
     	return $this->tripod->db->selectCollection($this->getSearchCollectionName())->remove(array("_id.type" => $typeId));
     }
-    
+
+    /**
+     * Returns the search document specification for the supplied type
+     * @param string $typeId
+     * @return array|null
+     */
     protected function getSearchDocumentSpecification($typeId)
     {
     	return MongoTripodConfig::getInstance()->getSearchDocumentSpecification($typeId);

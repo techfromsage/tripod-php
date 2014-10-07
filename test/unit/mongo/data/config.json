@@ -246,6 +246,48 @@
                         ]
                     }
                 }
+            },
+            {
+                "_id":"i_search_filter_parse",
+                "type":["baseData:Wibble"],
+                "from":"CBD_testing",
+                "filter":[
+                    {
+                        "condition":{
+                            "dct:created.l":{
+                                "$exists":true
+                            }
+                        }
+                    },
+                    {
+                        "condition":{
+                            "$where":"temp:numberOfThings.l > temp:amountOfTimeSpent.l"
+                        }
+                    }
+                ],
+                "indices":[
+                    {
+                        "fieldName": "title",
+                        "predicates": ["dct:title", "spec:name"]
+                    },
+                    {
+                        "fieldName": "other_terms",
+                        "predicates": ["rdf:type"]
+                    }
+
+                ],
+                "fields":[
+                    {
+                        "fieldName":"result.title",
+                        "predicates":["dct:title"],
+                        "limit" : 1
+                    },
+                    {
+                        "fieldName":"rdftype",
+                        "predicates":["rdf:type"],
+                        "limit": 1
+                    }
+                ]
             }
         ]
     },
@@ -470,7 +512,6 @@
                 },
                 {
                     "fieldName":"userProfileLink",
-                    "predicates":[""],
                     "value": "_link_"
                 }
             ]
@@ -482,7 +523,6 @@
             "fields" : [
                 {
                     "fieldName":"bookLink",
-                    "predicates":[""],
                     "value": "_link_"
                 },
                 {
@@ -499,7 +539,6 @@
                     "fields" : [
                         {
                             "fieldName":"authorLink",
-                            "predicates" : [""],
                             "value" : "_link_"
                         },
                         {
@@ -512,7 +551,6 @@
                             "fields" : [
                                 {
                                     "fieldName" : "knowsLink",
-                                    "predicates" : [""],
                                     "value" : "_link_"
                                 }
                             ]
@@ -523,7 +561,6 @@
                     "fields" :[
                         {
                             "fieldName" : "workLink",
-                            "predicates" : [""],
                             "value" : "_link_"
                         }
                     ]
@@ -539,7 +576,6 @@
                     "fields" : [
                         {
                             "fieldName":"contributorLink",
-                            "predicates" : [""],
                             "value" : "_link_"
                         }
                     ]

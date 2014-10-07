@@ -24,7 +24,7 @@ class MongoTripodSearchIndexer extends MongoTripodBase implements SplObserver
         $this->labeller = new MongoTripodLabeller();
         $this->stat = $tripod->getStat();
 
-        $provider = MongoTripodConfig::getInstance()->searchProvider;
+        $provider = MongoTripodConfig::getInstance()->getSearchProviderClassName();
 
         if(class_exists($provider)){
             $this->configuredProvider = new $provider($this->tripod);
@@ -52,10 +52,24 @@ class MongoTripodSearchIndexer extends MongoTripodBase implements SplObserver
 
         $collectionName = $queuedItem['collection'];
 
-        $this->generateAndIndexSearchDocuments($resourceUri, $context, $collectionName);
+        $specTypes = null;
+
+        if(isset($queuedItem['specTypes']))
+        {
+            $specTypes = $queuedItem['specTypes'];
+        }
+
+        $this->generateAndIndexSearchDocuments($resourceUri, $context, $collectionName, $specTypes);
     }
 
-    public function generateAndIndexSearchDocuments($resourceUri, $context, $collectionName)
+    /**
+     * Removes all existing documents for the supplied resource and regenerate the search documents
+     * @param string $resourceUri
+     * @param string $context
+     * @param string $collectionName
+     * @param array | string | null $specType
+     */
+    public function generateAndIndexSearchDocuments($resourceUri, $context, $collectionName, $specType = null)
     {
         $mongoDb            = $this->tripod->db;
         $mongoCollection    = $mongoDb->selectCollection($collectionName);
@@ -64,7 +78,7 @@ class MongoTripodSearchIndexer extends MongoTripodBase implements SplObserver
         $searchProvider = $this->getSearchProvider();
 
         //1. remove all search documents for this resource
-        $searchProvider->deleteDocument($resourceUri, $context, null); // null means delete all documents for this resource
+        $searchProvider->deleteDocument($resourceUri, $context, $specType); // null means delete all documents for this resource
 
         //2. find all impacted documents and regenerate them
         $documentsToIndex   = array();
@@ -136,9 +150,9 @@ class MongoTripodSearchIndexer extends MongoTripodBase implements SplObserver
         }
     }
 
-    public function findImpactedSearchDocuments($resources, $context)
+    public function findImpactedSearchDocuments($resourcesAndPredicates, $context)
     {
-        return $this->getSearchProvider()->findImpactedDocuments($resources, $context);
+        return $this->getSearchProvider()->findImpactedDocuments($resourcesAndPredicates, $context);
     }
 
     public function deleteSearchDocumentsByTypeId($typeId)
