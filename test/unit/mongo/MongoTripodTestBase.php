@@ -264,7 +264,7 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
     {
         $doc = $this->getDocument($_id, $tripod, $fromTransactionLog);
         $this->assertNotNull($doc);
-        $this->assertEquals($_id, $doc["_id"], "Actual Document _id :[" . print_r($doc['_id']) . "] did not match expected value of " . print_r($_id));
+        $this->assertEquals($_id, $doc["_id"], "Actual Document _id :[" . print_r($doc['_id'], true) . "] did not match expected value of " . print_r($_id, true));
     }
 
     protected function assertDocumentHasBeenDeleted($_id, $tripod=null, $useTransactionTripod=false)
