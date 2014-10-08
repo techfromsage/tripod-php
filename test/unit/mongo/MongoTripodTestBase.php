@@ -31,7 +31,7 @@ class AnonymousLogger
         {
             foreach ($params as $key=>$value)
             {
-                echo "$key: $value\n";
+                echo "$key: " . print_r($value, true) . "\n";
             }
         }
     }
@@ -112,9 +112,9 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
     {
         if($toTransactionLog == true){
             $tripod = new MongoTripod('transaction_log', 'testing');
-            return $tripod->collection->insert($doc, array("safe"=>true));
+            return $tripod->collection->insert($doc, array("w"=>1));
         } else {
-            return $this->tripod->collection->insert($doc, array("safe"=>true));
+            return $this->tripod->collection->insert($doc, array("w"=>1));
         }
     }
 
@@ -235,7 +235,7 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
 
         $this->assertTrue(isset($doc[$property]), "Document for ".var_export($_id,true)." should have property [$property], but none found");
         if($expectedValue !== NULL){
-            $this->assertEquals($expectedValue, $doc[$property],  "Document property [$property] actual value [".$doc[$property]."] does not match expected value [$expectedValue]");
+            $this->assertEquals($expectedValue, $doc[$property],  "Document property [$property] actual value [".print_r($doc[$property], true)."] does not match expected value [" . print_r($expectedValue, true) . "]");
         }
     }
 
@@ -264,7 +264,7 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
     {
         $doc = $this->getDocument($_id, $tripod, $fromTransactionLog);
         $this->assertNotNull($doc);
-        $this->assertEquals($_id, $doc["_id"], "Actual Document _id :[{$doc['_id']}] did not match expected value of $_id");
+        $this->assertEquals($_id, $doc["_id"], "Actual Document _id :[" . print_r($doc['_id'], true) . "] did not match expected value of " . print_r($_id, true));
     }
 
     protected function assertDocumentHasBeenDeleted($_id, $tripod=null, $useTransactionTripod=false)

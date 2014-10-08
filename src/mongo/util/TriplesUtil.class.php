@@ -247,7 +247,7 @@ class TriplesUtil
         }
         try
         {
-            $collection->insert($cbdGraph->to_tripod_array($cbdSubject,$context),array("safe"=>true));
+            $collection->insert($cbdGraph->to_tripod_array($cbdSubject,$context),array("w"=>1));
             print ".";
         }
         catch (MongoException $e)
@@ -262,7 +262,7 @@ class TriplesUtil
                 $existingGraph->add_graph($cbdGraph);
                 try
                 {
-                    $collection->update($criteria,$existingGraph->to_tripod_array($cbdSubject,$context),array("safe"=>true));
+                    $collection->update($criteria,$existingGraph->to_tripod_array($cbdSubject,$context),array("w"=>1));
                 }
                 catch (MongoException $e2)
                 {
@@ -275,7 +275,7 @@ class TriplesUtil
                 print "MongoCursorException on update: ".$e->getMessage().", retrying\n";
                 try
                 {
-                    $collection->insert($cbdGraph->to_tripod_array($cbdSubject,$context),array("safe"=>true));
+                    $collection->insert($cbdGraph->to_tripod_array($cbdSubject,$context),array("w"=>1));
                 }
                 catch (MongoException $e2)
                 {

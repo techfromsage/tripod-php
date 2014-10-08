@@ -8,15 +8,13 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
     /**
      * Construct accepts actual objects rather than strings as this class is a delegate of
      * MongoTripod and should inherit connections set up there
-     * @param MongoDB $db
      * @param MongoCollection $collection
      * @param $defaultContext
      * @param null $stat
      */
-    function __construct(MongoDB $db,MongoCollection $collection,$defaultContext,$stat=null)
+    function __construct(MongoCollection $collection,$defaultContext,$stat=null)
     {
         $this->labeller = new MongoTripodLabeller();
-        $this->db = $db;
         $this->collection = $collection;
         $this->collectionName = $collection->getName();
         $this->defaultContext = $defaultContext;
@@ -99,7 +97,7 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
 
             $fromCollection = $this->getFromCollectionForViewSpec($viewSpec);
 
-            $doc = $this->db->selectCollection($fromCollection)->findOne(array( "_id" => array("r"=>$resourceAlias,"c"=>$contextAlias)));
+            $doc = $this->config->getCollectionForCBD($fromCollection)->findOne(array( "_id" => array("r"=>$resourceAlias,"c"=>$contextAlias)));
             if($doc == NULL)
             {
                 // if you are trying to generate a view for a document that doesnt exist in the collection
@@ -145,7 +143,7 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
                 $fromCollection = $this->getFromCollectionForViewSpec($viewSpec);
 
                 $missingSubjectAlias = $this->labeller->uri_to_alias($missingSubject);
-                $doc = $this->db->selectCollection($fromCollection)->findOne(array( "_id" => array("r"=>$missingSubjectAlias,"c"=>$contextAlias)));
+                $doc = $this->config->getCollectionForCBD($fromCollection)->findOne(array( "_id" => array("r"=>$missingSubjectAlias,"c"=>$contextAlias)));
                 if($doc == NULL)
                 {
                     // nothing in source CBD for this subject, there can never be a view for it
@@ -202,7 +200,7 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
             foreach (MongoTripodConfig::getInstance()->getViewSpecifications() as $type=>$spec)
             {
                 if($spec['from']==$this->collectionName){
-                    $this->db->selectCollection(VIEWS_COLLECTION)->remove(array("_id" => array("r"=>$resourceAlias,"c"=>$contextAlias,"type"=>$type)));
+                    $this->config->getCollectionForView($type)->remove(array("_id" => array("r"=>$resourceAlias,"c"=>$contextAlias,"type"=>$type)));
                 }
             }
 
@@ -282,7 +280,7 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
             return;
         }
 
-        $this->db->selectCollection(VIEWS_COLLECTION)->remove(array("_id.type"=>$viewId), array('fsync'=>true));
+        $this->config->getCollectionForView($viewId)->remove(array("_id.type"=>$viewId), array('fsync'=>true));
     }
 
     /**
@@ -315,15 +313,15 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
             }
 
             // ensure both the ID field and the impactIndex indexes are correctly set up
-            $this->db->selectCollection(VIEWS_COLLECTION)->ensureIndex(array('_id.r'=>1, '_id.c'=>1,'_id.type'=>1),array('background'=>1));
-            $this->db->selectCollection(VIEWS_COLLECTION)->ensureIndex(array('value.'._IMPACT_INDEX=>1),array('background'=>1));
+            $this->config->getCollectionForView($viewId)->ensureIndex(array('_id.r'=>1, '_id.c'=>1,'_id.type'=>1),array('background'=>1));
+            $this->config->getCollectionForView($viewId)->ensureIndex(array('value.'._IMPACT_INDEX=>1),array('background'=>1));
 
             // ensure any custom view indexes
             if (isset($viewSpec['ensureIndexes']))
             {
                 foreach ($viewSpec['ensureIndexes'] as $ensureIndex)
                 {
-                    $this->db->selectCollection(VIEWS_COLLECTION)->ensureIndex($ensureIndex,array('background'=>1));
+                    $this->config->getCollectionForView($viewId)->ensureIndex($ensureIndex,array('background'=>1));
                 }
             }
 
@@ -348,7 +346,7 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
                 $filter["_id"] = array(_ID_RESOURCE=>$resourceAlias,_ID_CONTEXT=>$contextAlias);
             }
 
-            $docs = $this->db->selectCollection($from)->find($filter);
+            $docs = $this->config->getCollectionForCBD($from)->find($filter);
             foreach ($docs as $doc)
             {
                 // set up ID
@@ -375,7 +373,7 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
 
                 $generatedView['value'] = $value;
 
-                $this->db->selectCollection(VIEWS_COLLECTION)->save($generatedView);
+                $this->config->getCollectionForView($viewId)->save($generatedView);
             }
 
             $t->stop();
@@ -436,7 +434,7 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
                 }
 
                 $recursiveJoins = array();
-                $collection = isset($ruleset['from']) ? $this->db->selectCollection($ruleset['from']) : $this->db->selectCollection($from);
+                $collection = isset($ruleset['from']) ? $this->config->getCollectionForCBD($ruleset['from']) : $this->config->getCollectionForCBD($from);
                 $cursor = $collection->find(array('_id'=>array('$in'=>$joinUris)));
                 foreach($cursor as $linkMatch) {
                     // if there is a condition, check it...
@@ -576,7 +574,7 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
             {
                 if (isset($c['filter'])) // run a db filter
                 {
-                    $collection = isset($c['from']) ? $this->db->selectCollection($c['from']) : $this->db->selectCollection($from);
+                    $collection = isset($c['from']) ? $this->config->getCollectionForCBD($c['from']) : $this->config->getCollectionForCBD($from);
                     $query = $c['filter'];
                     $query[$c['property'].'.'.VALUE_URI] = $source['_id'][_ID_RESOURCE]; //todo: how does graph restriction work here?
                     $obj[$predicate] = array(VALUE_LITERAL=>$collection->count($query).''); // make sure it's a string

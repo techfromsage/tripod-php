@@ -892,7 +892,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             ->with(
                 $this->equalTo("http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2"),
                 'http://talisaspire.com/',
-                $this->equalTo(array("t_distinct", "t_join_source_count_regex"))); // <- These are the specs with dct:title defined
+                $this->equalTo(array("t_distinct", "t_join_source_count_regex"), 0, 10, true)); // <- These are the specs with dct:title defined
 
 
         $tripod->expects($this->atLeastOnce())

@@ -44,15 +44,16 @@ class MongoTripodUpdates extends MongoTripodBase {
 
     /**
      * @param MongoTripod $tripod
+     * @param string $collectionName
      * @param array $opts
      */
-    public function __construct(MongoTripod $tripod,$opts=array())
+    public function __construct(MongoTripod $tripod, $collectionName, $opts=array())
     {
         $this->tripod = $tripod;
-        $this->db = $tripod->db;
-        $this->dbName = $tripod->getDBName();
-        $this->collection = $tripod->collection;
-        $this->collectionName = $this->collection->getName();
+//        $this->db = $tripod->db;
+//        $this->dbName = $tripod->getDBName();
+//        $this->collection = $tripod->collection;
+//        $this->collectionName = $this->collection->getName();
         $this->stat = $tripod->getStat();
         
         $this->labeller = new MongoTripodLabeller();
@@ -66,6 +67,12 @@ class MongoTripodUpdates extends MongoTripodBase {
 
         $this->config = $this->getMongoTripodConfigInstance();
 
+        $this->collectionName = $collectionName;
+
+        $this->collection = $this->config->getCollectionForCBD($collectionName, $opts['readPreference']);
+        $this->dbName = $this->config->getDatabaseNameForCollectionName($this->collectionName);
+        $this->db = $this->config->getDatabase($this->dbName, $opts['readPreference']);
+
         // default context
         $this->defaultContext = $opts['defaultContext'];
 
@@ -73,7 +80,7 @@ class MongoTripodUpdates extends MongoTripodBase {
         $this->retriesToGetLock = $opts['retriesToGetLock'];
 
         //select locks collection
-        $this->lCollection = $this->db->selectCollection(LOCKS_COLLECTION);
+        $this->lCollection = $this->config->getCollectionForLocks($opts['readPreference']);
 
         // fill in and default any missing keys for $async array
         $async = $opts[OP_ASYNC];
@@ -1253,7 +1260,8 @@ class MongoTripodUpdates extends MongoTripodBase {
             $this->errorLog(MONGO_LOCK,
                 array(
                     'description'=>'MongoTripod::unlockAllDocuments - Failed to unlock documents (transaction_id - ' .$transaction_id .')',
-                    'mongoDriverError' => $this->db->lastError(),
+                    // Locks collection is associated with "default" db
+                    'mongoDriverError' => $this->config->getDatabase($this->config->getDefaultDatabase())->lastError(),
                     $res
                 )
             );
@@ -1344,7 +1352,7 @@ class MongoTripodUpdates extends MongoTripodBase {
      */
     protected function getAuditManualRollbacksCollection()
     {
-        return $this->db->selectCollection(AUDIT_MANUAL_ROLLBACKS_COLLECTION);
+        return $this->config->getDatabase($this->config->getDefaultDatabase())->selectCollection(AUDIT_MANUAL_ROLLBACKS_COLLECTION);
     }
     
     /**
@@ -1545,7 +1553,7 @@ class MongoTripodUpdates extends MongoTripodBase {
             }
 
         }
-
+        $tableTypes = array();
         if(empty($tableFilters) && !empty($resourceFilters))
         {
             $query = array("value."._IMPACT_INDEX=>array('$in'=>$resourceFilters));
@@ -1557,6 +1565,7 @@ class MongoTripodUpdates extends MongoTripodBase {
             {
                 // first re-gen views where resources appear in the impact index
                 $query[] = array("value."._IMPACT_INDEX=>array('$in'=>$filters), '_id.'._ID_TYPE=>$tableType);
+                $tableType[] = $tableType;
             }
 
             if(!empty($resourceFilters))
@@ -1578,13 +1587,16 @@ class MongoTripodUpdates extends MongoTripodBase {
         {
             return array();
         }
-        $tableRows = $this->db->selectCollection(TABLE_ROWS_COLLECTION)->find($query,array("_id"=>true));
-
         $affectedTableRows = array();
 
-        foreach($tableRows as $t)
+        foreach($this->config->getCollectionsForTables($tableTypes) as $collection)
         {
-            $affectedTableRows[] = $t;
+            $tableRows = $collection->find($query,array("_id"=>true));
+
+            foreach($tableRows as $t)
+            {
+                $affectedTableRows[] = $t;
+            }
         }
 
         return $affectedTableRows;
@@ -1614,13 +1626,15 @@ class MongoTripodUpdates extends MongoTripodBase {
 
         // first re-gen views where resources appear in the impact index
         $query = array("value."._IMPACT_INDEX=>array('$in'=>$filter));
-        $views = $this->db->selectCollection(VIEWS_COLLECTION)->find($query,array("_id"=>true));
 
         $affectedViews = array();
-
-        foreach($views as $v)
+        foreach($this->config->getCollectionsForViews() as $collection)
         {
-            $affectedViews[] = $v;
+            $views = $collection->find($query,array("_id"=>true));
+            foreach($views as $v)
+            {
+                $affectedViews[] = $v;
+            }
         }
 
         return $affectedViews;

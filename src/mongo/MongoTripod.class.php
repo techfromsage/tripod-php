@@ -327,7 +327,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
             $id['query'] = $query;
             $id['groupBy'] = $groupBy;
             $this->debugLog("Looking in cache",array("id"=>$id));
-            $candidate = $this->db->selectCollection(TTL_CACHE_COLLECTION)->findOne(array("_id"=>$id));
+            $candidate = $this->config->getCollectionForTTLCache()->findOne(array("_id"=>$id));
             if (!empty($candidate))
             {
                 $this->debugLog("Found candidate",array("candidate"=>$candidate));
@@ -369,7 +369,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
                 $cachedResults['results'] = $results;
                 $cachedResults['created'] = new MongoDate();
                 $this->debugLog("Adding result to cache",$cachedResults);
-                $this->db->selectCollection(TTL_CACHE_COLLECTION)->insert($cachedResults);
+                $this->config->getCollectionForTTLCache()->insert($cachedResults);
             }
         }
 
@@ -544,7 +544,6 @@ class MongoTripod extends MongoTripodBase implements ITripod
         if($this->tripod_views==null)
         {
             $this->tripod_views = new MongoTripodViews(
-                $this->db,
                 $this->collection,
                 $this->defaultContext,
                 $this->stat
@@ -561,7 +560,6 @@ class MongoTripod extends MongoTripodBase implements ITripod
         if ($this->tripod_tables==null)
         {
             $this->tripod_tables = new MongoTripodTables(
-                $this->db,
                 $this->collection,
                 $this->defaultContext,
                 $this->stat
@@ -659,7 +657,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
                 'retriesToGetLock' => $this->retriesToGetLock
             );
 
-            $this->dataUpdater = new MongoTripodUpdates($this, $opts);
+            $this->dataUpdater = new MongoTripodUpdates($this, $this->collectionName, $opts);
         }
         return $this->dataUpdater;
     }

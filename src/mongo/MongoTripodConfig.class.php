@@ -98,11 +98,6 @@ class MongoTripodConfig
     protected $specPredicates;
 
     /**
-     * MongoTripodConfig should not be instantiated directly: use MongoTripodConfig::getInstance()
-     */
-    private function __construct() {}
-
-    /**
      * A simple map between collection names and the database name they belong to
      * @var array
      */
@@ -112,6 +107,16 @@ class MongoTripodConfig
      * @var array
      */
     protected $activeMongoConnections = array();
+
+    /**
+     * @var string
+     */
+    protected $defaultDatabase;
+
+    /**
+     * MongoTripodConfig should not be instantiated directly: use MongoTripodConfig::getInstance()
+     */
+    private function __construct() {}
 
     /**
      * Used to load the config from self::config when new instance is generated
@@ -242,6 +247,8 @@ class MongoTripodConfig
                 $defaultDB = array_pop(array_keys($this->databases));
             }
         }
+
+        $this->defaultDatabase = $defaultDB;
 
         $searchConfig = (array_key_exists("search_config",$config)) ? $config["search_config"] : array();
         if(!empty($searchConfig)){
@@ -1258,7 +1265,7 @@ class MongoTripodConfig
      * @throws MongoTripodConfigException
      * @return MongoDB
      */
-    protected function getDatabase($dbName, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    public function getDatabase($dbName, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
     {
         if(!isset($this->activeMongoConnections[$dbName]))
         {
@@ -1319,7 +1326,7 @@ class MongoTripodConfig
         {
             return $this->getMongoCollection(
                 $this->getDatabase($this->viewSpecs[$viewId]['to'], $readPreference),
-                $viewId
+                VIEWS_COLLECTION
             );
         }
         throw new MongoTripodConfigException("View id '{$viewId}' not in configuration");
@@ -1337,7 +1344,7 @@ class MongoTripodConfig
         {
             return $this->getMongoCollection(
                 $this->getDatabase($this->searchDocSpecs[$searchDocumentId]['to'], $readPreference),
-                $searchDocumentId
+                SEARCH_INDEX_COLLECTION
             );
         }
         throw new MongoTripodConfigException("Search document id '{$searchDocumentId}' not in configuration");
@@ -1355,10 +1362,109 @@ class MongoTripodConfig
         {
             return $this->getMongoCollection(
                 $this->getDatabase($this->tableSpecs[$tableId]['to'], $readPreference),
-                $tableId
+                TABLE_ROWS_COLLECTION
             );
         }
         throw new MongoTripodConfigException("Table id '{$tableId}' not in configuration");
+    }
+
+    /**
+     * @param array $tables
+     * @param string $readPreference
+     * @return MongoCollection[]
+     * @throws MongoTripodConfigException
+     */
+    public function getCollectionsForTables(array $tables = array(), $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    {
+        if(empty($tables))
+        {
+            $tables = array_keys($this->tableSpecs);
+        }
+        $dbNames = array();
+        foreach($tables as $table)
+        {
+            if(isset($this->tableSpecs[$table]))
+            {
+                $dbNames[] = $this->tableSpecs[$table]['to'];
+            }
+            throw new MongoTripodConfigException("Table id '{$table}' not in configuration");
+        }
+
+        $collections = array();
+        foreach(array_unique($dbNames) as $dbName)
+        {
+            $collections[] = $this->getMongoCollection(
+                $this->getDatabase($dbName, $readPreference),
+                TABLE_ROWS_COLLECTION
+            );
+        }
+        return $collections;
+    }
+
+    /**
+     * @param array $views
+     * @param string $readPreference
+     * @return MongoCollection[]
+     * @throws MongoTripodConfigException
+     */
+    public function getCollectionsForViews(array $views = array(), $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    {
+        if(empty($views))
+        {
+            $views = array_keys($this->viewSpecs);
+        }
+        $dbNames = array();
+        foreach($views as $view)
+        {
+            if(isset($this->viewSpecs[$view]))
+            {
+                $dbNames[] = $this->viewSpecs[$view]['to'];
+            }
+            throw new MongoTripodConfigException("View id '{$view}' not in configuration");
+        }
+
+        $collections = array();
+        foreach(array_unique($dbNames) as $dbName)
+        {
+            $collections[] = $this->getMongoCollection(
+                $this->getDatabase($dbName, $readPreference),
+                VIEWS_COLLECTION
+            );
+        }
+        return $collections;
+    }
+
+
+    /**
+     * @param string $readPreference
+     * @return MongoCollection
+     */
+    public function getCollectionForTTLCache($readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    {
+        return $this->getMongoCollection(
+            $this->getDatabase($this->defaultDatabase, $readPreference),
+            TTL_CACHE_COLLECTION
+        );
+    }
+
+    /**
+     * @param string $readPreference
+     * @return MongoCollection
+     */
+    public function getCollectionForLocks($readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    {
+        return $this->getMongoCollection(
+            $this->getDatabase($this->defaultDatabase, $readPreference),
+            LOCKS_COLLECTION
+        );
+    }
+
+    /**
+     * @return string
+     */
+    public function getDefaultDatabase()
+    {
+        return $this->defaultDatabase;
     }
 }
 class MongoTripodConfigException extends Exception {}
