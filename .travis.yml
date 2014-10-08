@@ -3,6 +3,9 @@ php:
   - 5.4
   - 5.3
 
+services:
+  - mongodb
+  
 install:
   - composer install
 
