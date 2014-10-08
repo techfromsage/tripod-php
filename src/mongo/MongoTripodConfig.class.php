@@ -238,8 +238,9 @@ class MongoTripodConfig
                     $cardinality = $collection['cardinality'];
                     foreach ($cardinality as $qname=>$cardinalityValue)
                     {
+                        $namespaces = explode(':', $qname);
                         // just grab the first element
-                        $namespace  = array_shift(explode(':', $qname));
+                        $namespace  = array_shift($namespaces);
 
                         if (array_key_exists($namespace, $this->ns))
                         {
