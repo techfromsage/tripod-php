@@ -235,7 +235,7 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
 
         $this->assertTrue(isset($doc[$property]), "Document for ".var_export($_id,true)." should have property [$property], but none found");
         if($expectedValue !== NULL){
-            $this->assertEquals($expectedValue, $doc[$property],  "Document property [$property] actual value [".$doc[$property]."] does not match expected value [$expectedValue]");
+            $this->assertEquals($expectedValue, $doc[$property],  "Document property [$property] actual value [".print_r($doc[$property], true)."] does not match expected value [$expectedValue]");
         }
     }
 
