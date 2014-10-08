@@ -31,7 +31,7 @@ class AnonymousLogger
         {
             foreach ($params as $key=>$value)
             {
-                echo "$key: $value\n";
+                echo "$key: " . print_r($value, true) . "\n";
             }
         }
     }
