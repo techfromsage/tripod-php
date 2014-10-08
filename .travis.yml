@@ -9,8 +9,8 @@ services:
 install:
   - composer install
 
-
 before_script:
   - echo "extension = mongo.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+  - sleep 15
 
 script: phpunit ./test/unit
