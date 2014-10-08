@@ -112,9 +112,9 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
     {
         if($toTransactionLog == true){
             $tripod = new MongoTripod('transaction_log', 'testing');
-            return $tripod->collection->insert($doc, array("safe"=>true));
+            return $tripod->collection->insert($doc, array("w"=>1));
         } else {
-            return $this->tripod->collection->insert($doc, array("safe"=>true));
+            return $this->tripod->collection->insert($doc, array("w"=>1));
         }
     }
 
