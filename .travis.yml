@@ -5,6 +5,9 @@ php:
   - 5.2
 #install:
 #  - composer install
+before_install:
+  - git submodule update --init --recursive
+
 before_script:
   - echo "extension = mongo.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
 
