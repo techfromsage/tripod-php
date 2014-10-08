@@ -647,13 +647,24 @@ class MongoTripod extends MongoTripodBase implements ITripod
      */
     protected function getDataUpdater()
     {
+        $rp = $this->collection->getReadPreference();
+        if(is_array($rp) && isset($rp['type']))
+        {
+            $readPreference = $rp['type'];
+        }
+
+        if(empty($rp))
+        {
+            $readPreference = MongoClient::RP_PRIMARY_PREFERRED;
+        }
+
         if(!isset($this->dataUpdater))
         {
             $opts = array(
                 'defaultContext'=>$this->defaultContext,
                 OP_ASYNC=>$this->async,
                 'stat'=>$this->stat,
-                'readPreference'=>$this->collection->getReadPreference(),
+                'readPreference'=>$readPreference,
                 'retriesToGetLock' => $this->retriesToGetLock
             );
 

@@ -1565,7 +1565,7 @@ class MongoTripodUpdates extends MongoTripodBase {
             {
                 // first re-gen views where resources appear in the impact index
                 $query[] = array("value."._IMPACT_INDEX=>array('$in'=>$filters), '_id.'._ID_TYPE=>$tableType);
-                $tableType[] = $tableType;
+                $tableTypes[] = $tableType;
             }
 
             if(!empty($resourceFilters))

@@ -18,6 +18,7 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
         $this->collection = $collection;
         $this->collectionName = $collection->getName();
         $this->defaultContext = $defaultContext;
+        $this->config = MongoTripodConfig::getInstance();
         $this->stat = $stat;
     }
 
@@ -66,7 +67,7 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
                 $query['value.'._GRAPHS.'.'.$predicate] = $object;
             }
         }
-        return $this->fetchGraph($query,MONGO_VIEW,VIEWS_COLLECTION);
+        return $this->fetchGraph($query,MONGO_VIEW,$this->config->getCollectionForView($viewType));
     }
 
     /**
@@ -86,10 +87,11 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
         $contextAlias = $this->getContextAlias($context);
 
         $query = array( "_id" => array("r"=>$resourceAlias,"c"=>$contextAlias,"type"=>$viewType));
-        $graph = $this->fetchGraph($query,MONGO_VIEW,VIEWS_COLLECTION);
+        $collection = $this->config->getCollectionForView($viewType);
+        $graph = $this->fetchGraph($query,MONGO_VIEW,$collection);
         if ($graph->is_empty())
         {
-            $viewSpec = MongoTripodConfig::getInstance()->getViewSpecification($viewType);
+            $viewSpec = $this->config->getViewSpecification($viewType);
             if($viewSpec == null)
             {
                 return new MongoGraph();
@@ -107,7 +109,7 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
 
             // generate view then try again
             $this->generateView($viewType,$resource,$context);
-            return $this->fetchGraph($query,MONGO_VIEW,VIEWS_COLLECTION);
+            return $this->fetchGraph($query,MONGO_VIEW,$collection);
         }
         return $graph;
     }
@@ -129,7 +131,8 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
         }
 
         $query = array("_id" => array('$in' => $this->createTripodViewIdsFromResourceUris($resources,$context,$viewType)));
-        $g = $this->fetchGraph($query,MONGO_VIEW,VIEWS_COLLECTION, null, $cursorSize);
+        $collection = $this->config->getCollectionForView($viewType);
+        $g = $this->fetchGraph($query,MONGO_VIEW,$collection, null, $cursorSize);
 
         // account for missing subjects
         $returnedSubjects = $g->get_subjects();
@@ -139,7 +142,7 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
             $regrabResources = array();
             foreach($missingSubjects as $missingSubject)
             {
-                $viewSpec = MongoTripodConfig::getInstance()->getViewSpecification($viewType);
+                $viewSpec = $this->config->getViewSpecification($viewType);
                 $fromCollection = $this->getFromCollectionForViewSpec($viewSpec);
 
                 $missingSubjectAlias = $this->labeller->uri_to_alias($missingSubject);
@@ -163,7 +166,7 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
                 }
 
                 $query = array("_id" => array('$in' => $this->createTripodViewIdsFromResourceUris($regrabResources,$context,$viewType)));
-                $g->add_graph($this->fetchGraph($query,MONGO_VIEW,VIEWS_COLLECTION), null, $cursorSize);
+                $g->add_graph($this->fetchGraph($query,MONGO_VIEW,$collection), null, $cursorSize);
             }
         }
 
@@ -197,7 +200,7 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
             $resourceAlias = $this->labeller->uri_to_alias($resource);
 
             // delete any views this resource is involved in. It's type may have changed so it's not enough just to regen it with it's new type below.
-            foreach (MongoTripodConfig::getInstance()->getViewSpecifications() as $type=>$spec)
+            foreach ($this->config->getViewSpecifications() as $type=>$spec)
             {
                 if($spec['from']==$this->collectionName){
                     $this->config->getCollectionForView($type)->remove(array("_id" => array("r"=>$resourceAlias,"c"=>$contextAlias,"type"=>$type)));
@@ -247,7 +250,7 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
         $rdfType = $this->labeller->qname_to_alias($rdfType);
         $rdfTypeAlias = $this->labeller->uri_to_alias($rdfType);
         $foundSpec = false;
-        $viewSpecs = MongoTripodConfig::getInstance()->getViewSpecifications();
+        $viewSpecs = $this->config->getViewSpecifications();
         foreach($viewSpecs as $key=>$viewSpec)
         {
             // check for rdfType and rdfTypeAlias
@@ -273,7 +276,7 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
      * @internal param $tableId
      */
     public function deleteViewsByViewId($viewId){
-        $viewSpec = MongoTripodConfig::getInstance()->getViewSpecification($viewId);
+        $viewSpec = $this->config->getViewSpecification($viewId);
         if ($viewSpec==null)
         {
             $this->debugLog("Could not find a view specification with viewId '$viewId'");
@@ -294,7 +297,7 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
     public function generateView($viewId,$resource=null,$context=null)
     {
         $contextAlias = $this->getContextAlias($context);
-        $viewSpec = MongoTripodConfig::getInstance()->getViewSpecification($viewId);
+        $viewSpec = $this->config->getViewSpecification($viewId);
         if ($viewSpec==null)
         {
             $this->debugLog("Could not find a view specification for $resource with viewId '$viewId'");

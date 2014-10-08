@@ -185,8 +185,9 @@ class MongoTripodConfig
                     $cardinality = $collection['cardinality'];
                     foreach ($cardinality as $qname=>$cardinalityValue)
                     {
+                        $namespaces = explode(':', $qname);
                         // just grab the first element
-                        $namespace  = array_shift(explode(':', $qname));
+                        $namespace  = array_shift($namespaces);
 
                         if (array_key_exists($namespace, $this->ns))
                         {
@@ -1387,7 +1388,10 @@ class MongoTripodConfig
             {
                 $dbNames[] = $this->tableSpecs[$table]['to'];
             }
-            throw new MongoTripodConfigException("Table id '{$table}' not in configuration");
+            else
+            {
+                throw new MongoTripodConfigException("Table id '{$table}' not in configuration");
+            }
         }
 
         $collections = array();
@@ -1420,7 +1424,10 @@ class MongoTripodConfig
             {
                 $dbNames[] = $this->viewSpecs[$view]['to'];
             }
-            throw new MongoTripodConfigException("View id '{$view}' not in configuration");
+            else
+            {
+                throw new MongoTripodConfigException("View id '{$view}' not in configuration");
+            }
         }
 
         $collections = array();
@@ -1434,6 +1441,41 @@ class MongoTripodConfig
         return $collections;
     }
 
+    /**
+     * @param array $searchSpecIds
+     * @param string $readPreference
+     * @return MongoCollection[]
+     * @throws MongoTripodConfigException
+     */
+    public function getCollectionsForSearch(array $searchSpecIds = array(), $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    {
+        if(empty($searchSpecIds))
+        {
+            $searchSpecIds = array_keys($this->searchDocSpecs);
+        }
+        $dbNames = array();
+        foreach($searchSpecIds as $searchSpec)
+        {
+            if(isset($this->searchDocSpecs[$searchSpec]))
+            {
+                $dbNames[] = $this->searchDocSpecs[$searchSpec]['to'];
+            }
+            else
+            {
+                throw new MongoTripodConfigException("Search document spec id '{$searchSpec}' not in configuration");
+            }
+        }
+
+        $collections = array();
+        foreach(array_unique($dbNames) as $dbName)
+        {
+            $collections[] = $this->getMongoCollection(
+                $this->getDatabase($dbName, $readPreference),
+                SEARCH_INDEX_COLLECTION
+            );
+        }
+        return $collections;
+    }
 
     /**
      * @param string $readPreference

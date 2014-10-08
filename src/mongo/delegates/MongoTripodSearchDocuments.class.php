@@ -16,6 +16,7 @@ class MongoTripodSearchDocuments extends MongoTripodBase
         $this->collectionName = $collection->getName();
         $this->defaultContext = $defaultContext;
         $this->stat = $stat;
+        $this->config = MongoTripodConfig::getInstance();
     }
 
     public function generateSearchDocumentBasedOnSpecId($specId, $resource, $context)

@@ -50,7 +50,7 @@
         },
         "testing_alt" : {
             "collections" : {
-                "CBD_testing_3" : {
+                "CBD_someOtherCollection" : {
                     "cardinality" : {
                         "dct:created.l" : 1
                     },

@@ -39,6 +39,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         $this->collectionName = $collection->getName();
         $this->defaultContext = $this->labeller->uri_to_alias($defaultContext); // make sure default context is qnamed if applicable
         $this->stat = $stat;
+        $this->config = MongoTripodConfig::getInstance();
     }
 
     /**
@@ -153,13 +154,23 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         }
         else
         {
+            $specTypes = array_keys($this->config->getTableSpecifications());
             if(is_string($specType))
             {
+                if(!in_array($specType, $specTypes))
+                {
+                    return;
+                }
                 $query[_ID_KEY][_ID_TYPE] = $specType;
                 $collections = array($this->config->getCollectionForTable($specType));
             }
             elseif(is_array($specType))
             {
+                $specType = array_intersect($specTypes, $specType);
+                if(empty($specType))
+                {
+                    return;
+                }
                 $query[_ID_KEY . '.' . _ID_TYPE] = array('$in'=>$specType);
                 $collections = $this->config->getCollectionsForTables($specType);
             }
@@ -181,7 +192,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
      * @param $tableId
      */
     public function deleteTableRowsByTableId($tableId) {
-        $tableSpec = MongoTripodConfig::getInstance()->getTableSpecification($tableId);
+        $tableSpec = $this->config->getTableSpecification($tableId);
         if ($tableSpec==null)
         {
             $this->debugLog("Could not find a table specification for $tableId");
@@ -250,14 +261,14 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
 
         if(empty($specTypes))
         {
-            $tableSpecs = MongoTripodConfig::getInstance()->getTableSpecifications();
+            $tableSpecs = $this->config->getTableSpecifications();
         }
         else
         {
             $tableSpecs = array();
             foreach($specTypes as $specType)
             {
-                $spec = MongoTripodConfig::getInstance()->getTableSpecification($specType);
+                $spec = $this->config->getTableSpecification($specType);
                 if($spec)
                 {
                     $tableSpecs[$specType] = $spec;
@@ -294,7 +305,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         $t = new Timer();
         $t->start();
 
-        $tableSpec = MongoTripodConfig::getInstance()->getTableSpecification($tableType);
+        $tableSpec = $this->config->getTableSpecification($tableType);
 
         if ($tableSpec==null)
         {

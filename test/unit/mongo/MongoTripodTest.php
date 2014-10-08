@@ -21,13 +21,13 @@ class MongoTripodTest extends MongoTripodTestBase
         $this->tripodTransactionLog->purgeAllTransactions();
 
         // Stub ouf 'addToElastic' search to prevent writes into Elastic Search happening by default.
-        $this->tripod = $this->getMock('MongoTripod', array('addToSearchIndexQueue'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/')));
+        $this->tripod = $this->getMock('MongoTripod', array('addToSearchIndexQueue'), array('CBD_testing',array('defaultContext'=>'http://talisaspire.com/')));
         $this->tripod->expects($this->any())->method('addToSearchIndexQueue');
 
         $this->tripod->collection->drop();
 
         // Lock collection no longer available from MongoTripod, so drop it manually
-        $this->tripod->db->selectCollection(LOCKS_COLLECTION)->drop();
+        MongoTripodConfig::getInstance()->getCollectionForLocks()->drop();
 
         $this->tripod->setTransactionLog($this->tripodTransactionLog);
 
@@ -509,9 +509,10 @@ class MongoTripodTest extends MongoTripodTestBase
     public function testSetReadPreferenceWhenSavingChanges(){
         $subjectOne = "http://talisaspire.com/works/checkReadPreferencesWrite";
         /** @var $tripodMock MongoTripod **/
-        $tripodMock = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/')));
+        $tripodMock = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing',array('defaultContext'=>'http://talisaspire.com/')));
         $tripodUpdate = $this->getMock('MongoTripodUpdates',
-            array('addToSearchIndexQueue','setReadPreferenceToPrimary','resetOriginalReadPreference'), array($tripodMock));
+            array('addToSearchIndexQueue','setReadPreferenceToPrimary','resetOriginalReadPreference'),
+            array($tripodMock, 'CBD_testing'));
         $tripodUpdate
             ->expects($this->once(0))
             ->method('setReadPreferenceToPrimary');
@@ -564,12 +565,12 @@ class MongoTripodTest extends MongoTripodTestBase
         $tripodMock = $this->getMock(
             'MongoTripod',
             array('getDataUpdater'),
-            array('CBD_testing','testing',
+            array('CBD_testing',
                 array('defaultContext'=>'http://talisaspire.com/', 'readPreference'=>MongoClient::RP_SECONDARY_PREFERRED))
         );
 
         $tripodUpdate = $this->getMock('MongoTripodUpdates',
-            array('addToSearchIndexQueue', 'validateGraphCardinality'), array($tripodMock));
+            array('addToSearchIndexQueue', 'validateGraphCardinality'), array($tripodMock, 'CBD_testing'));
         $tripodUpdate
             ->expects($this->any())
             ->method('addToSearchIndexQueue');
@@ -586,7 +587,11 @@ class MongoTripodTest extends MongoTripodTestBase
             ->will($this->returnValue($tripodUpdate));
 
         $expectedCollectionReadPreference = $tripodMock->collection->getReadPreference();
-        $expectedDbReadPreference = $tripodMock->db->getReadPreference();
+        $expectedDbReadPreference = MongoTripodConfig::getInstance()
+            ->getDatabase(
+                MongoTripodConfig::getInstance()->getDatabaseNameForCollectionName('CBD_testing')
+            )
+            ->getReadPreference();
         $this->assertEquals($expectedCollectionReadPreference['type'], MongoClient::RP_SECONDARY_PREFERRED);
         $this->assertEquals($expectedDbReadPreference['type'], MongoClient::RP_SECONDARY_PREFERRED);
 
@@ -1307,10 +1312,10 @@ class MongoTripodTest extends MongoTripodTestBase
             ->with(array("_id" => $mongoDocumentId), array('$set' => array("status" => AUDIT_STATUS_COMPLETED, _UPDATED_TS => $mongoDate)));
 
         /* @var MongoTripod PHPUnit_Framework_MockObject_MockObject */
-        $tripod = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/')));
+        $tripod = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing',array('defaultContext'=>'http://talisaspire.com/')));
         $tripodUpdate = $this->getMock('MongoTripodUpdates',
             array('unlockAllDocuments', 'generateIdForNewMongoDocument', 'getMongoDate', 'getAuditManualRollbacksCollection'),
-            array($tripod));
+            array($tripod, 'CBD_testing'));
         
         $tripodUpdate->expects($this->once())
             ->method("generateIdForNewMongoDocument")

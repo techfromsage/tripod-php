@@ -313,6 +313,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                 "_id"=>"i_search_list",
                 "type"=>array("resourcelist:List"),
                 "from"=>"CBD_testing",
+                "to"=>"testing",
                 "filter"=>array(
                     array("condition"=>array(
                         "spec:name.l"=>array('$exists'=>true)
@@ -358,6 +359,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                 "_id"=>"i_search_list",
                 "type"=>array("resourcelist:List"),
                 "from"=>"CBD_testing",
+                "to"=>"testing",
                 "filter"=>array(
                     array("condition"=>array(
                         "spec:name.l"=>array('$exists'=>true)
@@ -818,6 +820,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             "_id"=> "v_resource_full",
             "_version" => "0.1",
             "from"=>"CBD_testing",
+            "to"=>"testing",
             "ensureIndexes" =>array(
                 array(
                     "value._graphs.sioc:has_container.u"=>1,
@@ -849,6 +852,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             "_id"=>"t_resource",
             "type"=>"acorn:Resource",
             "from"=>"CBD_testing",
+            "to"=>"testing",
             "ensureIndexes" => array(array("value.isbn"=>1)),
             "fields"=>array(
                 array(

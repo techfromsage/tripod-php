@@ -33,14 +33,14 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
         $this->labeller = new MongoTripodLabeller();
 
         // Stub out 'addToElastic' search to prevent writes into Elastic Search happening by default.
-        $tripod = $this->getMock('MongoTripod', array('addToSearchIndexQueue'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/')));
+        $tripod = $this->getMock('MongoTripod', array('addToSearchIndexQueue'), array('CBD_testing',array('defaultContext'=>'http://talisaspire.com/')));
         $tripod->expects($this->any())->method('addToSearchIndexQueue');
 
         /** @var $tripod MongoTripod */
         $tripod->collection->drop();
 
         // Lock collection no longer available from MongoTripod, so drop it manually
-        $tripod->db->selectCollection(LOCKS_COLLECTION)->drop();
+        MongoTripodConfig::getInstance()->getCollectionForLocks()->drop();
 
         $tripod->setTransactionLog($this->tripodTransactionLog);
 
@@ -89,8 +89,10 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
         $nG->add_literal_triple($subjectTwo, $nG->qname_to_uri("dct:title"), "Updated Title three");
 
         $mockTransactionId = 'transaction_1';
-        $mockTripod = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/')));
-        $mockTripodUpdate = $this->getMock('MongoTripodUpdates', array('generateTransactionId','lockSingleDocument'), array($mockTripod));
+        $mockTripod = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing',array('defaultContext'=>'http://talisaspire.com/')));
+        $mockTripodUpdate = $this->getMock('MongoTripodUpdates',
+            array('generateTransactionId','lockSingleDocument'),
+            array($mockTripod, 'CBD_testing'));
 
         $mockTripodUpdate->expects($this->exactly(1))
             ->method('generateTransactionId')
@@ -156,8 +158,10 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
         $nG->add_literal_triple($subjectTwo, $nG->qname_to_uri("dct:title"), "Title four");
 
         $mockTransactionId = 'transaction_1';
-        $mockTripod = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/')));
-        $mockTripodUpdate = $this->getMock('MongoTripodUpdates', array('generateTransactionId','lockSingleDocument'), array($mockTripod));
+        $mockTripod = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing',array('defaultContext'=>'http://talisaspire.com/')));
+        $mockTripodUpdate = $this->getMock('MongoTripodUpdates',
+            array('generateTransactionId','lockSingleDocument'),
+            array($mockTripod, 'CBD_testing'));
 
         $mockTripodUpdate->expects($this->exactly(1))
             ->method('generateTransactionId')
@@ -255,8 +259,10 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
             ->method('failTransaction')
             ->with($this->equalTo($mockTransactionId));
 
-        $mockTripod = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/')));
-        $mockTripodUpdate = $this->getMock('MongoTripodUpdates', array('generateTransactionId','lockSingleDocument', 'getTransactionLog'), array($mockTripod));
+        $mockTripod = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing',array('defaultContext'=>'http://talisaspire.com/')));
+        $mockTripodUpdate = $this->getMock('MongoTripodUpdates',
+            array('generateTransactionId','lockSingleDocument', 'getTransactionLog'),
+            array($mockTripod, 'CBD_testing'));
 
         $mockTripodUpdate->expects($this->once())
             ->method('generateTransactionId')
@@ -343,9 +349,9 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
 
         $mockTransactionId = 'transaction_1';
         $mockTripod = $this->getMock('MongoTripod', array('getDataUpdater'),
-            array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/')));
+            array('CBD_testing',array('defaultContext'=>'http://talisaspire.com/')));
         $mockTripodUpdate = $this->getMock('MongoTripodUpdates',
-            array('generateTransactionId','lockSingleDocument','applyChangeSet'), array($mockTripod));
+            array('generateTransactionId','lockSingleDocument','applyChangeSet'), array($mockTripod, 'CBD_testing'));
         $mockTripodUpdate->expects($this->exactly(1))
             ->method('generateTransactionId')
             ->will($this->returnValue($mockTransactionId));
@@ -426,7 +432,7 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
      */
     public function lockSingleDocumentCallback($s, $transaction_id, $contextAlias)
     {
-        $lCollection = $this->tripod->db->selectCollection(LOCKS_COLLECTION);
+        $lCollection = MongoTripodConfig::getInstance()->getCollectionForLocks();
         $countEntriesInLocksCollection = $lCollection->count(array('_id' => array(_ID_RESOURCE => $this->labeller->uri_to_alias($s), _ID_CONTEXT => $contextAlias)));
 
         if($countEntriesInLocksCollection > 0) //Subject is already locked

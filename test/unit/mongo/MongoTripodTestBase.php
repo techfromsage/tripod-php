@@ -309,13 +309,13 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
 
     protected function lockDocument($subject, $transaction_id)
     {
-        $tripod = new MongoTripod(LOCKS_COLLECTION, 'testing');
+
         $labeller = new MongoTripodLabeller();
         $doc = array(
             '_id' => array(_ID_RESOURCE => $labeller->uri_to_alias($subject), _ID_CONTEXT => MongoTripodConfig::getInstance()->getDefaultContextAlias()),
             _LOCKED_FOR_TRANS => $transaction_id,
             _LOCKED_FOR_TRANS_TS=>new MongoDate()
         );
-        $tripod->collection->insert($doc, array("w" => 1));
+        MongoTripodConfig::getInstance()->getCollectionForLocks()->insert($doc, array("w" => 1));
     }
 }

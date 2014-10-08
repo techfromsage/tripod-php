@@ -56,26 +56,26 @@ abstract class MongoTripodBase
     /**
      * @param $query
      * @param $type
-     * @param null $collectionName
+     * @param MongoCollection|null $collection
      * @param array $includeProperties
      * @param int $cursorSize
      * @return MongoGraph
      */
-    protected function fetchGraph($query, $type, $collectionName=null,$includeProperties=array(), $cursorSize=101)
+    protected function fetchGraph($query, $type, $collection=null,$includeProperties=array(), $cursorSize=101)
     {
         $graph = new MongoGraph();
 
         $t = new Timer();
         $t->start();
 
-        if ($collectionName==null)
+        if ($collection==null)
         {
             $collection = $this->collection;
             $collectionName = $collection->getName();
         }
         else
         {
-            $collection = $this->config->getCollectionForCBD($collectionName);
+            $collectionName = $collection->getName();
         }
 
         if (empty($includeProperties))
