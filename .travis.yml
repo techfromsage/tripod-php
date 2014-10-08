@@ -9,10 +9,11 @@ services:
   - mongodb
 
 before_install:
+  - true
   - git submodule update --init --recursive
 
 install:
-  - composer install
+  - sh -c "if [ '$TRAVIS_PHP_VERSION' != '5.2' ]; then composer install; fi"
 
 before_script:
   - echo "extension = mongo.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
