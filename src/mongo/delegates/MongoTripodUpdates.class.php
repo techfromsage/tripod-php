@@ -128,7 +128,7 @@ class MongoTripodUpdates extends MongoTripodBase {
         try{
             $contextAlias = $this->getContextAlias($context);
 
-            if (!MongoTripodConfig::getInstance()->isCollectionWithinConfig($this->getDBName(),$this->getCollectionName()))
+            if (!$this->config->isCollectionWithinConfig($this->getDBName(),$this->getCollectionName()))
             {
                 throw new TripodException("database:collection {$this->getDBName()}:{$this->getCollectionName()} is not referenced within config, so cannot be written to");
             }
@@ -540,9 +540,8 @@ class MongoTripodUpdates extends MongoTripodBase {
      */
     protected function validateGraphCardinality(ExtendedGraph $graph)
     {
-        $config = MongoTripodConfig::getInstance();
-        $cardinality = $config->getCardinality($this->getDBName(), $this->getCollectionName());
-        $namespaces = $config->getNamespaces();
+        $cardinality = $this->config->getCardinality($this->getDBName(), $this->getCollectionName());
+        $namespaces = $this->config->getNamespaces();
         $graphSubjects = $graph->get_subjects();
 
         if (empty($cardinality) || $graph->is_empty())
@@ -1354,15 +1353,6 @@ class MongoTripodUpdates extends MongoTripodBase {
     {
         return $this->config->getDatabase($this->config->getDefaultDatabase())->selectCollection(AUDIT_MANUAL_ROLLBACKS_COLLECTION);
     }
-    
-    /**
-     * For mocking
-     * @return MongoTripodConfig
-     */
-    protected function getMongoTripodConfigInstance()
-    {
-        return MongoTripodConfig::getInstance();
-    }
 
     /**
      * @return MongoId
@@ -1495,7 +1485,7 @@ class MongoTripodUpdates extends MongoTripodBase {
     protected function getContextAlias($context=null)
     {
         $contextAlias = $this->labeller->uri_to_alias((empty($context)) ? $this->defaultContext : $context);
-        return (empty($contextAlias)) ? MongoTripodConfig::getInstance()->getDefaultContextAlias() : $contextAlias;
+        return (empty($contextAlias)) ? $this->config->getDefaultContextAlias() : $contextAlias;
     }
 
 
@@ -1513,11 +1503,11 @@ class MongoTripodUpdates extends MongoTripodBase {
 
         $tablePredicates = array();
 
-        foreach(MongoTripodConfig::getInstance()->getTableSpecifications() as $tableSpec)
+        foreach($this->config->getTableSpecifications() as $tableSpec)
         {
             if(isset($tableSpec[_ID_KEY]))
             {
-                $tablePredicates[$tableSpec[_ID_KEY]] = MongoTripodConfig::getInstance()->getDefinedPredicatesInSpec($tableSpec[_ID_KEY]);
+                $tablePredicates[$tableSpec[_ID_KEY]] = $this->config->getDefinedPredicatesInSpec($tableSpec[_ID_KEY]);
             }
         }
 

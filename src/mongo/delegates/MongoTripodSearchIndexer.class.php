@@ -24,7 +24,7 @@ class MongoTripodSearchIndexer extends MongoTripodBase implements SplObserver
         $this->labeller = new MongoTripodLabeller();
         $this->stat = $tripod->getStat();
 
-        $this->config = MongoTripodConfig::getInstance();
+        $this->config = $this->getMongoTripodConfigInstance();
 
         $provider = $this->config->getSearchProviderClassName();
         if(class_exists($provider)){

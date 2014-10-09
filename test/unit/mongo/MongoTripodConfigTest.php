@@ -797,12 +797,13 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                 "collections"=>array(
                     "CBD_testing"=>array(
                     )
-                )
+                ),
+                "default"=>true
             ),
             "testing_2"=>array(
                 "connStr"=>"sometestval",
                 "collections"=>array(
-                    "CBD_testing"=>array(
+                    "CBD_testing2"=>array(
                     )
                 )
             )

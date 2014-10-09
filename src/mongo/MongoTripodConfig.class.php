@@ -124,7 +124,7 @@ class MongoTripodConfig
      * @param array $config
      * @throws MongoTripodConfigException
      */
-    private function loadConfig(Array $config)
+    protected function loadConfig(Array $config)
     {
         if (array_key_exists('namespaces',$config))
         {

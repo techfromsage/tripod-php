@@ -10,7 +10,7 @@ abstract class MongoTripodBase
     /**
      * @var MongoDB
      */
-    public $db;
+    protected $db;
 
     /**
      * @var MongoCollection
@@ -50,7 +50,7 @@ abstract class MongoTripodBase
     protected function getContextAlias($context=null)
     {
         $contextAlias = $this->labeller->uri_to_alias((empty($context)) ? $this->defaultContext : $context);
-        return (empty($contextAlias)) ? MongoTripodConfig::getInstance()->getDefaultContextAlias() : $contextAlias;
+        return (empty($contextAlias)) ? $this->getMongoTripodConfigInstance()->getDefaultContextAlias() : $contextAlias;
     }
 
     /**
@@ -281,6 +281,19 @@ abstract class MongoTripodBase
                 $this->addIdToImpactIndex($i, $target);
             }
         }
+    }
+
+    /**
+     * For mocking
+     * @return MongoTripodConfig
+     */
+    protected function getMongoTripodConfigInstance()
+    {
+        if(!isset($this->config))
+        {
+            $this->config = MongoTripodConfig::getInstance();
+        }
+        return $this->config;
     }
 }
 

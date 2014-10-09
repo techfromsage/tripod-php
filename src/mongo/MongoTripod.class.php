@@ -601,16 +601,6 @@ class MongoTripod extends MongoTripodBase implements ITripod
     }
 
     /**
-     * For mocking
-     * @return MongoTripodConfig
-     */
-    protected function getMongoTripodConfigInstance()
-    {
-        return MongoTripodConfig::getInstance();
-    }
-
-
-    /**
      * Returns the correct observer as per the supported operation
      * @param $operation string must be either views, tables or search
      * @return SplObserver

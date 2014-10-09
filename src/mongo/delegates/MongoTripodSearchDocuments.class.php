@@ -16,7 +16,7 @@ class MongoTripodSearchDocuments extends MongoTripodBase
         $this->collectionName = $collection->getName();
         $this->defaultContext = $defaultContext;
         $this->stat = $stat;
-        $this->config = MongoTripodConfig::getInstance();
+        $this->config = $this->getMongoTripodConfigInstance();
     }
 
     public function generateSearchDocumentBasedOnSpecId($specId, $resource, $context)
@@ -132,7 +132,7 @@ class MongoTripodSearchDocuments extends MongoTripodBase
 
         foreach($rdfTypes as $rdfType)
         {
-            $specs = MongoTripodConfig::getInstance()->getSearchDocumentSpecifications($rdfType);
+            $specs = $this->config->getSearchDocumentSpecifications($rdfType);
 
             if(empty($specs)) continue; // no point doing anything else if there is no spec for the type
 
@@ -240,7 +240,7 @@ class MongoTripodSearchDocuments extends MongoTripodBase
     
     protected function getSearchDocumentSpecification($specId)
     {
-    	return MongoTripodConfig::getInstance()->getSearchDocumentSpecification($specId);
+    	return $this->config->getSearchDocumentSpecification($specId);
     }
 
     private function addValuesToTarget($values, $field, &$target)

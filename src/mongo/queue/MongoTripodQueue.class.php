@@ -8,24 +8,24 @@ require_once TRIPOD_DIR . 'mongo/delegates/MongoTripodTables.class.php';
 // TODO: need to put an index on createdDate, lastUpdatedDate and status
 class MongoTripodQueue extends MongoTripodBase
 {
-    protected $config = null;
+    protected $queueConfig;
     public function __construct($stat=null)
     {
-        $config = MongoTripodConfig::getInstance();
-        $this->config = $config->getQueueConfig();
+        $config = $this->getMongoTripodConfigInstance();
+        $this->queueConfig = $config->getQueueConfig();
         $connStr = $config->getQueueConnStr();
 
         $this->debugLog("Connecting to queue with $connStr");
-        if(isset($this->config['replicaSet']) && !empty($this->config['replicaSet'])) {
-            $this->debugLog("Connecting to replica set {$this->config['replicaSet']}");
-            $m = new MongoClient($connStr, array("replicaSet"=>$this->config['replicaSet']));
+        if(isset($this->queueConfig['replicaSet']) && !empty($this->queueConfig['replicaSet'])) {
+            $this->debugLog("Connecting to replica set {$this->queueConfig['replicaSet']}");
+            $m = new MongoClient($connStr, array("replicaSet"=>$this->queueConfig['replicaSet']));
         } else {
             $m = new MongoClient($connStr);
         }
 
         // select a database
-        $this->db = $m->selectDB($this->config['database']);
-        $this->collectionName = $this->config['collection'];
+        $this->db = $m->selectDB($this->queueConfig['database']);
+        $this->collectionName = $this->queueConfig['collection'];
         $this->collection = $this->db->selectCollection($this->collectionName);
 
         if ($stat!=null) $this->stat = $stat;

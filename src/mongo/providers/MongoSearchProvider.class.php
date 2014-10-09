@@ -12,10 +12,13 @@ class MongoSearchProvider implements ITripodSearchProvider
 
     private $stopWords = array("a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "aren't", "as", "at", "be", "because", "been", "before", "being", "below", "between", "both", "but", "by", "can't", "cannot", "could", "couldn't", "did", "didn't", "do", "does", "doesn't", "doing", "don't", "down", "during", "each", "few", "for", "from", "further", "had", "hadn't", "has", "hasn't", "have", "haven't", "having", "he", "he'd", "he'll", "he's", "her", "here", "here's", "hers", "herself", "him", "himself", "his", "how", "how's", "i", "i'd", "i'll", "i'm", "i've", "if", "in", "into", "is", "isn't", "it", "it's", "its", "itself", "let's", "me", "more", "most", "mustn't", "my", "myself", "no", "nor", "not", "of", "off", "on", "once", "only", "or", "other", "ought", "our", "ours ", "ourselves", "out", "over", "own", "same", "shan't", "she", "she'd", "she'll", "she's", "should", "shouldn't", "so", "some", "such", "than", "that", "that's", "the", "their", "theirs", "them", "themselves", "then", "there", "there's", "these", "they", "they'd", "they'll", "they're", "they've", "this", "those", "through", "to", "too", "under", "until", "up", "very", "was", "wasn't", "we", "we'd", "we'll", "we're", "we've", "were", "weren't", "what", "what's", "when", "when's", "where", "where's", "which", "while", "who", "who's", "whom", "why", "why's", "with", "won't", "would", "wouldn't", "you", "you'd", "you'll", "you're", "you've", "your", "yours", "yourself", "yourselves");
 
+    protected $config;
+
     public function __construct(MongoTripod $tripod)
     {
         $this->tripod = $tripod;
         $this->labeller = new MongoTripodLabeller();
+        $this->config = $this->getMongoTripodConfigInstance();
     }
 
     /**
@@ -28,7 +31,7 @@ class MongoSearchProvider implements ITripodSearchProvider
     {
         if(isset($document['_id']['type']))
         {
-            $collection = MongoTripodConfig::getInstance()->getCollectionForSearchDocument($document['_id']['type']);
+            $collection = $this->config->getCollectionForSearchDocument($document['_id']['type']);
         }
         else
         {
@@ -60,7 +63,7 @@ class MongoSearchProvider implements ITripodSearchProvider
             $query = array(_ID_KEY . '.' . _ID_RESOURCE => $this->labeller->uri_to_alias($resource),  _ID_KEY . '.' . _ID_CONTEXT => $context);
             $searchTypes = array();
             if (!empty($specId)) {
-                $specTypes = MongoTripodConfig::getInstance()->getSearchDocumentSpecifications(null, true);
+                $specTypes = $this->config->getSearchDocumentSpecifications(null, true);
                 if(is_string($specId))
                 {
                     // This isn't a search document spec
@@ -84,7 +87,7 @@ class MongoSearchProvider implements ITripodSearchProvider
                     $searchTypes = $specId;
                 }
             }
-            foreach(MongoTripodConfig::getInstance()->getCollectionsForSearch($searchTypes) as $collection)
+            foreach($this->config->getCollectionsForSearch($searchTypes) as $collection)
             {
                 $collection->remove($query);
             }
@@ -106,11 +109,11 @@ class MongoSearchProvider implements ITripodSearchProvider
 
         $specPredicates = array();
 
-        foreach(MongoTripodConfig::getInstance()->getSearchDocumentSpecifications() as $spec)
+        foreach($this->config->getSearchDocumentSpecifications() as $spec)
         {
             if(isset($spec[_ID_KEY]))
             {
-                $specPredicates[$spec[_ID_KEY]] = MongoTripodConfig::getInstance()->getDefinedPredicatesInSpec($spec[_ID_KEY]);
+                $specPredicates[$spec[_ID_KEY]] = $this->config->getDefinedPredicatesInSpec($spec[_ID_KEY]);
             }
         }
 
@@ -181,7 +184,7 @@ class MongoSearchProvider implements ITripodSearchProvider
         }
         $searchDocs = array();
 
-        foreach(MongoTripodConfig::getInstance()->getCollectionsForSearch($searchTypes) as $collection)
+        foreach($this->config->getCollectionsForSearch($searchTypes) as $collection)
         {
             $cursor = $collection->find($query, array('_id'=>true));
 
@@ -239,7 +242,7 @@ class MongoSearchProvider implements ITripodSearchProvider
         }
         $searchTimer = new Timer();
         $searchTimer->start();
-        $cursor = MongoTripodConfig::getInstance()->getCollectionForSearchDocument($type)
+        $cursor = $this->config->getCollectionForSearchDocument($type)
             ->find($query, $fieldsToReturn)
             ->limit($limit)
             ->skip($offset);
@@ -309,7 +312,7 @@ class MongoSearchProvider implements ITripodSearchProvider
     		throw new TripodSearchException("Cound not find a search specification for $typeId");
     	}
     	    	
-    	return MongoTripodConfig::getInstance()->getCollectionForSearchDocument($typeId)
+    	return $this->config->getCollectionForSearchDocument($typeId)
             ->remove(array("_id.type" => $typeId));
     }
 
@@ -320,6 +323,19 @@ class MongoSearchProvider implements ITripodSearchProvider
      */
     protected function getSearchDocumentSpecification($typeId)
     {
-    	return MongoTripodConfig::getInstance()->getSearchDocumentSpecification($typeId);
+    	return $this->config->getSearchDocumentSpecification($typeId);
+    }
+
+    /**
+     * For mocking
+     * @return MongoTripodConfig
+     */
+    protected function getMongoTripodConfigInstance()
+    {
+        if(!isset($this->config))
+        {
+            $this->config = MongoTripodConfig::getInstance();
+        }
+        return $this->config;
     }
 }

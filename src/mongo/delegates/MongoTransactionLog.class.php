@@ -10,7 +10,7 @@ class MongoTransactionLog
 
     public function __construct()
     {
-        $config = MongoTripodConfig::getInstance();
+        $config = $this->getMongoTripodConfigInstance();
         $this->config = $config->getTransactionLogConfig();
         // connect to transaction db
         $connStr = $config->getTransactionLogConnStr();
@@ -216,6 +216,15 @@ class MongoTransactionLog
     protected function updateTransaction($query, $update, $options)
     {
         return $this->transaction_collection->update($query, $update, $options);
+    }
+
+    /**
+     * For mocking
+     * @return MongoTripodConfig
+     */
+    protected function getMongoTripodConfigInstance()
+    {
+        return MongoTripodConfig::getInstance();
     }
 
 

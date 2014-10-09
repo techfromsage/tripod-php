@@ -39,7 +39,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         $this->collectionName = $collection->getName();
         $this->defaultContext = $this->labeller->uri_to_alias($defaultContext); // make sure default context is qnamed if applicable
         $this->stat = $stat;
-        $this->config = MongoTripodConfig::getInstance();
+        $this->config = $this->getMongoTripodConfigInstance();
     }
 
     /**

@@ -456,7 +456,7 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         $g->add_literal_triple($uri, $g->qname_to_uri("dct:title"), "wibble");
 
         $mTripod = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing'));
-        $mTripodUpdate = $this->getMock('MongoTripodUpdates', array('getUniqId'), array($mTripod, 'CDB_testing'));
+        $mTripodUpdate = $this->getMock('MongoTripodUpdates', array('getUniqId'), array($mTripod, 'CBD_testing'));
 
         $mTripodUpdate->expects($this->atLeastOnce())
             ->method('getUniqId')
@@ -485,8 +485,12 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         // STEP 2
         // update the same entity with an addition
         $mTripod = null;
-        $mTripod = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing', 'testing'));
-        $mTripodUpdate = $this->getMock('MongoTripodUpdates', array('getUniqId'), array($mTripod));
+        $mTripod = $this->getMock('MongoTripod', array('getDataUpdater'),
+            array('CBD_testing')
+        );
+        $mTripodUpdate = $this->getMock('MongoTripodUpdates', array('getUniqId'),
+            array($mTripod, 'CBD_testing')
+        );
 
         $mTripodUpdate->expects($this->atLeastOnce())
             ->method('getUniqId')
@@ -531,8 +535,13 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         // STEP 3
         // update the same entity with a removal
         $mTripod = null;
-        $mTripod = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing', 'testing'));
-        $mTripodUpdate = $this->getMock('MongoTripodUpdates', array('getUniqId'), array($mTripod));
+        $mTripod = $this->getMock('MongoTripod', array('getDataUpdater'),
+            array('CBD_testing')
+        );
+        $mTripodUpdate = $this->getMock('MongoTripodUpdates',
+            array('getUniqId'),
+            array($mTripod, 'CBD_testing')
+        );
 
         $mTripodUpdate->expects($this->atLeastOnce())
             ->method('getUniqId')

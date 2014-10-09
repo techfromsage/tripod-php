@@ -41,6 +41,17 @@ class AnonymousLogger
     }
 }
 
+class MongoTripodTestConfig extends MongoTripodConfig
+{
+    public function __construct(array $config = array())
+    {
+        if(!empty($config))
+        {
+            $this->loadConfig($config);
+        }
+    }
+}
+
 class MongoTripodTestBase extends PHPUnit_Framework_TestCase
 {
 
@@ -111,11 +122,26 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
     protected function addDocument($doc, $toTransactionLog=false)
     {
         if($toTransactionLog == true){
-            $tripod = new MongoTripod('transaction_log');
-            return $tripod->collection->insert($doc, array("w"=>1));
+            return $this->getTLogCollection()->insert($doc, array("w"=>1));
         } else {
             return $this->tripod->collection->insert($doc, array("w"=>1));
         }
+    }
+
+    protected function getTLogCollection()
+    {
+        $config = MongoTripodConfig::getInstance();
+        $tlConfig = $config->getTransactionLogConfig();
+        $connStr = $config->getTransactionLogConnStr();
+        $m = null;
+        if(isset($tlConfig['replicaSet']) && !empty($tlConfig['replicaSet'])) {
+            $m = new MongoClient($connStr, array("replicaSet"=>$tlConfig['replicaSet']));
+        } else {
+            $m = new MongoClient($connStr);
+        }
+
+        $transactionDb = $m->selectDB($tlConfig['database']);
+        return $transactionDb->selectCollection($tlConfig['collection']);
     }
 
     protected function getDocument($_id, $tripod=null, $fromTransactionLog=false)
