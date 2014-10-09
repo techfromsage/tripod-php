@@ -166,7 +166,6 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             array('getSearchIndexer'),
             array(
                 'CBD_testing',
-                'testing',
                 array(
                     'defaultContext'=>'http://talisaspire.com/',
                     'async'=>array(

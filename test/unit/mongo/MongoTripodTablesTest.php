@@ -421,7 +421,10 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $mockTripodTables->generateTableRowsForType("http://talisaspire.com/schema#Work2");
 
         /* @var $mockTripodTables MongoTripodTables */
-        $mockTripodTables = $this->getMock('MongoTripodTables', array('generateTableRows'), array($this->tripod->db,$this->tripod->collection,'http://talisaspire.com/'));
+        $mockTripodTables = $this->getMock('MongoTripodTables',
+            array('generateTableRows'),
+            array($this->tripod->collection,'http://talisaspire.com/')
+        );
         $mockTripodTables->expects($this->atLeastOnce())->method('generateTableRows')->will($this->returnValue(array("ok"=>true)));
 
         // check where referred to as http://talisaspire.com/schema#Resource in spec...
@@ -887,7 +890,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         $tables = $this->getMock('MongoTripodTables',
             array('generateTableRowsForResource'),
-            array($tripod->db, $tripod->collection, "http://talisaspire.com/")
+            array($tripod->collection, "http://talisaspire.com/")
         );
 
         $tables->expects($this->once())

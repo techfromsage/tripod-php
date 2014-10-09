@@ -455,8 +455,8 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         $g->add_resource_triple($uri, $g->qname_to_uri("rdf:type"), $g->qname_to_uri("acorn:Resource"));
         $g->add_literal_triple($uri, $g->qname_to_uri("dct:title"), "wibble");
 
-        $mTripod = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing', 'testing'));
-        $mTripodUpdate = $this->getMock('MongoTripodUpdates', array('getUniqId'), array($mTripod));
+        $mTripod = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing'));
+        $mTripodUpdate = $this->getMock('MongoTripodUpdates', array('getUniqId'), array($mTripod, 'CDB_testing'));
 
         $mTripodUpdate->expects($this->atLeastOnce())
             ->method('getUniqId')
@@ -580,8 +580,8 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         $g = new MongoGraph();
         $g->add_resource_triple($uri, $g->qname_to_uri("rdf:type"), $g->qname_to_uri("acorn:Resource"));
         $g->add_literal_triple($uri, $g->qname_to_uri("dct:title"), "wibble");
-        $mTripod = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing', 'testing'));
-        $mTripodUpdate = $this->getMock('MongoTripodUpdates', array('getUniqId'), array($mTripod));
+        $mTripod = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing'));
+        $mTripodUpdate = $this->getMock('MongoTripodUpdates', array('getUniqId'), array($mTripod, 'CBD_testing'));
 
         $mTripodUpdate->expects($this->atLeastOnce())
             ->method('getUniqId')
@@ -597,8 +597,11 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         // now attempt to update the entity but throw an exception in applyChangeset
         // this should cause the save to fail, and this should be reflected in the transaction log
         $mTripod = null;
-        $mTripod = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing', 'testing'));
-        $mTripodUpdate = $this->getMock('MongoTripodUpdates', array('getUniqId', 'applyChangeSet'), array($mTripod));
+        $mTripod = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing'));
+        $mTripodUpdate = $this->getMock('MongoTripodUpdates',
+            array('getUniqId', 'applyChangeSet'),
+            array($mTripod, 'CBD_testing')
+        );
 
         $mTripodUpdate->expects($this->atLeastOnce())
             ->method('getUniqId')
@@ -660,12 +663,16 @@ class MongoTransactionLogTest extends MongoTripodTestBase
     public function testTransactionsLoggedCorrectlyFromMultipleTripods()
     {
         // Create two tripods onto different collection/dbname and make them use the same transaction log
-        $tripod1 = $this->getMock('MongoTripod', array('generateViewsAndSearchDocumentsForResources'), array('CBD_testing','testing'));
+        $tripod1 = $this->getMock('MongoTripod',
+            array('generateViewsAndSearchDocumentsForResources'),
+            array('CBD_testing')
+        );
         $tripod1->expects($this->any())->method('generateViewsAndSearchDocumentsForResources');
         $tripod1->collection->drop();
         $tripod1->setTransactionLog($this->tripodTransactionLog);
 
-        $tripod2 = $this->getMock('MongoTripod', array('generateViewsAndSearchDocumentsForResources'), array('CBD_testing_2','testing'));
+        $tripod2 = $this->getMock('MongoTripod', array('generateViewsAndSearchDocumentsForResources'),
+            array('CBD_testing_2'));
         $tripod2->expects($this->any())->method('generateViewsAndSearchDocumentsForResources');
         $tripod2->collection->drop();
         $tripod2->setTransactionLog($this->tripodTransactionLog);
