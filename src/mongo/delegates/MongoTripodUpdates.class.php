@@ -286,7 +286,7 @@ class MongoTripodUpdates extends MongoTripodBase {
                     }
                 }
             }
-
+            $currentSubject = $subjectsAndPredicatesOfChange[$docResource];
             foreach($docTypes as $type)
             {
                 if(in_array($type, $viewTypes)){
@@ -305,7 +305,7 @@ class MongoTripodUpdates extends MongoTripodBase {
                     }
                 }
 
-                if(in_array($type, $tableTypes) && empty($subjectsAndPredicatesOfChange[$docResource])) {
+                if(in_array($type, $tableTypes) && (empty($currentSubject) || in_array('rdf:type', $currentSubject))) {
                     if($asyncConfig[OP_TABLES] == true) {
                         if(!array_key_exists($docHash, $operations[OP_ASYNC])){
                             $operations[OP_ASYNC][$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
@@ -321,7 +321,7 @@ class MongoTripodUpdates extends MongoTripodBase {
                     }
                 }
 
-                if(in_array($type, $searchTypes) && empty($subjectsAndPredicatesOfChange[$docResource])) {
+                if(in_array($type, $searchTypes) && (empty($currentSubject) || in_array('rdf:type', $currentSubject))) {
                     if($asyncConfig[OP_SEARCH] == true) {
                         if(!array_key_exists($docHash, $operations[OP_ASYNC])){
                             $operations[OP_ASYNC][$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
