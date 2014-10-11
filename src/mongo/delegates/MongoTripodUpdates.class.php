@@ -293,7 +293,8 @@ class MongoTripodUpdates extends MongoTripodBase {
             {
                 $currentSubject = $subjectsAndPredicatesOfChange[$docResource];
             }
-            elseif(isset($subjectsAndPredicatesOfChange[$subjectsToAlias[$docResource]]))
+            elseif(isset($subjectsToAlias[$docResource]) &&
+                isset($subjectsAndPredicatesOfChange[$subjectsToAlias[$docResource]]))
             {
                 $currentSubject = $subjectsAndPredicatesOfChange[$subjectsToAlias[$docResource]];
             }
