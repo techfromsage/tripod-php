@@ -242,8 +242,10 @@ class MongoTripodUpdates extends MongoTripodBase {
     )
     {
         $filter = array();
+        $subjectsToAlias = array();
         foreach(array_keys($subjectsAndPredicatesOfChange) as $s){
             $resourceAlias = $this->labeller->uri_to_alias($s);
+            $subjectsToAlias[$s] = $resourceAlias;
             // build $filter for queries to impact index
             $filter[] = array(_ID_RESOURCE=>$resourceAlias,_ID_CONTEXT=>$contextAlias);
         }
@@ -286,7 +288,15 @@ class MongoTripodUpdates extends MongoTripodBase {
                     }
                 }
             }
-            $currentSubject = $subjectsAndPredicatesOfChange[$docResource];
+            $currentSubject = null;
+            if(isset($subjectsAndPredicatesOfChange[$docResource]))
+            {
+                $currentSubject = $subjectsAndPredicatesOfChange[$docResource];
+            }
+            elseif(isset($subjectsAndPredicatesOfChange[$subjectsToAlias[$docResource]]))
+            {
+                $currentSubject = $subjectsAndPredicatesOfChange[$subjectsToAlias[$docResource]];
+            }
             foreach($docTypes as $type)
             {
                 if(in_array($type, $viewTypes)){
