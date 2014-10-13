@@ -316,7 +316,7 @@ class MongoTripodUpdates extends MongoTripodBase {
                     }
                 }
 
-                if(in_array($type, $tableTypes) && (empty($currentSubject) || in_array('rdf:type', $currentSubject))) {
+                if($this->checkIfTypeShouldTriggerOperation($type, $tableTypes, $currentSubject)) {
                     if($asyncConfig[OP_TABLES] == true) {
                         if(!array_key_exists($docHash, $operations[OP_ASYNC])){
                             $operations[OP_ASYNC][$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
@@ -332,7 +332,7 @@ class MongoTripodUpdates extends MongoTripodBase {
                     }
                 }
 
-                if(in_array($type, $searchTypes) && (empty($currentSubject) || in_array('rdf:type', $currentSubject))) {
+                if($this->checkIfTypeShouldTriggerOperation($type, $searchTypes, $currentSubject)) {
                     if($asyncConfig[OP_SEARCH] == true) {
                         if(!array_key_exists($docHash, $operations[OP_ASYNC])){
                             $operations[OP_ASYNC][$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
@@ -350,6 +350,46 @@ class MongoTripodUpdates extends MongoTripodBase {
             }
         }
         return $operations;
+    }
+
+    /**
+     * Test if the a particular type appears in the array of types associated with a particular spec and that the changeset
+     * includes rdf:type (or is empty, meaning addition or deletion vs. update)
+     * @param string $rdfType
+     * @param array $validTypes
+     * @param array|null $subjectPredicates
+     * @return bool
+     */
+    protected function checkIfTypeShouldTriggerOperation($rdfType, array $validTypes, $subjectPredicates)
+    {
+        // We don't know if this is an alias or a fqURI, nor what is in the valid types, necessarily
+        $types = array_unique(
+            array(
+                $rdfType,
+                $this->labeller->qname_to_uri($rdfType),
+                $this->labeller->uri_to_alias($rdfType)
+            )
+        );
+        $intersectingTypes = array_intersect($types, $validTypes);
+        if(!empty($intersectingTypes))
+        {
+            // This means we're either adding or deleting a graph
+            if(empty($subjectPredicates))
+            {
+                return true;
+            }
+            // Check for alias in changed predicates
+            elseif(in_array('rdf:type', $subjectPredicates))
+            {
+                return true;
+            }
+            // Check for fully qualified URI in changed predicates
+            elseif(in_array(RDF_TYPE, $subjectPredicates))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
