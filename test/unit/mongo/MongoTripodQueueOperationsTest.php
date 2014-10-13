@@ -228,6 +228,42 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
     }
 
     /**
+     * When adding a new resource that has never been seen before, we should see NO item added to the queue when the type of the item
+     * does not correspond to any type the configured specifications will look for
+     */
+    public function testItemAddedToQueueForUpdatedSubjectWithApplicableType()
+    {
+        // create a tripod instance that will send all operations to the queue
+        $tripod = new MongoTripod('CBD_testing','testing', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
+
+        // first lets add a book, which should trigger a search doc, view and table gen for a single item
+        $g = new MongoGraph();
+        $subjectUri = "http://talisaspire.com/resources/newdoc2";
+        $g->add_resource_triple($subjectUri, $g->qname_to_uri("rdf:type"),    "acorn:Resource"); // there are no specs that are applicable for this type alone
+        $g->add_resource_triple($subjectUri, $g->qname_to_uri("dct:creator"), "http://talisaspire.com/authors/1");
+        $g->add_literal_triple($subjectUri,  $g->qname_to_uri("dct:title"),   "This is a new resource");
+        $g->add_literal_triple($subjectUri,  $g->qname_to_uri("dct:subject"), "history");
+        $g->add_literal_triple($subjectUri,  $g->qname_to_uri("dct:subject"), "philosophy");
+
+        $tripod->saveChanges(new MongoGraph(), $g);
+        $queueCount = $this->tripodQueue->count();
+        // Same as previous test
+        $this->assertEquals(0, $queueCount, "There should be 0 items on the queue");
+
+        $newGraph = $tripod->describeResource($subjectUri);
+        $oldGraph = $tripod->describeResource($subjectUri);
+        $newGraph->add_resource_triple($subjectUri, $g->qname_to_uri("rdf:type"), "bibo:Book");
+        $tripod->saveChanges($oldGraph, $newGraph);
+        $queueCount = $this->tripodQueue->count();
+        $this->assertEquals(1, $queueCount, "There should only be 1 item on the queue");
+
+        $queueItemData = $this->tripodQueue->fetchNextQueuedItem()->getData();
+        $this->assertEquals($subjectUri, $queueItemData['r']);
+        $ops = array(OP_VIEWS, OP_TABLES, OP_SEARCH);
+        $this->assertEmpty(array_diff($ops, $queueItemData['operations']));
+    }
+
+    /**
      * Save several new resources in a single operation. Only one of the resources has a type that is applicable based on specifications,
      * therefore it should be the only one queued.
      */

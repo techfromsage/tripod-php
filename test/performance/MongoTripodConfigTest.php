@@ -5,6 +5,7 @@ set_include_path(
     . PATH_SEPARATOR . dirname(dirname(dirname(__FILE__))).'/lib'
     . PATH_SEPARATOR . dirname(dirname(dirname(__FILE__))).'/src');
 
+require_once 'src/mongo/MongoTripodConstants.php';
 require_once 'src/mongo/MongoTripodConfig.class.php';
 
 /**
@@ -66,7 +67,8 @@ class MongoTripodConfigTest extends PHPUnit_Framework_TestCase
 
         //Let's try to create 1000 objects to see how much time they take.
         for($i =0; $i < self::BENCHMARK_OBJECT_CREATE_ITERATIONS; $i++) {
-            $instance = new MongoTripodConfig($this->config);
+            MongoTripodConfig::setConfig($this->config);
+            $instance = MongoTripodConfig::getInstance();
         }
 
         $testEndTime = microtime();
