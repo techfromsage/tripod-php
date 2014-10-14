@@ -363,14 +363,20 @@ class MongoTripodUpdates extends MongoTripodBase {
     protected function checkIfTypeShouldTriggerOperation($rdfType, array $validTypes, $subjectPredicates)
     {
         // We don't know if this is an alias or a fqURI, nor what is in the valid types, necessarily
-        $types = array_unique(
-            array(
-                $rdfType,
-                $this->labeller->qname_to_uri($rdfType),
-                $this->labeller->uri_to_alias($rdfType)
-            )
-        );
-        $intersectingTypes = array_intersect($types, $validTypes);
+        $types = array($rdfType);
+        try
+        {
+            $types[] = $this->labeller->qname_to_uri($rdfType);
+        }
+        catch(TripodLabellerException $e) {}
+        try
+        {
+            $types[] = $this->labeller->uri_to_alias($rdfType);
+        }
+        catch(TripodLabellerException $e) {}
+
+        $intersectingTypes = array_unique(array_intersect($types, $validTypes));
+        
         if(!empty($intersectingTypes))
         {
             // This means we're either adding or deleting a graph
