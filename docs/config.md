@@ -311,6 +311,8 @@ A property of the `join` object, specifies a query condition which must be match
 
 This is very useful if you have specific volatile views and the freshest data is not always cruicial - you can avoid excessive view re-generation by specifying a `ttl` value which exceeds the mean time between writes to your data.
 
+`ttl` cannot be used within table specifications, because tablerows are often operated on in paged sets. It would be impossible to tell if table rows on further counts should still exist without paging through the whole set first.
+
 ### indicies
 
 ### ensureIndexes
