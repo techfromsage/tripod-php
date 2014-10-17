@@ -184,12 +184,25 @@ Each of the specifications above are built from a specification language defined
 
 ### from
 
+For the current operation specifies the collection the operation should be performed on. Within `joins` this allows you to join data across collections. It is mandatory at the top level of a specification and gives the starting collection from where the specification should operate. For example, to join from one collection to another:
+
+```javascript
+{
+  "_id": "v_someview",
+  "from": "CBD_mydata
+  "joins" : {
+    "foaf:knows": {
+      "from":"CBD_myotherdata"
+    }
+  }
+}
+```
+
 ### type
 
 If _type_ is defined, will limit the resources to those that have the specified rdf:type.  The value can be a curie
-string or array of curie strings.
+string or array of curie strings. For example:
 
-ex.
 ```javascript
 {
     "_id" : "v_people",
@@ -207,6 +220,8 @@ ex.
 etc.
 
 ### include
+
+A property of the `joins` predicate object, is an array of predicate values to pluck from the joined CBD and include in the result. If ommitted, all values from the CBD will be included. Allows you to mimic the behaviour of a `CONSTRUCT` style SPARQL query by slimming down the resultant graph only to predicates you specify.
 
 ### joins
 
@@ -243,7 +258,27 @@ Note: you can *only* join a URI object (or \_id) to an \_id.
 
 ### maxJoins
 
+A property of the `joins` predicate object, determines the maximum amount of times a join will be performed. Where the amount of available matches exceeds `maxJoins` there are no guarantees on which of the available matches will be included. The exception to this is when used with a sequence via `followSequence`, here sequences `rdf:_1..rdf:_{maxJoin}` will be included.
+
 ### followSequence
+
+[RDF sequences](http://www.w3.org/TR/rdf-schema/#ch_seq) are triple structures with a type of `rdf:Seq` and enumerate entities with the predicates `rdf:_x`, e.g. `rdf:_1, rdf:_2` etc. These have always been tricky to work with in SPARQL queries.
+
+In tripod, when joining to a node which is actually a sequence, you would have to manually join again from the sequence to each element `rdf:_1` etc. which is hard because you'll need to know the length of the sequence up-front, and view specs are not dynamic (they are specified in config, not at runtime).
+
+`followSequence` simplifies this by providing a shortcut for following sequences and joins automatically until either the last sequence element is reached, or `maxJoins` is exceeded. For example:
+
+```javascript
+  "bibo:authorList":{
+    "joins" : {
+      "followSequence":{
+        "maxJoins":50
+      }
+    }
+}
+```
+
+The properties of the `followSequence` object are identical in behaviour to those that can be specified in the `joins` predicate object.
 
 ### predicates
 
@@ -253,6 +288,8 @@ that do post processing on the results, such as "lowercase" and "join".
 ### limit
 
 ### condition
+
+A property of the `join` object, specifies a query condition which must be matched for the join to be performed.
 
 ### counts
 
@@ -265,6 +302,10 @@ that do post processing on the results, such as "lowercase" and "join".
 ### filter/condition
 
 ### ttl
+
+`ttl` can be used in view specifications at the top level to indicate the time of expiry of the data. Views generated with a `ttl` will not have an impact index, that is, write operations will not automatically expire them. Instead, when they are read, tripod will look at the timestamp of the view's creation and if it exceeds the ttl it will discard the view and regenerate (and store) a new one and return that instead.
+
+This is very useful if you have specific volatile views and the freshest data is not always cruicial - you can avoid excessive view re-generation by specifying a `ttl` value which exceeds the mean time between writes to your data.
 
 ### indicies
 
@@ -281,6 +322,7 @@ that do post processing on the results, such as "lowercase" and "join".
 ### "value" : "_link_"
 
 Creates a fully qualified URI from the alias value of the _current_ resource.  E.g.:
+
 ```javascript
 {
     "id" : "t_foo",
@@ -294,7 +336,9 @@ Creates a fully qualified URI from the alias value of the _current_ resource.  E
     ]
 }
 ```
+
 would give the fully qualified URI of the base resource in field ``` fooLink ``` .  In a join:
+
 ```javascript
 {
     "id" : "t_foo",
