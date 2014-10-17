@@ -180,7 +180,11 @@ Each of the specifications above are built from a specification language defined
 
 ### _id
 
+The unique identifier of the spec
+
 ### _version
+
+Specifies the version of the spec. Unused until we implement version specification.
 
 ### from
 
