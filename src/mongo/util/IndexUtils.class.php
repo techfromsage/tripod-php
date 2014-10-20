@@ -38,7 +38,7 @@ class IndexUtils
                 foreach ($indexes as $indexName=>$fields)
                 {
                     $indexName = substr($indexName,0,127); // ensure max 128 chars
-                    if (is_int($indexName))
+                    if (is_numeric($indexName))
                     {
                         // no name
                         $db->selectCollection($collectionName)->ensureIndex($fields,array("background"=>$background));
