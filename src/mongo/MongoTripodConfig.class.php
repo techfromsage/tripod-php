@@ -245,7 +245,8 @@ class MongoTripodConfig
             }
             else
             {
-                $defaultDB = array_pop(array_keys($this->databases));
+                $dbs = array_keys($this->databases)
+                $defaultDB = array_pop($dbs);
             }
         }
 
