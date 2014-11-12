@@ -144,20 +144,21 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         return $transactionDb->selectCollection($tlConfig['collection']);
     }
 
-    protected function getDocument($_id, $tripod=null, $fromTransactionLog=false)
+    protected function getDocument($_id, $collection=null, $fromTransactionLog=false)
     {
         if($fromTransactionLog==true)
         {
             return $this->tripodTransactionLog->getTransaction($_id);
         }
 
-        if($tripod==NULL)
+        if($collection==NULL)
         {
             return $this->tripod->collection->findOne(array("_id"=>$_id));
         }
         else
         {
-            return $tripod->collection->findOne(array("_id"=>$_id));
+            $coll = ($collection instanceof MongoTripod ? $collection->collection : $collection);
+            return $coll->findOne(array("_id"=>$_id));
         }
     }
 

@@ -568,16 +568,16 @@ class MongoTripodTest extends MongoTripodTestBase
 
     public function testReadPreferencesOverMultipleSaves(){
         $subjectOne = "http://talisaspire.com/works/checkReadPreferencesOverMultipleSaves";
+        $tripodOptions = array('defaultContext'=>'http://talisaspire.com/', 'readPreference'=>MongoClient::RP_SECONDARY_PREFERRED);
         /** @var $tripodMock MongoTripod **/
         $tripodMock = $this->getMock(
             'MongoTripod',
             array('getDataUpdater'),
-            array('CBD_testing',
-                array('defaultContext'=>'http://talisaspire.com/', 'readPreference'=>MongoClient::RP_SECONDARY_PREFERRED))
+            array('CBD_testing', $tripodOptions)
         );
 
         $tripodUpdate = $this->getMock('MongoTripodUpdates',
-            array('addToSearchIndexQueue', 'validateGraphCardinality'), array($tripodMock, 'CBD_testing'));
+            array('addToSearchIndexQueue', 'validateGraphCardinality'), array($tripodMock, 'CBD_testing', $tripodOptions));
         $tripodUpdate
             ->expects($this->any())
             ->method('addToSearchIndexQueue');
@@ -832,8 +832,8 @@ class MongoTripodTest extends MongoTripodTestBase
     {
 //        TripodException: testing:SOME_COLLECTION is not referenced within config, so cannot be written to
         $this->setExpectedException(
-            'TripodException',
-            'database:collection testing:SOME_COLLECTION is not referenced within config, so cannot be written to');
+            'MongoTripodConfigException',
+            'Collection name \'SOME_COLLECTION\' not in configuration');
 
         $tripod = new MongoTripod("SOME_COLLECTION");
         $tripod->saveChanges(new ExtendedGraph(), new ExtendedGraph(), 'http://talisaspire.com/');
@@ -1089,19 +1089,18 @@ class MongoTripodTest extends MongoTripodTestBase
     }
 
     /**
-     * Return no results for tablespec that doesn't exist
+     * Throw error for tablespec that doesn't exist
      * @access public
      * @return void
      */
     public function testDistinctOnTableSpecThatDoesNotExist()
     {
         $table = "t_nothing_to_see_here";
-        $rows = $this->tripod->getTableRows($table, array(), array(), 0, 0);
-        $this->assertEquals(0, $rows['head']['count']);
+        $this->setExpectedException(
+            'MongoTripodConfigException',
+            'Table id \'t_nothing_to_see_here\' not in configuration'
+        );
         $results = $this->tripod->getDistinctTableColumnValues($table, "value.foo");
-        $this->assertEquals(0, $results['head']['count']);
-        $this->assertArrayHasKey('results', $results);
-        $this->assertEmpty($results['results']);
     }
 
     /**

@@ -696,8 +696,8 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         $tripod2->saveChanges(new ExtendedGraph(), $g, 'http://talisaspire.com/');
 
         // assert the document is in both collections
-        $this->assertDocumentVersion(array("r"=>$uri,"c"=>"http://talisaspire.com/"), 0, true, $tripod1);
-        $this->assertDocumentVersion(array("r"=>$uri,"c"=>"http://talisaspire.com/"), 0, true, $tripod2);
+        $this->assertDocumentVersion(array("r"=>$uri,"c"=>"http://talisaspire.com/"), 0, true, $tripod1->collection);
+        $this->assertDocumentVersion(array("r"=>$uri,"c"=>"http://talisaspire.com/"), 0, true, $tripod2->collection);
 
         // assert the transaction log contains two transactions
         $this->assertEquals(2, $this->tripodTransactionLog->getTotalTransactionCount());
@@ -710,8 +710,8 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         $tripod1->saveChanges($oG,$nG,'http://talisaspire.com/');
 
         // assert the documents and transaction count
-        $this->assertDocumentVersion(array("r"=>$uri,"c"=>"http://talisaspire.com/"), 1, true, $tripod1);
-        $this->assertDocumentVersion(array("r"=>$uri,"c"=>"http://talisaspire.com/"), 0, true, $tripod2);
+        $this->assertDocumentVersion(array("r"=>$uri,"c"=>"http://talisaspire.com/"), 1, true, $tripod1->collection);
+        $this->assertDocumentVersion(array("r"=>$uri,"c"=>"http://talisaspire.com/"), 0, true, $tripod2->collection);
         $this->assertEquals(3, $this->tripodTransactionLog->getTotalTransactionCount());
     }
 
