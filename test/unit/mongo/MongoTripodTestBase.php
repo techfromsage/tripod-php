@@ -50,6 +50,16 @@ class MongoTripodTestConfig extends MongoTripodConfig
             $this->loadConfig($config);
         }
     }
+
+    public function getActiveMongoConnections()
+    {
+        return $this->activeMongoConnections;
+    }
+
+    public function getMongoCollection(MongoDB $db, $collectionName)
+    {
+        return parent::getMongoCollection($db, $collectionName);
+    }
 }
 
 class MongoTripodTestBase extends PHPUnit_Framework_TestCase

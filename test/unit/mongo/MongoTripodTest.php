@@ -569,15 +569,43 @@ class MongoTripodTest extends MongoTripodTestBase
     public function testReadPreferencesOverMultipleSaves(){
         $subjectOne = "http://talisaspire.com/works/checkReadPreferencesOverMultipleSaves";
         $tripodOptions = array('defaultContext'=>'http://talisaspire.com/', 'readPreference'=>MongoClient::RP_SECONDARY_PREFERRED);
-        /** @var $tripodMock MongoTripod **/
-        $tripodMock = $this->getMock(
-            'MongoTripod',
-            array('getDataUpdater'),
-            array('CBD_testing', $tripodOptions)
+
+        // Use MongoTripodTestConfig so we have methods to get at the unadulterated DBs and Collections
+        $tripodConfig = new MongoTripodTestConfig(MongoTripodConfig::getConfig());
+        $mockConfig = $this->getMock(
+            'MongoTripodTestConfig',
+            array('getDatabase'),
+            array(MongoTripodConfig::getConfig())
         );
 
-        $tripodUpdate = $this->getMock('MongoTripodUpdates',
-            array('addToSearchIndexQueue', 'validateGraphCardinality'), array($tripodMock, 'CBD_testing', $tripodOptions));
+        $mockDB = $this->getMock(
+            'MongoDB',
+            array('setReadPreference'),
+            array(new MongoClient(), $tripodConfig->getDatabaseNameForCollectionName('CBD_testing'))
+        );
+
+        $mockDB->expects($this->exactly(6))
+            ->method('setReadPreference')
+            ->with(MongoClient::RP_PRIMARY);
+
+        $mockConfig->expects($this->atLeastOnce())
+            ->method('getDatabase')
+            ->will($this->returnValue($mockDB));
+
+
+        // Mock Tripod, disabling the constructor, so we can insert our testing config
+        /** @var $tripodMock MongoTripod **/
+        $tripodMock = $this->getMockBuilder('MongoTripod')
+            ->setMethods(array('getDataUpdater', 'getMongoTripodConfigInstance'))
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $tripodUpdate = $this->getMockBuilder('MongoTripodUpdates')
+            ->setMethods(array('addToSearchIndexQueue', 'validateGraphCardinality', 'getMongoTripodConfigInstance'))
+            ->disableOriginalConstructor()
+            ->getMock();
+//            , array($tripodMock, 'CBD_testing', $tripodOptions));
+
         $tripodUpdate
             ->expects($this->any())
             ->method('addToSearchIndexQueue');
@@ -588,17 +616,37 @@ class MongoTripodTest extends MongoTripodTestBase
             ->will($this->onConsecutiveCalls(null, $this->throwException(new Exception('readPreferenceOverMultipleSavesTestException')), null)
             );
 
+        $tripodUpdate
+            ->expects($this->atLeastOnce())
+            ->method('getMongoTripodConfigInstance')
+            ->will($this->returnValue($mockConfig));
+
         $tripodMock
             ->expects($this->atLeastOnce())
             ->method('getDataUpdater')
             ->will($this->returnValue($tripodUpdate));
 
-        $expectedCollectionReadPreference = $tripodMock->collection->getReadPreference();
-        $expectedDbReadPreference = MongoTripodConfig::getInstance()
-            ->getDatabase(
-                MongoTripodConfig::getInstance()->getDatabaseNameForCollectionName('CBD_testing')
-            )
-            ->getReadPreference();
+        $tripodMock
+            ->expects($this->atLeastOnce())
+            ->method('getMongoTripodConfigInstance')
+            ->will($this->returnValue($tripodConfig));
+
+        // Call MongoTripod's constructor via reflection
+        $reflectedTripod = new ReflectionClass('MongoTripod');
+        $contructor = $reflectedTripod->getConstructor();
+        $contructor->invoke($tripodMock, 'CBD_testing', $tripodOptions);
+
+        $reflectedTripodUpdate = new ReflectionClass('MongoTripodUpdates');
+        $contructor = $reflectedTripodUpdate->getConstructor();
+        $contructor->invoke($tripodUpdate, $tripodMock, 'CBD_testing', $tripodOptions);
+
+        // Because MongoTripodTestConfig has accessors for activeMongoConnections and collections, call them to get the current read preferences
+        $activeDBConnections = $tripodConfig->getActiveMongoConnections();
+        $db = $activeDBConnections[$tripodConfig->getDatabaseNameForCollectionName('CBD_testing')];
+        $collection = $tripodConfig->getMongoCollection($db, 'CBD_testing');
+
+        $expectedCollectionReadPreference = $collection->getReadPreference();
+        $expectedDbReadPreference = $db->getReadPreference();
         $this->assertEquals($expectedCollectionReadPreference['type'], MongoClient::RP_SECONDARY_PREFERRED);
         $this->assertEquals($expectedDbReadPreference['type'], MongoClient::RP_SECONDARY_PREFERRED);
 
@@ -606,8 +654,14 @@ class MongoTripodTest extends MongoTripodTestBase
         $g = new MongoGraph();
         $g->add_literal_triple($subjectOne, $g->qname_to_uri("dct:title"), "Title one");
         $tripodMock->saveChanges(new MongoGraph(), $g,"http://talisaspire.com/");
-        $this->assertEquals($expectedCollectionReadPreference, $tripodMock->collection->getReadPreference());
-        $this->assertEquals($expectedDbReadPreference, $tripodMock->db->getReadPreference());
+
+        // In theory, the database and collection should have been set to primary while saving and then reverted back afterwards
+        $activeDBConnections = $tripodConfig->getActiveMongoConnections();
+        $db = $activeDBConnections[$tripodConfig->getDatabaseNameForCollectionName('CBD_testing')];
+        $collection = $tripodConfig->getMongoCollection($db, 'CBD_testing');
+
+        $this->assertEquals($expectedCollectionReadPreference, $collection->getReadPreference());
+        $this->assertEquals($expectedDbReadPreference, $db->getReadPreference());
 
         // Assert a thrown exception still results in read preferences being restored
         $g = new MongoGraph();
@@ -620,16 +674,22 @@ class MongoTripodTest extends MongoTripodTestBase
             $exceptionThrown = true;
             $this->assertEquals("readPreferenceOverMultipleSavesTestException", $e->getMessage());
         }
+        $activeDBConnections = $tripodConfig->getActiveMongoConnections();
+        $db = $activeDBConnections[$tripodConfig->getDatabaseNameForCollectionName('CBD_testing')];
+        $collection = $tripodConfig->getMongoCollection($db, 'CBD_testing');
         $this->assertTrue($exceptionThrown);
-        $this->assertEquals($expectedCollectionReadPreference, $tripodMock->collection->getReadPreference());
-        $this->assertEquals($expectedDbReadPreference, $tripodMock->db->getReadPreference());
+        $this->assertEquals($expectedCollectionReadPreference, $collection->getReadPreference());
+        $this->assertEquals($expectedDbReadPreference, $db->getReadPreference());
 
         // Assert that a new save after the exception still results in read preferences being restored
         $g = new MongoGraph();
         $g->add_literal_triple($subjectOne, $g->qname_to_uri("dct:title3"), "Title three");
         $tripodMock->saveChanges(new MongoGraph(), $g,"http://talisaspire.com/");
-        $this->assertEquals($expectedCollectionReadPreference, $tripodMock->collection->getReadPreference());
-        $this->assertEquals($expectedDbReadPreference, $tripodMock->db->getReadPreference());
+        $activeDBConnections = $tripodConfig->getActiveMongoConnections();
+        $db = $activeDBConnections[$tripodConfig->getDatabaseNameForCollectionName('CBD_testing')];
+        $collection = $tripodConfig->getMongoCollection($db, 'CBD_testing');
+        $this->assertEquals($expectedCollectionReadPreference, $collection->getReadPreference());
+        $this->assertEquals($expectedDbReadPreference, $db->getReadPreference());
 
     }
 

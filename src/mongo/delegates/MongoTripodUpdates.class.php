@@ -50,10 +50,6 @@ class MongoTripodUpdates extends MongoTripodBase {
     public function __construct(MongoTripod $tripod, $collectionName, $opts=array())
     {
         $this->tripod = $tripod;
-//        $this->db = $tripod->db;
-//        $this->dbName = $tripod->getDBName();
-//        $this->collection = $tripod->collection;
-//        $this->collectionName = $this->collection->getName();
         $this->stat = $tripod->getStat();
         
         $this->labeller = new MongoTripodLabeller();
