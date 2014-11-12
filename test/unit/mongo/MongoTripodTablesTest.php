@@ -801,8 +801,10 @@ class MongoTripodTablesTest extends MongoTripodTestBase
     public function testDistinctOnTableSpecThatDoesNotExist()
     {
         $table = "t_nothing_to_see_here";
-        $rows = $this->tripodTables->getTableRows($table, array(), array(), 0, 0);
-        $this->assertEquals(0, $rows['head']['count']);
+        $this->setExpectedException(
+            'MongoTripodConfigException',
+            'Table id \'t_nothing_to_see_here\' not in configuration'
+        );
         $results = $this->tripodTables->distinct($table, "value.foo");
         $this->assertEquals(0, $results['head']['count']);
         $this->assertArrayHasKey('results', $results);
