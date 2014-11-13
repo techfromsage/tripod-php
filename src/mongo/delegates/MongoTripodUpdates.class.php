@@ -1002,7 +1002,7 @@ class MongoTripodUpdates extends MongoTripodBase {
             $this->timingLog(MONGO_ON_THE_FLY_MR,array(
                 "duration"=>$t->result(),
                 "operations"=>var_export($data['operations'],true),
-                "database"=>$data['database'],
+                "configSpec"=>$data['configSpec'],
                 "collection"=>$data['collection'],
                 "resource"=>$data[_ID_RESOURCE]
             ));
@@ -1026,7 +1026,7 @@ class MongoTripodUpdates extends MongoTripodBase {
             $data = $subject->getData();
             $this->debugLog(MONGO_ADD_TO_QUEUE,array(
                     "operations"=>var_export($data['operations'],true),
-                    "database"=>$data['database'],
+                    "configSpec"=>$data['configSpec'],
                     "collection"=>$data['collection'],
                     "resource"=>$data[_ID_RESOURCE]
                 )
