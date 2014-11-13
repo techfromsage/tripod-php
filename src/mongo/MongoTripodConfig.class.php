@@ -115,6 +115,10 @@ class MongoTripodConfig
     protected $defaultDatabase;
 
     /**
+     * @var string
+     */
+    protected $configSpec;
+    /**
      * MongoTripodConfig should not be instantiated directly: use MongoTripodConfig::getInstance()
      */
     private function __construct() {}
@@ -125,8 +129,9 @@ class MongoTripodConfig
      * @param array $config
      * @throws MongoTripodConfigException
      */
-    protected function loadConfig(Array $config)
+    protected function loadConfig(Array $config, $configSpec = self::DEFAULT_CONFIG_SPEC)
     {
+        $this->configSpec = $configSpec;
         if (array_key_exists('namespaces',$config))
         {
             $this->ns = $config['namespaces'];
@@ -696,7 +701,7 @@ class MongoTripodConfig
         if (!isset(self::$instances[$specName]))
         {
             self::$instances[$specName] = new MongoTripodConfig();
-            self::$instances[$specName]->loadConfig(self::$config[$specName]);
+            self::$instances[$specName]->loadConfig(self::$config[$specName], $specName);
         }
         return self::$instances[$specName];
     }
@@ -1129,7 +1134,7 @@ class MongoTripodConfig
     {
         if ($this->labeller==null)
         {
-            $this->labeller = new MongoTripodLabeller();
+            $this->labeller = new MongoTripodLabeller($this->configSpec);
         }
         return $this->labeller;
     }
