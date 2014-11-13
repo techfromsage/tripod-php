@@ -545,7 +545,7 @@ class MongoTripodTest extends MongoTripodTestBase
         /** @var $tripodMock MongoTripod **/
         $tripodMock = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing',array('defaultContext'=>'http://talisaspire.com/')));
         $tripodUpdate = $this->getMock('MongoTripodUpdates',
-            array('addToSearchIndexQueue','resetOriginalReadPreference','getContextAlias'), array($tripodMock));
+            array('addToSearchIndexQueue','resetOriginalReadPreference','getContextAlias'), array($tripodMock, 'CBD_testing'));
 
         $tripodUpdate
             ->expects($this->once())
