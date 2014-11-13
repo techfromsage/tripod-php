@@ -9,11 +9,12 @@ require_once TRIPOD_DIR . 'mongo/delegates/MongoTripodTables.class.php';
 class MongoTripodQueue extends MongoTripodBase
 {
     protected $queueConfig;
-    public function __construct($stat=null)
+    public function __construct($stat=null, $configSpec = MongoTripodConfig::DEFAULT_CONFIG_SPEC)
     {
-        $config = $this->getMongoTripodConfigInstance();
-        $this->queueConfig = $config->getQueueConfig();
-        $connStr = $config->getQueueConnStr();
+        $this->configSpec = $configSpec;
+        $this->config = $this->getMongoTripodConfigInstance();
+        $this->queueConfig = $this->config->getQueueConfig();
+        $connStr = $this->config->getQueueConnStr();
 
         $this->debugLog("Connecting to queue with $connStr");
         if(isset($this->queueConfig['replicaSet']) && !empty($this->queueConfig['replicaSet'])) {
@@ -80,11 +81,21 @@ class MongoTripodQueue extends MongoTripodBase
         return false;
     }
 
-    protected function getMongoTripod($data) {
-        return new MongoTripod(
-            $data['collection'],
-            $data['database'],
-            array('stat'=>$this->stat));
+    /**
+     * @param array $data
+     * @return MongoTripod
+     */
+    protected function getMongoTripod(Array $data) {
+        $opts = array('stat'=>$this->stat);
+        if(isset($data['configSpec']))
+        {
+            $opts['configSpec'] = $data['configSpec'];
+        }
+        elseif(isset($data['database'])) // Backwards compatibility
+        {
+            $opts['configSpec'] = MongoTripodConfig::getSpecNameForDatabaseAndCollection($data['database'], $data['collection']);
+        }
+        return new MongoTripod($data['collection'], $opts);
     }
 
     /**

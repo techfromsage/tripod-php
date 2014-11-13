@@ -25,6 +25,14 @@ abstract class MongoTripodBase
     protected $stat = null;
 
     /**
+     * @return string
+     */
+    public function getConfigSpec()
+    {
+        return $this->configSpec;
+    }
+
+    /**
      * @return ITripodStat
      */
     public function getStat()
@@ -36,6 +44,12 @@ abstract class MongoTripodBase
      * @var MongoTripodLabeller
      */
     protected $labeller;
+
+
+    /**
+     * @var string
+     */
+    protected $configSpec;
 
     /**
      * @var MongoTripodConfig
@@ -291,7 +305,7 @@ abstract class MongoTripodBase
     {
         if(!isset($this->config))
         {
-            $this->config = MongoTripodConfig::getInstance();
+            $this->config = MongoTripodConfig::getInstance($this->configSpec);
         }
         return $this->config;
     }

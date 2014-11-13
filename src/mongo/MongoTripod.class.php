@@ -70,6 +70,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
      */
     private $dataUpdater;
 
+
     /**
      * Constructor for MongoTripod
      *
@@ -89,6 +90,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
     )
     {
         $opts = array_merge(array(
+                'configSpec'=>MongoTripodConfig::DEFAULT_CONFIG_SPEC,
                 'defaultContext'=>null,
                 OP_ASYNC=>array(OP_VIEWS=>false,OP_TABLES=>true,OP_SEARCH=>true),
                 'stat'=>null,
@@ -96,10 +98,9 @@ class MongoTripod extends MongoTripodBase implements ITripod
                 'retriesToGetLock' => 20)
             ,$opts);
         $this->collectionName = $collectionName;
-
+        $this->configSpec = $opts['configSpec'];
         $this->config = $this->getMongoTripodConfigInstance();
 
-        // TODO: do we still need this?
         $this->dbName = $this->config->getDatabaseNameForCollectionName($collectionName);
 
         $this->labeller = $this->getLabeller();
@@ -546,7 +547,8 @@ class MongoTripod extends MongoTripodBase implements ITripod
             $this->tripod_views = new MongoTripodViews(
                 $this->collection,
                 $this->defaultContext,
-                $this->stat
+                $this->stat,
+                $this->configSpec
             );
         }
         return $this->tripod_views;
@@ -562,7 +564,8 @@ class MongoTripod extends MongoTripodBase implements ITripod
             $this->tripod_tables = new MongoTripodTables(
                 $this->collection,
                 $this->defaultContext,
-                $this->stat
+                $this->stat,
+                $this->configSpec
             );
         }
         return $this->tripod_tables;
@@ -627,7 +630,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
      */
     protected function getLabeller()
     {
-        return new MongoTripodLabeller();
+        return new MongoTripodLabeller($this->configSpec);
     }
 
     /**

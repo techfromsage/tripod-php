@@ -36,12 +36,12 @@ class MongoTripodQueueTest extends MongoTripodTestBase
     public function testAddToIndexQueue()
     {
         // add item to queue
-        $this->indexQueue->addItem(ModifiedSubject::create(array('r'=>'http://example.com/1','c'=>'http://talisaspire.com/'), array('http://talisaspire.com/schema#Resource'), array(OP_TABLES,OP_SEARCH), array(), 'myDB', 'myCollection'));
+        $this->indexQueue->addItem(ModifiedSubject::create(array('r'=>'http://example.com/1','c'=>'http://talisaspire.com/'), array('http://talisaspire.com/schema#Resource'), array(OP_TABLES,OP_SEARCH), array(), 'WibbleSpec', 'myCollection'));
 
         // retrieve it and assert properties
         $data = $this->indexQueue->fetchNextQueuedItem()->getData();
 
-        $this->assertEquals('myDB', $data['database']);
+        $this->assertEquals('WibbleSpec', $data['configSpec']);
         $this->assertEquals('myCollection', $data['collection']);
         $this->assertEquals('http://example.com/1', $data['r']);
         $this->assertEquals(array('http://talisaspire.com/schema#Resource'), $data['rdf:type']);
@@ -98,10 +98,10 @@ class MongoTripodQueueTest extends MongoTripodTestBase
         $mockQueue = $this->getMock('MongoTripodQueue', array('getUniqId'), array());
         $mockQueue->expects($this->any())->method('getUniqId')->will($this->returnValue($itemId));
 
-        $mockQueue->addItem(ModifiedSubject::create(array('r'=>'http://example.com/test','c'=>'http://talisaspire.com/'), array('http://talisaspire.com/schema#Resource'), array(OP_TABLES,OP_SEARCH), array(), 'myDB', 'myCollection'));
+        $mockQueue->addItem(ModifiedSubject::create(array('r'=>'http://example.com/test','c'=>'http://talisaspire.com/'), array('http://talisaspire.com/schema#Resource'), array(OP_TABLES,OP_SEARCH), array(), 'mySpec', 'myCollection'));
         $item = $mockQueue->getItem($itemId);
 
-        $this->assertEquals('myDB', $item['database']);
+        $this->assertEquals('mySpec', $item['configSpec']);
         $this->assertEquals('myCollection', $item['collection']);
         $this->assertEquals('http://example.com/test', $item['r']);
         $this->assertEquals(array('http://talisaspire.com/schema#Resource'), $item['rdf:type']);
@@ -112,7 +112,7 @@ class MongoTripodQueueTest extends MongoTripodTestBase
 
         $modifiedSubject = $mockQueue->fetchNextQueuedItem();
         $data=$modifiedSubject->getData();
-        $this->assertEquals('myDB', $data['database']);
+        $this->assertEquals('mySpec', $data['configSpec']);
         $this->assertEquals('myCollection', $data['collection']);
         $this->assertEquals('http://example.com/test', $data['r']);
         $this->assertEquals(array('http://talisaspire.com/schema#Resource'), $data['rdf:type']);

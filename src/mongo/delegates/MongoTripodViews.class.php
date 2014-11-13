@@ -11,13 +11,15 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
      * @param MongoCollection $collection
      * @param $defaultContext
      * @param null $stat
+     * @param $configSpec
      */
-    function __construct(MongoCollection $collection,$defaultContext,$stat=null)
+    function __construct(MongoCollection $collection,$defaultContext,$stat=null, $configSpec = MongoTripodConfig::DEFAULT_CONFIG_SPEC)
     {
-        $this->labeller = new MongoTripodLabeller();
+        $this->labeller = new MongoTripodLabeller($configSpec);
         $this->collection = $collection;
         $this->collectionName = $collection->getName();
         $this->defaultContext = $defaultContext;
+        $this->configSpec = $configSpec;
         $this->config = $this->getMongoTripodConfigInstance();
         $this->stat = $stat;
     }

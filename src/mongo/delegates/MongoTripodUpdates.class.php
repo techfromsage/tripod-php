@@ -50,9 +50,11 @@ class MongoTripodUpdates extends MongoTripodBase {
     public function __construct(MongoTripod $tripod, $collectionName, $opts=array())
     {
         $this->tripod = $tripod;
+        $this->configSpec = $tripod->getConfigSpec();
+
         $this->stat = $tripod->getStat();
         
-        $this->labeller = new MongoTripodLabeller();
+        $this->labeller = new MongoTripodLabeller($this->configSpec);
         $opts = array_merge(array(
                 'defaultContext'=>null,
                 OP_ASYNC=>array(OP_VIEWS=>false,OP_TABLES=>true,OP_SEARCH=>true),
@@ -60,7 +62,6 @@ class MongoTripodUpdates extends MongoTripodBase {
                 'readPreference'=>MongoClient::RP_PRIMARY_PREFERRED,
                 'retriesToGetLock' => 20)
             ,$opts);
-
         $this->config = $this->getMongoTripodConfigInstance();
 
         $this->collectionName = $collectionName;
@@ -189,7 +190,7 @@ class MongoTripodUpdates extends MongoTripodBase {
 
                     foreach($syncOp['ops'] as $collectionName=>$ops){
                         $specTypes = (isset($syncOp['specTypes']) ? $syncOp['specTypes'] : array());
-                        $syncModifiedSubjects[] = ModifiedSubject::create($syncOp['id'],array(),$ops, $specTypes, $this->getDBName(), $collectionName, $syncOp['delete']);
+                        $syncModifiedSubjects[] = ModifiedSubject::create($syncOp['id'],array(),$ops, $specTypes, $this->configSpec, $collectionName, $syncOp['delete']);
                     }
                 }
 
@@ -208,7 +209,7 @@ class MongoTripodUpdates extends MongoTripodBase {
 
                     foreach($asyncOp['ops'] as $collectionName=>$ops){
                         $specTypes = (isset($asyncOp['specTypes']) ? $asyncOp['specTypes'] : array());
-                        $asyncModifiedSubjects[] = ModifiedSubject::create($asyncOp['id'],array(),$ops, $specTypes, $this->getDBName(), $collectionName, $asyncOp['delete']);
+                        $asyncModifiedSubjects[] = ModifiedSubject::create($asyncOp['id'],array(),$ops, $specTypes, $this->configSpec, $collectionName, $asyncOp['delete']);
                     }
                 }
 
@@ -1457,7 +1458,6 @@ class MongoTripodUpdates extends MongoTripodBase {
     protected function getMongoTripod($data) {
         return new MongoTripod(
             $data['collection'],
-            $data['database'],
             array('stat'=>$this->stat));
     }
 

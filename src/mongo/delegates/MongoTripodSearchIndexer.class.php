@@ -21,7 +21,8 @@ class MongoTripodSearchIndexer extends MongoTripodBase implements SplObserver
     public function __construct(MongoTripod $tripod)
     {
         $this->tripod = $tripod;
-        $this->labeller = new MongoTripodLabeller();
+        $this->configSpec = $this->tripod->getConfigSpec();
+        $this->labeller = new MongoTripodLabeller($this->configSpec);
         $this->stat = $tripod->getStat();
 
         $this->config = $this->getMongoTripodConfigInstance();
@@ -155,9 +156,9 @@ class MongoTripodSearchIndexer extends MongoTripodBase implements SplObserver
      * @param string $context
      * @return MongoTripodSearchDocuments
      */
-    protected function getSearchDocumentGenerator($collection, $context )
+    protected function getSearchDocumentGenerator($collection, $context)
     {
-        return new MongoTripodSearchDocuments($collection, $context, $this->tripod->getStat());
+        return new MongoTripodSearchDocuments($collection, $context, $this->tripod->getStat(), $this->configSpec);
     }
 
     protected function deDupe(Array $input)

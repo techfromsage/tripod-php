@@ -4,15 +4,16 @@
  */
 class MongoTripodConfig
 {
+    const DEFAULT_CONFIG_SPEC = 'default';
     /**
-     * @var MongoTripodConfig
+     * @var MongoTripodConfig[]
      */
-    private static $instance = null;
+    private static $instances = array();
 
     /**
      * @var array
      */
-    private static $config = null;
+    private static $config = array();
 
     /**
      * @var MongoTripodLabeller
@@ -656,11 +657,15 @@ class MongoTripodConfig
     /**
      * @codeCoverageIgnore
      * @static
+     * @param string $specName
      * @return Array|null
      */
-    public static function getConfig()
+    public static function getConfig($specName = self::DEFAULT_CONFIG_SPEC)
     {
-        return self::$config;
+        if(isset(self::$config[$specName]))
+        {
+            return self::$config[$specName];
+        }
     }
 
     /**
@@ -678,32 +683,53 @@ class MongoTripodConfig
      * @uses MongoTripodConfig::setConfig() Configuration must be set prior to calling this method. To generate a completely new object, set a new config
      * @codeCoverageIgnore
      * @static
-     * @return MongoTripodConfig
+     * @param string $specName
      * @throws MongoTripodConfigException
+     * @return MongoTripodConfig
      */
-    public static function getInstance()
+    public static function getInstance($specName = self::DEFAULT_CONFIG_SPEC)
     {
-        if (self::$config == null)
+        if (!isset(self::$config[$specName]))
         {
             throw new MongoTripodConfigException("Call MongoTripodConfig::setConfig() first");
         }
-        if (self::$instance == null)
+        if (!isset(self::$instances[$specName]))
         {
-            self::$instance = new MongoTripodConfig();
-            self::$instance->loadConfig(self::$config);
+            self::$instances[$specName] = new MongoTripodConfig();
+            self::$instances[$specName]->loadConfig(self::$config[$specName]);
         }
-        return self::$instance;
+        return self::$instances[$specName];
+    }
+
+    /**
+     * @param string $dbName
+     * @param string $collectionName
+     * @return null|string
+     */
+    public static function getSpecNameForDatabaseAndCollection($dbName, $collectionName)
+    {
+        foreach(self::$instances as $specName=>$config)
+        {
+
+            $db = $config->getDatabaseNameForCollectionName($collectionName);
+            if($db === $dbName)
+            {
+                return $specName;
+            }
+        }
+        return null;
     }
 
     /**
      * set the config
      * @usedby MongoTripodConfig::getInstance()
      * @param array $config
+     * @param string $specName
      */
-    public static function setConfig(Array $config)
+    public static function setConfig(Array $config, $specName = self::DEFAULT_CONFIG_SPEC)
     {
-        self::$config = $config;
-        self::$instance = null; // this will force a reload next time getInstance() is called
+        self::$config[$specName] = $config;
+        self::$instances[$specName] = null; // this will force a reload next time getInstance() is called
     }
 
     /**
@@ -1090,8 +1116,8 @@ class MongoTripodConfig
      */
     public function destroy()
     {
-        self::$instance = NULL;
-        self::$config = NULL;
+        self::$instances = array();
+        self::$config = array();
     }
 
     /* PROTECTED FUNCTIONS */
