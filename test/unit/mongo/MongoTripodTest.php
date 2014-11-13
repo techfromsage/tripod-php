@@ -543,7 +543,7 @@ class MongoTripodTest extends MongoTripodTestBase
     public function testReadPreferencesAreRestoredWhenErrorSavingChanges(){
         $subjectOne = "http://talisaspire.com/works/checkReadPreferencesAreRestoredOnError";
         /** @var $tripodMock MongoTripod **/
-        $tripodMock = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/')));
+        $tripodMock = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing',array('defaultContext'=>'http://talisaspire.com/')));
         $tripodUpdate = $this->getMock('MongoTripodUpdates',
             array('addToSearchIndexQueue','resetOriginalReadPreference','getContextAlias'), array($tripodMock));
 

@@ -327,7 +327,10 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $uri2 = "http://uri2";
         $config = MongoTripodConfig::getInstance();
         // Just get a view name
-        $viewType = array_shift(array_keys($config->getViewSpecifications()));
+        $viewSpecs = $config->getViewSpecifications();
+        $specIds = array_keys($viewSpecs);
+        // Just get a view name
+        $viewType = array_shift($specIds);
         $context = "http://someContext";
 
         $query = array(
@@ -371,8 +374,10 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $uri2 = "http://uri2";
 
         $config = MongoTripodConfig::getInstance();
+        $viewSpecs = $config->getViewSpecifications();
+        $specIds = array_keys($viewSpecs);
         // Just get a view name
-        $this->viewType = array_shift(array_keys($config->getViewSpecifications()));
+        $this->viewType = array_shift($specIds);
         $context = "http://someContext";
 
         $mockDb = $this->getMock("MongoDB", array("selectCollection"),array(new MongoClient(),"test"));
