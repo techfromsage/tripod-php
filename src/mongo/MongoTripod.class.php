@@ -74,7 +74,6 @@ class MongoTripod extends MongoTripodBase implements ITripod
      * Constructor for MongoTripod
      *
      * @param string $collectionName
-     * @param string $dbName
      * @param array $opts an Array of options: <ul>
      * <li>defaultContext: (string) to use where a specific default context is not defined. Default is Null</li>
      * <li>async: (array) determines the async behaviour of views, tables and search. For each of these array keys, if set to true, generation of these elements will be done asyncronously on save. Default is array(OP_VIEWS=>false,OP_TABLES=>true,OP_SEARCH=>true)</li>
@@ -82,6 +81,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
      * <li>readPreference: The Read preference to set for Mongo: Default is Mongo:RP_PRIMARY_PREFERRED</li>
      * <li>retriesToGetLock: Retries to do when unable to get lock on a document, default is 20</li></ul>
      * @throws Exception
+     * @internal param string $dbName
      */
     public function __construct(
         $collectionName=MONGO_MAIN_COLLECTION,
