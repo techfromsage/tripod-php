@@ -82,7 +82,7 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
     public function getViewForResource($resource,$viewType,$context=null)
     {
         if(empty($resource)){
-            return new MongoGraph();
+            return new MongoGraph($this->configSpec);
         }
 
         $resourceAlias = $this->labeller->uri_to_alias($resource);
@@ -96,7 +96,7 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
             $viewSpec = $this->getMongoTripodConfigInstance()->getViewSpecification($viewType);
             if($viewSpec == null)
             {
-                return new MongoGraph();
+                return new MongoGraph($this->configSpec);
             }
 
             $fromCollection = $this->getFromCollectionForViewSpec($viewSpec);
@@ -106,7 +106,7 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
             {
                 // if you are trying to generate a view for a document that doesnt exist in the collection
                 // then we can just return an empty graph
-                return new MongoGraph();
+                return new MongoGraph($this->configSpec);
             }
 
             // generate view then try again

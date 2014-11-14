@@ -77,7 +77,7 @@ abstract class MongoTripodBase
      */
     protected function fetchGraph($query, $type, $collection=null,$includeProperties=array(), $cursorSize=101)
     {
-        $graph = new MongoGraph();
+        $graph = new MongoGraph($this->configSpec);
 
         $t = new Timer();
         $t->start();
