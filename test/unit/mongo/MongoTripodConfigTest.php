@@ -57,7 +57,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
     {
         $config = MongoTripodConfig::getInstance();
         $tConfig = $config->getTransactionLogConfig();
-        $this->assertEquals('testing',$tConfig['database']);
+        $this->assertEquals('tripod_php_testing',$tConfig['database']);
         $this->assertEquals('transaction_log',$tConfig['collection']);
         $this->assertEquals('mongodb://localhost',$config->getTransactionLogConnStr());
     }
@@ -67,7 +67,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $config=array();
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["databases"] = array(
-            "testing" => array(
+            "tripod_php_testing" => array(
                 "connStr" => "mongodb://localhost",
                 "collections" => array(
                     "CBD_testing" => array()
@@ -96,7 +96,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $config=array();
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["databases"] = array(
-            "testing" => array(
+            "tripod_php_testing" => array(
                 "connStr" => "mongodb://localhost",
                 "collections" => array(
                     "CBD_testing" => array()
@@ -119,16 +119,16 @@ class MongoTripodConfigTest extends MongoTripodTestBase
 
     public function testCardinality()
     {
-        $cardinality = $this->tripodConfig->getCardinality("testing","CBD_testing","dct:created");
+        $cardinality = $this->tripodConfig->getCardinality("tripod_php_testing","CBD_testing","dct:created");
         $this->assertEquals(1,$cardinality,"Expected cardinality of 1 for dct:created");
 
-        $cardinality = $this->tripodConfig->getCardinality("testing","CBD_testing","random:property");
+        $cardinality = $this->tripodConfig->getCardinality("tripod_php_testing","CBD_testing","random:property");
         $this->assertEquals(-1,$cardinality,"Expected cardinality of 1 for random:property");
     }
 
     public function testGetConnectionString()
     {
-        $this->assertEquals("mongodb://localhost",MongoTripodConfig::getInstance()->getConnStr("testing"));
+        $this->assertEquals("mongodb://localhost",MongoTripodConfig::getInstance()->getConnStr("tripod_php_testing"));
     }
 
     public function testGetConnectionStringThrowsException()
@@ -144,7 +144,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
         $config["databases"] = array(
-            "testing" => array(
+            "tripod_php_testing" => array(
                 "connStr" => "mongodb://localhost:27017,localhost:27018/admin",
                 "collections" => array(
                     "CBD_testing" => array()
@@ -157,18 +157,18 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         MongoTripodConfig::setConfig($config);
         $mtc = MongoTripodConfig::getInstance();
 
-        $this->assertEquals("mongodb://localhost:27017,localhost:27018/admin",$mtc->getConnStr("testing"));
+        $this->assertEquals("mongodb://localhost:27017,localhost:27018/admin",$mtc->getConnStr("tripod_php_testing"));
     }
 
     public function testGetConnectionStringThrowsExceptionForReplicaSet(){
         $this->setExpectedException(
                    'MongoTripodConfigException',
-                   'Connection string for testing must include /admin database when connecting to Replica Set');
+                   'Connection string for tripod_php_testing must include /admin database when connecting to Replica Set');
         $config=array();
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
         $config["databases"] = array(
-            "testing" => array(
+            "tripod_php_testing" => array(
                 "connStr" => "mongodb://localhost:27017,localhost:27018",
                 "collections" => array(
                     "CBD_testing" => array()
@@ -181,7 +181,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         MongoTripodConfig::setConfig($config);
         $mtc = MongoTripodConfig::getInstance();
 
-        $mtc->getConnStr("testing");
+        $mtc->getConnStr("tripod_php_testing");
     }
 
     public function testCompoundIndexAllArraysThrowsException()
@@ -193,7 +193,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
         $config["databases"] = array(
-            "testing"=>array(
+            "tripod_php_testing"=>array(
                 "connStr"=>"sometestval",
                 "collections"=>array(
                     "CBD_testing"=>array(
@@ -223,7 +223,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
     {
         $config = MongoTripodConfig::getInstance();
         $queueConfig = $config->getQueueConfig();
-        $this->assertEquals('testing',$queueConfig['database']);
+        $this->assertEquals('tripod_php_testing',$queueConfig['database']);
         $this->assertEquals('q_queue',$queueConfig['collection']);
         $this->assertEquals('mongodb://localhost',$config->getQueueConnStr());
     }
@@ -233,7 +233,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $config=array();
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["databases"] = array(
-            "testing" => array(
+            "tripod_php_testing" => array(
                 "connStr" => "mongodb://localhost",
                 "collections" => array(
                     "CBD_testing" => array()
@@ -262,7 +262,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $config=array();
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["databases"] = array(
-            "testing" => array(
+            "tripod_php_testing" => array(
                 "connStr" => "mongodb://localhost",
                 "collections" => array(
                     "CBD_testing" => array()
@@ -290,7 +290,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://talisaspire:acorn123@46.137.106.66:27018");
         $config["databases"] = array(
-            "testing"=>array(
+            "tripod_php_testing"=>array(
                 "connStr"=>"sometestval",
                 "collections"=>array(
                     "CBD_testing"=>array(
@@ -313,7 +313,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                 "_id"=>"i_search_list",
                 "type"=>array("resourcelist:List"),
                 "from"=>"CBD_testing",
-                "to"=>"testing",
+                "to"=>"tripod_php_testing",
                 "filter"=>array(
                     array("condition"=>array(
                         "spec:name.l"=>array('$exists'=>true)
@@ -359,7 +359,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                 "_id"=>"i_search_list",
                 "type"=>array("resourcelist:List"),
                 "from"=>"CBD_testing",
-                "to"=>"testing",
+                "to"=>"tripod_php_testing",
                 "filter"=>array(
                     array("condition"=>array(
                         "spec:name.l"=>array('$exists'=>true)
@@ -414,7 +414,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
         $config["databases"] = array(
-            "testing"=>array(
+            "tripod_php_testing"=>array(
                 "connStr"=>"sometestval",
                 "collections"=>array(
                     "CBD_testing"=>array(
@@ -448,7 +448,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
         $config["databases"] = array(
-            "testing"=>array(
+            "tripod_php_testing"=>array(
                 "connStr"=>"sometestval",
                 "collections"=>array(
                     "CBD_testing"=>array(
@@ -486,7 +486,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
         $config["databases"] = array(
-            "testing"=>array(
+            "tripod_php_testing"=>array(
                 "connStr"=>"sometestval",
                 "collections"=>array(
                     "CBD_testing"=>array(
@@ -522,7 +522,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
         $config["databases"] = array(
-            "testing"=>array(
+            "tripod_php_testing"=>array(
             "connStr"=>"sometestval",
                 "collections"=>array(
                     "CBD_testing"=>array()
@@ -561,7 +561,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
         $config["databases"] = array(
-            "testing"=>array(
+            "tripod_php_testing"=>array(
             "connStr"=>"sometestval",
                 "collections"=>array(
                     "CBD_testing"=>array()
@@ -594,7 +594,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
         $config["databases"] = array(
-            "testing"=>array(
+            "tripod_php_testing"=>array(
             "connStr"=>"sometestval",
                 "collections"=>array(
                     "CBD_testing"=>array()
@@ -627,7 +627,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
         $config["databases"] = array(
-            "testing"=>array(
+            "tripod_php_testing"=>array(
             "connStr"=>"sometestval",
                 "collections"=>array(
                     "CBD_testing"=>array()
@@ -660,7 +660,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
         $config["databases"] = array(
-            "testing"=>array(
+            "tripod_php_testing"=>array(
             "connStr"=>"sometestval",
                 "collections"=>array(
                     "CBD_testing"=>array()
@@ -693,7 +693,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
         $config["databases"] = array(
-            "testing"=>array(
+            "tripod_php_testing"=>array(
             "connStr"=>"sometestval",
                 "collections"=>array(
                     "CBD_testing"=>array()
@@ -726,7 +726,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $config = array();
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
         $config["databases"] = array(
-            "testing"=>array(
+            "tripod_php_testing"=>array(
                 "connStr"=>"sometestval",
                 "collections"=>array(
                     "CBD_testing"=>array(
@@ -761,7 +761,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
      */
     public function testGetIndexesGroupedByCollection()
     {
-        $indexSpecs = MongoTripodConfig::getInstance()->getIndexesGroupedByCollection("testing");
+        $indexSpecs = MongoTripodConfig::getInstance()->getIndexesGroupedByCollection("tripod_php_testing");
         //print_r($indexSpecs);
         $this->assertArrayHasKey("CBD_testing", $indexSpecs);
         $this->assertArrayHasKey("index1", $indexSpecs["CBD_testing"]);
@@ -791,7 +791,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://talisaspire:acorn123@46.137.106.66:27018");
         $config["databases"] = array(
-            "testing"=>array(
+            "tripod_php_testing"=>array(
                 "connStr"=>"sometestval",
                 "replicaSet"=>"myreplicaset",
                 "collections"=>array(
@@ -811,7 +811,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
         MongoTripodConfig::setConfig($config);
         $mtc = MongoTripodConfig::getInstance();
-        $this->assertEquals("myreplicaset", $mtc->getReplicaSetName("testing"));
+        $this->assertEquals("myreplicaset", $mtc->getReplicaSetName("tripod_php_testing"));
 
         $this->assertNull($mtc->getReplicaSetName("testing_2"));
     }
@@ -821,7 +821,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             "_id"=> "v_resource_full",
             "_version" => "0.1",
             "from"=>"CBD_testing",
-            "to"=>"testing",
+            "to"=>"tripod_php_testing",
             "ensureIndexes" =>array(
                 array(
                     "value._graphs.sioc:has_container.u"=>1,
@@ -853,7 +853,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             "_id"=>"t_resource",
             "type"=>"acorn:Resource",
             "from"=>"CBD_testing",
-            "to"=>"testing",
+            "to"=>"tripod_php_testing",
             "ensureIndexes" => array(array("value.isbn"=>1)),
             "fields"=>array(
                 array(
@@ -890,7 +890,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $config=array();
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["databases"] = array(
-            "testing" => array(
+            "tripod_php_testing" => array(
                 "connStr" => "mongodb://localhost",
                 "collections" => array(
                     "CBD_testing" => array()

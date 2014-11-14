@@ -137,7 +137,7 @@ class MongoTripodQueueTest extends MongoTripodTestBase
             "_id"=>'blah',
             "r"=>"http://talisaspire.com/works/4d101f63c10a6",
             "c"=>'http://talisaspire.com/',
-            "database"=>'testing',
+            "configSpec"=>MongoTripodConfig::DEFAULT_CONFIG_SPEC,
             "collection"=>'CBD_testing',
             "operations"=>array(OP_VIEWS),
             "createdOn"=>new MongoDate()
@@ -173,7 +173,7 @@ class MongoTripodQueueTest extends MongoTripodTestBase
             "_id"=>'blah',
             "r"=>"http://talisaspire.com/works/4d101f63c10a6",
             "c"=>'http://talisaspire.com/',
-            "database"=>'testing',
+            "configSpec"=>MongoTripodConfig::DEFAULT_CONFIG_SPEC,
             "collection"=>'CBD_testing',
             "operations"=>array(OP_TABLES),
             "createdOn"=>new MongoDate()
@@ -209,7 +209,7 @@ class MongoTripodQueueTest extends MongoTripodTestBase
             "_id"=>'blah',
             "r"=>"http://talisaspire.com/works/4d101f63c10a6",
             "c"=>'http://talisaspire.com/',
-            "database"=>'testing',
+            "configSpec"=>MongoTripodConfig::DEFAULT_CONFIG_SPEC,
             "collection"=>'CBD_testing',
             "operations"=>array(OP_SEARCH),
             "createdOn"=>new MongoDate()
@@ -245,7 +245,7 @@ class MongoTripodQueueTest extends MongoTripodTestBase
             "_id"=>'blah',
             "r"=>"http://talisaspire.com/works/4d101f63c10a6",
             "c"=>'http://talisaspire.com/',
-            "database"=>'testing',
+            "configSpec"=>MongoTripodConfig::DEFAULT_CONFIG_SPEC,
             "collection"=>'CBD_testing',
             "operations"=>array(OP_SEARCH,OP_TABLES,OP_VIEWS),
             "createdOn"=>new MongoDate()
@@ -281,7 +281,7 @@ class MongoTripodQueueTest extends MongoTripodTestBase
             "_id"=>'blah',
             "r"=>"http://talisaspire.com/works/4d101f63c10a6",
             "c"=>'http://talisaspire.com/',
-            "database"=>'testing',
+            "configSpec"=>MongoTripodConfig::DEFAULT_CONFIG_SPEC,
             "collection"=>'CBD_testing',
             "operations"=>array(),
             "createdOn"=>new MongoDate()

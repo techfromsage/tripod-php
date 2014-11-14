@@ -19,7 +19,7 @@
     },
     "defaultContext":"http://talisaspire.com/",
     "databases" : {
-        "testing" : {
+        "tripod_php_testing" : {
             "collections" : {
                 "CBD_testing" : {
                     "cardinality" : {
@@ -48,7 +48,7 @@
             "default" : true,
             "connStr" : "mongodb://localhost"
         },
-        "testing_alt" : {
+        "tripod_php_testing_alt" : {
             "collections" : {
                 "CBD_someOtherCollection" : {
                     "cardinality" : {
@@ -123,7 +123,7 @@
             "_id": "v_counts",
             "type": "acorn:Work",
             "from":"CBD_testing",
-            "to":"testing_alt",
+            "to":"tripod_php_testing_alt",
             "include": ["rdf:type"],
             "ttl": 300,
             "counts" : {
@@ -268,7 +268,7 @@
                 "_id":"i_search_filter_parse",
                 "type":["baseData:Wibble"],
                 "from":"CBD_testing",
-                "to":"testing_alt",
+                "to":"tripod_php_testing_alt",
                 "filter":[
                     {
                         "condition":{
@@ -538,7 +538,7 @@
             "_id": "t_join_link",
             "type":"bibo:Document",
             "from":"CBD_testing",
-            "to":"testing_alt",
+            "to":"tripod_php_testing_alt",
             "fields" : [
                 {
                     "fieldName":"bookLink",
@@ -624,12 +624,12 @@
         }
     ],
     "transaction_log" : {
-        "database" : "testing",
+        "database" : "tripod_php_testing",
         "collection" : "transaction_log",
         "connStr" : "mongodb://localhost"
     },
     "queue" : {
-        "database" : "testing",
+        "database" : "tripod_php_testing",
         "collection" : "q_queue",
         "connStr" : "mongodb://localhost"
     }

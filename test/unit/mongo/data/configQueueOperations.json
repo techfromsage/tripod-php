@@ -19,7 +19,7 @@
     },
     "defaultContext":"http://talisaspire.com/",
     "databases" : {
-        "testing" : {
+        "tripod_php_testing" : {
             "collections" : {
                 "CBD_testing" : {
                     "cardinality" : {

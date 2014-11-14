@@ -427,7 +427,7 @@ class MongoTransactionLogTest extends MongoTripodTestBase
                 )
             ),
             'collectionName' => 'CBD_testing',
-            'dbName' => 'testing',
+            'dbName' => 'tripod_php_testing',
             'startTime' => new MongoDate(strtotime($startTime)),
             'endTime' => new MongoDate(strtotime($endTime)),
             'status' => 'completed',
