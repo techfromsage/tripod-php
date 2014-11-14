@@ -988,4 +988,141 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             $this->assertContains($expected, $predicates, "List of predicates should have contained $expected");
         }
     }
+
+    public function testDataLoadedInConfiguredDatabases()
+    {
+        $mongo = new MongoClient("mongodb://localhost");
+        $this->tripod = new MongoTripod('CBD_testing');
+        $this->loadBaseSearchDataViaTripod();
+
+        $defaultDb = $mongo->selectDB('tripod_php_testing');
+        $defaultDbCollections = array(
+            'q_queue', 'transaction_log', 'views', 'search', 'table_rows', 'CBD_testing', 'CBD_testing_2',
+            'audit_manual_rollbacks', 'locks'
+        );
+        $specs = array();
+        $specs['views'] = MongoTripodConfig::getInstance()->getViewSpecifications();
+        $specs['search'] = MongoTripodConfig::getInstance()->getSearchDocumentSpecifications();
+        $specs['table_rows'] = MongoTripodConfig::getInstance()->getTableSpecifications();
+        $specsForDb = array('tripod_php_testing'=>array(), 'tripod_php_testing_alt'=>array());
+
+        foreach(array('views', 'search', 'table_rows') as $type)
+        {
+            foreach($specs[$type] as $spec)
+            {
+                if(!isset($specsForDb[$spec['to']][$type]))
+                {
+                    $specsForDb[$spec['to']][$type] = array();
+                }
+                $specsForDb[$spec['to']][$type][] = $spec['_id'];
+            }
+        }
+
+        $foundCollections = array();
+        /** @var MongoCollection $collection */
+        foreach($defaultDb->listCollections() as $collection)
+        {
+            $name = $collection->getName();
+            $foundCollections[] = $name;
+            $this->assertContains($name, $defaultDbCollections);
+            switch($name)
+            {
+                case 'views':
+                    $this->assertGreaterThan(0, count($specsForDb['tripod_php_testing']['views']));
+
+                    $this->assertGreaterThan(0, $collection->count(array()), "views collection did not have at least 1 document in db tripod_php_testing");
+
+                    foreach($specsForDb['tripod_php_testing_alt']['views'] as $view)
+                    {
+                        $this->assertEquals(0, $collection->count(array('_id.type'=>$view)), $view . " had at least 1 document in db tripod_php_testing_alt");
+                    }
+                    break;
+                case 'search':
+                    $this->assertGreaterThan(0, count($specsForDb['tripod_php_testing']['search']));
+
+                    $this->assertGreaterThan(0, $collection->count(array()), "search collection did not have at least 1 document in db tripod_php_testing");
+
+                    foreach($specsForDb['tripod_php_testing_alt']['search'] as $search)
+                    {
+                        $this->assertEquals(0, $collection->count(array('_id.type'=>$search)), $search . " had at least 1 document in db tripod_php_testing_alt");
+                    }
+                    break;
+                case 'table_rows':
+                    $this->assertGreaterThan(0, count($specsForDb['tripod_php_testing']['table_rows']));
+
+                    $this->assertGreaterThan(0, $collection->count(array()), "table_rows collection did not have at least 1 document in db tripod_php_testing");
+
+                    foreach($specsForDb['tripod_php_testing_alt']['table_rows'] as $t)
+                    {
+                        $this->assertEquals(0, $collection->count(array('_id.type'=>$t)), $t . " had at least 1 document in db tripod_php_testing_alt");
+                    }
+                    break;
+                case 'CBD_testing':
+                    $this->assertGreaterThan(0, $collection->count(array()), "CBD_testing collection did not have at least 1 document in db tripod_php_testing");
+                    break;
+                case 'CBD_testing_2':
+                    $this->assertGreaterThan(0, $collection->count(array()), "CBD_testing_2 collection did not have at least 1 document in db tripod_php_testing");
+                    break;
+            }
+
+
+        }
+
+        $this->assertEmpty(array_diff($defaultDbCollections, $foundCollections));
+
+        $this->tripod = new MongoTripod('CBD_someOtherCollection');
+        $this->loadBaseDataViaTripod();
+        $this->loadBaseSearchDataViaTripod();
+
+        $altDb = $mongo->selectDB('tripod_php_testing_alt');
+        $altDbCollections = array('views', 'search', 'table_rows', 'CBD_someOtherCollection');
+        $foundCollections = array();
+
+        /** @var MongoCollection $collection */
+        foreach($altDb->listCollections() as $collection)
+        {
+            $name = $collection->getName();
+            $foundCollections[] = $name;
+            $this->assertContains($name, $altDbCollections);
+            switch($name)
+            {
+                case 'views':
+                    $this->assertGreaterThan(0, count($specsForDb['tripod_php_testing_alt']['views']));
+
+                    $this->assertGreaterThan(0, $collection->count(array()), "views collection did not have at least 1 document in db tripod_php_testing_alt");
+
+                    foreach($specsForDb['tripod_php_testing']['views'] as $view)
+                    {
+                        $this->assertEquals(0, $collection->count(array('_id.type'=>$view)), $view . " had at least 1 document in db tripod_php_testing");
+                    }
+                    break;
+                case 'search':
+                    $this->assertGreaterThan(0, count($specsForDb['tripod_php_testing_alt']['search']));
+
+                    $this->assertGreaterThan(0, $collection->count(array()), "search collection did not have at least 1 document in db tripod_php_testing_alt");
+
+                    foreach($specsForDb['tripod_php_testing']['search'] as $search)
+                    {
+                        $this->assertEquals(0, $collection->count(array('_id.type'=>$search)), $search . " had at least 1 document in db tripod_php_testing");
+                    }
+                    break;
+                case 'table_rows':
+                    $this->assertGreaterThan(0, count($specsForDb['tripod_php_testing_alt']['table_rows']));
+
+                    $this->assertGreaterThan(0, $collection->count(array()), "table_rows collection did not have at least 1 document in db tripod_php_testing_alt");
+
+                    foreach($specsForDb['tripod_php_testing']['table_rows'] as $t)
+                    {
+                        $this->assertEquals(0, $collection->count(array('_id.type'=>$t)), $t . " had at least 1 document in db tripod_php_testing");
+                    }
+                    break;
+                case 'CBD_someOtherCollection':
+                    $this->assertGreaterThan(0, $collection->count(array()), "CBD_someOtherCollection collection did not have at least 1 document in db tripod_php_testing");
+                    break;
+            }
+        }
+        // we don't currently match any views or search to this data
+        $this->assertEquals(array('views', 'search'), array_diff($altDbCollections, $foundCollections));
+
+    }
 }
