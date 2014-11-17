@@ -10,16 +10,16 @@ require_once 'classes/Timer.class.php';
 require_once 'mongo/MongoTripodConfig.class.php';
 require_once 'mongo/MongoTripod.class.php';
 
-function generateViews($id, $viewId,$dbName)
+function generateViews($id, $viewId,$configSpec)
 {
-    $viewSpec = MongoTripodConfig::getInstance()->getViewSpecification($viewId);
+    $viewSpec = MongoTripodConfig::getInstance($configSpec)->getViewSpecification($viewId);
     echo $viewId;
     if (array_key_exists("from",$viewSpec))
     {
         MongoCursor::$timeout = -1;
 
         print "Generating $viewId";
-        $tripod = new MongoTripod($viewSpec['from'], $dbName);
+        $tripod = new MongoTripod($viewSpec['from'], array('configSpec'=>$configSpec));
         $views = $tripod->getTripodViews();//new MongoTripodViews($tripod->db,$tripod->collection,$tripod->defaultContext);
         if ($id)
         {
@@ -37,25 +37,46 @@ function generateViews($id, $viewId,$dbName)
 $t = new Timer();
 $t->start();
 
-if ($argc!=3 && $argc!=4 && $argc!=5)
+$options = getopt('c:s:v:i:');
+if (!isset($options['c']))
 {
-	echo "usage: ./createViews.php tripodConfig.json dbName [viewId] [_id]\n";
+	echo "usage: ./createViews.php -c tripodConfig.json [-s configSpec] [-v viewId] [-i _id]\n";
 	die();
 }
-array_shift($argv);
 
-MongoTripodConfig::setConfig(json_decode(file_get_contents($argv[0]),true));
-$viewId = (empty($argv[2])) ? null: $argv[2];
-$id = (empty($argv[3])) ? null: $argv[3];
-if ($viewId)
+$configSpec = (isset($options['s']) ? $options['s'] : MongoTripodConfig::DEFAULT_CONFIG_SPEC);
+$config = json_decode(file_get_contents($options['c']),true);
+
+// Rewrite single config model as configSpec
+$configKeys = array('namespaces', 'databases', 'defaultContext');
+if(count(array_intersect($configKeys, array_keys($config))) > 1)
 {
-    generateViews($id, $viewId, $argv[1]);
+    $config = array($configSpec=>$config);
+}
+
+if(isset($config[$configSpec]))
+{
+    foreach($config as $spec=>$cfg)
+    {
+        MongoTripodConfig::setConfig($cfg, $spec);
+    }
 }
 else
 {
-    foreach(MongoTripodConfig::getInstance()->getViewSpecifications() as $viewSpec)
+    throw new MongoTripodConfigException("ConfigSpec not defined in configuration document");
+}
+
+$viewId = (isset($options['v']) ? $options['v'] : null);
+$id = (isset($options['i']) ? $options['i'] : null);
+if ($viewId)
+{
+    generateViews($id, $viewId, $configSpec);
+}
+else
+{
+    foreach(MongoTripodConfig::getInstance($configSpec)->getViewSpecifications() as $viewSpec)
     {
-        generateViews($id, $viewSpec['_id'], $argv[1]);
+        generateViews($id, $viewSpec['_id'], $configSpec);
     }
 }
 
