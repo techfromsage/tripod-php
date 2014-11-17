@@ -7,23 +7,42 @@ set_include_path(
 require_once 'tripod.inc.php';
 require_once 'mongo/util/TriplesUtil.class.php';
 
-if ($argc!=2)
+if ($argc<2)
 {
-	echo "usage: ./BSONToTriples.php tripodConfig.json < bsondata\n";
+	echo "usage: ./BSONToTriples.php tripodConfig.json [configSpec] < bsondata\n";
     echo "  When exporting bson data from Mongo use:  \n";
     echo "     mongoexport -d <dbname> -c <collectionName> > bsondata.txt \n";
 	die();
 }
 array_shift($argv);
 $config = json_decode(file_get_contents($argv[0]), true);
-MongoTripodConfig::setConfig($config);
+$configSpec = (isset($argv[1]) ? $argv[1] : MongoTripodConfig::DEFAULT_CONFIG_SPEC);
 
-$tu = new TriplesUtil();
+// Rewrite single config model as configSpec
+$configKeys = array('namespaces', 'databases', 'defaultContext');
+if(count(array_intersect($configKeys, array_keys($config))) > 1)
+{
+    $config = array($configSpec=>$config);
+}
+
+if(isset($config[$configSpec]))
+{
+    foreach($config as $spec=>$cfg)
+    {
+        MongoTripodConfig::setConfig($cfg, $spec);
+    }
+}
+else
+{
+    throw new MongoTripodConfigException("ConfigSpec not defined in configuration document");
+}
+
+$tu = new TriplesUtil($configSpec);
 
 while (($line = fgets(STDIN)) !== false) {
     $line = rtrim($line);
 
-    $graph = new MongoGraph();
+    $graph = new MongoGraph($configSpec);
     $doc = json_decode($line, true);
 
     if(array_key_exists("_id", $doc)) {
