@@ -756,6 +756,10 @@ class MongoTripodConfig
         $tableIndexes = array();
         foreach ($this->getTableSpecifications() as $tspec)
         {
+            if($tspec['to'] != $dbName)
+            {
+                continue;
+            }
             if (array_key_exists("ensureIndexes",$tspec))
             {
                 foreach ($tspec["ensureIndexes"] as $index)
@@ -769,6 +773,10 @@ class MongoTripodConfig
         $viewIndexes = array();
         foreach ($this->getViewSpecifications() as $vspec)
         {
+            if($vspec['to'] != $dbName)
+            {
+                continue;
+            }
             if (array_key_exists("ensureIndexes",$vspec))
             {
                 foreach ($vspec["ensureIndexes"] as $index)

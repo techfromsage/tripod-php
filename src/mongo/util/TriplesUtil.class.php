@@ -12,10 +12,15 @@ class TriplesUtil
 {
     private $collections = array();
     private $labeller = null;
+    /**
+     * @var string
+     */
+    private $configSpec;
 
-    function __construct()
+    function __construct($configSpec = MongoTripodConfig::DEFAULT_CONFIG_SPEC)
     {
-        $this->labeller = new MongoTripodLabeller();
+        $this->configSpec = $configSpec;
+        $this->labeller = new MongoTripodLabeller($configSpec);
     }
 
 
@@ -65,20 +70,19 @@ class TriplesUtil
      * @param null $context
      * @param null $allowableTypes
      */
-    public function loadTriplesAbout($subject,Array $triples,$dbName,$collectionName,$context=null,$allowableTypes=null)
+    public function loadTriplesAbout($subject,Array $triples,$configSpec,$collectionName,$context=null,$allowableTypes=null)
     {
-        $context = ($context==null) ? MongoTripodConfig::getInstance()->getDefaultContextAlias() : $this->labeller->uri_to_alias($context);
+        $context = ($context==null) ? MongoTripodConfig::getInstance($configSpec)->getDefaultContextAlias() : $this->labeller->uri_to_alias($context);
         if (array_key_exists($collectionName,$this->collections))
         {
             $collection = $this->collections[$collectionName];
         }
         else
         {
-            $m = new MongoClient(MongoTripodConfig::getInstance()->getConnStr($dbName));
-            $collection = $m->selectDB($dbName)->selectCollection($collectionName);
+            $collection = MongoTripodConfig::getInstance($configSpec)->getCollectionForCBD($collectionName);
         }
 
-        $graph = new MongoGraph();
+        $graph = new MongoGraph($this->configSpec);
         foreach ($triples as $triple)
         {
             $triple = rtrim($triple);
@@ -130,8 +134,8 @@ class TriplesUtil
      */
     public function bsonizeTriplesAbout($subject,Array $triples,$context=null)
     {
-        $context = ($context==null) ? MongoTripodConfig::getInstance()->getDefaultContextAlias() : $this->labeller->uri_to_alias($context);
-        $graph = new MongoGraph();
+        $context = ($context==null) ? MongoTripodConfig::getInstance($this->configSpec)->getDefaultContextAlias() : $this->labeller->uri_to_alias($context);
+        $graph = new MongoGraph($this->configSpec);
         foreach ($triples as $triple)
         {
             $triple = rtrim($triple);
@@ -156,7 +160,7 @@ class TriplesUtil
     public function extractMissingPredicateNs($triples)
     {
         $missingNs = array();
-        $graph = new MongoGraph();
+        $graph = new MongoGraph($this->configSpec);
         foreach ($triples as $triple)
         {
             $triple = rtrim($triple);
@@ -179,7 +183,7 @@ class TriplesUtil
     public function extractMissingObjectNs($triples)
     {
         $missingNs = array();
-        $graph = new MongoGraph();
+        $graph = new MongoGraph($this->configSpec);
         foreach ($triples as $triple)
         {
             $triple = rtrim($triple);
@@ -216,7 +220,7 @@ class TriplesUtil
 
     public function getTArrayAbout($subject,Array $triples,$context)
     {
-        $graph = new MongoGraph();
+        $graph = new MongoGraph($this->configSpec);
         foreach ($triples as $triple)
         {
             $triple = rtrim($triple);
@@ -257,7 +261,7 @@ class TriplesUtil
                 print "M";
                 // key already exists, merge it
                 $criteria = array("_id"=>array("r"=>$cbdSubject,"c"=>$context));
-                $existingGraph = new MongoGraph();
+                $existingGraph = new MongoGraph($this->configSpec);
                 $existingGraph->add_tripod_array($collection->findOne($criteria));
                 $existingGraph->add_graph($cbdGraph);
                 try

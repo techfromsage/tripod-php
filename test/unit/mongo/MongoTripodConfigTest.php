@@ -15,6 +15,43 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $this->tripodConfig = MongoTripodConfig::getInstance();
     }
 
+    public static function tearDownAfterClass()
+    {
+        // Remove any data we installed here
+        $tripodConfig = MongoTripodConfig::getConfig();
+
+        foreach($tripodConfig['databases'] as $dbName=>$dbConfig)
+        {
+            $mongo = new MongoClient($dbConfig['connStr']);
+            $db = $mongo->selectDB($dbName);
+            foreach($dbConfig['collections'] as $collName=>$collConfig)
+            {
+                $db->dropCollection($collName);
+            }
+            $db->dropCollection(VIEWS_COLLECTION);
+            $db->dropCollection(TABLE_ROWS_COLLECTION);
+            $db->dropCollection(SEARCH_INDEX_COLLECTION);
+            $db->dropCollection(TTL_CACHE_COLLECTION);
+            $db->dropCollection(LOCKS_COLLECTION);
+            $db->dropCollection(AUDIT_MANUAL_ROLLBACKS_COLLECTION);
+            foreach(array('transaction_log', 'queue') as $c)
+            {
+                if($tripodConfig[$c]['database'] == $dbName
+                    && $tripodConfig[$c]['connStr'] == $dbConfig['connStr'])
+                {
+                    $db->dropCollection($tripodConfig[$c]['collection']);
+                }
+            }
+
+            $collections = $db->listCollections();
+            if(count($collections) == 0)
+            {
+                $db->drop();
+            }
+        }
+
+    }
+
     public function testGetInstanceThrowsExceptionIfSetInstanceNotCalledFirst()
     {
         // to test that the instance throws an exception if it is called before calling setConfig
@@ -994,7 +1031,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $mongo = new MongoClient("mongodb://localhost");
         $this->tripod = new MongoTripod('CBD_testing');
         $this->loadBaseSearchDataViaTripod();
-
+        $this->tripod->generateTableRows('CBD_testing');
         $defaultDb = $mongo->selectDB('tripod_php_testing');
         $defaultDbCollections = array(
             'q_queue', 'transaction_log', 'views', 'search', 'table_rows', 'CBD_testing', 'CBD_testing_2',
@@ -1068,7 +1105,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
 
         }
 
-        $this->assertEmpty(array_diff($defaultDbCollections, $foundCollections));
+        $this->assertEmpty(array_diff($defaultDbCollections, $foundCollections), print_r(array_diff($defaultDbCollections, $foundCollections), true) . ' not empty!');
 
         $this->tripod = new MongoTripod('CBD_someOtherCollection');
         $this->loadBaseDataViaTripod();
@@ -1121,8 +1158,10 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                     break;
             }
         }
-        // we don't currently match any views or search to this data
-        $this->assertEquals(array('views', 'search'), array_diff($altDbCollections, $foundCollections));
+        $diff = array_diff($altDbCollections, $foundCollections);
+        // we don't currently match search to this data
+        $this->assertContains('search', $diff, print_r($diff, true) . " doesn't contain 'search'");
+        $this->assertEquals(1, count($diff));
 
     }
 }
