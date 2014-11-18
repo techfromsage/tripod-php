@@ -71,7 +71,7 @@ if ($tableId)
 }
 else
 {
-    foreach(MongoTripodConfig::getInstance()->getTableSpecifications() as $tableSpec)
+    foreach(MongoTripodConfig::getInstance($configSpec)->getTableSpecifications() as $tableSpec)
     {
         generateTables($id, $tableSpec['_id'], $$configSpec);
     }
