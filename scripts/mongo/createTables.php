@@ -10,7 +10,7 @@ require_once 'classes/Timer.class.php';
 require_once 'mongo/MongoTripodConfig.class.php';
 require_once 'mongo/MongoTripod.class.php';
 
-function generateTables($id, $tableId,$configSpec)
+function generateTables($id, $tableId, $configSpec)
 {
     $tableSpec = MongoTripodConfig::getInstance($configSpec)->getTableSpecification($tableId);
     if (array_key_exists("from",$tableSpec))
@@ -73,7 +73,7 @@ else
 {
     foreach(MongoTripodConfig::getInstance($configSpec)->getTableSpecifications() as $tableSpec)
     {
-        generateTables($id, $tableSpec['_id'], $$configSpec);
+        generateTables($id, $tableSpec['_id'], $configSpec);
     }
 }
 
