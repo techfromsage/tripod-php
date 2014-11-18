@@ -12,13 +12,13 @@ class MongoTripodSearchDocuments extends MongoTripodBase
      */
     function __construct(MongoCollection $collection,$defaultContext, $stat=null, $configSpec = MongoTripodConfig::DEFAULT_CONFIG_SPEC)
     {
-        $this->labeller = new MongoTripodLabeller();
+        $this->labeller = new MongoTripodLabeller($configSpec);
         $this->collection = $collection;
         $this->collectionName = $collection->getName();
         $this->defaultContext = $defaultContext;
         $this->stat = $stat;
         $this->configSpec = $configSpec;
-        $this->config = $this->getMongoTripodConfigInstance($this->configSpec);
+        $this->config = $this->getMongoTripodConfigInstance();
     }
 
     public function generateSearchDocumentBasedOnSpecId($specId, $resource, $context)
