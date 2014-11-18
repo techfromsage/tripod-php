@@ -7,9 +7,11 @@ class MongoTransactionLog
     private $transaction_db = null;
     private $transaction_collection = null;
     protected $config = null;
+    protected $configSpec;
 
-    public function __construct()
+    public function __construct($configSpec = MongoTripodConfig::DEFAULT_CONFIG_SPEC)
     {
+        $this->configSpec = $configSpec;
         $config = $this->getMongoTripodConfigInstance();
         $this->config = $config->getTransactionLogConfig();
         // connect to transaction db
@@ -224,7 +226,7 @@ class MongoTransactionLog
      */
     protected function getMongoTripodConfigInstance()
     {
-        return MongoTripodConfig::getInstance();
+        return MongoTripodConfig::getInstance($this->configSpec);
     }
 
 

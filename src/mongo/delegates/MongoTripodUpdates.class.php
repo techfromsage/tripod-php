@@ -1404,7 +1404,7 @@ class MongoTripodUpdates extends MongoTripodBase {
     {
         if($this->transaction_log==null)
         {
-            $this->transaction_log = new MongoTransactionLog();
+            $this->transaction_log = new MongoTransactionLog($this->configSpec);
         }
         return $this->transaction_log;
     }
