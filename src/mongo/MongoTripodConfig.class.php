@@ -994,7 +994,7 @@ class MongoTripodConfig
             }
         }
 
-        $labeller = new MongoTripodLabeller();
+        $labeller = $this->getLabeller();
         $typeAsUri = $labeller->uri_to_alias($type);
         $typeAsQName = $labeller->qname_to_alias($type);
 
