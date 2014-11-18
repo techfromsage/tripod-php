@@ -14,10 +14,13 @@ class MongoSearchProvider implements ITripodSearchProvider
 
     protected $config;
 
+    protected $configSpec;
+
     public function __construct(MongoTripod $tripod)
     {
         $this->tripod = $tripod;
-        $this->labeller = new MongoTripodLabeller();
+        $this->configSpec = $tripod->getConfigSpec();
+        $this->labeller = new MongoTripodLabeller($this->configSpec);
         $this->config = $this->getMongoTripodConfigInstance();
     }
 
@@ -334,7 +337,7 @@ class MongoSearchProvider implements ITripodSearchProvider
     {
         if(!isset($this->config))
         {
-            $this->config = MongoTripodConfig::getInstance();
+            $this->config = MongoTripodConfig::getInstance($this->configSpec);
         }
         return $this->config;
     }
