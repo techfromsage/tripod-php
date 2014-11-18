@@ -1043,7 +1043,7 @@ class MongoTripodUpdates extends MongoTripodBase {
     {
         if(empty($this->queue))
         {
-            $this->queue = new MongoTripodQueue();
+            $this->queue = new MongoTripodQueue($this->configSpec);
         }
 
         return $this->queue;
