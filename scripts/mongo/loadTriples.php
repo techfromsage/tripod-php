@@ -58,7 +58,7 @@ $i=0;
 $currentSubject = "";
 $triples = array();
 $errors = array(); // array of subjects that failed to insert, even after retry...
-$loader = new TriplesUtil();
+$loader = new TriplesUtil($configSpec);
 
 while (($line = fgets(STDIN)) !== false) {
     $i++;
