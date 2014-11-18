@@ -116,7 +116,10 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         $configFileName = dirname(__FILE__).'/data/config.json';
 
         $config = json_decode(file_get_contents($configFileName), true);
-        MongoTripodConfig::setConfig($config);
+        foreach($config as $spec=>$cfg)
+        {
+            MongoTripodConfig::setConfig($cfg, $spec);
+        }
 
         $className = get_class($this);
         $testName = $this->getName();
