@@ -1455,9 +1455,18 @@ class MongoTripodUpdates extends MongoTripodBase {
      * @return MongoTripod
      */
     protected function getMongoTripod($data) {
+        $opts = array('stat'=>$this->stat);
+        if(isset($data['configSpec']))
+        {
+            $opts['configSpec'] = $data['configSpec'];
+        }
+        elseif(isset($data['database'])) // Backwards compatibility
+        {
+            $opts['configSpec'] = MongoTripodConfig::getSpecNameForDatabaseAndCollection($data['database'], $data['collection']);
+        }
         return new MongoTripod(
             $data['collection'],
-            array('stat'=>$this->stat));
+            $opts);
     }
 
     /**
