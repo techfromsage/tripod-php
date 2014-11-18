@@ -9,7 +9,7 @@ require_once TRIPOD_DIR . 'mongo/delegates/MongoTripodTables.class.php';
 class MongoTripodQueue extends MongoTripodBase
 {
     protected $queueConfig;
-    public function __construct($stat=null, $configSpec = MongoTripodConfig::DEFAULT_CONFIG_SPEC)
+    public function __construct($configSpec = MongoTripodConfig::DEFAULT_CONFIG_SPEC, $stat=null)
     {
         $this->configSpec = $configSpec;
         $this->config = $this->getMongoTripodConfigInstance();
