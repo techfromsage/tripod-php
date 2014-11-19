@@ -176,68 +176,71 @@ class MongoTripodConfig
             }
             $this->cardinality[$dbName] = array();
             $this->indexes[$dbName] = array();
-            foreach($db["collections"] as $collName=>$collection)
+            if(isset($db["collections"]))
             {
-                if(in_array($collName, $distinctCollections))
+                foreach($db["collections"] as $collName=>$collection)
                 {
-                    throw new MongoTripodConfigException("Collection names must be distinct: '{$collName}' has already been defined");
-                }
-                $distinctCollections[] = $collName;
-                $this->collectionDatabases[$collName] = $dbName;
-                // Set cardinality, also checking against defined namespaces
-                if (array_key_exists('cardinality', $collection))
-                {
-                    // Test that the namespace exists for each cardinality rule defined
-                    $cardinality = $collection['cardinality'];
-                    foreach ($cardinality as $qname=>$cardinalityValue)
+                    if(in_array($collName, $distinctCollections))
                     {
-                        $namespaces = explode(':', $qname);
-                        // just grab the first element
-                        $namespace  = array_shift($namespaces);
+                        throw new MongoTripodConfigException("Collection names must be distinct: '{$collName}' has already been defined");
+                    }
+                    $distinctCollections[] = $collName;
+                    $this->collectionDatabases[$collName] = $dbName;
+                    // Set cardinality, also checking against defined namespaces
+                    if (array_key_exists('cardinality', $collection))
+                    {
+                        // Test that the namespace exists for each cardinality rule defined
+                        $cardinality = $collection['cardinality'];
+                        foreach ($cardinality as $qname=>$cardinalityValue)
+                        {
+                            $namespaces = explode(':', $qname);
+                            // just grab the first element
+                            $namespace  = array_shift($namespaces);
 
-                        if (array_key_exists($namespace, $this->ns))
-                        {
-                            $this->cardinality[$dbName][$collName][] = $cardinality;
-                        }
-                        else
-                        {
-                            throw new MongoTripodConfigException("Cardinality '{$qname}' does not have the namespace defined");
+                            if (array_key_exists($namespace, $this->ns))
+                            {
+                                $this->cardinality[$dbName][$collName][] = $cardinality;
+                            }
+                            else
+                            {
+                                throw new MongoTripodConfigException("Cardinality '{$qname}' does not have the namespace defined");
+                            }
                         }
                     }
-                }
-                else
-                {
-                    $this->cardinality[$dbName][$collName] = array();
-                }
-
-                $this->cardinality[$dbName][$collName] = (array_key_exists("cardinality",$collection)) ? $collection['cardinality'] : array();
-
-                // Ensure indexes are legal
-                if (array_key_exists("indexes",$collection))
-                {
-                    $this->indexes[$dbName][$collName] = array();
-                    foreach($collection["indexes"] as $indexName=>$indexFields)
+                    else
                     {
-                        // check no more than 1 indexField is an array to ensure Mongo will be able to create compount indexes
-                        if (count($indexFields)>1)
-                        {
-                            $fieldsThatAreArrays = 0;
-                            foreach ($indexFields as $field=>$fieldVal)
-                            {
-                                $cardinalityField = preg_replace('/\.value/','',$field);
-                                if (!array_key_exists($cardinalityField,$this->cardinality[$dbName][$collName])||$this->cardinality[$dbName][$collName][$cardinalityField]!=1)
-                                {
-                                    $fieldsThatAreArrays++;
-                                }
-                                if ($fieldsThatAreArrays>1)
-                                {
-                                    throw new MongoTripodConfigException("Compound index $indexName has more than one field with cardinality > 1 - mongo will not be able to build this index");
-                                }
-                            }
-                        } // @codeCoverageIgnoreStart
-                        // @codeCoverageIgnoreEnd
+                        $this->cardinality[$dbName][$collName] = array();
+                    }
 
-                        $this->indexes[$dbName][$collName][$indexName] = $indexFields;
+                    $this->cardinality[$dbName][$collName] = (array_key_exists("cardinality",$collection)) ? $collection['cardinality'] : array();
+
+                    // Ensure indexes are legal
+                    if (array_key_exists("indexes",$collection))
+                    {
+                        $this->indexes[$dbName][$collName] = array();
+                        foreach($collection["indexes"] as $indexName=>$indexFields)
+                        {
+                            // check no more than 1 indexField is an array to ensure Mongo will be able to create compount indexes
+                            if (count($indexFields)>1)
+                            {
+                                $fieldsThatAreArrays = 0;
+                                foreach ($indexFields as $field=>$fieldVal)
+                                {
+                                    $cardinalityField = preg_replace('/\.value/','',$field);
+                                    if (!array_key_exists($cardinalityField,$this->cardinality[$dbName][$collName])||$this->cardinality[$dbName][$collName][$cardinalityField]!=1)
+                                    {
+                                        $fieldsThatAreArrays++;
+                                    }
+                                    if ($fieldsThatAreArrays>1)
+                                    {
+                                        throw new MongoTripodConfigException("Compound index $indexName has more than one field with cardinality > 1 - mongo will not be able to build this index");
+                                    }
+                                }
+                            } // @codeCoverageIgnoreStart
+                            // @codeCoverageIgnoreEnd
+
+                            $this->indexes[$dbName][$collName][$indexName] = $indexFields;
+                        }
                     }
                 }
             }
