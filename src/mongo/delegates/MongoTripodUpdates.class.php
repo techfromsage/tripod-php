@@ -44,18 +44,17 @@ class MongoTripodUpdates extends MongoTripodBase {
 
     /**
      * @param MongoTripod $tripod
+     * @param string $collectionName
      * @param array $opts
      */
-    public function __construct(MongoTripod $tripod,$opts=array())
+    public function __construct(MongoTripod $tripod, $collectionName, $opts=array())
     {
         $this->tripod = $tripod;
-        $this->db = $tripod->db;
-        $this->dbName = $tripod->getDBName();
-        $this->collection = $tripod->collection;
-        $this->collectionName = $this->collection->getName();
+        $this->configSpec = $tripod->getConfigSpec();
+
         $this->stat = $tripod->getStat();
         
-        $this->labeller = new MongoTripodLabeller();
+        $this->labeller = new MongoTripodLabeller($this->configSpec);
         $opts = array_merge(array(
                 'defaultContext'=>null,
                 OP_ASYNC=>array(OP_VIEWS=>false,OP_TABLES=>true,OP_SEARCH=>true),
@@ -63,8 +62,13 @@ class MongoTripodUpdates extends MongoTripodBase {
                 'readPreference'=>MongoClient::RP_PRIMARY_PREFERRED,
                 'retriesToGetLock' => 20)
             ,$opts);
-
         $this->config = $this->getMongoTripodConfigInstance();
+
+        $this->collectionName = $collectionName;
+
+        $this->collection = $this->config->getCollectionForCBD($collectionName, $opts['readPreference']);
+        $this->dbName = $this->config->getDatabaseNameForCollectionName($this->collectionName);
+        $this->db = $this->config->getDatabase($this->dbName, $opts['readPreference']);
 
         // default context
         $this->defaultContext = $opts['defaultContext'];
@@ -73,7 +77,7 @@ class MongoTripodUpdates extends MongoTripodBase {
         $this->retriesToGetLock = $opts['retriesToGetLock'];
 
         //select locks collection
-        $this->lCollection = $this->db->selectCollection(LOCKS_COLLECTION);
+        $this->lCollection = $this->config->getCollectionForLocks($opts['readPreference']);
 
         // fill in and default any missing keys for $async array
         $async = $opts[OP_ASYNC];
@@ -121,7 +125,7 @@ class MongoTripodUpdates extends MongoTripodBase {
         try{
             $contextAlias = $this->getContextAlias($context);
 
-            if (!MongoTripodConfig::getInstance()->isCollectionWithinConfig($this->getDBName(),$this->getCollectionName()))
+            if (!$this->config->isCollectionWithinConfig($this->getDBName(),$this->getCollectionName()))
             {
                 throw new TripodException("database:collection {$this->getDBName()}:{$this->getCollectionName()} is not referenced within config, so cannot be written to");
             }
@@ -186,7 +190,7 @@ class MongoTripodUpdates extends MongoTripodBase {
 
                     foreach($syncOp['ops'] as $collectionName=>$ops){
                         $specTypes = (isset($syncOp['specTypes']) ? $syncOp['specTypes'] : array());
-                        $syncModifiedSubjects[] = ModifiedSubject::create($syncOp['id'],array(),$ops, $specTypes, $this->getDBName(), $collectionName, $syncOp['delete']);
+                        $syncModifiedSubjects[] = ModifiedSubject::create($syncOp['id'],array(),$ops, $specTypes, $this->configSpec, $collectionName, $syncOp['delete']);
                     }
                 }
 
@@ -205,7 +209,7 @@ class MongoTripodUpdates extends MongoTripodBase {
 
                     foreach($asyncOp['ops'] as $collectionName=>$ops){
                         $specTypes = (isset($asyncOp['specTypes']) ? $asyncOp['specTypes'] : array());
-                        $asyncModifiedSubjects[] = ModifiedSubject::create($asyncOp['id'],array(),$ops, $specTypes, $this->getDBName(), $collectionName, $asyncOp['delete']);
+                        $asyncModifiedSubjects[] = ModifiedSubject::create($asyncOp['id'],array(),$ops, $specTypes, $this->configSpec, $collectionName, $asyncOp['delete']);
                     }
                 }
 
@@ -590,9 +594,8 @@ class MongoTripodUpdates extends MongoTripodBase {
      */
     protected function validateGraphCardinality(ExtendedGraph $graph)
     {
-        $config = MongoTripodConfig::getInstance();
-        $cardinality = $config->getCardinality($this->getDBName(), $this->getCollectionName());
-        $namespaces = $config->getNamespaces();
+        $cardinality = $this->config->getCardinality($this->getDBName(), $this->getCollectionName());
+        $namespaces = $this->config->getNamespaces();
         $graphSubjects = $graph->get_subjects();
 
         if (empty($cardinality) || $graph->is_empty())
@@ -647,7 +650,7 @@ class MongoTripodUpdates extends MongoTripodBase {
         $transaction_id = $this->generateTransactionId();
 
         // store the details of the transaction in the transaction log
-        $mongoGraph = new MongoGraph();
+        $mongoGraph = new MongoGraph($this->configSpec);
         $mongoGraph->_index = $cs->_index;
         $csDoc = $mongoGraph->to_tripod_view_array("changes",$contextAlias); // todo - this changed to tripod view array, why is "changes" the docId?
         $originalCBDs=array();
@@ -807,11 +810,10 @@ class MongoTripodUpdates extends MongoTripodBase {
                 );
 
                 // read before write, and to find array indexes and get document in memory
-                //$targetGraph = new MongoGraph();
 
                 $doc = $this->getDocumentForUpdate($subjectOfChange, $contextAlias, $originalCBDs);
 
-                $targetGraph = new MongoGraph();
+                $targetGraph = new MongoGraph($this->configSpec);
                 $targetGraph->add_tripod_array($doc);
 
                 if(!$targetGraph->has_triples_about($subjectOfChange))
@@ -1056,7 +1058,7 @@ class MongoTripodUpdates extends MongoTripodBase {
             $this->timingLog(MONGO_ON_THE_FLY_MR,array(
                 "duration"=>$t->result(),
                 "operations"=>var_export($data['operations'],true),
-                "database"=>$data['database'],
+                "configSpec"=>$data['configSpec'],
                 "collection"=>$data['collection'],
                 "resource"=>$data[_ID_RESOURCE]
             ));
@@ -1080,7 +1082,7 @@ class MongoTripodUpdates extends MongoTripodBase {
             $data = $subject->getData();
             $this->debugLog(MONGO_ADD_TO_QUEUE,array(
                     "operations"=>var_export($data['operations'],true),
-                    "database"=>$data['database'],
+                    "configSpec"=>$data['configSpec'],
                     "collection"=>$data['collection'],
                     "resource"=>$data[_ID_RESOURCE]
                 )
@@ -1098,7 +1100,7 @@ class MongoTripodUpdates extends MongoTripodBase {
     {
         if(empty($this->queue))
         {
-            $this->queue = new MongoTripodQueue();
+            $this->queue = new MongoTripodQueue($this->configSpec);
         }
 
         return $this->queue;
@@ -1310,7 +1312,8 @@ class MongoTripodUpdates extends MongoTripodBase {
             $this->errorLog(MONGO_LOCK,
                 array(
                     'description'=>'MongoTripod::unlockAllDocuments - Failed to unlock documents (transaction_id - ' .$transaction_id .')',
-                    'mongoDriverError' => $this->db->lastError(),
+                    // Locks collection is associated with "default" db
+                    'mongoDriverError' => $this->config->getDatabase($this->config->getDefaultDatabase())->lastError(),
                     $res
                 )
             );
@@ -1401,16 +1404,7 @@ class MongoTripodUpdates extends MongoTripodBase {
      */
     protected function getAuditManualRollbacksCollection()
     {
-        return $this->db->selectCollection(AUDIT_MANUAL_ROLLBACKS_COLLECTION);
-    }
-    
-    /**
-     * For mocking
-     * @return MongoTripodConfig
-     */
-    protected function getMongoTripodConfigInstance()
-    {
-        return MongoTripodConfig::getInstance();
+        return $this->config->getDatabase($this->config->getDefaultDatabase())->selectCollection(AUDIT_MANUAL_ROLLBACKS_COLLECTION);
     }
 
     /**
@@ -1467,7 +1461,7 @@ class MongoTripodUpdates extends MongoTripodBase {
     {
         if($this->transaction_log==null)
         {
-            $this->transaction_log = new MongoTransactionLog();
+            $this->transaction_log = new MongoTransactionLog($this->configSpec);
         }
         return $this->transaction_log;
     }
@@ -1518,10 +1512,18 @@ class MongoTripodUpdates extends MongoTripodBase {
      * @return MongoTripod
      */
     protected function getMongoTripod($data) {
+        $opts = array('stat'=>$this->stat);
+        if(isset($data['configSpec']))
+        {
+            $opts['configSpec'] = $data['configSpec'];
+        }
+        elseif(isset($data['database'])) // Backwards compatibility
+        {
+            $opts['configSpec'] = MongoTripodConfig::getSpecNameForDatabaseAndCollection($data['database'], $data['collection']);
+        }
         return new MongoTripod(
             $data['collection'],
-            $data['database'],
-            array('stat'=>$this->stat));
+            $opts);
     }
 
     /**
@@ -1544,7 +1546,7 @@ class MongoTripodUpdates extends MongoTripodBase {
     protected function getContextAlias($context=null)
     {
         $contextAlias = $this->labeller->uri_to_alias((empty($context)) ? $this->defaultContext : $context);
-        return (empty($contextAlias)) ? MongoTripodConfig::getInstance()->getDefaultContextAlias() : $contextAlias;
+        return (empty($contextAlias)) ? $this->config->getDefaultContextAlias() : $contextAlias;
     }
 
 
@@ -1562,11 +1564,11 @@ class MongoTripodUpdates extends MongoTripodBase {
 
         $tablePredicates = array();
 
-        foreach(MongoTripodConfig::getInstance()->getTableSpecifications() as $tableSpec)
+        foreach($this->config->getTableSpecifications() as $tableSpec)
         {
             if(isset($tableSpec[_ID_KEY]))
             {
-                $tablePredicates[$tableSpec[_ID_KEY]] = MongoTripodConfig::getInstance()->getDefinedPredicatesInSpec($tableSpec[_ID_KEY]);
+                $tablePredicates[$tableSpec[_ID_KEY]] = $this->config->getDefinedPredicatesInSpec($tableSpec[_ID_KEY]);
             }
         }
 
@@ -1602,7 +1604,7 @@ class MongoTripodUpdates extends MongoTripodBase {
             }
 
         }
-
+        $tableTypes = array();
         if(empty($tableFilters) && !empty($resourceFilters))
         {
             $query = array("value."._IMPACT_INDEX=>array('$in'=>$resourceFilters));
@@ -1614,6 +1616,7 @@ class MongoTripodUpdates extends MongoTripodBase {
             {
                 // first re-gen views where resources appear in the impact index
                 $query[] = array("value."._IMPACT_INDEX=>array('$in'=>$filters), '_id.'._ID_TYPE=>$tableType);
+                $tableTypes[] = $tableType;
             }
 
             if(!empty($resourceFilters))
@@ -1635,13 +1638,16 @@ class MongoTripodUpdates extends MongoTripodBase {
         {
             return array();
         }
-        $tableRows = $this->db->selectCollection(TABLE_ROWS_COLLECTION)->find($query,array("_id"=>true));
-
         $affectedTableRows = array();
 
-        foreach($tableRows as $t)
+        foreach($this->config->getCollectionsForTables($tableTypes) as $collection)
         {
-            $affectedTableRows[] = $t;
+            $tableRows = $collection->find($query,array("_id"=>true));
+
+            foreach($tableRows as $t)
+            {
+                $affectedTableRows[] = $t;
+            }
         }
 
         return $affectedTableRows;
@@ -1671,13 +1677,15 @@ class MongoTripodUpdates extends MongoTripodBase {
 
         // first re-gen views where resources appear in the impact index
         $query = array("value."._IMPACT_INDEX=>array('$in'=>$filter));
-        $views = $this->db->selectCollection(VIEWS_COLLECTION)->find($query,array("_id"=>true));
 
         $affectedViews = array();
-
-        foreach($views as $v)
+        foreach($this->config->getCollectionsForViews() as $collection)
         {
-            $affectedViews[] = $v;
+            $views = $collection->find($query,array("_id"=>true));
+            foreach($views as $v)
+            {
+                $affectedViews[] = $v;
+            }
         }
 
         return $affectedViews;

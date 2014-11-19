@@ -7,9 +7,9 @@ require_once TRIPOD_DIR . 'mongo/serializers/MongoTripodNQuadSerializer.class.ph
 
 class MongoGraph extends ExtendedGraph {
 
-    function __construct()
+    function __construct($configSpec = MongoTripodConfig::DEFAULT_CONFIG_SPEC)
     {
-        $this->_labeller = new MongoTripodLabeller();
+        $this->_labeller = new MongoTripodLabeller($configSpec);
     }
 
     /**

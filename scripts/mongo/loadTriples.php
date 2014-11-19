@@ -9,11 +9,11 @@ require_once 'tripod.inc.php';
 require_once 'mongo/util/TriplesUtil.class.php';
 require_once 'classes/Timer.class.php';
 
-function load(TriplesUtil $loader,$subject,Array $triples,Array &$errors,$collectionName,$dbName)
+function load(TriplesUtil $loader,$subject,Array $triples,Array &$errors,$collectionName,$configSpec)
 {
     try
     {
-        $loader->loadTriplesAbout($subject,$triples,$dbName,$collectionName);
+        $loader->loadTriplesAbout($subject,$triples,$configSpec,$collectionName);
     }
     catch (Exception $e)
     {
@@ -24,23 +24,41 @@ function load(TriplesUtil $loader,$subject,Array $triples,Array &$errors,$collec
 
 $timer = new Timer();
 $timer->start();
-
-if ($argc!=4)
+$options = getopt("c:f:s:");
+if (!(isset($options['c']) && isset($options['f'])))
 {
-	echo "usage: ./loadTriples.php dbname collectionname tripodConfig.json < ntriplesdata\n";
+	echo "usage: ./loadTriples.php -c collectionname -f tripodConfig.json [-s configSpec] < ntriplesdata\n";
 	die();
 }
-array_shift($argv);
 
-$dbName = $argv[0];
-$collectionName = $argv[1];
-MongoTripodConfig::setConfig(json_decode(file_get_contents($argv[2]),true));
+$collectionName = $options['c'];
+$configSpec = (isset($options['s']) ? $options['s'] : MongoTripodConfig::DEFAULT_CONFIG_SPEC);
+$config = json_decode(file_get_contents($options['f']),true);
+
+// Rewrite single config model as configSpec
+$configKeys = array('namespaces', 'databases', 'defaultContext');
+if(count(array_intersect($configKeys, array_keys($config))) > 1)
+{
+    $config = array($configSpec=>$config);
+}
+
+if(isset($config[$configSpec]))
+{
+    foreach($config as $spec=>$cfg)
+    {
+        MongoTripodConfig::setConfig($cfg, $spec);
+    }
+}
+else
+{
+    throw new MongoTripodConfigException("ConfigSpec not defined in configuration document");
+}
 
 $i=0;
 $currentSubject = "";
 $triples = array();
 $errors = array(); // array of subjects that failed to insert, even after retry...
-$loader = new TriplesUtil();
+$loader = new TriplesUtil($configSpec);
 
 while (($line = fgets(STDIN)) !== false) {
     $i++;
@@ -61,7 +79,7 @@ while (($line = fgets(STDIN)) !== false) {
     }
     else if ($currentSubject!=$subject) // once subject changes, we have all triples for that subject, flush to Mongo
     {
-        load($loader,$currentSubject,$triples,$errors,$collectionName,$dbName);
+        load($loader,$currentSubject,$triples,$errors,$collectionName,$configSpec);
         $currentSubject=$subject; // reset current subject to next subject
         $triples = array(); // reset triples
     }
@@ -69,7 +87,7 @@ while (($line = fgets(STDIN)) !== false) {
 }
 
 // last doc
-load($loader,$currentSubject,$triples,$errors,$collectionName,$dbName);
+load($loader,$currentSubject,$triples,$errors,$collectionName,$configSpec);
 
 $timer->stop();
 print "This script ran in ".$timer->result()." milliseconds\n";

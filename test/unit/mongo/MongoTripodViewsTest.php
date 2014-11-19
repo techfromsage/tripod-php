@@ -11,6 +11,12 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
     protected $tripodViews = null;
 
     private $viewsConstParams = null;
+
+    /**
+     * @var string
+     */
+    private $viewType;
+    
     protected function setUp()
     {
         parent::setup();
@@ -22,7 +28,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $this->tripod = $this->getMock(
             'MongoTripod',
             array('addToSearchIndexQueue'),
-            array('CBD_testing','testing',
+            array('CBD_testing',
                 array(
                     "defaultContext"=>"http://talisaspire.com/",
                     "async"=>array(OP_VIEWS=>true)
@@ -34,11 +40,13 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $this->tripod->collection->drop();
         $this->tripod->setTransactionLog($this->tripodTransactionLog);
 
-        $this->tripodViews = new MongoTripodViews($this->tripod->db,$this->tripod->collection,'http://talisaspire.com/');
+        $this->tripodViews = new MongoTripodViews($this->tripod->collection,'http://talisaspire.com/');
+        foreach(MongoTripodConfig::getInstance()->getCollectionsForViews() as $collection)
+        {
+            $collection->drop();
+        }
 
-        $this->tripod->db->selectCollection(VIEWS_COLLECTION)->drop();
-
-        $this->viewsConstParams = array($this->tripod->db,$this->tripod->collection,'http://talisaspire.com/');
+        $this->viewsConstParams = array($this->tripod->collection,'http://talisaspire.com/');
 
         // load base data
         $this->loadBaseDataViaTripod();
@@ -90,8 +98,16 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         );
         // get the view direct from mongo
 //        $result = $this->tripod->getViewForResource("http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA","v_resource_full");
-        $mongo = new MongoClient(MongoTripodConfig::getInstance()->getConnStr('testing'));
-        $actualView = $mongo->selectCollection('testing','views')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA',"c"=>'http://talisaspire.com/',"type"=>'v_resource_full')));
+
+        $collection = MongoTripodConfig::getInstance()->getCollectionForView('v_resource_full');
+        $actualView = $collection->findOne(
+            array(
+                '_id'=>array(
+                    "r"=>'http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA',
+                    "c"=>'http://talisaspire.com/',
+                    "type"=>'v_resource_full')
+            )
+        );
         $this->assertEquals($expectedView,$actualView);
     }
 
@@ -137,8 +153,16 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             )
         );
         // get the view direct from mongo
-        $mongo = new MongoClient(MongoTripodConfig::getInstance()->getConnStr('testing'));
-        $actualView = $mongo->selectCollection('testing','views')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA',"c"=>'http://talisaspire.com/',"type"=>'v_resource_full_ttl')));
+        $collection = MongoTripodConfig::getInstance()->getCollectionForView('v_resource_full_ttl');
+        $actualView = $collection->findOne(
+            array(
+                '_id'=>array(
+                    "r"=>'http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA',
+                    "c"=>'http://talisaspire.com/',
+                    "type"=>'v_resource_full_ttl'
+                )
+            )
+        );
         $this->assertEquals($expectedView,$actualView);
     }
 
@@ -242,8 +266,13 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
                 _EXPIRES=>$expiryDate
             )
         );
-        $mongo = new MongoClient(MongoTripodConfig::getInstance()->getConnStr('testing'));
-        $actualView = $mongo->selectCollection('testing','views')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/works/4d101f63c10a6',"c"=>"http://talisaspire.com/","type"=>'v_counts')));
+
+        $actualView = MongoTripodConfig::getInstance()->getCollectionForView("v_counts")
+            ->findOne(array('_id'=>array(
+                "r"=>'http://talisaspire.com/works/4d101f63c10a6',
+                "c"=>"http://talisaspire.com/",
+                "type"=>'v_counts')
+            ));
 //        var_dump($actualView); die;
 //        var_dump($expectedView);
         $this->assertEquals($expectedView,$actualView);
@@ -296,8 +325,12 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
     {
         $uri1 = "http://uri1";
         $uri2 = "http://uri2";
-
-        $viewType = "someView";
+        $config = MongoTripodConfig::getInstance();
+        // Just get a view name
+        $viewSpecs = $config->getViewSpecifications();
+        $specIds = array_keys($viewSpecs);
+        // Just get a view name
+        $viewType = array_shift($specIds);
         $context = "http://someContext";
 
         $query = array(
@@ -312,20 +345,22 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $returnedGraph = new ExtendedGraph();
         $returnedGraph->add_literal_triple($uri1,'http://somepred','someval');
 
-        $mockDb = $this->getMock("MongoDB", array("selectCollection"),array(new MongoClient(),"test"));
-        $mockColl = $this->getMock("MongoCollection", array("findOne"),array($mockDb,$this->tripod->collection->getName()));
+        $mockDb = $this->getMock("MongoDB", array("selectCollection"),array(new MongoClient(),"testing"));
+        $mockColl = $this->getMock("MongoCollection", array("findOne"),array($mockDb,'CBD_testing'));
 
-        $mockDb->expects($this->once())->method("selectCollection")->will($this->returnValue($mockColl));
-        $mockColl->expects($this->once())->method("findOne")->will($this->returnValue(null));
 
         /* @var $mockTripodViews MongoTripodViews */
-        $mockTripodViews = $this->getMock('MongoTripodViews', array('generateView','fetchGraph'), array($mockDb,$mockColl,$context));
+        $mockTripodViews = $this->getMock('MongoTripodViews',
+            array('generateView','fetchGraph'),
+            array($mockColl,$context)
+        );
         $mockTripodViews->expects($this->never())
             ->method('generateView');
 
-        $mockTripodViews->expects($this->once())
+        $viewColl = MongoTripodConfig::getInstance()->getCollectionForView($viewType);
+        $mockTripodViews->expects($this->atLeastOnce())
             ->method("fetchGraph")
-            ->with($query,MONGO_VIEW,VIEWS_COLLECTION, null, 101)
+            ->with($query,MONGO_VIEW,$viewColl, null, 101)
             ->will($this->returnValue($returnedGraph));
 
         $resultGraph = $mockTripodViews->getViewForResources(array($uri1,$uri2),$viewType,$context);
@@ -338,27 +373,43 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $uri1 = "http://uri1";
         $uri2 = "http://uri2";
 
-        $viewType = "someView";
+        $config = MongoTripodConfig::getInstance();
+        $viewSpecs = $config->getViewSpecifications();
+        $specIds = array_keys($viewSpecs);
+        // Just get a view name
+        $this->viewType = array_shift($specIds);
         $context = "http://someContext";
 
         $mockDb = $this->getMock("MongoDB", array("selectCollection"),array(new MongoClient(),"test"));
-        $mockColl = $this->getMock("MongoCollection", array("findOne"),array($mockDb,$this->tripod->collection->getName()));
-
-        $mockDb->expects($this->once())->method("selectCollection")->will($this->returnValue($mockColl));
+        $mockColl = $this->getMock("MongoCollection", array("findOne"),array($mockDb,'CBD_testing'));
         $mockColl->expects($this->once())->method("findOne")->will($this->returnValue(array("_id"=>$uri1))); // the actual returned doc is not important, it just has to not be null
+        $mockConfig = $this->getMock('MongoTripodTestConfig', array('getCollectionForCBD'), array(MongoTripodConfig::getConfig()));
+        $mockConfig->expects($this->atLeastOnce())
+            ->method(('getCollectionForCBD'))
+            ->with('CBD_testing')
+            ->will($this->returnValue($mockColl));
 
         /* @var $mockTripodViews MongoTripodViews */
-        $mockTripodViews = $this->getMock('MongoTripodViews', array('generateView','fetchGraph'), array($mockDb,$mockColl,$context));
+        $mockTripodViews = $this->getMock('MongoTripodViews',
+            array('generateView','fetchGraph', 'getMongoTripodConfigInstance'),
+            array($mockColl,$context)
+        );
         $mockTripodViews->expects($this->once())
             ->method('generateView')
-            ->with($viewType,$uri2,$context)
+            ->with($this->viewType,$uri2,$context)
             ->will($this->returnValue(array("ok"=>true)));
 
         $mockTripodViews->expects($this->exactly(2))
             ->method("fetchGraph")
-            ->will($this->returnCallback(array($this, 'fetchGraphInGetViewForResourcesCallback')));
+            ->will(
+                $this->returnCallback(array($this, 'fetchGraphInGetViewForResourcesCallback'))
+            );
 
-        $resultGraph = $mockTripodViews->getViewForResources(array($uri1,$uri2),$viewType,$context);
+        $mockTripodViews->expects($this->atLeastOnce())
+            ->method('getMongoTripodConfigInstance')
+            ->will($this->returnValue($mockConfig));
+
+        $resultGraph = $mockTripodViews->getViewForResources(array($uri1,$uri2),$this->viewType,$context);
 
         $expectedGraph = new ExtendedGraph();
         $expectedGraph->add_literal_triple($uri1,'http://somepred','someval');
@@ -372,11 +423,10 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $uri1 = "http://uri1";
         $uri2 = "http://uri2";
 
-        $viewType = "someView";
         $context = "http://someContext";
 
-        $query1 = array("_id"=>array('$in'=>array(array("r"=>$uri1,"c"=>$context,"type"=>$viewType),array("r"=>$uri2,"c"=>$context,"type"=>$viewType))));
-        $query2 = array("_id"=>array('$in'=>array(array("r"=>$uri2,"c"=>$context,"type"=>$viewType))));
+        $query1 = array("_id"=>array('$in'=>array(array("r"=>$uri1,"c"=>$context,"type"=>$this->viewType),array("r"=>$uri2,"c"=>$context,"type"=>$this->viewType))));
+        $query2 = array("_id"=>array('$in'=>array(array("r"=>$uri2,"c"=>$context,"type"=>$this->viewType))));
 
         $returnedGraph1 = new ExtendedGraph();
         $returnedGraph1->add_literal_triple($uri1,'http://somepred','someval');
@@ -384,7 +434,8 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $returnedGraph2 = new ExtendedGraph();
         $returnedGraph2->add_literal_triple($uri2,'http://somepred','someval');
 
-        $args = func_get_args();
+        $args = func_get_args();    
+
         if($args[0]==$query1){
             return $returnedGraph1;
         }

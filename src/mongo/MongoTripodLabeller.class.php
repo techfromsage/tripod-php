@@ -5,7 +5,7 @@ require_once TRIPOD_DIR.'exceptions/TripodLabellerException.class.php';
 
 class MongoTripodLabeller extends Labeller {
 
-    function __construct()
+    function __construct($configSpec = MongoTripodConfig::DEFAULT_CONFIG_SPEC)
     {
         // only default minimal ns - make app define the rest
         $this->_ns = array(
@@ -14,7 +14,7 @@ class MongoTripodLabeller extends Labeller {
             'owl' => 'http://www.w3.org/2002/07/owl#',
             'cs' => 'http://purl.org/vocab/changeset/schema#',
         );
-        $config = MongoTripodConfig::getInstance();
+        $config = MongoTripodConfig::getInstance($configSpec);
         $ns = $config->getNamespaces();
         foreach ($ns as $prefix=>$uri)
         {

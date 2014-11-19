@@ -10,15 +10,15 @@ require_once 'classes/Timer.class.php';
 require_once 'mongo/MongoTripodConfig.class.php';
 require_once 'mongo/MongoTripod.class.php';
 
-function generateTables($id, $tableId,$dbName)
+function generateTables($id, $tableId, $configSpec)
 {
-    $tableSpec = MongoTripodConfig::getInstance()->getTableSpecification($tableId);
+    $tableSpec = MongoTripodConfig::getInstance($configSpec)->getTableSpecification($tableId);
     if (array_key_exists("from",$tableSpec))
     {
         MongoCursor::$timeout = -1;
 
         print "Generating $tableId";
-        $tripod = new MongoTripod($tableSpec['from'], $dbName);
+        $tripod = new MongoTripod($tableSpec['from'], array('configSpec'=>$configSpec));
         $tTables = $tripod->getTripodTables();//new MongoTripodTables($tripod->db,$tripod->collection,$tripod->defaultContext);
         if ($id)
         {
@@ -35,26 +35,45 @@ function generateTables($id, $tableId,$dbName)
 
 $t = new Timer();
 $t->start();
-
-if ($argc!=3 && $argc!=4 && $argc!=5)
+$options = getopt('c:s:t:i:');
+if (!isset($options['c']))
 {
-    echo "usage: ./createTables.php tripodConfig.json dbName [tableId] [_id]\n";
+    echo "usage: ./createTables.php -c tripodConfig.json [-s configSpec] [-t tableId] [-i _id]\n";
     die();
 }
-array_shift($argv);
+$configSpec = (isset($options['s']) ? $options['s'] : MongoTripodConfig::DEFAULT_CONFIG_SPEC);
+$config = json_decode(file_get_contents($options['c']),true);
 
-MongoTripodConfig::setConfig(json_decode(file_get_contents($argv[0]),true));
-$tableId = (empty($argv[2])) ? null: $argv[2];
-$id = (empty($argv[3])) ? null: $argv[3];
-if ($tableId)
+// Rewrite single config model as configSpec
+$configKeys = array('namespaces', 'databases', 'defaultContext');
+if(count(array_intersect($configKeys, array_keys($config))) > 1)
 {
-    generateTables($id, $tableId, $argv[1]);
+    $config = array($configSpec=>$config);
+}
+
+if(isset($config[$configSpec]))
+{
+    foreach($config as $spec=>$cfg)
+    {
+        MongoTripodConfig::setConfig($cfg, $spec);
+    }
 }
 else
 {
-    foreach(MongoTripodConfig::getInstance()->getTableSpecifications() as $tableSpec)
+    throw new MongoTripodConfigException("ConfigSpec not defined in configuration document");
+}
+
+$tableId = (isset($options['t']) ? $options['v'] : null);
+$id = (isset($options['i']) ? $options['i'] : null);
+if ($tableId)
+{
+    generateTables($id, $tableId, $configSpec);
+}
+else
+{
+    foreach(MongoTripodConfig::getInstance($configSpec)->getTableSpecifications() as $tableSpec)
     {
-        generateTables($id, $tableSpec['_id'], $argv[1]);
+        generateTables($id, $tableSpec['_id'], $configSpec);
     }
 }
 

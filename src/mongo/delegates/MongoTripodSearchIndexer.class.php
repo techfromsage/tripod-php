@@ -21,11 +21,13 @@ class MongoTripodSearchIndexer extends MongoTripodBase implements SplObserver
     public function __construct(MongoTripod $tripod)
     {
         $this->tripod = $tripod;
-        $this->labeller = new MongoTripodLabeller();
+        $this->configSpec = $this->tripod->getConfigSpec();
+        $this->labeller = new MongoTripodLabeller($this->configSpec);
         $this->stat = $tripod->getStat();
 
-        $provider = MongoTripodConfig::getInstance()->getSearchProviderClassName();
+        $this->config = $this->getMongoTripodConfigInstance();
 
+        $provider = $this->config->getSearchProviderClassName();
         if(class_exists($provider)){
             $this->configuredProvider = new $provider($this->tripod);
         } else {
@@ -71,10 +73,9 @@ class MongoTripodSearchIndexer extends MongoTripodBase implements SplObserver
      */
     public function generateAndIndexSearchDocuments($resourceUri, $context, $collectionName, $specType = null)
     {
-        $mongoDb            = $this->tripod->db;
-        $mongoCollection    = $mongoDb->selectCollection($collectionName);
+        $mongoCollection = $this->config->getCollectionForCBD($collectionName);
 
-        $searchDocGenerator = $this->getSearchDocumentGenerator($mongoDb, $mongoCollection, $context);
+        $searchDocGenerator = $this->getSearchDocumentGenerator($mongoCollection, $context);
         $searchProvider = $this->getSearchProvider();
 
         //1. remove all search documents for this resource
@@ -82,25 +83,6 @@ class MongoTripodSearchIndexer extends MongoTripodBase implements SplObserver
 
         //2. find all impacted documents and regenerate them
         $documentsToIndex   = array();
-//        $documentsToDelete  = array();
-
-//        foreach($searchProvider->findImpactedDocuments($resourceUri, $context) as $impactedDocument){
-//            $doc = $searchDocGenerator->generateSearchDocumentBasedOnSpecId(
-//                $impactedDocument['_id']['type'],
-//                $impactedDocument['_id']['r'],
-//                $impactedDocument['_id']['c']
-//            );
-//
-//            if(empty($doc)){
-//                $documentsToDelete[] =  array(
-//                    'r'=>$impactedDocument['_id']['r'],
-//                    'c'=>$impactedDocument['_id']['c'],
-//                    'type'=>$impactedDocument['_id']['type']
-//                );
-//            } else {
-//                $documentsToIndex[] = $doc;
-//            }
-//        }
 
         //3. regenerate search documents for this resource
         // first work out what its type is
@@ -170,14 +152,13 @@ class MongoTripodSearchIndexer extends MongoTripodBase implements SplObserver
     }
 
     /**
-     * @param $db
-     * @param $collection
-     * @param $context
+     * @param MongoCollection $collection
+     * @param string $context
      * @return MongoTripodSearchDocuments
      */
-    protected function getSearchDocumentGenerator( $db, $collection, $context )
+    protected function getSearchDocumentGenerator($collection, $context)
     {
-        return new MongoTripodSearchDocuments($db, $collection, $context, $this->tripod->getStat());
+        return new MongoTripodSearchDocuments($collection, $context, $this->tripod->getStat(), $this->configSpec);
     }
 
     protected function deDupe(Array $input)

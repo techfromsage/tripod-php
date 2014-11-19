@@ -70,11 +70,11 @@ class MongoTripod extends MongoTripodBase implements ITripod
      */
     private $dataUpdater;
 
+
     /**
      * Constructor for MongoTripod
      *
      * @param string $collectionName
-     * @param string $dbName
      * @param array $opts an Array of options: <ul>
      * <li>defaultContext: (string) to use where a specific default context is not defined. Default is Null</li>
      * <li>async: (array) determines the async behaviour of views, tables and search. For each of these array keys, if set to true, generation of these elements will be done asyncronously on save. Default is array(OP_VIEWS=>false,OP_TABLES=>true,OP_SEARCH=>true)</li>
@@ -82,14 +82,15 @@ class MongoTripod extends MongoTripodBase implements ITripod
      * <li>readPreference: The Read preference to set for Mongo: Default is Mongo:RP_PRIMARY_PREFERRED</li>
      * <li>retriesToGetLock: Retries to do when unable to get lock on a document, default is 20</li></ul>
      * @throws Exception
+     * @internal param string $dbName
      */
     public function __construct(
         $collectionName=MONGO_MAIN_COLLECTION,
-        $dbName=MONGO_MAIN_DB,
         $opts=array()
     )
     {
         $opts = array_merge(array(
+                'configSpec'=>MongoTripodConfig::DEFAULT_CONFIG_SPEC,
                 'defaultContext'=>null,
                 OP_ASYNC=>array(OP_VIEWS=>false,OP_TABLES=>true,OP_SEARCH=>true),
                 'stat'=>null,
@@ -97,9 +98,10 @@ class MongoTripod extends MongoTripodBase implements ITripod
                 'retriesToGetLock' => 20)
             ,$opts);
         $this->collectionName = $collectionName;
-        $this->dbName = $dbName;
-
+        $this->configSpec = $opts['configSpec'];
         $this->config = $this->getMongoTripodConfigInstance();
+
+        $this->dbName = $this->config->getDatabaseNameForCollectionName($collectionName);
 
         $this->labeller = $this->getLabeller();
 
@@ -110,23 +112,11 @@ class MongoTripod extends MongoTripodBase implements ITripod
         $this->retriesToGetLock = $opts['retriesToGetLock'];
 
         // connect
-        /* @var $m MongoClient */
-        $connectionOptions = array('connectTimeoutMS'=>20000); // set a 20 second timeout on establishing a connection
-        if($this->config->isReplicaSet($dbName)) {
-            $connectionOptions['replicaSet'] = $this->config->getReplicaSetName($dbName);
-        }
         try {
-            $m = new MongoClient($this->config->getConnStr($dbName), $connectionOptions);
+            $this->collection = $this->config->getCollectionForCBD($collectionName, $opts['readPreference']);
         } catch (Exception $e) {
             $this->getStat()->increment(MONGO_CONNECTION_ERROR);
             throw $e;
-        }
-        $m->setReadPreference($opts['readPreference']);
-        // select a database
-        $this->db = $m->selectDB($dbName);
-        if (!empty($collectionName))
-        {
-            $this->collection = $this->db->selectCollection($collectionName);
         }
 
         // fill in and default any missing keys for $async array
@@ -192,6 +182,11 @@ class MongoTripod extends MongoTripodBase implements ITripod
         return $this->fetchGraph($query,MONGO_MULTIDESCRIBE);
     }
 
+    /**
+     * @param string $resource
+     * @param string $viewType
+     * @return MongoGraph
+     */
     public function getViewForResource($resource, $viewType)
     {
         return $this->getTripodViews()->getViewForResource($resource,$viewType);
@@ -333,7 +328,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
             $id['query'] = $query;
             $id['groupBy'] = $groupBy;
             $this->debugLog("Looking in cache",array("id"=>$id));
-            $candidate = $this->db->selectCollection(TTL_CACHE_COLLECTION)->findOne(array("_id"=>$id));
+            $candidate = $this->config->getCollectionForTTLCache()->findOne(array("_id"=>$id));
             if (!empty($candidate))
             {
                 $this->debugLog("Found candidate",array("candidate"=>$candidate));
@@ -375,7 +370,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
                 $cachedResults['results'] = $results;
                 $cachedResults['created'] = new MongoDate();
                 $this->debugLog("Adding result to cache",$cachedResults);
-                $this->db->selectCollection(TTL_CACHE_COLLECTION)->insert($cachedResults);
+                $this->config->getCollectionForTTLCache()->insert($cachedResults);
             }
         }
 
@@ -523,7 +518,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
     }
 
     /**
-     * Retuns the eTag of the $resource, useful for cache control or optimistic concurrency control
+     * Returns the eTag of the $resource, useful for cache control or optimistic concurrency control
      * @param $resource
      * @param null $context
      * @return string
@@ -550,10 +545,10 @@ class MongoTripod extends MongoTripodBase implements ITripod
         if($this->tripod_views==null)
         {
             $this->tripod_views = new MongoTripodViews(
-                $this->db,
                 $this->collection,
                 $this->defaultContext,
-                $this->stat
+                $this->stat,
+                $this->configSpec
             );
         }
         return $this->tripod_views;
@@ -567,10 +562,10 @@ class MongoTripod extends MongoTripodBase implements ITripod
         if ($this->tripod_tables==null)
         {
             $this->tripod_tables = new MongoTripodTables(
-                $this->db,
                 $this->collection,
                 $this->defaultContext,
-                $this->stat
+                $this->stat,
+                $this->configSpec
             );
         }
         return $this->tripod_tables;
@@ -609,16 +604,6 @@ class MongoTripod extends MongoTripodBase implements ITripod
     }
 
     /**
-     * For mocking
-     * @return MongoTripodConfig
-     */
-    protected function getMongoTripodConfigInstance()
-    {
-        return MongoTripodConfig::getInstance();
-    }
-
-
-    /**
      * Returns the correct observer as per the supported operation
      * @param $operation string must be either views, tables or search
      * @return SplObserver
@@ -645,7 +630,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
      */
     protected function getLabeller()
     {
-        return new MongoTripodLabeller();
+        return new MongoTripodLabeller($this->configSpec);
     }
 
     /**
@@ -655,17 +640,28 @@ class MongoTripod extends MongoTripodBase implements ITripod
      */
     protected function getDataUpdater()
     {
+        $rp = $this->collection->getReadPreference();
+        if(is_array($rp) && isset($rp['type']))
+        {
+            $readPreference = $rp['type'];
+        }
+
+        if(empty($rp))
+        {
+            $readPreference = MongoClient::RP_PRIMARY_PREFERRED;
+        }
+
         if(!isset($this->dataUpdater))
         {
             $opts = array(
                 'defaultContext'=>$this->defaultContext,
                 OP_ASYNC=>$this->async,
                 'stat'=>$this->stat,
-                'readPreference'=>$this->collection->getReadPreference(),
+                'readPreference'=>$readPreference,
                 'retriesToGetLock' => $this->retriesToGetLock
             );
 
-            $this->dataUpdater = new MongoTripodUpdates($this, $opts);
+            $this->dataUpdater = new MongoTripodUpdates($this, $this->collectionName, $opts);
         }
         return $this->dataUpdater;
     }

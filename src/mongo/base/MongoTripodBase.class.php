@@ -10,7 +10,7 @@ abstract class MongoTripodBase
     /**
      * @var MongoDB
      */
-    public $db;
+    protected $db;
 
     /**
      * @var MongoCollection
@@ -25,6 +25,14 @@ abstract class MongoTripodBase
     protected $stat = null;
 
     /**
+     * @return string
+     */
+    public function getConfigSpec()
+    {
+        return $this->configSpec;
+    }
+
+    /**
      * @return ITripodStat
      */
     public function getStat()
@@ -36,6 +44,12 @@ abstract class MongoTripodBase
      * @var MongoTripodLabeller
      */
     protected $labeller;
+
+
+    /**
+     * @var string
+     */
+    protected $configSpec;
 
     /**
      * @var MongoTripodConfig
@@ -50,32 +64,32 @@ abstract class MongoTripodBase
     protected function getContextAlias($context=null)
     {
         $contextAlias = $this->labeller->uri_to_alias((empty($context)) ? $this->defaultContext : $context);
-        return (empty($contextAlias)) ? MongoTripodConfig::getInstance()->getDefaultContextAlias() : $contextAlias;
+        return (empty($contextAlias)) ? $this->getMongoTripodConfigInstance()->getDefaultContextAlias() : $contextAlias;
     }
 
     /**
      * @param $query
      * @param $type
-     * @param null $collectionName
+     * @param MongoCollection|null $collection
      * @param array $includeProperties
      * @param int $cursorSize
      * @return MongoGraph
      */
-    protected function fetchGraph($query, $type, $collectionName=null,$includeProperties=array(), $cursorSize=101)
+    protected function fetchGraph($query, $type, $collection=null,$includeProperties=array(), $cursorSize=101)
     {
-        $graph = new MongoGraph();
+        $graph = new MongoGraph($this->configSpec);
 
         $t = new Timer();
         $t->start();
 
-        if ($collectionName==null)
+        if ($collection==null)
         {
             $collection = $this->collection;
             $collectionName = $collection->getName();
         }
         else
         {
-            $collection = $this->db->selectCollection($collectionName);
+            $collectionName = $collection->getName();
         }
 
         if (empty($includeProperties))
@@ -281,6 +295,19 @@ abstract class MongoTripodBase
                 $this->addIdToImpactIndex($i, $target);
             }
         }
+    }
+
+    /**
+     * For mocking
+     * @return MongoTripodConfig
+     */
+    protected function getMongoTripodConfigInstance()
+    {
+        if(!isset($this->config))
+        {
+            $this->config = MongoTripodConfig::getInstance($this->configSpec);
+        }
+        return $this->config;
     }
 }
 

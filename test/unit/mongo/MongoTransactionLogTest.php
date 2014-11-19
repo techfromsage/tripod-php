@@ -22,13 +22,13 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         //Mongo::setPoolSize(200);
 
         // Stub ouf 'addToElastic' search to prevent writes into Elastic Search happening by default.
-        $this->tripod = $this->getMock('MongoTripod', array('addToSearchIndexQueue'), array('CBD_testing','testing'));
+        $this->tripod = $this->getMock('MongoTripod', array('addToSearchIndexQueue'), array('CBD_testing'));
         $this->tripod->expects($this->any())->method('addToSearchIndexQueue');
 
         $this->tripod->collection->drop();
 
         // Lock collection no longer available from MongoTripod, so drop it manually
-        $this->tripod->db->selectCollection(LOCKS_COLLECTION)->drop();
+        MongoTripodConfig::getInstance()->getCollectionForLocks()->drop();
 
         $this->loadBaseDataViaTripod();
 
@@ -427,7 +427,7 @@ class MongoTransactionLogTest extends MongoTripodTestBase
                 )
             ),
             'collectionName' => 'CBD_testing',
-            'dbName' => 'testing',
+            'dbName' => 'tripod_php_testing',
             'startTime' => new MongoDate(strtotime($startTime)),
             'endTime' => new MongoDate(strtotime($endTime)),
             'status' => 'completed',
@@ -455,8 +455,8 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         $g->add_resource_triple($uri, $g->qname_to_uri("rdf:type"), $g->qname_to_uri("acorn:Resource"));
         $g->add_literal_triple($uri, $g->qname_to_uri("dct:title"), "wibble");
 
-        $mTripod = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing', 'testing'));
-        $mTripodUpdate = $this->getMock('MongoTripodUpdates', array('getUniqId'), array($mTripod));
+        $mTripod = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing'));
+        $mTripodUpdate = $this->getMock('MongoTripodUpdates', array('getUniqId'), array($mTripod, 'CBD_testing'));
 
         $mTripodUpdate->expects($this->atLeastOnce())
             ->method('getUniqId')
@@ -485,8 +485,12 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         // STEP 2
         // update the same entity with an addition
         $mTripod = null;
-        $mTripod = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing', 'testing'));
-        $mTripodUpdate = $this->getMock('MongoTripodUpdates', array('getUniqId'), array($mTripod));
+        $mTripod = $this->getMock('MongoTripod', array('getDataUpdater'),
+            array('CBD_testing')
+        );
+        $mTripodUpdate = $this->getMock('MongoTripodUpdates', array('getUniqId'),
+            array($mTripod, 'CBD_testing')
+        );
 
         $mTripodUpdate->expects($this->atLeastOnce())
             ->method('getUniqId')
@@ -531,8 +535,13 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         // STEP 3
         // update the same entity with a removal
         $mTripod = null;
-        $mTripod = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing', 'testing'));
-        $mTripodUpdate = $this->getMock('MongoTripodUpdates', array('getUniqId'), array($mTripod));
+        $mTripod = $this->getMock('MongoTripod', array('getDataUpdater'),
+            array('CBD_testing')
+        );
+        $mTripodUpdate = $this->getMock('MongoTripodUpdates',
+            array('getUniqId'),
+            array($mTripod, 'CBD_testing')
+        );
 
         $mTripodUpdate->expects($this->atLeastOnce())
             ->method('getUniqId')
@@ -580,8 +589,8 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         $g = new MongoGraph();
         $g->add_resource_triple($uri, $g->qname_to_uri("rdf:type"), $g->qname_to_uri("acorn:Resource"));
         $g->add_literal_triple($uri, $g->qname_to_uri("dct:title"), "wibble");
-        $mTripod = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing', 'testing'));
-        $mTripodUpdate = $this->getMock('MongoTripodUpdates', array('getUniqId'), array($mTripod));
+        $mTripod = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing'));
+        $mTripodUpdate = $this->getMock('MongoTripodUpdates', array('getUniqId'), array($mTripod, 'CBD_testing'));
 
         $mTripodUpdate->expects($this->atLeastOnce())
             ->method('getUniqId')
@@ -597,8 +606,11 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         // now attempt to update the entity but throw an exception in applyChangeset
         // this should cause the save to fail, and this should be reflected in the transaction log
         $mTripod = null;
-        $mTripod = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing', 'testing'));
-        $mTripodUpdate = $this->getMock('MongoTripodUpdates', array('getUniqId', 'applyChangeSet'), array($mTripod));
+        $mTripod = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing'));
+        $mTripodUpdate = $this->getMock('MongoTripodUpdates',
+            array('getUniqId', 'applyChangeSet'),
+            array($mTripod, 'CBD_testing')
+        );
 
         $mTripodUpdate->expects($this->atLeastOnce())
             ->method('getUniqId')
@@ -660,12 +672,16 @@ class MongoTransactionLogTest extends MongoTripodTestBase
     public function testTransactionsLoggedCorrectlyFromMultipleTripods()
     {
         // Create two tripods onto different collection/dbname and make them use the same transaction log
-        $tripod1 = $this->getMock('MongoTripod', array('generateViewsAndSearchDocumentsForResources'), array('CBD_testing','testing'));
+        $tripod1 = $this->getMock('MongoTripod',
+            array('generateViewsAndSearchDocumentsForResources'),
+            array('CBD_testing')
+        );
         $tripod1->expects($this->any())->method('generateViewsAndSearchDocumentsForResources');
         $tripod1->collection->drop();
         $tripod1->setTransactionLog($this->tripodTransactionLog);
 
-        $tripod2 = $this->getMock('MongoTripod', array('generateViewsAndSearchDocumentsForResources'), array('CBD_testing_2','testing'));
+        $tripod2 = $this->getMock('MongoTripod', array('generateViewsAndSearchDocumentsForResources'),
+            array('CBD_testing_2'));
         $tripod2->expects($this->any())->method('generateViewsAndSearchDocumentsForResources');
         $tripod2->collection->drop();
         $tripod2->setTransactionLog($this->tripodTransactionLog);
@@ -680,8 +696,8 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         $tripod2->saveChanges(new ExtendedGraph(), $g, 'http://talisaspire.com/');
 
         // assert the document is in both collections
-        $this->assertDocumentVersion(array("r"=>$uri,"c"=>"http://talisaspire.com/"), 0, true, $tripod1);
-        $this->assertDocumentVersion(array("r"=>$uri,"c"=>"http://talisaspire.com/"), 0, true, $tripod2);
+        $this->assertDocumentVersion(array("r"=>$uri,"c"=>"http://talisaspire.com/"), 0, true, $tripod1->collection);
+        $this->assertDocumentVersion(array("r"=>$uri,"c"=>"http://talisaspire.com/"), 0, true, $tripod2->collection);
 
         // assert the transaction log contains two transactions
         $this->assertEquals(2, $this->tripodTransactionLog->getTotalTransactionCount());
@@ -694,8 +710,8 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         $tripod1->saveChanges($oG,$nG,'http://talisaspire.com/');
 
         // assert the documents and transaction count
-        $this->assertDocumentVersion(array("r"=>$uri,"c"=>"http://talisaspire.com/"), 1, true, $tripod1);
-        $this->assertDocumentVersion(array("r"=>$uri,"c"=>"http://talisaspire.com/"), 0, true, $tripod2);
+        $this->assertDocumentVersion(array("r"=>$uri,"c"=>"http://talisaspire.com/"), 1, true, $tripod1->collection);
+        $this->assertDocumentVersion(array("r"=>$uri,"c"=>"http://talisaspire.com/"), 0, true, $tripod2->collection);
         $this->assertEquals(3, $this->tripodTransactionLog->getTotalTransactionCount());
     }
 

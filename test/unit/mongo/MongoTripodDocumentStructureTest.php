@@ -22,7 +22,7 @@ class MongoTripodDocumentStructureTest extends MongoTripodTestBase
         $this->tripodTransactionLog->purgeAllTransactions();
 
         // Stub ouf 'addToElastic' search to prevent writes into Elastic Search happening by default.
-        $this->tripod = $this->getMock('MongoTripod', array('addToSearchIndexQueue'), array('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/')));
+        $this->tripod = $this->getMock('MongoTripod', array('addToSearchIndexQueue'), array('CBD_testing',array('defaultContext'=>'http://talisaspire.com/')));
         $this->tripod->expects($this->any())->method('addToSearchIndexQueue');
 
         $this->tripod->collection->drop();

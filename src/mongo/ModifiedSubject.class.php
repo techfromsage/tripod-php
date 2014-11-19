@@ -75,7 +75,7 @@ class ModifiedSubject implements SplSubject
      * @return ModifiedSubject
      * @throws TripodException
      */
-    public static function create(Array $resourceId, Array $types, Array $operations, Array $specTypes, $dbName, $collectionName, $delete=false)
+    public static function create(Array $resourceId, Array $types, Array $operations, Array $specTypes, $configSpec, $collectionName, $delete=false)
     {
         if (!is_array($resourceId) || !array_key_exists(_ID_RESOURCE,$resourceId) || !array_key_exists(_ID_CONTEXT,$resourceId))
         {
@@ -85,7 +85,7 @@ class ModifiedSubject implements SplSubject
         $data = array(
             _ID_RESOURCE=>$resourceId[_ID_RESOURCE],
             _ID_CONTEXT=>$resourceId[_ID_CONTEXT],
-            "database"=>$dbName,
+            "configSpec"=>$configSpec,
             "collection"=>$collectionName,
             "operations"=>$operations
         );

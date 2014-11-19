@@ -27,7 +27,7 @@ class MongoTripodQueueTest extends MongoTripodTestBase
         $this->indexQueue = new MongoTripodQueue();
         $this->indexQueue->purgeQueue();
 
-        $this->tripod = new MongoTripod('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/'));
+        $this->tripod = new MongoTripod('CBD_testing',array('defaultContext'=>'http://talisaspire.com/'));
 
     }
 
@@ -36,12 +36,12 @@ class MongoTripodQueueTest extends MongoTripodTestBase
     public function testAddToIndexQueue()
     {
         // add item to queue
-        $this->indexQueue->addItem(ModifiedSubject::create(array('r'=>'http://example.com/1','c'=>'http://talisaspire.com/'), array('http://talisaspire.com/schema#Resource'), array(OP_TABLES,OP_SEARCH), array(), 'myDB', 'myCollection'));
+        $this->indexQueue->addItem(ModifiedSubject::create(array('r'=>'http://example.com/1','c'=>'http://talisaspire.com/'), array('http://talisaspire.com/schema#Resource'), array(OP_TABLES,OP_SEARCH), array(), 'WibbleSpec', 'myCollection'));
 
         // retrieve it and assert properties
         $data = $this->indexQueue->fetchNextQueuedItem()->getData();
 
-        $this->assertEquals('myDB', $data['database']);
+        $this->assertEquals('WibbleSpec', $data['configSpec']);
         $this->assertEquals('myCollection', $data['collection']);
         $this->assertEquals('http://example.com/1', $data['r']);
         $this->assertEquals(array('http://talisaspire.com/schema#Resource'), $data['rdf:type']);
@@ -98,10 +98,10 @@ class MongoTripodQueueTest extends MongoTripodTestBase
         $mockQueue = $this->getMock('MongoTripodQueue', array('getUniqId'), array());
         $mockQueue->expects($this->any())->method('getUniqId')->will($this->returnValue($itemId));
 
-        $mockQueue->addItem(ModifiedSubject::create(array('r'=>'http://example.com/test','c'=>'http://talisaspire.com/'), array('http://talisaspire.com/schema#Resource'), array(OP_TABLES,OP_SEARCH), array(), 'myDB', 'myCollection'));
+        $mockQueue->addItem(ModifiedSubject::create(array('r'=>'http://example.com/test','c'=>'http://talisaspire.com/'), array('http://talisaspire.com/schema#Resource'), array(OP_TABLES,OP_SEARCH), array(), 'mySpec', 'myCollection'));
         $item = $mockQueue->getItem($itemId);
 
-        $this->assertEquals('myDB', $item['database']);
+        $this->assertEquals('mySpec', $item['configSpec']);
         $this->assertEquals('myCollection', $item['collection']);
         $this->assertEquals('http://example.com/test', $item['r']);
         $this->assertEquals(array('http://talisaspire.com/schema#Resource'), $item['rdf:type']);
@@ -112,7 +112,7 @@ class MongoTripodQueueTest extends MongoTripodTestBase
 
         $modifiedSubject = $mockQueue->fetchNextQueuedItem();
         $data=$modifiedSubject->getData();
-        $this->assertEquals('myDB', $data['database']);
+        $this->assertEquals('mySpec', $data['configSpec']);
         $this->assertEquals('myCollection', $data['collection']);
         $this->assertEquals('http://example.com/test', $data['r']);
         $this->assertEquals(array('http://talisaspire.com/schema#Resource'), $data['rdf:type']);
@@ -137,16 +137,16 @@ class MongoTripodQueueTest extends MongoTripodTestBase
             "_id"=>'blah',
             "r"=>"http://talisaspire.com/works/4d101f63c10a6",
             "c"=>'http://talisaspire.com/',
-            "database"=>'testing',
+            "configSpec"=>MongoTripodConfig::DEFAULT_CONFIG_SPEC,
             "collection"=>'CBD_testing',
             "operations"=>array(OP_VIEWS),
             "createdOn"=>new MongoDate()
         ));
 
         // mock tripod and observers
-        $mockTripod = $this->getMock("MongoTripod",array("getTripodTables","getSearchIndexer","getTripodViews"),array('CBD_testing', 'testing', array('defaultContext'=>'http://talisaspire.com/')));
-        $mockViews = $this->getMock("MongoTripodViews",array("update"),array($this->tripod->db,$this->tripod->collection,"http://talisaspire.com/"));
-        $mockTables = $this->getMock("MongoTripodTables",array("update"),array($this->tripod->db,$this->tripod->collection,"http://talisaspire.com/"));
+        $mockTripod = $this->getMock("MongoTripod",array("getTripodTables","getSearchIndexer","getTripodViews"),array('CBD_testing', array('defaultContext'=>'http://talisaspire.com/')));
+        $mockViews = $this->getMock("MongoTripodViews",array("update"),array($this->tripod->collection,"http://talisaspire.com/"));
+        $mockTables = $this->getMock("MongoTripodTables",array("update"),array($this->tripod->collection,"http://talisaspire.com/"));
         $mockSearchIndexer = $this->getMock("MongoTripodSearchIndexer",array("update"),array($this->tripod));
 
         // get tripod to return mock observers
@@ -173,16 +173,16 @@ class MongoTripodQueueTest extends MongoTripodTestBase
             "_id"=>'blah',
             "r"=>"http://talisaspire.com/works/4d101f63c10a6",
             "c"=>'http://talisaspire.com/',
-            "database"=>'testing',
+            "configSpec"=>MongoTripodConfig::DEFAULT_CONFIG_SPEC,
             "collection"=>'CBD_testing',
             "operations"=>array(OP_TABLES),
             "createdOn"=>new MongoDate()
         ));
 
         // mock tripod and observers
-        $mockTripod = $this->getMock("MongoTripod",array("getTripodTables","getSearchIndexer","getTripodViews"),array('CBD_testing', 'testing', array('defaultContext'=>'http://talisaspire.com/')));
-        $mockViews = $this->getMock("MongoTripodViews",array("update"),array($this->tripod->db,$this->tripod->collection,"http://talisaspire.com/"));
-        $mockTables = $this->getMock("MongoTripodTables",array("update"),array($this->tripod->db,$this->tripod->collection,"http://talisaspire.com/"));
+        $mockTripod = $this->getMock("MongoTripod",array("getTripodTables","getSearchIndexer","getTripodViews"),array('CBD_testing', array('defaultContext'=>'http://talisaspire.com/')));
+        $mockViews = $this->getMock("MongoTripodViews",array("update"),array($this->tripod->collection,"http://talisaspire.com/"));
+        $mockTables = $this->getMock("MongoTripodTables",array("update"),array($this->tripod->collection,"http://talisaspire.com/"));
         $mockSearchIndexer = $this->getMock("MongoTripodSearchIndexer",array("update"),array($this->tripod));
 
         // get tripod to return mock observers
@@ -209,16 +209,16 @@ class MongoTripodQueueTest extends MongoTripodTestBase
             "_id"=>'blah',
             "r"=>"http://talisaspire.com/works/4d101f63c10a6",
             "c"=>'http://talisaspire.com/',
-            "database"=>'testing',
+            "configSpec"=>MongoTripodConfig::DEFAULT_CONFIG_SPEC,
             "collection"=>'CBD_testing',
             "operations"=>array(OP_SEARCH),
             "createdOn"=>new MongoDate()
         ));
 
         // mock tripod and observers
-        $mockTripod = $this->getMock("MongoTripod",array("getTripodTables","getSearchIndexer","getTripodViews"),array('CBD_testing', 'testing', array('defaultContext'=>'http://talisaspire.com/')));
-        $mockViews = $this->getMock("MongoTripodViews",array("update"),array($this->tripod->db,$this->tripod->collection,"http://talisaspire.com/"));
-        $mockTables = $this->getMock("MongoTripodTables",array("update"),array($this->tripod->db,$this->tripod->collection,"http://talisaspire.com/"));
+        $mockTripod = $this->getMock("MongoTripod",array("getTripodTables","getSearchIndexer","getTripodViews"),array('CBD_testing', array('defaultContext'=>'http://talisaspire.com/')));
+        $mockViews = $this->getMock("MongoTripodViews",array("update"),array($this->tripod->collection,"http://talisaspire.com/"));
+        $mockTables = $this->getMock("MongoTripodTables",array("update"),array($this->tripod->collection,"http://talisaspire.com/"));
         $mockSearchIndexer = $this->getMock("MongoTripodSearchIndexer",array("update"),array($this->tripod));
 
         // get tripod to return mock observers
@@ -245,16 +245,16 @@ class MongoTripodQueueTest extends MongoTripodTestBase
             "_id"=>'blah',
             "r"=>"http://talisaspire.com/works/4d101f63c10a6",
             "c"=>'http://talisaspire.com/',
-            "database"=>'testing',
+            "configSpec"=>MongoTripodConfig::DEFAULT_CONFIG_SPEC,
             "collection"=>'CBD_testing',
             "operations"=>array(OP_SEARCH,OP_TABLES,OP_VIEWS),
             "createdOn"=>new MongoDate()
         ));
 
         // mock tripod and observers
-        $mockTripod = $this->getMock("MongoTripod",array("getTripodTables","getSearchIndexer","getTripodViews"),array('CBD_testing', 'testing', array('defaultContext'=>'http://talisaspire.com/')));
-        $mockViews = $this->getMock("MongoTripodViews",array("update"),array($this->tripod->db,$this->tripod->collection,"http://talisaspire.com/"));
-        $mockTables = $this->getMock("MongoTripodTables",array("update"),array($this->tripod->db,$this->tripod->collection,"http://talisaspire.com/"));
+        $mockTripod = $this->getMock("MongoTripod",array("getTripodTables","getSearchIndexer","getTripodViews"),array('CBD_testing', array('defaultContext'=>'http://talisaspire.com/')));
+        $mockViews = $this->getMock("MongoTripodViews",array("update"),array($this->tripod->collection,"http://talisaspire.com/"));
+        $mockTables = $this->getMock("MongoTripodTables",array("update"),array($this->tripod->collection,"http://talisaspire.com/"));
         $mockSearchIndexer = $this->getMock("MongoTripodSearchIndexer",array("update"),array($this->tripod));
 
         // get tripod to return mock observers
@@ -281,16 +281,16 @@ class MongoTripodQueueTest extends MongoTripodTestBase
             "_id"=>'blah',
             "r"=>"http://talisaspire.com/works/4d101f63c10a6",
             "c"=>'http://talisaspire.com/',
-            "database"=>'testing',
+            "configSpec"=>MongoTripodConfig::DEFAULT_CONFIG_SPEC,
             "collection"=>'CBD_testing',
             "operations"=>array(),
             "createdOn"=>new MongoDate()
         ));
 
         // mock tripod and observers
-        $mockTripod = $this->getMock("MongoTripod",array("getTripodTables","getSearchIndexer","getTripodViews"),array('CBD_testing', 'testing', array('defaultContext'=>'http://talisaspire.com/')));
-        $mockViews = $this->getMock("MongoTripodViews",array("update"),array($this->tripod->db,$this->tripod->collection,"http://talisaspire.com/"));
-        $mockTables = $this->getMock("MongoTripodTables",array("update"),array($this->tripod->db,$this->tripod->collection,"http://talisaspire.com/"));
+        $mockTripod = $this->getMock("MongoTripod",array("getTripodTables","getSearchIndexer","getTripodViews"),array('CBD_testing', array('defaultContext'=>'http://talisaspire.com/')));
+        $mockViews = $this->getMock("MongoTripodViews",array("update"),array($this->tripod->collection,"http://talisaspire.com/"));
+        $mockTables = $this->getMock("MongoTripodTables",array("update"),array($this->tripod->collection,"http://talisaspire.com/"));
         $mockSearchIndexer = $this->getMock("MongoTripodSearchIndexer",array("update"),array($this->tripod));
 
         // get tripod to return mock observers

@@ -7,10 +7,12 @@ class MongoTransactionLog
     private $transaction_db = null;
     private $transaction_collection = null;
     protected $config = null;
+    protected $configSpec;
 
-    public function __construct()
+    public function __construct($configSpec = MongoTripodConfig::DEFAULT_CONFIG_SPEC)
     {
-        $config = MongoTripodConfig::getInstance();
+        $this->configSpec = $configSpec;
+        $config = $this->getMongoTripodConfigInstance();
         $this->config = $config->getTransactionLogConfig();
         // connect to transaction db
         $connStr = $config->getTransactionLogConnStr();
@@ -216,6 +218,15 @@ class MongoTransactionLog
     protected function updateTransaction($query, $update, $options)
     {
         return $this->transaction_collection->update($query, $update, $options);
+    }
+
+    /**
+     * For mocking
+     * @return MongoTripodConfig
+     */
+    protected function getMongoTripodConfigInstance()
+    {
+        return MongoTripodConfig::getInstance($this->configSpec);
     }
 
 
