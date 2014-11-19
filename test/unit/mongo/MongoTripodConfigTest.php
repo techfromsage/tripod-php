@@ -1029,13 +1029,36 @@ class MongoTripodConfigTest extends MongoTripodTestBase
     public function testDataLoadedInConfiguredDatabases()
     {
         $mongo = new MongoClient("mongodb://localhost");
-        $this->tripod = new MongoTripod('CBD_testing');
+        $this->tripod = new MongoTripod('CBD_testing', array(OP_ASYNC=>array(OP_VIEWS=>true,OP_TABLES=>false,OP_SEARCH=>false)));
         $this->loadBaseSearchDataViaTripod();
         $this->tripod->generateTableRows('CBD_testing');
+        foreach(MongoTripodConfig::getInstance()->getViewSpecifications() as $viewId=>$viewSpec)
+        {
+            $this->tripod->getTripodViews()->generateView($viewId);
+        }
+        foreach(MongoTripodConfig::getInstance()->getTableSpecifications() as $tableId=>$tableSpec)
+        {
+            $this->tripod->generateTableRows($tableId);
+        }
+        $this->loadBaseSearchDataViaTripod();
+        $lCollection = MongoTripodConfig::getInstance()->getCollectionForLocks();
+        $lCollection->insert(array(_ID_KEY=>array(_ID_RESOURCE=>'foo',_ID_CONTEXT=>'bar'), _LOCKED_FOR_TRANS=>'foobar'));
+        $lCollection->insert(array(_ID_KEY=>array(_ID_RESOURCE=>'baz',_ID_CONTEXT=>'bar'), _LOCKED_FOR_TRANS=>'wibble'));
+        $this->tripod->removeInertLocks('foobar', 'reason1');
+
+        $this->tripod = new MongoTripod('CBD_testing_2', array(OP_ASYNC=>array(OP_VIEWS=>true,OP_TABLES=>false,OP_SEARCH=>false)));
+        $this->loadBaseSearchDataViaTripod();
+        $this->loadBaseSearchDataViaTripod();
+        foreach(MongoTripodConfig::getInstance()->getViewSpecifications() as $viewId=>$viewSpec)
+        {
+            $this->tripod->getTripodViews()->generateView($viewId);
+        }
+
+
         $defaultDb = $mongo->selectDB('tripod_php_testing');
         $defaultDbCollections = array(
-            'q_queue', 'transaction_log', 'views', 'search', 'table_rows', 'CBD_testing', 'CBD_testing_2',
-            'audit_manual_rollbacks', 'locks'
+            'q_queue', 'transaction_log', VIEWS_COLLECTION, SEARCH_INDEX_COLLECTION, TABLE_ROWS_COLLECTION, 'CBD_testing',
+            'CBD_testing_2', AUDIT_MANUAL_ROLLBACKS_COLLECTION, LOCKS_COLLECTION
         );
         $specs = array();
         $specs['views'] = MongoTripodConfig::getInstance()->getViewSpecifications();
@@ -1107,12 +1130,22 @@ class MongoTripodConfigTest extends MongoTripodTestBase
 
         $this->assertEmpty(array_diff($defaultDbCollections, $foundCollections), print_r(array_diff($defaultDbCollections, $foundCollections), true) . ' not empty!');
 
-        $this->tripod = new MongoTripod('CBD_someOtherCollection');
+        $this->tripod = new MongoTripod('CBD_someOtherCollection', array(OP_ASYNC=>array(OP_VIEWS=>false,OP_TABLES=>true,OP_SEARCH=>false)));
         $this->loadBaseDataViaTripod();
         $this->loadBaseSearchDataViaTripod();
+        foreach(MongoTripodConfig::getInstance()->getTableSpecifications() as $tableId=>$tableSpec)
+        {
+            $this->tripod->generateTableRows($tableId);
+        }
+        foreach(MongoTripodConfig::getInstance()->getViewSpecifications() as $viewId=>$viewSpec)
+        {
+            $this->tripod->getTripodViews()->generateView($viewId);
+        }
+        $this->tripod->removeInertLocks('wibble', 'reason2');
+
 
         $altDb = $mongo->selectDB('tripod_php_testing_alt');
-        $altDbCollections = array('views', 'search', 'table_rows', 'CBD_someOtherCollection');
+        $altDbCollections = array(VIEWS_COLLECTION, SEARCH_INDEX_COLLECTION, TABLE_ROWS_COLLECTION, 'CBD_someOtherCollection');
         $foundCollections = array();
 
         /** @var MongoCollection $collection */
@@ -1160,7 +1193,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         }
         $diff = array_diff($altDbCollections, $foundCollections);
         // we don't currently match search to this data
-        $this->assertContains('search', $diff, print_r($diff, true) . " doesn't contain 'search'");
+        $this->assertContains(SEARCH_INDEX_COLLECTION, $diff, print_r($diff, true) . " doesn't contain 'search'");
         $this->assertEquals(1, count($diff));
 
     }
