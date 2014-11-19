@@ -278,7 +278,7 @@ class MongoTripodConfig
                     {
                         if(!isset($this->databases[$spec['to']]))
                         {
-                            throw new MongoTripodConfigException("'{$spec[_ID_KEY]}[\"to\"]' property references an undefined database name");
+                            throw new MongoTripodConfigException("'" . $spec[_ID_KEY] . "[\"to\"]' property references an undefined database name");
                         }
                     }
                     else
@@ -303,7 +303,7 @@ class MongoTripodConfig
             {
                 if(!isset($this->databases[$spec['to']]))
                 {
-                    throw new MongoTripodConfigException("'{$spec[_ID_KEY]}[\"to\"]' property references an undefined database name");
+                    throw new MongoTripodConfigException("'" . $spec[_ID_KEY] . "[\"to\"]' property references an undefined database name");
                 }
             }
             else
@@ -381,7 +381,7 @@ class MongoTripodConfig
             {
                 if(!isset($this->databases[$spec['to']]))
                 {
-                    throw new MongoTripodConfigException("'{$spec[_ID_KEY]}[\"to\"]' property references an undefined database name");
+                    throw new MongoTripodConfigException("'" . $spec[_ID_KEY] . "[\"to\"]' property references an undefined database name");
                 }
             }
             else
