@@ -1389,21 +1389,22 @@ class MongoTripodConfig
     }
 
     /**
+     * @param string $group
      * @param string $tableId
      * @param string $readPreference
      * @throws MongoTripodConfigException
      * @return MongoCollection
      */
-    public function getCollectionForTable($tableId, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    public function getCollectionForTable($group, $tableId, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
     {
-        if(isset($this->tableSpecs[$tableId]))
+        if(isset($this->tableSpecs[$group][$tableId]) && isset($this->tableSpecs[$group][$tableId]))
         {
             return $this->getMongoCollection(
-                $this->getDatabase($this->tableSpecs[$tableId]['to'], $readPreference),
+                $this->getDatabase($group, $this->tableSpecs[$group][$tableId]['to'], $readPreference),
                 TABLE_ROWS_COLLECTION
             );
         }
-        throw new MongoTripodConfigException("Table id '{$tableId}' not in configuration");
+        throw new MongoTripodConfigException("Table id '{$tableId}' not in configuration for group '{$group}'");
     }
 
     /**
