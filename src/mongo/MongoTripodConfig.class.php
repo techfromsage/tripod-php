@@ -7,12 +7,12 @@ class MongoTripodConfig
     /**
      * @var MongoTripodConfig
      */
-    private static $instance = null;
+    private static $instance;
 
     /**
      * @var array
      */
-    private static $config = null;
+    private static $config;
 
     /**
      * @var MongoTripodLabeller
@@ -85,10 +85,10 @@ class MongoTripodConfig
     protected $queueConfig = array();
 
     /**
-     * This should be the name of a class that implement iTripod
-     * @var string
+     * The value should be the name of a class that implement iTripodSearchProvider keyed by group
+     * @var array
      */
-    protected $searchProviderClassName = null;
+    protected $searchProviderClassName = array();
 
     /**
      * All of the predicates associated with a particular spec document
@@ -96,6 +96,29 @@ class MongoTripodConfig
      * @var array
      */
     protected $specPredicates;
+
+    /**
+     * A simple map between collection names and the database name they belong to
+     * @var array
+     */
+    protected $collectionDatabases = array();
+
+    /**
+     * @var array
+     */
+    protected $activeMongoConnections = array();
+
+    /**
+     * @var string
+     */
+    protected $defaultDatabase;
+
+    /**
+     * @var array
+     */
+    protected $dataSources = array();
+
+    protected $podConnections = array();
 
     /**
      * MongoTripodConfig should not be instantiated directly: use MongoTripodConfig::getInstance()
@@ -108,7 +131,7 @@ class MongoTripodConfig
      * @param array $config
      * @throws MongoTripodConfigException
      */
-    private function loadConfig(Array $config)
+    protected function loadConfig(Array $config)
     {
         if (array_key_exists('namespaces',$config))
         {
@@ -117,178 +140,255 @@ class MongoTripodConfig
 
         $this->defaultContext = $this->getMandatoryKey("defaultContext",$config);
 
-        $transactionConfig = $this->getMandatoryKey("transaction_log",$config);
-        $this->tConfig["database"] = $this->getMandatoryKey("database",$transactionConfig,'transaction_log');
-        $this->tConfig["collection"] = $this->getMandatoryKey("collection",$transactionConfig,'transaction_log');
-        $this->tConfig["connStr"] = $this->getMandatoryKey("connStr",$transactionConfig,'transaction_log');
-        if(array_key_exists("replicaSet", $transactionConfig) && !empty($transactionConfig["replicaSet"]))
+        foreach($this->getMandatoryKey('data_sources', $config) as $source=>$c)
         {
-            $this->tConfig['replicaSet'] = $transactionConfig["replicaSet"];
+            if(!$c['type'])
+            {
+                throw new MongoTripodConfigException("No type set for data source $source");
+            }
+            if(!$c['connection'])
+            {
+                throw new MongoTripodConfigException("No connection information set for data source $source");
+            }
+            $this->dataSources[$source] = $c;
         }
 
-        $searchConfig = (array_key_exists("search_config",$config)) ? $config["search_config"] : array();
-        if(!empty($searchConfig)){
-            $this->searchProviderClassName = $this->getMandatoryKey('search_provider', $searchConfig, 'search');
-            // Load search doc specs if search_config is set
-            $searchDocSpecs = $this->getMandatoryKey('search_specifications', $searchConfig, 'search');
-            foreach ($searchDocSpecs as $spec)
-            {
-                $this->searchDocSpecs[$spec[_ID_KEY]] = $spec;
-            }
+        $transactionConfig = $this->getMandatoryKey("transaction_log",$config);
+        $this->tConfig["data_source"] = $this->getMandatoryKey('data_source', $transactionConfig, 'transaction_log');
+        if(!isset($this->dataSources[$this->tConfig['data_source']]))
+        {
+            throw new MongoTripodConfigException("Transaction log data source, " . $this->tConfig['data_source'] . ", was not defined");
         }
+        $this->tConfig["database"] = $this->getMandatoryKey("database",$transactionConfig,'transaction_log');
+        $this->tConfig["collection"] = $this->getMandatoryKey("collection",$transactionConfig,'transaction_log');
 
         $queueConfig = $this->getMandatoryKey("queue",$config);
         $this->queueConfig["database"] = $this->getMandatoryKey("database",$queueConfig,'queue');
         $this->queueConfig["collection"] = $this->getMandatoryKey("collection",$queueConfig,'queue');
-        $this->queueConfig["connStr"] = $this->getMandatoryKey("connStr",$queueConfig,'queue');
-        if(array_key_exists("replicaSet", $queueConfig) && !empty($queueConfig["replicaSet"])) {
-            $this->queueConfig['replicaSet'] = $queueConfig["replicaSet"];
+        $this->queueConfig["data_source"] = $this->getMandatoryKey("connStr",$queueConfig,'queue');
+        if(!isset($this->dataSources[$this->queueConfig['data_source']]))
+        {
+            throw new MongoTripodConfigException("Queue data source, " . $this->queueConfig['data_source'] . ", was not defined");
         }
 
-        // Load view specs
-        $viewSpecs = (array_key_exists("view_specifications",$config)) ? $config["view_specifications"] : array();
-        foreach ($viewSpecs as $spec)
+        // A 'pod' corresponds to a logical database
+        $this->databases = $this->getMandatoryKey("pods",$config);
+        $defaultDB = null;
+        foreach ($this->databases as $groupName=>$groupConfig)
         {
-            $this->ifCountExistsWithoutTTLThrowException($spec);
-            $this->viewSpecs[$spec[_ID_KEY]] = $spec;
-        }
-
-        // Load table specs
-        $tableSpecs = (array_key_exists("table_specifications",$config)) ? $config["table_specifications"] : array();
-        foreach ($tableSpecs as $spec)
-        {
-            if(!isset($spec[_ID_KEY]))
+            $this->dbConfig[$groupName] = array ("data_source"=>$this->getMandatoryKey("data_source",$groupConfig));
+            if(isset($groupConfig['database']) && !empty($groupConfig['database']))
             {
-                throw new MongoTripodConfigException("Table spec does not contain " . _ID_KEY);
+                $this->dbConfig[$groupName]["database"]=$groupConfig['database'];
+            }
+            else
+            {
+                $this->dbConfig[$groupConfig]["database"] = $groupName;
             }
 
-            // Get all "fields" in the spec
-            $fieldsInTableSpec = $this->findFieldsInTableSpec('fields', $spec);
-            // Loop through fields and validate
-            foreach($fieldsInTableSpec as $field)
+            $this->cardinality[$groupName] = array();
+            $this->indexes[$groupName] = array();
+            $this->podConnections[$groupName] = array();
+            if(isset($groupConfig["pods"]))
             {
-                if (!isset($field['fieldName']))
+                foreach($groupConfig["pods"] as $podName=>$podConfig)
                 {
-                    throw new MongoTripodConfigException("Field spec does not contain fieldName");
-                }
+                    $dataSource = (isset($podConfig['data_source']) ? $podConfig['data_source'] : $groupConfig['data_source']);
+                    $this->podConnections[$groupName][$podName] = $dataSource;
 
-                if(isset($field['predicates']))
-                {
-                    foreach($field['predicates'] as $p)
+                    // Set cardinality, also checking against defined namespaces
+                    if (array_key_exists('cardinality', $podConfig))
                     {
-                        // If predicates is an array we've got modifiers
-                        if(is_array($p))
+                        // Test that the namespace exists for each cardinality rule defined
+                        $cardinality = $podConfig['cardinality'];
+                        foreach ($cardinality as $qname=>$cardinalityValue)
                         {
-                            /*
-                             * checkModifierFunctions will check if each predicate modifier is valid - it will
-                             * check recursively through the predicate
-                             */
-                            $this->checkModifierFunctions($p, MongoTripodTables::$predicateModifiers);
+                            $namespaces = explode(':', $qname);
+                            // just grab the first element
+                            $namespace  = array_shift($namespaces);
+
+                            if (array_key_exists($namespace, $this->ns))
+                            {
+                                $this->cardinality[$groupName][$podName][] = $cardinality;
+                            }
+                            else
+                            {
+                                throw new MongoTripodConfigException("Cardinality '{$qname}' does not have the namespace defined");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        $this->cardinality[$groupName][$podName] = array();
+                    }
+
+                    $this->cardinality[$groupName][$podName] = (array_key_exists("cardinality",$podConfig)) ? $podConfig['cardinality'] : array();
+
+                    // Ensure indexes are legal
+                    if (array_key_exists("indexes",$podConfig))
+                    {
+                        $this->indexes[$groupName][$podName] = array();
+                        foreach($podConfig["indexes"] as $indexName=>$indexFields)
+                        {
+                            // check no more than 1 indexField is an array to ensure Mongo will be able to create compount indexes
+                            if (count($indexFields)>1)
+                            {
+                                $fieldsThatAreArrays = 0;
+                                foreach ($indexFields as $field=>$fieldVal)
+                                {
+                                    $cardinalityField = preg_replace('/\.value/','',$field);
+                                    if (!array_key_exists($cardinalityField,$this->cardinality[$groupName][$podName])||$this->cardinality[$groupName][$podName][$cardinalityField]!=1)
+                                    {
+                                        $fieldsThatAreArrays++;
+                                    }
+                                    if ($fieldsThatAreArrays>1)
+                                    {
+                                        throw new MongoTripodConfigException("Compound index $indexName has more than one field with cardinality > 1 - mongo will not be able to build this index");
+                                    }
+                                }
+                            } // @codeCoverageIgnoreStart
+                            // @codeCoverageIgnoreEnd
+
+                            $this->indexes[$groupName][$podName][$indexName] = $indexFields;
                         }
                     }
                 }
-                // fields can either have predicates or values
-                elseif((!isset($field['value'])) || empty($field['value']))
-                {
-                    throw new MongoTripodConfigException("Field spec does not contain predicates or value");
-                }
             }
-
-            // Get all "counts" in the spec
-            $fieldsInTableSpec = $this->findFieldsInTableSpec('counts', $spec);
-            // Loop through fields and validate
-            foreach($fieldsInTableSpec as $field)
-            {
-                if (!isset($field['fieldName']))
+            $searchConfig = (array_key_exists("search_config",$groupConfig)) ? $groupConfig["search_config"] : array();
+            $this->searchDocSpecs[$groupName] = array();
+            if(!empty($searchConfig)){
+                $this->searchProviderClassName[$groupName] = $this->getMandatoryKey('search_provider', $searchConfig, 'search');
+                // Load search doc specs if search_config is set
+                $searchDocSpecs = $this->getMandatoryKey('search_specifications', $searchConfig, 'search');
+                foreach ($searchDocSpecs as $spec)
                 {
-                    throw new MongoTripodConfigException("Count spec does not contain fieldName");
-                }
-
-                if(isset($field['property']))
-                {
-                    if (!is_string($field['property']))
+                    if(!isset($spec[_ID_KEY]))
                     {
-                        throw new MongoTripodConfigException("Count spec property was not a string");
+                        throw new MongoTripodConfigException("Search document spec does not contain " . _ID_KEY);
                     }
-                }
-                else
-                {
-                    throw new MongoTripodConfigException("Count spec does not contain property");
-                }
-            }
-            $this->tableSpecs[$spec[_ID_KEY]] = $spec;
-        }
-
-        $this->databases = $this->getMandatoryKey("databases",$config);
-        foreach ($this->databases as $dbName=>$db)
-        {
-            $this->dbConfig[$dbName] = array ("connStr"=>$this->getMandatoryKey("connStr",$db));
-            if(isset($db['replicaSet']) && !empty($db['replicaSet']))
-            {
-                $this->dbConfig[$dbName]["replicaSet"]=$db['replicaSet'];
-            }
-            $this->cardinality[$dbName] = array();
-            $this->indexes[$dbName] = array();
-            foreach($db["collections"] as $collName=>$collection)
-            {
-                // Set cardinality, also checking against defined namespaces
-                if (array_key_exists('cardinality', $collection))
-                {
-                    // Test that the namespace exists for each cardinality rule defined
-                    $cardinality = $collection['cardinality'];
-                    foreach ($cardinality as $qname=>$cardinalityValue)
+                    if($this->searchProviderClassName[$groupName] == SEARCH_PROVIDER_MONGO)
                     {
-                        $namespaces = explode(':', $qname);
-                        // just grab the first element
-                        $namespace  = array_shift($namespaces);
-
-                        if (array_key_exists($namespace, $this->ns))
+                        if(isset($spec['to']))
                         {
-                            $this->cardinality[$dbName][$collName][] = $cardinality;
+                            if(!isset($this->dataSources[$spec['to']]))
+                            {
+                                throw new MongoTripodConfigException("'" . $spec[_ID_KEY] . "[\"to\"]' property references an undefined data source");
+                            }
                         }
                         else
                         {
-                            throw new MongoTripodConfigException("Cardinality '{$qname}' does not have the namespace defined");
+                            $spec['to'] = $groupConfig['data_source'];
                         }
+                    }
+                    $this->searchDocSpecs[$groupName][$spec[_ID_KEY]] = $spec;
+                }
+            }
+
+            // Load view specs
+            $viewSpecs = (array_key_exists("view_specifications",$groupConfig)) ? $groupConfig["view_specifications"] : array();
+            $this->viewSpecs[$groupName] = array();
+            foreach ($viewSpecs as $spec)
+            {
+                if(!isset($spec[_ID_KEY]))
+                {
+                    throw new MongoTripodConfigException("View spec does not contain " . _ID_KEY);
+                }
+                $this->ifCountExistsWithoutTTLThrowException($spec);
+                if(isset($spec['to']))
+                {
+                    if(!isset($this->dataSources[$spec['to']]))
+                    {
+                        throw new MongoTripodConfigException("'" . $spec[_ID_KEY] . "[\"to\"]' property references an undefined data source");
                     }
                 }
                 else
                 {
-                    $this->cardinality[$dbName][$collName] = array();
+                    $spec['to'] = $groupConfig['data_source'];
+                }
+                $this->viewSpecs[$groupName][$spec[_ID_KEY]] = $spec;
+            }
+
+            // Load table specs
+            $tableSpecs = (array_key_exists("table_specifications",$groupConfig)) ? $groupConfig["table_specifications"] : array();
+            $this->tableSpecs[$groupName] = array();
+            foreach ($tableSpecs as $spec)
+            {
+                if(!isset($spec[_ID_KEY]))
+                {
+                    throw new MongoTripodConfigException("Table spec does not contain " . _ID_KEY);
                 }
 
-                $this->cardinality[$dbName][$collName] = (array_key_exists("cardinality",$collection)) ? $collection['cardinality'] : array();
-
-                // Ensure indexes are legal
-                if (array_key_exists("indexes",$collection))
+                // Get all "fields" in the spec
+                $fieldsInTableSpec = $this->findFieldsInTableSpec('fields', $spec);
+                // Loop through fields and validate
+                foreach($fieldsInTableSpec as $field)
                 {
-                    $this->indexes[$dbName][$collName] = array();
-                    foreach($collection["indexes"] as $indexName=>$indexFields)
+                    if (!isset($field['fieldName']))
                     {
-                        // check no more than 1 indexField is an array to ensure Mongo will be able to create compount indexes
-                        if (count($indexFields)>1)
-                        {
-                            $fieldsThatAreArrays = 0;
-                            foreach ($indexFields as $field=>$fieldVal)
-                            {
-                                $cardinalityField = preg_replace('/\.value/','',$field);
-                                if (!array_key_exists($cardinalityField,$this->cardinality[$dbName][$collName])||$this->cardinality[$dbName][$collName][$cardinalityField]!=1)
-                                {
-                                    $fieldsThatAreArrays++;
-                                }
-                                if ($fieldsThatAreArrays>1)
-                                {
-                                    throw new MongoTripodConfigException("Compound index $indexName has more than one field with cardinality > 1 - mongo will not be able to build this index");
-                                }
-                            }
-                        } // @codeCoverageIgnoreStart
-                        // @codeCoverageIgnoreEnd
+                        throw new MongoTripodConfigException("Field spec does not contain fieldName");
+                    }
 
-                        $this->indexes[$dbName][$collName][$indexName] = $indexFields;
+                    if(isset($field['predicates']))
+                    {
+                        foreach($field['predicates'] as $p)
+                        {
+                            // If predicates is an array we've got modifiers
+                            if(is_array($p))
+                            {
+                                /*
+                                 * checkModifierFunctions will check if each predicate modifier is valid - it will
+                                 * check recursively through the predicate
+                                 */
+                                $this->checkModifierFunctions($p, MongoTripodTables::$predicateModifiers);
+                            }
+                        }
+                    }
+                    // fields can either have predicates or values
+                    elseif((!isset($field['value'])) || empty($field['value']))
+                    {
+                        throw new MongoTripodConfigException("Field spec does not contain predicates or value");
                     }
                 }
+
+                // Get all "counts" in the spec
+                $fieldsInTableSpec = $this->findFieldsInTableSpec('counts', $spec);
+                // Loop through fields and validate
+                foreach($fieldsInTableSpec as $field)
+                {
+                    if (!isset($field['fieldName']))
+                    {
+                        throw new MongoTripodConfigException("Count spec does not contain fieldName");
+                    }
+
+                    if(isset($field['property']))
+                    {
+                        if (!is_string($field['property']))
+                        {
+                            throw new MongoTripodConfigException("Count spec property was not a string");
+                        }
+                    }
+                    else
+                    {
+                        throw new MongoTripodConfigException("Count spec does not contain property");
+                    }
+                }
+
+                if(isset($spec['to']))
+                {
+                    if(!isset($this->dataSources[$spec['to']]))
+                    {
+                        throw new MongoTripodConfigException("'" . $spec[_ID_KEY] . "[\"to\"]' property references an undefined data source");
+                    }
+                }
+                else
+                {
+                    $spec['to'] = $defaultDB;
+                }
+
+                $this->tableSpecs[$groupName][$spec[_ID_KEY]] = $spec;
             }
         }
+
 
     }
 
@@ -296,10 +396,10 @@ class MongoTripodConfig
      * Creates an associative array of all predicates/properties associated with all table and search document specifications
      * @return array
      */
-    protected function getDefinedPredicatesInSpecs()
+    protected function getDefinedPredicatesInSpecs($group)
     {
         $predicates = array();
-        $specs = array_merge($this->getTableSpecifications(), $this->getSearchDocumentSpecifications());
+        $specs = array_merge($this->getTableSpecifications($group), $this->getSearchDocumentSpecifications($group));
         foreach($specs as $spec)
         {
             if(!isset($spec[_ID_KEY]))
@@ -502,18 +602,19 @@ class MongoTripodConfig
      * Returns an array of associated predicates in a table or search document specification
      * Note: will not return viewSpec predicates
      *
+     * @param string $group
      * @param string $specId
      * @return array
      */
-    public function getDefinedPredicatesInSpec($specId)
+    public function getDefinedPredicatesInSpec($group, $specId)
     {
-        if(!isset($this->specPredicates))
+        if(!isset($this->specPredicates[$group]))
         {
-            $this->specPredicates = $this->getDefinedPredicatesInSpecs();
+            $this->specPredicates = $this->getDefinedPredicatesInSpecs($group);
         }
-        if(isset($this->specPredicates[$specId]))
+        if(isset($this->specPredicates[$group][$specId]))
         {
-            return $this->specPredicates[$specId];
+            return $this->specPredicates[$group][$specId];
         }
         return array();
     }
@@ -564,11 +665,15 @@ class MongoTripodConfig
     /**
      * @codeCoverageIgnore
      * @static
+     * @internal param string $specName
      * @return Array|null
      */
     public static function getConfig()
     {
-        return self::$config;
+        if(isset(self::$config))
+        {
+            return self::$config;
+        }
     }
 
     /**
@@ -586,16 +691,17 @@ class MongoTripodConfig
      * @uses MongoTripodConfig::setConfig() Configuration must be set prior to calling this method. To generate a completely new object, set a new config
      * @codeCoverageIgnore
      * @static
-     * @return MongoTripodConfig
      * @throws MongoTripodConfigException
+     * @internal param string $specName
+     * @return MongoTripodConfig
      */
     public static function getInstance()
     {
-        if (self::$config == null)
+        if (!isset(self::$config))
         {
             throw new MongoTripodConfigException("Call MongoTripodConfig::setConfig() first");
         }
-        if (self::$instance == null)
+        if (!isset(self::$instance))
         {
             self::$instance = new MongoTripodConfig();
             self::$instance->loadConfig(self::$config);
@@ -607,6 +713,7 @@ class MongoTripodConfig
      * set the config
      * @usedby MongoTripodConfig::getInstance()
      * @param array $config
+     * @param string $specName
      */
     public static function setConfig(Array $config)
     {
@@ -631,7 +738,7 @@ class MongoTripodConfig
 
         // also add the indexes for any views/tables
         $tableIndexes = array();
-        foreach ($this->getTableSpecifications() as $tspec)
+        foreach ($this->getTableSpecifications($dbName) as $tspec)
         {
             if (array_key_exists("ensureIndexes",$tspec))
             {
@@ -644,7 +751,7 @@ class MongoTripodConfig
         $indexes[TABLE_ROWS_COLLECTION] = $tableIndexes;
 
         $viewIndexes = array();
-        foreach ($this->getViewSpecifications() as $vspec)
+        foreach ($this->getViewSpecifications($dbName) as $vspec)
         {
             if (array_key_exists("ensureIndexes",$vspec))
             {
@@ -688,23 +795,23 @@ class MongoTripodConfig
 
     /**
      * Returns a boolean reflecting whether or not the database and collection are defined in the config
-     * @param string $dbName
-     * @param string $collName
+     * @param string $group
+     * @param string $pod
      * @return bool
      */
-    public function isCollectionWithinConfig($dbName,$collName)
+    public function isPodWithinGroup($group,$pod)
     {
-        return (array_key_exists($dbName,$this->databases)) ? array_key_exists($collName,$this->databases[$dbName]['collections']) : false;
+        return (array_key_exists($group,$this->podConnections)) ? array_key_exists($pod,$this->podConnections[$group]) : false;
     }
 
     /**
      * Returns an array of collection configurations for the supplied database name
-     * @param string $dbName
+     * @param string group
      * @return array
      */
-    public function getCollections($dbName)
+    public function getPods($group)
     {
-        return (array_key_exists($dbName,$this->databases)) ? $this->databases[$dbName]['collections'] : array();
+        return (array_key_exists($group,$this->podConnections)) ? array_keys($this->podConnections[$group]) : array();
     }
 
     /**
@@ -811,14 +918,15 @@ class MongoTripodConfig
 
     /**
      * Return the view specification document for the supplied id, if it exists
+     * @param string $group
      * @param string $vid
      * @return array|null
      */
-    public function getViewSpecification($vid)
+    public function getViewSpecification($group, $vid)
     {
-        if (array_key_exists($vid,$this->viewSpecs))
+        if (isset($this->viewSpecs[$group]) && isset($this->viewSpecs[$group][$vid]))
         {
-            return $this->viewSpecs[$vid];
+            return $this->viewSpecs[$group][$vid];
         }
         else
         {
@@ -828,13 +936,15 @@ class MongoTripodConfig
 
     /**
      * Returns the search document specification for the supplied id, if it exists
+     * @param string $group
      * @param string $sid
      * @return array|null
      */
-    public function getSearchDocumentSpecification($sid)
+    public function getSearchDocumentSpecification($group, $sid)
     {
-        if(array_key_exists($sid, $this->searchDocSpecs)) {
-            return $this->searchDocSpecs[$sid];
+        if (isset($this->searchDocSpecs[$group]) && isset($this->searchDocSpecs[$group][$sid]))
+        {
+            return $this->searchDocSpecs[$group][$sid];
         }
 
         return null;
@@ -843,18 +953,23 @@ class MongoTripodConfig
     /**
      * Returns an array of all search document specifications, or specification ids
      *
+     * @param string $group
      * @param string|null $type When supplied, will only return search document specifications that are triggered by this rdf:type
      * @param bool $justReturnSpecId default is false. If true will only return an array of specification _id's, otherwise returns the array of specification documents
      * @return array
      */
-    public function getSearchDocumentSpecifications($type=null, $justReturnSpecId=false)
+    public function getSearchDocumentSpecifications($group, $type=null, $justReturnSpecId=false)
     {
+        if(!isset($this->searchDocSpecs[$group]) || empty($this->searchDocSpecs[$group]))
+        {
+            return array();
+        }
         $specs = array();
 
         if(empty($type)){
             if($justReturnSpecId){
                 $specIds = array();
-                foreach($this->searchDocSpecs as $spec){
+                foreach($this->searchDocSpecs[$group] as $spec){
                     $specIds[] = $spec[_ID_KEY];
                 }
                 return $specIds;
@@ -863,11 +978,11 @@ class MongoTripodConfig
             }
         }
 
-        $labeller = new MongoTripodLabeller();
+        $labeller = $this->getLabeller();
         $typeAsUri = $labeller->uri_to_alias($type);
         $typeAsQName = $labeller->qname_to_alias($type);
 
-        foreach ($this->searchDocSpecs as $spec)
+        foreach ($this->searchDocSpecs[$group] as $spec)
         {
             if(is_array($spec[_ID_TYPE])){
                 if(in_array($typeAsUri, $spec[_ID_TYPE]) || in_array($typeAsQName, $spec[_ID_TYPE])){
@@ -894,14 +1009,15 @@ class MongoTripodConfig
     /**
      * Returns the requested table specification, if it exists
      *
+     * @param string $group
      * @param string $tid
      * @return array|null
      */
-    public function getTableSpecification($tid)
+    public function getTableSpecification($group, $tid)
     {
-        if (array_key_exists($tid,$this->tableSpecs))
+        if (isset($this->tableSpecs[$group]) && isset($this->tableSpecs[$group][$tid]))
         {
-            return $this->tableSpecs[$tid];
+            return $this->tableSpecs[$group][$tid];
         }
         else
         {
@@ -912,69 +1028,79 @@ class MongoTripodConfig
     /**
      * Returns all defined table specifications
      * @codeCoverageIgnore
+     * @param string $group
      * @return array
      */
-    public function getTableSpecifications()
+    public function getTableSpecifications($group)
     {
-        return $this->tableSpecs;
+        return (isset($this->tableSpecs[$group]) ? $this->tableSpecs[$group] : array());
     }
 
     /**
      * Returns all defined view specification
      * @codeCoverageIgnore
+     * @param string $group
      * @return array
      */
-    public function getViewSpecifications()
+    public function getViewSpecifications($group)
     {
-        return $this->viewSpecs;
+        return (isset($this->viewSpecs[$group])  ? $this->viewSpecs[$group] : array());
     }
 
 
     /**
      * This method returns a unique list of every rdf type configured in a specifications ['type'] restriction
+     * @param string $group
      * @return array of types
      */
-    public function getAllTypesInSpecifications()
+    public function getAllTypesInSpecifications($group)
     {
-        $viewTypes   = $this->getTypesInViewSpecifications();
-        $tableTypes  = $this->getTypesInTableSpecifications();
-        $searchTypes = $this->getTypesInSearchSpecifications();
+        $viewTypes   = $this->getTypesInViewSpecifications($group);
+        $tableTypes  = $this->getTypesInTableSpecifications($group);
+        $searchTypes = $this->getTypesInSearchSpecifications($group);
         $types = array_unique(array_merge($viewTypes, $tableTypes, $searchTypes));
         return array_values($types);
     }
 
     /**
      * Returns a unique list of every rdf type configured in the view spec ['type'] restriction
-     * @param string|null $collectionName
+     * @param string $group
+     * @param string|null $pod
+     * @internal param null|string $collectionName
      * @return array
      */
-    public function getTypesInViewSpecifications($collectionName=null)
+    public function getTypesInViewSpecifications($group, $pod=null)
     {
-        return array_unique($this->getSpecificationTypes($this->getViewSpecifications(), $collectionName));
+        return array_unique($this->getSpecificationTypes($this->getViewSpecifications($group), $pod));
     }
 
     /**
      * Returns a unique list of every rdf type configured in the table spec ['type'] restriction
-     * @param string|null $collectionName
+     * @param string $group
+     * @param string|null $pod
+     * @internal param null|string $collectionName
      * @return array
      */
-    public function getTypesInTableSpecifications($collectionName=null)
+    public function getTypesInTableSpecifications($group, $pod = null)
     {
-        return array_unique($this->getSpecificationTypes($this->getTableSpecifications(), $collectionName));
+        return array_unique($this->getSpecificationTypes($this->getTableSpecifications($group), $pod));
     }
 
     /**
      * Returns a unique list of every rdf type configured in the search doc spec ['type'] restriction
-     * @param string|null $collectionName
+     * @param string $group
+     * @param string|null $pod
+     * @internal param null|string $collectionName
      * @return array
      */
-    public function getTypesInSearchSpecifications($collectionName=null)
+    public function getTypesInSearchSpecifications($group, $pod = null)
     {
-        return array_unique($this->getSpecificationTypes($this->getSearchDocumentSpecifications(), $collectionName));
+        return array_unique($this->getSpecificationTypes($this->getSearchDocumentSpecifications($group), $pod));
     }
 
     /**
      * Returns an array of database names
+     * @todo Refactor this for groups/pods
      * @return array
      */
     public function getDbs()
@@ -988,8 +1114,8 @@ class MongoTripodConfig
      */
     public function destroy()
     {
-        self::$instance = NULL;
-        self::$config = NULL;
+        self::$instance = null;
+        self::$config = null;
     }
 
     /* PROTECTED FUNCTIONS */
@@ -1134,7 +1260,7 @@ class MongoTripodConfig
     }
 
     /**
-     * Getter for transaction log connection config 
+     * Getter for transaction log connection config
      * @return array
      */
     public function getTransactionLogConfig()
@@ -1152,11 +1278,281 @@ class MongoTripodConfig
     }
 
     /**
-     * @return string
+     * @param string $group
+     * @return string|null
      */
-    public function getSearchProviderClassName()
+    public function getSearchProviderClassName($group)
     {
-        return $this->searchProviderClassName;
+        return (isset($this->searchProviderClassName[$group]) ? $this->searchProviderClassName[$group] : null);
+    }
+
+    /**
+     * @param $group
+     * @param string|null $dataSource
+     * @param string $readPreference
+     * @throws MongoTripodConfigException
+     * @return MongoDB
+     */
+    public function getDatabase($group, $dataSource = null, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    {
+        if(!isset($this->dbConfig[$group]))
+        {
+            throw new MongoTripodConfigException("Database name '{$group}' not in configuration");
+        }
+
+        if(!$dataSource)
+        {
+            $dataSource = $this->dbConfig[$group]["data_source"];
+        }
+
+        if(!isset($this->dataSources[$dataSource]))
+        {
+            throw new MongoTripodConfigException("Data source '{$group}' not in configuration");
+        }
+        $connectionOptions = array();
+        if(isset($dataSource['connectTimeoutMS']) ? $dataSource['connectTimeoutMS'] : 20000);
+
+        if(isset($dataSource['replicaSet']) && !empty($dataSource['replicaSet'])) {
+            $connectionOptions['replicaSet'] = $dataSource['replicaSet'];
+        }
+        $client = new MongoClient($dataSource['connStr'], $connectionOptions);
+        $db = $client->selectDB($this->dbConfig['database']);
+        $db->setReadPreference($readPreference);
+        return $db;
+    }
+
+    /**
+     * @param MongoDB $db
+     * @param string $collectionName
+     * @return MongoCollection
+     */
+    protected function getMongoCollection(MongoDB $db, $collectionName)
+    {
+        return $db->selectCollection($collectionName);
+    }
+
+    /**
+     * @param string $group
+     * @param string $pod
+     * @param string $readPreference
+     * @throws MongoTripodConfigException
+     * @return MongoCollection
+     */
+    public function getCollectionForCBD($group, $pod, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    {
+        if(isset($this->podConnections[$group]) && isset($this->podConnections[$group][$pod]))
+        {
+            return $this->getMongoCollection(
+                $this->getDatabase($group, $this->podConnections[$group][$pod], $readPreference),
+                $pod
+            );
+        }
+        throw new MongoTripodConfigException("Collection name '{$pod}' not in configuration for group '{$group}'");
+    }
+
+    /**
+     * @param string $group
+     * @param string $viewId
+     * @param string $readPreference
+     * @throws MongoTripodConfigException
+     * @return MongoCollection
+     */
+    public function getCollectionForView($group, $viewId, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    {
+        if(isset($this->viewSpecs[$group]) && isset($this->viewSpecs[$group][$viewId]))
+        {
+            return $this->getMongoCollection(
+                $this->getDatabase($group, $this->viewSpecs[$group][$viewId]['to'], $readPreference),
+                VIEWS_COLLECTION
+            );
+        }
+        throw new MongoTripodConfigException("View id '{$viewId}' not in configuration for group '{$group}'");
+    }
+
+    /**
+     * @param string $group
+     * @param string $searchDocumentId
+     * @param string $readPreference
+     * @throws MongoTripodConfigException
+     * @return MongoCollection
+     */
+    public function getCollectionForSearchDocument($group, $searchDocumentId, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    {
+        if(isset($this->searchDocSpecs[$group]) && ($this->searchDocSpecs[$group][$searchDocumentId]))
+        {
+            return $this->getMongoCollection(
+                $this->getDatabase($group, $this->searchDocSpecs[$group][$searchDocumentId]['to'], $readPreference),
+                SEARCH_INDEX_COLLECTION
+            );
+        }
+        throw new MongoTripodConfigException("Search document id '{$searchDocumentId}' not in configuration for group '{$group}'");
+    }
+
+    /**
+     * @param string $tableId
+     * @param string $readPreference
+     * @throws MongoTripodConfigException
+     * @return MongoCollection
+     */
+    public function getCollectionForTable($tableId, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    {
+        if(isset($this->tableSpecs[$tableId]))
+        {
+            return $this->getMongoCollection(
+                $this->getDatabase($this->tableSpecs[$tableId]['to'], $readPreference),
+                TABLE_ROWS_COLLECTION
+            );
+        }
+        throw new MongoTripodConfigException("Table id '{$tableId}' not in configuration");
+    }
+
+    /**
+     * @param string $group
+     * @param array $tables
+     * @param string $readPreference
+     * @throws MongoTripodConfigException
+     * @return MongoCollection[]
+     */
+    public function getCollectionsForTables($group, array $tables = array(), $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    {
+        if(!isset($this->tableSpecs[$group]))
+        {
+            return array();
+        }
+        if(empty($tables))
+        {
+            $tables = array_keys($this->tableSpecs[$group]);
+        }
+        $dataSources = array();
+        foreach($tables as $table)
+        {
+            if(isset($this->tableSpecs[$group][$table]))
+            {
+                $dataSources[] = $this->tableSpecs[$group][$table]['to'];
+            }
+            else
+            {
+                throw new MongoTripodConfigException("Table id '{$table}' not in configuration for group '{$group}'");
+            }
+        }
+
+        $collections = array();
+        foreach(array_unique($dataSources) as $dataSource)
+        {
+            $collections[] = $this->getMongoCollection(
+                $this->getDatabase($group, $dataSource, $readPreference),
+                TABLE_ROWS_COLLECTION
+            );
+        }
+        return $collections;
+    }
+
+    /**
+     * @param string $group
+     * @param array $views
+     * @param string $readPreference
+     * @throws MongoTripodConfigException
+     * @return MongoCollection[]
+     */
+    public function getCollectionsForViews($group, array $views = array(), $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    {
+        if(!isset($this->viewSpecs[$group]))
+        {
+            return array();
+        }
+        if(empty($views))
+        {
+            $views = array_keys($this->viewSpecs[$group]);
+        }
+        $dataSources = array();
+        foreach($views as $view)
+        {
+            if(isset($this->viewSpecs[$group][$view]))
+            {
+                $dataSources[] = $this->viewSpecs[$group][$view]['to'];
+            }
+            else
+            {
+                throw new MongoTripodConfigException("View id '{$view}' not in configuration for group '{$group}'");
+            }
+        }
+
+        $collections = array();
+        foreach(array_unique($dataSources) as $dataSource)
+        {
+            $collections[] = $this->getMongoCollection(
+                $this->getDatabase($group, $dataSource, $readPreference),
+                VIEWS_COLLECTION
+            );
+        }
+        return $collections;
+    }
+
+    /**
+     * @param string $group
+     * @param array $searchSpecIds
+     * @param string $readPreference
+     * @throws MongoTripodConfigException
+     * @return MongoCollection[]
+     */
+    public function getCollectionsForSearch($group, array $searchSpecIds = array(), $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    {
+        if(!isset($this->searchDocSpecs[$group]))
+        {
+            return array();
+        }
+        if(empty($searchSpecIds))
+        {
+            $searchSpecIds = array_keys($this->searchDocSpecs[$group]);
+        }
+        $dataSources = array();
+        foreach($searchSpecIds as $searchSpec)
+        {
+            if(isset($this->searchDocSpecs[$group][$searchSpec]))
+            {
+                $dataSources[] = $this->searchDocSpecs[$group][$searchSpec]['to'];
+            }
+            else
+            {
+                throw new MongoTripodConfigException("Search document spec id '{$searchSpec}' not in configuration for group '{$group}'");
+            }
+        }
+
+        $collections = array();
+        foreach(array_unique($dataSources) as $dataSource)
+        {
+            $collections[] = $this->getMongoCollection(
+                $this->getDatabase($group, $dataSource, $readPreference),
+                SEARCH_INDEX_COLLECTION
+            );
+        }
+        return $collections;
+    }
+
+    /**
+     * @param string $group
+     * @param string $readPreference
+     * @return MongoCollection
+     */
+    public function getCollectionForTTLCache($group, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    {
+        return $this->getMongoCollection(
+            $this->getDatabase($group, $this->dbConfig[$group]['data_source'], $readPreference),
+            TTL_CACHE_COLLECTION
+        );
+    }
+
+    /**
+     * @param string $group
+     * @param string $readPreference
+     * @return MongoCollection
+     */
+    public function getCollectionForLocks($group, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    {
+        return $this->getMongoCollection(
+            $this->getDatabase($group, $this->dbConfig[$group]['data_source'], $readPreference),
+            LOCKS_COLLECTION
+        );
     }
 }
 class MongoTripodConfigException extends Exception {}

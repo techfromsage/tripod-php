@@ -50,7 +50,7 @@ class MongoTripodUpdates extends MongoTripodBase {
     {
         $this->tripod = $tripod;
         $this->db = $tripod->db;
-        $this->dbName = $tripod->getDBName();
+        $this->dbName = $tripod->getGroup();
         $this->collection = $tripod->collection;
         $this->collectionName = $this->collection->getName();
         $this->stat = $tripod->getStat();
@@ -121,9 +121,9 @@ class MongoTripodUpdates extends MongoTripodBase {
         try{
             $contextAlias = $this->getContextAlias($context);
 
-            if (!MongoTripodConfig::getInstance()->isCollectionWithinConfig($this->getDBName(),$this->getCollectionName()))
+            if (!MongoTripodConfig::getInstance()->isCollectionWithinConfig($this->getGroup(),$this->getCollectionName()))
             {
-                throw new TripodException("database:collection {$this->getDBName()}:{$this->getCollectionName()} is not referenced within config, so cannot be written to");
+                throw new TripodException("database:collection {$this->getGroup()}:{$this->getCollectionName()} is not referenced within config, so cannot be written to");
             }
 
             $this->validateGraphCardinality($newGraph);
@@ -186,7 +186,7 @@ class MongoTripodUpdates extends MongoTripodBase {
 
                     foreach($syncOp['ops'] as $collectionName=>$ops){
                         $specTypes = (isset($syncOp['specTypes']) ? $syncOp['specTypes'] : array());
-                        $syncModifiedSubjects[] = ModifiedSubject::create($syncOp['id'],array(),$ops, $specTypes, $this->getDBName(), $collectionName, $syncOp['delete']);
+                        $syncModifiedSubjects[] = ModifiedSubject::create($syncOp['id'],array(),$ops, $specTypes, $this->getGroup(), $collectionName, $syncOp['delete']);
                     }
                 }
 
@@ -205,7 +205,7 @@ class MongoTripodUpdates extends MongoTripodBase {
 
                     foreach($asyncOp['ops'] as $collectionName=>$ops){
                         $specTypes = (isset($asyncOp['specTypes']) ? $asyncOp['specTypes'] : array());
-                        $asyncModifiedSubjects[] = ModifiedSubject::create($asyncOp['id'],array(),$ops, $specTypes, $this->getDBName(), $collectionName, $asyncOp['delete']);
+                        $asyncModifiedSubjects[] = ModifiedSubject::create($asyncOp['id'],array(),$ops, $specTypes, $this->getGroup(), $collectionName, $asyncOp['delete']);
                     }
                 }
 
@@ -376,7 +376,7 @@ class MongoTripodUpdates extends MongoTripodBase {
         catch(TripodLabellerException $e) {}
 
         $intersectingTypes = array_unique(array_intersect($types, $validTypes));
-        
+
         if(!empty($intersectingTypes))
         {
             // This means we're either adding or deleting a graph
@@ -591,7 +591,7 @@ class MongoTripodUpdates extends MongoTripodBase {
     protected function validateGraphCardinality(ExtendedGraph $graph)
     {
         $config = MongoTripodConfig::getInstance();
-        $cardinality = $config->getCardinality($this->getDBName(), $this->getCollectionName());
+        $cardinality = $config->getCardinality($this->getGroup(), $this->getCollectionName());
         $namespaces = $config->getNamespaces();
         $graphSubjects = $graph->get_subjects();
 
@@ -663,7 +663,7 @@ class MongoTripodUpdates extends MongoTripodBase {
 
             $originalCBDs = $this->lockAllDocuments($subjectsOfChange, $transaction_id,$contextAlias);
 
-            $this->getTransactionLog()->createNewTransaction($transaction_id, $csDoc['value'][_GRAPHS], $originalCBDs, $this->getDBName(), $this->getCollectionName());
+            $this->getTransactionLog()->createNewTransaction($transaction_id, $csDoc['value'][_GRAPHS], $originalCBDs, $this->getGroup(), $this->getCollectionName());
 
             if(empty($originalCBDs)) // didn't get lock on documents
             {
