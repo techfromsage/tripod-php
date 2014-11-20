@@ -1568,5 +1568,29 @@ class MongoTripodConfig
             AUDIT_MANUAL_ROLLBACKS_COLLECTION
         );
     }
+
+    /**
+     * @param $readPreference
+     * @return MongoDB
+     * @throws MongoTripodConfigException
+     */
+    public function getQueueDatabase($readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    {
+
+        if(!isset($this->dataSources[$this->queueConfig['data_source']]))
+        {
+            throw new MongoTripodConfigException("Data source '{$group}' not in configuration");
+        }
+        $connectionOptions = array();
+        if(isset($dataSource['connectTimeoutMS']) ? $dataSource['connectTimeoutMS'] : 20000);
+
+        if(isset($dataSource['replicaSet']) && !empty($dataSource['replicaSet'])) {
+            $connectionOptions['replicaSet'] = $dataSource['replicaSet'];
+        }
+        $client = new MongoClient($dataSource['connStr'], $connectionOptions);
+        $db = $client->selectDB($this->queueConfig['database']);
+        $db->setReadPreference($readPreference);
+        return $db;
+    }
 }
 class MongoTripodConfigException extends Exception {}
