@@ -9,7 +9,7 @@ abstract class MongoTripodBase
     /**
      * @var MongoCollection
      */
-    public $collection;
+    protected $collection;
 
     protected $groupName;
     protected $collectionName;

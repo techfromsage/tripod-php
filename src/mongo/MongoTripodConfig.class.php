@@ -1555,5 +1555,18 @@ class MongoTripodConfig
             LOCKS_COLLECTION
         );
     }
+
+    /**
+     * @param string $group
+     * @param string $readPreference
+     * @return MongoCollection
+     */
+    public function getCollectionForManualRollbackAudit($group, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    {
+        return $this->getMongoCollection(
+            $this->getDatabase($group, $this->dbConfig[$group]['data_source'], $readPreference),
+            AUDIT_MANUAL_ROLLBACKS_COLLECTION
+        );
+    }
 }
 class MongoTripodConfigException extends Exception {}
