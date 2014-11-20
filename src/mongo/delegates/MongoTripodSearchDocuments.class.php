@@ -11,7 +11,7 @@ class MongoTripodSearchDocuments extends MongoTripodBase
      * @param null $stat
      * @internal param \MongoDB $db
      */
-    function __construct($group, MongoCollection $collection,$defaultContext, $stat=null)
+    function __construct($group, MongoCollection $collection, $defaultContext, $stat=null)
     {
         $this->labeller = new MongoTripodLabeller();
         $this->groupName = $group;
