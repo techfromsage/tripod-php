@@ -19,21 +19,13 @@ class IndexUtils
         $dbs = ($dbName==null) ? $config->getDbs() : array($dbName);
         foreach ($dbs as $dbName)
         {
-            $m = null;
-            if($config->isReplicaSet($dbName)) {
-                $m = new MongoClient($config->getConnStr($dbName), array("replicaSet" => $config->getReplicaSetName($dbName)));
-            } else {
-                $m = new MongoClient($config->getConnStr($dbName));
-            }
-
-            $db = $m->selectDB($dbName);
-
             $collections = MongoTripodConfig::getInstance()->getIndexesGroupedByCollection($dbName);
             foreach ($collections as $collectionName=>$indexes)
             {
+
                 if ($reindex)
                 {
-                    $db->selectCollection($collectionName)->deleteIndexes();
+                    $config->getCollectionForCBD($dbName, $collectionName)->deleteIndexes();
                 }
                 foreach ($indexes as $indexName=>$fields)
                 {
@@ -41,16 +33,26 @@ class IndexUtils
                     if (is_numeric($indexName))
                     {
                         // no name
-                        $db->selectCollection($collectionName)->ensureIndex($fields,array("background"=>$background));
+                        $config->getCollectionForCBD($dbName, $collectionName)->ensureIndex($fields,array("background"=>$background));
                     }
                     else
                     {
-                        $db->selectCollection($collectionName)->ensureIndex($fields,array('name'=>$indexName,"background"=>$background));
+                        $config->getCollectionForCBD($dbName, $collectionName)->ensureIndex($fields,array('name'=>$indexName,"background"=>$background));
                     }
                 }
             }
             // finally, for views, make sure type is indexed
-            $db->selectCollection("views")->ensureIndex(array("_id.type"=>1),array("background"=>$background));
+            $dataSources = array();
+            foreach($config->getViewSpecifications($dbName) as $viewId=>$spec)
+            {
+                $dataSources[] = $spec['to'];
+            }
+            foreach(array_unique($dataSources) as $dataSource)
+            {
+                $config->getDatabase($dbName, $dataSource)
+                    ->selectCollection(VIEWS_COLLECTION)
+                    ->ensureIndex(array("_id.type"=>1),array("background"=>$background));
+            }
         }
     }
 }
