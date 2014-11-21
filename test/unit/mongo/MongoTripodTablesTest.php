@@ -31,9 +31,9 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $this->tripodTransactionLog = new MongoTransactionLog();
         $this->tripodTransactionLog->purgeAllTransactions();
 
-        $this->tripod = new MongoTripod("CBD_testing", "testing", array("async"=>array(OP_VIEWS=>false, OP_TABLES=>false, OP_SEARCH=>false)));
+        $this->tripod = new MongoTripod("CBD_testing", "tripod_php_testing", array("async"=>array(OP_VIEWS=>false, OP_TABLES=>false, OP_SEARCH=>false)));
 
-        $this->tripod->collection->drop();
+        $this->getTripodCollection($this->tripod)->drop();
         $this->tripod->setTransactionLog($this->tripodTransactionLog);
 
         $this->loadBaseDataViaTripod();
@@ -42,12 +42,15 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $queue = new MongoTripodQueue();
         $queue->purgeQueue();
 
-        $this->tablesConstParams = array($this->tripod->db,$this->tripod->collection,'http://talisaspire.com/');
+        $this->tablesConstParams = array($this->tripod->getGroup(),$this->getTripodCollection($this->tripod),'http://talisaspire.com/');
 
-        $this->tripodTables = new MongoTripodTables($this->tripod->db,$this->tripod->collection,null); // pass null context, should default to http://talisaspire.com
+        $this->tripodTables = new MongoTripodTables($this->tripod->getGroup(),$this->getTripodCollection($this->tripod),null); // pass null context, should default to http://talisaspire.com
 
         // purge tables
-        $this->tripodTables->db->selectCollection("table_rows")->drop();
+        foreach(MongoTripodConfig::getInstance()->getCollectionsForTables($this->tripod->getGroup()) as $collection)
+        {
+            $collection->drop();
+        }
     }
 
     /**
@@ -60,7 +63,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $config = array();
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["databases"] = array(
-            "testing" => array(
+            "tripod_php_testing" => array(
                 "connStr" => "mongodb://localhost",
                 "collections" => array(
                     "CBD_testing" => array()
@@ -410,15 +413,23 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
     public function testGenerateTableRowsForResourcesOfTypeWithNamespace()
     {
-        /* @var $mockTripodTables MongoTripodTables */
-        $mockTripodTables = $this->getMock('MongoTripodTables', array('generateTableRows'), array($this->tripod->db,$this->tripod->collection,'http://talisaspire.com/'));
+        /* @var MongoTripodTables|PHPUnit_Framework_MockObject_MockObject $mockTripodTables  */
+        $mockTripodTables = $this->getMock(
+            'MongoTripodTables',
+            array('generateTableRows'),
+            array($this->tripod->getGroup(),$this->getTripodCollection($this->tripod),'http://talisaspire.com/')
+        );
         $mockTripodTables->expects($this->atLeastOnce())->method('generateTableRows')->will($this->returnValue(array("ok"=>true)));
 
         // check where referred to as acorn:Work2 in spec...
         $mockTripodTables->generateTableRowsForType("http://talisaspire.com/schema#Work2");
 
-        /* @var $mockTripodTables MongoTripodTables */
-        $mockTripodTables = $this->getMock('MongoTripodTables', array('generateTableRows'), array($this->tripod->db,$this->tripod->collection,'http://talisaspire.com/'));
+        /* @var MongoTripodTables|PHPUnit_Framework_MockObject_MockObject $mockTripodTables */
+        $mockTripodTables = $this->getMock(
+            'MongoTripodTables',
+            array('generateTableRows'),
+            array($this->tripod->getGroup(),$this->getTripodCollection($this->tripod),'http://talisaspire.com/')
+        );
         $mockTripodTables->expects($this->atLeastOnce())->method('generateTableRows')->will($this->returnValue(array("ok"=>true)));
 
         // check where referred to as http://talisaspire.com/schema#Resource in spec...
@@ -837,7 +848,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
     public function testTableRowsGenerateWhenDefinedPredicateChanges()
     {
-        foreach(MongoTripodConfig::getInstance()->getTableSpecifications() as $specId=>$spec)
+        foreach(MongoTripodConfig::getInstance()->getTableSpecifications($this->tripod->getGroup()) as $specId=>$spec)
         {
             $this->generateTableRows($specId);
         }
@@ -847,7 +858,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             array('getTripodTables', 'getDataUpdater'),
             array(
                 'CBD_testing',
-                'testing',
+                'tripod_php_testing',
                 array(
                     'defaultContext'=>'http://talisaspire.com/',
                     'async'=>array(
@@ -908,7 +919,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
     public function testTableRowsNotGeneratedWhenUndefinedPredicateChanges()
     {
-        foreach(MongoTripodConfig::getInstance()->getTableSpecifications() as $specId=>$spec)
+        foreach(MongoTripodConfig::getInstance()->getTableSpecifications($this->tripod->getGroup()) as $specId=>$spec)
         {
             $this->generateTableRows($specId);
         }
@@ -918,7 +929,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             array('getTripodTables', 'getDataUpdater'),
             array(
                 'CBD_testing',
-                'testing',
+                'tripod_php_testing',
                 array(
                     'defaultContext'=>'http://talisaspire.com/',
                     'async'=>array(

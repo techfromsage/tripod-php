@@ -85,7 +85,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
      */
     public function __construct(
         $collectionName=MONGO_MAIN_COLLECTION,
-        $dbName=MONGO_MAIN_DB,
+        $group,
         $opts=array()
     )
     {
@@ -97,7 +97,6 @@ class MongoTripod extends MongoTripodBase implements ITripod
                 'retriesToGetLock' => 20)
             ,$opts);
         $this->collectionName = $collectionName;
-        $this->dbName = $dbName;
 
         $this->config = $this->getMongoTripodConfigInstance();
 
@@ -109,25 +108,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
         //max retries to get lock
         $this->retriesToGetLock = $opts['retriesToGetLock'];
 
-        // connect
-        /* @var $m MongoClient */
-        $connectionOptions = array('connectTimeoutMS'=>20000); // set a 20 second timeout on establishing a connection
-        if($this->config->isReplicaSet($dbName)) {
-            $connectionOptions['replicaSet'] = $this->config->getReplicaSetName($dbName);
-        }
-        try {
-            $m = new MongoClient($this->config->getConnStr($dbName), $connectionOptions);
-        } catch (Exception $e) {
-            $this->getStat()->increment(MONGO_CONNECTION_ERROR);
-            throw $e;
-        }
-        $m->setReadPreference($opts['readPreference']);
-        // select a database
-        $this->db = $m->selectDB($dbName);
-        if (!empty($collectionName))
-        {
-            $this->collection = $this->db->selectCollection($collectionName);
-        }
+        $this->collection = $this->config->getCollectionForCBD($group, $collectionName, $opts['readPreference']);
 
         // fill in and default any missing keys for $async array
         $async = $opts[OP_ASYNC];
@@ -333,7 +314,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
             $id['query'] = $query;
             $id['groupBy'] = $groupBy;
             $this->debugLog("Looking in cache",array("id"=>$id));
-            $candidate = $this->db->selectCollection(TTL_CACHE_COLLECTION)->findOne(array("_id"=>$id));
+            $candidate = $this->config->getCollectionForTTLCache($this->groupName)->findOne(array("_id"=>$id));
             if (!empty($candidate))
             {
                 $this->debugLog("Found candidate",array("candidate"=>$candidate));
@@ -375,7 +356,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
                 $cachedResults['results'] = $results;
                 $cachedResults['created'] = new MongoDate();
                 $this->debugLog("Adding result to cache",$cachedResults);
-                $this->db->selectCollection(TTL_CACHE_COLLECTION)->insert($cachedResults);
+                $this->config->getCollectionForTTLCache($this->groupName)->insert($cachedResults);
             }
         }
 
@@ -550,7 +531,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
         if($this->tripod_views==null)
         {
             $this->tripod_views = new MongoTripodViews(
-                $this->db,
+                $this->groupName,
                 $this->collection,
                 $this->defaultContext,
                 $this->stat
@@ -567,7 +548,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
         if ($this->tripod_tables==null)
         {
             $this->tripod_tables = new MongoTripodTables(
-                $this->db,
+                $this->groupName,
                 $this->collection,
                 $this->defaultContext,
                 $this->stat

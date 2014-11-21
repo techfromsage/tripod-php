@@ -110,12 +110,34 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
 
     protected function addDocument($doc, $toTransactionLog=false)
     {
+        $config = MongoTripodConfig::getInstance();
         if($toTransactionLog == true){
-            $tripod = new MongoTripod('transaction_log', 'testing');
-            return $tripod->collection->insert($doc, array("w"=>1));
+
+            $tripod = new MongoTripod('transaction_log', 'tripod_php_testing');
+            return $this->getTlogCollection()->insert($doc, array("w"=>1));
         } else {
-            return $this->tripod->collection->insert($doc, array("w"=>1));
+            return $config->getCollectionForCBD(
+                $this->tripod->getGroup(),
+                $this->tripod->getCollectionName()
+            )->insert($doc, array("w"=>1));
         }
+    }
+
+    protected function getTlogCollection()
+    {
+        $config = MongoTripodConfig::getInstance();
+        $tLogConfig = $config->getTransactionLogConfig();
+        return $config->getTransactionLogDatabase()->selectCollection($tLogConfig['collection']);
+    }
+
+    protected function getTripodCollection(MongoTripod $tripod)
+    {
+        $config = MongoTripodConfig::getInstance();
+        $pods = $config->getPods($tripod->getGroup());
+        return $config->getDatabase(
+            $tripod->getGroup(),
+            $pods[$tripod->getCollectionName()]['data_source']
+        )->selectCollection($tripod->getCollectionName());
     }
 
     protected function getDocument($_id, $tripod=null, $fromTransactionLog=false)
@@ -127,11 +149,11 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
 
         if($tripod==NULL)
         {
-            return $this->tripod->collection->findOne(array("_id"=>$_id));
+            return $this->getTripodCollection($this->tripod)->findOne(array("_id"=>$_id));
         }
         else
         {
-            return $tripod->collection->findOne(array("_id"=>$_id));
+            return $this->getTripodCollection($tripod)->findOne(array("_id"=>$_id));
         }
     }
 
@@ -309,13 +331,30 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
 
     protected function lockDocument($subject, $transaction_id)
     {
-        $tripod = new MongoTripod(LOCKS_COLLECTION, 'testing');
+        $tripod = new MongoTripod(LOCKS_COLLECTION, 'tripod_php_testing');
         $labeller = new MongoTripodLabeller();
         $doc = array(
             '_id' => array(_ID_RESOURCE => $labeller->uri_to_alias($subject), _ID_CONTEXT => MongoTripodConfig::getInstance()->getDefaultContextAlias()),
             _LOCKED_FOR_TRANS => $transaction_id,
             _LOCKED_FOR_TRANS_TS=>new MongoDate()
         );
-        $tripod->collection->insert($doc, array("w" => 1));
+        $this->getTripodCollection($tripod)->insert($doc, array("w" => 1));
+    }
+}
+
+class MongoTestTripod extends MongoTripod
+{
+    public function getCollectionReadPreference()
+    {
+        return $this->collection->getReadPreference();
+    }
+}
+
+class MongoTripodTestConfig extends MongoTripodConfig
+{
+    public function __construct() {}
+    public function loadConfig(array $config)
+    {
+        parent::loadConfig($config);
     }
 }

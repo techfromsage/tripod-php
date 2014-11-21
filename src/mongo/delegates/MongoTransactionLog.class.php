@@ -21,7 +21,7 @@ class MongoTransactionLog
             $m = new MongoClient($connStr);
         }
 
-        $this->transaction_db = $m->selectDB($this->config['database']);
+        $this->transaction_db = $config->getTransactionLogDatabase();
         $this->transaction_collection = $this->transaction_db->selectCollection($this->config['collection']);
     }
 

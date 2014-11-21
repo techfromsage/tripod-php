@@ -17,6 +17,7 @@
         "foaf": "http://xmlns.com/foaf/0.1/",
         "baseData": "http://basedata.com/b/"
     },
+    "defaultContext":"http://talisaspire.com/",
     "data_sources" : {
         "rs1" : {
             "type" : "mongo",
@@ -312,7 +313,7 @@
                     }
                 ]
             },
-            "tables_specifications" : [
+            "table_specifications" : [
                 {
                     "_id": "t_resource",
                     "type": "acorn:Resource",
@@ -665,12 +666,12 @@
         }
     },
     "transaction_log": {
-        "database": "testing",
+        "database": "tripod_php_testing",
         "collection" : "transaction_log",
         "data_source" : "rs2"
     },
     "queue": {
-        "database": "testing",
+        "database": "tripod_php_testing",
         "collection": "q_queue",
         "data_source" : "rs1"
     }

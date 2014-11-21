@@ -165,14 +165,14 @@ class MongoTripodConfig
         $queueConfig = $this->getMandatoryKey("queue",$config);
         $this->queueConfig["database"] = $this->getMandatoryKey("database",$queueConfig,'queue');
         $this->queueConfig["collection"] = $this->getMandatoryKey("collection",$queueConfig,'queue');
-        $this->queueConfig["data_source"] = $this->getMandatoryKey("connStr",$queueConfig,'queue');
+        $this->queueConfig["data_source"] = $this->getMandatoryKey("data_source",$queueConfig,'queue');
         if(!isset($this->dataSources[$this->queueConfig['data_source']]))
         {
             throw new MongoTripodConfigException("Queue data source, " . $this->queueConfig['data_source'] . ", was not defined");
         }
 
         // A 'pod' corresponds to a logical database
-        $this->databases = $this->getMandatoryKey("pods",$config);
+        $this->databases = $this->getMandatoryKey("groups",$config);
         $defaultDB = null;
         foreach ($this->databases as $groupName=>$groupConfig)
         {
@@ -183,7 +183,7 @@ class MongoTripodConfig
             }
             else
             {
-                $this->dbConfig[$groupConfig]["database"] = $groupName;
+                $this->dbConfig[$groupName]["database"] = $groupName;
             }
 
             $this->cardinality[$groupName] = array();
@@ -382,7 +382,7 @@ class MongoTripodConfig
                 }
                 else
                 {
-                    $spec['to'] = $defaultDB;
+                    $spec['to'] = $groupConfig['data_source'];
                 }
 
                 $this->tableSpecs[$groupName][$spec[_ID_KEY]] = $spec;
@@ -394,6 +394,7 @@ class MongoTripodConfig
 
     /**
      * Creates an associative array of all predicates/properties associated with all table and search document specifications
+     * @param string $group
      * @return array
      */
     protected function getDefinedPredicatesInSpecs($group)
@@ -610,7 +611,7 @@ class MongoTripodConfig
     {
         if(!isset($this->specPredicates[$group]))
         {
-            $this->specPredicates = $this->getDefinedPredicatesInSpecs($group);
+            $this->specPredicates[$group] = $this->getDefinedPredicatesInSpecs($group);
         }
         if(isset($this->specPredicates[$group][$specId]))
         {
@@ -742,9 +743,14 @@ class MongoTripodConfig
         {
             if (array_key_exists("ensureIndexes",$tspec))
             {
+                // Indexes should be keyed by data_source
+                if(!isset($tableIndexes[$tspec['to']]))
+                {
+                    $tableIndexes[$tspec['to']] = array();
+                }
                 foreach ($tspec["ensureIndexes"] as $index)
                 {
-                    $tableIndexes[] = $index;
+                    $tableIndexes[$tspec['to']][] = $index;
                 }
             }
         }
@@ -755,9 +761,14 @@ class MongoTripodConfig
         {
             if (array_key_exists("ensureIndexes",$vspec))
             {
+                // Indexes should be keyed by data_source
+                if(!isset($viewIndexes[$vspec['to']]))
+                {
+                    $viewIndexes[$vspec['to']] = array();
+                }
                 foreach ($vspec["ensureIndexes"] as $index)
                 {
-                    $viewIndexes[] = $index;
+                    $viewIndexes[$vspec['to']][] = $index;
                 }
             }
         }
@@ -818,28 +829,24 @@ class MongoTripodConfig
      * Returns the connection string for the supplied database name
      *
      * @param string $dbName
-     * @return string
+     * @param null $collectionName
      * @throws MongoTripodConfigException
+     * @return string
      */
-    public function getConnStr($dbName)
+    public function getConnStr($dbName, $collectionName = null)
     {
         if (array_key_exists($dbName,$this->dbConfig))
         {
-            if($this->isReplicaSet($dbName)){
-                // if this is a replica set then we have to make sure that the connstr specified
-                // connects directly to the /admin database on the cluster.
-                // see XIP-2448. All im doing here is checking to see that the connstr ends with /admin
-                // substr is faster than regex match
-                $connStr = $this->dbConfig[$dbName]["connStr"];
-                if ($this->isConnectionStringValidForRepSet($connStr)){
-                    return $connStr;
-                } else {
-                    throw new MongoTripodConfigException("Connection string for $dbName must include /admin database when connecting to Replica Set");
-                }
-
-            } else {
-                return $this->dbConfig[$dbName]["connStr"];
+            if(!$collectionName)
+            {
+                return $this->getConnStrForDataSource($this->dbConfig[$dbName]['data_source']);
             }
+            $pods = $this->getPods($dbName);
+            if(array_key_exists($collectionName, $pods))
+            {
+                return $this->getConnStrForDataSource($pods[$collectionName]['data_source']);
+            }
+            throw new MongoTripodConfigException("Collection $collectionName does not exist for database $dbName");
         }
         else
         {
@@ -853,15 +860,30 @@ class MongoTripodConfig
      * @throws MongoTripodConfigException
      */
     public function getTransactionLogConnStr() {
-        if(array_key_exists("replicaSet", $this->tConfig) && !empty($this->tConfig["replicaSet"])) {
-            $connStr = $this->tConfig['connStr'];
+        return $this->getConnStrForDataSource($this->tConfig['data_source']);
+    }
+
+    /**
+     * @param $dataSource
+     * @return string
+     * @throws MongoTripodConfigException
+     */
+    protected function getConnStrForDataSource($dataSource)
+    {
+        if(!array_key_exists($dataSource, $this->dataSources))
+        {
+            throw new MongoTripodConfigException("Data source '{$dataSource}' not configured");
+        }
+        $ds = $this->dataSources[$dataSource];
+        if(array_key_exists("replicaSet", $ds) && !empty($ds["replicaSet"])) {
+            $connStr = $ds['connection'];
             if ($this->isConnectionStringValidForRepSet($connStr)){
                 return $connStr;
             } else {
-                throw new MongoTripodConfigException("Connection string for Transaction Log must include /admin database when connecting to Replica Set");
+                throw new MongoTripodConfigException("Connection string for '{$dataSource}' must include /admin database when connecting to Replica Set");
             }
         } else {
-            return $this->tConfig['connStr'];
+            return $ds['connection'];
         }
     }
 
@@ -872,28 +894,20 @@ class MongoTripodConfig
      * @throws MongoTripodConfigException
      */
     public function getQueueConnStr() {
-        if(array_key_exists("replicaSet", $this->queueConfig) && !empty($this->queueConfig["replicaSet"])) {
-            $connStr = $this->queueConfig['connStr'];
-            if ($this->isConnectionStringValidForRepSet($connStr)){
-                return $connStr;
-            } else {
-                throw new MongoTripodConfigException("Connection string for Queue must include /admin database when connecting to Replica Set");
-            }
-        } else {
-            return $this->queueConfig['connStr'];
-        }
+        return $this->getConnStrForDataSource($this->queueConfig['data_source']);
     }
 
     /**
      * Returns a replica set name for the database, if one has been defined
-     * @param string|$dbName
+     * @param $datasource
+     * @internal param string $dbName
      * @return string|null
      */
-    public function getReplicaSetName($dbName)
+    public function getReplicaSetName($datasource)
     {
-        if($this->isReplicaSet($dbName))
+        if($this->isReplicaSet($datasource))
         {
-            return $this->dbConfig[$dbName]['replicaSet'];
+            return $this->dataSources[$datasource]['replicaSet'];
         }
 
         return null;
@@ -901,19 +915,29 @@ class MongoTripodConfig
 
     /**
      * Returns a boolean reflecting whether or not a replica set has been defined for the supplied database name
-     * @param string $dbName
+     * @param $datasource
+     * @internal param string $dbName
      * @return bool
      */
-    public function isReplicaSet($dbName)
+    public function isReplicaSet($datasource)
     {
-        if (array_key_exists($dbName,$this->dbConfig))
+        if (array_key_exists($datasource,$this->dataSources))
         {
-            if(array_key_exists("replicaSet",$this->dbConfig[$dbName]) && !empty($this->dbConfig[$dbName]["replicaSet"])) {
+            if(array_key_exists("replicaSet",$this->dataSources[$datasource]) && !empty($this->dataSources[$datasource]["replicaSet"])) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    public function getDefaultDataSourceForGroup($group)
+    {
+        if(array_key_exists($group, $this->dbConfig))
+        {
+            return $this->dbConfig[$group]['data_source'];
+        }
+        return null;
     }
 
     /**
@@ -960,6 +984,7 @@ class MongoTripodConfig
      */
     public function getSearchDocumentSpecifications($group, $type=null, $justReturnSpecId=false)
     {
+
         if(!isset($this->searchDocSpecs[$group]) || empty($this->searchDocSpecs[$group]))
         {
             return array();
@@ -974,7 +999,7 @@ class MongoTripodConfig
                 }
                 return $specIds;
             } else {
-                return $this->searchDocSpecs;
+                return $this->searchDocSpecs[$group];
             }
         }
 
@@ -1579,9 +1604,35 @@ class MongoTripodConfig
 
         if(!isset($this->dataSources[$this->queueConfig['data_source']]))
         {
-            throw new MongoTripodConfigException("Data source '{$group}' not in configuration");
+            throw new MongoTripodConfigException("Data source '" . $this->queueConfig['data_source'] . "' not in configuration");
         }
         $connectionOptions = array();
+        $dataSource = $this->dataSources[$this->queueConfig['data_source']];
+        if(isset($dataSource['connectTimeoutMS']) ? $dataSource['connectTimeoutMS'] : 20000);
+
+        if(isset($dataSource['replicaSet']) && !empty($dataSource['replicaSet'])) {
+            $connectionOptions['replicaSet'] = $dataSource['replicaSet'];
+        }
+        $client = new MongoClient($dataSource['connStr'], $connectionOptions);
+        $db = $client->selectDB($this->queueConfig['database']);
+        $db->setReadPreference($readPreference);
+        return $db;
+    }
+
+    /**
+     * @param $readPreference
+     * @return MongoDB
+     * @throws MongoTripodConfigException
+     */
+    public function getTransactionLogDatabase($readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    {
+
+        if(!isset($this->dataSources[$this->tConfig['data_source']]))
+        {
+            throw new MongoTripodConfigException("Data source '" . $this->tConfig['data_source'] . "' not in configuration");
+        }
+        $connectionOptions = array();
+        $dataSource = $this->dataSources[$this->tConfig['data_source']];
         if(isset($dataSource['connectTimeoutMS']) ? $dataSource['connectTimeoutMS'] : 20000);
 
         if(isset($dataSource['replicaSet']) && !empty($dataSource['replicaSet'])) {

@@ -51,8 +51,8 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
         $this->tripodQueue = new MongoTripodQueue();
         $this->tripodQueue->purgeQueue();
 
-        $this->tripod = new MongoTripod('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/','async'=>array(OP_VIEWS=>false, OP_TABLES=>false, OP_SEARCH=>false)));
-        $this->tripod->collection->drop();
+        $this->tripod = new MongoTripod('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/','async'=>array(OP_VIEWS=>false, OP_TABLES=>false, OP_SEARCH=>false)));
+        $this->getTripodCollection($this->tripod)->drop();
 
         $this->tripod->db->selectCollection(VIEWS_COLLECTION)->drop();
         $this->tripod->db->selectCollection(TABLE_ROWS_COLLECTION)->drop();
@@ -63,7 +63,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
         $this->tripod->getTripodViews()->generateViewsForResourcesOfType("bibo:Book");
         $this->tripod->getTripodTables()->generateTableRowsForType("bibo:Book");
         // index all the documents
-        $cursor = $this->tripod->collection->find(array("rdf:type.u"=>array('$in'=>array("bibo:Book","foaf:Person"))),array('_id'=>1));//->limit(20);
+        $cursor = $this->getTripodCollection($this->tripod)->find(array("rdf:type.u"=>array('$in'=>array("bibo:Book","foaf:Person"))),array('_id'=>1));//->limit(20);
         while($cursor->hasNext()){
             $result = $cursor->getNext();
             $this->tripod->getSearchIndexer()->generateAndIndexSearchDocuments($result['_id']['r'], $result['_id']['c'], $this->tripod->getCollectionName());
@@ -76,7 +76,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
     public function testSingleItemIsAddedToQueueForChangeToSubjectThatDoesNotImpactAnything()
     {
         // create a tripod instance that will send all operations to the queue
-        $tripod = new MongoTripod('CBD_testing','testing', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
+        $tripod = new MongoTripod('CBD_testing','tripod_php_testing', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
         $g1 = $tripod->describeResource("http://talisaspire.com/resources/doc1");
         $g2 = $tripod->describeResource("http://talisaspire.com/resources/doc1");
         $g2->add_literal_triple("http://talisaspire.com/resources/doc1", $g2->qname_to_uri("dct:subject"),"astrophysics");
@@ -101,7 +101,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
         $this->tripod->getTripodTables()->generateTableRowsForType("bibo:Book");
 
         // create a tripod instance that will send all operations to the queue
-        $tripod = new MongoTripod('CBD_testing','testing', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
+        $tripod = new MongoTripod('CBD_testing','tripod_php_testing', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
         $g1 = $tripod->describeResource("http://talisaspire.com/authors/1");
         $g2 = $tripod->describeResource("http://talisaspire.com/authors/1");
 
@@ -162,7 +162,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
     public function testItemAddedToQueueForSubjectNeverSeenBefore()
     {
         // create a tripod instance that will send all operations to the queue
-        $tripod = new MongoTripod('CBD_testing','testing', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
+        $tripod = new MongoTripod('CBD_testing','tripod_php_testing', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
 
         // first lets add a book, which should trigger a search doc, view and table gen for a single item
         $g = new MongoGraph();
@@ -211,7 +211,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
     public function testItemNotAddedToQueueForSubjectNeverSeenBeforeThatHasNoApplicableType()
     {
         // create a tripod instance that will send all operations to the queue
-        $tripod = new MongoTripod('CBD_testing','testing', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
+        $tripod = new MongoTripod('CBD_testing','tripod_php_testing', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
 
         // first lets add a book, which should trigger a search doc, view and table gen for a single item
         $g = new MongoGraph();
@@ -234,7 +234,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
     public function testItemAddedToQueueForUpdatedSubjectWithApplicableType()
     {
         // create a tripod instance that will send all operations to the queue
-        $tripod = new MongoTripod('CBD_testing','testing', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
+        $tripod = new MongoTripod('CBD_testing','tripod_php_testing', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
 
         // first lets add a book, which should trigger a search doc, view and table gen for a single item
         $g = new MongoGraph();
@@ -270,7 +270,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
     public function testSavingMultipleNewEntitiesWhereOnlyOneIsApplicable()
     {
         // create a tripod instance that will send all operations to the queue
-        $tripod = new MongoTripod('CBD_testing','testing', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
+        $tripod = new MongoTripod('CBD_testing','tripod_php_testing', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
 
         // first lets add a book, which should trigger a search doc, view and table gen for a single item
         $g = new MongoGraph();
@@ -320,7 +320,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
     public function testChangingResourceTypeQueuesOneItemWillDeleteTheOldViewsTablesAndSearchDocs()
     {
         // create a tripod instance that will send all operations to the queue
-        $tripod = new MongoTripod('CBD_testing','testing', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
+        $tripod = new MongoTripod('CBD_testing','tripod_php_testing', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
 
         $subjectUri = "http://talisaspire.com/resources/doc1";
 
@@ -375,7 +375,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
     public function testChangingTypeOfResourceThatImpactsOthers()
     {
         // create a tripod instance that will send all operations to the queue
-        $tripod = new MongoTripod('CBD_testing','testing', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
+        $tripod = new MongoTripod('CBD_testing','tripod_php_testing', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
 
         $subjectUri = "http://talisaspire.com/authors/1";
         $expectedQueuedItems = array(
@@ -504,7 +504,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
     public function testDeleteSingleResourceWithNoImpactQueuesSingleItem()
     {
         // create a tripod instance that will send all operations to the queue
-        $tripod = new MongoTripod('CBD_testing','testing', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
+        $tripod = new MongoTripod('CBD_testing','tripod_php_testing', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
 
         $subjectUri = "http://talisaspire.com/resources/doc1";
 
@@ -557,7 +557,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
     public function testDeleteSingleResourceWithNoImpactButNoExistingViewsTablesSearchDocsDoesntQueueAnything()
     {
         // create a tripod instance that will send all operations to the queue
-        $tripod = new MongoTripod('CBD_testing','testing', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
+        $tripod = new MongoTripod('CBD_testing','tripod_php_testing', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
 
         $subjectUri = "http://talisaspire.com/resources/doc1";
 

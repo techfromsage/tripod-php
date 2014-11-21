@@ -19,18 +19,22 @@ class MongoSearchProviderTest extends MongoTripodTestBase
         $this->tripodTransactionLog = new MongoTransactionLog();
         $this->tripodTransactionLog->purgeAllTransactions();
 
-        $this->tripod = new MongoTripod('CBD_testing', 'testing');
+        $this->tripod = new MongoTripod('CBD_testing', 'tripod_php_testing');
         $this->indexer = new MongoTripodSearchIndexer($this->tripod);
         $this->searchProvider = new MongoSearchProvider($this->tripod);
+        $this->getTripodCollection($this->tripod)->drop();
 
-        $this->tripod->collection->drop();
         $this->loadBaseSearchDataViaTripod();
 
-        $this->tripod->db->selectCollection(SEARCH_INDEX_COLLECTION)->drop();
-        $this->tripod->db->selectCollection("CBD_testing");
+        foreach(MongoTripodConfig::getInstance()->getCollectionsForSearch($this->tripod->getGroup()) as $collection)
+        {
+            $collection->drop;
+        }
+
 
         // index all the documents
-        $cursor = $this->tripod->collection->find(array("rdf:type.u"=>array('$in'=>array("bibo:Book"))),array('_id'=>1,'rdf:type'=>1));//->limit(20);
+        $cursor = $this->getTripodCollection($this->tripod)
+            ->find(array("rdf:type.u"=>array('$in'=>array("bibo:Book"))),array('_id'=>1,'rdf:type'=>1));//->limit(20);
         while($cursor->hasNext()){
             $result = $cursor->getNext();
             $t = array();
@@ -165,7 +169,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
         );
 
         // loop through every expected document and assert that it exists, and that each property matches the value we defined above.
-        $searchTripod = new MongoTripod('search', 'testing');
+        $searchTripod = new MongoTripod('search', 'tripod_php_testing');
         foreach($expectedSearchDocs as $expectedSearchDoc){
             $this->assertDocumentExists($expectedSearchDoc["_id"], $searchTripod);
             $this->assertDocumentHasProperty($expectedSearchDoc["_id"], "result", $expectedSearchDoc["result"], $searchTripod);
@@ -178,7 +182,8 @@ class MongoSearchProviderTest extends MongoTripodTestBase
     {
         // update a document
         $id = array('_id.r'=>'http://talisaspire.com/resources/doc1');
-        $this->tripod->collection->update($id, array('$set'=>array("rdf:type"=>array("u"=>"bibo:Article"))));
+        $this->getTripodCollection($this->tripod)
+            ->update($id, array('$set'=>array("rdf:type"=>array("u"=>"bibo:Article"))));
 
         // reindex
         $this->indexer->generateAndIndexSearchDocuments('http://talisaspire.com/resources/doc1', 'http://talisaspire.com/', $this->tripod->getCollectionName());
@@ -201,7 +206,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
             "resourcelists:description"=>array("l"=>"foo bar baz"),
 
         );
-        $this->tripod->collection->update($id, array('$set'=> $newData));
+        $this->getTripodCollection($this->tripod)->update($id, array('$set'=> $newData));
 
         // reindex
         $this->indexer->generateAndIndexSearchDocuments('http://talisaspire.com/resources/doc1', 'http://talisaspire.com/', $this->tripod->getCollectionName());
@@ -227,7 +232,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
             "spec:name"=>array("l"=>"my list title"),
             "resourcelist:description"=>array("l"=>"foo bar baz"),
         );
-        $this->tripod->collection->update($id, array('$set'=> $newData));
+        $this->getTripodCollection($this->tripod)->update($id, array('$set'=> $newData));
 
         // reindex
         $this->indexer->generateAndIndexSearchDocuments('http://talisaspire.com/resources/doc1', 'http://talisaspire.com/', $this->tripod->getCollectionName());
@@ -261,7 +266,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
         $newData = array(
             "rdf:type"=>array("u"=>"bibo:Book")
         );
-        $this->tripod->collection->update($id, array('$set'=> $newData));
+        $this->getTripodCollection($this->tripod)->update($id, array('$set'=> $newData));
 
         // reindex
         $this->indexer->generateAndIndexSearchDocuments('http://talisaspire.com/resources/doc1', 'http://talisaspire.com/', $this->tripod->getCollectionName());
@@ -510,7 +515,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
     			"spec:name"=>array("l"=>"my list title"),
     			"resourcelist:description"=>array("l"=>"foo bar baz"),
     	);
-    	$this->tripod->collection->update($id, array('$set'=> $newData));
+    	$this->getTripodCollection($this->tripod)->update($id, array('$set'=> $newData));
     	
     	// reindex
     	$this->indexer->generateAndIndexSearchDocuments('http://talisaspire.com/resources/doc1', 'http://talisaspire.com/', $this->tripod->getCollectionName());
