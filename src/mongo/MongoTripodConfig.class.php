@@ -987,7 +987,7 @@ class MongoTripodConfig
      */
     public function getSearchDocumentSpecification($storeName, $sid)
     {
-        if (isset($this->searchDocSpecs[$storeName]) && isset($this->searchDocSpecs[$storeName][$sid]))
+        if (array_key_exists($storeName, $this->searchDocSpecs) && array_key_exists($sid, $this->searchDocSpecs[$storeName]))
         {
             return $this->searchDocSpecs[$storeName][$sid];
         }
@@ -1422,7 +1422,7 @@ class MongoTripodConfig
      */
     public function getCollectionForSearchDocument($storeName, $searchDocumentId, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
     {
-        if(isset($this->searchDocSpecs[$storeName]) && ($this->searchDocSpecs[$storeName][$searchDocumentId]))
+        if(array_key_exists($storeName, $this->searchDocSpecs) && array_key_exists($searchDocumentId, $this->searchDocSpecs[$storeName]))
         {
             return $this->getMongoCollection(
                 $this->getDatabase($storeName, $this->searchDocSpecs[$storeName][$searchDocumentId]['to'], $readPreference),

@@ -313,7 +313,7 @@ class MongoSearchProvider implements ITripodSearchProvider
     	$searchSpec = $this->getSearchDocumentSpecification($typeId);
     	if ($searchSpec == null)
     	{    		
-    		throw new TripodSearchException("Cound not find a search specification for $typeId");
+    		throw new TripodSearchException("Could not find a search specification for $typeId");
     	}
     	    	
     	return $this->config->getCollectionForSearchDocument($this->storeName, $typeId)

@@ -505,7 +505,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
     						->with('i_some_type')
     						->will($this->returnValue(null));
     	
-    	$this->setExpectedException("TripodException","Cound not find a search specification for i_some_type");
+    	$this->setExpectedException("TripodException","Could not find a search specification for i_some_type");
     	$mockSearchProvider->deleteSearchDocumentsByTypeId('i_some_type');
     }
     
@@ -515,7 +515,8 @@ class MongoSearchProviderTest extends MongoTripodTestBase
         $actualSearchDocumentCount = $this->getCountForSearchSpecs($this->tripod);
 
     	$this->assertEquals(12, $actualSearchDocumentCount, "Should have generated 12 search documents based on searchData.json");
-    	
+
+        /** @var MongoSearchProvider|PHPUnit_Framework_MockObject_MockObject $mockSearchProvider */
     	$mockSearchProvider = $this->getMock("MongoSearchProvider", array('getSearchDocumentSpecification'), array($this->tripod));
     	$mockSearchProvider->expects($this->once())
 				    	->method('getSearchDocumentSpecification')
