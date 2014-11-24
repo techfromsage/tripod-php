@@ -84,7 +84,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
      * @throws Exception
      */
     public function __construct(
-        $collectionName=MONGO_MAIN_COLLECTION,
+        $pod=MONGO_MAIN_COLLECTION,
         $group,
         $opts=array()
     )
@@ -96,7 +96,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
                 'readPreference'=>MongoClient::RP_PRIMARY_PREFERRED,
                 'retriesToGetLock' => 20)
             ,$opts);
-        $this->collectionName = $collectionName;
+        $this->collectionName = $pod;
         $this->groupName = $group;
         $this->config = $this->getMongoTripodConfigInstance();
 
@@ -108,7 +108,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
         //max retries to get lock
         $this->retriesToGetLock = $opts['retriesToGetLock'];
 
-        $this->collection = $this->config->getCollectionForCBD($group, $collectionName, $opts['readPreference']);
+        $this->collection = $this->config->getCollectionForCBD($group, $pod, $opts['readPreference']);
 
         // fill in and default any missing keys for $async array
         $async = $opts[OP_ASYNC];
