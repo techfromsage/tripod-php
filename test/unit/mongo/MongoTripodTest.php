@@ -738,12 +738,21 @@ class MongoTripodTest extends MongoTripodTestBase
         $config = array();
         $config['namespaces'] = array('rdf'=>'http://www.w3.org/1999/02/22-rdf-syntax-ns#');
         $config["defaultContext"] = "http://talisaspire.com/";
-        $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://talisaspire:acorn123@46.137.106.66:27018");
-        $config["es_config"] = array("search_document_specifications"=>array(),"indexes"=>array(),"endpoint"=>"http://localhost");
-        $config["databases"] = array(
+        $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"tlog");
+        $config["data_sources"] = array(
+            "db"=>array(
+                "type"=>"mongo",
+                "connection"=>"mongodb://localhost"
+            ),
+            "tlog"=>array(
+                "type"=>"mongo",
+                "connection"=>"mongodb://talisaspire:acorn123@46.137.106.66:27018"
+            )
+        );
+        $config["groups"] = array(
             "tripod_php_testing"=>array(
-                "connStr"=>"mongodb://localhost",
-                "collections"=>array(
+                "data_source"=>"db",
+                "pods"=>array(
                     "CBD_testing"=>array(
                         "cardinality"=>array(
                             "rdf:type"=>1
@@ -752,7 +761,7 @@ class MongoTripodTest extends MongoTripodTestBase
                 )
             )
         );
-        $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","connStr"=>"mongodb://localhost");
+        $config['queue'] = array("database"=>"queue","collection"=>"q_queue","data_source"=>"db");
 
         // Override the config defined in base test class as we need specific config here.
         MongoTripodConfig::setConfig($config);
@@ -818,8 +827,8 @@ class MongoTripodTest extends MongoTripodTestBase
     {
 //        TripodException: testing:SOME_COLLECTION is not referenced within config, so cannot be written to
         $this->setExpectedException(
-            'TripodException',
-            'database:collection testing:SOME_COLLECTION is not referenced within config, so cannot be written to');
+            'MongoTripodConfigException',
+            'Collection name \'SOME_COLLECTION\' not in configuration');
 
         $tripod = new MongoTripod("SOME_COLLECTION","tripod_php_testing");
         $tripod->saveChanges(new ExtendedGraph(), new ExtendedGraph(), 'http://talisaspire.com/');
@@ -1082,12 +1091,13 @@ class MongoTripodTest extends MongoTripodTestBase
     public function testDistinctOnTableSpecThatDoesNotExist()
     {
         $table = "t_nothing_to_see_here";
-        $rows = $this->tripod->getTableRows($table, array(), array(), 0, 0);
-        $this->assertEquals(0, $rows['head']['count']);
+
+        $this->setExpectedException(
+            'MongoTripodConfigException',
+            'Table id \'t_nothing_to_see_here\' not in configuration'
+        );
         $results = $this->tripod->getDistinctTableColumnValues($table, "value.foo");
-        $this->assertEquals(0, $results['head']['count']);
-        $this->assertArrayHasKey('results', $results);
-        $this->assertEmpty($results['results']);
+
     }
 
     /**
