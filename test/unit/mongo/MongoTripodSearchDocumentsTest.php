@@ -8,7 +8,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
 		$this->tripod = new MongoTripod('CBD_testing', 'tripod_php_testing');
 		$this->getTripodCollection($this->tripod)->drop();
         $this->loadBaseSearchDataViaTripod();
-        foreach(MongoTripodConfig::getInstance()->getCollectionsForSearch($this->tripod->getGroup()) as $collection)
+        foreach(MongoTripodConfig::getInstance()->getCollectionsForSearch($this->tripod->getStoreName()) as $collection)
         {
             $collection->drop();
         }
@@ -17,7 +17,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
     protected function getMongoTripodSearchDocuments(MongoTripod $tripod)
     {
         return new MongoTripodSearchDocuments(
-            $tripod->getGroup(),
+            $tripod->getStoreName(),
             $this->getTripodCollection($tripod),
             'http://talisaspire.com/'
         );
@@ -41,7 +41,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
 	{
 		$mockSearchDocuments = $this->getMock('MongoTripodSearchDocuments',
 											array('getSearchDocumentSpecification'), 
-											array($this->tripod->getGroup(), $this->getTripodCollection($this->tripod), 'http://talisaspire.com/'));
+											array($this->tripod->getStoreName(), $this->getTripodCollection($this->tripod), 'http://talisaspire.com/'));
 		
 		$mockSearchDocuments->expects($this->once())
 							->method('getSearchDocumentSpecification')
@@ -71,7 +71,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
 		$searchSpecs = json_decode('{"_id":"i_search_resource","type":["bibo:Book"],"from":"CBD_testing","filter":[{"condition":{"dct:title.l":{"$exists":true}}}],"indices":[{"fieldName":"search_terms","predicates":["dct:title","dct:subject"]},{"fieldName":"other_terms","predicates":["rdf:type"]}],"fields":[{"fieldName":"result.title","predicates":["dct:title"],"limit":1},{"fieldName":"result.link","value":"_link_"},{"fieldName":"rdftype","predicates":["rdf:type"],"limit":1}],"joins":{"dct:creator":{"indices":[{"fieldName":"search_terms","predicates":["foaf:name"]}],"fields":[{"fieldName":"result.author","predicates":["foaf:name"],"limit":1}, {"fieldName":"result.role","predicates":["siocAccess:Role"], "limit":1}] } }}', true);
 		$mockSearchDocuments = $this->getMock('MongoTripodSearchDocuments',
 				array('getSearchDocumentSpecification'),
-				array($this->tripod->getGroup(), $this->getTripodCollection($this->tripod), 'http://talisaspire.com/'));
+				array($this->tripod->getStoreName(), $this->getTripodCollection($this->tripod), 'http://talisaspire.com/'));
 		$mockSearchDocuments->expects($this->once())
 							->method('getSearchDocumentSpecification')
 							->will($this->returnValue($searchSpecs));

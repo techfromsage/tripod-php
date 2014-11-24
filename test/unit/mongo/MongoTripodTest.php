@@ -27,7 +27,7 @@ class MongoTripodTest extends MongoTripodTestBase
         $this->getTripodCollection($this->tripod)->drop();
 
         // Lock collection no longer available from MongoTripod, so drop it manually
-        MongoTripodConfig::getInstance()->getCollectionForLocks($this->tripod->getGroup())->drop();
+        MongoTripodConfig::getInstance()->getCollectionForLocks($this->tripod->getStoreName())->drop();
 
         $this->tripod->setTransactionLog($this->tripodTransactionLog);
 
@@ -749,7 +749,7 @@ class MongoTripodTest extends MongoTripodTestBase
                 "connection"=>"mongodb://talisaspire:acorn123@46.137.106.66:27018"
             )
         );
-        $config["groups"] = array(
+        $config["stores"] = array(
             "tripod_php_testing"=>array(
                 "data_source"=>"db",
                 "pods"=>array(

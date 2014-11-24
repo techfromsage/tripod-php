@@ -152,12 +152,12 @@ class MongoTripodQueueTest extends MongoTripodTestBase
         $mockViews = $this->getMock(
             "MongoTripodViews",
             array("update"),
-            array($this->tripod->getGroup(),$this->getTripodCollection($this->tripod),"http://talisaspire.com/")
+            array($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),"http://talisaspire.com/")
         );
         $mockTables = $this->getMock(
             "MongoTripodTables",
             array("update"),
-            array($this->tripod->getGroup(),$this->getTripodCollection($this->tripod),"http://talisaspire.com/")
+            array($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),"http://talisaspire.com/")
         );
         $mockSearchIndexer = $this->getMock("MongoTripodSearchIndexer",array("update"),array($this->tripod));
 
@@ -200,12 +200,12 @@ class MongoTripodQueueTest extends MongoTripodTestBase
         $mockViews = $this->getMock(
             "MongoTripodViews",
             array("update"),
-            array($this->tripod->getGroup(),$this->getTripodCollection($this->tripod),"http://talisaspire.com/")
+            array($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),"http://talisaspire.com/")
         );
         $mockTables = $this->getMock(
             "MongoTripodTables",
             array("update"),
-            array($this->tripod->getGroup(),$this->getTripodCollection($this->tripod),"http://talisaspire.com/")
+            array($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),"http://talisaspire.com/")
         );
         $mockSearchIndexer = $this->getMock("MongoTripodSearchIndexer",array("update"),array($this->tripod));
 
@@ -248,12 +248,12 @@ class MongoTripodQueueTest extends MongoTripodTestBase
         $mockViews = $this->getMock(
             "MongoTripodViews",
             array("update"),
-            array($this->tripod->getGroup(),$this->getTripodCollection($this->tripod),"http://talisaspire.com/")
+            array($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),"http://talisaspire.com/")
         );
         $mockTables = $this->getMock(
             "MongoTripodTables",
             array("update"),
-            array($this->tripod->getGroup(),$this->getTripodCollection($this->tripod),"http://talisaspire.com/")
+            array($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),"http://talisaspire.com/")
         );
         $mockSearchIndexer = $this->getMock("MongoTripodSearchIndexer",array("update"),array($this->tripod));
 
@@ -296,12 +296,12 @@ class MongoTripodQueueTest extends MongoTripodTestBase
         $mockViews = $this->getMock(
             "MongoTripodViews",
             array("update"),
-            array($this->tripod->getGroup(),$this->getTripodCollection($this->tripod),"http://talisaspire.com/")
+            array($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),"http://talisaspire.com/")
         );
         $mockTables = $this->getMock(
             "MongoTripodTables",
             array("update"),
-            array($this->tripod->getGroup(),$this->getTripodCollection($this->tripod),"http://talisaspire.com/")
+            array($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),"http://talisaspire.com/")
         );
         $mockSearchIndexer = $this->getMock("MongoTripodSearchIndexer",array("update"),array($this->tripod));
 
@@ -344,12 +344,12 @@ class MongoTripodQueueTest extends MongoTripodTestBase
         $mockViews = $this->getMock(
             "MongoTripodViews",
             array("update"),
-            array($this->tripod->getGroup(),$this->getTripodCollection($this->tripod),"http://talisaspire.com/")
+            array($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),"http://talisaspire.com/")
         );
         $mockTables = $this->getMock(
             "MongoTripodTables",
             array("update"),
-            array($this->tripod->getGroup(),$this->getTripodCollection($this->tripod),"http://talisaspire.com/")
+            array($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),"http://talisaspire.com/")
         );
         $mockSearchIndexer = $this->getMock("MongoTripodSearchIndexer",array("update"),array($this->tripod));
 

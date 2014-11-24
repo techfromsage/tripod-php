@@ -26,7 +26,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
         $this->loadBaseSearchDataViaTripod();
 
-        foreach(MongoTripodConfig::getInstance()->getCollectionsForSearch($this->tripod->getGroup()) as $collection)
+        foreach(MongoTripodConfig::getInstance()->getCollectionsForSearch($this->tripod->getStoreName()) as $collection)
         {
             $collection->drop();
         }
@@ -45,7 +45,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
                     $t[] = $_t['u'];
                 }
             }
-            $this->indexer->generateAndIndexSearchDocuments($result['_id']['r'], $result['_id']['c'], $this->tripod->getCollectionName());
+            $this->indexer->generateAndIndexSearchDocuments($result['_id']['r'], $result['_id']['c'], $this->tripod->getPodName());
         }
     }
 
@@ -170,7 +170,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
         );
 
         // loop through every expected document and assert that it exists, and that each property matches the value we defined above.
-        $searchCollection = MongoTripodConfig::getInstance()->getCollectionForSearchDocument($this->tripod->getGroup(), 'i_search_resource');
+        $searchCollection = MongoTripodConfig::getInstance()->getCollectionForSearchDocument($this->tripod->getStoreName(), 'i_search_resource');
         foreach($expectedSearchDocs as $expectedSearchDoc){
             $this->assertDocumentExists($expectedSearchDoc["_id"], $searchCollection);
             $this->assertDocumentHasProperty($expectedSearchDoc["_id"], "result", $expectedSearchDoc["result"], $searchCollection);
@@ -187,7 +187,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
             ->update($id, array('$set'=>array("rdf:type"=>array("u"=>"bibo:Article"))));
 
         // reindex
-        $this->indexer->generateAndIndexSearchDocuments('http://talisaspire.com/resources/doc1', 'http://talisaspire.com/', $this->tripod->getCollectionName());
+        $this->indexer->generateAndIndexSearchDocuments('http://talisaspire.com/resources/doc1', 'http://talisaspire.com/', $this->tripod->getPodName());
 
         $actualSearchDocumentCount = $this->getCountForSearchSpecs($this->tripod);
 
@@ -220,7 +220,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
         $this->getTripodCollection($this->tripod)->update($id, array('$set'=> $newData));
 
         // reindex
-        $this->indexer->generateAndIndexSearchDocuments('http://talisaspire.com/resources/doc1', 'http://talisaspire.com/', $this->tripod->getCollectionName());
+        $this->indexer->generateAndIndexSearchDocuments('http://talisaspire.com/resources/doc1', 'http://talisaspire.com/', $this->tripod->getPodName());
 
         $actualSearchDocumentCount = $this->getCountForSearchSpecs($this->tripod);
 
@@ -254,7 +254,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
         $this->getTripodCollection($this->tripod)->update($id, array('$set'=> $newData));
 
         // reindex
-        $this->indexer->generateAndIndexSearchDocuments('http://talisaspire.com/resources/doc1', 'http://talisaspire.com/', $this->tripod->getCollectionName());
+        $this->indexer->generateAndIndexSearchDocuments('http://talisaspire.com/resources/doc1', 'http://talisaspire.com/', $this->tripod->getPodName());
 
         $actualSearchDocumentCount = $this->getCountForSearchSpecs($this->tripod);
 
@@ -301,7 +301,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
         $this->getTripodCollection($this->tripod)->update($id, array('$set'=> $newData));
 
         // reindex
-        $this->indexer->generateAndIndexSearchDocuments('http://talisaspire.com/resources/doc1', 'http://talisaspire.com/', $this->tripod->getCollectionName());
+        $this->indexer->generateAndIndexSearchDocuments('http://talisaspire.com/resources/doc1', 'http://talisaspire.com/', $this->tripod->getPodName());
 
         $actualSearchDocumentCount = $this->getCountForSearchSpecs($this->tripod);
 
@@ -527,7 +527,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
         }
         catch(MongoTripodConfigException $e)
         {
-            $this->assertEquals("Search document id 'i_some_type' not in configuration for group 'tripod_php_testing'", $e->getMessage());
+            $this->assertEquals("Search document id 'i_some_type' not in configuration for store 'tripod_php_testing'", $e->getMessage());
         }
     	
     	//search document count should remain same, because we expect that there was nothing to delete 
@@ -574,7 +574,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
     	$this->getTripodCollection($this->tripod)->update($id, array('$set'=> $newData));
     	
     	// reindex
-    	$this->indexer->generateAndIndexSearchDocuments('http://talisaspire.com/resources/doc1', 'http://talisaspire.com/', $this->tripod->getCollectionName());
+    	$this->indexer->generateAndIndexSearchDocuments('http://talisaspire.com/resources/doc1', 'http://talisaspire.com/', $this->tripod->getPodName());
     	 
     	//assert that there are now 13 documents after adding new document to collection
         $updatedSearchDocumentCount = $this->getCountForSearchSpecs($this->tripod);
@@ -605,12 +605,12 @@ class MongoSearchProviderTest extends MongoTripodTestBase
         $count = 0;
         if(empty($specs))
         {
-            $specs = MongoTripodConfig::getInstance()->getSearchDocumentSpecifications($tripod->getGroup(), null, true);
+            $specs = MongoTripodConfig::getInstance()->getSearchDocumentSpecifications($tripod->getStoreName(), null, true);
         }
 
         foreach($specs as $spec)
         {
-            $count += MongoTripodConfig::getInstance()->getCollectionForSearchDocument($tripod->getGroup(), $spec)->count(array('_id.type'=>$spec));
+            $count += MongoTripodConfig::getInstance()->getCollectionForSearchDocument($tripod->getStoreName(), $spec)->count(array('_id.type'=>$spec));
         }
         return $count;
     }

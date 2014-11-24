@@ -25,7 +25,7 @@
             "replicaSet": ""
         }
     },
-    "groups" : {
+    "stores" : {
         "tripod_php_testing_queue_ops" : {
             "pods" : {
                 "CBD_testing" : {

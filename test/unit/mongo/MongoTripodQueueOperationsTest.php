@@ -55,15 +55,15 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
         $this->getTripodCollection($this->tripod)->drop();
         $config = MongoTripodConfig::getInstance();
 
-        foreach($config->getCollectionsForViews($this->tripod->getGroup()) as $collection)
+        foreach($config->getCollectionsForViews($this->tripod->getStoreName()) as $collection)
         {
             $collection->drop;
         }
-        foreach($config->getCollectionsForSearch($this->tripod->getGroup()) as $collection)
+        foreach($config->getCollectionsForSearch($this->tripod->getStoreName()) as $collection)
         {
             $collection->drop;
         }
-        foreach($config->getCollectionsForTables($this->tripod->getGroup()) as $collection)
+        foreach($config->getCollectionsForTables($this->tripod->getStoreName()) as $collection)
         {
             $collection->drop;
         }
@@ -76,7 +76,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
         $cursor = $this->getTripodCollection($this->tripod)->find(array("rdf:type.u"=>array('$in'=>array("bibo:Book","foaf:Person"))),array('_id'=>1));//->limit(20);
         while($cursor->hasNext()){
             $result = $cursor->getNext();
-            $this->tripod->getSearchIndexer()->generateAndIndexSearchDocuments($result['_id']['r'], $result['_id']['c'], $this->tripod->getCollectionName());
+            $this->tripod->getSearchIndexer()->generateAndIndexSearchDocuments($result['_id']['r'], $result['_id']['c'], $this->tripod->getPodName());
         }
     }
 
@@ -596,7 +596,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
      */
     protected function findOneView(MongoTripod $tripod, array $query)
     {
-        foreach(MongoTripodConfig::getInstance()->getCollectionsForViews($tripod->getGroup()) as $c)
+        foreach(MongoTripodConfig::getInstance()->getCollectionsForViews($tripod->getStoreName()) as $c)
         {
             $view = $c->findOne($query);
             if($view)
@@ -613,7 +613,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
      */
     protected function findOneTableRow(MongoTripod $tripod, array $query)
     {
-        foreach(MongoTripodConfig::getInstance()->getCollectionsForTables($tripod->getGroup()) as $c)
+        foreach(MongoTripodConfig::getInstance()->getCollectionsForTables($tripod->getStoreName()) as $c)
         {
             $tableRow = $c->findOne($query);
             if($tableRow)
@@ -630,7 +630,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
      */
     protected function findOneSearchDocument(MongoTripod $tripod, array $query)
     {
-        foreach(MongoTripodConfig::getInstance()->getCollectionsForSearch($tripod->getGroup()) as $c)
+        foreach(MongoTripodConfig::getInstance()->getCollectionsForSearch($tripod->getStoreName()) as $c)
         {
             $searchDoc = $c->findOne($query);
             if($searchDoc)
@@ -646,7 +646,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
      */
     protected function removeFromViews(MongoTripod $tripod, array $query)
     {
-        foreach(MongoTripodConfig::getInstance()->getCollectionsForViews($tripod->getGroup()) as $c)
+        foreach(MongoTripodConfig::getInstance()->getCollectionsForViews($tripod->getStoreName()) as $c)
         {
             $c->remove($query);
         }
@@ -658,7 +658,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
      */
     protected function removeFromTableRows(MongoTripod $tripod, array $query)
     {
-        foreach(MongoTripodConfig::getInstance()->getCollectionsForTables($tripod->getGroup()) as $c)
+        foreach(MongoTripodConfig::getInstance()->getCollectionsForTables($tripod->getStoreName()) as $c)
         {
             $c->remove($query);
         }
@@ -670,7 +670,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
      */
     protected function removeFromSearchDocuments(MongoTripod $tripod, array $query)
     {
-        foreach(MongoTripodConfig::getInstance()->getCollectionsForSearch($tripod->getGroup()) as $c)
+        foreach(MongoTripodConfig::getInstance()->getCollectionsForSearch($tripod->getStoreName()) as $c)
         {
             $c->remove($query);
         }

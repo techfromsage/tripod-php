@@ -69,8 +69,8 @@ class MongoTripodUpdates extends MongoTripodBase {
     public function __construct(MongoTripod $tripod,$opts=array())
     {
         $this->tripod = $tripod;
-        $this->groupName = $tripod->getGroup();
-        $this->collectionName = $tripod->getCollectionName();
+        $this->storeName = $tripod->getStoreName();
+        $this->podName = $tripod->getPodName();
         $this->stat = $tripod->getStat();
         
         $this->labeller = new MongoTripodLabeller();
@@ -108,7 +108,7 @@ class MongoTripodUpdates extends MongoTripodBase {
         }
 
         // if there is no es configured then remove OP_SEARCH from async (no point putting these onto the queue) TRI-19
-        if($this->config->getSearchDocumentSpecifications($this->groupName) == null) {
+        if($this->config->getSearchDocumentSpecifications($this->storeName) == null) {
             unset($async[OP_SEARCH]);
         }
 
@@ -137,9 +137,9 @@ class MongoTripodUpdates extends MongoTripodBase {
         try{
             $contextAlias = $this->getContextAlias($context);
 
-            if (!MongoTripodConfig::getInstance()->isPodWithinGroup($this->getGroup(),$this->getCollectionName()))
+            if (!MongoTripodConfig::getInstance()->isPodWithinStore($this->getStoreName(),$this->getPodName()))
             {
-                throw new TripodException("database:collection {$this->getGroup()}:{$this->getCollectionName()} is not referenced within config, so cannot be written to");
+                throw new TripodException("database:collection " . $this->getStoreName() . ":" . $this->getPodName(). " is not referenced within config, so cannot be written to");
             }
 
             $this->validateGraphCardinality($newGraph);
@@ -202,7 +202,7 @@ class MongoTripodUpdates extends MongoTripodBase {
 
                     foreach($syncOp['ops'] as $pod=>$ops){
                         $specTypes = (isset($syncOp['specTypes']) ? $syncOp['specTypes'] : array());
-                        $syncModifiedSubjects[] = ModifiedSubject::create($syncOp['id'],array(),$ops, $specTypes, $this->getGroup(), $pod, $syncOp['delete']);
+                        $syncModifiedSubjects[] = ModifiedSubject::create($syncOp['id'],array(),$ops, $specTypes, $this->getStoreName(), $pod, $syncOp['delete']);
                     }
                 }
 
@@ -221,7 +221,7 @@ class MongoTripodUpdates extends MongoTripodBase {
 
                     foreach($asyncOp['ops'] as $pod=>$ops){
                         $specTypes = (isset($asyncOp['specTypes']) ? $asyncOp['specTypes'] : array());
-                        $asyncModifiedSubjects[] = ModifiedSubject::create($asyncOp['id'],array(),$ops, $specTypes, $this->getGroup(), $pod, $asyncOp['delete']);
+                        $asyncModifiedSubjects[] = ModifiedSubject::create($asyncOp['id'],array(),$ops, $specTypes, $this->getStoreName(), $pod, $asyncOp['delete']);
                     }
                 }
 
@@ -281,9 +281,9 @@ class MongoTripodUpdates extends MongoTripodBase {
         }
 
 
-        $viewTypes   = $this->config->getTypesInViewSpecifications($this->groupName, $this->getCollectionName());
-        $tableTypes  = $this->config->getTypesInTableSpecifications($this->groupName, $this->getCollectionName());
-        $searchTypes = $this->config->getTypesInSearchSpecifications($this->groupName, $this->getCollectionName());
+        $viewTypes   = $this->config->getTypesInViewSpecifications($this->storeName, $this->getPodName());
+        $tableTypes  = $this->config->getTypesInTableSpecifications($this->storeName, $this->getPodName());
+        $searchTypes = $this->config->getTypesInSearchSpecifications($this->storeName, $this->getPodName());
 
         foreach($docs as $doc)
         {
@@ -320,15 +320,15 @@ class MongoTripodUpdates extends MongoTripodBase {
                     if($asyncConfig[OP_VIEWS] == true) {
                         if(!array_key_exists($docHash, $operations[OP_ASYNC])){
                             $operations[OP_ASYNC][$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
-                            $operations[OP_ASYNC][$docHash]['ops'][$this->getCollectionName()] = array();
+                            $operations[OP_ASYNC][$docHash]['ops'][$this->getPodName()] = array();
                         }
-                        array_push($operations[OP_ASYNC][$docHash]['ops'][$this->getCollectionName()], OP_VIEWS);
+                        array_push($operations[OP_ASYNC][$docHash]['ops'][$this->getPodName()], OP_VIEWS);
                     } else{
                         if(!array_key_exists($docHash, $operations[OP_SYNC])){
                             $operations[OP_SYNC][$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
-                            $operations[OP_SYNC][$docHash]['ops'][$this->getCollectionName()] = array();
+                            $operations[OP_SYNC][$docHash]['ops'][$this->getPodName()] = array();
                         }
-                        array_push($operations[OP_SYNC][$docHash]['ops'][$this->getCollectionName()], OP_VIEWS);
+                        array_push($operations[OP_SYNC][$docHash]['ops'][$this->getPodName()], OP_VIEWS);
                     }
                 }
 
@@ -336,15 +336,15 @@ class MongoTripodUpdates extends MongoTripodBase {
                     if($asyncConfig[OP_TABLES] == true) {
                         if(!array_key_exists($docHash, $operations[OP_ASYNC])){
                             $operations[OP_ASYNC][$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
-                            $operations[OP_ASYNC][$docHash]['ops'][$this->getCollectionName()] = array();
+                            $operations[OP_ASYNC][$docHash]['ops'][$this->getPodName()] = array();
                         }
-                        array_push($operations[OP_ASYNC][$docHash]['ops'][$this->getCollectionName()], OP_TABLES);
+                        array_push($operations[OP_ASYNC][$docHash]['ops'][$this->getPodName()], OP_TABLES);
                     } else{
                         if(!array_key_exists($docHash, $operations[OP_SYNC])){
                             $operations[OP_SYNC][$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
-                            $operations[OP_SYNC][$docHash]['ops'][$this->getCollectionName()] = array();
+                            $operations[OP_SYNC][$docHash]['ops'][$this->getPodName()] = array();
                         }
-                        array_push($operations[OP_SYNC][$docHash]['ops'][$this->getCollectionName()], OP_TABLES);
+                        array_push($operations[OP_SYNC][$docHash]['ops'][$this->getPodName()], OP_TABLES);
                     }
                 }
 
@@ -352,15 +352,15 @@ class MongoTripodUpdates extends MongoTripodBase {
                     if($asyncConfig[OP_SEARCH] == true) {
                         if(!array_key_exists($docHash, $operations[OP_ASYNC])){
                             $operations[OP_ASYNC][$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
-                            $operations[OP_ASYNC][$docHash]['ops'][$this->getCollectionName()] = array();
+                            $operations[OP_ASYNC][$docHash]['ops'][$this->getPodName()] = array();
                         }
-                        array_push($operations[OP_ASYNC][$docHash]['ops'][$this->getCollectionName()], OP_SEARCH);
+                        array_push($operations[OP_ASYNC][$docHash]['ops'][$this->getPodName()], OP_SEARCH);
                     } else{
                         if(!array_key_exists($docHash, $operations[OP_SYNC])){
                             $operations[OP_SYNC][$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
-                            $operations[OP_SYNC][$docHash]['ops'][$this->getCollectionName()] = array();
+                            $operations[OP_SYNC][$docHash]['ops'][$this->getPodName()] = array();
                         }
-                        array_push($operations[OP_SYNC][$docHash]['ops'][$this->getCollectionName()], OP_SEARCH);
+                        array_push($operations[OP_SYNC][$docHash]['ops'][$this->getPodName()], OP_SEARCH);
                     }
                 }
             }
@@ -435,7 +435,7 @@ class MongoTripodUpdates extends MongoTripodBase {
         }
 
         foreach($this->findImpactedViews(array_keys($subjectsAndPredicatesOfChange), $contextAlias) as $doc) {
-            $spec = $this->config->getViewSpecification($this->groupName, $doc[_ID_KEY]['type']);
+            $spec = $this->config->getViewSpecification($this->storeName, $doc[_ID_KEY]['type']);
             if(!empty($spec)){
                 $fromCollection = $spec['from'];
 
@@ -463,7 +463,7 @@ class MongoTripodUpdates extends MongoTripodBase {
         }
 
         foreach($this->findImpactedTableRows($subjectsAndPredicatesOfChange, $contextAlias) as $doc) {
-            $spec = $this->config->getTableSpecification($this->groupName, $doc[_ID_KEY][_ID_TYPE]);
+            $spec = $this->config->getTableSpecification($this->storeName, $doc[_ID_KEY][_ID_TYPE]);
             $fromCollection = $spec['from'];
 
             $docHash = md5($doc[_ID_KEY][_ID_RESOURCE] . $doc[_ID_KEY][_ID_CONTEXT]);
@@ -498,9 +498,9 @@ class MongoTripodUpdates extends MongoTripodBase {
 
         }
 
-        if($this->config->getSearchProviderClassName($this->groupName) !== null) {
+        if($this->config->getSearchProviderClassName($this->storeName) !== null) {
             foreach($this->tripod->getSearchIndexer()->findImpactedSearchDocuments($subjectsAndPredicatesOfChange, $contextAlias) as $doc) {
-                $spec = $this->config->getSearchDocumentSpecification($this->groupName, $doc[_ID_KEY][_ID_TYPE]);
+                $spec = $this->config->getSearchDocumentSpecification($this->storeName, $doc[_ID_KEY][_ID_TYPE]);
                 $fromCollection = $spec['from'];
 
                 $docHash = md5($doc[_ID_KEY][_ID_RESOURCE] . $doc[_ID_KEY][_ID_CONTEXT]);
@@ -595,7 +595,7 @@ class MongoTripodUpdates extends MongoTripodBase {
     protected function validateGraphCardinality(ExtendedGraph $graph)
     {
         $config = MongoTripodConfig::getInstance();
-        $cardinality = $config->getCardinality($this->getGroup(), $this->getCollectionName());
+        $cardinality = $config->getCardinality($this->getStoreName(), $this->getPodName());
         $namespaces = $config->getNamespaces();
         $graphSubjects = $graph->get_subjects();
 
@@ -667,7 +667,7 @@ class MongoTripodUpdates extends MongoTripodBase {
 
             $originalCBDs = $this->lockAllDocuments($subjectsOfChange, $transaction_id,$contextAlias);
 
-            $this->getTransactionLog()->createNewTransaction($transaction_id, $csDoc['value'][_GRAPHS], $originalCBDs, $this->getGroup(), $this->getCollectionName());
+            $this->getTransactionLog()->createNewTransaction($transaction_id, $csDoc['value'][_GRAPHS], $originalCBDs, $this->getStoreName(), $this->getPodName());
 
             if(empty($originalCBDs)) // didn't get lock on documents
             {
@@ -689,7 +689,7 @@ class MongoTripodUpdates extends MongoTripodBase {
 
             $t->stop();
             $this->timingLog(MONGO_WRITE, array('duration'=>$t->result(), 'subjectsOfChange'=>implode(", ",$subjectsOfChange)));
-            $this->getStat()->timer(MONGO_WRITE.".{$this->getCollectionName()}",$t->result());
+            $this->getStat()->timer(MONGO_WRITE.".{$this->getPodName()}",$t->result());
 
             return $changes;
         }
@@ -1044,7 +1044,7 @@ class MongoTripodUpdates extends MongoTripodBase {
             $operations = $data['operations'];
             foreach ($operations as $op)
             {
-                if($data['collection'] == $this->getCollectionName()){
+                if($data['collection'] == $this->getPodName()){
                     $observer = $this->tripod->getObserver($op);
                 } else {
                     $observer = $this->getMongoTripod($data)->getObserver($op);
@@ -1412,7 +1412,7 @@ class MongoTripodUpdates extends MongoTripodBase {
      */
     protected function getAuditManualRollbacksCollection()
     {
-        return $this->config->getCollectionForManualRollbackAudit($this->groupName);
+        return $this->config->getCollectionForManualRollbackAudit($this->storeName);
     }
     
     /**
@@ -1453,7 +1453,7 @@ class MongoTripodUpdates extends MongoTripodBase {
     public function replayTransactionLog($fromDate=null, $toDate=null)
     {
 
-        $cursor = $this->getTransactionLog()->getCompletedTransactions($this->groupName, $this->collectionName, $fromDate, $toDate);
+        $cursor = $this->getTransactionLog()->getCompletedTransactions($this->storeName, $this->podName, $fromDate, $toDate);
         while($cursor->hasNext()) {
             $result = $cursor->getNext();
             $this->applyTransaction($result);
@@ -1566,11 +1566,11 @@ class MongoTripodUpdates extends MongoTripodBase {
 
         $tablePredicates = array();
 
-        foreach(MongoTripodConfig::getInstance()->getTableSpecifications($this->groupName) as $tableSpec)
+        foreach(MongoTripodConfig::getInstance()->getTableSpecifications($this->storeName) as $tableSpec)
         {
             if(isset($tableSpec[_ID_KEY]))
             {
-                $tablePredicates[$tableSpec[_ID_KEY]] = MongoTripodConfig::getInstance()->getDefinedPredicatesInSpec($this->groupName, $tableSpec[_ID_KEY]);
+                $tablePredicates[$tableSpec[_ID_KEY]] = MongoTripodConfig::getInstance()->getDefinedPredicatesInSpec($this->storeName, $tableSpec[_ID_KEY]);
             }
         }
 
@@ -1642,7 +1642,7 @@ class MongoTripodUpdates extends MongoTripodBase {
 
         $affectedTableRows = array();
 
-        foreach($this->config->getCollectionsForTables($this->groupName) as $collection)
+        foreach($this->config->getCollectionsForTables($this->storeName) as $collection)
         {
             $tableRows = $collection->find($query, array("_id"=>true));
             foreach($tableRows as $t)
@@ -1680,7 +1680,7 @@ class MongoTripodUpdates extends MongoTripodBase {
         $query = array("value."._IMPACT_INDEX=>array('$in'=>$filter));
 
         $affectedViews = array();
-        foreach($this->config->getCollectionsForViews($this->groupName) as $collection)
+        foreach($this->config->getCollectionsForViews($this->storeName) as $collection)
         {
             $views = $collection->find($query,array("_id"=>true));
             foreach($views as $v)
@@ -1699,8 +1699,8 @@ class MongoTripodUpdates extends MongoTripodBase {
         if(!isset($this->db))
         {
             $this->db = $this->config->getDatabase(
-                $this->groupName,
-                $this->config->getDataSourceForPod($this->groupName, $this->collectionName),
+                $this->storeName,
+                $this->config->getDataSourceForPod($this->storeName, $this->podName),
                 $this->readPreference
             );
         }
@@ -1714,7 +1714,7 @@ class MongoTripodUpdates extends MongoTripodBase {
     {
         if(!isset($this->collection))
         {
-            $this->collection = $this->getDatabase()->selectCollection($this->collectionName);
+            $this->collection = $this->getDatabase()->selectCollection($this->podName);
         }
 
         return $this->collection;
@@ -1727,7 +1727,7 @@ class MongoTripodUpdates extends MongoTripodBase {
     {
         if(!isset($this->locksDb))
         {
-            $this->locksDb = $this->config->getDatabase($this->groupName);
+            $this->locksDb = $this->config->getDatabase($this->storeName);
         }
         return $this->locksDb;
     }

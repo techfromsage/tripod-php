@@ -19,8 +19,8 @@ class MongoTripodQueue extends MongoTripodBase
         $this->debugLog("Connecting to queue with $connStr");
 
         // select a database
-        $this->collectionName = $this->queueConfig['collection'];
-        $this->collection = $this->config->getQueueDatabase()->selectCollection($this->collectionName);
+        $this->podName = $this->queueConfig['collection'];
+        $this->collection = $this->config->getQueueDatabase()->selectCollection($this->podName);
 
         if ($stat!=null) $this->stat = $stat;
     }
@@ -134,7 +134,7 @@ class MongoTripodQueue extends MongoTripodBase
     public function fetchNextQueuedItem()
     {
         $response = $this->config->getQueueDatabase()->command(array(
-            "findAndModify" => $this->collectionName,
+            "findAndModify" => $this->podName,
             "query" => array("status"=>"queued"),
             "update" => array('$set'=>array(
                 "status"=>"processing",

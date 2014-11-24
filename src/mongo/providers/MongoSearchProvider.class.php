@@ -15,14 +15,14 @@ class MongoSearchProvider implements ITripodSearchProvider
     /**
      * @var string
      */
-    protected $groupName;
+    protected $storeName;
 
     protected $config;
 
     public function __construct(MongoTripod $tripod)
     {
         $this->tripod = $tripod;
-        $this->groupName = $tripod->getGroup();
+        $this->storeName = $tripod->getStoreName();
         $this->labeller = new MongoTripodLabeller();
         $this->config = MongoTripodConfig::getInstance();
     }
@@ -37,7 +37,7 @@ class MongoSearchProvider implements ITripodSearchProvider
     {
         if(isset($document['_id']['type']))
         {
-            $collection = $this->config->getCollectionForSearchDocument($this->groupName, $document['_id']['type']);
+            $collection = $this->config->getCollectionForSearchDocument($this->storeName, $document['_id']['type']);
         }
         else
         {
@@ -69,7 +69,7 @@ class MongoSearchProvider implements ITripodSearchProvider
         try {
             $searchTypes = array();
             if (!empty($specId)) {
-                $specTypes = $this->config->getSearchDocumentSpecifications($this->groupName, null, true);
+                $specTypes = $this->config->getSearchDocumentSpecifications($this->storeName, null, true);
                 if(is_string($specId))
                 {
                     if(!in_array($specId, $specTypes))
@@ -91,7 +91,7 @@ class MongoSearchProvider implements ITripodSearchProvider
                     $searchTypes = $specId;
                 }
             }
-            foreach($this->config->getCollectionsForSearch($this->groupName, $searchTypes) as $collection)
+            foreach($this->config->getCollectionsForSearch($this->storeName, $searchTypes) as $collection)
             {
                 $collection->remove($query);
             }
@@ -113,11 +113,11 @@ class MongoSearchProvider implements ITripodSearchProvider
 
         $specPredicates = array();
 
-        foreach($this->config->getSearchDocumentSpecifications($this->groupName) as $spec)
+        foreach($this->config->getSearchDocumentSpecifications($this->storeName) as $spec)
         {
             if(isset($spec[_ID_KEY]))
             {
-                $specPredicates[$spec[_ID_KEY]] = $this->config->getDefinedPredicatesInSpec($this->groupName, $spec[_ID_KEY]);
+                $specPredicates[$spec[_ID_KEY]] = $this->config->getDefinedPredicatesInSpec($this->storeName, $spec[_ID_KEY]);
             }
         }
 
@@ -189,7 +189,7 @@ class MongoSearchProvider implements ITripodSearchProvider
         }
 
         $searchDocs = array();
-        foreach($this->config->getCollectionsForSearch($this->groupName, $searchTypes) as $collection)
+        foreach($this->config->getCollectionsForSearch($this->storeName, $searchTypes) as $collection)
         {
             $cursor = $collection->find($query, array('_id'=>true));
             foreach($cursor as $d)
@@ -245,7 +245,7 @@ class MongoSearchProvider implements ITripodSearchProvider
         }
         $searchTimer = new Timer();
         $searchTimer->start();
-        $cursor = $this->config->getCollectionForSearchDocument($this->groupName, $type)
+        $cursor = $this->config->getCollectionForSearchDocument($this->storeName, $type)
             ->find($query, $fieldsToReturn)
             ->limit($limit)
             ->skip($offset);
@@ -316,7 +316,7 @@ class MongoSearchProvider implements ITripodSearchProvider
     		throw new TripodSearchException("Cound not find a search specification for $typeId");
     	}
     	    	
-    	return $this->config->getCollectionForSearchDocument($this->groupName, $typeId)
+    	return $this->config->getCollectionForSearchDocument($this->storeName, $typeId)
             ->remove(array("_id.type" => $typeId));
     }
 
@@ -327,6 +327,6 @@ class MongoSearchProvider implements ITripodSearchProvider
      */
     protected function getSearchDocumentSpecification($typeId)
     {
-    	return MongoTripodConfig::getInstance()->getSearchDocumentSpecification($this->groupName, $typeId);
+    	return MongoTripodConfig::getInstance()->getSearchDocumentSpecification($this->storeName, $typeId);
     }
 }

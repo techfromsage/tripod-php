@@ -28,17 +28,17 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
     /**
      * Construct accepts actual objects rather than strings as this class is a delegate of
      * MongoTripod and should inherit connections set up there
-     * @param MongoDB $db
+     * @param string $storeName
      * @param MongoCollection $collection
      * @param $defaultContext
      * @param $stat
      */
-    function __construct($group,MongoCollection $collection,$defaultContext,$stat=null)
+    function __construct($storeName,MongoCollection $collection,$defaultContext,$stat=null)
     {
         $this->labeller = new MongoTripodLabeller();
-        $this->groupName = $group;
+        $this->storeName = $storeName;
         $this->collection = $collection;
-        $this->collectionName = $collection->getName();
+        $this->podName = $collection->getName();
         $this->config = MongoTripodConfig::getInstance();
         $this->defaultContext = $this->labeller->uri_to_alias($defaultContext); // make sure default context is qnamed if applicable
         $this->stat = $stat;
@@ -84,7 +84,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
 
         $filter["_id." . _ID_TYPE] = $tableSpecId;
 
-        $collection = $this->config->getCollectionForTable($this->groupName, $tableSpecId);
+        $collection = $this->config->getCollectionForTable($this->storeName, $tableSpecId);
         $results = (empty($limit)) ? $collection->find($filter) : $collection->find($filter)->skip($offset)->limit($limit);
         if (isset($sortBy))
         {
@@ -125,7 +125,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
 
         $filter['_id.'._ID_TYPE] = $tableSpecId;
 
-        $collection = $this->config->getCollectionForTable($this->groupName, $tableSpecId);
+        $collection = $this->config->getCollectionForTable($this->storeName, $tableSpecId);
         $results = $collection->distinct($fieldName, $filter);
 
         $t->stop();
@@ -152,7 +152,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         $contextAlias = $this->getContextAlias($context);
         $query = array(_ID_KEY . '.' . _ID_RESOURCE => $this->labeller->uri_to_alias($resource),  _ID_KEY . '.' . _ID_CONTEXT => $context);
         $specNames = array();
-        $specTypes = $this->config->getTableSpecifications($this->groupName);
+        $specTypes = $this->config->getTableSpecifications($this->storeName);
         if (empty($specType)) {
             $specNames = array_keys($specTypes);
         }
@@ -174,7 +174,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
             // Ignore any other types of specs that might have been passed in here
             if(isset($specTypes[$specName]))
             {
-                $this->config->getCollectionForTable($this->groupName, $specName)->remove($query);
+                $this->config->getCollectionForTable($this->storeName, $specName)->remove($query);
             }
         }
     }
@@ -184,14 +184,14 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
      * @param $tableId
      */
     public function deleteTableRowsByTableId($tableId) {
-        $tableSpec = MongoTripodConfig::getInstance()->getTableSpecification($this->groupName, $tableId);
+        $tableSpec = MongoTripodConfig::getInstance()->getTableSpecification($this->storeName, $tableId);
         if ($tableSpec==null)
         {
             $this->debugLog("Could not find a table specification for $tableId");
             return;
         }
 
-        $this->config->getCollectionForTable($this->groupName, $tableId)
+        $this->config->getCollectionForTable($this->storeName, $tableId)
             ->remove(array("_id.type"=>$tableId), array('fsync'=>true));
     }
 
@@ -214,7 +214,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
 
         // now go through the types
         $query = array("_id"=>array('$in'=>$filter));
-        $resourceAndType = $this->config->getCollectionForCBD($this->groupName, $this->collectionName)
+        $resourceAndType = $this->config->getCollectionForCBD($this->storeName, $this->podName)
             ->find($query,array("_id"=>1,"rdf:type"=>1));
 
         foreach ($resourceAndType as $rt)
@@ -255,14 +255,14 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
 
         if(empty($specTypes))
         {
-            $tableSpecs = MongoTripodConfig::getInstance()->getTableSpecifications($this->groupName);
+            $tableSpecs = MongoTripodConfig::getInstance()->getTableSpecifications($this->storeName);
         }
         else
         {
             $tableSpecs = array();
             foreach($specTypes as $specType)
             {
-                $spec = MongoTripodConfig::getInstance()->getTableSpecification($this->groupName, $specType);
+                $spec = MongoTripodConfig::getInstance()->getTableSpecification($this->storeName, $specType);
                 if($spec)
                 {
                     $tableSpecs[$specType] = $spec;
@@ -299,8 +299,8 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         $t = new Timer();
         $t->start();
 
-        $tableSpec = MongoTripodConfig::getInstance()->getTableSpecification($this->groupName, $tableType);
-        $collection = $this->config->getCollectionForTable($this->groupName, $tableType);
+        $tableSpec = MongoTripodConfig::getInstance()->getTableSpecification($this->storeName, $tableType);
+        $collection = $this->config->getCollectionForTable($this->storeName, $tableType);
 
         if ($tableSpec==null)
         {
@@ -325,7 +325,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         $contextAlias = $this->getContextAlias($context);
 
         // default collection
-        $from = (isset($tableSpec["from"])) ? $tableSpec["from"] : $this->collectionName;
+        $from = (isset($tableSpec["from"])) ? $tableSpec["from"] : $this->podName;
 
         $types = array();
         if (is_array($tableSpec["type"]))
@@ -347,7 +347,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
             $filter["_id"] = array(_ID_RESOURCE=>$this->labeller->uri_to_alias($resource),_ID_CONTEXT=>$contextAlias);
         }
 
-        $docs = $this->config->getCollectionForCBD($this->groupName, $from)->find($filter);
+        $docs = $this->config->getCollectionForCBD($this->storeName, $from)->find($filter);
         foreach ($docs as $doc)
         {
             // set up ID
@@ -624,8 +624,8 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
 
                 $recursiveJoins = array();
                 $collection = (isset($ruleset['from'])
-                    ? $this->config->getCollectionForCBD($this->groupName, $ruleset['from'])
-                    : $this->config->getCollectionForCBD($this->groupName, $from)
+                    ? $this->config->getCollectionForCBD($this->storeName, $ruleset['from'])
+                    : $this->config->getCollectionForCBD($this->storeName, $from)
                 );
                 $cursor = $collection->find(array('_id'=>array('$in'=>$joinUris)));
 

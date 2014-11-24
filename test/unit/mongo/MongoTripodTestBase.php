@@ -116,8 +116,8 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
             return $this->getTlogCollection()->insert($doc, array("w"=>1));
         } else {
             return $config->getCollectionForCBD(
-                $this->tripod->getGroup(),
-                $this->tripod->getCollectionName()
+                $this->tripod->getStoreName(),
+                $this->tripod->getPodName()
             )->insert($doc, array("w"=>1));
         }
     }
@@ -132,11 +132,11 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
     protected function getTripodCollection(MongoTripod $tripod)
     {
         $config = MongoTripodConfig::getInstance();
-        $pods = $config->getPods($tripod->getGroup());
+        $pods = $config->getPods($tripod->getStoreName());
         return $config->getDatabase(
-            $tripod->getGroup(),
-            $pods[$tripod->getCollectionName()]['data_source']
-        )->selectCollection($tripod->getCollectionName());
+            $tripod->getStoreName(),
+            $pods[$tripod->getPodName()]['data_source']
+        )->selectCollection($tripod->getPodName());
     }
 
     protected function getDocument($_id, $collection=null, $fromTransactionLog=false)

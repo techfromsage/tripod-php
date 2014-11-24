@@ -28,7 +28,7 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         $this->getTripodCollection($this->tripod)->drop();
 
         // Lock collection no longer available from MongoTripod, so drop it manually
-        MongoTripodConfig::getInstance()->getCollectionForLocks($this->tripod->getGroup())->drop();
+        MongoTripodConfig::getInstance()->getCollectionForLocks($this->tripod->getStoreName())->drop();
 
         $this->loadBaseDataViaTripod();
 

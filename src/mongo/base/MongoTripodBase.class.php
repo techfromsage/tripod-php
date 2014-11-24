@@ -11,11 +11,24 @@ abstract class MongoTripodBase
      */
     protected $collection;
 
-    protected $groupName;
-    protected $collectionName;
+    /**
+     * @var string
+     */
+    protected $storeName;
 
+    /**
+     * @var string
+     */
+    protected $podName;
+
+    /**
+     * @var $podName
+     */
     protected $defaultContext;
 
+    /**
+     * @var iTripodStat
+     */
     protected $stat = null;
 
     /**
@@ -132,14 +145,14 @@ abstract class MongoTripodBase
         return $graph;
     }
 
-    public function getGroup()
+    public function getStoreName()
     {
-        return $this->groupName;
+        return $this->storeName;
     }
 
-    public function getCollectionName()
+    public function getPodName()
     {
-        return $this->collectionName;
+        return $this->podName;
     }
 
     ///////// LOGGING METHODS BELOW ////////

@@ -36,18 +36,18 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $this->tripod->setTransactionLog($this->tripodTransactionLog);
 
         $this->tripodViews = new MongoTripodViews(
-            $this->tripod->getGroup(),
+            $this->tripod->getStoreName(),
             $this->getTripodCollection($this->tripod),
             'http://talisaspire.com/'
         );
 
 
-        foreach(MongoTripodConfig::getInstance()->getCollectionsForViews($this->tripod->getGroup()) as $collection)
+        foreach(MongoTripodConfig::getInstance()->getCollectionsForViews($this->tripod->getStoreName()) as $collection)
         {
             $collection->drop();
         }
 
-        $this->viewsConstParams = array($this->tripod->getGroup(),$this->getTripodCollection($this->tripod),'http://talisaspire.com/');
+        $this->viewsConstParams = array($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),'http://talisaspire.com/');
 
         // load base data
         $this->loadBaseDataViaTripod();
@@ -322,7 +322,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $returnedGraph->add_literal_triple($uri1,'http://somepred','someval');
 
         $mockDb = $this->getMock("MongoDB", array("selectCollection"),array(new MongoClient(),"test"));
-        $mockColl = $this->getMock("MongoCollection", array("findOne"),array($mockDb,$this->tripod->getCollectionName()));
+        $mockColl = $this->getMock("MongoCollection", array("findOne"),array($mockDb,$this->tripod->getPodName()));
 
         $mockDb->expects($this->any())->method("selectCollection")->will($this->returnValue($mockColl));
         $mockColl->expects($this->once())->method("findOne")->will($this->returnValue(null));
@@ -372,7 +372,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $context = "http://someContext";
 
         $mockDb = $this->getMock("MongoDB", array("selectCollection"),array(new MongoClient(),"test"));
-        $mockColl = $this->getMock("MongoCollection", array("findOne"),array($mockDb,$this->tripod->getCollectionName()));
+        $mockColl = $this->getMock("MongoCollection", array("findOne"),array($mockDb,$this->tripod->getPodName()));
 
         $mockDb->expects($this->any())->method("selectCollection")->will($this->returnValue($mockColl));
         $mockColl->expects($this->once())->method("findOne")->will($this->returnValue(array("_id"=>$uri1))); // the actual returned doc is not important, it just has to not be null

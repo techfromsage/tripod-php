@@ -426,7 +426,7 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
      */
     public function lockSingleDocumentCallback($s, $transaction_id, $contextAlias)
     {
-        $lCollection = MongoTripodConfig::getInstance()->getCollectionForLocks($this->tripod->getGroup());
+        $lCollection = MongoTripodConfig::getInstance()->getCollectionForLocks($this->tripod->getStoreName());
         $countEntriesInLocksCollection = $lCollection->count(array('_id' => array(_ID_RESOURCE => $this->labeller->uri_to_alias($s), _ID_CONTEXT => $contextAlias)));
 
         if($countEntriesInLocksCollection > 0) //Subject is already locked

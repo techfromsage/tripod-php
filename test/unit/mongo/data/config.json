@@ -30,7 +30,7 @@
             "replicaSet": ""
         }
     },
-    "groups": {
+    "stores": {
         "tripod_php_testing": {
             "pods": {
                 "CBD_testing": {

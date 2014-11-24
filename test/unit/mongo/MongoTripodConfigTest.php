@@ -74,7 +74,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             "mongo"=>array("type"=>"mongo","connection" => "mongodb://localhost")
         );
         $config["defaultContext"] = "http://talisaspire.com/";
-        $config["groups"] = array(
+        $config["stores"] = array(
             "tripod_php_testing" => array(
                 "type"=>"mongo",
                 "data_source"=>"mongo",
@@ -115,7 +115,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                 "replicaSet" => "tlogrepset"
             )
         );
-        $config["groups"] = array(
+        $config["stores"] = array(
             "tripod_php_testing" => array(
                 "data_source"=>"mongo1",
                 "pods" => array(
@@ -169,7 +169,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"rs");
-        $config["groups"] = array(
+        $config["stores"] = array(
             "tripod_php_testing" => array(
                 "pods" => array(
                     "CBD_testing" => array()
@@ -203,7 +203,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"mongo1");
-        $config["groups"] = array(
+        $config["stores"] = array(
             "tripod_php_testing" => array(
                 "data_source"=>"rs1",
                 "pods" => array(
@@ -237,7 +237,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db1");
-        $config["groups"] = array(
+        $config["stores"] = array(
             "tripod_php_testing"=>array(
                 "data_source"=>"db2",
                 "pods"=>array(
@@ -289,7 +289,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                 "replicaSet" => "myrepset"
             )
         );
-        $config["groups"] = array(
+        $config["stores"] = array(
             "tripod_php_testing" => array(
                 "data_source"=>"mongo",
                 "pods" => array(
@@ -328,7 +328,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                 "replicaSet" => "myrepset"
             ),
         );
-        $config["groups"] = array(
+        $config["stores"] = array(
             "tripod_php_testing" => array(
                 "data_source"=>"db1",
                 "pods" => array(
@@ -362,7 +362,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");
-        $config["groups"] = array(
+        $config["stores"] = array(
             "tripod_php_testing"=>array(
                 "data_source"=>"db",
                 "pods"=>array(
@@ -492,7 +492,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");
-        $config["groups"] = array(
+        $config["stores"] = array(
             "tripod_php_testing"=>array(
                 "data_source"=>"db",
                 "pods"=>array(
@@ -501,7 +501,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                 )
             )
         );
-        $config["groups"]["tripod_php_testing"]["view_specifications"] = array(
+        $config["stores"]["tripod_php_testing"]["view_specifications"] = array(
             array(
                 "_id"=>"v_illegal_counts",
                 "type"=>"http://talisaspire.com/schema#Work",
@@ -532,7 +532,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");
-        $config["groups"] = array(
+        $config["stores"] = array(
             "tripod_php_testing"=>array(
                 "data_source"=>"db",
                 "pods"=>array(
@@ -541,7 +541,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                 )
             )
         );
-        $config["groups"]["tripod_php_testing"]["view_specifications"] = array(
+        $config["stores"]["tripod_php_testing"]["view_specifications"] = array(
             array(
                 "_id"=>"v_illegal_counts",
                 "type"=>"http://talisaspire.com/schema#Work",
@@ -576,7 +576,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");
-        $config["groups"] = array(
+        $config["stores"] = array(
             "tripod_php_testing"=>array(
                 "data_source"=>"db",
                 "pods"=>array(
@@ -586,7 +586,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
 
-        $config["groups"]["tripod_php_testing"]["table_specifications"] = array(
+        $config["stores"]["tripod_php_testing"]["table_specifications"] = array(
             array(
                 "_id"=>"t_illegal_counts",
                 "type"=>"http://talisaspire.com/schema#Work",
@@ -618,7 +618,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");
-        $config["groups"] = array(
+        $config["stores"] = array(
             "tripod_php_testing"=>array(
                 "data_source"=>"db",
                 "pods"=>array(
@@ -627,7 +627,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
 
-        $config["groups"]["tripod_php_testing"]["table_specifications"] = array(
+        $config["stores"]["tripod_php_testing"]["table_specifications"] = array(
             array(
                 "_id"=>"t_illegal_counts",
                 "type"=>"http://talisaspire.com/schema#Work",
@@ -663,7 +663,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");
-        $config["groups"] = array(
+        $config["stores"] = array(
             "tripod_php_testing"=>array(
                 "data_source"=>"db",
                 "pods"=>array(
@@ -672,7 +672,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
 
-        $config["groups"]["tripod_php_testing"]["table_specifications"] = array(
+        $config["stores"]["tripod_php_testing"]["table_specifications"] = array(
             array(
                 "_id"=>"t_illegal_spec",
                 "type"=>"http://talisaspire.com/schema#Work",
@@ -702,7 +702,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");
-        $config["groups"] = array(
+        $config["stores"] = array(
             "tripod_php_testing"=>array(
                 "data_source"=>"db",
                 "pods"=>array(
@@ -711,7 +711,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
 
-        $config["groups"]["tripod_php_testing"]["table_specifications"] = array(
+        $config["stores"]["tripod_php_testing"]["table_specifications"] = array(
             array(
                 "_id"=>"t_illegal_spec",
                 "type"=>"http://talisaspire.com/schema#Work",
@@ -741,7 +741,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");
-        $config["groups"] = array(
+        $config["stores"] = array(
             "tripod_php_testing"=>array(
                 "data_source"=>"db",
                 "pods"=>array(
@@ -750,7 +750,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
 
-        $config["groups"]["tripod_php_testing"]["table_specifications"] = array(
+        $config["stores"]["tripod_php_testing"]["table_specifications"] = array(
             array(
                 "_id"=>"t_illegal_spec",
                 "type"=>"http://talisaspire.com/schema#Work",
@@ -780,7 +780,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");
-        $config["groups"] = array(
+        $config["stores"] = array(
             "tripod_php_testing"=>array(
             "data_source"=>"db",
                 "pods"=>array(
@@ -789,7 +789,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
 
-        $config["groups"]["tripod_php_testing"]["table_specifications"] = array(
+        $config["stores"]["tripod_php_testing"]["table_specifications"] = array(
             array(
                 "_id"=>"t_illegal_spec",
                 "type"=>"http://talisaspire.com/schema#Work",
@@ -819,7 +819,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");
-        $config["groups"] = array(
+        $config["stores"] = array(
             "tripod_php_testing"=>array(
             "data_source"=>"db",
                 "pods"=>array(
@@ -828,7 +828,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
 
-        $config["groups"]["tripod_php_testing"]["table_specifications"] = array(
+        $config["stores"]["tripod_php_testing"]["table_specifications"] = array(
             array(
                 "_id"=>"t_illegal_spec",
                 "type"=>"http://talisaspire.com/schema#Work",
@@ -858,7 +858,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");
-        $config["groups"] = array(
+        $config["stores"] = array(
             "tripod_php_testing"=>array(
                 "data_source"=>"db",
                 "pods"=>array(
@@ -867,7 +867,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                 )
             )
         );
-        $config["groups"]["tripod_php_testing"]["view_specifications"] = array(
+        $config["stores"]["tripod_php_testing"]["view_specifications"] = array(
             array(
                 "_id"=>"v_illegal_counts",
                 "type"=>"http://talisaspire.com/schema#Work",
@@ -942,7 +942,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log", "data_source"=>"tlog");
-        $config["groups"] = array(
+        $config["stores"] = array(
             "tripod_php_testing"=>array(
                 "data_source" => "rs1",
                 "pods"=>array(
@@ -961,7 +961,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"queue");
         MongoTripodConfig::setConfig($config);
         $mtc = MongoTripodConfig::getInstance();
-        $this->assertEquals("myreplicaset", $mtc->getReplicaSetName($mtc->getDefaultDataSourceForGroup("tripod_php_testing")));
+        $this->assertEquals("myreplicaset", $mtc->getReplicaSetName($mtc->getDefaultDataSourceForStore("tripod_php_testing")));
 
         $this->assertNull($mtc->getReplicaSetName("testing_2"));
     }
@@ -1045,7 +1045,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                 "connection"=>"mongodb://localhost"
             )
         );
-        $config["groups"] = array(
+        $config["stores"] = array(
             "tripod_php_testing" => array(
                 "data_source"=>"mongo1",
                 "pods" => array(
