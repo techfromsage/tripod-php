@@ -825,6 +825,14 @@ class MongoTripodConfig
         return (array_key_exists($group,$this->podConnections)) ? array_keys($this->podConnections[$group]) : array();
     }
 
+    public function getDataSourceForPod($group, $podName)
+    {
+        if(isset($this->podConnections[$group]) && isset($this->podConnections[$group][$podName]))
+        {
+            return $this->podConnections[$group][$podName];
+        }
+        throw new MongoTripodConfigException("'{$podName}' not configured for group '{$group}'");
+    }
     /**
      * Returns the connection string for the supplied database name
      *
@@ -1332,16 +1340,17 @@ class MongoTripodConfig
 
         if(!isset($this->dataSources[$dataSource]))
         {
-            throw new MongoTripodConfigException("Data source '{$group}' not in configuration");
+            throw new MongoTripodConfigException("Data source '{$dataSource}' not in configuration");
         }
         $connectionOptions = array();
-        if(isset($dataSource['connectTimeoutMS']) ? $dataSource['connectTimeoutMS'] : 20000);
+        $ds = $this->dataSources[$dataSource];
+        $connectionOptions['connectTimeoutMS'] = (isset($ds['connectTimeoutMS']) ? $ds['connectTimeoutMS'] : 20000);
 
-        if(isset($dataSource['replicaSet']) && !empty($dataSource['replicaSet'])) {
-            $connectionOptions['replicaSet'] = $dataSource['replicaSet'];
+        if(isset($ds['replicaSet']) && !empty($ds['replicaSet'])) {
+            $connectionOptions['replicaSet'] = $ds['replicaSet'];
         }
-        $client = new MongoClient($dataSource['connStr'], $connectionOptions);
-        $db = $client->selectDB($this->dbConfig['database']);
+        $client = new MongoClient($ds['connection'], $connectionOptions);
+        $db = $client->selectDB($this->dbConfig[$group]['database']);
         $db->setReadPreference($readPreference);
         return $db;
     }
@@ -1613,7 +1622,7 @@ class MongoTripodConfig
         if(isset($dataSource['replicaSet']) && !empty($dataSource['replicaSet'])) {
             $connectionOptions['replicaSet'] = $dataSource['replicaSet'];
         }
-        $client = new MongoClient($dataSource['connStr'], $connectionOptions);
+        $client = new MongoClient($dataSource['connection'], $connectionOptions);
         $db = $client->selectDB($this->queueConfig['database']);
         $db->setReadPreference($readPreference);
         return $db;
@@ -1638,7 +1647,7 @@ class MongoTripodConfig
         if(isset($dataSource['replicaSet']) && !empty($dataSource['replicaSet'])) {
             $connectionOptions['replicaSet'] = $dataSource['replicaSet'];
         }
-        $client = new MongoClient($dataSource['connStr'], $connectionOptions);
+        $client = new MongoClient($dataSource['connection'], $connectionOptions);
         $db = $client->selectDB($this->queueConfig['database']);
         $db->setReadPreference($readPreference);
         return $db;

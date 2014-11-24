@@ -549,7 +549,7 @@ class MongoTripodUpdates extends MongoTripodBase {
     protected function setReadPreferenceToPrimary()
     {
         // Set db preference
-        $dbPref = $this->db->getReadPreference();
+        $dbPref = $this->getDatabase()->getReadPreference();
         if($dbPref['type'] !== MongoClient::RP_PRIMARY){
             $this->originalDbReadPreference = $this->db->getReadPreference();
             $this->db->setReadPreference(MongoClient::RP_PRIMARY);
@@ -1698,17 +1698,11 @@ class MongoTripodUpdates extends MongoTripodBase {
     {
         if(!isset($this->db))
         {
-            $pods = $this->config->getPods($this->groupName);
-            $dataSource = null;
-            foreach($pods as $pod=>$ds)
-            {
-                if($pod == $this->collectionName)
-                {
-                    $dataSource = $ds;
-                    break;
-                }
-            }
-            $this->db = $this->config->getDatabase($this->groupName, $dataSource, $this->readPreference);
+            $this->db = $this->config->getDatabase(
+                $this->groupName,
+                $this->config->getDataSourceForPod($this->groupName, $this->collectionName),
+                $this->readPreference
+            );
         }
         return $this->db;
     }

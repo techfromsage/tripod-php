@@ -20,6 +20,7 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
         $this->collection = $collection;
         $this->collectionName = $collection->getName();
         $this->defaultContext = $defaultContext;
+        $this->config = MongoTripodConfig::getInstance();
         $this->stat = $stat;
     }
 
@@ -88,7 +89,8 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
         $contextAlias = $this->getContextAlias($context);
 
         $query = array( "_id" => array("r"=>$resourceAlias,"c"=>$contextAlias,"type"=>$viewType));
-        $graph = $this->fetchGraph($query,MONGO_VIEW,VIEWS_COLLECTION);
+        $viewCollection = $this->config->getCollectionForView($this->groupName, $viewType);
+        $graph = $this->fetchGraph($query,MONGO_VIEW,$viewCollection);
         if ($graph->is_empty())
         {
             $viewSpec = MongoTripodConfig::getInstance()->getViewSpecification($this->groupName, $viewType);
@@ -111,7 +113,7 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
 
             // generate view then try again
             $this->generateView($viewType,$resource,$context);
-            return $this->fetchGraph($query,MONGO_VIEW,VIEWS_COLLECTION);
+            return $this->fetchGraph($query,MONGO_VIEW,$viewCollection);
         }
         return $graph;
     }
@@ -143,11 +145,11 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
             $regrabResources = array();
             foreach($missingSubjects as $missingSubject)
             {
-                $viewSpec = MongoTripodConfig::getInstance()->getViewSpecification($this->groupName, $viewType);
+                $viewSpec = $this->getMongoTripodConfigInstance()->getViewSpecification($this->groupName, $viewType);
                 $fromCollection = $this->getFromCollectionForViewSpec($viewSpec);
 
                 $missingSubjectAlias = $this->labeller->uri_to_alias($missingSubject);
-                $doc = $this->config->getCollectionForCBD($this->groupName, $fromCollection)
+                $doc = $this->getMongoTripodConfigInstance()->getCollectionForCBD($this->groupName, $fromCollection)
                     ->findOne(array( "_id" => array("r"=>$missingSubjectAlias,"c"=>$contextAlias)));
 
                 if($doc == NULL)

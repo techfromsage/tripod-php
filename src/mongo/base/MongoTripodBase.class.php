@@ -276,6 +276,15 @@ abstract class MongoTripodBase
             }
         }
     }
+
+    /**
+     * For mocking
+     * @return MongoTripodConfig
+     */
+    protected function getMongoTripodConfigInstance()
+    {
+        return MongoTripodConfig::getInstance();
+    }
 }
 
 final class NoStat implements ITripodStat

@@ -97,7 +97,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
                 'retriesToGetLock' => 20)
             ,$opts);
         $this->collectionName = $collectionName;
-
+        $this->groupName = $group;
         $this->config = $this->getMongoTripodConfigInstance();
 
         $this->labeller = $this->getLabeller();
@@ -638,11 +638,12 @@ class MongoTripod extends MongoTripodBase implements ITripod
     {
         if(!isset($this->dataUpdater))
         {
+            $readPreference = $this->collection->getReadPreference();
             $opts = array(
                 'defaultContext'=>$this->defaultContext,
                 OP_ASYNC=>$this->async,
                 'stat'=>$this->stat,
-                'readPreference'=>$this->collection->getReadPreference(),
+                'readPreference'=>$readPreference['type'],
                 'retriesToGetLock' => $this->retriesToGetLock
             );
 

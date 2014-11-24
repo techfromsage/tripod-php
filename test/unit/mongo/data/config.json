@@ -134,7 +134,7 @@
                             "property": "dct:isVersionOf"
                         },
                         "acorn:resourceCountAlt": {
-                            "from": "CBD_someOtherCollection",
+                            "from": "CBD_testing_2",
                             "filter": {
                                 "rdf:type": {
                                     "u": "acorn:Resource"
