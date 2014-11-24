@@ -390,7 +390,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             ->will($this->returnValue($mockColl));
 
         $mockConfig->loadConfig(MongoTripodConfig::getConfig());
-        
+
 
         /* @var $mockTripodViews MongoTripodViews */
         $mockTripodViews = $this->getMock(
