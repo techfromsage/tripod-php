@@ -1002,8 +1002,8 @@ class MongoTripodConfig
         if(empty($type)){
             if($justReturnSpecId){
                 $specIds = array();
-                foreach($this->searchDocSpecs[$group] as $spec){
-                    $specIds[] = $spec[_ID_KEY];
+                foreach($this->searchDocSpecs[$group] as $specId=>$spec){
+                    $specIds[] = $specId;
                 }
                 return $specIds;
             } else {
