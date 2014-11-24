@@ -841,20 +841,20 @@ class MongoTripodConfig
      * @throws MongoTripodConfigException
      * @return string
      */
-    public function getConnStr($dbName, $collectionName = null)
+    public function getConnStr($dbName, $pod = null)
     {
         if (array_key_exists($dbName,$this->dbConfig))
         {
-            if(!$collectionName)
+            if(!$pod)
             {
                 return $this->getConnStrForDataSource($this->dbConfig[$dbName]['data_source']);
             }
             $pods = $this->getPods($dbName);
-            if(array_key_exists($collectionName, $pods))
+            if(array_key_exists($pod, $pods))
             {
-                return $this->getConnStrForDataSource($pods[$collectionName]['data_source']);
+                return $this->getConnStrForDataSource($pods[$pod]['data_source']);
             }
-            throw new MongoTripodConfigException("Collection $collectionName does not exist for database $dbName");
+            throw new MongoTripodConfigException("Collection $pod does not exist for database $dbName");
         }
         else
         {

@@ -200,9 +200,9 @@ class MongoTripodUpdates extends MongoTripodBase {
                         $syncOp['delete'] = false;
                     }
 
-                    foreach($syncOp['ops'] as $collectionName=>$ops){
+                    foreach($syncOp['ops'] as $pod=>$ops){
                         $specTypes = (isset($syncOp['specTypes']) ? $syncOp['specTypes'] : array());
-                        $syncModifiedSubjects[] = ModifiedSubject::create($syncOp['id'],array(),$ops, $specTypes, $this->getGroup(), $collectionName, $syncOp['delete']);
+                        $syncModifiedSubjects[] = ModifiedSubject::create($syncOp['id'],array(),$ops, $specTypes, $this->getGroup(), $pod, $syncOp['delete']);
                     }
                 }
 
@@ -219,9 +219,9 @@ class MongoTripodUpdates extends MongoTripodBase {
                         $asyncOp['delete'] = false;
                     }
 
-                    foreach($asyncOp['ops'] as $collectionName=>$ops){
+                    foreach($asyncOp['ops'] as $pod=>$ops){
                         $specTypes = (isset($asyncOp['specTypes']) ? $asyncOp['specTypes'] : array());
-                        $asyncModifiedSubjects[] = ModifiedSubject::create($asyncOp['id'],array(),$ops, $specTypes, $this->getGroup(), $collectionName, $asyncOp['delete']);
+                        $asyncModifiedSubjects[] = ModifiedSubject::create($asyncOp['id'],array(),$ops, $specTypes, $this->getGroup(), $pod, $asyncOp['delete']);
                     }
                 }
 
