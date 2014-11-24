@@ -133,9 +133,10 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
     {
         $config = MongoTripodConfig::getInstance();
         $pods = $config->getPods($tripod->getStoreName());
+        $podName = $tripod->getPodName();
         return $config->getDatabase(
             $tripod->getStoreName(),
-            $pods[$tripod->getPodName()]['data_source']
+            $pods[$podName]['data_source']
         )->selectCollection($tripod->getPodName());
     }
 
