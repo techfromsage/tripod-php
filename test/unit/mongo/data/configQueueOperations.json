@@ -209,12 +209,12 @@
     },
 
     "transaction_log" : {
-        "database" : "tripod_php_testing",
+        "database" : "tripod_php_testing_queue_ops",
         "collection" : "transaction_log",
         "data_source" : "rs1"
     },
     "queue" : {
-        "database" : "tripod_php_testing",
+        "database" : "tripod_php_testing_queue_ops",
         "collection" : "q_queue",
         "data_source" : "rs1"
     }

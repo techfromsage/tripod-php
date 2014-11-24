@@ -152,8 +152,8 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         $contextAlias = $this->getContextAlias($context);
         $query = array(_ID_KEY . '.' . _ID_RESOURCE => $this->labeller->uri_to_alias($resource),  _ID_KEY . '.' . _ID_CONTEXT => $context);
         $specNames = array();
+        $specTypes = $this->config->getTableSpecifications($this->groupName);
         if (empty($specType)) {
-            $specTypes = $this->config->getTableSpecifications($this->groupName);
             $specNames = array_keys($specTypes);
         }
         else
@@ -171,7 +171,11 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         }
         foreach($specNames as $specName)
         {
-            $this->config->getCollectionForTable($this->groupName, $specName)->remove($query);
+            // Ignore any other types of specs that might have been passed in here
+            if(isset($specTypes[$specName]))
+            {
+                $this->config->getCollectionForTable($this->groupName, $specName)->remove($query);
+            }
         }
     }
 
