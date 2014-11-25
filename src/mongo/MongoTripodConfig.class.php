@@ -142,11 +142,11 @@ class MongoTripodConfig
 
         foreach($this->getMandatoryKey('data_sources', $config) as $source=>$c)
         {
-            if(!$c['type'])
+            if(!array_key_exists('type', $c))
             {
                 throw new MongoTripodConfigException("No type set for data source $source");
             }
-            if(!$c['connection'])
+            if(!array_key_exists('connection', $c))
             {
                 throw new MongoTripodConfigException("No connection information set for data source $source");
             }
