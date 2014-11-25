@@ -10,16 +10,16 @@ require_once 'classes/Timer.class.php';
 require_once 'mongo/MongoTripodConfig.class.php';
 require_once 'mongo/MongoTripod.class.php';
 
-function generateTables($id, $tableId,$dbName)
+function generateTables($id, $tableId,$storeName)
 {
-    $tableSpec = MongoTripodConfig::getInstance()->getTableSpecification($tableId);
+    $tableSpec = MongoTripodConfig::getInstance()->getTableSpecification($storeName, $tableId);
     if (array_key_exists("from",$tableSpec))
     {
         MongoCursor::$timeout = -1;
 
         print "Generating $tableId";
-        $tripod = new MongoTripod($tableSpec['from'], $dbName);
-        $tTables = $tripod->getTripodTables();//new MongoTripodTables($tripod->db,$tripod->collection,$tripod->defaultContext);
+        $tripod = new MongoTripod($tableSpec['from'], $storeName);
+        $tTables = $tripod->getTripodTables();//new MongoTripodTables($tripod->storeName,$tripod->collection,$tripod->defaultContext);
         if ($id)
         {
             print " for $id....\n";
@@ -38,7 +38,7 @@ $t->start();
 
 if ($argc!=3 && $argc!=4 && $argc!=5)
 {
-    echo "usage: ./createTables.php tripodConfig.json dbName [tableId] [_id]\n";
+    echo "usage: ./createTables.php tripodConfig.json storeName [tableId] [_id]\n";
     die();
 }
 array_shift($argv);
@@ -52,7 +52,7 @@ if ($tableId)
 }
 else
 {
-    foreach(MongoTripodConfig::getInstance()->getTableSpecifications() as $tableSpec)
+    foreach(MongoTripodConfig::getInstance()->getTableSpecifications($argv[1]) as $tableSpec)
     {
         generateTables($id, $tableSpec['_id'], $argv[1]);
     }

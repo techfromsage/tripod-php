@@ -10,17 +10,17 @@ require_once 'classes/Timer.class.php';
 require_once 'mongo/MongoTripodConfig.class.php';
 require_once 'mongo/MongoTripod.class.php';
 
-function generateViews($id, $viewId,$dbName)
+function generateViews($id, $viewId,$storeName)
 {
-    $viewSpec = MongoTripodConfig::getInstance()->getViewSpecification($viewId);
+    $viewSpec = MongoTripodConfig::getInstance()->getViewSpecification($storeName, $viewId);
     echo $viewId;
     if (array_key_exists("from",$viewSpec))
     {
         MongoCursor::$timeout = -1;
 
         print "Generating $viewId";
-        $tripod = new MongoTripod($viewSpec['from'], $dbName);
-        $views = $tripod->getTripodViews();//new MongoTripodViews($tripod->db,$tripod->collection,$tripod->defaultContext);
+        $tripod = new MongoTripod($viewSpec['from'], $storeName);
+        $views = $tripod->getTripodViews();//new MongoTripodViews($tripod->storeName,$tripod->collection,$tripod->defaultContext);
         if ($id)
         {
             print " for $id....\n";
@@ -39,7 +39,7 @@ $t->start();
 
 if ($argc!=3 && $argc!=4 && $argc!=5)
 {
-	echo "usage: ./createViews.php tripodConfig.json dbName [viewId] [_id]\n";
+	echo "usage: ./createViews.php tripodConfig.json storeName [viewId] [_id]\n";
 	die();
 }
 array_shift($argv);
@@ -53,7 +53,7 @@ if ($viewId)
 }
 else
 {
-    foreach(MongoTripodConfig::getInstance()->getViewSpecifications() as $viewSpec)
+    foreach(MongoTripodConfig::getInstance()->getViewSpecifications($argv[1]) as $viewSpec)
     {
         generateViews($id, $viewSpec['_id'], $argv[1]);
     }
