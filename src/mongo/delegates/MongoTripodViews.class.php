@@ -69,7 +69,8 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
                 $query['value.'._GRAPHS.'.'.$predicate] = $object;
             }
         }
-        return $this->fetchGraph($query,MONGO_VIEW,VIEWS_COLLECTION);
+        $viewCollection = $this->getMongoTripodConfigInstance()->getCollectionForView($this->storeName, $viewType);
+        return $this->fetchGraph($query,MONGO_VIEW,$viewCollection);
     }
 
     /**
@@ -135,7 +136,7 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
         }
 
         $query = array("_id" => array('$in' => $this->createTripodViewIdsFromResourceUris($resources,$context,$viewType)));
-        $g = $this->fetchGraph($query,MONGO_VIEW,VIEWS_COLLECTION, null, $cursorSize);
+        $g = $this->fetchGraph($query,MONGO_VIEW,$this->getCollectionForViewSpec($viewType), null, $cursorSize);
 
         // account for missing subjects
         $returnedSubjects = $g->get_subjects();
@@ -171,7 +172,7 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
                 }
 
                 $query = array("_id" => array('$in' => $this->createTripodViewIdsFromResourceUris($regrabResources,$context,$viewType)));
-                $g->add_graph($this->fetchGraph($query,MONGO_VIEW,VIEWS_COLLECTION), null, $cursorSize);
+                $g->add_graph($this->fetchGraph($query,MONGO_VIEW,$this->getCollectionForViewSpec($viewType)), null, $cursorSize);
             }
         }
 
@@ -608,6 +609,10 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
         return $obj;
     }
 
+    /**
+     * @param string $viewSpec
+     * @return string
+     */
     private function getFromCollectionForViewSpec($viewSpec)
     {
         $from = null;
@@ -621,4 +626,14 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
         }
         return $from;
     }
+
+    /**
+     * @param string $viewSpecId
+     * @return MongoCollection
+     */
+    protected function getCollectionForViewSpec($viewSpecId)
+    {
+        return $this->getMongoTripodConfigInstance()->getCollectionForView($this->storeName, $viewSpecId);
+    }
+
 }
