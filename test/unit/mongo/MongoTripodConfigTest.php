@@ -56,10 +56,11 @@ class MongoTripodConfigTest extends MongoTripodTestBase
     public function testTConfig()
     {
         $config = MongoTripodConfig::getInstance();
+        $cfg = MongoTripodConfig::getConfig();
         $tConfig = $config->getTransactionLogConfig();
         $this->assertEquals('tripod_php_testing',$tConfig['database']);
         $this->assertEquals('transaction_log',$tConfig['collection']);
-        $this->assertEquals('mongodb://localhost',$config->getTransactionLogConnStr());
+        $this->assertEquals($cfg['data_sources'][$cfg['transaction_log']['data_source']]['connection'],$config->getTransactionLogConnStr());
     }
 
     public function testTConfigRepSetConnStr()
@@ -1166,5 +1167,206 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $mockConfig->getCollectionForCBD('tripod_php_testing', 'CBD_testing', MongoClient::RP_SECONDARY_PREFERRED);
         $mockConfig->getCollectionForCBD('tripod_php_testing', 'CBD_testing', MongoClient::RP_NEAREST);
 
+    }
+
+    public function testDataLoadedInConfiguredDataSource()
+    {
+        $storeName = 'tripod_php_testing';
+
+        $dataSourcesForStore = array();
+        $config = MongoTripodConfig::getInstance();
+        $pods = $config->getPods($storeName);
+
+        foreach($pods as $pod)
+        {
+            if(!in_array($config->getDataSourceForPod($storeName, $pod), $dataSourcesForStore))
+            {
+                $dataSourcesForStore[] = $config->getDataSourceForPod($storeName, $pod);
+            }
+        }
+
+        foreach($config->getViewSpecifications($storeName) as $id=>$spec)
+        {
+            if(!in_array($spec['to'], $dataSourcesForStore))
+            {
+                $dataSourcesForStore[] = $spec['to'];
+            }
+        }
+
+        foreach($config->getTableSpecifications($storeName) as $id=>$spec)
+        {
+            if(!in_array($spec['to'], $dataSourcesForStore))
+            {
+                $dataSourcesForStore[] = $spec['to'];
+            }
+        }
+
+        foreach($config->getSearchDocumentSpecifications($storeName) as $id=>$spec)
+        {
+            if(!in_array($spec['to'], $dataSourcesForStore))
+            {
+                $dataSourcesForStore[] = $spec['to'];
+            }
+        }
+
+        if(count($dataSourcesForStore) < 2)
+        {
+            $this->markTestSkipped("Less than two datasources configured for store, nothing to test");
+        }
+
+        $diff = false;
+
+        $cfg = MongoTripodConfig::getConfig();
+        $defaultDataSource = $cfg["data_sources"][$config->getDefaultDataSourceForStore($storeName)];
+
+        foreach($dataSourcesForStore as $source)
+        {
+            if($cfg['data_sources'][$source] != $defaultDataSource)
+            {
+                $diff = true;
+                break;
+            }
+            $config->getDatabase($storeName, $source)->drop();
+        }
+
+        if($diff == false)
+        {
+            $this->markTestSkipped("All datasources configured for store use same configuration, nothing to test");
+        }
+
+        $this->tripod = new MongoTripod('CBD_testing', $storeName, array(OP_ASYNC=>array(OP_VIEWS=>true,OP_TABLES=>false,OP_SEARCH=>false)));
+        $this->loadBaseDataViaTripod();
+
+        $graph = new MongoGraph();
+        $subject = 'http://example.com/' . uniqid();
+        $labeller = new MongoTripodLabeller();
+        $graph->add_resource_triple($subject, RDF_TYPE, $labeller->qname_to_uri('foaf:Person'));
+        $graph->add_literal_triple($subject, FOAF_NAME, "Anne Example");
+        $this->tripod->saveChanges(new ExtendedGraph(), $graph);
+
+        $newGraph = $this->tripod->describeResource($subject);
+        $newGraph->add_literal_triple($subject, $labeller->qname_to_uri('foaf:email'), 'anne@example.com');
+        $this->tripod->saveChanges($graph, $newGraph);
+
+        // Add an item to the queue
+        $queue = new MongoTripodQueue();
+        $item = new ModifiedSubject(array('collection'=>'CBD_wibble', 'database'=>'foo'));
+        $queue->addItem($item);
+
+        // Generate views and tables
+        foreach($config->getViewSpecifications($storeName) as $viewId=>$viewSpec)
+        {
+            $this->tripod->getTripodViews()->generateView($viewId);
+        }
+        foreach($config->getTableSpecifications($storeName) as $tableId=>$tableSpec)
+        {
+            $this->tripod->generateTableRows($tableId);
+        }
+
+        // Create some locks so we have a collection
+        $lCollection = $config->getCollectionForLocks($storeName);
+        $lCollection->drop();
+        $lCollection->insert(array(_ID_KEY=>array(_ID_RESOURCE=>'foo',_ID_CONTEXT=>'bar'), _LOCKED_FOR_TRANS=>'foobar'));
+        $lCollection->insert(array(_ID_KEY=>array(_ID_RESOURCE=>'baz',_ID_CONTEXT=>'bar'), _LOCKED_FOR_TRANS=>'wibble'));
+        $this->tripod->removeInertLocks('foobar', 'reason1');
+
+        $collectionsForDataSource = array();
+        $collectionsForDataSource['rs1'] = array(
+            VIEWS_COLLECTION, SEARCH_INDEX_COLLECTION, TABLE_ROWS_COLLECTION, 'CBD_testing',
+            AUDIT_MANUAL_ROLLBACKS_COLLECTION, LOCKS_COLLECTION, 'q_queue'
+        );
+
+        $collectionsForDataSource['rs2'] = array(VIEWS_COLLECTION, SEARCH_INDEX_COLLECTION, TABLE_ROWS_COLLECTION, 'CBD_testing_2', 'transaction_log');
+        $specs = array();
+        $specs['views'] = MongoTripodConfig::getInstance()->getViewSpecifications($storeName);
+        $specs['search'] = MongoTripodConfig::getInstance()->getSearchDocumentSpecifications($storeName);
+        $specs['table_rows'] = MongoTripodConfig::getInstance()->getTableSpecifications($storeName);
+        $specsForDataSource = array();
+
+        foreach(array('views', 'search', 'table_rows') as $type)
+        {
+            foreach($specs[$type] as $spec)
+            {
+                if(!isset($specsForDataSource[$spec['to']][$type]))
+                {
+                    $specsForDataSource[$spec['to']][$type] = array();
+                }
+                $specsForDataSource[$spec['to']][$type][] = $spec['_id'];
+            }
+        }
+
+
+        $foundCollections = array();
+
+        foreach($dataSourcesForStore  as $source)
+        {
+            /** @var MongoCollection $collection */
+            foreach($config->getDatabase($storeName, $source)->listCollections() as $collection)
+            {
+                $name = $collection->getName();
+                $foundCollections[] = $name;
+                $this->assertContains($name, $collectionsForDataSource[$source], "Source " . $source . " does not include " . $name);
+                switch($name)
+                {
+                    case 'views':
+                        $this->assertGreaterThan(0, count($specsForDataSource[$source]['views']));
+
+                        $this->assertGreaterThan(0, $collection->count(array()), "views collection did not have at least 1 document in data source " . $source);
+                        foreach($dataSourcesForStore as $otherSource)
+                        {
+                            if($otherSource == $source)
+                            {
+                                continue;
+                            }
+                            foreach($specsForDataSource[$otherSource]['views'] as $view)
+                            {
+                                $this->assertEquals(0, $collection->count(array('_id.type'=>$view)), $view . " had at least 1 document in data source " . $source);
+                            }
+                        }
+
+                        break;
+                    case 'search':
+                        $this->assertGreaterThan(0, count($specsForDataSource[$source]['search']));
+
+                        $this->assertGreaterThan(0, $collection->count(array()), "search collection did not have at least 1 document in data source " . $source);
+
+                        foreach($dataSourcesForStore as $otherSource)
+                        {
+                            if($otherSource == $source)
+                            {
+                                continue;
+                            }
+                            foreach($specsForDataSource[$otherSource]['search'] as $search)
+                            {
+                                $this->assertEquals(0, $collection->count(array('_id.type'=>$search)), $search . " had at least 1 document in data source " . $source);
+                            }
+                        }
+                        break;
+                    case 'table_rows':
+                        $this->assertGreaterThan(0, count($specsForDataSource[$source]['table_rows']));
+
+                        $this->assertGreaterThan(0, $collection->count(array()), "table_rows collection did not have at least 1 document in data source " . $source);
+                        foreach($dataSourcesForStore as $otherSource)
+                        {
+                            if($otherSource == $source)
+                            {
+                                continue;
+                            }
+                            foreach($specsForDataSource[$otherSource]['table_rows'] as $t)
+                            {
+                                $this->assertEquals(0, $collection->count(array('_id.type'=>$t)), $t . " had at least 1 document in data source " . $source);
+                            }
+                        }
+                        break;
+                    case 'CBD_testing':
+                        $this->assertGreaterThan(0, $collection->count(array()), "CBD_testing collection did not have at least 1 document in data source " . $source);
+                        break;
+                    case 'CBD_testing_2':
+                        $this->assertGreaterThan(0, $collection->count(array()), "CBD_testing_2 collection did not have at least 1 document in data source " . $source);
+                        break;
+                }
+
+            }
+        }
     }
 }

@@ -47,6 +47,7 @@
                     }
                 },
                 "CBD_testing_2": {
+                    "data_source" : "rs2",
                     "cardinality": {
                         "dct:created.l": 1
                     },

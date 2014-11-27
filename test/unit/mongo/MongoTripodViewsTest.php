@@ -146,8 +146,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             )
         );
         // get the view direct from mongo
-        $mongo = new MongoClient(MongoTripodConfig::getInstance()->getConnStr('tripod_php_testing'));
-        $actualView = $mongo->selectCollection('tripod_php_testing','views')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA',"c"=>'http://talisaspire.com/',"type"=>'v_resource_full_ttl')));
+        $actualView = MongoTripodConfig::getInstance()->getCollectionForView('tripod_php_testing', 'v_resource_full_ttl')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA',"c"=>'http://talisaspire.com/',"type"=>'v_resource_full_ttl')));
         $this->assertEquals($expectedView,$actualView);
     }
 
@@ -251,8 +250,8 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
                 _EXPIRES=>$expiryDate
             )
         );
-        $mongo = new MongoClient(MongoTripodConfig::getInstance()->getConnStr('tripod_php_testing'));
-        $actualView = $mongo->selectCollection('tripod_php_testing','views')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/works/4d101f63c10a6',"c"=>"http://talisaspire.com/","type"=>'v_counts')));
+
+        $actualView = MongoTripodConfig::getInstance()->getCollectionForView('tripod_php_testing', 'v_counts')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/works/4d101f63c10a6',"c"=>"http://talisaspire.com/","type"=>'v_counts')));
 //        var_dump($actualView); die;
 //        var_dump($expectedView);
         $this->assertEquals($expectedView,$actualView);
