@@ -29,16 +29,16 @@ class MongoTransactionLog
      * @param string $transaction_id - the id you wish to assign to the new transaction
      * @param array $changes - an array serialization of the changeset to be applied
      * @param array $originalCBDs - an array of the serialized CBDs
-     * @param string $dbName - the name of the database the changes are being applied to
-     * @param string $collectionName - the name of the collection, in the database, the changes are being applied to
+     * @param string $storeName - the name of the database the changes are being applied to
+     * @param string $podName - the name of the collection, in the database, the changes are being applied to
      * @throws TripodException
      */
-    public function createNewTransaction($transaction_id, $changes, $originalCBDs, $dbName, $collectionName)
+    public function createNewTransaction($transaction_id, $changes, $originalCBDs, $storeName, $podName)
     {
         $transaction = array(
             "_id" => $transaction_id,
-            "dbName"=>$dbName,
-            "collectionName"=>$collectionName,
+            "dbName"=>$storeName,
+            "collectionName"=>$podName,
             "changes" => $changes,
             "status" => "in_progress",
             "startTime" => new MongoDate(),
@@ -134,22 +134,22 @@ class MongoTransactionLog
     }
 
     /**
-     * @param string $dbName
-     * @param string $collectionName
+     * @param string $storeName
+     * @param string $podName
      * @param string|null $fromDate only transactions after this specified date will be replayed. This must be a datetime string i.e. '2010-01-15 00:00:00'
      * @param string|null $toDate only transactions after this specified date will be replayed. This must be a datetime string i.e. '2010-01-15 00:00:00'
      * @return MongoCursor
      * @throws InvalidArgumentException
      */
-    public function getCompletedTransactions($dbName=null, $collectionName=null, $fromDate=null, $toDate=null)
+    public function getCompletedTransactions($storeName=null, $podName=null, $fromDate=null, $toDate=null)
     {
         $query = array();
         $query['status'] = 'completed';
 
-        if(!empty($dbName) && !empty($collectionName))
+        if(!empty($storeName) && !empty($podName))
         {
-            $query['dbName'] = $dbName;
-            $query['collectionName'] = $collectionName;
+            $query['dbName'] = $storeName;
+            $query['collectionName'] = $podName;
         }
 
         if(!empty($fromDate)) {
@@ -180,11 +180,11 @@ class MongoTransactionLog
      * @return int Total number of completed transactions in the transaction log
      * @codeCoverageIgnore
      */
-    public function getCompletedTransactionCount($dbName=null, $collectionName=null)
+    public function getCompletedTransactionCount($storeName=null, $podName=null)
     {
-        if(!empty($dbName) && !empty($collectionName))
+        if(!empty($storeName) && !empty($podName))
         {
-            return $this->transaction_collection->count(array('status'=>'completed','dbName'=>$dbName, 'collectionName'=>$collectionName));
+            return $this->transaction_collection->count(array('status'=>'completed','dbName'=>$storeName, 'collectionName'=>$podName));
         }
         else
         {

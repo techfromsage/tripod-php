@@ -60,22 +60,22 @@ class TriplesUtil
      * Make them quads with a $context
      * @param $subject
      * @param array $triples
-     * @param $dbName
-     * @param $collectionName
+     * @param string $storeName
+     * @param string $podName
      * @param null $context
      * @param null $allowableTypes
      */
-    public function loadTriplesAbout($subject,Array $triples,$dbName,$collectionName,$context=null,$allowableTypes=null)
+    public function loadTriplesAbout($subject,Array $triples,$storeName,$podName,$context=null,$allowableTypes=null)
     {
         $context = ($context==null) ? MongoTripodConfig::getInstance()->getDefaultContextAlias() : $this->labeller->uri_to_alias($context);
-        if (array_key_exists($collectionName,$this->collections))
+        if (array_key_exists($podName,$this->collections))
         {
-            $collection = $this->collections[$collectionName];
+            $collection = $this->collections[$podName];
         }
         else
         {
-            $m = new MongoClient(MongoTripodConfig::getInstance()->getConnStr($dbName));
-            $collection = $m->selectDB($dbName)->selectCollection($collectionName);
+            $m = new MongoClient(MongoTripodConfig::getInstance()->getConnStr($storeName));
+            $collection = $m->selectDB($storeName)->selectCollection($podName);
         }
 
         $graph = new MongoGraph();

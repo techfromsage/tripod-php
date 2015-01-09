@@ -9,11 +9,11 @@ require_once 'tripod.inc.php';
 require_once 'mongo/util/TriplesUtil.class.php';
 require_once 'classes/Timer.class.php';
 
-function load(TriplesUtil $loader,$subject,Array $triples,Array &$errors,$collectionName,$storeName)
+function load(TriplesUtil $loader,$subject,Array $triples,Array &$errors,$podName,$storeName)
 {
     try
     {
-        $loader->loadTriplesAbout($subject,$triples,$storeName,$collectionName);
+        $loader->loadTriplesAbout($subject,$triples,$storeName,$podName);
     }
     catch (Exception $e)
     {
@@ -27,13 +27,13 @@ $timer->start();
 
 if ($argc!=4)
 {
-	echo "usage: ./loadTriples.php storename collectionname tripodConfig.json < ntriplesdata\n";
+	echo "usage: ./loadTriples.php storename podname tripodConfig.json < ntriplesdata\n";
 	die();
 }
 array_shift($argv);
 
 $storeName = $argv[0];
-$collectionName = $argv[1];
+$podName = $argv[1];
 MongoTripodConfig::setConfig(json_decode(file_get_contents($argv[2]),true));
 
 $i=0;
@@ -61,7 +61,7 @@ while (($line = fgets(STDIN)) !== false) {
     }
     else if ($currentSubject!=$subject) // once subject changes, we have all triples for that subject, flush to Mongo
     {
-        load($loader,$currentSubject,$triples,$errors,$collectionName,$storeName);
+        load($loader,$currentSubject,$triples,$errors,$podName,$storeName);
         $currentSubject=$subject; // reset current subject to next subject
         $triples = array(); // reset triples
     }
@@ -69,7 +69,7 @@ while (($line = fgets(STDIN)) !== false) {
 }
 
 // last doc
-load($loader,$currentSubject,$triples,$errors,$collectionName,$storeName);
+load($loader,$currentSubject,$triples,$errors,$podName,$storeName);
 
 $timer->stop();
 print "This script ran in ".$timer->result()." milliseconds\n";

@@ -723,12 +723,12 @@ class MongoTripodConfig
 
     /**
      * Returns a list of the configured indexes grouped by collection
-     * @param string $dbName
+     * @param string $storeName
      * @return mixed
      */
-    public function getIndexesGroupedByCollection($dbName)
+    public function getIndexesGroupedByCollection($storeName)
     {
-        $indexes = $this->indexes[$dbName];
+        $indexes = $this->indexes[$storeName];
         //TODO: if we have much more default indexes we should find a better way of doing this
         foreach($indexes as $collection=>$indices) {
             $indexes[$collection][_LOCKED_FOR_TRANS_INDEX] = array(_ID_KEY=>1, _LOCKED_FOR_TRANS=>1);
@@ -738,7 +738,7 @@ class MongoTripodConfig
 
         // also add the indexes for any views/tables
         $tableIndexes = array();
-        foreach ($this->getTableSpecifications($dbName) as $tspec)
+        foreach ($this->getTableSpecifications($storeName) as $tspec)
         {
             if (array_key_exists("ensureIndexes",$tspec))
             {
@@ -756,7 +756,7 @@ class MongoTripodConfig
         $indexes[TABLE_ROWS_COLLECTION] = $tableIndexes;
 
         $viewIndexes = array();
-        foreach ($this->getViewSpecifications($dbName) as $vspec)
+        foreach ($this->getViewSpecifications($storeName) as $vspec)
         {
             if (array_key_exists("ensureIndexes",$vspec))
             {
@@ -779,23 +779,23 @@ class MongoTripodConfig
     /**
      * Get the cardinality values for a DB/Collection.
      *
-     * @param string $dbName The database name to use.
+     * @param string $storeName The database name to use.
      * @param string $collName The collection in the database.
      * @param string $qName Either the qname to get the values for or empty for all cardinality values.
      * @return mixed If no qname is specified then returns an array of cardinality options, otherwise returns the cardinality value for the given qname.
      */
-    public function getCardinality($dbName,$collName,$qName=null)
+    public function getCardinality($storeName,$collName,$qName=null)
     {
         // If no qname specified the return all cardinality rules for this db/collection.
         if (empty($qName))
         {
-            return $this->cardinality[$dbName][$collName];
+            return $this->cardinality[$storeName][$collName];
         }
 
         // Return the cardinality rule for the specified qname.
-        if (array_key_exists($qName,$this->cardinality[$dbName][$collName]))
+        if (array_key_exists($qName,$this->cardinality[$storeName][$collName]))
         {
-            return $this->cardinality[$dbName][$collName][$qName];
+            return $this->cardinality[$storeName][$collName][$qName];
         }
         else
         {
@@ -917,7 +917,6 @@ class MongoTripodConfig
     /**
      * Returns a replica set name for the database, if one has been defined
      * @param $datasource
-     * @internal param string $dbName
      * @return string|null
      */
     public function getReplicaSetName($datasource)
@@ -933,7 +932,6 @@ class MongoTripodConfig
     /**
      * Returns a boolean reflecting whether or not a replica set has been defined for the supplied database name
      * @param $datasource
-     * @internal param string $dbName
      * @return bool
      */
     public function isReplicaSet($datasource)
