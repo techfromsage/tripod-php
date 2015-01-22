@@ -230,7 +230,7 @@ class MongoTripodConfig
                         $this->indexes[$storeName][$podName] = array();
                         foreach($podConfig["indexes"] as $indexName=>$indexFields)
                         {
-                            // check no more than 1 indexField is an array to ensure Mongo will be able to create compount indexes
+                            // check no more than 1 indexField is an array to ensure Mongo will be able to create compound indexes
                             if (count($indexFields)>1)
                             {
                                 $fieldsThatAreArrays = 0;
@@ -1352,7 +1352,7 @@ class MongoTripodConfig
         }
         $connectionOptions = array();
         $ds = $this->dataSources[$dataSource];
-        $connectionOptions['connectTimeoutMS'] = (isset($ds['connectTimeoutMS']) ? $ds['connectTimeoutMS'] : 20000);
+        $connectionOptions['connectTimeoutMS'] = (isset($ds['connectTimeoutMS']) ? $ds['connectTimeoutMS'] : DEFAULT_MONGO_CONNECT_TIMEOUT_MS);
 
         if(isset($ds['replicaSet']) && !empty($ds['replicaSet'])) {
             $connectionOptions['replicaSet'] = $ds['replicaSet'];
@@ -1625,7 +1625,7 @@ class MongoTripodConfig
         }
         $connectionOptions = array();
         $dataSource = $this->dataSources[$this->queueConfig['data_source']];
-        if(isset($dataSource['connectTimeoutMS']) ? $dataSource['connectTimeoutMS'] : 20000);
+        $connectionOptions['connectTimeoutMS'] = (isset($dataSource['connectTimeoutMS']) ? $dataSource['connectTimeoutMS'] : DEFAULT_MONGO_CONNECT_TIMEOUT_MS);
 
         if(isset($dataSource['replicaSet']) && !empty($dataSource['replicaSet'])) {
             $connectionOptions['replicaSet'] = $dataSource['replicaSet'];
@@ -1650,7 +1650,7 @@ class MongoTripodConfig
         }
         $connectionOptions = array();
         $dataSource = $this->dataSources[$this->tConfig['data_source']];
-        if(isset($dataSource['connectTimeoutMS']) ? $dataSource['connectTimeoutMS'] : 20000);
+        $connectionOptions['connectTimeoutMS'] = (isset($dataSource['connectTimeoutMS']) ? $dataSource['connectTimeoutMS'] : DEFAULT_MONGO_CONNECT_TIMEOUT_MS);
 
         if(isset($dataSource['replicaSet']) && !empty($dataSource['replicaSet'])) {
             $connectionOptions['replicaSet'] = $dataSource['replicaSet'];
