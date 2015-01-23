@@ -746,7 +746,7 @@ class MongoTripodTest extends MongoTripodTestBase
             ),
             "tlog"=>array(
                 "type"=>"mongo",
-                "connection"=>"mongodb://talisaspire:acorn123@46.137.106.66:27018"
+                "connection"=>"mongodb://abc:xyz@localhost:27018"
             )
         );
         $config["stores"] = array(

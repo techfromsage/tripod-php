@@ -196,14 +196,12 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
         foreach(MongoTripodConfig::getInstance()->getCollectionsForSearch('tripod_php_testing') as $collection)
         {
-            $result = $collection->findOne(array("_id.r"=>"http://talisaspire.com/resources/doc1"));
-            if($result)
-            {
-                break;
-            }
+            $this->assertNull(
+                $collection->findOne(array("_id.r"=>"http://talisaspire.com/resources/doc1")),
+                "No search document should be found, because it should have been deleted"
+            );
         }
 
-        $this->assertNull($result, "No search document should be found, because it should have been deleted");
     }
 
     public function testSearchIndexingGeneratesNewDocForChangedTypeThatHasACorrespondingSearchdocSpec()

@@ -935,7 +935,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             ),
             "tlog"=>array(
                 "type"=>"mongo",
-                "connection"=>"mongodb://talisaspire:acorn123@46.137.106.66:27018"
+                "connection"=>"mongodb://abc:zyx@localhost:27018"
             ),
             "queue"=>array(
                 "type"=>"mongo",

@@ -17,6 +17,9 @@ class MongoSearchProvider implements ITripodSearchProvider
      */
     protected $storeName;
 
+    /**
+     * @var MongoTripodConfig
+     */
     protected $config;
 
     public function __construct(MongoTripod $tripod)
