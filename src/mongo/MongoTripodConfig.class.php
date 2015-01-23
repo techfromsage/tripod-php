@@ -118,6 +118,9 @@ class MongoTripodConfig
      */
     protected $dataSources = array();
 
+    /**
+     * @var array
+     */
     protected $podConnections = array();
 
     /**
@@ -144,7 +147,7 @@ class MongoTripodConfig
         {
             if(!array_key_exists('type', $c))
             {
-                throw new MongoTripodConfigException("No type set for data source $source");
+                throw new MongoTripodConfigException("No 'type' set for data source $source");
             }
             if(!array_key_exists('connection', $c))
             {

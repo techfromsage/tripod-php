@@ -552,14 +552,16 @@ class MongoTripodUpdates extends MongoTripodBase {
         $dbPref = $this->getDatabase()->getReadPreference();
         if($dbPref['type'] !== MongoClient::RP_PRIMARY){
             $this->originalDbReadPreference = $this->db->getReadPreference();
-            $this->db->setReadPreference(MongoClient::RP_PRIMARY);
+            $tagsets = (isset($dbPref['tagsets']) ? $dbPref['tagsets'] : array());
+            $this->db->setReadPreference(MongoClient::RP_PRIMARY, $tagsets);
         }
 
         $collPref = $this->getCollection()->getReadPreference();
         // Set collection preference
         if($collPref['type'] !== MongoClient::RP_PRIMARY){
             $this->originalCollectionReadPreference = $this->collection->getReadPreference();
-            $this->collection->setReadPreference(MongoClient::RP_PRIMARY);
+            $tagsets = (isset($collPref['tagsets']) ? $collPref['tagsets'] : array());
+            $this->collection->setReadPreference(MongoClient::RP_PRIMARY, $tagsets);
         }
     }
 
@@ -570,11 +572,13 @@ class MongoTripodUpdates extends MongoTripodBase {
     protected function resetOriginalReadPreference(){
         if($this->originalDbReadPreference !== $this->db->getReadPreference())
         {
-            $pref = (isset($this->originalCollectionReadPreference['type'])
-                ? $this->originalCollectionReadPreference['type']
+            $pref = (isset($this->originalDbReadPreference['type'])
+                ? $this->originalDbReadPreference['type']
                 : $this->readPreference
             );
-            $this->db->setReadPreference($pref);
+            $tagsets = (isset($this->originalDbReadPreference['tagsets'])
+                ? $this->originalDbReadPreference['tagsets'] : array());
+            $this->db->setReadPreference($pref, $tagsets);
         }
         // Reset collection object
         if($this->originalCollectionReadPreference !== $this->getCollection()->getReadPreference()){
@@ -582,7 +586,9 @@ class MongoTripodUpdates extends MongoTripodBase {
                 ? $this->originalCollectionReadPreference['type']
                 : $this->readPreference
             );
-            $this->collection->setReadPreference($pref);
+            $tagsets = (isset($this->originalCollectionReadPreference['tagsets'])
+                ? $this->originalCollectionReadPreference['tagsets'] : array());
+            $this->collection->setReadPreference($pref, $tagsets);
         }
     }
 
