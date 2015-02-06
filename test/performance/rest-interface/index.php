@@ -2,37 +2,63 @@
 require 'vendor/autoload.php';
 define('ARC_DIR', dirname(__FILE__) . '/vendor/semsol/arc2/');
 require_once 'vendor/talis/tripod-php/src/tripod.inc.php';
-
-$app = new \Slim\Slim();
+define('FORMAT_RDF_XML', 'rdfxml');
+define('FORMAT_NTRIPLES', 'ntriples');
+define('FORMAT_TURTLE', 'turtle');
+define('FORMAT_RDF_JSON', 'rdfjson');
+$app = new \Slim\Slim(array(
+    'log.level' => \Slim\Log::DEBUG
+));
 
 MongoTripodConfig::setConfig(json_decode(file_get_contents('config/tripod-config.json'), true));
-
 
 $app->group('/1', function() use ($app) {
     $app->group('/:storeName/:podName', function() use ($app)
     {
         $app->group('/graph', function() use ($app) {
+//            $app->get('/:encodedFqUri.rdf', function($storeName, $podName, $encodedFqUri, $fileType) use ($app) {
+//                $tripod = new MongoTripod($podName, $storeName);
+////                switch($fileType)
+////                {
+////                    case 'xml':
+////                    case 'rdf':
+////                        $format = FORMAT_RDF_XML;
+////                        break;
+////                    case 'nt':
+////                    case 'txt':
+////                        $format = FORMAT_NTRIPLES;
+////                        break;
+////                    case 'text/turtle':
+////                        $format = FORMAT_TURTLE;
+////                        break;
+////                    default:
+////                        $format = FORMAT_RDF_JSON;
+////                }
+//                $format = FORMAT_RDF_XML;
+//                $output = getFormattedGraph($tripod, base64_decode($encodedFqUri), $format);
+//                $app->response()->headers()->set('Content-type', getContentType($format));
+//                echo $output;
+
+//            });
             $app->get('/:encodedFqUri', function($storeName, $podName, $encodedFqUri) use ($app) {
                 $tripod = new MongoTripod($podName, $storeName);
-                $graph =  $tripod->describeResource(base64_decode($encodedFqUri));
                 $contentType = $app->request()->getMediaType();
                 switch($contentType)
                 {
                     case 'application/rdf+xml':
-                        $output = $graph->to_rdfxml();
+                        $format = FORMAT_RDF_XML;
                         break;
                     case 'text/plain':
-                        $output = $graph->to_ntriples();
+                        $format = FORMAT_NTRIPLES;
                         break;
                     case 'text/turtle':
-                        $output = $graph->to_turtle();
+                        $format = FORMAT_TURTLE;
                         break;
                     default:
-                        $contentType = 'application/json';
-                        $output = $graph->to_json();
+                        $format = FORMAT_RDF_JSON;
                 }
-
-                $app->response()->headers()->set('Content-type', $contentType);
+                $output = getFormattedGraph($tripod, base64_decode($encodedFqUri), $format);
+                $app->response()->headers()->set('Content-type', getContentType($format));
                 echo $output;
 
             });
@@ -76,4 +102,38 @@ $app->group('/1', function() use ($app) {
     });
 });
 
+function getContentType($format)
+{
+    switch($format)
+    {
+        case 'rdfxml':
+            $contentType = 'application/rdf+xml';
+            break;
+
+        default:
+            $contentType = 'application/json';
+    }
+
+    return $contentType;
+}
+
+function getFormattedGraph(MongoTripod $tripod, $uri, $format)
+{
+    $graph =  $tripod->describeResource($uri);
+    switch($format)
+    {
+        case 'rdfxml':
+            $output = $graph->to_rdfxml();
+            break;
+        case 'ntriples':
+            $output = $graph->to_ntriples();
+            break;
+        case 'turtle':
+            $output = $graph->to_turtle();
+            break;
+        default:
+            $output = $graph->to_json();
+    }
+    return $output;
+}
 $app->run();
