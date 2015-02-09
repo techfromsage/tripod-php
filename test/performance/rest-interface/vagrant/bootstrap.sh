@@ -1,11 +1,11 @@
-apt-get update
+apt-get update -y
 apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 7F0CEB10
 echo 'deb http://downloads-distro.mongodb.org/repo/ubuntu-upstart dist 10gen' | tee /etc/apt/sources.list.d/mongodb.list
-sudo apt-get update
-sudo apt-get install -y mongodb-org
-apt-get install php5 php-pear
+apt-get update -y
+apt-get install -y mongodb-org -y
+apt-get install php5 php-pear -y
 pecl install mongo
-apt-get install git siege
+apt-get install git siege -y
 git clone https://github.com/talis/tripod-php.git /opt/tripod-php
 cd /opt/tripod-php
 git checkout performance-test-rest-interface
