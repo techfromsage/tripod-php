@@ -16,5 +16,7 @@ php composer.phar install
 a2enmod rewrite
 touch /etc/php5/apache2/conf.d/mongo.ini
 echo "extension=mongo.so" > /etc/php5/apache2/conf.d/mongo.ini
+sed -i "s/DocumentRoot \/var\/www/DocumentRoot \/vagrant/" /etc/apache2/sites-enabled/000-default
+sed -i "s/Directory \/var\/www\//Directory \/vagrant\//" /etc/apache2/sites-enabled/000-default
 sed -i "s/AllowOverride None/AllowOverride All/" /etc/apache2/sites-enabled/000-default
 service apache2 restart

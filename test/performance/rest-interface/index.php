@@ -1,7 +1,7 @@
 <?php
 require 'vendor/autoload.php';
 define('ARC_DIR', dirname(__FILE__) . '/vendor/semsol/arc2/');
-require_once 'vendor/talis/tripod-php/src/tripod.inc.php';
+require_once dirname(__FILE__) . '/vendor/talis/tripod-php/src/tripod.inc.php';
 define('FORMAT_RDF_XML', 'rdfxml');
 define('FORMAT_NTRIPLES', 'ntriples');
 define('FORMAT_TURTLE', 'turtle');
@@ -9,8 +9,6 @@ define('FORMAT_RDF_JSON', 'rdfjson');
 $app = new \Slim\Slim(array(
     'log.level' => \Slim\Log::DEBUG
 ));
-
-MongoTripodConfig::setConfig(json_decode(file_get_contents('config/tripod-config.json'), true));
 
 $app->group('/1', function() use ($app) {
     $app->group('/:storeName/:podName', function() use ($app)
@@ -41,6 +39,7 @@ $app->group('/1', function() use ($app) {
 
 //            });
             $app->get('/:encodedFqUri', function($storeName, $podName, $encodedFqUri) use ($app) {
+                MongoTripodConfig::setConfig(json_decode(file_get_contents('./config/tripod-config-'.$storeName .'.json'), true));
                 $tripod = new MongoTripod($podName, $storeName);
                 $contentType = $app->request()->getMediaType();
                 switch($contentType)
@@ -57,9 +56,17 @@ $app->group('/1', function() use ($app) {
                     default:
                         $format = FORMAT_RDF_JSON;
                 }
-                $output = getFormattedGraph($tripod, base64_decode($encodedFqUri), $format);
-                $app->response()->headers()->set('Content-type', getContentType($format));
-                echo $output;
+                $graph =  $tripod->describeResource(base64_decode($encodedFqUri));
+                if($graph->is_empty())
+                {
+                    $app->response()->setStatus(404);
+                }
+                else
+                {
+                    $output = getFormattedGraph($graph, $format);
+                    $app->response()->headers()->set('Content-type', getContentType($format));
+                    echo $output;
+                }
 
             });
 
@@ -117,9 +124,8 @@ function getContentType($format)
     return $contentType;
 }
 
-function getFormattedGraph(MongoTripod $tripod, $uri, $format)
+function getFormattedGraph(ExtendedGraph $graph, $format)
 {
-    $graph =  $tripod->describeResource($uri);
     switch($format)
     {
         case 'rdfxml':
