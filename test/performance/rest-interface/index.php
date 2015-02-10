@@ -87,6 +87,8 @@ $app->group('/1', function() use ($app) {
 
         $app->group('/change', function() use ($app) {
             $app->post('/', function($storeName, $podName) use ($app) {
+              MongoTripodConfig::setConfig(json_decode(file_get_contents('./config/tripod-config-'.$storeName .'.json'), true));
+                $app->response()->setStatus(500);
                 $tripod = new MongoTripod($podName, $storeName);
                 $rawChangeData = $app->request()->post('data');
                 if($rawChangeData)
@@ -94,15 +96,29 @@ $app->group('/1', function() use ($app) {
                     $changeData = json_decode($rawChangeData, true);
                     $from = new MongoGraph();
                     $to = new MongoGraph();
-                    if(isset($changeData['oldCBDs']))
+                    if(isset($changeData['originalCBDs']))
                     {
-                        $from->add_tripod_array($changeData['oldCBDs']);
+                        foreach($changeData['originalCBDs'] as $change)
+                        {
+                            $from->add_tripod_array($change);
+                        }
                     }
                     if(isset($changeData['newCBDs']))
                     {
-                        $to->add_tripod_array($changeData['newCBDs']);
+                        foreach($changeData['newCBDs'] as $change)
+                        {
+                            $to->add_tripod_array($change);
+                        }
                     }
-                    $tripod->saveChanges($from, $to);
+                    try
+                    {
+                        $tripod->saveChanges($from, $to);
+                        $app->response()->setStatus(202);
+                    }
+                    catch (Exception $e)
+                    {
+                        $app->response()->setStatus(400);
+                    }
                 }
             });
         });
