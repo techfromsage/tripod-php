@@ -387,7 +387,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                 "_id"=>"i_search_list",
                 "type"=>array("resourcelist:List"),
                 "from"=>"CBD_testing",
-                "to"=>"rs1", // This should be added automatically
+                "to_data_source"=>"rs1", // This should be added automatically
                 "filter"=>array(
                     array("condition"=>array(
                         "spec:name.l"=>array('$exists'=>true)
@@ -433,7 +433,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                 "_id"=>"i_search_list",
                 "type"=>array("resourcelist:List"),
                 "from"=>"CBD_testing",
-                "to"=>"rs1", // this is added automatically
+                "to_data_source"=>"rs1", // this is added automatically
                 "filter"=>array(
                     array("condition"=>array(
                         "spec:name.l"=>array('$exists'=>true)
@@ -972,7 +972,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             "_id"=> "v_resource_full",
             "_version" => "0.1",
             "from"=>"CBD_testing",
-            "to"=>"rs1", // This should get added automatically
+            "to_data_source"=>"rs1", // This should get added automatically
             "ensureIndexes" =>array(
                 array(
                     "value._graphs.sioc:has_container.u"=>1,
@@ -1004,7 +1004,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             "_id"=>"t_resource",
             "type"=>"acorn:Resource",
             "from"=>"CBD_testing",
-            "to"=>"rs1", // This should be added automatically
+            "to_data_source"=>"rs1", // This should be added automatically
             "ensureIndexes" => array(array("value.isbn"=>1)),
             "fields"=>array(
                 array(
@@ -1187,25 +1187,25 @@ class MongoTripodConfigTest extends MongoTripodTestBase
 
         foreach($config->getViewSpecifications($storeName) as $id=>$spec)
         {
-            if(!in_array($spec['to'], $dataSourcesForStore))
+            if(!in_array($spec['to_data_source'], $dataSourcesForStore))
             {
-                $dataSourcesForStore[] = $spec['to'];
+                $dataSourcesForStore[] = $spec['to_data_source'];
             }
         }
 
         foreach($config->getTableSpecifications($storeName) as $id=>$spec)
         {
-            if(!in_array($spec['to'], $dataSourcesForStore))
+            if(!in_array($spec['to_data_source'], $dataSourcesForStore))
             {
-                $dataSourcesForStore[] = $spec['to'];
+                $dataSourcesForStore[] = $spec['to_data_source'];
             }
         }
 
         foreach($config->getSearchDocumentSpecifications($storeName) as $id=>$spec)
         {
-            if(!in_array($spec['to'], $dataSourcesForStore))
+            if(!in_array($spec['to_data_source'], $dataSourcesForStore))
             {
-                $dataSourcesForStore[] = $spec['to'];
+                $dataSourcesForStore[] = $spec['to_data_source'];
             }
         }
 
@@ -1287,11 +1287,11 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         {
             foreach($specs[$type] as $spec)
             {
-                if(!isset($specsForDataSource[$spec['to']][$type]))
+                if(!isset($specsForDataSource[$spec['to_data_source']][$type]))
                 {
-                    $specsForDataSource[$spec['to']][$type] = array();
+                    $specsForDataSource[$spec['to_data_source']][$type] = array();
                 }
-                $specsForDataSource[$spec['to']][$type][] = $spec['_id'];
+                $specsForDataSource[$spec['to_data_source']][$type][] = $spec['_id'];
             }
         }
 
