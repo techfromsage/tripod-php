@@ -31,8 +31,8 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
         // index all the documents
         $cursor = $this->tripod->collection->find(array("rdf:type.u"=>array('$in'=>array("bibo:Book"))),array('_id'=>1,'rdf:type'=>1));//->limit(20);
-        while($cursor->hasNext()){
-            $result = $cursor->getNext();
+        foreach($cursor as $result)
+        {
             $t = array();
             if(isset($result['rdf:type']['u'])){
                 $t[] = $result['rdf:type']['u'];
