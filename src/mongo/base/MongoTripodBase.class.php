@@ -94,8 +94,8 @@ abstract class MongoTripodBase
 
         $ttlExpiredResources = false;
         $cursor->batchSize($cursorSize);
-        while($cursor->hasNext()) {
-            $result = $cursor->getNext();
+		foreach($cursor as $result)
+		{
             // handle MONGO_VIEWS that have expired due to ttl. These are expired
             // on read (lazily) rather than on write
             if ($type==MONGO_VIEW && array_key_exists(_EXPIRES,$result['value']))

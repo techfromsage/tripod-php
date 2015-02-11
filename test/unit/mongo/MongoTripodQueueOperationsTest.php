@@ -64,9 +64,9 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
         $this->tripod->getTripodTables()->generateTableRowsForType("bibo:Book");
         // index all the documents
         $cursor = $this->tripod->collection->find(array("rdf:type.u"=>array('$in'=>array("bibo:Book","foaf:Person"))),array('_id'=>1));//->limit(20);
-        while($cursor->hasNext()){
-            $result = $cursor->getNext();
-            $this->tripod->getSearchIndexer()->generateAndIndexSearchDocuments($result['_id']['r'], $result['_id']['c'], $this->tripod->getCollectionName());
+        foreach($cursor as $result)
+        { 
+			$this->tripod->getSearchIndexer()->generateAndIndexSearchDocuments($result['_id']['r'], $result['_id']['c'], $this->tripod->getCollectionName());
         }
     }
 
