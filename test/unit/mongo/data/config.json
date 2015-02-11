@@ -82,7 +82,7 @@
                     "_id": "v_resource_full_ttl",
                     "type": "acorn:Resource",
                     "from": "CBD_testing",
-                    "to": "rs2",
+                    "to_data_source": "rs2",
                     "ttl": 300,
                     "include": ["rdf:type", "searchterms:topic"],
                     "joins": {
@@ -122,7 +122,7 @@
                     "_id": "v_counts",
                     "type": "acorn:Work",
                     "from": "CBD_testing",
-                    "to": "rs2",
+                    "to_data_source": "rs2",
                     "include": ["rdf:type"],
                     "ttl": 300,
                     "counts": {
@@ -273,7 +273,7 @@
                         "_id": "i_search_filter_parse",
                         "type": ["baseData:Wibble"],
                         "from": "CBD_testing",
-                        "to": "rs2",
+                        "to_data_source": "rs2",
                         "filter": [
                             {
                                 "condition": {
@@ -349,7 +349,7 @@
                     "_id": "t_source_count",
                     "type": "acorn:Resource",
                     "from": "CBD_testing",
-                    "to": "rs2",
+                    "to_data_source": "rs2",
                     "fields": [
                         {
                             "fieldName": "type",
@@ -562,7 +562,7 @@
                     "_id": "t_join_link",
                     "type": "bibo:Document",
                     "from": "CBD_testing",
-                    "to": "rs2",
+                    "to_data_source": "rs2",
                     "fields": [
                         {
                             "fieldName": "bookLink",

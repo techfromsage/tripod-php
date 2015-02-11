@@ -1460,8 +1460,8 @@ class MongoTripodUpdates extends MongoTripodBase {
     {
 
         $cursor = $this->getTransactionLog()->getCompletedTransactions($this->storeName, $this->podName, $fromDate, $toDate);
-        while($cursor->hasNext()) {
-            $result = $cursor->getNext();
+        foreach($cursor as $result)
+        {
             $this->applyTransaction($result);
         }
 

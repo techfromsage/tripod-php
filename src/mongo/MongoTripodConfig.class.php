@@ -271,16 +271,16 @@ class MongoTripodConfig
                     }
                     if($this->searchProviderClassName[$storeName] == SEARCH_PROVIDER_MONGO)
                     {
-                        if(isset($spec['to']))
+                        if(isset($spec['to_data_source']))
                         {
-                            if(!isset($this->dataSources[$spec['to']]))
+                            if(!isset($this->dataSources[$spec['to_data_source']]))
                             {
-                                throw new MongoTripodConfigException("'" . $spec[_ID_KEY] . "[\"to\"]' property references an undefined data source");
+                                throw new MongoTripodConfigException("'" . $spec[_ID_KEY] . "[\"to_data_source\"]' property references an undefined data source");
                             }
                         }
                         else
                         {
-                            $spec['to'] = $storeConfig['data_source'];
+                            $spec['to_data_source'] = $storeConfig['data_source'];
                         }
                     }
                     $this->searchDocSpecs[$storeName][$spec[_ID_KEY]] = $spec;
@@ -297,16 +297,16 @@ class MongoTripodConfig
                     throw new MongoTripodConfigException("View spec does not contain " . _ID_KEY);
                 }
                 $this->ifCountExistsWithoutTTLThrowException($spec);
-                if(isset($spec['to']))
+                if(isset($spec['to_data_source']))
                 {
-                    if(!isset($this->dataSources[$spec['to']]))
+                    if(!isset($this->dataSources[$spec['to_data_source']]))
                     {
-                        throw new MongoTripodConfigException("'" . $spec[_ID_KEY] . "[\"to\"]' property references an undefined data source");
+                        throw new MongoTripodConfigException("'" . $spec[_ID_KEY] . "[\"to_data_source\"]' property references an undefined data source");
                     }
                 }
                 else
                 {
-                    $spec['to'] = $storeConfig['data_source'];
+                    $spec['to_data_source'] = $storeConfig['data_source'];
                 }
                 $this->viewSpecs[$storeName][$spec[_ID_KEY]] = $spec;
             }
@@ -376,16 +376,16 @@ class MongoTripodConfig
                     }
                 }
 
-                if(isset($spec['to']))
+                if(isset($spec['to_data_source']))
                 {
-                    if(!isset($this->dataSources[$spec['to']]))
+                    if(!isset($this->dataSources[$spec['to_data_source']]))
                     {
-                        throw new MongoTripodConfigException("'" . $spec[_ID_KEY] . "[\"to\"]' property references an undefined data source");
+                        throw new MongoTripodConfigException("'" . $spec[_ID_KEY] . "[\"to_data_source\"]' property references an undefined data source");
                     }
                 }
                 else
                 {
-                    $spec['to'] = $storeConfig['data_source'];
+                    $spec['to_data_source'] = $storeConfig['data_source'];
                 }
 
                 $this->tableSpecs[$storeName][$spec[_ID_KEY]] = $spec;
@@ -746,13 +746,13 @@ class MongoTripodConfig
             if (array_key_exists("ensureIndexes",$tspec))
             {
                 // Indexes should be keyed by data_source
-                if(!isset($tableIndexes[$tspec['to']]))
+                if(!isset($tableIndexes[$tspec['to_data_source']]))
                 {
-                    $tableIndexes[$tspec['to']] = array();
+                    $tableIndexes[$tspec['to_data_source']] = array();
                 }
                 foreach ($tspec["ensureIndexes"] as $index)
                 {
-                    $tableIndexes[$tspec['to']][] = $index;
+                    $tableIndexes[$tspec['to_data_source']][] = $index;
                 }
             }
         }
@@ -764,13 +764,13 @@ class MongoTripodConfig
             if (array_key_exists("ensureIndexes",$vspec))
             {
                 // Indexes should be keyed by data_source
-                if(!isset($viewIndexes[$vspec['to']]))
+                if(!isset($viewIndexes[$vspec['to_data_source']]))
                 {
-                    $viewIndexes[$vspec['to']] = array();
+                    $viewIndexes[$vspec['to_data_source']] = array();
                 }
                 foreach ($vspec["ensureIndexes"] as $index)
                 {
-                    $viewIndexes[$vspec['to']][] = $index;
+                    $viewIndexes[$vspec['to_data_source']][] = $index;
                 }
             }
         }
@@ -1407,7 +1407,7 @@ class MongoTripodConfig
         if(isset($this->viewSpecs[$storeName]) && isset($this->viewSpecs[$storeName][$viewId]))
         {
             return $this->getMongoCollection(
-                $this->getDatabase($storeName, $this->viewSpecs[$storeName][$viewId]['to'], $readPreference),
+                $this->getDatabase($storeName, $this->viewSpecs[$storeName][$viewId]['to_data_source'], $readPreference),
                 VIEWS_COLLECTION
             );
         }
@@ -1426,7 +1426,7 @@ class MongoTripodConfig
         if(array_key_exists($storeName, $this->searchDocSpecs) && array_key_exists($searchDocumentId, $this->searchDocSpecs[$storeName]))
         {
             return $this->getMongoCollection(
-                $this->getDatabase($storeName, $this->searchDocSpecs[$storeName][$searchDocumentId]['to'], $readPreference),
+                $this->getDatabase($storeName, $this->searchDocSpecs[$storeName][$searchDocumentId]['to_data_source'], $readPreference),
                 SEARCH_INDEX_COLLECTION
             );
         }
@@ -1445,7 +1445,7 @@ class MongoTripodConfig
         if(isset($this->tableSpecs[$storeName][$tableId]) && isset($this->tableSpecs[$storeName][$tableId]))
         {
             return $this->getMongoCollection(
-                $this->getDatabase($storeName, $this->tableSpecs[$storeName][$tableId]['to'], $readPreference),
+                $this->getDatabase($storeName, $this->tableSpecs[$storeName][$tableId]['to_data_source'], $readPreference),
                 TABLE_ROWS_COLLECTION
             );
         }
@@ -1474,7 +1474,7 @@ class MongoTripodConfig
         {
             if(isset($this->tableSpecs[$storeName][$table]))
             {
-                $dataSources[] = $this->tableSpecs[$storeName][$table]['to'];
+                $dataSources[] = $this->tableSpecs[$storeName][$table]['to_data_source'];
             }
             else
             {
@@ -1515,7 +1515,7 @@ class MongoTripodConfig
         {
             if(isset($this->viewSpecs[$storeName][$view]))
             {
-                $dataSources[] = $this->viewSpecs[$storeName][$view]['to'];
+                $dataSources[] = $this->viewSpecs[$storeName][$view]['to_data_source'];
             }
             else
             {
@@ -1556,7 +1556,7 @@ class MongoTripodConfig
         {
             if(isset($this->searchDocSpecs[$storeName][$searchSpec]))
             {
-                $dataSources[] = $this->searchDocSpecs[$storeName][$searchSpec]['to'];
+                $dataSources[] = $this->searchDocSpecs[$storeName][$searchSpec]['to_data_source'];
             }
             else
             {

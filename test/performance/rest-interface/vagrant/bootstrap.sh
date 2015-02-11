@@ -4,7 +4,7 @@ echo 'deb http://downloads-distro.mongodb.org/repo/ubuntu-upstart dist 10gen' | 
 apt-get update -y
 apt-get install -y mongodb-org -y
 apt-get install php5 php-pear -y
-pecl install mongo
+yes '' | pecl install mongo
 apt-get install git siege -y
 git clone https://github.com/talis/tripod-php.git /opt/tripod-php
 cd /opt/tripod-php
