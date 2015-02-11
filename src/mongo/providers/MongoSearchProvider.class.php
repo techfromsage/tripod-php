@@ -221,7 +221,7 @@ class MongoSearchProvider implements ITripodSearchProvider
             $searchResults['head']['count']     = $cursor->count();
 
             foreach($cursor as $result)
-			{
+            {
                 // if more than one field has been asked for we need to
                 // enumerate them in the results returned. However if only one has been
                 // asked for then results is just set to that single fields value.

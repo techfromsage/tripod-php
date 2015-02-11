@@ -171,8 +171,8 @@ class MongoTripodSearchDocuments extends MongoTripodBase
                 $cursor = $collection->find(array('_id'=>array('$in'=>$joinUris)));
                 // add to impact index
                 $this->addIdToImpactIndex($joinUris, $target);
-				foreach($cursor as $linkMatch)
-				{               
+                foreach($cursor as $linkMatch)
+                {               
                     if(isset($rules['fields'])){
                         $this->addFields($linkMatch, $rules['fields'], $target);
                     }
