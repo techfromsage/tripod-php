@@ -125,10 +125,15 @@ function getContentType($format)
 {
     switch($format)
     {
-        case 'rdfxml':
+        case FORMAT_RDF_XML:
             $contentType = 'application/rdf+xml';
             break;
-
+        case FORMAT_NTRIPLES:
+            $contentType = 'text/plain';
+            break;
+        case FORMAT_TURTLE:
+            $contentType = 'text/turtle';
+            break;
         default:
             $contentType = 'application/json';
     }
@@ -145,13 +150,13 @@ function getFormattedGraph(ExtendedGraph $graph, $format)
 {
     switch($format)
     {
-        case 'rdfxml':
+        case FORMAT_RDF_XML:
             $output = $graph->to_rdfxml();
             break;
-        case 'ntriples':
+        case FORMAT_NTRIPLES:
             $output = $graph->to_ntriples();
             break;
-        case 'turtle':
+        case FORMAT_TURTLE:
             $output = $graph->to_turtle();
             break;
         default:
@@ -167,7 +172,7 @@ function getFormattedGraph(ExtendedGraph $graph, $format)
 function getStat(Slim\Slim $app)
 {
     $statEnv = $app->request()->headers('X-TRIPOD-TEST-ENV');
-    $storeName = $app->router()->getCurrentRoute()->getParam(':storeName');
+    $storeName = $app->router()->getCurrentRoute()->getParam('storeName');
     $stat = null;
     if(StatConfig::getInstance($app))
     {
