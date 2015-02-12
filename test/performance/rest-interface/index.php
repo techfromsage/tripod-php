@@ -10,37 +10,29 @@ $app = new \Slim\Slim(array(
     'log.level' => \Slim\Log::DEBUG
 ));
 
+$appConfig = json_decode(file_get_contents('./config/config.json'), true);
+if(isset($appConfig['stat']))
+{
+    require_once dirname(__FILE__) . '/src/Stat.class.php';
+    StatConfig::setConfig($appConfig['stat']);
+}
+$tripodOptions = array();
+if(isset($appConfig['tripod']))
+{
+    $tripodOptions = $appConfig['tripod'];
+}
+
 $app->group('/1', function() use ($app) {
     $app->group('/:storeName/:podName', function() use ($app)
     {
         $app->group('/graph', function() use ($app) {
-//            $app->get('/:encodedFqUri.rdf', function($storeName, $podName, $encodedFqUri, $fileType) use ($app) {
-//                $tripod = new MongoTripod($podName, $storeName);
-////                switch($fileType)
-////                {
-////                    case 'xml':
-////                    case 'rdf':
-////                        $format = FORMAT_RDF_XML;
-////                        break;
-////                    case 'nt':
-////                    case 'txt':
-////                        $format = FORMAT_NTRIPLES;
-////                        break;
-////                    case 'text/turtle':
-////                        $format = FORMAT_TURTLE;
-////                        break;
-////                    default:
-////                        $format = FORMAT_RDF_JSON;
-////                }
-//                $format = FORMAT_RDF_XML;
-//                $output = getFormattedGraph($tripod, base64_decode($encodedFqUri), $format);
-//                $app->response()->headers()->set('Content-type', getContentType($format));
-//                echo $output;
-
-//            });
             $app->get('/:encodedFqUri', function($storeName, $podName, $encodedFqUri) use ($app) {
                 MongoTripodConfig::setConfig(json_decode(file_get_contents('./config/tripod-config-'.$storeName .'.json'), true));
-                $tripod = new MongoTripod($podName, $storeName);
+                if(StatConfig::getInstance())
+                {
+                    $tripodOptions['stat'] = new Stat($storeName);
+                }
+                $tripod = new MongoTripod($podName, $storeName, $tripodOptions);
                 $contentType = $app->request()->getMediaType();
                 switch($contentType)
                 {
@@ -71,13 +63,21 @@ $app->group('/1', function() use ($app) {
             });
 
             $app->delete('/:encodedFqUri', function($storeName, $podName, $encodedFqUri) use ($app) {
-                $tripod = new MongoTripod($podName, $storeName);
+                if(StatConfig::getInstance())
+                {
+                    $tripodOptions['stat'] = new Stat($storeName);
+                }
+                $tripod = new MongoTripod($podName, $storeName, $tripodOptions);
                 $oldGraph = $tripod->describeResource(base64_decode($encodedFqUri));
                 $tripod->saveChanges($oldGraph, new ExtendedGraph());
             });
 
             $app->post('/', function($storeName, $podName) use ($app) {
-                $tripod = new MongoTripod($podName, $storeName);
+                if(StatConfig::getInstance())
+                {
+                    $tripodOptions['stat'] = new Stat($storeName);
+                }
+                $tripod = new MongoTripod($podName, $storeName, $tripodOptions);
                 $rawGraphData = $app->request()->getBody();
                 $graph = new MongoGraph();
                 $graph->add_rdf($rawGraphData);
@@ -89,7 +89,11 @@ $app->group('/1', function() use ($app) {
             $app->post('/', function($storeName, $podName) use ($app) {
               MongoTripodConfig::setConfig(json_decode(file_get_contents('./config/tripod-config-'.$storeName .'.json'), true));
                 $app->response()->setStatus(500);
-                $tripod = new MongoTripod($podName, $storeName);
+                if(StatConfig::getInstance())
+                {
+                    $tripodOptions['stat'] = new Stat($storeName);
+                }
+                $tripod = new MongoTripod($podName, $storeName, $tripodOptions);
                 $rawChangeData = $app->request()->post('data');
                 if($rawChangeData)
                 {

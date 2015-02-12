@@ -1,0 +1,14 @@
+{
+    "stats": {
+        "host" : "localhost",
+        "port" : "changeme"
+    },
+    "tripod" : {
+        "async" : {
+            "generate_views":false,
+            "generate_table_rows" : true,
+            "generate_search_index_docs" : true
+        },
+        "readPreference":"primaryPreferred"
+    }
+}

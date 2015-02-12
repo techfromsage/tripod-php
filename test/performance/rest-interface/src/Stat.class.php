@@ -1,6 +1,8 @@
 <?php
 
-define("LIST_APP",'list_app');
+require_once 'StatConfig.class.php';
+
+define('TRIPOD_PERFORMANCE_TEST','TRIPOD_PERFORMANCE_TEST');
 /**
  * Based on StatD class by Michael Grace http://geek.michaelgrace.org/2011/09/installing-statsd-on-ubuntu-server-10-04/
  */
@@ -85,15 +87,15 @@ class Stat implements ITripodStat {
 
     protected static function track($stat,$class,$pivotField,$pivotValue,$duration=null,$data=array())
     {
-        $data[LIST_APP.".$class.$pivotField.$pivotValue.$stat"] = "1|c";
+        $data[TRIPOD_PERFORMANCE_TEST.".$class.$pivotField.$pivotValue.$stat"] = "1|c";
         if ($duration==null)
         {
-            $data[LIST_APP.".$class.$stat"] = "1|c";
+            $data[TRIPOD_PERFORMANCE_TEST.".$class.$stat"] = "1|c";
         }
         else
         {
-            $data[LIST_APP.".$class.$stat"][] = "1|c";
-            $data[LIST_APP.".$class.$stat"][] = "$duration|ms";
+            $data[TRIPOD_PERFORMANCE_TEST.".$class.$stat"][] = "1|c";
+            $data[TRIPOD_PERFORMANCE_TEST.".$class.$stat"][] = "$duration|ms";
         }
         Stat::send($data);
     }
@@ -111,8 +113,9 @@ class Stat implements ITripodStat {
         }
         if (empty($sampledData)) { return; }
         try {
-            $host = $zephyrEnvironment['statsDHost'];
-            $port = $zephyrEnvironment['statsDPort'];
+            $config = StatConfig::getInstance();
+            $host = $config->getStatsHost();
+            $port = $config->getStatsPort();
 
             if (!empty($host)) // if host is configured, send..
             {
