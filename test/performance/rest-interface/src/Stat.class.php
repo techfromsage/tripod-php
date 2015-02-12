@@ -30,7 +30,7 @@ class Stat implements ITripodStat {
 
     public function increment($operation)
     {
-        self::trackTripodOp($operation,$this->storeName);
+        self::trackTripodOp($operation,$this->getStatEnvName(),$this->storeName);
     }
 
     /**
@@ -58,19 +58,20 @@ class Stat implements ITripodStat {
             );
             return;
         }
-        self::trackTripodOp($operation,$this->storeName,$duration);
+        self::trackTripodOp($operation,$this->getStatEnvName(),$this->storeName,$duration);
     }
 
     /**
      * Tracks operations and pivots by tenant short code (tenant short code is the mongo database name)
      * @static
      * @param string $stat
+     * @param string $env
      * @param string $storeName
      * @param null $duration
      */
-    public static function trackTripodOp($stat,$storeName,$duration=null)
+    public static function trackTripodOp($stat,$env,$storeName,$duration=null)
     {
-        Stat::track($stat,"tripod","group_by_db",$storeName,$duration);
+        Stat::track($stat,$env,"tripod","group_by_db",$storeName,$duration);
     }
 
 
@@ -90,17 +91,17 @@ class Stat implements ITripodStat {
         }
     }
 
-    protected static function track($stat,$class,$pivotField,$pivotValue,$duration=null,$data=array())
+    protected static function track($stat,$env,$class,$pivotField,$pivotValue,$duration=null,$data=array())
     {
-        $data[TRIPOD_PERFORMANCE_TEST.".$class.$pivotField.$pivotValue.$stat"] = "1|c";
+        $data[$env.".$class.$pivotField.$pivotValue.$stat"] = "1|c";
         if ($duration==null)
         {
-            $data[TRIPOD_PERFORMANCE_TEST.".$class.$stat"] = "1|c";
+            $data[$env.".$class.$stat"] = "1|c";
         }
         else
         {
-            $data[TRIPOD_PERFORMANCE_TEST.".$class.$stat"][] = "1|c";
-            $data[TRIPOD_PERFORMANCE_TEST.".$class.$stat"][] = "$duration|ms";
+            $data[$env.".$class.$stat"][] = "1|c";
+            $data[$env.".$class.$stat"][] = "$duration|ms";
         }
         Stat::send($data);
     }
