@@ -13,6 +13,11 @@ class Stat implements ITripodStat {
      */
     protected $storeName;
 
+    /**
+     * @var string
+     */
+    protected $statEnvName;
+
     public static $logger;
 
     /**
@@ -163,6 +168,22 @@ class Stat implements ITripodStat {
                 }
             }
         }
+    }
+
+    /**
+     * @return string
+     */
+    public function getStatEnvName()
+    {
+        return (isset($this->statEnvName) ? $this->statEnvName : TRIPOD_PERFORMANCE_TEST);
+    }
+
+    /**
+     * @param string $statEnvName
+     */
+    public function setStatEnvName($statEnvName)
+    {
+        $this->statEnvName = $statEnvName;
     }
 }
 ?>
