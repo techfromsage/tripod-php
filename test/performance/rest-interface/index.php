@@ -40,7 +40,8 @@ $app->group('/1', function() use ($app) {
 //            });
             $app->get('/:encodedFqUri', function($storeName, $podName, $encodedFqUri) use ($app) {
                 MongoTripodConfig::setConfig(json_decode(file_get_contents('./config/tripod-config-'.$storeName .'.json'), true));
-                $tripod = new MongoTripod($podName, $storeName);
+                $stat = new Stat($storeName);
+                $tripod = new MongoTripod($podName, $storeName, $stat);
                 $contentType = $app->request()->getMediaType();
                 switch($contentType)
                 {
