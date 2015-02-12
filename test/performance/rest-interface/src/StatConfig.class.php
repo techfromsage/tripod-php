@@ -51,13 +51,13 @@ class StatConfig {
      */
     protected function loadConfig(array $config)
     {
-        if(isset($config['statsHost']))
+        if(isset($config['host']))
         {
-            $this->statsHost = $config['statsHost'];
+            $this->statsHost = $config['host'];
         }
-        if(isset($config['statsPort']))
+        if(isset($config['port']))
         {
-            $this->statsHost = $config['statsPort'];
+            $this->statsPort = $config['port'];
         }
     }
 
