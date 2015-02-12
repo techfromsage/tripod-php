@@ -1,7 +1,7 @@
 {
-    "stats": {
+    "stat": {
         "host" : "localhost",
-        "port" : "changeme"
+        "port" : 8125
     },
     "tripod" : {
         "async" : {

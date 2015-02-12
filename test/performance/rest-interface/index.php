@@ -11,9 +11,9 @@ $app = new \Slim\Slim(array(
 ));
 
 $appConfig = json_decode(file_get_contents('./config/config.json'), true);
+require_once dirname(__FILE__) . '/src/Stat.class.php';
 if(isset($appConfig['stat']))
 {
-    require_once dirname(__FILE__) . '/src/Stat.class.php';
     StatConfig::setConfig($appConfig['stat']);
 }
 $tripodOptions = array();
