@@ -83,6 +83,10 @@ require_once 'mongo/MongoTripod.class.php';
 function generateViews($id, $viewId, $storeName, $stat)
 {
     $viewSpec = MongoTripodConfig::getInstance()->getViewSpecification($storeName, $viewId);
+    if(empty($viewSpec)) // Older version of Tripod being used?
+    {
+        $viewSpec = MongoTripodConfig::getInstance()->getViewSpecification($viewId);
+    }
     echo $viewId;
     if (array_key_exists("from",$viewSpec))
     {

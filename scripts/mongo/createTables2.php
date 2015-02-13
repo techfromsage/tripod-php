@@ -83,6 +83,10 @@ require_once 'mongo/MongoTripod.class.php';
 function generateTables($id, $tableId, $storeName, $stat = null)
 {
     $tableSpec = MongoTripodConfig::getInstance()->getTableSpecification($storeName, $tableId);
+    if(empty($tableSpec)) // Older version of Tripod being used?
+    {
+        $tableSpec = MongoTripodConfig::getInstance()->getTableSpecification($tableId);
+    }
     if (array_key_exists("from",$tableSpec))
     {
         MongoCursor::$timeout = -1;
