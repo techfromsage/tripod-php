@@ -1,7 +1,7 @@
 <?php
 
 $options = getopt(
-    "c:s:ht:i:",
+    "c:s:hv:i:",
     array(
         "config:",
         "storename:",
@@ -16,18 +16,18 @@ $options = getopt(
 function showUsage()
 {
     $help = <<<END
-createTables2.php
+createViews2.php
 
 Usage:
 
-php createTables2.php -c/--config path/to/tripod-config.json -s/--storename store-name [options]
+php createViews2.php -c/--config path/to/tripod-config.json -s/--storename store-name [options]
 
 Options:
     -h --help               This help
     -c --config             path to MongoTripodConfig configuration (required)
-    -s --storename          Store to create tables for (required)
-    -t --spec               Only create for specified table specs
-    -i --id                 Resource ID to regenerate table rows for
+    -s --storename          Store to create views for (required)
+    -v --spec               Only create for specified view specs
+    -i --id                 Resource ID to regenerate views for
 
     --stat-loader           Path to script to initialize a Stat object.  Note, it *must* return an iTripodStat object!
     --tripod-dir            Path to tripod directory base
@@ -58,29 +58,30 @@ require_once 'mongo/MongoTripod.class.php';
 
 /**
  * @param string|null $id
- * @param string|null $tableId
- * @param string|null $storeName
+ * @param string|null $viewId
+ * @param string $storeName
  * @param iTripodStat|null $stat
  */
-function generateTables($id, $tableId, $storeName, $stat = null)
+function generateViews($id, $viewId, $storeName, $stat)
 {
-    $tableSpec = MongoTripodConfig::getInstance()->getTableSpecification($storeName, $tableId);
-    if (array_key_exists("from",$tableSpec))
+    $viewSpec = MongoTripodConfig::getInstance()->getViewSpecification($storeName, $viewId);
+    echo $viewId;
+    if (array_key_exists("from",$viewSpec))
     {
         MongoCursor::$timeout = -1;
 
-        print "Generating $tableId";
-        $tripod = new MongoTripod($tableSpec['from'], $storeName, array('stat'=>$stat));
-        $tTables = $tripod->getTripodTables();//new MongoTripodTables($tripod->storeName,$tripod->collection,$tripod->defaultContext);
+        print "Generating $viewId";
+        $tripod = new MongoTripod($viewSpec['from'], $storeName, array('stat'=>$stat));
+        $views = $tripod->getTripodViews();//new MongoTripodViews($tripod->storeName,$tripod->collection,$tripod->defaultContext);
         if ($id)
         {
             print " for $id....\n";
-            $tTables->generateTableRows($tableId, $id);
+            $views->generateView($viewId, $id);
         }
         else
         {
-            print " for all tables....\n";
-            $tTables->generateTableRows($tableId);
+            print " for all views....\n";
+            $views->generateView($viewId, null);
         }
     }
 }
@@ -106,13 +107,13 @@ else
     $storeName = null;
 }
 
-if(isset($options['t']) || isset($options['spec']))
+if(isset($options['v']) || isset($options['spec']))
 {
-    $tableId = isset($options['t']) ? $options['t'] : $options['spec'];
+    $viewId = isset($options['v']) ? $options['v'] : $options['spec'];
 }
 else
 {
-    $tableId = null;
+    $viewId = null;
 }
 
 if(isset($options['i']) || isset($options['id']))
@@ -124,17 +125,17 @@ else
     $id = null;
 }
 
-if ($tableId)
+if ($viewId)
 {
-    generateTables($id, $tableId, $storeName, $stat);
+    generateViews($id, $viewId, $storeName, $stat);
 }
 else
 {
-    foreach(MongoTripodConfig::getInstance()->getTableSpecifications($storeName) as $tableSpec)
+    foreach(MongoTripodConfig::getInstance()->getViewSpecifications($storeName) as $viewSpec)
     {
-        generateTables($id, $tableSpec['_id'], $storeName, $stat);
+        generateViews($id, $viewSpec['_id'], $storeName, $stat);
     }
 }
 
 $t->stop();
-print "Tables created in ".$t->result()." secs\n";
+print "Views created in ".$t->result()." secs\n";
