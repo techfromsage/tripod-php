@@ -27,7 +27,7 @@ function generateTables($id, $tableId,$storeName)
         }
         else
         {
-            print " for all views....\n";
+            print " for all tables....\n";
             $tTables->generateTableRows($tableId);
         }
     }
