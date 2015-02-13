@@ -31,6 +31,7 @@ Options:
 
     --stat-loader           Path to script to initialize a Stat object.  Note, it *must* return an iTripodStat object!
     --tripod-dir            Path to tripod directory base
+    --arc-dir               Path to ARC2 (required with --tripod-dir)
 
 END;
     echo $help;
@@ -45,7 +46,23 @@ if(empty($options) || isset($options['h']) || isset($options['help']) ||
     exit();
 }
 $configLocation = isset($options['c']) ? $options['c'] : $options['config'];
-$tripodBasePath = isset($options['tripod-dir']) ? $options['tripod-dir'] : dirname(dirname(dirname(__FILE__)));
+if(isset($options['tripod-dir']))
+{
+    if(isset($options['arc-dir']))
+    {
+        $tripodBasePath = $options['tripod-dir'];
+        define('ARC_DIR', $options['arc-dir']);
+    }
+    else
+    {
+        showUsage();
+        exit();
+    }
+}
+else
+{
+    $tripodBasePath = dirname(dirname(dirname(__FILE__)));
+}
 set_include_path(
     get_include_path()
     . PATH_SEPARATOR . $tripodBasePath.'/src'
