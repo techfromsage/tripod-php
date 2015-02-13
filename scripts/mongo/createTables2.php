@@ -6,6 +6,7 @@ $options = getopt(
         "config:",
         "storename:",
         "tripod-dir:",
+        "arc-dir:",
         "spec:",
         "id:",
         "help",

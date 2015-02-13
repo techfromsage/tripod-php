@@ -5,6 +5,7 @@ $options = getopt(
     array(
         "config:",
         "tripod-dir:",
+        "arc-dir:",
         "help",
         "stat-loader:",
     )
