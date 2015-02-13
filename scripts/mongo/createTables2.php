@@ -37,8 +37,7 @@ END;
 }
 
 if(empty($options) || isset($options['h']) || isset($options['help']) ||
-    (!isset($options['c']) && !isset($options['config'])) ||
-    (!isset($options['s']) && !isset($options['storename']))
+    (!isset($options['c']) && !isset($options['config']))
 )
 {
     showUsage();
