@@ -23,7 +23,7 @@ Options:
     -h --help               This help
     -c --config             path to MongoTripodConfig configuration (required)
 
-    --stat-loader           Path to script to initialize an iStat object.  Note, it *must* return an iStat object!
+    --stat-loader           Path to script to initialize a Stat object.  Note, it *must* return an iTripodStat object!
     --tripod-dir            Path to tripod directory base
 
 END;
