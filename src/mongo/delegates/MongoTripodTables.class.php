@@ -308,7 +308,6 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         // default collection
         $from = (isset($tableSpec["from"])) ? $tableSpec["from"] : $this->collectionName;
 
-        $filter = array(); // this is used to filter the CBD table to speed up the view creation
         $types = array();
         if (is_array($tableSpec["type"]))
         {
@@ -334,6 +333,17 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
 //            $i=0;
 //            $this->doBulkMR($from, $tableSpec, $filter, $map, $reduce, $i); // todo: We are not detecting failure of individual m-r's here... fix
 //        }
+
+        // Allow a filter to be specified in the tablespec
+        if(isset($tableSpec['filter']) && is_array($tableSpec['filter']))
+        {
+            $filter['$and'] = array();
+            foreach($tableSpec['filter'] as $tableFilter)
+            {
+                $filter['$and'][] = array(key($tableFilter) => $tableFilter[key($tableFilter)]);
+            }
+        }
+
         $docs = $this->db->selectCollection($from)->find($filter);
         foreach ($docs as $doc)
         {
