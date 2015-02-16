@@ -113,16 +113,9 @@ $t->start();
 
 MongoTripodConfig::setConfig(json_decode(file_get_contents($configLocation),true));
 
-$stat = null;
-
-if(isset($options['stat-loader']))
-{
-    $stat = include_once $options['stat-loader'];
-}
-
 if(isset($options['s']) || isset($options['storename']))
 {
-    $storeName = isset($options['s']) ? $options['s'] : $options['storeName'];
+    $storeName = isset($options['s']) ? $options['s'] : $options['storename'];
 }
 else
 {
@@ -146,6 +139,17 @@ else
 {
     $id = null;
 }
+
+$stat = null;
+
+if(isset($options['stat-loader']))
+{
+    $stat = include_once $options['stat-loader'];
+}
+
+var_dump($stat);
+
+die();
 
 if ($viewId)
 {
