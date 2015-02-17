@@ -63,10 +63,12 @@ require_once 'tripod.inc.php';
 require_once 'mongo/MongoTripod.class.php';
 require_once 'mongo/MongoTripodConfig.class.php';
 require_once 'mongo/queue/MongoTripodQueue.class.php';
+require_once 'mongo/queue/MongoTripodQueue.class.php';
+require_once 'TestTripodQueue.class.php';
 
 ini_set("memory_limit","320M");
 
-MongoTripodConfig::setConfig(json_decode(file_get_contents($configLocation),true));
+//MongoTripodConfig::setConfig(json_decode(file_get_contents($configLocation),true));
 
 $stat = null;
 
@@ -82,7 +84,7 @@ echo("About to start indexing....\n");
 $i=0;
 $startTime = microtime(true);
 
-$queue = new MongoTripodQueue($stat);
+$queue = new TestTripodQueue($stat, file_get_contents($configLocation));
 
 while(true)
 {
