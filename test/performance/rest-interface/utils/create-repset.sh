@@ -1,8 +1,9 @@
 #!/bin/bash
+
 #
-# This script starts a very basic Mongo replica set on the localhost
+# This script creates and starts a very basic Mongo replica set on the localhost
 #
-# Usage: start-repset.sh [-r repset-number] [-n number-of-nodes] [-p base-path-to-use-for-databases]
+# Usage: create-repset.sh [-r repset-number] [-n number-of-nodes] [-p base-path-to-use-for-databases]
 #
 #   -r      The repset number is for running multiple repsets concurrently, the number is used for generating the repset
 #           repset name ("rs3" for -r 3) and port (27017 + (repset number x 100)): defaults to 0
@@ -41,15 +42,42 @@ while getopts r:n:p:l: opt; do
             usage
             ;;
 	esac
-done 
+done
+REPSET_CONF="/tmp/create-repset-$REPSET_NAME.js"
+./start-repset.sh -r $REPSET_NUMBER -n $NODE_COUNT -p $DB_BASE_PATH -l $LOG_PATH
 
-COUNTER=0;
+cat > $REPSET_CONF <<END-OF-CONF
+rsconf = {
+           _id: "$REPSET_NAME",
+           members: [
+                      {
+                       _id: 0,
+                       host: "127.0.0.1:$BASE_PORT"
+                      }
+                    ]
+         }
+
+rs.initiate( rsconf )
+rs.conf()
+END-OF-CONF
+
+echo "Sleeping 15 seconds to bring up mongod services"
+sleep 15
+
+echo "Initiating replica set $REPSET_NAME"
+mongo --port $BASE_PORT < $REPSET_CONF
+
+echo "Sleeping 15 seconds to before adding to repset"
+sleep 15
+REPSET_NODE_SCRIPT="/tmp/add-node-to-repset-$REPSET_NAME.js"
+cat > $REPSET_NODE_SCRIPT ""
+COUNTER=1;
 while [ $COUNTER -lt $NODE_COUNT ]; do
 	: $((MONGO_PORT=$BASE_PORT+$COUNTER))
-	CURR_PATH=$DB_BASE_PATH/rs$REPSET_NUMBER-$COUNTER
-	echo "Creating $CURR_PATH, if it does not exist"
-	mkdir -p $CURR_PATH
-    echo "Starting Mongo node $COUNTER on port $MONGO_PORT"
-	nohup mongod --port $MONGO_PORT --dbpath $CURR_PATH --replSet $REPSET_NAME --smallfiles --oplogSize 128 >> $LOG_PATH/mongod-$REPSET_NAME-$COUNTER.log &
 	: $((COUNTER=$COUNTER+1))
+cat >> $REPSET_NODE_SCRIPT <<END-OF-CMD
+rs.add("127.0.0.1:$MONGO_PORT")
+END-OF-CMD
 done
+
+mongo --port $BASE_PORT < $REPSET_NODE_SCRIPT
