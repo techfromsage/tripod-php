@@ -15,7 +15,6 @@ class TestTripodQueue extends MongoTripodQueue {
     protected $template = null;
 
     public function __construct($stat=null, $template) {
-#throw new Exception("\n\nCONFIG:\n" . $template. "\n\n");
         parent::__construct($stat);
         $this->template = $template;
     }
@@ -28,10 +27,6 @@ class TestTripodQueue extends MongoTripodQueue {
     public function setConfig($opts)
     {
         if (!isset($opts["database"])) throw new Exception("Problem assembling config, template: Missing database: " . serialize($opts));
-        //if (!isset($opts["r"])) throw new Exception("Problem assembling config, template: Missing resource: " . serialize($opts));
-
-        //$urlParts = parse_url($opts["r"]);
-        //$baseUrl = "".$urlParts["schema"]."://".$urlParts["hostname"];
         $baseUrl = $this->databaseToBaseUri($opts["database"]);
 
         $c = $this->template;
