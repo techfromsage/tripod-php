@@ -1,10 +1,10 @@
 <?php
 
-$queueOptions = json_decode(file_get_contents('queue-stat-config.json'), true);
+$queueOptions = json_decode(file_get_contents(dirname(__FILE__) . '/queue-stat-config.json'), true);
 
 if(!(isset($queueOptions['host']) && isset($queueOptions['port']) && isset($queueOptions['env'])))
 {
-    throw new InvalidArgumentException("Must include --stat-host, --stat-port, and --stat-env");
+    throw new InvalidArgumentException("Must include 'host', 'port', and 'env'");
 }
 require_once dirname(dirname(__FILE__)) . '/src/Stat.class.php';
 $qConfig = MongoTripodConfig::getInstance()->getQueueConfig();
