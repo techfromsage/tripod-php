@@ -5,11 +5,11 @@ require_once TRIPOD_DIR.'/mongo/queue/MongoTripodQueue.class.php';
 class TestTripodQueue extends MongoTripodQueue {
 
     protected $mapDatabaseToBaseUri = array(
-        "kent"  => "http://resourcelists.kent.ac.uk",
-        "mmu"   => "http://lists.lib.mmu.ac.uk",
-        "ntu"   => "http://resourcelists.ntu.ac.uk",
-        "sta"   => "http://resourcelists.st-andrews.ac.uk",
-        "worcs" => "http://readinglists.worcs.ac.uk"
+        "kent" => "http://resourcelists.kent.ac.uk",
+        "mmu"  => "http://lists.lib.mmu.ac.uk",
+        "ntu"  => "http://resourcelists.ntu.ac.uk",
+        "sta"  => "http://resourcelists.st-andrews.ac.uk",
+        "worc" => "http://readinglists.worcs.ac.uk"
     );
 
     protected $template = null;
@@ -22,7 +22,7 @@ class TestTripodQueue extends MongoTripodQueue {
 
     protected function getMongoTripod($data) {
         $this->setConfig($data);
-        parent::getMongoTripod($data);
+        return parent::getMongoTripod($data);
     }
 
     public function setConfig($opts)
