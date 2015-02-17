@@ -68,7 +68,7 @@ require_once 'TestTripodQueue.class.php';
 
 ini_set("memory_limit","320M");
 
-//MongoTripodConfig::setConfig(json_decode(file_get_contents($configLocation),true));
+MongoTripodConfig::setConfig(json_decode(file_get_contents($configLocation),true));
 
 $stat = null;
 

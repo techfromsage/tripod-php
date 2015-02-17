@@ -1,32 +1,51 @@
 <?php
 
-require_once TRIPOD_DIR.'/mongo/queue/MongoTripodQueue.class';
+require_once TRIPOD_DIR.'/mongo/queue/MongoTripodQueue.class.php';
 
 class TestTripodQueue extends MongoTripodQueue {
+
+    protected $mapDatabaseToBaseUri = array(
+        "kent"  => "http://resourcelists.kent.ac.uk",
+        "mmu"   => "http://lists.lib.mmu.ac.uk",
+        "ntu"   => "http://resourcelists.ntu.ac.uk",
+        "sta"   => "http://resourcelists.st-andrews.ac.uk",
+        "worcs" => "http://readinglists.worcs.ac.uk"
+    );
 
     protected $template = null;
 
     public function __construct($stat=null, $template) {
+#throw new Exception("\n\nCONFIG:\n" . $template. "\n\n");
         parent::__construct($stat);
         $this->template = $template;
     }
 
     protected function getMongoTripod($data) {
-        setConfig($data);
+        $this->setConfig($data);
         parent::getMongoTripod($data);
     }
 
     public function setConfig($opts)
     {
-        $c = $this->template;
+        if (!isset($opts["database"])) throw new Exception("Problem assembling config, template: Missing database: " . serialize($opts));
+        //if (!isset($opts["r"])) throw new Exception("Problem assembling config, template: Missing resource: " . serialize($opts));
 
-        $c = str_replace('#SHORT_CODE#',$opts["tenantShortCode"],$c);
-        $c = str_replace('#BASE_URI#',$opts["baseUri"],$c);
+        //$urlParts = parse_url($opts["r"]);
+        //$baseUrl = "".$urlParts["schema"]."://".$urlParts["hostname"];
+        $baseUrl = $this->databaseToBaseUri($opts["database"]);
+
+        $c = $this->template;
+        $c = str_replace('#SHORT_CODE#',$opts["database"],$c);
+        $c = str_replace('#BASE_URI#',$baseUrl,$c);
 
         $config = json_decode($c,true);
         if ($config==null) throw new Exception("Problem assembling config, template: \n$c");
 
         MongoTripodConfig::setConfig($config);
+    }
+
+    protected function databaseToBaseUri($database) {
+        return $this->mapDatabaseToBaseUri[$database];
     }
 }
 
