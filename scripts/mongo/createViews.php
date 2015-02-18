@@ -147,10 +147,6 @@ if(isset($options['stat-loader']))
     $stat = include_once $options['stat-loader'];
 }
 
-var_dump($stat);
-
-die();
-
 if ($viewId)
 {
     generateViews($id, $viewId, $storeName, $stat);
