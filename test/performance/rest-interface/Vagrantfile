@@ -16,4 +16,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.network "private_network", ip: "#{ENV['VAGRANT_IP_TRIPOD_TESTING']}"
   config.vm.hostname = "tripod-performance-testing.vagrant"
   config.vm.network "forwarded_port", guest: 27017, host: 27717
+  config.vm.provider "virtualbox" do |v|
+    v.memory = 2048
+  end
 end
