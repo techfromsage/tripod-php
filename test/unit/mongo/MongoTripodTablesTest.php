@@ -31,9 +31,9 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $this->tripodTransactionLog = new MongoTransactionLog();
         $this->tripodTransactionLog->purgeAllTransactions();
 
-        $this->tripod = new MongoTripod("CBD_testing", "testing", array("async"=>array(OP_VIEWS=>false, OP_TABLES=>false, OP_SEARCH=>false)));
+        $this->tripod = new MongoTripod("CBD_testing", "tripod_php_testing", array("async"=>array(OP_VIEWS=>false, OP_TABLES=>false, OP_SEARCH=>false)));
 
-        $this->tripod->collection->drop();
+        $this->getTripodCollection($this->tripod)->drop();
         $this->tripod->setTransactionLog($this->tripodTransactionLog);
 
         $this->loadBaseDataViaTripod();
@@ -42,12 +42,15 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $queue = new MongoTripodQueue();
         $queue->purgeQueue();
 
-        $this->tablesConstParams = array($this->tripod->db,$this->tripod->collection,'http://talisaspire.com/');
+        $this->tablesConstParams = array($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),'http://talisaspire.com/');
 
-        $this->tripodTables = new MongoTripodTables($this->tripod->db,$this->tripod->collection,null); // pass null context, should default to http://talisaspire.com
+        $this->tripodTables = new MongoTripodTables($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),null); // pass null context, should default to http://talisaspire.com
 
         // purge tables
-        $this->tripodTables->db->selectCollection("table_rows")->drop();
+        foreach(MongoTripodConfig::getInstance()->getCollectionsForTables($this->tripod->getStoreName()) as $collection)
+        {
+            $collection->drop();
+        }
     }
 
     /**
@@ -59,19 +62,29 @@ class MongoTripodTablesTest extends MongoTripodTestBase
     {
         $config = array();
         $config["defaultContext"] = "http://talisaspire.com/";
-        $config["databases"] = array(
-            "testing" => array(
-                "connStr" => "mongodb://localhost",
-                "collections" => array(
+        $config["data_sources"] = array(
+            "db"=>array(
+                "type"=>"mongo",
+                "connection"=>"mongodb://localhost"
+            ),
+            "tlog"=>array(
+                "type"=>"mongo",
+                "connection"=>"mongodb://tloghost:27017,tloghost:27018"
+            )
+        );
+        $config["stores"] = array(
+            "tripod_php_testing" => array(
+                "data_source"=>"db",
+                "pods" => array(
                     "CBD_testing" => array()
                 )
             )
         );
-        $config['queue'] = array("database"=>"queue","collection"=>"q_queue","connStr"=>"mongodb://localhost");
+        $config['queue'] = array("database"=>"queue","collection"=>"q_queue","data_source"=>"db");
         $config["transaction_log"] = array(
             "database"=>"transactions",
             "collection"=>"transaction_log",
-            "connStr"=>"mongodb://tloghost:27017,tloghost:27018"
+            "data_source"=>"db"
         );
         return $config;
     }
@@ -410,15 +423,23 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
     public function testGenerateTableRowsForResourcesOfTypeWithNamespace()
     {
-        /* @var $mockTripodTables MongoTripodTables */
-        $mockTripodTables = $this->getMock('MongoTripodTables', array('generateTableRows'), array($this->tripod->db,$this->tripod->collection,'http://talisaspire.com/'));
+        /* @var MongoTripodTables|PHPUnit_Framework_MockObject_MockObject $mockTripodTables  */
+        $mockTripodTables = $this->getMock(
+            'MongoTripodTables',
+            array('generateTableRows'),
+            array($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),'http://talisaspire.com/')
+        );
         $mockTripodTables->expects($this->atLeastOnce())->method('generateTableRows')->will($this->returnValue(array("ok"=>true)));
 
         // check where referred to as acorn:Work2 in spec...
         $mockTripodTables->generateTableRowsForType("http://talisaspire.com/schema#Work2");
 
-        /* @var $mockTripodTables MongoTripodTables */
-        $mockTripodTables = $this->getMock('MongoTripodTables', array('generateTableRows'), array($this->tripod->db,$this->tripod->collection,'http://talisaspire.com/'));
+        /* @var MongoTripodTables|PHPUnit_Framework_MockObject_MockObject $mockTripodTables */
+        $mockTripodTables = $this->getMock(
+            'MongoTripodTables',
+            array('generateTableRows'),
+            array($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),'http://talisaspire.com/')
+        );
         $mockTripodTables->expects($this->atLeastOnce())->method('generateTableRows')->will($this->returnValue(array("ok"=>true)));
 
         // check where referred to as http://talisaspire.com/schema#Resource in spec...
@@ -795,12 +816,11 @@ class MongoTripodTablesTest extends MongoTripodTestBase
     public function testDistinctOnTableSpecThatDoesNotExist()
     {
         $table = "t_nothing_to_see_here";
-        $rows = $this->tripodTables->getTableRows($table, array(), array(), 0, 0);
-        $this->assertEquals(0, $rows['head']['count']);
+        $this->setExpectedException(
+            'MongoTripodConfigException',
+            'Table id \'t_nothing_to_see_here\' not in configuration'
+        );
         $results = $this->tripodTables->distinct($table, "value.foo");
-        $this->assertEquals(0, $results['head']['count']);
-        $this->assertArrayHasKey('results', $results);
-        $this->assertEmpty($results['results']);
     }
 
     /**
@@ -837,17 +857,18 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
     public function testTableRowsGenerateWhenDefinedPredicateChanges()
     {
-        foreach(MongoTripodConfig::getInstance()->getTableSpecifications() as $specId=>$spec)
+        foreach(MongoTripodConfig::getInstance()->getTableSpecifications($this->tripod->getStoreName()) as $specId=>$spec)
         {
             $this->generateTableRows($specId);
         }
 
+        /** @var PHPUnit_Framework_MockObject_MockObject|MongoTripod $tripod */
         $tripod = $this->getMock(
             'MongoTripod',
             array('getTripodTables', 'getDataUpdater'),
             array(
                 'CBD_testing',
-                'testing',
+                'tripod_php_testing',
                 array(
                     'defaultContext'=>'http://talisaspire.com/',
                     'async'=>array(
@@ -884,7 +905,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         $tables = $this->getMock('MongoTripodTables',
             array('generateTableRowsForResource'),
-            array($tripod->db, $tripod->collection, "http://talisaspire.com/")
+            array($tripod->getStoreName(), $this->getTripodCollection($tripod), "http://talisaspire.com/")
         );
 
         $tables->expects($this->once())
@@ -908,17 +929,18 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
     public function testTableRowsNotGeneratedWhenUndefinedPredicateChanges()
     {
-        foreach(MongoTripodConfig::getInstance()->getTableSpecifications() as $specId=>$spec)
+        foreach(MongoTripodConfig::getInstance()->getTableSpecifications($this->tripod->getStoreName()) as $specId=>$spec)
         {
             $this->generateTableRows($specId);
         }
 
+        /** @var PHPUnit_Framework_MockObject_MockObject|MongoTripod $tripod */
         $tripod = $this->getMock(
             'MongoTripod',
             array('getTripodTables', 'getDataUpdater'),
             array(
                 'CBD_testing',
-                'testing',
+                'tripod_php_testing',
                 array(
                     'defaultContext'=>'http://talisaspire.com/',
                     'async'=>array(
@@ -959,7 +981,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         $tables = $this->getMock('MongoTripodTables',
             array('generateTableRowsForResource'),
-            array($tripod->db, $tripod->collection, "http://talisaspire.com/")
+            array($tripod->getStoreName(), $this->getTripodCollection($tripod), "http://talisaspire.com/")
         );
 
         $tables->expects($this->never())

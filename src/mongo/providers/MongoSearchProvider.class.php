@@ -12,10 +12,22 @@ class MongoSearchProvider implements ITripodSearchProvider
 
     private $stopWords = array("a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "aren't", "as", "at", "be", "because", "been", "before", "being", "below", "between", "both", "but", "by", "can't", "cannot", "could", "couldn't", "did", "didn't", "do", "does", "doesn't", "doing", "don't", "down", "during", "each", "few", "for", "from", "further", "had", "hadn't", "has", "hasn't", "have", "haven't", "having", "he", "he'd", "he'll", "he's", "her", "here", "here's", "hers", "herself", "him", "himself", "his", "how", "how's", "i", "i'd", "i'll", "i'm", "i've", "if", "in", "into", "is", "isn't", "it", "it's", "its", "itself", "let's", "me", "more", "most", "mustn't", "my", "myself", "no", "nor", "not", "of", "off", "on", "once", "only", "or", "other", "ought", "our", "ours ", "ourselves", "out", "over", "own", "same", "shan't", "she", "she'd", "she'll", "she's", "should", "shouldn't", "so", "some", "such", "than", "that", "that's", "the", "their", "theirs", "them", "themselves", "then", "there", "there's", "these", "they", "they'd", "they'll", "they're", "they've", "this", "those", "through", "to", "too", "under", "until", "up", "very", "was", "wasn't", "we", "we'd", "we'll", "we're", "we've", "were", "weren't", "what", "what's", "when", "when's", "where", "where's", "which", "while", "who", "who's", "whom", "why", "why's", "with", "won't", "would", "wouldn't", "you", "you'd", "you'll", "you're", "you've", "your", "yours", "yourself", "yourselves");
 
+    /**
+     * @var string
+     */
+    protected $storeName;
+
+    /**
+     * @var MongoTripodConfig
+     */
+    protected $config;
+
     public function __construct(MongoTripod $tripod)
     {
         $this->tripod = $tripod;
+        $this->storeName = $tripod->getStoreName();
         $this->labeller = new MongoTripodLabeller();
+        $this->config = MongoTripodConfig::getInstance();
     }
 
     /**
@@ -26,11 +38,20 @@ class MongoSearchProvider implements ITripodSearchProvider
      */
     public function indexDocument($document)
     {
+        if(isset($document['_id']['type']))
+        {
+            $collection = $this->config->getCollectionForSearchDocument($this->storeName, $document['_id']['type']);
+        }
+        else
+        {
+            throw new TripodSearchException("No search document type specified in document");
+        }
+
         try {
-            $this->tripod->db->selectCollection($this->getSearchCollectionName())->ensureIndex(array('_id.type' => 1), array('background' => 1));
-            $this->tripod->db->selectCollection($this->getSearchCollectionName())->ensureIndex(array('_id.r' => 1, '_id.c' => 1), array('background' => 1));
-            $this->tripod->db->selectCollection($this->getSearchCollectionName())->ensureIndex(array('_impactIndex' => 1), array('background' => 1));
-            $this->tripod->db->selectCollection($this->getSearchCollectionName())->save($document);
+            $collection->ensureIndex(array('_id.type' => 1), array('background' => 1));
+            $collection->ensureIndex(array('_id.r' => 1, '_id.c' => 1), array('background' => 1));
+            $collection->ensureIndex(array('_impactIndex' => 1), array('background' => 1));
+            $collection->save($document);
         } catch (Exception $e) {
             throw new TripodSearchException("Failed to Index Document \n" . print_r($document, true), 0, $e);
         }
@@ -47,19 +68,36 @@ class MongoSearchProvider implements ITripodSearchProvider
      */
     public function deleteDocument($resource, $context, $specId = null)
     {
+        $query = array(_ID_KEY . '.' . _ID_RESOURCE => $this->labeller->uri_to_alias($resource),  _ID_KEY . '.' . _ID_CONTEXT => $context);
         try {
-            $query = array(_ID_KEY . '.' . _ID_RESOURCE => $this->labeller->uri_to_alias($resource),  _ID_KEY . '.' . _ID_CONTEXT => $context);
+            $searchTypes = array();
             if (!empty($specId)) {
+                $specTypes = $this->config->getSearchDocumentSpecifications($this->storeName, null, true);
                 if(is_string($specId))
                 {
+                    if(!in_array($specId, $specTypes))
+                    {
+                        return;
+                    }
                     $query[_ID_KEY][_ID_TYPE] = $specId;
+                    $searchTypes[]  = $specId;
                 }
                 elseif(is_array($specId))
                 {
+                    // Only filter on search document spec types
+                    $specId = array_intersect($specTypes, $specId);
+                    if(empty($specId))
+                    {
+                        return;
+                    }
                     $query[_ID_KEY . '.' . _ID_TYPE] = array('$in'=>$specId);
+                    $searchTypes = $specId;
                 }
             }
-            $this->tripod->db->selectCollection($this->getSearchCollectionName())->remove($query);
+            foreach($this->config->getCollectionsForSearch($this->storeName, $searchTypes) as $collection)
+            {
+                $collection->remove($query);
+            }
         } catch (Exception $e) {
             throw new TripodSearchException("Failed to Remove Document with id \n" . print_r($query, true), 0, $e);
         }
@@ -78,11 +116,11 @@ class MongoSearchProvider implements ITripodSearchProvider
 
         $specPredicates = array();
 
-        foreach(MongoTripodConfig::getInstance()->getSearchDocumentSpecifications() as $spec)
+        foreach($this->config->getSearchDocumentSpecifications($this->storeName) as $spec)
         {
             if(isset($spec[_ID_KEY]))
             {
-                $specPredicates[$spec[_ID_KEY]] = MongoTripodConfig::getInstance()->getDefinedPredicatesInSpec($spec[_ID_KEY]);
+                $specPredicates[$spec[_ID_KEY]] = $this->config->getDefinedPredicatesInSpec($this->storeName, $spec[_ID_KEY]);
             }
         }
 
@@ -119,6 +157,7 @@ class MongoSearchProvider implements ITripodSearchProvider
 
         }
 
+        $searchTypes = array();
         if(empty($searchDocFilters) && !empty($resourceFilters))
         {
             $query = array(_IMPACT_INDEX=>array('$in'=>$resourceFilters));
@@ -130,6 +169,7 @@ class MongoSearchProvider implements ITripodSearchProvider
             {
                 // first re-gen views where resources appear in the impact index
                 $query[] = array(_IMPACT_INDEX=>array('$in'=>$filters), '_id.'._ID_TYPE=>$searchDocType);
+                $searchTypes[] = $searchDocType;
             }
 
             if(!empty($resourceFilters))
@@ -150,14 +190,16 @@ class MongoSearchProvider implements ITripodSearchProvider
         {
             return array();
         }
-        $cursor = $this->tripod->db->selectCollection($this->getSearchCollectionName())->find($query, array('_id'=>true));
+
         $searchDocs = array();
-
-        foreach($cursor as $d)
+        foreach($this->config->getCollectionsForSearch($this->storeName, $searchTypes) as $collection)
         {
-            $searchDocs[] = $d;
+            $cursor = $collection->find($query, array('_id'=>true));
+            foreach($cursor as $d)
+            {
+                $searchDocs[] = $d;
+            }
         }
-
         return $searchDocs;
     }
 
@@ -206,7 +248,11 @@ class MongoSearchProvider implements ITripodSearchProvider
         }
         $searchTimer = new Timer();
         $searchTimer->start();
-        $cursor = $this->tripod->db->selectCollection($this->getSearchCollectionName())->find($query, $fieldsToReturn)->limit($limit)->skip($offset);
+        $cursor = $this->config->getCollectionForSearchDocument($this->storeName, $type)
+            ->find($query, $fieldsToReturn)
+            ->limit($limit)
+            ->skip($offset);
+
         $searchResults = array();
         $searchResults['head'] = array();
         $searchResults['head']['count']     = "";
@@ -269,10 +315,11 @@ class MongoSearchProvider implements ITripodSearchProvider
     	$searchSpec = $this->getSearchDocumentSpecification($typeId);
     	if ($searchSpec == null)
     	{    		
-    		throw new TripodSearchException("Cound not find a search specification for $typeId");
+    		throw new TripodSearchException("Could not find a search specification for $typeId");
     	}
     	    	
-    	return $this->tripod->db->selectCollection($this->getSearchCollectionName())->remove(array("_id.type" => $typeId));
+    	return $this->config->getCollectionForSearchDocument($this->storeName, $typeId)
+            ->remove(array("_id.type" => $typeId));
     }
 
     /**
@@ -282,6 +329,6 @@ class MongoSearchProvider implements ITripodSearchProvider
      */
     protected function getSearchDocumentSpecification($typeId)
     {
-    	return MongoTripodConfig::getInstance()->getSearchDocumentSpecification($typeId);
+    	return MongoTripodConfig::getInstance()->getSearchDocumentSpecification($this->storeName, $typeId);
     }
 }

@@ -9,24 +9,18 @@ require_once TRIPOD_DIR . 'mongo/delegates/MongoTripodTables.class.php';
 class MongoTripodQueue extends MongoTripodBase
 {
     protected $config = null;
+    protected $queueConfig = null;
     public function __construct($stat=null)
     {
-        $config = MongoTripodConfig::getInstance();
-        $this->config = $config->getQueueConfig();
-        $connStr = $config->getQueueConnStr();
+        $this->config = MongoTripodConfig::getInstance();
+        $this->queueConfig = $this->config->getQueueConfig();
+        $connStr = $this->config->getQueueConnStr();
 
         $this->debugLog("Connecting to queue with $connStr");
-        if(isset($this->config['replicaSet']) && !empty($this->config['replicaSet'])) {
-            $this->debugLog("Connecting to replica set {$this->config['replicaSet']}");
-            $m = new MongoClient($connStr, array("replicaSet"=>$this->config['replicaSet']));
-        } else {
-            $m = new MongoClient($connStr);
-        }
 
         // select a database
-        $this->db = $m->selectDB($this->config['database']);
-        $this->collectionName = $this->config['collection'];
-        $this->collection = $this->db->selectCollection($this->collectionName);
+        $this->podName = $this->queueConfig['collection'];
+        $this->collection = $this->config->getQueueDatabase()->selectCollection($this->podName);
 
         if ($stat!=null) $this->stat = $stat;
     }
@@ -81,6 +75,7 @@ class MongoTripodQueue extends MongoTripodBase
     }
 
     protected function getMongoTripod($data) {
+        // TODO: remove reference to 'database'?
         return new MongoTripod(
             $data['collection'],
             $data['database'],
@@ -138,8 +133,8 @@ class MongoTripodQueue extends MongoTripodBase
      */
     public function fetchNextQueuedItem()
     {
-        $response = $this->db->command(array(
-            "findAndModify" => $this->collectionName,
+        $response = $this->config->getQueueDatabase()->command(array(
+            "findAndModify" => $this->podName,
             "query" => array("status"=>"queued"),
             "update" => array('$set'=>array(
                 "status"=>"processing",

@@ -9,7 +9,7 @@ define('AUDIT_MANUAL_ROLLBACKS_COLLECTION','audit_manual_rollbacks');
 
 // search
 define('SEARCH_INDEX_COLLECTION', 'search');
-define("SEARCH_PROVIDER_MONGO", 'mongo');
+define("SEARCH_PROVIDER_MONGO", 'MongoSearchProvider');
 define("SEARCH_PROVIDER_ELASTIC_SEARCH", 'es');
 
 
@@ -73,3 +73,6 @@ define('AUDIT_TYPE_REMOVE_INERT_LOCKS', 'REMOVE_INERT_LOCKS');
 define('AUDIT_STATUS_IN_PROGRESS', 'IN_PROGRESS');
 define('AUDIT_STATUS_COMPLETED', 'COMPLETED');
 define('AUDIT_STATUS_ERROR', 'ERROR');
+
+// Mongo constants
+define('DEFAULT_MONGO_CONNECT_TIMEOUT_MS', 20000);

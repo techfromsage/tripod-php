@@ -21,10 +21,11 @@ class MongoTripodSearchIndexer extends MongoTripodBase implements SplObserver
     public function __construct(MongoTripod $tripod)
     {
         $this->tripod = $tripod;
+        $this->storeName = $tripod->getStoreName();
         $this->labeller = new MongoTripodLabeller();
         $this->stat = $tripod->getStat();
-
-        $provider = MongoTripodConfig::getInstance()->getSearchProviderClassName();
+        $this->config = MongoTripodConfig::getInstance();
+        $provider = $this->config->getSearchProviderClassName($this->tripod->getStoreName());
 
         if(class_exists($provider)){
             $this->configuredProvider = new $provider($this->tripod);
@@ -50,7 +51,7 @@ class MongoTripodSearchIndexer extends MongoTripodBase implements SplObserver
         $resourceUri    = $queuedItem['r'];
         $context        = $queuedItem['c'];
 
-        $collectionName = $queuedItem['collection'];
+        $podName = $queuedItem['collection'];
 
         $specTypes = null;
 
@@ -59,22 +60,21 @@ class MongoTripodSearchIndexer extends MongoTripodBase implements SplObserver
             $specTypes = $queuedItem['specTypes'];
         }
 
-        $this->generateAndIndexSearchDocuments($resourceUri, $context, $collectionName, $specTypes);
+        $this->generateAndIndexSearchDocuments($resourceUri, $context, $podName, $specTypes);
     }
 
     /**
      * Removes all existing documents for the supplied resource and regenerate the search documents
      * @param string $resourceUri
      * @param string $context
-     * @param string $collectionName
+     * @param string $podName
      * @param array | string | null $specType
      */
-    public function generateAndIndexSearchDocuments($resourceUri, $context, $collectionName, $specType = null)
+    public function generateAndIndexSearchDocuments($resourceUri, $context, $podName, $specType = null)
     {
-        $mongoDb            = $this->tripod->db;
-        $mongoCollection    = $mongoDb->selectCollection($collectionName);
+        $mongoCollection    = $this->config->getCollectionForCBD($this->storeName, $podName);
 
-        $searchDocGenerator = $this->getSearchDocumentGenerator($mongoDb, $mongoCollection, $context);
+        $searchDocGenerator = $this->getSearchDocumentGenerator($mongoCollection, $context);
         $searchProvider = $this->getSearchProvider();
 
         //1. remove all search documents for this resource
@@ -82,25 +82,6 @@ class MongoTripodSearchIndexer extends MongoTripodBase implements SplObserver
 
         //2. find all impacted documents and regenerate them
         $documentsToIndex   = array();
-//        $documentsToDelete  = array();
-
-//        foreach($searchProvider->findImpactedDocuments($resourceUri, $context) as $impactedDocument){
-//            $doc = $searchDocGenerator->generateSearchDocumentBasedOnSpecId(
-//                $impactedDocument['_id']['type'],
-//                $impactedDocument['_id']['r'],
-//                $impactedDocument['_id']['c']
-//            );
-//
-//            if(empty($doc)){
-//                $documentsToDelete[] =  array(
-//                    'r'=>$impactedDocument['_id']['r'],
-//                    'c'=>$impactedDocument['_id']['c'],
-//                    'type'=>$impactedDocument['_id']['type']
-//                );
-//            } else {
-//                $documentsToIndex[] = $doc;
-//            }
-//        }
 
         //3. regenerate search documents for this resource
         // first work out what its type is
@@ -139,12 +120,6 @@ class MongoTripodSearchIndexer extends MongoTripodBase implements SplObserver
             }
         }
 
-//        $documentsToDelete = $this->deDupe($documentsToDelete);
-//
-//        foreach($documentsToDelete as $document){
-//            if(!empty($document)) $searchProvider->deleteDocument($document['r'],$document['c'], $document['type']);
-//        }
-
         foreach($documentsToIndex as $document) {
             if(!empty($document)) $searchProvider->indexDocument($document);
         }
@@ -170,14 +145,13 @@ class MongoTripodSearchIndexer extends MongoTripodBase implements SplObserver
     }
 
     /**
-     * @param $db
-     * @param $collection
-     * @param $context
+     * @param MongoCollection $collection
+     * @param string $context
      * @return MongoTripodSearchDocuments
      */
-    protected function getSearchDocumentGenerator( $db, $collection, $context )
+    protected function getSearchDocumentGenerator($collection, $context )
     {
-        return new MongoTripodSearchDocuments($db, $collection, $context, $this->tripod->getStat());
+        return new MongoTripodSearchDocuments($this->storeName, $collection, $context, $this->tripod->getStat());
     }
 
     protected function deDupe(Array $input)

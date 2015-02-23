@@ -95,6 +95,14 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         $configFileName = dirname(__FILE__).'/data/config.json';
 
         $config = json_decode(file_get_contents($configFileName), true);
+        if(getenv('TRIPOD_DATASOURCE_RS1_CONFIG'))
+        {
+            $config['data_sources']['rs1'] = json_decode(getenv('TRIPOD_DATASOURCE_RS1_CONFIG'), true);
+        }
+        if(getenv('TRIPOD_DATASOURCE_RS2_CONFIG'))
+        {
+            $config['data_sources']['rs2'] = json_decode(getenv('TRIPOD_DATASOURCE_RS2_CONFIG'), true);
+        }
         MongoTripodConfig::setConfig($config);
 
         $className = get_class($this);
@@ -110,28 +118,55 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
 
     protected function addDocument($doc, $toTransactionLog=false)
     {
-        if($toTransactionLog == true){
-            $tripod = new MongoTripod('transaction_log', 'testing');
-            return $tripod->collection->insert($doc, array("w"=>1));
+        $config = MongoTripodConfig::getInstance();
+        if($toTransactionLog == true)
+        {
+            return $this->getTlogCollection()->insert($doc, array("w"=>1));
         } else {
-            return $this->tripod->collection->insert($doc, array("w"=>1));
+            return $config->getCollectionForCBD(
+                $this->tripod->getStoreName(),
+                $this->tripod->getPodName()
+            )->insert($doc, array("w"=>1));
         }
     }
 
-    protected function getDocument($_id, $tripod=null, $fromTransactionLog=false)
+    protected function getTlogCollection()
+    {
+        $config = MongoTripodConfig::getInstance();
+        $tLogConfig = $config->getTransactionLogConfig();
+        return $config->getTransactionLogDatabase()->selectCollection($tLogConfig['collection']);
+    }
+
+    protected function getTripodCollection(MongoTripod $tripod)
+    {
+        $config = MongoTripodConfig::getInstance();
+        $pods = $config->getPods($tripod->getStoreName());
+        $podName = $tripod->getPodName();
+        $dataSource = $config->getDataSourceForPod($tripod->getStoreName(), $podName);
+        return $config->getDatabase(
+            $tripod->getStoreName(),
+            $dataSource
+        )->selectCollection($tripod->getPodName());
+    }
+
+    protected function getDocument($_id, $collection=null, $fromTransactionLog=false)
     {
         if($fromTransactionLog==true)
         {
             return $this->tripodTransactionLog->getTransaction($_id);
         }
 
-        if($tripod==NULL)
+        if($collection==NULL)
         {
-            return $this->tripod->collection->findOne(array("_id"=>$_id));
+            return $this->getTripodCollection($this->tripod)->findOne(array("_id"=>$_id));
+        }
+        elseif($collection instanceof MongoTripod)
+        {
+            return $this->getTripodCollection($collection)->findOne(array("_id"=>$_id));
         }
         else
         {
-            return $tripod->collection->findOne(array("_id"=>$_id));
+            return $collection->findOne(array("_id"=>$_id));
         }
     }
 
@@ -309,13 +344,30 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
 
     protected function lockDocument($subject, $transaction_id)
     {
-        $tripod = new MongoTripod(LOCKS_COLLECTION, 'testing');
+        $collection = MongoTripodConfig::getInstance()->getCollectionForLocks('tripod_php_testing');
         $labeller = new MongoTripodLabeller();
         $doc = array(
             '_id' => array(_ID_RESOURCE => $labeller->uri_to_alias($subject), _ID_CONTEXT => MongoTripodConfig::getInstance()->getDefaultContextAlias()),
             _LOCKED_FOR_TRANS => $transaction_id,
             _LOCKED_FOR_TRANS_TS=>new MongoDate()
         );
-        $tripod->collection->insert($doc, array("w" => 1));
+        $collection->insert($doc, array("w" => 1));
+    }
+}
+
+class MongoTestTripod extends MongoTripod
+{
+    public function getCollectionReadPreference()
+    {
+        return $this->collection->getReadPreference();
+    }
+}
+
+class MongoTripodTestConfig extends MongoTripodConfig
+{
+    public function __construct() {}
+    public function loadConfig(array $config)
+    {
+        parent::loadConfig($config);
     }
 }

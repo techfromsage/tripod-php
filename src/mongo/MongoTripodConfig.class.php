@@ -7,12 +7,12 @@ class MongoTripodConfig
     /**
      * @var MongoTripodConfig
      */
-    private static $instance = null;
+    private static $instance;
 
     /**
      * @var array
      */
-    private static $config = null;
+    private static $config;
 
     /**
      * @var MongoTripodLabeller
@@ -85,10 +85,10 @@ class MongoTripodConfig
     protected $queueConfig = array();
 
     /**
-     * This should be the name of a class that implement iTripod
-     * @var string
+     * The value should be the name of a class that implement iTripodSearchProvider keyed by storename
+     * @var array
      */
-    protected $searchProviderClassName = null;
+    protected $searchProviderClassName = array();
 
     /**
      * All of the predicates associated with a particular spec document
@@ -96,6 +96,32 @@ class MongoTripodConfig
      * @var array
      */
     protected $specPredicates;
+
+    /**
+     * A simple map between collection names and the database name they belong to
+     * @var array
+     */
+    protected $collectionDatabases = array();
+
+    /**
+     * @var array
+     */
+    protected $activeMongoConnections = array();
+
+    /**
+     * @var string
+     */
+    protected $defaultDatabase;
+
+    /**
+     * @var array
+     */
+    protected $dataSources = array();
+
+    /**
+     * @var array
+     */
+    protected $podConnections = array();
 
     /**
      * MongoTripodConfig should not be instantiated directly: use MongoTripodConfig::getInstance()
@@ -108,7 +134,7 @@ class MongoTripodConfig
      * @param array $config
      * @throws MongoTripodConfigException
      */
-    private function loadConfig(Array $config)
+    protected function loadConfig(Array $config)
     {
         if (array_key_exists('namespaces',$config))
         {
@@ -117,189 +143,267 @@ class MongoTripodConfig
 
         $this->defaultContext = $this->getMandatoryKey("defaultContext",$config);
 
-        $transactionConfig = $this->getMandatoryKey("transaction_log",$config);
-        $this->tConfig["database"] = $this->getMandatoryKey("database",$transactionConfig,'transaction_log');
-        $this->tConfig["collection"] = $this->getMandatoryKey("collection",$transactionConfig,'transaction_log');
-        $this->tConfig["connStr"] = $this->getMandatoryKey("connStr",$transactionConfig,'transaction_log');
-        if(array_key_exists("replicaSet", $transactionConfig) && !empty($transactionConfig["replicaSet"]))
+        foreach($this->getMandatoryKey('data_sources', $config) as $source=>$c)
         {
-            $this->tConfig['replicaSet'] = $transactionConfig["replicaSet"];
+            if(!array_key_exists('type', $c))
+            {
+                throw new MongoTripodConfigException("No 'type' set for data source $source");
+            }
+            if(!array_key_exists('connection', $c))
+            {
+                throw new MongoTripodConfigException("No connection information set for data source $source");
+            }
+            $this->dataSources[$source] = $c;
         }
 
-        $searchConfig = (array_key_exists("search_config",$config)) ? $config["search_config"] : array();
-        if(!empty($searchConfig)){
-            $this->searchProviderClassName = $this->getMandatoryKey('search_provider', $searchConfig, 'search');
-            // Load search doc specs if search_config is set
-            $searchDocSpecs = $this->getMandatoryKey('search_specifications', $searchConfig, 'search');
-            foreach ($searchDocSpecs as $spec)
-            {
-                $this->searchDocSpecs[$spec[_ID_KEY]] = $spec;
-            }
+        $transactionConfig = $this->getMandatoryKey("transaction_log",$config);
+        $this->tConfig["data_source"] = $this->getMandatoryKey('data_source', $transactionConfig, 'transaction_log');
+        if(!isset($this->dataSources[$this->tConfig['data_source']]))
+        {
+            throw new MongoTripodConfigException("Transaction log data source, " . $this->tConfig['data_source'] . ", was not defined");
         }
+        $this->tConfig["database"] = $this->getMandatoryKey("database",$transactionConfig,'transaction_log');
+        $this->tConfig["collection"] = $this->getMandatoryKey("collection",$transactionConfig,'transaction_log');
 
         $queueConfig = $this->getMandatoryKey("queue",$config);
         $this->queueConfig["database"] = $this->getMandatoryKey("database",$queueConfig,'queue');
         $this->queueConfig["collection"] = $this->getMandatoryKey("collection",$queueConfig,'queue');
-        $this->queueConfig["connStr"] = $this->getMandatoryKey("connStr",$queueConfig,'queue');
-        if(array_key_exists("replicaSet", $queueConfig) && !empty($queueConfig["replicaSet"])) {
-            $this->queueConfig['replicaSet'] = $queueConfig["replicaSet"];
+        $this->queueConfig["data_source"] = $this->getMandatoryKey("data_source",$queueConfig,'queue');
+        if(!isset($this->dataSources[$this->queueConfig['data_source']]))
+        {
+            throw new MongoTripodConfigException("Queue data source, " . $this->queueConfig['data_source'] . ", was not defined");
         }
 
-        // Load view specs
-        $viewSpecs = (array_key_exists("view_specifications",$config)) ? $config["view_specifications"] : array();
-        foreach ($viewSpecs as $spec)
+        // A 'pod' corresponds to a logical database
+        $this->databases = $this->getMandatoryKey("stores",$config);
+        $defaultDB = null;
+        foreach ($this->databases as $storeName=>$storeConfig)
         {
-            $this->ifCountExistsWithoutTTLThrowException($spec);
-            $this->viewSpecs[$spec[_ID_KEY]] = $spec;
-        }
-
-        // Load table specs
-        $tableSpecs = (array_key_exists("table_specifications",$config)) ? $config["table_specifications"] : array();
-        foreach ($tableSpecs as $spec)
-        {
-            if(!isset($spec[_ID_KEY]))
+            $this->dbConfig[$storeName] = array ("data_source"=>$this->getMandatoryKey("data_source",$storeConfig));
+            if(isset($storeConfig['database']) && !empty($storeConfig['database']))
             {
-                throw new MongoTripodConfigException("Table spec does not contain " . _ID_KEY);
+                $this->dbConfig[$storeName]["database"]=$storeConfig['database'];
+            }
+            else
+            {
+                $this->dbConfig[$storeName]["database"] = $storeName;
             }
 
-            // Get all "fields" in the spec
-            $fieldsInTableSpec = $this->findFieldsInTableSpec('fields', $spec);
-            // Loop through fields and validate
-            foreach($fieldsInTableSpec as $field)
+            $this->cardinality[$storeName] = array();
+            $this->indexes[$storeName] = array();
+            $this->podConnections[$storeName] = array();
+            if(isset($storeConfig["pods"]))
             {
-                if (!isset($field['fieldName']))
+                foreach($storeConfig["pods"] as $podName=>$podConfig)
                 {
-                    throw new MongoTripodConfigException("Field spec does not contain fieldName");
-                }
+                    $dataSource = (isset($podConfig['data_source']) ? $podConfig['data_source'] : $storeConfig['data_source']);
+                    $this->podConnections[$storeName][$podName] = $dataSource;
 
-                if(isset($field['predicates']))
-                {
-                    foreach($field['predicates'] as $p)
+                    // Set cardinality, also checking against defined namespaces
+                    if (array_key_exists('cardinality', $podConfig))
                     {
-                        // If predicates is an array we've got modifiers
-                        if(is_array($p))
+                        // Test that the namespace exists for each cardinality rule defined
+                        $cardinality = $podConfig['cardinality'];
+                        foreach ($cardinality as $qname=>$cardinalityValue)
                         {
-                            /*
-                             * checkModifierFunctions will check if each predicate modifier is valid - it will
-                             * check recursively through the predicate
-                             */
-                            $this->checkModifierFunctions($p, MongoTripodTables::$predicateModifiers);
+                            $namespaces = explode(':', $qname);
+                            // just grab the first element
+                            $namespace  = array_shift($namespaces);
+
+                            if (array_key_exists($namespace, $this->ns))
+                            {
+                                $this->cardinality[$storeName][$podName][] = $cardinality;
+                            }
+                            else
+                            {
+                                throw new MongoTripodConfigException("Cardinality '{$qname}' does not have the namespace defined");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        $this->cardinality[$storeName][$podName] = array();
+                    }
+
+                    $this->cardinality[$storeName][$podName] = (array_key_exists("cardinality",$podConfig)) ? $podConfig['cardinality'] : array();
+
+                    // Ensure indexes are legal
+                    if (array_key_exists("indexes",$podConfig))
+                    {
+                        $this->indexes[$storeName][$podName] = array();
+                        foreach($podConfig["indexes"] as $indexName=>$indexFields)
+                        {
+                            // check no more than 1 indexField is an array to ensure Mongo will be able to create compound indexes
+                            if (count($indexFields)>1)
+                            {
+                                $fieldsThatAreArrays = 0;
+                                foreach ($indexFields as $field=>$fieldVal)
+                                {
+                                    $cardinalityField = preg_replace('/\.value/','',$field);
+                                    if (!array_key_exists($cardinalityField,$this->cardinality[$storeName][$podName])||$this->cardinality[$storeName][$podName][$cardinalityField]!=1)
+                                    {
+                                        $fieldsThatAreArrays++;
+                                    }
+                                    if ($fieldsThatAreArrays>1)
+                                    {
+                                        throw new MongoTripodConfigException("Compound index $indexName has more than one field with cardinality > 1 - mongo will not be able to build this index");
+                                    }
+                                }
+                            } // @codeCoverageIgnoreStart
+                            // @codeCoverageIgnoreEnd
+
+                            $this->indexes[$storeName][$podName][$indexName] = $indexFields;
                         }
                     }
                 }
-                // fields can either have predicates or values
-                elseif((!isset($field['value'])) || empty($field['value']))
-                {
-                    throw new MongoTripodConfigException("Field spec does not contain predicates or value");
-                }
             }
-
-            // Get all "counts" in the spec
-            $fieldsInTableSpec = $this->findFieldsInTableSpec('counts', $spec);
-            // Loop through fields and validate
-            foreach($fieldsInTableSpec as $field)
-            {
-                if (!isset($field['fieldName']))
+            $searchConfig = (array_key_exists("search_config",$storeConfig)) ? $storeConfig["search_config"] : array();
+            $this->searchDocSpecs[$storeName] = array();
+            if(!empty($searchConfig)){
+                $this->searchProviderClassName[$storeName] = $this->getMandatoryKey('search_provider', $searchConfig, 'search');
+                // Load search doc specs if search_config is set
+                $searchDocSpecs = $this->getMandatoryKey('search_specifications', $searchConfig, 'search');
+                foreach ($searchDocSpecs as $spec)
                 {
-                    throw new MongoTripodConfigException("Count spec does not contain fieldName");
-                }
-
-                if(isset($field['property']))
-                {
-                    if (!is_string($field['property']))
+                    if(!isset($spec[_ID_KEY]))
                     {
-                        throw new MongoTripodConfigException("Count spec property was not a string");
+                        throw new MongoTripodConfigException("Search document spec does not contain " . _ID_KEY);
                     }
-                }
-                else
-                {
-                    throw new MongoTripodConfigException("Count spec does not contain property");
-                }
-            }
-            $this->tableSpecs[$spec[_ID_KEY]] = $spec;
-        }
-
-        $this->databases = $this->getMandatoryKey("databases",$config);
-        foreach ($this->databases as $dbName=>$db)
-        {
-            $this->dbConfig[$dbName] = array ("connStr"=>$this->getMandatoryKey("connStr",$db));
-            if(isset($db['replicaSet']) && !empty($db['replicaSet']))
-            {
-                $this->dbConfig[$dbName]["replicaSet"]=$db['replicaSet'];
-            }
-            $this->cardinality[$dbName] = array();
-            $this->indexes[$dbName] = array();
-            foreach($db["collections"] as $collName=>$collection)
-            {
-                // Set cardinality, also checking against defined namespaces
-                if (array_key_exists('cardinality', $collection))
-                {
-                    // Test that the namespace exists for each cardinality rule defined
-                    $cardinality = $collection['cardinality'];
-                    foreach ($cardinality as $qname=>$cardinalityValue)
+                    if($this->searchProviderClassName[$storeName] == SEARCH_PROVIDER_MONGO)
                     {
-                        $namespaces = explode(':', $qname);
-                        // just grab the first element
-                        $namespace  = array_shift($namespaces);
-
-                        if (array_key_exists($namespace, $this->ns))
+                        if(isset($spec['to_data_source']))
                         {
-                            $this->cardinality[$dbName][$collName][] = $cardinality;
+                            if(!isset($this->dataSources[$spec['to_data_source']]))
+                            {
+                                throw new MongoTripodConfigException("'" . $spec[_ID_KEY] . "[\"to_data_source\"]' property references an undefined data source");
+                            }
                         }
                         else
                         {
-                            throw new MongoTripodConfigException("Cardinality '{$qname}' does not have the namespace defined");
+                            $spec['to_data_source'] = $storeConfig['data_source'];
                         }
+                    }
+                    $this->searchDocSpecs[$storeName][$spec[_ID_KEY]] = $spec;
+                }
+            }
+
+            // Load view specs
+            $viewSpecs = (array_key_exists("view_specifications",$storeConfig)) ? $storeConfig["view_specifications"] : array();
+            $this->viewSpecs[$storeName] = array();
+            foreach ($viewSpecs as $spec)
+            {
+                if(!isset($spec[_ID_KEY]))
+                {
+                    throw new MongoTripodConfigException("View spec does not contain " . _ID_KEY);
+                }
+                $this->ifCountExistsWithoutTTLThrowException($spec);
+                if(isset($spec['to_data_source']))
+                {
+                    if(!isset($this->dataSources[$spec['to_data_source']]))
+                    {
+                        throw new MongoTripodConfigException("'" . $spec[_ID_KEY] . "[\"to_data_source\"]' property references an undefined data source");
                     }
                 }
                 else
                 {
-                    $this->cardinality[$dbName][$collName] = array();
+                    $spec['to_data_source'] = $storeConfig['data_source'];
+                }
+                $this->viewSpecs[$storeName][$spec[_ID_KEY]] = $spec;
+            }
+
+            // Load table specs
+            $tableSpecs = (array_key_exists("table_specifications",$storeConfig)) ? $storeConfig["table_specifications"] : array();
+            $this->tableSpecs[$storeName] = array();
+            foreach ($tableSpecs as $spec)
+            {
+                if(!isset($spec[_ID_KEY]))
+                {
+                    throw new MongoTripodConfigException("Table spec does not contain " . _ID_KEY);
                 }
 
-                $this->cardinality[$dbName][$collName] = (array_key_exists("cardinality",$collection)) ? $collection['cardinality'] : array();
-
-                // Ensure indexes are legal
-                if (array_key_exists("indexes",$collection))
+                // Get all "fields" in the spec
+                $fieldsInTableSpec = $this->findFieldsInTableSpec('fields', $spec);
+                // Loop through fields and validate
+                foreach($fieldsInTableSpec as $field)
                 {
-                    $this->indexes[$dbName][$collName] = array();
-                    foreach($collection["indexes"] as $indexName=>$indexFields)
+                    if (!isset($field['fieldName']))
                     {
-                        // check no more than 1 indexField is an array to ensure Mongo will be able to create compount indexes
-                        if (count($indexFields)>1)
-                        {
-                            $fieldsThatAreArrays = 0;
-                            foreach ($indexFields as $field=>$fieldVal)
-                            {
-                                $cardinalityField = preg_replace('/\.value/','',$field);
-                                if (!array_key_exists($cardinalityField,$this->cardinality[$dbName][$collName])||$this->cardinality[$dbName][$collName][$cardinalityField]!=1)
-                                {
-                                    $fieldsThatAreArrays++;
-                                }
-                                if ($fieldsThatAreArrays>1)
-                                {
-                                    throw new MongoTripodConfigException("Compound index $indexName has more than one field with cardinality > 1 - mongo will not be able to build this index");
-                                }
-                            }
-                        } // @codeCoverageIgnoreStart
-                        // @codeCoverageIgnoreEnd
+                        throw new MongoTripodConfigException("Field spec does not contain fieldName");
+                    }
 
-                        $this->indexes[$dbName][$collName][$indexName] = $indexFields;
+                    if(isset($field['predicates']))
+                    {
+                        foreach($field['predicates'] as $p)
+                        {
+                            // If predicates is an array we've got modifiers
+                            if(is_array($p))
+                            {
+                                /*
+                                 * checkModifierFunctions will check if each predicate modifier is valid - it will
+                                 * check recursively through the predicate
+                                 */
+                                $this->checkModifierFunctions($p, MongoTripodTables::$predicateModifiers);
+                            }
+                        }
+                    }
+                    // fields can either have predicates or values
+                    elseif((!isset($field['value'])) || empty($field['value']))
+                    {
+                        throw new MongoTripodConfigException("Field spec does not contain predicates or value");
                     }
                 }
+
+                // Get all "counts" in the spec
+                $fieldsInTableSpec = $this->findFieldsInTableSpec('counts', $spec);
+                // Loop through fields and validate
+                foreach($fieldsInTableSpec as $field)
+                {
+                    if (!isset($field['fieldName']))
+                    {
+                        throw new MongoTripodConfigException("Count spec does not contain fieldName");
+                    }
+
+                    if(isset($field['property']))
+                    {
+                        if (!is_string($field['property']))
+                        {
+                            throw new MongoTripodConfigException("Count spec property was not a string");
+                        }
+                    }
+                    else
+                    {
+                        throw new MongoTripodConfigException("Count spec does not contain property");
+                    }
+                }
+
+                if(isset($spec['to_data_source']))
+                {
+                    if(!isset($this->dataSources[$spec['to_data_source']]))
+                    {
+                        throw new MongoTripodConfigException("'" . $spec[_ID_KEY] . "[\"to_data_source\"]' property references an undefined data source");
+                    }
+                }
+                else
+                {
+                    $spec['to_data_source'] = $storeConfig['data_source'];
+                }
+
+                $this->tableSpecs[$storeName][$spec[_ID_KEY]] = $spec;
             }
         }
+
 
     }
 
     /**
      * Creates an associative array of all predicates/properties associated with all table and search document specifications
+     * @param string $storename
      * @return array
      */
-    protected function getDefinedPredicatesInSpecs()
+    protected function getDefinedPredicatesInSpecs($storename)
     {
         $predicates = array();
-        $specs = array_merge($this->getTableSpecifications(), $this->getSearchDocumentSpecifications());
+        $specs = array_merge($this->getTableSpecifications($storename), $this->getSearchDocumentSpecifications($storename));
         foreach($specs as $spec)
         {
             if(!isset($spec[_ID_KEY]))
@@ -502,18 +606,19 @@ class MongoTripodConfig
      * Returns an array of associated predicates in a table or search document specification
      * Note: will not return viewSpec predicates
      *
+     * @param string $storename
      * @param string $specId
      * @return array
      */
-    public function getDefinedPredicatesInSpec($specId)
+    public function getDefinedPredicatesInSpec($storename, $specId)
     {
-        if(!isset($this->specPredicates))
+        if(!isset($this->specPredicates[$storename]))
         {
-            $this->specPredicates = $this->getDefinedPredicatesInSpecs();
+            $this->specPredicates[$storename] = $this->getDefinedPredicatesInSpecs($storename);
         }
-        if(isset($this->specPredicates[$specId]))
+        if(isset($this->specPredicates[$storename][$specId]))
         {
-            return $this->specPredicates[$specId];
+            return $this->specPredicates[$storename][$specId];
         }
         return array();
     }
@@ -564,11 +669,15 @@ class MongoTripodConfig
     /**
      * @codeCoverageIgnore
      * @static
+     * @internal param string $specName
      * @return Array|null
      */
     public static function getConfig()
     {
-        return self::$config;
+        if(isset(self::$config))
+        {
+            return self::$config;
+        }
     }
 
     /**
@@ -586,16 +695,17 @@ class MongoTripodConfig
      * @uses MongoTripodConfig::setConfig() Configuration must be set prior to calling this method. To generate a completely new object, set a new config
      * @codeCoverageIgnore
      * @static
-     * @return MongoTripodConfig
      * @throws MongoTripodConfigException
+     * @internal param string $specName
+     * @return MongoTripodConfig
      */
     public static function getInstance()
     {
-        if (self::$config == null)
+        if (!isset(self::$config))
         {
             throw new MongoTripodConfigException("Call MongoTripodConfig::setConfig() first");
         }
-        if (self::$instance == null)
+        if (!isset(self::$instance))
         {
             self::$instance = new MongoTripodConfig();
             self::$instance->loadConfig(self::$config);
@@ -616,12 +726,12 @@ class MongoTripodConfig
 
     /**
      * Returns a list of the configured indexes grouped by collection
-     * @param string $dbName
+     * @param string $storeName
      * @return mixed
      */
-    public function getIndexesGroupedByCollection($dbName)
+    public function getIndexesGroupedByCollection($storeName)
     {
-        $indexes = $this->indexes[$dbName];
+        $indexes = $this->indexes[$storeName];
         //TODO: if we have much more default indexes we should find a better way of doing this
         foreach($indexes as $collection=>$indices) {
             $indexes[$collection][_LOCKED_FOR_TRANS_INDEX] = array(_ID_KEY=>1, _LOCKED_FOR_TRANS=>1);
@@ -631,26 +741,36 @@ class MongoTripodConfig
 
         // also add the indexes for any views/tables
         $tableIndexes = array();
-        foreach ($this->getTableSpecifications() as $tspec)
+        foreach ($this->getTableSpecifications($storeName) as $tspec)
         {
             if (array_key_exists("ensureIndexes",$tspec))
             {
+                // Indexes should be keyed by data_source
+                if(!isset($tableIndexes[$tspec['to_data_source']]))
+                {
+                    $tableIndexes[$tspec['to_data_source']] = array();
+                }
                 foreach ($tspec["ensureIndexes"] as $index)
                 {
-                    $tableIndexes[] = $index;
+                    $tableIndexes[$tspec['to_data_source']][] = $index;
                 }
             }
         }
         $indexes[TABLE_ROWS_COLLECTION] = $tableIndexes;
 
         $viewIndexes = array();
-        foreach ($this->getViewSpecifications() as $vspec)
+        foreach ($this->getViewSpecifications($storeName) as $vspec)
         {
             if (array_key_exists("ensureIndexes",$vspec))
             {
+                // Indexes should be keyed by data_source
+                if(!isset($viewIndexes[$vspec['to_data_source']]))
+                {
+                    $viewIndexes[$vspec['to_data_source']] = array();
+                }
                 foreach ($vspec["ensureIndexes"] as $index)
                 {
-                    $viewIndexes[] = $index;
+                    $viewIndexes[$vspec['to_data_source']][] = $index;
                 }
             }
         }
@@ -662,23 +782,23 @@ class MongoTripodConfig
     /**
      * Get the cardinality values for a DB/Collection.
      *
-     * @param string $dbName The database name to use.
+     * @param string $storeName The database name to use.
      * @param string $collName The collection in the database.
      * @param string $qName Either the qname to get the values for or empty for all cardinality values.
      * @return mixed If no qname is specified then returns an array of cardinality options, otherwise returns the cardinality value for the given qname.
      */
-    public function getCardinality($dbName,$collName,$qName=null)
+    public function getCardinality($storeName,$collName,$qName=null)
     {
         // If no qname specified the return all cardinality rules for this db/collection.
         if (empty($qName))
         {
-            return $this->cardinality[$dbName][$collName];
+            return $this->cardinality[$storeName][$collName];
         }
 
         // Return the cardinality rule for the specified qname.
-        if (array_key_exists($qName,$this->cardinality[$dbName][$collName]))
+        if (array_key_exists($qName,$this->cardinality[$storeName][$collName]))
         {
-            return $this->cardinality[$dbName][$collName][$qName];
+            return $this->cardinality[$storeName][$collName][$qName];
         }
         else
         {
@@ -688,55 +808,69 @@ class MongoTripodConfig
 
     /**
      * Returns a boolean reflecting whether or not the database and collection are defined in the config
-     * @param string $dbName
-     * @param string $collName
+     * @param string $storeName
+     * @param string $pod
      * @return bool
      */
-    public function isCollectionWithinConfig($dbName,$collName)
+    public function isPodWithinStore($storeName,$pod)
     {
-        return (array_key_exists($dbName,$this->databases)) ? array_key_exists($collName,$this->databases[$dbName]['collections']) : false;
+        return (array_key_exists($storeName,$this->podConnections)) ? array_key_exists($pod,$this->podConnections[$storeName]) : false;
     }
 
     /**
      * Returns an array of collection configurations for the supplied database name
-     * @param string $dbName
+     * @param string $storeName
      * @return array
      */
-    public function getCollections($dbName)
+    public function getPods($storeName)
     {
-        return (array_key_exists($dbName,$this->databases)) ? $this->databases[$dbName]['collections'] : array();
+        return (array_key_exists($storeName,$this->podConnections)) ? array_keys($this->podConnections[$storeName]) : array();
+    }
+
+    /**
+     * Returns the name of the data source for the request pod.  This may be the default for the store or the pod may
+     * have overridden it in the config.
+     *
+     * @param string $storeName
+     * @param string $podName
+     * @throws MongoTripodConfigException
+     * @return string
+     */
+    public function getDataSourceForPod($storeName, $podName)
+    {
+        if(isset($this->podConnections[$storeName]) && isset($this->podConnections[$storeName][$podName]))
+        {
+            return $this->podConnections[$storeName][$podName];
+        }
+        throw new MongoTripodConfigException("'{$podName}' not configured for store '{$storeName}'");
     }
 
     /**
      * Returns the connection string for the supplied database name
      *
-     * @param string $dbName
-     * @return string
+     * @param string $storeName
+     * @param string|null $podName
      * @throws MongoTripodConfigException
+     * @return string
      */
-    public function getConnStr($dbName)
+    public function getConnStr($storeName, $podName = null)
     {
-        if (array_key_exists($dbName,$this->dbConfig))
+        if (array_key_exists($storeName,$this->dbConfig))
         {
-            if($this->isReplicaSet($dbName)){
-                // if this is a replica set then we have to make sure that the connstr specified
-                // connects directly to the /admin database on the cluster.
-                // see XIP-2448. All im doing here is checking to see that the connstr ends with /admin
-                // substr is faster than regex match
-                $connStr = $this->dbConfig[$dbName]["connStr"];
-                if ($this->isConnectionStringValidForRepSet($connStr)){
-                    return $connStr;
-                } else {
-                    throw new MongoTripodConfigException("Connection string for $dbName must include /admin database when connecting to Replica Set");
-                }
-
-            } else {
-                return $this->dbConfig[$dbName]["connStr"];
+            if(!$podName)
+            {
+                return $this->getConnStrForDataSource($this->dbConfig[$storeName]['data_source']);
             }
+            $pods = $this->getPods($storeName);
+            if(array_key_exists($podName, $pods))
+            {
+                return $this->getConnStrForDataSource($pods[$podName]['data_source']);
+            }
+            throw new MongoTripodConfigException("Collection $podName does not exist for database $storeName");
         }
         else
         {
-            throw new MongoTripodConfigException("Database $dbName does not exist in configuration");
+            throw new MongoTripodConfigException("Database $storeName does not exist in configuration");
         }
     }
 
@@ -746,15 +880,30 @@ class MongoTripodConfig
      * @throws MongoTripodConfigException
      */
     public function getTransactionLogConnStr() {
-        if(array_key_exists("replicaSet", $this->tConfig) && !empty($this->tConfig["replicaSet"])) {
-            $connStr = $this->tConfig['connStr'];
+        return $this->getConnStrForDataSource($this->tConfig['data_source']);
+    }
+
+    /**
+     * @param $dataSource
+     * @return string
+     * @throws MongoTripodConfigException
+     */
+    protected function getConnStrForDataSource($dataSource)
+    {
+        if(!array_key_exists($dataSource, $this->dataSources))
+        {
+            throw new MongoTripodConfigException("Data source '{$dataSource}' not configured");
+        }
+        $ds = $this->dataSources[$dataSource];
+        if(array_key_exists("replicaSet", $ds) && !empty($ds["replicaSet"])) {
+            $connStr = $ds['connection'];
             if ($this->isConnectionStringValidForRepSet($connStr)){
                 return $connStr;
             } else {
-                throw new MongoTripodConfigException("Connection string for Transaction Log must include /admin database when connecting to Replica Set");
+                throw new MongoTripodConfigException("Connection string for '{$dataSource}' must include /admin database when connecting to Replica Set");
             }
         } else {
-            return $this->tConfig['connStr'];
+            return $ds['connection'];
         }
     }
 
@@ -765,28 +914,19 @@ class MongoTripodConfig
      * @throws MongoTripodConfigException
      */
     public function getQueueConnStr() {
-        if(array_key_exists("replicaSet", $this->queueConfig) && !empty($this->queueConfig["replicaSet"])) {
-            $connStr = $this->queueConfig['connStr'];
-            if ($this->isConnectionStringValidForRepSet($connStr)){
-                return $connStr;
-            } else {
-                throw new MongoTripodConfigException("Connection string for Queue must include /admin database when connecting to Replica Set");
-            }
-        } else {
-            return $this->queueConfig['connStr'];
-        }
+        return $this->getConnStrForDataSource($this->queueConfig['data_source']);
     }
 
     /**
      * Returns a replica set name for the database, if one has been defined
-     * @param string|$dbName
+     * @param $datasource
      * @return string|null
      */
-    public function getReplicaSetName($dbName)
+    public function getReplicaSetName($datasource)
     {
-        if($this->isReplicaSet($dbName))
+        if($this->isReplicaSet($datasource))
         {
-            return $this->dbConfig[$dbName]['replicaSet'];
+            return $this->dataSources[$datasource]['replicaSet'];
         }
 
         return null;
@@ -794,14 +934,14 @@ class MongoTripodConfig
 
     /**
      * Returns a boolean reflecting whether or not a replica set has been defined for the supplied database name
-     * @param string $dbName
+     * @param $datasource
      * @return bool
      */
-    public function isReplicaSet($dbName)
+    public function isReplicaSet($datasource)
     {
-        if (array_key_exists($dbName,$this->dbConfig))
+        if (array_key_exists($datasource,$this->dataSources))
         {
-            if(array_key_exists("replicaSet",$this->dbConfig[$dbName]) && !empty($this->dbConfig[$dbName]["replicaSet"])) {
+            if(array_key_exists("replicaSet",$this->dataSources[$datasource]) && !empty($this->dataSources[$datasource]["replicaSet"])) {
                 return true;
             }
         }
@@ -810,15 +950,29 @@ class MongoTripodConfig
     }
 
     /**
+     * @param string $storeName
+     * @return null
+     */
+    public function getDefaultDataSourceForStore($storeName)
+    {
+        if(array_key_exists($storeName, $this->dbConfig))
+        {
+            return $this->dbConfig[$storeName]['data_source'];
+        }
+        return null;
+    }
+
+    /**
      * Return the view specification document for the supplied id, if it exists
+     * @param string $storeName
      * @param string $vid
      * @return array|null
      */
-    public function getViewSpecification($vid)
+    public function getViewSpecification($storeName, $vid)
     {
-        if (array_key_exists($vid,$this->viewSpecs))
+        if (isset($this->viewSpecs[$storeName]) && isset($this->viewSpecs[$storeName][$vid]))
         {
-            return $this->viewSpecs[$vid];
+            return $this->viewSpecs[$storeName][$vid];
         }
         else
         {
@@ -828,13 +982,15 @@ class MongoTripodConfig
 
     /**
      * Returns the search document specification for the supplied id, if it exists
+     * @param string $storeName
      * @param string $sid
      * @return array|null
      */
-    public function getSearchDocumentSpecification($sid)
+    public function getSearchDocumentSpecification($storeName, $sid)
     {
-        if(array_key_exists($sid, $this->searchDocSpecs)) {
-            return $this->searchDocSpecs[$sid];
+        if (array_key_exists($storeName, $this->searchDocSpecs) && array_key_exists($sid, $this->searchDocSpecs[$storeName]))
+        {
+            return $this->searchDocSpecs[$storeName][$sid];
         }
 
         return null;
@@ -843,31 +999,37 @@ class MongoTripodConfig
     /**
      * Returns an array of all search document specifications, or specification ids
      *
+     * @param string $storeName
      * @param string|null $type When supplied, will only return search document specifications that are triggered by this rdf:type
      * @param bool $justReturnSpecId default is false. If true will only return an array of specification _id's, otherwise returns the array of specification documents
      * @return array
      */
-    public function getSearchDocumentSpecifications($type=null, $justReturnSpecId=false)
+    public function getSearchDocumentSpecifications($storeName, $type=null, $justReturnSpecId=false)
     {
+
+        if(!isset($this->searchDocSpecs[$storeName]) || empty($this->searchDocSpecs[$storeName]))
+        {
+            return array();
+        }
         $specs = array();
 
         if(empty($type)){
             if($justReturnSpecId){
                 $specIds = array();
-                foreach($this->searchDocSpecs as $spec){
-                    $specIds[] = $spec[_ID_KEY];
+                foreach($this->searchDocSpecs[$storeName] as $specId=>$spec){
+                    $specIds[] = $specId;
                 }
                 return $specIds;
             } else {
-                return $this->searchDocSpecs;
+                return $this->searchDocSpecs[$storeName];
             }
         }
 
-        $labeller = new MongoTripodLabeller();
+        $labeller = $this->getLabeller();
         $typeAsUri = $labeller->uri_to_alias($type);
         $typeAsQName = $labeller->qname_to_alias($type);
 
-        foreach ($this->searchDocSpecs as $spec)
+        foreach ($this->searchDocSpecs[$storeName] as $spec)
         {
             if(is_array($spec[_ID_TYPE])){
                 if(in_array($typeAsUri, $spec[_ID_TYPE]) || in_array($typeAsQName, $spec[_ID_TYPE])){
@@ -894,14 +1056,15 @@ class MongoTripodConfig
     /**
      * Returns the requested table specification, if it exists
      *
+     * @param string $storeName
      * @param string $tid
      * @return array|null
      */
-    public function getTableSpecification($tid)
+    public function getTableSpecification($storeName, $tid)
     {
-        if (array_key_exists($tid,$this->tableSpecs))
+        if (isset($this->tableSpecs[$storeName]) && isset($this->tableSpecs[$storeName][$tid]))
         {
-            return $this->tableSpecs[$tid];
+            return $this->tableSpecs[$storeName][$tid];
         }
         else
         {
@@ -912,69 +1075,76 @@ class MongoTripodConfig
     /**
      * Returns all defined table specifications
      * @codeCoverageIgnore
+     * @param string $storeName
      * @return array
      */
-    public function getTableSpecifications()
+    public function getTableSpecifications($storeName)
     {
-        return $this->tableSpecs;
+        return (isset($this->tableSpecs[$storeName]) ? $this->tableSpecs[$storeName] : array());
     }
 
     /**
      * Returns all defined view specification
      * @codeCoverageIgnore
+     * @param string $storeName
      * @return array
      */
-    public function getViewSpecifications()
+    public function getViewSpecifications($storeName)
     {
-        return $this->viewSpecs;
+        return (isset($this->viewSpecs[$storeName])  ? $this->viewSpecs[$storeName] : array());
     }
 
 
     /**
      * This method returns a unique list of every rdf type configured in a specifications ['type'] restriction
+     * @param string $storeName
      * @return array of types
      */
-    public function getAllTypesInSpecifications()
+    public function getAllTypesInSpecifications($storeName)
     {
-        $viewTypes   = $this->getTypesInViewSpecifications();
-        $tableTypes  = $this->getTypesInTableSpecifications();
-        $searchTypes = $this->getTypesInSearchSpecifications();
+        $viewTypes   = $this->getTypesInViewSpecifications($storeName);
+        $tableTypes  = $this->getTypesInTableSpecifications($storeName);
+        $searchTypes = $this->getTypesInSearchSpecifications($storeName);
         $types = array_unique(array_merge($viewTypes, $tableTypes, $searchTypes));
         return array_values($types);
     }
 
     /**
      * Returns a unique list of every rdf type configured in the view spec ['type'] restriction
-     * @param string|null $collectionName
+     * @param string $storeName
+     * @param string|null $pod
      * @return array
      */
-    public function getTypesInViewSpecifications($collectionName=null)
+    public function getTypesInViewSpecifications($storeName, $pod=null)
     {
-        return array_unique($this->getSpecificationTypes($this->getViewSpecifications(), $collectionName));
+        return array_unique($this->getSpecificationTypes($this->getViewSpecifications($storeName), $pod));
     }
 
     /**
      * Returns a unique list of every rdf type configured in the table spec ['type'] restriction
-     * @param string|null $collectionName
+     * @param string $storeName
+     * @param string|null $pod
      * @return array
      */
-    public function getTypesInTableSpecifications($collectionName=null)
+    public function getTypesInTableSpecifications($storeName, $pod = null)
     {
-        return array_unique($this->getSpecificationTypes($this->getTableSpecifications(), $collectionName));
+        return array_unique($this->getSpecificationTypes($this->getTableSpecifications($storeName), $pod));
     }
 
     /**
      * Returns a unique list of every rdf type configured in the search doc spec ['type'] restriction
-     * @param string|null $collectionName
+     * @param string $storeName
+     * @param string|null $pod
      * @return array
      */
-    public function getTypesInSearchSpecifications($collectionName=null)
+    public function getTypesInSearchSpecifications($storeName, $pod = null)
     {
-        return array_unique($this->getSpecificationTypes($this->getSearchDocumentSpecifications(), $collectionName));
+        return array_unique($this->getSpecificationTypes($this->getSearchDocumentSpecifications($storeName), $pod));
     }
 
     /**
      * Returns an array of database names
+     * @todo Refactor this for stores/pods
      * @return array
      */
     public function getDbs()
@@ -988,8 +1158,8 @@ class MongoTripodConfig
      */
     public function destroy()
     {
-        self::$instance = NULL;
-        self::$config = NULL;
+        self::$instance = null;
+        self::$config = null;
     }
 
     /* PROTECTED FUNCTIONS */
@@ -1010,16 +1180,16 @@ class MongoTripodConfig
     /**
      * Returns a unique list of every rdf type configured in the supplied specs' ['type'] restriction
      * @param array $specifications
-     * @param string|null $collectionName
+     * @param string|null $podName
      * @return array
      */
-    private function getSpecificationTypes(Array $specifications, $collectionName=null)
+    private function getSpecificationTypes(Array $specifications, $podName=null)
     {
         $types = array();
         foreach($specifications as $spec){
 
-            if(!empty($collectionName)){
-                if($spec['from'] !== $collectionName){
+            if(!empty($podName)){
+                if($spec['from'] !== $podName){
                     continue; // skip this view spec if it isnt for the collection
                 }
             }
@@ -1134,7 +1304,7 @@ class MongoTripodConfig
     }
 
     /**
-     * Getter for transaction log connection config 
+     * Getter for transaction log connection config
      * @return array
      */
     public function getTransactionLogConfig()
@@ -1152,11 +1322,346 @@ class MongoTripodConfig
     }
 
     /**
-     * @return string
+     * @param string $storeName
+     * @return string|null
      */
-    public function getSearchProviderClassName()
+    public function getSearchProviderClassName($storeName)
     {
-        return $this->searchProviderClassName;
+        return (isset($this->searchProviderClassName[$storeName]) ? $this->searchProviderClassName[$storeName] : null);
+    }
+
+    /**
+     * @param $storeName
+     * @param string|null $dataSource
+     * @param string $readPreference
+     * @throws MongoTripodConfigException
+     * @return MongoDB
+     */
+    public function getDatabase($storeName, $dataSource = null, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    {
+        if(!isset($this->dbConfig[$storeName]))
+        {
+            throw new MongoTripodConfigException("Store name '{$storeName}' not in configuration");
+        }
+
+        if(!$dataSource)
+        {
+            $dataSource = $this->dbConfig[$storeName]["data_source"];
+        }
+
+        if(!isset($this->dataSources[$dataSource]))
+        {
+            throw new MongoTripodConfigException("Data source '{$dataSource}' not in configuration");
+        }
+        $connectionOptions = array();
+        $ds = $this->dataSources[$dataSource];
+        $connectionOptions['connectTimeoutMS'] = (isset($ds['connectTimeoutMS']) ? $ds['connectTimeoutMS'] : DEFAULT_MONGO_CONNECT_TIMEOUT_MS);
+
+        if(isset($ds['replicaSet']) && !empty($ds['replicaSet'])) {
+            $connectionOptions['replicaSet'] = $ds['replicaSet'];
+        }
+        $client = new MongoClient($ds['connection'], $connectionOptions);
+        $db = $client->selectDB($this->dbConfig[$storeName]['database']);
+        $db->setReadPreference($readPreference);
+        return $db;
+    }
+
+    /**
+     * @param MongoDB $db
+     * @param string $collectionName
+     * @return MongoCollection
+     */
+    protected function getMongoCollection(MongoDB $db, $collectionName)
+    {
+        return $db->selectCollection($collectionName);
+    }
+
+    /**
+     * @param string $storeName
+     * @param string $podName
+     * @param string $readPreference
+     * @throws MongoTripodConfigException
+     * @return MongoCollection
+     */
+    public function getCollectionForCBD($storeName, $podName, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    {
+        if(isset($this->podConnections[$storeName]) && isset($this->podConnections[$storeName][$podName]))
+        {
+            return $this->getMongoCollection(
+                $this->getDatabase($storeName, $this->podConnections[$storeName][$podName], $readPreference),
+                $podName
+            );
+        }
+        throw new MongoTripodConfigException("Collection name '{$podName}' not in configuration for store '{$storeName}'");
+    }
+
+    /**
+     * @param string $storeName
+     * @param string $viewId
+     * @param string $readPreference
+     * @throws MongoTripodConfigException
+     * @return MongoCollection
+     */
+    public function getCollectionForView($storeName, $viewId, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    {
+        if(isset($this->viewSpecs[$storeName]) && isset($this->viewSpecs[$storeName][$viewId]))
+        {
+            return $this->getMongoCollection(
+                $this->getDatabase($storeName, $this->viewSpecs[$storeName][$viewId]['to_data_source'], $readPreference),
+                VIEWS_COLLECTION
+            );
+        }
+        throw new MongoTripodConfigException("View id '{$viewId}' not in configuration for store '{$storeName}'");
+    }
+
+    /**
+     * @param string $storeName
+     * @param string $searchDocumentId
+     * @param string $readPreference
+     * @throws MongoTripodConfigException
+     * @return MongoCollection
+     */
+    public function getCollectionForSearchDocument($storeName, $searchDocumentId, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    {
+        if(array_key_exists($storeName, $this->searchDocSpecs) && array_key_exists($searchDocumentId, $this->searchDocSpecs[$storeName]))
+        {
+            return $this->getMongoCollection(
+                $this->getDatabase($storeName, $this->searchDocSpecs[$storeName][$searchDocumentId]['to_data_source'], $readPreference),
+                SEARCH_INDEX_COLLECTION
+            );
+        }
+        throw new MongoTripodConfigException("Search document id '{$searchDocumentId}' not in configuration for store '{$storeName}'");
+    }
+
+    /**
+     * @param string $storeName
+     * @param string $tableId
+     * @param string $readPreference
+     * @throws MongoTripodConfigException
+     * @return MongoCollection
+     */
+    public function getCollectionForTable($storeName, $tableId, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    {
+        if(isset($this->tableSpecs[$storeName][$tableId]) && isset($this->tableSpecs[$storeName][$tableId]))
+        {
+            return $this->getMongoCollection(
+                $this->getDatabase($storeName, $this->tableSpecs[$storeName][$tableId]['to_data_source'], $readPreference),
+                TABLE_ROWS_COLLECTION
+            );
+        }
+        throw new MongoTripodConfigException("Table id '{$tableId}' not in configuration for store '{$storeName}'");
+    }
+
+    /**
+     * @param string $storeName
+     * @param array $tables
+     * @param string $readPreference
+     * @throws MongoTripodConfigException
+     * @return MongoCollection[]
+     */
+    public function getCollectionsForTables($storeName, array $tables = array(), $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    {
+        if(!isset($this->tableSpecs[$storeName]))
+        {
+            return array();
+        }
+        if(empty($tables))
+        {
+            $tables = array_keys($this->tableSpecs[$storeName]);
+        }
+        $dataSources = array();
+        foreach($tables as $table)
+        {
+            if(isset($this->tableSpecs[$storeName][$table]))
+            {
+                $dataSources[] = $this->tableSpecs[$storeName][$table]['to_data_source'];
+            }
+            else
+            {
+                throw new MongoTripodConfigException("Table id '{$table}' not in configuration for store '{$storeName}'");
+            }
+        }
+
+        $collections = array();
+        foreach(array_unique($dataSources) as $dataSource)
+        {
+            $collections[] = $this->getMongoCollection(
+                $this->getDatabase($storeName, $dataSource, $readPreference),
+                TABLE_ROWS_COLLECTION
+            );
+        }
+        return $collections;
+    }
+
+    /**
+     * @param string $storeName
+     * @param array $views
+     * @param string $readPreference
+     * @throws MongoTripodConfigException
+     * @return MongoCollection[]
+     */
+    public function getCollectionsForViews($storeName, array $views = array(), $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    {
+        if(!isset($this->viewSpecs[$storeName]))
+        {
+            return array();
+        }
+        if(empty($views))
+        {
+            $views = array_keys($this->viewSpecs[$storeName]);
+        }
+        $dataSources = array();
+        foreach($views as $view)
+        {
+            if(isset($this->viewSpecs[$storeName][$view]))
+            {
+                $dataSources[] = $this->viewSpecs[$storeName][$view]['to_data_source'];
+            }
+            else
+            {
+                throw new MongoTripodConfigException("View id '{$view}' not in configuration for store '{$storeName}'");
+            }
+        }
+
+        $collections = array();
+        foreach(array_unique($dataSources) as $dataSource)
+        {
+            $collections[] = $this->getMongoCollection(
+                $this->getDatabase($storeName, $dataSource, $readPreference),
+                VIEWS_COLLECTION
+            );
+        }
+        return $collections;
+    }
+
+    /**
+     * @param string $storeName
+     * @param array $searchSpecIds
+     * @param string $readPreference
+     * @throws MongoTripodConfigException
+     * @return MongoCollection[]
+     */
+    public function getCollectionsForSearch($storeName, array $searchSpecIds = array(), $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    {
+        if(!isset($this->searchDocSpecs[$storeName]))
+        {
+            return array();
+        }
+        if(empty($searchSpecIds))
+        {
+            $searchSpecIds = array_keys($this->searchDocSpecs[$storeName]);
+        }
+        $dataSources = array();
+        foreach($searchSpecIds as $searchSpec)
+        {
+            if(isset($this->searchDocSpecs[$storeName][$searchSpec]))
+            {
+                $dataSources[] = $this->searchDocSpecs[$storeName][$searchSpec]['to_data_source'];
+            }
+            else
+            {
+                throw new MongoTripodConfigException("Search document spec id '{$searchSpec}' not in configuration for store '{$storeName}'");
+            }
+        }
+
+        $collections = array();
+        foreach(array_unique($dataSources) as $dataSource)
+        {
+            $collections[] = $this->getMongoCollection(
+                $this->getDatabase($storeName, $dataSource, $readPreference),
+                SEARCH_INDEX_COLLECTION
+            );
+        }
+        return $collections;
+    }
+
+    /**
+     * @param string $storeName
+     * @param string $readPreference
+     * @return MongoCollection
+     */
+    public function getCollectionForTTLCache($storeName, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    {
+        return $this->getMongoCollection(
+            $this->getDatabase($storeName, $this->dbConfig[$storeName]['data_source'], $readPreference),
+            TTL_CACHE_COLLECTION
+        );
+    }
+
+    /**
+     * @param string $storeName
+     * @param string $readPreference
+     * @return MongoCollection
+     */
+    public function getCollectionForLocks($storeName, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    {
+        return $this->getMongoCollection(
+            $this->getDatabase($storeName, $this->dbConfig[$storeName]['data_source'], $readPreference),
+            LOCKS_COLLECTION
+        );
+    }
+
+    /**
+     * @param string $storeName
+     * @param string $readPreference
+     * @return MongoCollection
+     */
+    public function getCollectionForManualRollbackAudit($storeName, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    {
+        return $this->getMongoCollection(
+            $this->getDatabase($storeName, $this->dbConfig[$storeName]['data_source'], $readPreference),
+            AUDIT_MANUAL_ROLLBACKS_COLLECTION
+        );
+    }
+
+    /**
+     * @param $readPreference
+     * @return MongoDB
+     * @throws MongoTripodConfigException
+     */
+    public function getQueueDatabase($readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    {
+
+        if(!isset($this->dataSources[$this->queueConfig['data_source']]))
+        {
+            throw new MongoTripodConfigException("Data source '" . $this->queueConfig['data_source'] . "' not in configuration");
+        }
+        $connectionOptions = array();
+        $dataSource = $this->dataSources[$this->queueConfig['data_source']];
+        $connectionOptions['connectTimeoutMS'] = (isset($dataSource['connectTimeoutMS']) ? $dataSource['connectTimeoutMS'] : DEFAULT_MONGO_CONNECT_TIMEOUT_MS);
+
+        if(isset($dataSource['replicaSet']) && !empty($dataSource['replicaSet'])) {
+            $connectionOptions['replicaSet'] = $dataSource['replicaSet'];
+        }
+        $client = new MongoClient($dataSource['connection'], $connectionOptions);
+        $db = $client->selectDB($this->queueConfig['database']);
+        $db->setReadPreference($readPreference);
+        return $db;
+    }
+
+    /**
+     * @param $readPreference
+     * @return MongoDB
+     * @throws MongoTripodConfigException
+     */
+    public function getTransactionLogDatabase($readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    {
+
+        if(!isset($this->dataSources[$this->tConfig['data_source']]))
+        {
+            throw new MongoTripodConfigException("Data source '" . $this->tConfig['data_source'] . "' not in configuration");
+        }
+        $connectionOptions = array();
+        $dataSource = $this->dataSources[$this->tConfig['data_source']];
+        $connectionOptions['connectTimeoutMS'] = (isset($dataSource['connectTimeoutMS']) ? $dataSource['connectTimeoutMS'] : DEFAULT_MONGO_CONNECT_TIMEOUT_MS);
+
+        if(isset($dataSource['replicaSet']) && !empty($dataSource['replicaSet'])) {
+            $connectionOptions['replicaSet'] = $dataSource['replicaSet'];
+        }
+        $client = new MongoClient($dataSource['connection'], $connectionOptions);
+        $db = $client->selectDB($this->queueConfig['database']);
+        $db->setReadPreference($readPreference);
+        return $db;
     }
 }
 class MongoTripodConfigException extends Exception {}

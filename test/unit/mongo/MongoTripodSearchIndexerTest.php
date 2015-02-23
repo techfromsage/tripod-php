@@ -11,9 +11,11 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
         parent::setUp();
         $queue = new MongoTripodQueue();
         $queue->purgeQueue();
-        $this->tripod = new MongoTripod("CBD_testing", "testing", array("async"=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>false)));
-        $this->tripod->db->selectCollection(SEARCH_INDEX_COLLECTION)->drop();
-        $this->tripod->collection->drop();
+        $this->tripod = new MongoTripod("CBD_testing", "tripod_php_testing", array("async"=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>false)));
+        foreach(MongoTripodConfig::getInstance()->getCollectionsForSearch($this->tripod->getStoreName()) as $collection)
+        {
+            $collection->drop();
+        }
         $this->loadBaseDataViaTripod();
         $this->loadBaseSearchDataViaTripod();
     }
@@ -26,7 +28,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             array('getSearchIndexer', 'getDataUpdater'),
             array(
                 'CBD_testing',
-                'testing',
+                'tripod_php_testing',
                 array(
                     'defaultContext'=>'http://talisaspire.com/',
                     'async'=>array(
@@ -102,7 +104,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             array('getSearchIndexer'),
             array(
                 'CBD_testing',
-                'testing',
+                'tripod_php_testing',
                 array(
                     'defaultContext'=>'http://talisaspire.com/',
                     'async'=>array(
@@ -163,7 +165,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             array('getSearchIndexer'),
             array(
                 'CBD_testing',
-                'testing',
+                'tripod_php_testing',
                 array(
                     'defaultContext'=>'http://talisaspire.com/',
                     'async'=>array(
@@ -230,7 +232,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             array('getSearchIndexer', 'getDataUpdater'),
             array(
                 'CBD_testing',
-                'testing',
+                'tripod_php_testing',
                 array(
                     'defaultContext'=>'http://talisaspire.com/',
                     'async'=>array(

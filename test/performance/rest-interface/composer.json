@@ -1,0 +1,13 @@
+{
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/talis/tripod-php"
+        }
+    ],
+    "require": {
+        "slim/slim": "2.*",
+        "monolog/monolog": "1.2.*",
+        "talis/tripod-php" : "*"
+    }
+}

@@ -6,22 +6,29 @@ $TOTAL_TIME=0;
 
 abstract class MongoTripodBase
 {
-    //todo: I don't like this being public, can we hide it?
-    /**
-     * @var MongoDB
-     */
-    public $db;
-
     /**
      * @var MongoCollection
      */
-    public $collection;
+    protected $collection;
 
-    protected $dbName;
-    protected $collectionName;
+    /**
+     * @var string
+     */
+    protected $storeName;
 
+    /**
+     * @var string
+     */
+    protected $podName;
+
+    /**
+     * @var $podName
+     */
     protected $defaultContext;
 
+    /**
+     * @var iTripodStat
+     */
     protected $stat = null;
 
     /**
@@ -56,26 +63,26 @@ abstract class MongoTripodBase
     /**
      * @param $query
      * @param $type
-     * @param null $collectionName
+     * @param MongoCollection|null $collection
      * @param array $includeProperties
      * @param int $cursorSize
      * @return MongoGraph
      */
-    protected function fetchGraph($query, $type, $collectionName=null,$includeProperties=array(), $cursorSize=101)
+    protected function fetchGraph($query, $type, $collection=null,$includeProperties=array(), $cursorSize=101)
     {
         $graph = new MongoGraph();
 
         $t = new Timer();
         $t->start();
 
-        if ($collectionName==null)
+        if ($collection==null)
         {
             $collection = $this->collection;
             $collectionName = $collection->getName();
         }
         else
         {
-            $collection = $this->db->selectCollection($collectionName);
+            $collectionName = $collection->getName();
         }
 
         if (empty($includeProperties))
@@ -138,14 +145,14 @@ abstract class MongoTripodBase
         return $graph;
     }
 
-    public function getDBName()
+    public function getStoreName()
     {
-        return $this->dbName;
+        return $this->storeName;
     }
 
-    public function getCollectionName()
+    public function getPodName()
     {
-        return $this->collectionName;
+        return $this->podName;
     }
 
     ///////// LOGGING METHODS BELOW ////////
@@ -281,6 +288,15 @@ abstract class MongoTripodBase
                 $this->addIdToImpactIndex($i, $target);
             }
         }
+    }
+
+    /**
+     * For mocking
+     * @return MongoTripodConfig
+     */
+    protected function getMongoTripodConfigInstance()
+    {
+        return MongoTripodConfig::getInstance();
     }
 }
 

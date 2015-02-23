@@ -5,17 +5,18 @@ class MongoTripodSearchDocuments extends MongoTripodBase
     /**
      * Construct accepts actual objects rather than strings as this class is a delegate of
      * MongoTripod and should inherit connections set up there
-     * @param MongoDB $db
+     * @param string $storeName
      * @param MongoCollection $collection
      * @param $defaultContext
      * @param null $stat
+     * @internal param \MongoDB $db
      */
-    function __construct(MongoDB $db,MongoCollection $collection,$defaultContext, $stat=null)
+    function __construct($storeName, MongoCollection $collection, $defaultContext, $stat=null)
     {
         $this->labeller = new MongoTripodLabeller();
-        $this->db = $db;
+        $this->storeName = $storeName;
         $this->collection = $collection;
-        $this->collectionName = $collection->getName();
+        $this->podName = $collection->getName();
         $this->defaultContext = $defaultContext;
         $this->stat = $stat;
     }
@@ -43,7 +44,7 @@ class MongoTripodSearchDocuments extends MongoTripodBase
         }
         else
         {
-            $from = $this->collectionName;
+            $from = $this->podName;
         }
 
         $specId = $searchSpec['_id'];
@@ -56,12 +57,12 @@ class MongoTripodSearchDocuments extends MongoTripodBase
             // run a query to work out
             if (!empty($indexRules['condition']))
             {
-                $irFrom = (!empty($indexRules['from'])) ? $indexRules['from'] : $this->collectionName;
+                $irFrom = (!empty($indexRules['from'])) ? $indexRules['from'] : $this->podName;
                 // add id of current record to rules..
                 $indexRules['condition']['_id'] = array(
                     'r'=>$this->labeller->uri_to_alias($resource),
                     'c'=>$this->labeller->uri_to_alias($context));				
-                if ($this->db->selectCollection($irFrom)->find($indexRules['condition'])->hasNext())
+                if (MongoTripodConfig::getInstance()->getCollectionForCBD($this->storeName, $irFrom)->find($indexRules['condition'])->hasNext())
                 {
                     // match found, add this spec id to those that should be generated
                    $proceedWithGeneration = true;
@@ -84,7 +85,7 @@ class MongoTripodSearchDocuments extends MongoTripodBase
             'c'=>$this->labeller->uri_to_alias($context)
         );
 
-        $sourceDocument = $this->db->selectCollection($from)->findOne(array('_id'=>$_id));
+        $sourceDocument = MongoTripodConfig::getInstance()->getCollectionForCBD($this->storeName, $from)->findOne(array('_id'=>$_id));
 
         if(empty($sourceDocument)){
             $this->debugLog("Source document not found for $resource, cannot proceed");
@@ -98,8 +99,15 @@ class MongoTripodSearchDocuments extends MongoTripodBase
         $_id['type'] = $specId;
         $generatedDocument['_id'] = $_id;
 
-        $this->db->selectCollection($this->getSearchCollectionName())->ensureIndex(array('_id.type'=>1),array('background'=>1));
-        $this->db->selectCollection($this->getSearchCollectionName())->ensureIndex(array('_impactIndex'=>1),array('background'=>1));
+        MongoTripodConfig::getInstance()->getCollectionForSearchDocument(
+            $this->storeName,
+            $specId)
+            ->ensureIndex(array('_id.type'=>1),array('background'=>1));
+
+        MongoTripodConfig::getInstance()->getCollectionForSearchDocument(
+            $this->storeName,
+            $specId)
+            ->ensureIndex(array('_impactIndex'=>1),array('background'=>1));
 
         if(isset($searchSpec['fields'])){  	
             $this->addFields($sourceDocument, $searchSpec['fields'], $generatedDocument);
@@ -133,7 +141,7 @@ class MongoTripodSearchDocuments extends MongoTripodBase
 
         foreach($rdfTypes as $rdfType)
         {
-            $specs = MongoTripodConfig::getInstance()->getSearchDocumentSpecifications($rdfType);
+            $specs = MongoTripodConfig::getInstance()->getSearchDocumentSpecifications($this->storeName, $rdfType);
 
             if(empty($specs)) continue; // no point doing anything else if there is no spec for the type
 
@@ -151,7 +159,7 @@ class MongoTripodSearchDocuments extends MongoTripodBase
     {
         // expand sequences before proceeding
         $this->expandSequence($joins, $source);
-
+        $config = MongoTripodConfig::getInstance();
         foreach($joins as $predicate=>$rules){
             if(isset($source[$predicate])){
                 $joinUris = array();
@@ -167,12 +175,17 @@ class MongoTripodSearchDocuments extends MongoTripodBase
                 }
 
                 $recursiveJoins = array();
-                $collection = (isset($rules['from'])) ? $this->db->selectCollection($rules['from']) : $this->db->selectCollection($from);
+
+                $collection = (isset($rules['from'])
+                    ? $config->getCollectionForCBD($this->storeName, $rules['from'])
+                    : $config->getCollectionForCBD($this->storeName, $from)
+                );
+
                 $cursor = $collection->find(array('_id'=>array('$in'=>$joinUris)));
                 // add to impact index
                 $this->addIdToImpactIndex($joinUris, $target);
                 foreach($cursor as $linkMatch)
-                {               
+                {
                     if(isset($rules['fields'])){
                         $this->addFields($linkMatch, $rules['fields'], $target);
                     }
@@ -240,7 +253,7 @@ class MongoTripodSearchDocuments extends MongoTripodBase
     
     protected function getSearchDocumentSpecification($specId)
     {
-    	return MongoTripodConfig::getInstance()->getSearchDocumentSpecification($specId);
+    	return MongoTripodConfig::getInstance()->getSearchDocumentSpecification($this->storeName, $specId);
     }
 
     private function addValuesToTarget($values, $field, &$target)

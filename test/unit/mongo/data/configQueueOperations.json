@@ -18,9 +18,16 @@
         "baseData":"http://basedata.com/b/"
     },
     "defaultContext":"http://talisaspire.com/",
-    "databases" : {
-        "testing" : {
-            "collections" : {
+    "data_sources" : {
+        "rs1" : {
+            "type" : "mongo",
+            "connection": "mongodb:\/\/localhost",
+            "replicaSet": ""
+        }
+    },
+    "stores" : {
+        "tripod_php_testing_queue_ops" : {
+            "pods" : {
                 "CBD_testing" : {
                     "cardinality" : {
                         "dct:created" : 1
@@ -35,180 +42,181 @@
                     }
                 }
             },
-            "connStr" : "mongodb://localhost"
-        }
-    },
-    "view_specifications" : [
-        {
-            "_id": "v_resource",
-            "_version": "0.1",
-            "from":"CBD_testing",
-            "type": ["bibo:Book"],
-            "joins": {
-                "dct:creator": {}
-            }
-        }
-    ],
-    "search_config":{
-        "search_provider":"MongoSearchProvider",
-        "search_specifications":[
-            {
-                "_id":"i_search_resource",
-                "type":["bibo:Book"],
-                "from":"CBD_testing",
-                "filter":[
+            "data_source" : "rs1",
+            "view_specifications" : [
+                {
+                    "_id": "v_resource",
+                    "_version": "0.1",
+                    "from":"CBD_testing",
+                    "type": ["bibo:Book"],
+                    "joins": {
+                        "dct:creator": {}
+                    }
+                }
+            ],
+            "search_config":{
+                "search_provider":"MongoSearchProvider",
+                "search_specifications":[
                     {
-                        "condition":{
-                            "dct:title.l":{
-                                "$exists":true
+                        "_id":"i_search_resource",
+                        "type":["bibo:Book"],
+                        "from":"CBD_testing",
+                        "filter":[
+                            {
+                                "condition":{
+                                    "dct:title.l":{
+                                        "$exists":true
+                                    }
+                                }
                             }
-                        }
-                    }
-                ],
-                "indices":[
-                    {
-                        "fieldName": "search_terms",
-                        "predicates": ["dct:title", "dct:subject"]
-                    },
-                    {
-                        "fieldName": "other_terms",
-                        "predicates": ["rdf:type"]
-                    }
-
-                ],
-                "fields":[
-                    {
-                        "fieldName":"result.title",
-                        "predicates":["dct:title"],
-                        "limit" : 1
-                    },
-                    {
-                        "fieldName":"result.link",
-                        "value":"_link_"
-                    },
-                    {
-                        "fieldName":"rdftype",
-                        "predicates":["rdf:type"],
-                        "limit": 1
-                    }
-                ],
-                "joins":{
-                    "dct:creator":{
+                        ],
                         "indices":[
                             {
-                                "fieldName":"search_terms",
-                                "predicates":["foaf:name"]
+                                "fieldName": "search_terms",
+                                "predicates": ["dct:title", "dct:subject"]
+                            },
+                            {
+                                "fieldName": "other_terms",
+                                "predicates": ["rdf:type"]
+                            }
+
+                        ],
+                        "fields":[
+                            {
+                                "fieldName":"result.title",
+                                "predicates":["dct:title"],
+                                "limit" : 1
+                            },
+                            {
+                                "fieldName":"result.link",
+                                "value":"_link_"
+                            },
+                            {
+                                "fieldName":"rdftype",
+                                "predicates":["rdf:type"],
+                                "limit": 1
+                            }
+                        ],
+                        "joins":{
+                            "dct:creator":{
+                                "indices":[
+                                    {
+                                        "fieldName":"search_terms",
+                                        "predicates":["foaf:name"]
+                                    }
+                                ],
+                                "fields":[
+                                    {
+                                        "fieldName":"result.author",
+                                        "predicates":["foaf:name"],
+                                        "limit" : 1
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        "_id":"i_search_author",
+                        "type":["foaf:Person"],
+                        "from":"CBD_testing",
+                        "filter":[
+                            {
+                                "condition":{
+                                    "foaf:name.l":{
+                                        "$exists":true
+                                    }
+                                }
+                            }
+                        ],
+                        "indices":[
+                            {
+                                "fieldName": "search_terms",
+                                "predicates": ["foaf:name"]
                             }
                         ],
                         "fields":[
                             {
-                                "fieldName":"result.author",
+                                "fieldName":"result.name",
                                 "predicates":["foaf:name"],
                                 "limit" : 1
+                            },
+                            {
+                                "fieldName":"result.link",
+                                "value":"_link_"
+                            },
+                            {
+                                "fieldName":"rdftype",
+                                "predicates":["rdf:type"],
+                                "limit": 1
                             }
                         ]
                     }
-                }
-            },
-            {
-                "_id":"i_search_author",
-                "type":["foaf:Person"],
-                "from":"CBD_testing",
-                "filter":[
-                    {
-                        "condition":{
-                            "foaf:name.l":{
-                                "$exists":true
-                            }
-                        }
-                    }
-                ],
-                "indices":[
-                    {
-                        "fieldName": "search_terms",
-                        "predicates": ["foaf:name"]
-                    }
-                ],
-                "fields":[
-                    {
-                        "fieldName":"result.name",
-                        "predicates":["foaf:name"],
-                        "limit" : 1
-                    },
-                    {
-                        "fieldName":"result.link",
-                        "value":"_link_"
-                    },
-                    {
-                        "fieldName":"rdftype",
-                        "predicates":["rdf:type"],
-                        "limit": 1
-                    }
                 ]
-            }
-        ]
-    },
-    "table_specifications" : [
-        {
-            "_id": "t_resource",
-            "type": "bibo:Book",
-            "from":"CBD_testing",
-            "fields": [
+            },
+            "table_specifications" : [
                 {
-                    "fieldName": "title",
-                    "predicates": ["dct:title"]
-                },
-                {
-                    "fieldName": "type",
-                    "predicates": ["rdf:type"]
-                }
-            ],
-            "joins" : {
-                "dct:creator" : {
-                    "fields" : [
+                    "_id": "t_resource",
+                    "type": "bibo:Book",
+                    "from":"CBD_testing",
+                    "fields": [
                         {
-                            "fieldName" : "author",
-                            "predicates": ["foaf:name"]
-                        }
-                    ]
-                }
-            }
-        },
-        {
-            "_id": "t_authors",
-            "type": "bibo:Book",
-            "from":"CBD_testing",
-            "fields": [
-                {
-                    "fieldName": "title",
-                    "predicates": ["dct:title"]
-                }
-            ],
-            "joins" : {
-                "dct:creator" : {
-                    "fields" : [
-                        {
-                            "fieldName" : "author",
-                            "predicates": ["foaf:name"]
+                            "fieldName": "title",
+                            "predicates": ["dct:title"]
                         },
                         {
-                            "fieldName": "dob",
-                            "predicates": ["foaf:dob"]
+                            "fieldName": "type",
+                            "predicates": ["rdf:type"]
                         }
-                    ]
+                    ],
+                    "joins" : {
+                        "dct:creator" : {
+                            "fields" : [
+                                {
+                                    "fieldName" : "author",
+                                    "predicates": ["foaf:name"]
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "_id": "t_authors",
+                    "type": "bibo:Book",
+                    "from":"CBD_testing",
+                    "fields": [
+                        {
+                            "fieldName": "title",
+                            "predicates": ["dct:title"]
+                        }
+                    ],
+                    "joins" : {
+                        "dct:creator" : {
+                            "fields" : [
+                                {
+                                    "fieldName" : "author",
+                                    "predicates": ["foaf:name"]
+                                },
+                                {
+                                    "fieldName": "dob",
+                                    "predicates": ["foaf:dob"]
+                                }
+                            ]
+                        }
+                    }
                 }
-            }
+            ]
         }
-    ],
+    },
+
     "transaction_log" : {
-        "database" : "testing",
+        "database" : "tripod_php_testing_queue_ops",
         "collection" : "transaction_log",
-        "connStr" : "mongodb://localhost"
+        "data_source" : "rs1"
     },
     "queue" : {
-        "database" : "testing",
+        "database" : "tripod_php_testing_queue_ops",
         "collection" : "q_queue",
-        "connStr" : "mongodb://localhost"
+        "data_source" : "rs1"
     }
 
 }

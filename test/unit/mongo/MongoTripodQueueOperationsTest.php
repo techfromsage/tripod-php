@@ -51,22 +51,32 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
         $this->tripodQueue = new MongoTripodQueue();
         $this->tripodQueue->purgeQueue();
 
-        $this->tripod = new MongoTripod('CBD_testing','testing',array('defaultContext'=>'http://talisaspire.com/','async'=>array(OP_VIEWS=>false, OP_TABLES=>false, OP_SEARCH=>false)));
-        $this->tripod->collection->drop();
+        $this->tripod = new MongoTripod('CBD_testing','tripod_php_testing_queue_ops',array('defaultContext'=>'http://talisaspire.com/','async'=>array(OP_VIEWS=>false, OP_TABLES=>false, OP_SEARCH=>false)));
+        $this->getTripodCollection($this->tripod)->drop();
+        $config = MongoTripodConfig::getInstance();
 
-        $this->tripod->db->selectCollection(VIEWS_COLLECTION)->drop();
-        $this->tripod->db->selectCollection(TABLE_ROWS_COLLECTION)->drop();
-        $this->tripod->db->selectCollection(SEARCH_INDEX_COLLECTION)->drop();
+        foreach($config->getCollectionsForViews($this->tripod->getStoreName()) as $collection)
+        {
+            $collection->drop;
+        }
+        foreach($config->getCollectionsForSearch($this->tripod->getStoreName()) as $collection)
+        {
+            $collection->drop;
+        }
+        foreach($config->getCollectionsForTables($this->tripod->getStoreName()) as $collection)
+        {
+            $collection->drop;
+        }
 
         $this->loadBaseSearchDataViaTripod();
 
         $this->tripod->getTripodViews()->generateViewsForResourcesOfType("bibo:Book");
         $this->tripod->getTripodTables()->generateTableRowsForType("bibo:Book");
         // index all the documents
-        $cursor = $this->tripod->collection->find(array("rdf:type.u"=>array('$in'=>array("bibo:Book","foaf:Person"))),array('_id'=>1));//->limit(20);
+        $cursor = $this->getTripodCollection($this->tripod)->find(array("rdf:type.u"=>array('$in'=>array("bibo:Book","foaf:Person"))),array('_id'=>1));//->limit(20);
         foreach($cursor as $result)
-        { 
-            $this->tripod->getSearchIndexer()->generateAndIndexSearchDocuments($result['_id']['r'], $result['_id']['c'], $this->tripod->getCollectionName());
+        {
+            $this->tripod->getSearchIndexer()->generateAndIndexSearchDocuments($result['_id']['r'], $result['_id']['c'], $this->tripod->getPodName());
         }
     }
 
@@ -76,7 +86,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
     public function testSingleItemIsAddedToQueueForChangeToSubjectThatDoesNotImpactAnything()
     {
         // create a tripod instance that will send all operations to the queue
-        $tripod = new MongoTripod('CBD_testing','testing', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
+        $tripod = new MongoTripod('CBD_testing','tripod_php_testing_queue_ops', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
         $g1 = $tripod->describeResource("http://talisaspire.com/resources/doc1");
         $g2 = $tripod->describeResource("http://talisaspire.com/resources/doc1");
         $g2->add_literal_triple("http://talisaspire.com/resources/doc1", $g2->qname_to_uri("dct:subject"),"astrophysics");
@@ -101,7 +111,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
         $this->tripod->getTripodTables()->generateTableRowsForType("bibo:Book");
 
         // create a tripod instance that will send all operations to the queue
-        $tripod = new MongoTripod('CBD_testing','testing', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
+        $tripod = new MongoTripod('CBD_testing','tripod_php_testing_queue_ops', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
         $g1 = $tripod->describeResource("http://talisaspire.com/authors/1");
         $g2 = $tripod->describeResource("http://talisaspire.com/authors/1");
 
@@ -162,7 +172,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
     public function testItemAddedToQueueForSubjectNeverSeenBefore()
     {
         // create a tripod instance that will send all operations to the queue
-        $tripod = new MongoTripod('CBD_testing','testing', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
+        $tripod = new MongoTripod('CBD_testing','tripod_php_testing_queue_ops', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
 
         // first lets add a book, which should trigger a search doc, view and table gen for a single item
         $g = new MongoGraph();
@@ -211,7 +221,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
     public function testItemNotAddedToQueueForSubjectNeverSeenBeforeThatHasNoApplicableType()
     {
         // create a tripod instance that will send all operations to the queue
-        $tripod = new MongoTripod('CBD_testing','testing', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
+        $tripod = new MongoTripod('CBD_testing','tripod_php_testing_queue_ops', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
 
         // first lets add a book, which should trigger a search doc, view and table gen for a single item
         $g = new MongoGraph();
@@ -234,7 +244,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
     public function testItemAddedToQueueForUpdatedSubjectWithApplicableType()
     {
         // create a tripod instance that will send all operations to the queue
-        $tripod = new MongoTripod('CBD_testing','testing', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
+        $tripod = new MongoTripod('CBD_testing','tripod_php_testing_queue_ops', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
 
         // first lets add a book, which should trigger a search doc, view and table gen for a single item
         $g = new MongoGraph();
@@ -270,7 +280,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
     public function testSavingMultipleNewEntitiesWhereOnlyOneIsApplicable()
     {
         // create a tripod instance that will send all operations to the queue
-        $tripod = new MongoTripod('CBD_testing','testing', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
+        $tripod = new MongoTripod('CBD_testing','tripod_php_testing_queue_ops', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
 
         // first lets add a book, which should trigger a search doc, view and table gen for a single item
         $g = new MongoGraph();
@@ -320,14 +330,14 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
     public function testChangingResourceTypeQueuesOneItemWillDeleteTheOldViewsTablesAndSearchDocs()
     {
         // create a tripod instance that will send all operations to the queue
-        $tripod = new MongoTripod('CBD_testing','testing', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
+        $tripod = new MongoTripod('CBD_testing','tripod_php_testing_queue_ops', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
 
         $subjectUri = "http://talisaspire.com/resources/doc1";
 
         // before we do anything assert that there is a view, table_row and search doc already generated for this resource
-        $view        = $tripod->db->selectCollection(VIEWS_COLLECTION)->findOne(array('_id.r'=>$subjectUri));
-        $tableRow    = $tripod->db->selectCollection(TABLE_ROWS_COLLECTION)->findOne(array('_id.r'=>$subjectUri));
-        $searchDoc   = $tripod->db->selectCollection(SEARCH_INDEX_COLLECTION)->findOne(array('_id.r'=>$subjectUri));
+        $view = $this->findOneView($tripod, array('_id.r'=>$subjectUri));
+        $tableRow = $this->findOneTableRow($tripod, array('_id.r'=>$subjectUri));
+        $searchDoc = $this->findOneSearchDocument($tripod, array('_id.r'=>$subjectUri));
         $this->assertEquals($view['_id']['r'], $subjectUri);
         $this->assertEquals($tableRow['_id']['r'], $subjectUri);
         $this->assertEquals($searchDoc['_id']['r'], $subjectUri);
@@ -356,9 +366,9 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
 
         // the result should be that the view, table_row and search document has been deleted, so retrieve each
         // and confirm that each is NULL i.e. does not exist in the db anymore
-        $view        = $tripod->db->selectCollection(VIEWS_COLLECTION)->findOne(array('_id.r'=>$subjectUri));
-        $tableRow    = $tripod->db->selectCollection(TABLE_ROWS_COLLECTION)->findOne(array('_id.r'=>$subjectUri));
-        $searchDoc   = $tripod->db->selectCollection(SEARCH_INDEX_COLLECTION)->findOne(array('_id.r'=>$subjectUri));
+        $view = $this->findOneView($tripod, array('_id.r'=>$subjectUri));
+        $tableRow = $this->findOneTableRow($tripod, array('_id.r'=>$subjectUri));
+        $searchDoc = $this->findOneSearchDocument($tripod, array('_id.r'=>$subjectUri));
         $this->assertNull($view);
         $this->assertNull($tableRow);
         $this->assertNull($searchDoc);
@@ -375,7 +385,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
     public function testChangingTypeOfResourceThatImpactsOthers()
     {
         // create a tripod instance that will send all operations to the queue
-        $tripod = new MongoTripod('CBD_testing','testing', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
+        $tripod = new MongoTripod('CBD_testing','tripod_php_testing_queue_ops', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
 
         $subjectUri = "http://talisaspire.com/authors/1";
         $expectedQueuedItems = array(
@@ -399,17 +409,17 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
                 switch($op){
                     case OP_SEARCH:
                         echo "Asserting Search Doc exists for $id\n";
-                        $s = $tripod->db->selectCollection(SEARCH_INDEX_COLLECTION)->findOne(array('_id.r'=>$id));
+                        $s = $this->findOneSearchDocument($tripod, array('_id.r'=>$id));
                         $this->assertNotNull($s, "Search doc for $id should exist");
                         break;
                     case OP_VIEWS:
                         echo "Asserting View exists for $id\n";
-                        $v = $tripod->db->selectCollection(VIEWS_COLLECTION)->findOne(array('_id.r'=>$id));
+                        $v = $this->findOneView($tripod, array('_id.r'=>$id));
                         $this->assertNotNull($v, "View for $id should exist");
                         break;
                     case OP_TABLES:
                         echo "Asserting Table row exists for $id\n";
-                        $t = $tripod->db->selectCollection(TABLE_ROWS_COLLECTION)->findOne(array('_id.r'=>$id));
+                        $t = $this->findOneTableRow($tripod, array('_id.r'=>$id));
                         $this->assertNotNull($t, "Table row doc for $id should exist");
                         break;
                 }
@@ -441,7 +451,6 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
             $queuedItemData['operations'];
             $expectedItemOpsCount = count($expectedQueuedItems[$queuedItemRId]["operations"]);
             $this->assertEquals($expectedItemOpsCount, $queuedItemOpsCount, "Queued Item does not contain the expected number of operations");
-
             // assert queued item operations appear in the expected item operations
             foreach($queuedItemData['operations'] as $op){
                 $this->assertContains($op, $expectedQueuedItems[$queuedItemRId]["operations"], "$op was not found in set of Expected Operations for this queued item");
@@ -465,8 +474,13 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
 
         // by this point the queued items are asserted and each item has been processed
         // now assert that the search doc for the author that we changed has been deleted
-        $s = $tripod->db->selectCollection(SEARCH_INDEX_COLLECTION)->findOne(array('_id.r'=>$subjectUri));
+        // Note, *only* i_search_author should have been affected by the changed graph, there should still be a
+        // matching search document for i_search_resource
+        $s = $this->findOneSearchDocument($tripod, array('_id.r'=>$id, '_id.type'=>"i_search_author"));
         $this->assertNull($s);
+
+        $s = $this->findOneSearchDocument($tripod, array('_id.r'=>$id, '_id.type'=>"i_search_resource"));
+        $this->assertNotNull($s);
         // remove it from the expectedQueuedItems structure so we can verify the others
         unset($expectedQueuedItems[$subjectUri]);
 
@@ -476,17 +490,17 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
                 switch($op){
                     case OP_SEARCH:
                         echo "Asserting Search Doc exists for $id\n";
-                        $s = $tripod->db->selectCollection(SEARCH_INDEX_COLLECTION)->findOne(array('_id.r'=>$id));
+                        $s = $this->findOneSearchDocument($tripod, array('_id.r'=>$id));
                         $this->assertNotNull($s, "Search doc for $id should exist");
                         break;
                     case OP_VIEWS:
                         echo "Asserting View exists for $id\n";
-                        $v = $tripod->db->selectCollection(VIEWS_COLLECTION)->findOne(array('_id.r'=>$id));
+                        $v = $this->findOneView($tripod, array('_id.r'=>$id));
                         $this->assertNotNull($v, "View for $id should exist");
                         break;
                     case OP_TABLES:
                         echo "Asserting Table row exists for $id\n";
-                        $t = $tripod->db->selectCollection(TABLE_ROWS_COLLECTION)->findOne(array('_id.r'=>$id));
+                        $t = $this->findOneTableRow($tripod, array('_id.r'=>$id));
                         $this->assertNotNull($t, "Table row doc for $id should exist");
                         break;
                 }
@@ -504,14 +518,14 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
     public function testDeleteSingleResourceWithNoImpactQueuesSingleItem()
     {
         // create a tripod instance that will send all operations to the queue
-        $tripod = new MongoTripod('CBD_testing','testing', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
+        $tripod = new MongoTripod('CBD_testing','tripod_php_testing_queue_ops', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
 
         $subjectUri = "http://talisaspire.com/resources/doc1";
 
         // before we do anything assert that there is a view, table_row and search doc already generated for this resource
-        $view        = $tripod->db->selectCollection(VIEWS_COLLECTION)->findOne(array('_id.r'=>$subjectUri));
-        $tableRow    = $tripod->db->selectCollection(TABLE_ROWS_COLLECTION)->findOne(array('_id.r'=>$subjectUri));
-        $searchDoc   = $tripod->db->selectCollection(SEARCH_INDEX_COLLECTION)->findOne(array('_id.r'=>$subjectUri));
+        $view = $this->findOneView($tripod, array('_id.r'=>$subjectUri));
+        $tableRow = $this->findOneTableRow($tripod, array('_id.r'=>$subjectUri));
+        $searchDoc = $this->findOneSearchDocument($tripod, array('_id.r'=>$subjectUri));
         $this->assertEquals($view['_id']['r'], $subjectUri);
         $this->assertEquals($tableRow['_id']['r'], $subjectUri);
         $this->assertEquals($searchDoc['_id']['r'], $subjectUri);
@@ -539,9 +553,9 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
 
         // the result should be that the view, table_row and search document has been deleted, so retrieve each
         // and confirm that each is NULL i.e. does not exist in the db anymore
-        $view        = $tripod->db->selectCollection(VIEWS_COLLECTION)->findOne(array('_id.r'=>$subjectUri));
-        $tableRow    = $tripod->db->selectCollection(TABLE_ROWS_COLLECTION)->findOne(array('_id.r'=>$subjectUri));
-        $searchDoc   = $tripod->db->selectCollection(SEARCH_INDEX_COLLECTION)->findOne(array('_id.r'=>$subjectUri));
+        $view = $this->findOneView($tripod, array('_id.r'=>$subjectUri));
+        $tableRow = $this->findOneTableRow($tripod, array('_id.r'=>$subjectUri));
+        $searchDoc = $this->findOneSearchDocument($tripod, array('_id.r'=>$subjectUri));
         $this->assertNull($view);
         $this->assertNull($tableRow);
         $this->assertNull($searchDoc);
@@ -557,14 +571,14 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
     public function testDeleteSingleResourceWithNoImpactButNoExistingViewsTablesSearchDocsDoesntQueueAnything()
     {
         // create a tripod instance that will send all operations to the queue
-        $tripod = new MongoTripod('CBD_testing','testing', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
+        $tripod = new MongoTripod('CBD_testing','tripod_php_testing_queue_ops', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
 
         $subjectUri = "http://talisaspire.com/resources/doc1";
 
         // before we do anything remove any existing views/tables/search docs for this resource
-        $tripod->db->selectCollection(VIEWS_COLLECTION)->remove(array('_id.r'=>$subjectUri));
-        $tripod->db->selectCollection(TABLE_ROWS_COLLECTION)->remove(array('_id.r'=>$subjectUri));
-        $tripod->db->selectCollection(SEARCH_INDEX_COLLECTION)->remove(array('_id.r'=>$subjectUri));
+        $this->removeFromViews($tripod, array('_id.r'=>$subjectUri));
+        $this->removeFromTableRows($tripod, array('_id.r'=>$subjectUri));
+        $this->removeFromSearchDocuments($tripod, array('_id.r'=>$subjectUri));
 
         // now lets change the type of the resource
         $g1 = $tripod->describeResource($subjectUri);
@@ -573,5 +587,92 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
 
         $queueCount = $this->tripodQueue->count();
         $this->assertEquals(0, $queueCount, "There should only be 0 item on the queue");
+    }
+
+    /**
+     * @param MongoTripod $tripod
+     * @param array $query
+     * @return array|null
+     */
+    protected function findOneView(MongoTripod $tripod, array $query)
+    {
+        foreach(MongoTripodConfig::getInstance()->getCollectionsForViews($tripod->getStoreName()) as $c)
+        {
+            $view = $c->findOne($query);
+            if($view)
+            {
+               return $view;
+            }
+        }
+    }
+
+    /**
+     * @param MongoTripod $tripod
+     * @param array $query
+     * @return array|null
+     */
+    protected function findOneTableRow(MongoTripod $tripod, array $query)
+    {
+        foreach(MongoTripodConfig::getInstance()->getCollectionsForTables($tripod->getStoreName()) as $c)
+        {
+            $tableRow = $c->findOne($query);
+            if($tableRow)
+            {
+                return $tableRow;
+            }
+        }
+    }
+
+    /**
+     * @param MongoTripod $tripod
+     * @param array $query
+     * @return array|null
+     */
+    protected function findOneSearchDocument(MongoTripod $tripod, array $query)
+    {
+        foreach(MongoTripodConfig::getInstance()->getCollectionsForSearch($tripod->getStoreName()) as $c)
+        {
+            $searchDoc = $c->findOne($query);
+            if($searchDoc)
+            {
+                return $searchDoc;
+            }
+        }
+    }
+
+    /**
+     * @param MongoTripod $tripod
+     * @param array $query
+     */
+    protected function removeFromViews(MongoTripod $tripod, array $query)
+    {
+        foreach(MongoTripodConfig::getInstance()->getCollectionsForViews($tripod->getStoreName()) as $c)
+        {
+            $c->remove($query);
+        }
+    }
+
+    /**
+     * @param MongoTripod $tripod
+     * @param array $query
+     */
+    protected function removeFromTableRows(MongoTripod $tripod, array $query)
+    {
+        foreach(MongoTripodConfig::getInstance()->getCollectionsForTables($tripod->getStoreName()) as $c)
+        {
+            $c->remove($query);
+        }
+    }
+
+    /**
+     * @param MongoTripod $tripod
+     * @param array $query
+     */
+    protected function removeFromSearchDocuments(MongoTripod $tripod, array $query)
+    {
+        foreach(MongoTripodConfig::getInstance()->getCollectionsForSearch($tripod->getStoreName()) as $c)
+        {
+            $c->remove($query);
+        }
     }
 }
