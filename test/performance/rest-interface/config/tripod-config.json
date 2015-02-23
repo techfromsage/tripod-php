@@ -1,1586 +1,679 @@
-{"namespaces": {
-    "acorn": "http:\/\/talisaspire.com\/schema#",
-    "ov": "http:\/\/talisaspire.com\/ov#",
-    "dct": "http:\/\/purl.org\/dc\/terms\/",
-    "bibo": "http:\/\/purl.org\/ontology\/bibo\/",
-    "dir": "http:\/\/schemas.talis.com\/2005\/dir\/schema#",
-    "foaf": "http:\/\/xmlns.com\/foaf\/0.1\/",
-    "spec": "http:\/\/rdfs.org\/sioc\/spec\/",
-    "resourcelist": "http:\/\/purl.org\/vocab\/resourcelist\/schema#",
-    "temp": "http:\/\/lists.talis.com\/schema\/temp#",
-    "lifecycle": "http:\/\/purl.org\/vocab\/lifecycle\/schema#",
-    "sioc": "http:\/\/rdfs.org\/sioc\/ns#",
-    "appconfig": "http:\/\/lists.talis.com\/schema\/appConfig#",
-    "aiiso": "http:\/\/purl.org\/vocab\/aiiso\/schema#",
-    "saml": "http:\/\/purl.org\/vocab\/saml\/schema#",
-    "talistenancies": "http:\/\/purl.org\/vocab\/talistenancies#",
-    "dc": "http:\/\/purl.org\/dc\/elements\/1.1\/",
-    "rss": "http:\/\/purl.org\/rss\/1.0\/",
-    "events": "http:\/\/schemas.talis.com\/2009\/events\/",
-    "bibliographic": "http:\/\/lists.talis.com\/schema\/bibliographic#",
-    "bookmark": "http:\/\/www.w3.org\/2002\/01\/bookmark#",
-    "legacyList": "http:\/\/schemas.talis.com\/2007\/list\/schema#",
-    "constraint": "http:\/\/purl.org\/vocab\/resourcelist\/constraint#",
-    "widget": "http:\/\/talisaspire.com\/widget\/schema#",
-    "consumption": "http:\/\/lists.talis.com\/schema\/consumption#",
-    "siocTypes": "http:\/\/rdfs.org\/sioc\/types#",
-    "siocAccess": "http:\/\/rdfs.org\/sioc\/access#",
-    "elements": "http:\/\/rdvocab.info\/elements\/",
-    "olBooks": "http:\/\/openlibrary.org\/books\/",
-    "vann": "http:\/\/purl.org\/vocab\/vann\/",
-    "cc": "http:\/\/web.resource.org\/cc\/",
-    "skos": "http:\/\/www.w3.org\/2004\/02\/skos\/core#",
-    "vocabStatus": "http:\/\/www.w3.org\/2003\/06\/sw-vocab-status\/ns#",
-    "lti1": "http:\/\/www.imsglobal.org\/LTI\/v1p0#",
-    "tenant": "http:\/\/life.ac.uk\/",
-    "tenantContexts": "http:\/\/life.ac.uk\/graphs\/",
-    "tenantLists": "http:\/\/life.ac.uk\/lists\/",
-    "tenantItems": "http:\/\/life.ac.uk\/items\/",
-    "tenantResources": "http:\/\/life.ac.uk\/resources\/",
-    "tenantSections": "http:\/\/life.ac.uk\/sections\/",
-    "tenantPages": "http:\/\/life.ac.uk\/sections\/",
-    "tenantUsers": "http:\/\/life.ac.uk\/users\/",
-    "tenantOrganisations": "http:\/\/life.ac.uk\/organisations\/",
-    "tenantPeople": "http:\/\/life.ac.uk\/people\/",
-    "tenantEvents": "http:\/\/life.ac.uk\/events\/",
-    "tenantCatalogRecords": "http:\/\/life.ac.uk\/catalog\/records\/",
-    "tenantCourses": "http:\/\/life.ac.uk\/courses\/",
-    "tenantRoles": "http:\/\/life.ac.uk\/roles\/"
-}, "defaultContext": "http:\/\/life.ac.uk\/graphs\/DefaultGraph", "databases": {
-    "life": {
-        "collections": {
-            "CBD_users": {
-                "indexes": {
-                    "email": {
-                        "spec:email.l": 1
-                    }
-                }
-            },
-            "CBD_events": [],
-            "CBD_config": [],
-            "CBD_reviews": {
-                "cardinality": {
-                    "dct:created": 1
-                },
-                "indexes": {
-                    "rdf_type": {
-                        "rdf:type.u": 1
-                    },
-                    "dc_subject": {
-                        "dc:subject.u": 1
-                    }
-                }
-            },
-            "CBD_resources": {
-                "cardinality": {
-                    "dct:created": 1,
-                    "dct:title": 1
-                },
-                "indexes": {
-                    "rdf_type": {
-                        "rdf:type.u": 1
-                    },
-                    "slug": {
-                        "temp:slug.l": 1
-                    },
-                    "isbn10": {
-                        "bibo:isbn10.l": 1
-                    },
-                    "isbn13": {
-                        "bibo:isbn13.l": 1
-                    },
-                    "issn": {
-                        "bibo:issn.l": 1
-                    },
-                    "doi": {
-                        "bibo:doi.l": 1
-                    },
-                    "lcn": {
-                        "bibliographic:localControlNumber.l": 1
-                    }
-                }
-            },
-            "CBD_jobs": {
-                "cardinality": {
-                    "dct:created": 1
-                },
-                "indexes": {
-                    "rdf_type": {
-                        "rdf:type.u": 1
-                    }
-                }
-            },
-            "CBD_user_lists": {
-                "cardinality": {
-                    "dct:created": 1
-                },
-                "indexes": {
-                    "rdf_type": {
-                        "rdf:type.u": 1
-                    }
-                }
-            },
-            "CBD_user_resources": {
-                "cardinality": {
-                    "dct:created": 1
-                },
-                "indexes": {
-                    "rdf_type": {
-                        "rdf:type.u": 1
-                    }
-                }
-            },
-            "CBD_draft": {
-                "cardinality": {
-                    "dct:created": 1
-                },
-                "indexes": {
-                    "rdf_type": {
-                        "rdf:type.u": 1
-                    },
-                    "bibo_annotates": {
-                        "bibo:annotates.u": 1
-                    },
-                    "resourcelist_list": {
-                        "resourcelist:list.u": 1
-                    },
-                    "resourcelist_resource": {
-                        "resourcelist:resource.u": 1
-                    },
-                    "aiiso_code": {
-                        "aiiso:code.l": 1
-                    },
-                    "resourcelist_contains": {
-                        "resourcelist:contains.u": 1
-                    }
-                }
-            },
-            "CBD_lists": {
-                "cardinality": {
-                    "dct:created": 1
-                },
-                "indexes": {
-                    "rdf_type": {
-                        "rdf:type.u": 1
-                    },
-                    "bibo_annotates": {
-                        "bibo:annotates.u": 1
-                    },
-                    "resourcelist_list": {
-                        "resourcelist:list.u": 1
-                    },
-                    "resourcelist_resource": {
-                        "resourcelist:resource.u": 1
-                    },
-                    "aiiso_code": {
-                        "aiiso:code.l": 1
-                    },
-                    "resourcelist_contains": {
-                        "resourcelist:contains.u": 1
-                    }
-                }
-            },
-            "CBD_nodes": {
-                "indexes": {
-                    "rdf_type": {
-                        "rdf:type.u": 1
-                    },
-                    "aiiso_code": {
-                        "aiiso:code.l": 1
-                    },
-                    "aiiso_name": {
-                        "aiiso:name.l": 1
-                    }
-                }
-            },
-            "CBD_service": [],
-            "CBD_lti_resources": []
+{
+    "namespaces": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "dct": "http://purl.org/dc/terms/",
+        "resourcelist": "http://purl.org/vocab/resourcelist/schema#",
+        "temp": "http://lists.talis.com/schema/temp#",
+        "spec": "http://rdfs.org/sioc/spec/",
+        "events": "http://schemas.talis.com/2009/events/",
+        "acorn": "http://talisaspire.com/schema#",
+        "searchterms": "http://talisaspire.com/searchTerms/schema#",
+        "opensearch": "http://a9.com/-/opensearch/extensions/relevance/1.0/",
+        "sioc": "http://rdfs.org/sioc/ns#",
+        "aiiso": "http://purl.org/vocab/aiiso/schema#",
+        "user": "http://schemas.talis.com/2005/user/schema#",
+        "changeset": "http://purl.org/vocab/changeset/schema#",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "baseData": "http://basedata.com/b/"
+    },
+    "defaultContext":"http://talisaspire.com/",
+    "data_sources" : {
+        "rs1" : {
+            "type" : "mongo",
+            "connection": "mongodb:\/\/localhost",
+            "replicaSet": ""
         },
-        "connStr": "mongodb:\/\/localhost",
-        "replicaSet": ""
-    },
-    "aspire_global": {
-        "collections": {
-            "CBD_config": [],
-            "CBD_licenses": [],
-            "CBD_widgets": [],
-            "CBD_bookmarking_rules": [],
-            "CBD_login_providers": [],
-            "CBD_report_definitions": [],
-            "CBD_types": []
-        },
-        "connStr": "mongodb:\/\/localhost",
-        "replicaSet": ""
-    }
-}, "view_specifications": [
-    {
-        "_id": "v_reviews",
-        "ensureIndexes": [
-            {
-                "value._graphs.sioc:has_container.u": 1,
-                "value._graphs.sioc:topic.u": 1
-            }
-        ],
-        "type": ["temp:AcquisitionsReview"],
-        "from": "CBD_reviews",
-        "joins": {
-            "siocAccess:has_status": [],
-            "temp:completedBy": {
-                "from": "CBD_users"
-            },
-            "temp:startedBy": {
-                "from": "CBD_users"
-            },
-            "resourcelist:hasReviewer": {
-                "from": "CBD_users"
-            },
-            "dct:creator": {
-                "from": "CBD_users"
-            }
+        "rs2" : {
+            "type" : "mongo",
+            "connection": "mongodb:\/\/localhost",
+            "replicaSet": ""
         }
     },
-    {
-        "_id": "v_resources",
-        "type": ["resourcelist:Resource"],
-        "from": "CBD_resources",
-        "joins": {
-            "dct:partOf": {
-                "joins": {
-                    "bibo:authorList": {
-                        "joins": {
-                            "followSequence": {
-                                "maxJoins": 50
-                            }
-                        }
+    "stores": {
+        "tripod_php_testing": {
+            "pods": {
+                "CBD_testing": {
+                    "cardinality": {
+                        "dct:created": 1
                     },
-                    "bibo:editorList": {
-                        "joins": {
-                            "followSequence": {
-                                "maxJoins": 50
-                            }
+                    "indexes": {
+                        "index1": {
+                            "dct:subject.u": 1
+                        },
+                        "index2": {
+                            "rdf:type.u": 1
                         }
+                    }
+                },
+                "CBD_testing_2": {
+                    "data_source" : "rs2",
+                    "cardinality": {
+                        "dct:created.l": 1
                     },
-                    "dct:publisher": []
-                }
-            },
-            "dct:isPartOf": {
-                "joins": {
-                    "bibo:authorList": {
-                        "joins": {
-                            "followSequence": {
-                                "maxJoins": 50
-                            }
-                        }
-                    },
-                    "bibo:editorList": {
-                        "joins": {
-                            "followSequence": {
-                                "maxJoins": 50
-                            }
-                        }
-                    },
-                    "dct:publisher": []
-                }
-            },
-            "bibo:authorList": {
-                "joins": {
-                    "followSequence": {
-                        "maxJoins": 50
-                    }
-                }
-            },
-            "bibo:editorList": {
-                "joins": {
-                    "followSequence": {
-                        "maxJoins": 50
-                    }
-                }
-            },
-            "dct:publisher": []
-        }
-    },
-    {
-        "_id": "v_threads_full",
-        "type": ["sioc:Thread"],
-        "from": "CBD_reviews",
-        "joins": {
-            "sioc:container_of": []
-        }
-    },
-    {
-        "_id": "v_draft_structure",
-        "type": ["resourcelist:List"],
-        "from": "CBD_draft",
-        "joins": {
-            "resourcelist:hasOwner": {
-                "from": "CBD_users"
-            },
-            "resourcelist:contains": {
-                "joins": {
-                    "temp:hasLibraryNote": [],
-                    "temp:hasImportance": {
-                        "from": "CBD_config"
-                    }
-                }
-            },
-            "temp:hasTimePeriod": {
-                "from": "CBD_config"
-            }
-        }
-    },
-    {
-        "_id": "v_published_structure",
-        "type": ["resourcelist:List", "resourcelist:ArchiveList"],
-        "from": "CBD_lists",
-        "ensureIndexes": [
-            {
-                "value._graphs.resourcelist:resource.u": 1
-            }
-        ],
-        "joins": {
-            "resourcelist:hasOwner": {
-                "from": "CBD_users"
-            },
-            "resourcelist:contains": {
-                "joins": {
-                    "temp:hasLibraryNote": [],
-                    "temp:hasImportance": {
-                        "from": "CBD_config"
-                    }
-                }
-            },
-            "temp:hasTimePeriod": {
-                "from": "CBD_config"
-            }
-        }
-    },
-    {
-        "_id": "v_nodes",
-        "type": ["aiiso:KnowledgeGrouping", "aiiso:organizationalUnit"],
-        "from": "CBD_nodes",
-        "joins": {
-            "aiiso:knowledgeGrouping": [],
-            "aiiso:organizationalUnit": [],
-            "aiiso:organisationalUnit": [],
-            "resourcelist:usesList": {
-                "from": "CBD_draft",
-                "include": ["resourcelist:lastUpdated", "spec:name", "temp:hasTimePeriod", "rdf:type"],
-                "joins": {
-                    "temp:hasTimePeriod": {
-                        "from": "CBD_config"
-                    }
-                }
-            }
-        }
-    },
-    {
-        "_id": "v_nodes_published_list",
-        "type": ["aiiso:KnowledgeGrouping", "aiiso:organizationalUnit"],
-        "from": "CBD_nodes",
-        "joins": {
-            "resourcelist:usesList": {
-                "from": "CBD_lists",
-                "include": ["resourcelist:lastUpdated", "resourcelist:lastPublished", "spec:name", "temp:hasTimePeriod", "rdf:type"],
-                "joins": {
-                    "temp:hasTimePeriod": {
-                        "from": "CBD_config"
-                    }
-                }
-            }
-        }
-    },
-    {
-        "_id": "v_publish_detail",
-        "type": ["events:Detail"],
-        "from": "CBD_events",
-        "joins": {
-            "events:itemAdditions": {
-                "from": "CBD_lists",
-                "include": [],
-                "joins": {
-                    "resourcelist:resource": {
-                        "from": "CBD_resources"
-                    }
-                }
-            },
-            "events:itemRemovals": {
-                "from": "CBD_lists",
-                "include": [],
-                "joins": {
-                    "resourcelist:resource": {
-                        "from": "CBD_resources",
-                        "include": ["dct:title"]
-                    }
-                }
-            },
-            "events:sectionAdditions": {
-                "from": "CBD_lists",
-                "include": ["spec:name"]
-            },
-            "events:resourceRemovals": {
-                "from": "CBD_lists",
-                "include": ["spec:name"]
-            }
-        }
-    },
-    {
-        "_id": "v_users",
-        "type": ["spec:User"],
-        "from": "CBD_users",
-        "ensureIndexes": [
-            {
-                "value._graphs.saml:persistentId.l": 1
-            }
-        ],
-        "joins": {
-            "constraint:hasConstraint": {
-                "filter": {
-                    "rdf:type": {
-                        "u": "constraint:Constraint"
-                    }
-                }
-            }
-        }
-    },
-    {
-        "_id": "v_roles",
-        "type": ["spec:Role"],
-        "from": "CBD_config",
-        "joins": {
-            "siocAccess:has_permission": []
-        }
-    },
-    {
-        "_id": "v_list_item_importances",
-        "type": ["appconfig:ListItemImportances"],
-        "from": "CBD_config",
-        "joins": {
-            "followSequence": []
-        }
-    },
-    {
-        "_id": "v_time_periods",
-        "type": ["appconfig:TimePeriods"],
-        "from": "CBD_config",
-        "joins": {
-            "followSequence": []
-        }
-    },
-    {
-        "_id": "v_review_outcomes",
-        "type": ["appconfig:ReviewOutcomes"],
-        "from": "CBD_config",
-        "joins": {
-            "followSequence": []
-        }
-    },
-    {
-        "_id": "v_book_stores",
-        "type": ["appconfig:BookStores"],
-        "from": "CBD_config",
-        "joins": {
-            "temp:contains": {
-                "from": "CBD_config"
-            }
-        }
-    },
-    {
-        "_id": "v_review_stages",
-        "type": ["appconfig:ReviewStages"],
-        "from": "CBD_config",
-        "joins": {
-            "followSequence": []
-        }
-    },
-    {
-        "_id": "v_licenses",
-        "type": ["appconfig:AvailableLicenseCollection"],
-        "from": "CBD_licenses",
-        "joins": {
-            "followSequence": []
-        }
-    },
-    {
-        "_id": "v_widgets",
-        "type": ["widget:JavascriptWidget"],
-        "from": "CBD_widgets",
-        "joins": {
-            "widget:hasWidgetConfigurationProperties": {
-                "joins": {
-                    "followSequence": []
-                }
-            }
-        }
-    },
-    {
-        "_id": "v_widget_configurations",
-        "type": ["widget:WidgetConfiguration"],
-        "from": "CBD_config",
-        "joins": {
-            "followSequence": []
-        }
-    },
-    {
-        "_id": "v_bookmarklet_parsers",
-        "type": ["appconfig:BookmarkletParsers"],
-        "from": "CBD_bookmarking_rules",
-        "joins": {
-            "followSequence": {
-                "include": ["talistenancies:siteRegEx"]
-            }
-        }
-    },
-    {
-        "_id": "v_bookmarklet_parser",
-        "type": ["talistenancies:BookmarkletParser"],
-        "from": "CBD_bookmarking_rules",
-        "joins": {
-            "talistenancies:hasExtractionRules": {
-                "joins": {
-                    "followSequence": []
-                }
-            }
-        }
-    },
-    {
-        "_id": "v_login_providers",
-        "from": "CBD_login_providers",
-        "type": "appconfig:LoginProviders",
-        "joins": {
-            "temp:hasProvider": []
-        }
-    },
-    {
-        "_id": "v_reports",
-        "from": "CBD_report_definitions",
-        "type": "appconfig:Reports",
-        "joins": {
-            "appconfig:contains": {
-                "include": ["dct:title", "temp:isDefaultReport"]
-            }
-        }
-    },
-    {
-        "_id": "v_report_definition",
-        "from": "CBD_report_definitions",
-        "type": "temp:ReportDefinition",
-        "joins": {
-            "temp:hasColumnSet": {
-                "joins": {
-                    "followSequence": []
-                }
-            },
-            "temp:hasFilters": {
-                "joins": {
-                    "followSequence": {
-                        "joins": {
-                            "temp:hasFilterOptions": []
+                    "indexes": {
+                        "index1": {
+                            "rdf:type.u": 1
                         }
                     }
                 }
-            }
-        }
-    }
-], "table_specifications": [
-    {
-        "_id": "t_user_resources",
-        "from": "CBD_user_resources",
-        "ensureIndexes": [
-            {
-                "value.collection": 1,
-                "value.createdDate": 1,
-                "value.title": 1
-            }
-        ],
-        "type": "bookmark:Bookmark",
-        "fields": [
-            {
-                "fieldName": "collection",
-                "predicates": ["spec:has_container"]
             },
-            {
-                "fieldName": "createdDate",
-                "predicates": ["dct:date"]
-            },
-            {
-                "fieldName": "note",
-                "predicates": ["sioc:note"]
-            },
-            {
-                "fieldName": "resourceUri",
-                "predicates": ["bookmark:recalls"]
-            },
-            {
-                "fieldName": "note",
-                "predicates": ["spec:note"]
-            }
-        ],
-        "joins": {
-            "bookmark:recalls": {
-                "from": "CBD_resources",
-                "fields": [
-                    {
-                        "fieldName": "title",
-                        "predicates": ["dct:title"]
-                    },
-                    {
-                        "fieldName": "type",
-                        "predicates": ["rdf:type"]
+            "data_source" : "rs1",
+            "view_specifications": [
+                {
+                    "_id": "v_resource_full",
+                    "_version": "0.1",
+                    "from": "CBD_testing",
+                    "ensureIndexes": [
+                        {
+                            "value._graphs.sioc:has_container.u": 1,
+                            "value._graphs.sioc:topic.u": 1
+                        }
+                    ],
+                    "type": "acorn:Resource",
+                    "include": ["rdf:type", "searchterms:topic"],
+                    "joins": {
+                        "dct:isVersionOf": {
+                            "include": ["dct:subject", "rdf:type"]
+                        }
                     }
-                ],
-                "joins": {
-                    "dct:isPartOf": {
-                        "from": "CBD_resources",
-                        "fields": [
-                            {
-                                "fieldName": "partOfTitle",
-                                "predicates": ["dct:title"]
-                            }
-                        ],
-                        "joins": {
-                            "bibo:authorList": {
-                                "from": "CBD_resources",
-                                "joins": {
-                                    "followSequence": {
-                                        "from": "CBD_resources",
-                                        "maxJoins": 50,
-                                        "fields": [
-                                            {
-                                                "fieldName": "partFirstName",
-                                                "predicates": ["foaf:firstName"]
-                                            },
-                                            {
-                                                "fieldName": "partSurname",
-                                                "predicates": ["foaf:surname"]
-                                            },
-                                            {
-                                                "fieldName": "partName",
-                                                "predicates": ["foaf:name"]
-                                            }
-                                        ]
-                                    }
+                },
+                {
+                    "_id": "v_resource_full_ttl",
+                    "type": "acorn:Resource",
+                    "from": "CBD_testing",
+                    "to_data_source": "rs2",
+                    "ttl": 300,
+                    "include": ["rdf:type", "searchterms:topic"],
+                    "joins": {
+                        "dct:isVersionOf": {
+                            "include": ["dct:subject", "rdf:type"]
+                        }
+                    }
+                },
+                {
+                    "_id": "v_resource_to_single_source",
+                    "type": "acorn:Resource",
+                    "from": "CBD_testing",
+                    "include": ["rdf:type"],
+                    "joins": {
+                        "dct:source": {
+                            "maxJoins": 1
+                        }
+                    }
+                },
+                {
+                    "_id": "v_work_see_also",
+                    "type": "acorn:Work",
+                    "from": "CBD_testing",
+                    "joins": {
+                        "acorn:seeAlso": {}
+                    }
+                },
+                {
+                    "_id": "v_work2_see_also",
+                    "type": "http://talisaspire.com/schema#Work2",
+                    "from": "CBD_testing",
+                    "joins": {
+                        "acorn:seeAlso": {}
+                    }
+                },
+                {
+                    "_id": "v_counts",
+                    "type": "acorn:Work",
+                    "from": "CBD_testing",
+                    "to_data_source": "rs2",
+                    "include": ["rdf:type"],
+                    "ttl": 300,
+                    "counts": {
+                        "acorn:resourceCount": {
+                            "filter": {
+                                "rdf:type": {
+                                    "u": "acorn:Resource"
+                                }
+                            },
+                            "property": "dct:isVersionOf"
+                        },
+                        "acorn:resourceCountAlt": {
+                            "from": "CBD_testing_2",
+                            "filter": {
+                                "rdf:type": {
+                                    "u": "acorn:Resource"
+                                }
+                            },
+                            "property": "dct:isVersionOf"
+                        },
+                        "acorn:isbnCount": {
+                            "property": "bibo:isbn13"
+                        }
+                    },
+                    "joins": {
+                        "acorn:seeAlso": {
+                            "include": ["rdf:type"],
+                            "counts": {
+                                "acorn:resourceCount": {
+                                    "filter": {
+                                        "rdf:type": {
+                                            "u": "acorn:Resource"
+                                        }
+                                    },
+                                    "property": "dct:isVersionOf"
+                                },
+                                "acorn:isbnCount": {
+                                    "property": "bibo:isbn13"
                                 }
                             }
                         }
-                    },
-                    "bibo:authorList": {
-                        "from": "CBD_resources",
+                    }
+                }
+            ],
+            "search_config": {
+                "search_provider": "MongoSearchProvider",
+                "search_specifications": [
+                    {
+                        "_id": "i_search_list",
+                        "type": ["resourcelist:List"],
+                        "from": "CBD_testing",
+                        "filter": [
+                            {
+                                "condition": {
+                                    "spec:name.l": {
+                                        "$exists": true
+                                    }
+                                }
+                            }
+                        ],
+                        "indices": [
+                            {
+                                "fieldName": "search_terms",
+                                "predicates": ["spec:name", "resourcelist:description"]
+                            }
+                        ],
+                        "fields": [
+                            {
+                                "fieldName": "result.title",
+                                "predicates": ["spec:name"],
+                                "limit": 1
+                            },
+                            {
+                                "fieldName": "result.link",
+                                "value": "_link_"
+                            }
+                        ],
                         "joins": {
-                            "followSequence": {
-                                "from": "CBD_resources",
-                                "maxJoins": 50,
-                                "fields": [
+                            "resourcelist:usedBy": {
+                                "indices": [
                                     {
-                                        "fieldName": "firstName",
-                                        "predicates": ["foaf:firstName"]
-                                    },
-                                    {
-                                        "fieldName": "surname",
-                                        "predicates": ["foaf:surname"]
-                                    },
-                                    {
-                                        "fieldName": "name",
-                                        "predicates": ["foaf:name"]
+                                        "fieldName": "search_terms",
+                                        "predicates": ["aiiso:name", "aiiso:code"]
                                     }
                                 ]
                             }
                         }
-                    }
-                }
-            }
-        }
-    },
-    {
-        "_id": "t_user_lists",
-        "from": "CBD_user_lists",
-        "ensureIndexes": [
-            {
-                "value.collection": 1,
-                "value.lastUpdated": 1,
-                "value.listName": 1
-            }
-        ],
-        "type": "bookmark:Bookmark",
-        "fields": [
-            {
-                "fieldName": "collection",
-                "predicates": ["spec:has_container"]
-            }
-        ],
-        "joins": {
-            "bookmark:recalls": {
-                "from": "CBD_draft",
-                "fields": [
-                    {
-                        "fieldName": "listUri",
-                        "predicates": ["_id"]
                     },
                     {
-                        "fieldName": "listName",
-                        "predicates": ["spec:name"]
-                    },
-                    {
-                        "fieldName": "listType",
-                        "predicates": ["rdf:type"]
-                    },
-                    {
-                        "fieldName": "lastUpdated",
-                        "predicates": ["resourcelist:lastUpdated"]
-                    },
-                    {
-                        "fieldName": "lastPublished",
-                        "predicates": ["resourcelist:lastPublished"]
-                    },
-                    {
-                        "fieldName": "timePeriod",
-                        "predicates": ["temp:hasTimePeriod"]
-                    },
-                    {
-                        "fieldName": "usedBy",
-                        "predicates": ["resourcelist:usedBy"]
-                    }
-                ],
-                "joins": {
-                    "temp:hasTimePeriod": {
-                        "from": "CBD_config",
-                        "fields": [
+                        "_id": "i_search_resource",
+                        "type": ["bibo:Book"],
+                        "from": "CBD_testing",
+                        "filter": [
                             {
-                                "fieldName": "timePeriodName",
-                                "predicates": ["dct:title"]
-                            },
-                            {
-                                "fieldName": "timePeriodEndDate",
-                                "predicates": ["temp:endDate"]
+                                "condition": {
+                                    "dct:title.l": {
+                                        "$exists": true
+                                    }
+                                }
                             }
-                        ]
-                    },
-                    "_id": {
-                        "from": "CBD_lists",
-                        "fields": [
+                        ],
+                        "indices": [
                             {
-                                "fieldName": "publishedListLastUpdated",
-                                "predicates": ["resourcelist:lastUpdated"]
+                                "fieldName": "search_terms",
+                                "predicates": ["dct:title", "dct:subject"]
                             },
                             {
-                                "fieldName": "publishedListType",
+                                "fieldName": "other_terms",
                                 "predicates": ["rdf:type"]
                             }
-                        ]
-                    }
-                }
-            }
-        }
-    },
-    {
-        "_id": "t_reviews",
-        "from": "CBD_reviews",
-        "ensureIndexes": [
-            {
-                "value.assignedToUri": 1
-            },
-            {
-                "value.listUri": 1
-            }
-        ],
-        "type": "temp:AcquisitionsReview",
-        "fields": [
-            {
-                "fieldName": "requestedDate",
-                "predicates": ["dct:created"]
-            },
-            {
-                "fieldName": "startedDate",
-                "predicates": ["temp:startedOn"]
-            },
-            {
-                "fieldName": "completedDate",
-                "predicates": ["temp:completedOn"]
-            },
-            {
-                "fieldName": "listUri",
-                "predicates": ["dc:subject"]
-            },
-            {
-                "fieldName": "tenantUri",
-                "predicates": ["sioc:has_host"]
-            },
-            {
-                "fieldName": "assignedToUri",
-                "predicates": ["resourcelist:hasReviewer"]
-            },
-            {
-                "fieldName": "requestStatusUri",
-                "predicates": ["siocAccess:has_status"]
-            },
-            {
-                "fieldName": "reviewStageUri",
-                "predicates": ["resourcelist:has_stage"]
-            },
-            {
-                "fieldName": "requestedByUri",
-                "predicates": ["dct:creator"]
-            },
-            {
-                "fieldName": "startedByUri",
-                "predicates": ["temp:startedBy"]
-            },
-            {
-                "fieldName": "completedByUri",
-                "predicates": ["temp:completedBy"]
-            }
-        ],
-        "joins": {
-            "dc:subject": {
-                "from": "CBD_draft",
-                "fields": [
-                    {
-                        "fieldName": "listType",
-                        "predicates": ["rdf:type"]
-                    },
-                    {
-                        "fieldName": "listTitle",
-                        "predicates": ["spec:name"]
-                    }
-                ]
-            },
-            "siocAccess:has_status": {
-                "fields": [
-                    {
-                        "fieldName": "status",
-                        "predicates": ["rdfs:label"]
-                    }
-                ]
-            },
-            "dct:creator": {
-                "from": "CBD_users",
-                "fields": [
-                    {
-                        "fieldName": "requestedBy",
-                        "predicates": ["spec:email"]
-                    }
-                ]
-            },
-            "temp:startedBy": {
-                "from": "CBD_users",
-                "fields": [
-                    {
-                        "fieldName": "startedBy",
-                        "predicates": ["spec:email"]
-                    }
-                ]
-            },
-            "temp:completedBy": {
-                "from": "CBD_users",
-                "fields": [
-                    {
-                        "fieldName": "completedBy",
-                        "predicates": ["spec:email"]
-                    }
-                ]
-            },
-            "resourcelist:hasReviewer": {
-                "from": "CBD_users",
-                "fields": [
-                    {
-                        "fieldName": "assignedTo",
-                        "predicates": ["spec:email"]
-                    },
-                    {
-                        "fieldName": "assignedToSurname",
-                        "predicates": ["foaf:surname"]
-                    },
-                    {
-                        "fieldName": "assignedToFirstName",
-                        "predicates": ["foaf:firstName"]
-                    },
-                    {
-                        "fieldName": "assignedToRole",
-                        "predicates": ["siocAccess:Role"]
-                    }
-                ]
-            }
-        }
-    },
-    {
-        "_id": "t_grants",
-        "from": "CBD_users",
-        "type": "resourcelist:Grant",
-        "fields": [
-            {
-                "fieldName": "grantedTo",
-                "predicates": ["resourcelist:grantedTo"]
-            },
-            {
-                "fieldName": "appliesToScopeLink",
-                "predicates": ["resourcelist:appliesTo"]
-            },
-            {
-                "fieldName": "createdOn",
-                "predicates": ["dct:created"]
-            },
-            {
-                "fieldName": "acceptedOn",
-                "predicates": ["resourcelist:acceptedOn"]
-            },
-            {
-                "fieldName": "resentOn",
-                "predicates": ["resourcelist:resentOn"]
-            }
-        ],
-        "joins": {
-            "resourcelist:grants": {
-                "from": "CBD_config",
-                "fields": [
-                    {
-                        "fieldName": "role",
-                        "predicates": ["spec:name"]
-                    }
-                ]
-            },
-            "resourcelist:grantedBy": {
-                "fields": [
-                    {
-                        "fieldName": "grantedBy",
-                        "predicates": ["spec:email"]
-                    }
-                ]
-            },
-            "resourcelist:appliesTo": {
-                "from": "CBD_draft",
-                "fields": [
-                    {
-                        "fieldName": "appliesToScope",
-                        "predicates": ["spec:name"]
-                    }
-                ]
-            }
-        }
-    },
-    {
-        "_id": "t_jobs",
-        "from": "CBD_jobs",
-        "ensureIndexes": [
-            {
-                "value.description": 1,
-                "value.lastUpdated": -1,
-                "value.createdOn": -1
-            }
-        ],
-        "type": "temp:Job",
-        "fields": [
-            {
-                "fieldName": "status",
-                "predicates": ["temp:status"]
-            },
-            {
-                "fieldName": "description",
-                "predicates": ["dct:description"]
-            },
-            {
-                "fieldName": "uniqueKey",
-                "predicates": ["temp:hasUniqueKey"]
-            },
-            {
-                "fieldName": "createdOn",
-                "predicates": ["dct:created"]
-            },
-            {
-                "fieldName": "lastUpdated",
-                "predicates": ["resourcelist:lastUpdated"]
-            },
-            {
-                "fieldName": "requestedByUri",
-                "predicates": ["dct:creator"]
-            },
-            {
-                "fieldName": "isArchived",
-                "predicates": ["temp:RemovedFromView"]
-            },
-            {
-                "fieldName": "hierarchyUploadFile",
-                "predicates": ["temp:hierarchyUploadFile"]
-            },
-            {
-                "fieldName": "auditSummary",
-                "predicates": ["temp:auditSummary"]
-            },
-            {
-                "fieldName": "auditDetails",
-                "predicates": ["temp:auditDetails"]
-            },
-            {
-                "fieldName": "exceptionAudit",
-                "predicates": ["temp:exceptionAudit"]
-            },
-            {
-                "fieldName": "type",
-                "predicates": ["rdf:type"]
-            }
-        ],
-        "joins": {
-            "dct:creator": {
-                "from": "CBD_users",
-                "fields": [
-                    {
-                        "fieldName": "requestedByEmail",
-                        "predicates": ["spec:email"]
-                    }
-                ]
-            }
-        }
-    },
-    {
-        "_id": "t_widgets",
-        "from": "CBD_widgets",
-        "type": "widget:Widget",
-        "fields": [
-            {
-                "fieldName": "title",
-                "predicates": ["dct:title"]
-            },
-            {
-                "fieldName": "description",
-                "predicates": ["dct:description"]
-            },
-            {
-                "fieldName": "status",
-                "predicates": ["widget:status"]
-            },
-            {
-                "fieldName": "enabled",
-                "predicates": ["widget:active"]
-            }
-        ]
-    },
-    {
-        "_id": "t_bookmarklet_parsers",
-        "from": "CBD_bookmarking_rules",
-        "type": "talistenancies:BookmarkletParser",
-        "fields": [
-            {
-                "fieldName": "title",
-                "predicates": ["dc:title"]
-            },
-            {
-                "fieldName": "siteRegEx",
-                "predicates": ["talistenancies:siteRegEx"]
-            },
-            {
-                "fieldName": "skipUri",
-                "predicates": ["talistenancies:passUri"]
-            },
-            {
-                "fieldName": "type",
-                "predicates": ["rdf:type"]
-            }
-        ]
-    },
-    {
-        "_id": "t_oauth_login_providers",
-        "from": "CBD_login_providers",
-        "type": "appconfig:OAuthLoginProvider",
-        "fields": [
-            {
-                "fieldName": "endpoint",
-                "predicates": ["temp:endpoint"]
-            },
-            {
-                "fieldName": "secure",
-                "predicates": ["temp:secure"]
-            },
-            {
-                "fieldName": "transportName",
-                "predicates": ["temp:transportName"]
-            },
-            {
-                "fieldName": "debug",
-                "predicates": ["temp:debug"]
-            }
-        ]
-    },
-    {
-        "_id": "t_saml_login_providers",
-        "from": "CBD_login_providers",
-        "type": "appconfig:SAMLLoginProvider",
-        "fields": [
-            {
-                "fieldName": "serviceSso",
-                "predicates": ["temp:serviceSso"]
-            },
-            {
-                "fieldName": "debug",
-                "predicates": ["temp:debug"]
-            }
-        ]
-    },
-    {
-        "_id": "t_report_definitions",
-        "from": "CBD_report_definitions",
-        "type": "temp:ReportDefinition",
-        "fields": [
-            {
-                "fieldName": "title",
-                "predicates": ["dct:title"]
-            },
-            {
-                "fieldName": "description",
-                "predicates": ["dct:description"]
-            },
-            {
-                "fieldName": "isDefaultReport",
-                "predicates": ["temp:isDefaultReport"]
-            }
-        ]
-    },
-    {
-        "_id": "t_report_all_users",
-        "from": "CBD_users",
-        "type": "spec:User",
-        "ensureIndexes": [
-            {
-                "value.collection": 1,
-                "value.nameSort": 1
-            }
-        ],
-        "fields": [
-            {
-                "fieldName": "firstName",
-                "predicates": ["foaf:firstName"]
-            },
-            {
-                "fieldName": "surname",
-                "predicates": ["foaf:surname"]
-            },
-            {
-                "fieldName": "name",
-                "predicates": [
-                    {
-                        "join": {
-                            "glue": " ",
-                            "predicates": ["foaf:firstName", "foaf:surname"]
-                        }
-                    }
-                ]
-            },
-            {
-                "fieldName": "nameSort",
-                "predicates": [
-                    {
-                        "lowercase": {
-                            "join": {
-                                "glue": " ",
-                                "predicates": ["foaf:firstName", "foaf:surname"]
-                            }
-                        }
-                    }
-                ]
-            },
-            {
-                "fieldName": "userProfileLink",
-                "predicates": [""],
-                "value": "_link_"
-            },
-            {
-                "fieldName": "email",
-                "predicates": [
-                    {
-                        "join": {
-                            "glue": "; ",
-                            "predicates": ["spec:email"]
-                        }
-                    }
-                ]
-            },
-            {
-                "fieldName": "jobRole",
-                "predicates": [
-                    {
-                        "join": {
-                            "glue": ", ",
-                            "predicates": ["siocAccess:Role"]
-                        }
-                    }
-                ]
-            },
-            {
-                "fieldName": "profileVisibility",
-                "predicates": ["siocAccess:has_status"]
-            },
-            {
-                "fieldName": "lastLogin",
-                "predicates": [
-                    {
-                        "date": {
-                            "predicates": ["temp:last_login"]
-                        }
-                    }
-                ]
-            }
-        ],
-        "joins": {
-            "constraint:hasConstraint": {
-                "from": "CBD_users",
-                "joins": {
-                    "constraint:constrains": {
-                        "from": "CBD_config",
+
+                        ],
                         "fields": [
                             {
-                                "fieldName": "role",
-                                "predicates": [
-                                    {
-                                        "join": {
-                                            "glue": "; ",
-                                            "predicates": ["spec:name"]
-                                        }
-                                    }
-                                ]
+                                "fieldName": "result.title",
+                                "predicates": ["dct:title"],
+                                "limit": 1
                             },
                             {
-                                "fieldName": "roleSearch",
-                                "predicates": ["spec:name"]
+                                "fieldName": "result.link",
+                                "value": "_link_"
+                            },
+                            {
+                                "fieldName": "rdftype",
+                                "predicates": ["rdf:type"],
+                                "limit": 1
+                            }
+                        ],
+                        "joins": {
+                            "dct:creator": {
+                                "indices": [
+                                    {
+                                        "fieldName": "search_terms",
+                                        "predicates": ["foaf:name"]
+                                    }
+                                ],
+                                "fields": [
+                                    {
+                                        "fieldName": "result.author",
+                                        "predicates": ["foaf:name"],
+                                        "limit": 1
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        "_id": "i_search_filter_parse",
+                        "type": ["baseData:Wibble"],
+                        "from": "CBD_testing",
+                        "to_data_source": "rs2",
+                        "filter": [
+                            {
+                                "condition": {
+                                    "dct:created.l": {
+                                        "$exists": true
+                                    }
+                                }
+                            },
+                            {
+                                "condition": {
+                                    "$where": "temp:numberOfThings.l > temp:amountOfTimeSpent.l"
+                                }
+                            }
+                        ],
+                        "indices": [
+                            {
+                                "fieldName": "title",
+                                "predicates": ["dct:title", "spec:name"]
+                            },
+                            {
+                                "fieldName": "other_terms",
+                                "predicates": ["rdf:type"]
+                            }
+
+                        ],
+                        "fields": [
+                            {
+                                "fieldName": "result.title",
+                                "predicates": ["dct:title"],
+                                "limit": 1
+                            },
+                            {
+                                "fieldName": "rdftype",
+                                "predicates": ["rdf:type"],
+                                "limit": 1
                             }
                         ]
                     }
-                }
-            }
-        },
-        "filter": [
-            {
-                "from": "CBD_users",
-                "condition": {
-                    "rdf:type": {
-                        "u": "spec:User"
-                    }
-                }
-            }
-        ]
-    }
-], "search_config": {
-    "search_provider": "MongoSearchProvider",
-    "search_specifications": [
-        {
-            "_id": "i_search_list",
-            "type": ["resourcelist:List"],
-            "from": "CBD_lists",
-            "filter": [
+                ]
+            },
+            "table_specifications" : [
                 {
-                    "from": "CBD_lists",
-                    "condition": {
-                        "spec:name.l": {
-                            "$exists": true
-                        }
-                    }
-                }
-            ],
-            "indices": [
-                {
-                    "fieldName": "search_terms",
-                    "predicates": ["spec:name", "resourcelist:description"]
-                }
-            ],
-            "fields": [
-                {
-                    "fieldName": "result.title",
-                    "predicates": ["spec:name"],
-                    "limit": 1
-                },
-                {
-                    "fieldName": "result.lastUpdated",
-                    "predicates": ["resourcelist:lastUpdated"]
-                },
-                {
-                    "fieldName": "result.description",
-                    "predicates": ["resourcelist:description"]
-                },
-                {
-                    "fieldName": "result.link",
-                    "value": "_link_"
-                }
-            ],
-            "joins": {
-                "resourcelist:hasOwner": {
-                    "from": "CBD_users",
-                    "indices": [
+                    "_id": "t_resource",
+                    "type": "acorn:Resource",
+                    "from": "CBD_testing",
+                    "ensureIndexes": [
                         {
-                            "fieldName": "search_terms",
-                            "predicates": ["foaf:surname", "foaf:firstName"]
+                            "value.isbn": 1
                         }
                     ],
                     "fields": [
                         {
-                            "fieldName": "result.ownerSurname",
-                            "predicates": ["foaf:surname"],
-                            "limit": 1
+                            "fieldName": "type",
+                            "predicates": ["rdf:type"]
                         },
                         {
-                            "fieldName": "result.ownerFirstName",
-                            "predicates": ["foaf:firstName"],
-                            "limit": 1
-                        }
-                    ]
-                },
-                "resourcelist:usedBy": {
-                    "from": "CBD_nodes",
-                    "indices": [
-                        {
-                            "fieldName": "search_terms",
-                            "predicates": ["aiiso:name", "aiiso:code"]
-                        }
-                    ]
-                },
-                "temp:hasTimePeriod": {
-                    "from": "CBD_config",
-                    "fields": [
-                        {
-                            "fieldName": "result.timePeriodTitle",
-                            "predicates": ["dct:title"],
-                            "limit": 1
-                        }
-                    ]
-                }
-            }
-        },
-        {
-            "_id": "i_search_draft_list",
-            "type": ["resourcelist:List"],
-            "from": "CBD_draft",
-            "filter": [
-                {
-                    "from": "CBD_draft",
-                    "condition": {
-                        "spec:name.l": {
-                            "$exists": true
-                        }
-                    }
-                }
-            ],
-            "indices": [
-                {
-                    "fieldName": "search_terms",
-                    "predicates": ["spec:name", "resourcelist:description"]
-                }
-            ],
-            "fields": [
-                {
-                    "fieldName": "result.title",
-                    "predicates": ["spec:name"],
-                    "limit": 1
-                },
-                {
-                    "fieldName": "result.description",
-                    "predicates": ["resourcelist:description"]
-                },
-                {
-                    "fieldName": "result.lastUpdated",
-                    "predicates": ["resourcelist:lastUpdated"]
-                },
-                {
-                    "fieldName": "result.lastPublished",
-                    "predicates": ["resourcelist:lastPublished"]
-                },
-                {
-                    "fieldName": "result.link",
-                    "value": "_link_"
-                }
-            ],
-            "joins": {
-                "resourcelist:hasOwner": {
-                    "from": "CBD_users",
-                    "indices": [
-                        {
-                            "fieldName": "search_terms",
-                            "predicates": ["foaf:surname", "foaf:firstName"]
+                            "fieldName": "isbn",
+                            "predicates": ["bibo:isbn13"]
                         }
                     ],
+                    "joins": {
+                        "dct:isVersionOf": {
+                            "fields": [
+                                {
+                                    "fieldName": "isbn13",
+                                    "predicates": ["bibo:isbn13"]
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "_id": "t_source_count",
+                    "type": "acorn:Resource",
+                    "from": "CBD_testing",
+                    "to_data_source": "rs2",
                     "fields": [
                         {
-                            "fieldName": "result.ownerSurname",
-                            "predicates": ["foaf:surname"],
-                            "limit": 1
+                            "fieldName": "type",
+                            "predicates": ["rdf:type"]
+                        }
+                    ],
+                    "joins": {
+                        "dct:isVersionOf": {
+                            "fields": [
+                                {
+                                    "fieldName": "isbn13",
+                                    "predicates": ["bibo:isbn13"]
+                                }
+                            ]
+                        }
+                    },
+                    "counts": [
+                        {
+                            "fieldName": "source_count",
+                            "property": "dct:isVersionOf"
                         },
                         {
-                            "fieldName": "result.ownerFirstName",
-                            "predicates": ["foaf:firstName"],
-                            "limit": 1
+                            "fieldName": "random_predicate_count",
+                            "property": "dct:randomPredicate"
                         }
                     ]
                 },
-                "resourcelist:usedBy": {
-                    "from": "CBD_nodes",
-                    "indices": [
-                        {
-                            "fieldName": "search_terms",
-                            "predicates": ["aiiso:name", "aiiso:code"]
-                        }
-                    ]
-                },
-                "temp:hasTimePeriod": {
-                    "from": "CBD_config",
+                {
+                    "_id": "t_source_count_regex",
+                    "type": "acorn:Resource",
+                    "from": "CBD_testing",
                     "fields": [
                         {
-                            "fieldName": "result.timePeriodTitle",
-                            "predicates": ["dct:title"],
-                            "limit": 1
+                            "fieldName": "type",
+                            "predicates": ["rdf:type"]
                         }
-                    ]
-                }
-            }
-        },
-        {
-            "_id": "i_search_node",
-            "type": ["aiiso:KnowledgeGrouping", "aiiso:organizationalUnit"],
-            "from": "CBD_nodes",
-            "filter": [
-                {
-                    "from": "CBD_nodes",
-                    "condition": {
-                        "aiiso:name.l": {
-                            "$exists": true
+                    ],
+                    "joins": {
+                        "dct:isVersionOf": {
+                            "fields": [
+                                {
+                                    "fieldName": "isbn13",
+                                    "predicates": ["bibo:isbn13"]
+                                }
+                            ]
                         }
-                    }
-                }
-            ],
-            "indices": [
-                {
-                    "fieldName": "search_terms",
-                    "predicates": ["aiiso:name", "aiiso:code", "aiiso:description"]
-                }
-            ],
-            "fields": [
-                {
-                    "fieldName": "result.title",
-                    "predicates": ["aiiso:name"],
-                    "limit": 1
-                },
-                {
-                    "fieldName": "result.code",
-                    "predicates": ["aiiso:code"]
-                },
-                {
-                    "fieldName": "result.description",
-                    "predicates": ["aiiso:description"]
-                },
-                {
-                    "fieldName": "result.type",
-                    "predicates": ["rdf:type"]
-                },
-                {
-                    "fieldName": "result.link",
-                    "value": "_link_"
-                }
-            ],
-            "joins": {
-                "resourcelist:usesList": {
-                    "from": "CBD_lists",
-                    "indices": [
+                    },
+                    "counts": [
                         {
-                            "fieldName": "search_terms",
-                            "predicates": ["spec:name", "resourcelist:description"]
+                            "fieldName": "source_count",
+                            "property": "dct:isVersionOf"
+                        },
+                        {
+                            "fieldName": "regex_source_count",
+                            "property": "dct:isVersionOf",
+                            "regex": "/foobar/"
+                        }
+                    ]
+                },
+                {
+                    "_id": "t_join_source_count_regex",
+                    "type": "acorn:Resource",
+                    "from": "CBD_testing",
+                    "joins": {
+                        "acorn:jacsUri": {
+                            "counts": [
+                                {
+                                    "fieldName": "titles_count",
+                                    "property": "dct:title"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "_id": "t_work2",
+                    "type": "acorn:Work2",
+                    "from": "CBD_testing",
+                    "fields": [
+                        {
+                            "fieldName": "type",
+                            "predicates": ["rdf:type"]
+                        }
+                    ],
+                    "joins": {
+                        "acorn:seeAlso": {
+                            "fields": [
+                                {
+                                    "fieldName": "seeAlsoType",
+                                    "predicates": ["rdf:type"]
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "_id": "t_users",
+                    "type": "spec:User",
+                    "from": "CBD_testing",
+                    "fields": [
+                        {
+                            "fieldName": "lowercase",
+                            "predicates": [
+                                {
+                                    "lowercase": {
+                                        "predicates": ["foaf:firstName"]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "fieldName": "lowercaseDate",
+                            "predicates": [
+                                {
+                                    "lowercase": {
+                                        "date": {
+                                            "predicates": ["temp:last_login"]
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "fieldName": "join",
+                            "predicates": [
+                                {
+                                    "join": {
+                                        "glue": " ",
+                                        "predicates": ["foaf:firstName", "foaf:surname"]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "fieldName": "joinSingle",
+                            "predicates": [
+                                {
+                                    "join": {
+                                        "glue": " ",
+                                        "predicates": ["foaf:firstName"]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "fieldName": "joinLowerCase",
+                            "predicates": [
+                                {
+                                    "lowercase": {
+                                        "join": {
+                                            "glue": " ",
+                                            "predicates": ["foaf:firstName", "foaf:surname"]
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "fieldName": "joinLowerCaseANDExtraField",
+                            "predicates": [
+                                {
+                                    "lowercase": {
+                                        "join": {
+                                            "glue": " ",
+                                            "predicates": ["foaf:firstName", "foaf:surname"]
+                                        }
+                                    }
+
+                                },
+                                "foaf:firstName"
+                            ]
+                        },
+                        {
+                            "fieldName": "mongoDate",
+                            "predicates": [
+                                {
+                                    "date": {
+                                        "predicates": ["temp:last_login"]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "fieldName": "mongoDateInvalid",
+                            "predicates": [
+                                {
+                                    "date": {
+                                        "predicates": ["temp:last_login_invalid"]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "fieldName": "mongoDateDoesNotExist",
+                            "predicates": [
+                                {
+                                    "date": {
+                                        "predicates": ["temp:last_login_DOES_NOT_EXIST"]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "fieldName": "userProfileLink",
+                            "value": "_link_"
+                        }
+                    ]
+                },
+                {
+                    "_id": "t_join_link",
+                    "type": "bibo:Document",
+                    "from": "CBD_testing",
+                    "to_data_source": "rs2",
+                    "fields": [
+                        {
+                            "fieldName": "bookLink",
+                            "value": "_link_"
+                        },
+                        {
+                            "fieldName": "authorUri",
+                            "predicates": ["dct:creator"]
+                        },
+                        {
+                            "fieldName": "workUri",
+                            "predicates": ["dct:isVersionOf"]
+                        }
+                    ],
+                    "joins": {
+                        "dct:creator": {
+                            "fields": [
+                                {
+                                    "fieldName": "authorLink",
+                                    "value": "_link_"
+                                },
+                                {
+                                    "fieldName": "knowsUri",
+                                    "predicates": ["foaf:knows"]
+                                }
+                            ],
+                            "joins": {
+                                "foaf:knows": {
+                                    "fields": [
+                                        {
+                                            "fieldName": "knowsLink",
+                                            "value": "_link_"
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        "dct:isVersionOf": {
+                            "fields": [
+                                {
+                                    "fieldName": "workLink",
+                                    "value": "_link_"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "_id": "t_link_multiple",
+                    "type": "bibo:Document",
+                    "from": "CBD_testing",
+                    "joins": {
+                        "dct:contributor": {
+                            "fields": [
+                                {
+                                    "fieldName": "contributorLink",
+                                    "value": "_link_"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "_id": "t_distinct",
+                    "type": ["bibo:Book", "bibo:Document"],
+                    "from": "CBD_testing",
+                    "fields": [
+                        {
+                            "fieldName": "title",
+                            "predicates": ["dct:title",
+                                {
+                                    "join": {
+                                        "glue": ": ",
+                                        "predicates": ["searchterms:title"]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "fieldName": "type",
+                            "predicates": ["rdf:type"]
                         }
                     ]
                 }
-            }
+            ]
         },
-        {
-            "_id": "i_search_user",
-            "type": ["spec:User"],
-            "from": "CBD_users",
-            "filter": [
-                {
-                    "from": "CBD_users",
-                    "condition": {
-                        "foaf:firstName.l": {
-                            "$exists": true
+        "tripod_php_testing_alt": {
+            "pods": {
+                "CBD_someOtherCollection": {
+                    "cardinality": {
+                        "dct:created.l": 1
+                    },
+                    "indexes": {
+                        "index1": {
+                            "rdf:type.u": 1
                         }
                     }
                 }
-            ],
-            "indices": [
-                {
-                    "fieldName": "search_terms",
-                    "predicates": ["foaf:firstName", "foaf:surname", "spec:email"]
-                }
-            ],
-            "fields": [
-                {
-                    "fieldName": "result.firstName",
-                    "predicates": ["foaf:firstName"],
-                    "limit": 1
-                },
-                {
-                    "fieldName": "result.surname",
-                    "predicates": ["foaf:surname"]
-                },
-                {
-                    "fieldName": "result.email",
-                    "predicates": ["spec:email"],
-                    "limit": 1
-                },
-                {
-                    "fieldName": "result.role",
-                    "predicates": ["siocAccess:Role"]
-                },
-                {
-                    "fieldName": "result.link",
-                    "value": "_link_"
-                }
-            ]
-        },
-        {
-            "_id": "i_search_reviewer",
-            "type": ["spec:User"],
-            "from": "CBD_users",
-            "filter": [
-                {
-                    "from": "CBD_users",
-                    "condition": {
-                        "temp:isreviewer.l": "true",
-                        "foaf:firstName.l": {
-                            "$exists": true
-                        }
-                    }
-                }
-            ],
-            "indices": [
-                {
-                    "fieldName": "search_terms",
-                    "predicates": ["foaf:firstName", "foaf:surname", "spec:email"]
-                }
-            ],
-            "fields": [
-                {
-                    "fieldName": "result.firstName",
-                    "predicates": ["foaf:firstName"],
-                    "limit": 1
-                },
-                {
-                    "fieldName": "result.surname",
-                    "predicates": ["foaf:surname"]
-                },
-                {
-                    "fieldName": "result.email",
-                    "predicates": ["spec:email"],
-                    "limit": 1
-                },
-                {
-                    "fieldName": "result.role",
-                    "predicates": ["siocAccess:Role"]
-                },
-                {
-                    "fieldName": "result.link",
-                    "value": "_link_"
-                }
-            ]
+            },
+            "database" : "tripod_php_testing_2",
+            "data_source" : "rs1"
         }
-    ]
-}, "transaction_log": {
-    "database": "life_transactions",
-    "collection": "transaction_log",
-    "connStr": "mongodb:\/\/#MONGO_TLOG_HOST#",
-    "replicaSet": "#MONGO_TLOG_REP_SET#"
-}, "queue": {
-    "database": "queues",
-    "collection": "q_queue",
-    "connStr": "mongodb:\/\/localhost",
-    "replicaSet": ""
-}}
+    },
+    "transaction_log": {
+        "database": "tripod_php_testing",
+        "collection" : "transaction_log",
+        "data_source" : "rs2"
+    },
+    "queue": {
+        "database": "tripod_php_testing",
+        "collection": "q_queue",
+        "data_source" : "rs1"
+    }
+}

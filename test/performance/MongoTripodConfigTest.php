@@ -5,8 +5,9 @@ set_include_path(
     . PATH_SEPARATOR . dirname(dirname(dirname(__FILE__))).'/lib'
     . PATH_SEPARATOR . dirname(dirname(dirname(__FILE__))).'/src');
 
-require_once 'src/mongo/MongoTripodConstants.php';
-require_once 'src/mongo/MongoTripodConfig.class.php';
+require_once('tripod.inc.php');
+require_once TRIPOD_DIR.'mongo/MongoTripodConfig.class.php';
+require_once TRIPOD_DIR.'mongo/base/MongoTripodBase.class.php';
 
 /**
  * A quick performance test to see what amount of time in consumed in specific methods of MongoTripodConfig class
@@ -43,7 +44,7 @@ class MongoTripodConfigTest extends PHPUnit_Framework_TestCase
         $testName = $this->getName();
         echo "\nTest: {$className}->{$testName}\n";
         
-        $this->config = json_decode(file_get_contents(dirname(__FILE__) . '/tripodConfig.json'), true);
+        $this->config = json_decode(file_get_contents(dirname(__FILE__) . '/rest-interface/config/tripod-config.json'), true);
     }
 
     /**
