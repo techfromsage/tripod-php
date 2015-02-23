@@ -1,24 +1,98 @@
 <?php
+
+$options = getopt(
+    "c:s:ht:i:",
+    array(
+        "config:",
+        "storename:",
+        "tripod-dir:",
+        "arc-dir:",
+        "spec:",
+        "id:",
+        "help",
+        "stat-loader:",
+    )
+);
+
+function showUsage()
+{
+    $help = <<<END
+createTables2.php
+
+Usage:
+
+php createTables2.php -c/--config path/to/tripod-config.json -s/--storename store-name [options]
+
+Options:
+    -h --help               This help
+    -c --config             path to MongoTripodConfig configuration (required)
+    -s --storename          Store to create tables for (required)
+    -t --spec               Only create for specified table specs
+    -i --id                 Resource ID to regenerate table rows for
+
+    --stat-loader           Path to script to initialize a Stat object.  Note, it *must* return an iTripodStat object!
+    --tripod-dir            Path to tripod directory base
+    --arc-dir               Path to ARC2 (required with --tripod-dir)
+
+END;
+    echo $help;
+}
+
+if(empty($options) || isset($options['h']) || isset($options['help']) ||
+    (!isset($options['c']) && !isset($options['config'])) ||
+    (!isset($options['s']) && !isset($options['storename']))
+)
+{
+    showUsage();
+    exit();
+}
+$configLocation = isset($options['c']) ? $options['c'] : $options['config'];
+if(isset($options['tripod-dir']))
+{
+    if(isset($options['arc-dir']))
+    {
+        $tripodBasePath = $options['tripod-dir'];
+        define('ARC_DIR', $options['arc-dir']);
+    }
+    else
+    {
+        showUsage();
+        exit();
+    }
+}
+else
+{
+    $tripodBasePath = dirname(dirname(dirname(__FILE__)));
+}
 set_include_path(
     get_include_path()
-        . PATH_SEPARATOR . dirname(dirname(dirname(__FILE__))).'/'
-        . PATH_SEPARATOR . dirname(dirname(dirname(__FILE__))).'/src'
-        . PATH_SEPARATOR . dirname(dirname(dirname(__FILE__))).'/src/classes');
+    . PATH_SEPARATOR . $tripodBasePath.'/src'
+    . PATH_SEPARATOR . $tripodBasePath.'/src/classes');
 
 require_once 'tripod.inc.php';
 require_once 'classes/Timer.class.php';
 require_once 'mongo/MongoTripodConfig.class.php';
 require_once 'mongo/MongoTripod.class.php';
 
-function generateTables($id, $tableId,$storeName)
+/**
+ * @param string|null $id
+ * @param string|null $tableId
+ * @param string|null $storeName
+ * @param iTripodStat|null $stat
+ */
+function generateTables($id, $tableId, $storeName, $stat = null)
 {
     $tableSpec = MongoTripodConfig::getInstance()->getTableSpecification($storeName, $tableId);
+    if(empty($tableSpec)) // Older version of Tripod being used?
+    {
+        $tableSpec = MongoTripodConfig::getInstance()->getTableSpecification($tableId);
+    }
     if (array_key_exists("from",$tableSpec))
     {
         MongoCursor::$timeout = -1;
 
         print "Generating $tableId";
-        $tripod = new MongoTripod($tableSpec['from'], $storeName);
+        $tripod = new MongoTripod($tableSpec['from'], $storeName, array('stat'=>$stat));
         $tTables = $tripod->getTripodTables();//new MongoTripodTables($tripod->storeName,$tripod->collection,$tripod->defaultContext);
         if ($id)
         {
@@ -27,7 +101,7 @@ function generateTables($id, $tableId,$storeName)
         }
         else
         {
-            print " for all views....\n";
+            print " for all tables....\n";
             $tTables->generateTableRows($tableId);
         }
     }
@@ -36,25 +110,52 @@ function generateTables($id, $tableId,$storeName)
 $t = new Timer();
 $t->start();
 
-if ($argc!=3 && $argc!=4 && $argc!=5)
-{
-    echo "usage: ./createTables.php tripodConfig.json storeName [tableId] [_id]\n";
-    die();
-}
-array_shift($argv);
+MongoTripodConfig::setConfig(json_decode(file_get_contents($configLocation),true));
 
-MongoTripodConfig::setConfig(json_decode(file_get_contents($argv[0]),true));
-$tableId = (empty($argv[2])) ? null: $argv[2];
-$id = (empty($argv[3])) ? null: $argv[3];
-if ($tableId)
+if(isset($options['s']) || isset($options['storename']))
 {
-    generateTables($id, $tableId, $argv[1]);
+    $storeName = isset($options['s']) ? $options['s'] : $options['storename'];
 }
 else
 {
-    foreach(MongoTripodConfig::getInstance()->getTableSpecifications($argv[1]) as $tableSpec)
+    $storeName = null;
+}
+
+if(isset($options['t']) || isset($options['spec']))
+{
+    $tableId = isset($options['t']) ? $options['t'] : $options['spec'];
+}
+else
+{
+    $tableId = null;
+}
+
+if(isset($options['i']) || isset($options['id']))
+{
+    $id = isset($options['i']) ? $options['i'] : $options['id'];
+}
+else
+{
+    $id = null;
+}
+
+
+$stat = null;
+
+if(isset($options['stat-loader']))
+{
+    $stat = include_once $options['stat-loader'];
+}
+
+if ($tableId)
+{
+    generateTables($id, $tableId, $storeName, $stat);
+}
+else
+{
+    foreach(MongoTripodConfig::getInstance()->getTableSpecifications($storeName) as $tableSpec)
     {
-        generateTables($id, $tableSpec['_id'], $argv[1]);
+        generateTables($id, $tableSpec['_id'], $storeName, $stat);
     }
 }
 
