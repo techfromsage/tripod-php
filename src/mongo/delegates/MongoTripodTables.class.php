@@ -641,6 +641,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
                         $value = (float)$value;
                     }
                 }
+                break;
         }
         return $value;
     }
