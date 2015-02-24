@@ -30,8 +30,8 @@ require_once("tripod.inc.php");
 MongoTripodConfig::setConfig($conf); // set the config, usually read in as JSON from a file
 
 $tripod = new MongoTripod(
-  "CBD_users", // collection we're working with
-  "myapp" // db we're working with
+  "CBD_users", // pod (read: MongoDB collection) we're working with
+  "myapp" // store (read: MongoDB database)  we're working with
 );
 
 // describe
@@ -62,7 +62,7 @@ $tripod->saveChanges(
 );
 
 // save, but background all the expensive view/table/search generation
-$tripod = new MongoTripodMongoTripod("CBD_users",  "usersdb", array(
+$tripod = new MongoTripod("CBD_users",  "usersdb", array(
     'async' = array(OP_VIEWS,OP_TABLES,OP_SEARCH) // async opt says what to do later via a queue rather than as part of the save
   )
 );
@@ -96,9 +96,22 @@ Before you can do anything with tripod you need to initialise the config via the
         "exampleapp":"http://example.com/properties/"
     },
     "defaultContext":"http://talisaspire.com/",
-    "databases" : {
+    "data_sources" : {
+        "cluster1": {
+            "type": "mongo",
+            "connection": "mongodb:\/\/localhost",
+            "replicaSet": ""
+        },
+        "cluster2": {
+            "type": "mongo",
+            "connection": "mongodb:\/\/othermongo.example.com",
+            "replicaSet": ""
+        }
+    },
+    "stores" : {
         "myapp" : {
-            "collections" : {
+            "data_source" : "cluster1",
+            "pods" : {
                 "CBD_users" : {
                     "cardinality" : {
                         "foaf:name" : 1
@@ -109,105 +122,106 @@ Before you can do anything with tripod you need to initialise the config via the
                         }
                     }
                 }
-            },
-            "connStr" : "mongodb://localhost"
-        }
-    },
-    "view_specifications" : [
-        {
-            "_id": "v_users",
-            "from":"CBD_users",
-            "type": "exampleapp:AllUsers",
-            "include": ["rdf:type"],
-            "joins": {
-                "exampleapp:hasUser": {
-                    "include": ["foaf:name","rdf:type"]
-                    "joins": {
-                    	"foaf:knows" : {
-	                    "include": ["foaf:name","rdf:type"]
-                    	}
-                    }
-                }
             }
-        }
-    ],
-    "table_specifications" : [
-        {
-            "_id": "t_users",
-            "type":"foaf:Person",
-            "from":"CBD_user",
-            "ensureIndexes":[
-                {
-                    "value.name": 1
-                }
-            ],
-            "fields": [
-                {
-                    "fieldName": "type",
-                    "predicates": ["rdf:type"]
-                },
-                {
-                    "fieldName": "name",
-                    "predicates": ["foaf:name"]
-                },
-                {
-                    "fieldName": "knows",
-                    "predicates": ["foaf:knows"]
-                }
-            ],
-            "joins" : {
-                "foaf:knows" : {
-                    "fields": [
-                        {
-                            "fieldName":"knows_name",
-                            "predicates":["foaf:name"]
-                        }
-                    ]
-                }
-            }
-        }
-    ],
-    "search_config":{
-        "search_provider":"MongoSearchProvider",
-        "search_specifications":[
+        },
+        "view_specifications" : [
             {
-                "_id":"i_users",
-                "type":["foaf:Person"],
-                "from":"CBD_user",
-                "filter":[
-                    {
-                        "condition":{
-                            "foaf:name.l":{
-                                "$exists":true
+                "_id": "v_users",
+                "from":"CBD_users",
+                "type": "exampleapp:AllUsers",
+                "include": ["rdf:type"],
+                "joins": {
+                    "exampleapp:hasUser": {
+                        "include": ["foaf:name","rdf:type"]
+                        "joins": {
+                            "foaf:knows" : {
+                            "include": ["foaf:name","rdf:type"]
                             }
                         }
                     }
+                }
+            }
+        ],
+        "table_specifications" : [
+            {
+                "_id": "t_users",
+                "type":"foaf:Person",
+                "from":"CBD_user",
+                "to_data_source" : "cluster2",
+                "ensureIndexes":[
+                    {
+                        "value.name": 1
+                    }
                 ],
-                "indices":[
+                "fields": [
+                    {
+                        "fieldName": "type",
+                        "predicates": ["rdf:type"]
+                    },
                     {
                         "fieldName": "name",
-                        "predicates": ["foaf:name", "foaf:firstName","foaf:surname"]
+                        "predicates": ["foaf:name"]
+                    },
+                    {
+                        "fieldName": "knows",
+                        "predicates": ["foaf:knows"]
                     }
                 ],
-                "fields":[
-                    {
-                        "fieldName":"result.name",
-                        "predicates":["foaf:name"],
-                        "limit" : 1
+                "joins" : {
+                    "foaf:knows" : {
+                        "fields": [
+                            {
+                                "fieldName":"knows_name",
+                                "predicates":["foaf:name"]
+                            }
+                        ]
                     }
-                ]
+                }
             }
-        ]
+        ],
+        "search_config":{
+            "search_provider":"MongoSearchProvider",
+            "search_specifications":[
+                {
+                    "_id":"i_users",
+                    "type":["foaf:Person"],
+                    "from":"CBD_user",
+                    "to_data_source" : "cluster2",
+                    "filter":[
+                        {
+                            "condition":{
+                                "foaf:name.l":{
+                                    "$exists":true
+                                }
+                            }
+                        }
+                    ],
+                    "indices":[
+                        {
+                            "fieldName": "name",
+                            "predicates": ["foaf:name", "foaf:firstName","foaf:surname"]
+                        }
+                    ],
+                    "fields":[
+                        {
+                            "fieldName":"result.name",
+                            "predicates":["foaf:name"],
+                            "limit" : 1
+                        }
+                    ]
+                }
+            ]
+        },
     },
     "transaction_log" : {
         "database" : "testing",
         "collection" : "transaction_log",
-        "connStr" : "mongodb://localhost"
+        "data_source" : "cluster2"
     },
     "queue" : {
         "database" : "testing",
         "collection" : "q_queue",
-        "connStr" : "mongodb://localhost"
+        "data_source" : "cluster1"
     }
 }
 
