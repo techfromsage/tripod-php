@@ -25,10 +25,26 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         )
     );
 
-    public static $computedFieldFunctions = array('_conditional_', "_replace_");
+    /**
+     * Computed field config - A list of valid functions to write dynamic table row field values
+     *
+     * @var array
+     * @static
+     */
+    public static $computedFieldFunctions = array('_conditional_', "_replace_", "_arithmetic_");
 
+    /**
+     * Computed conditional config - list of allowed conditional operators
+     *
+     * @var array
+     * @static
+     */
     public static $conditionalOperators = array(
         ">","<",">=", "<=", "==", "!=", "contains", "not contains"
+    );
+
+    public static $arithmeticOperators = array(
+        "+", "-", "*", "/", "%", "**"
     );
 
     /**
@@ -427,8 +443,62 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
             case '_replace_':
                 $value = $this->generateReplaceValue($spec[$function], $dest);
                 break;
+            case '_arithmetic_':
+                $value = $this->computeArithmeticValue($spec[$function], $dest);
+                break;
         }
 
+        return $value;
+    }
+
+    /**
+     * @param array $equation
+     * @param array $dest
+     * @return float|int|null
+     * @throws InvalidArgumentException
+     */
+    protected function computeArithmeticValue(array $equation, array &$dest)
+    {
+        if(count($equation) < 3)
+        {
+            throw new InvalidArgumentException("Equations must consist of an array with 3 values");
+        }
+        if(!in_array($equation[1], self::$arithmeticOperators))
+        {
+            throw new InvalidArgumentException("Invalid arithmetic operator");
+        }
+
+        $left = $this->rewriteVariableValue($equation[0], $dest, 'numeric');
+        $right = $this->rewriteVariableValue($equation[2], $dest, 'numeric');
+        if(is_array($left))
+        {
+            $left = $this->computeArithmeticValue($left, $dest);
+        }
+        if(is_array($right))
+        {
+            $right = $this->computeArithmeticValue($right, $dest);
+        }
+
+        switch($equation[1])
+        {
+            case "+":
+                $value = $left + $right;
+                break;
+            case "-":
+                $value = $left - $right;
+                break;
+            case "*":
+                $value = $left * $right;
+                break;
+            case "/":
+                $value = $left / $right;
+                break;
+            case "%":
+                $value = $left % $right;
+                break;
+            default:
+                $value = null;
+        }
         return $value;
     }
 
@@ -515,9 +585,10 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
     /**
      * @param mixed $value The value to replace, if it contains a variable
      * @param array $dest The table row document to save
+     * @param string|null $setType Force the return to be set to specified type
      * @return mixed
      */
-    protected function rewriteVariableValue($value, array &$dest)
+    protected function rewriteVariableValue($value, array &$dest, $setType=null)
     {
         if(is_string($value))
         {
@@ -526,12 +597,12 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
                 $key =  str_replace('$','', $value);
                 if(isset($dest[$key]))
                 {
-                    return $dest[$key];
+                    return $this->castValueType($dest[$key], $setType);
                 }
             }
             else
             {
-                return $value;
+                return $this->castValueType($value, $setType);
             }
         }
         elseif(is_array($value))
@@ -544,6 +615,33 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
             return $aryValue;
         }
 
+        return $this->castValueType($value, $setType);
+    }
+
+    protected function castValueType($value, $type=null)
+    {
+        switch($type)
+        {
+            case 'string':
+                $value = (string)$value;
+                break;
+            case 'bool':
+            case 'boolean':
+                $value = (bool)$value;
+                break;
+            case 'numeric':
+                if((!is_int($value)) && !is_float($value))
+                {
+                    if($value == (string)(int)$value)
+                    {
+                        $value = (int)$value;
+                    }
+                    else
+                    {
+                        $value = (float)$value;
+                    }
+                }
+        }
         return $value;
     }
 
