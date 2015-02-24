@@ -618,6 +618,11 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         return $this->castValueType($value, $setType);
     }
 
+    /**
+     * @param mixed $value
+     * @param string|null $type
+     * @return mixed
+     */
     protected function castValueType($value, $type=null)
     {
         switch($type)
