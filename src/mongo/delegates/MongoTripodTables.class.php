@@ -25,6 +25,12 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         )
     );
 
+    public static $computedFieldFunctions = array('_conditional_');
+
+    public static $conditionalOperators = array(
+        ">","<",">=", "<=", "==", "!=", "contains", "not contains"
+    );
+
     /**
      * Construct accepts actual objects rather than strings as this class is a delegate of
      * MongoTripod and should inherit connections set up there
@@ -365,7 +371,14 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
                 $this->doCounts($doc,$tableSpec['counts'],$value);
             }
 
-            $generatedRow['value'] = $value;
+            if (isset($tableSpec['computed_fields']))
+            {
+                $this->doComputedFields($doc, $tableSpec, $value);
+            }
+
+            // Remove temp fields from document
+            $storedKeys = array_filter(array_keys($value), function($key) { return strpos($key, "!") !== 0; });
+            $generatedRow['value'] = array_intersect_key($value, array_flip($storedKeys));
             $collection->save($generatedRow);
         }
 
@@ -378,6 +391,193 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         $this->getStat()->timer(MONGO_CREATE_TABLE.".$tableType",$t->result());
     }
 
+    /**
+     * @param array $spec The table spec
+     * @param array $dest The table row document to save
+     */
+    protected function doComputedFields($spec, &$dest)
+    {
+        if (isset($spec['computed_fields']))
+        {
+            foreach ($spec['computed_fields'] as $f)
+            {
+                if(isset($f['fieldName']) && isset($f['value']) && is_array($f['value']))
+                {
+                    $computedFunctions = array_intersect_key(self::$computedFieldFunctions, $f['value']);
+                    $dest[$f['fieldName']] = $this->getComputedValue($computedFunctions[0], $f['value'], $dest);
+                }
+            }
+        }
+    }
+
+    /**
+     * @param string $function A defined computed value function
+     * @param array $spec The computed field spec
+     * @param array $dest The table row document to save
+     * @return mixed The computed value
+     */
+    protected function getComputedValue($function, $spec, &$dest)
+    {
+        $value = null;
+        switch($function)
+        {
+            case '_conditional_':
+                $value = $this->generateConditionalValue($spec[$function], $dest);
+                break;
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param array $conditional The conditional spec
+     * @param array $dest The table row document to save
+     * @return mixed The computed value
+     */
+    protected function generateConditionalValue($conditional, &$dest)
+    {
+        $value = null;
+        if(isset($conditional['if']) && is_array($conditional['if']))
+        {
+            $left = null;
+            $operator = null;
+            $right = null;
+            if(isset($conditional['if'][0]))
+            {
+                $left = $this->rewriteVariableValue($conditional['if'][0], $dest);
+            }
+            if(isset($conditional['if'][1]))
+            {
+                $operator = $conditional['if'][1];
+            }
+            if(isset($conditional['if'][2]))
+            {
+                $right = $this->rewriteVariableValue($conditional['if'][2], $dest);
+            }
+
+            $bool = $this->doConditional($left, $operator, $right);
+
+            $path = ($bool ? 'then' : 'else');
+
+            if(isset($conditional[$path]))
+            {
+                if(is_array($conditional[$path]))
+                {
+                    $nestedComputedFunctions = array_intersect_key(self::$computedFieldFunctions, $conditional[$path]);
+                    // This is 'just a regular old array'
+                    if(empty($nestedComputedFunctions))
+                    {
+                        return $this->rewriteVariableValue($conditional[$path], $dest);
+                    }
+
+                    return $this->getComputedValue($nestedComputedFunctions[0], $conditional[$path], $dest);
+
+                }
+                else
+                {
+                    return $this->rewriteVariableValue($conditional[$path], $dest);
+                }
+            }
+
+        }
+        return $value;
+    }
+
+    /**
+     * @param mixed $value The value to replace, if it contains a variable
+     * @param array $dest The table row document to save
+     * @return mixed
+     */
+    protected function rewriteVariableValue($value, &$dest)
+    {
+        if(is_string($value))
+        {
+            if(strpos($value, '$') === 0)
+            {
+                $key =  str_replace('$','', $value);
+                if(isset($dest[$key]))
+                {
+                    return $dest[$key];
+                }
+            }
+            else
+            {
+                return $value;
+            }
+        }
+        elseif(is_array($value))
+        {
+            $aryValue = array();
+            foreach($value as $v)
+            {
+                $aryValue[] = $this->rewriteVariableValue($v, $dest);
+            }
+            return $aryValue;
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param mixed $left The left value of the condition
+     * @param string $operator The comparison operator
+     * @param mixed $right The right value of the condition
+     * @return bool
+     * @throws InvalidArgumentException
+     */
+    protected function doConditional($left, $operator, $right)
+    {
+        if((!empty($operator)) && !in_array($operator, self::$conditionalOperators))
+        {
+            throw new InvalidArgumentException("Invalid conditional operator");
+        }
+        elseif(!$operator)
+        {
+            return ($left ? true : false);
+        }
+        $result = false;
+        switch($operator)
+        {
+            case ">":
+                $result = $left > $right;
+                break;
+            case ">=":
+                $result = $left >= $right;
+                break;
+            case "<":
+                $result = $left < $right;
+                break;
+            case "<=":
+                $result = $left <= $right;
+                break;
+            case "==":
+                $result = $left == $right;
+                break;
+            case "!=":
+                $result = $left != $right;
+                break;
+            case "contains":
+            case "not contains":
+                if(is_array($left))
+                {
+                    $bool = in_array($right, $left);
+                }
+                else
+                {
+
+                    $bool = (strpos((string)$left, (string)$right) !== false);
+                }
+                $result = ($bool && $operator != "not contains");
+                break;
+            case "~=":
+            case "!~":
+                $match = preg_match($right, $left);
+                $result = ($match > 0 && $operator != "!~");
+                break;
+
+        }
+        return $result;
+    }
 
     /**
      * Add fields to a table row
