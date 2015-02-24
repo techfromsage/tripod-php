@@ -25,7 +25,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         )
     );
 
-    public static $computedFieldFunctions = array('_conditional_');
+    public static $computedFieldFunctions = array('_conditional_', "_replace_");
 
     public static $conditionalOperators = array(
         ">","<",">=", "<=", "==", "!=", "contains", "not contains"
@@ -310,7 +310,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
 
         if ($tableSpec==null)
         {
-            $this->debugLog("Cound not find a table specification for $tableType");
+            $this->debugLog("Could not find a table specification for $tableType");
             return null;
         }
 
@@ -395,7 +395,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
      * @param array $spec The table spec
      * @param array $dest The table row document to save
      */
-    protected function doComputedFields($spec, &$dest)
+    protected function doComputedFields(array $spec, array &$dest)
     {
         if (isset($spec['computed_fields']))
         {
@@ -416,7 +416,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
      * @param array $dest The table row document to save
      * @return mixed The computed value
      */
-    protected function getComputedValue($function, $spec, &$dest)
+    protected function getComputedValue($function, array $spec, array &$dest)
     {
         $value = null;
         switch($function)
@@ -424,58 +424,87 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
             case '_conditional_':
                 $value = $this->generateConditionalValue($spec[$function], $dest);
                 break;
+            case '_replace_':
+                $value = $this->generateReplaceValue($spec[$function], $dest);
+                break;
         }
 
         return $value;
     }
 
     /**
-     * @param array $conditional The conditional spec
+     * @param array $replaceSpec The replace value spec
+     * @param array $dest The table row document to save
+     * @return mixed
+     */
+    protected function generateReplaceValue(array $replaceSpec, array &$dest)
+    {
+        $search = null;
+        $replace = null;
+        $subject = null;
+        if(isset($replaceSpec['search']))
+        {
+            $search = $this->rewriteVariableValue($replaceSpec['search'], $dest);
+        }
+        if(isset($replaceSpec['replace']))
+        {
+            $replace = $this->rewriteVariableValue($replaceSpec['replace'], $dest);
+        }
+        if(isset($replaceSpec['subject']))
+        {
+            $subject = $this->rewriteVariableValue($replaceSpec['subject'], $dest);
+        }
+
+        return str_replace($search, $replace, $subject);
+    }
+
+    /**
+     * @param array $conditionalSpec The conditional spec
      * @param array $dest The table row document to save
      * @return mixed The computed value
      */
-    protected function generateConditionalValue($conditional, &$dest)
+    protected function generateConditionalValue(array $conditionalSpec, array &$dest)
     {
         $value = null;
-        if(isset($conditional['if']) && is_array($conditional['if']))
+        if(isset($conditionalSpec['if']) && is_array($conditionalSpec['if']))
         {
             $left = null;
             $operator = null;
             $right = null;
-            if(isset($conditional['if'][0]))
+            if(isset($conditionalSpec['if'][0]))
             {
-                $left = $this->rewriteVariableValue($conditional['if'][0], $dest);
+                $left = $this->rewriteVariableValue($conditionalSpec['if'][0], $dest);
             }
-            if(isset($conditional['if'][1]))
+            if(isset($conditionalSpec['if'][1]))
             {
-                $operator = $conditional['if'][1];
+                $operator = $conditionalSpec['if'][1];
             }
-            if(isset($conditional['if'][2]))
+            if(isset($conditionalSpec['if'][2]))
             {
-                $right = $this->rewriteVariableValue($conditional['if'][2], $dest);
+                $right = $this->rewriteVariableValue($conditionalSpec['if'][2], $dest);
             }
 
             $bool = $this->doConditional($left, $operator, $right);
 
             $path = ($bool ? 'then' : 'else');
 
-            if(isset($conditional[$path]))
+            if(isset($conditionalSpec[$path]))
             {
-                if(is_array($conditional[$path]))
+                if(is_array($conditionalSpec[$path]))
                 {
-                    $nestedComputedFunctions = array_intersect_key(self::$computedFieldFunctions, $conditional[$path]);
+                    $nestedComputedFunctions = array_intersect_key(self::$computedFieldFunctions, $conditionalSpec[$path]);
                     // This is 'just a regular old array'
                     if(empty($nestedComputedFunctions))
                     {
-                        return $this->rewriteVariableValue($conditional[$path], $dest);
+                        return $this->rewriteVariableValue($conditionalSpec[$path], $dest);
                     }
 
-                    return $this->getComputedValue($nestedComputedFunctions[0], $conditional[$path], $dest);
+                    return $this->getComputedValue($nestedComputedFunctions[0], $conditionalSpec[$path], $dest);
 
                 }
                 else
                 {
-                    return $this->rewriteVariableValue($conditional[$path], $dest);
+                    return $this->rewriteVariableValue($conditionalSpec[$path], $dest);
                 }
             }
 
@@ -488,7 +517,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
      * @param array $dest The table row document to save
      * @return mixed
      */
-    protected function rewriteVariableValue($value, &$dest)
+    protected function rewriteVariableValue($value, array &$dest)
     {
         if(is_string($value))
         {
