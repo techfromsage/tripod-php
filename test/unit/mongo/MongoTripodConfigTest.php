@@ -591,6 +591,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             array(
                 "_id"=>"t_illegal_counts",
                 "type"=>"http://talisaspire.com/schema#Work",
+                "from"=>"CBD_testing",
                 "joins"=>array(
                     "acorn:resourceCount"=>array(
                         "filter"=>array("rdf:type.value"=>"http://talisaspire.com/schema#Resource"),
@@ -631,6 +632,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $config["stores"]["tripod_php_testing"]["table_specifications"] = array(
             array(
                 "_id"=>"t_illegal_counts",
+                "from"=>"CBD_testing",
                 "type"=>"http://talisaspire.com/schema#Work",
                 "joins"=>array(
                      "acorn:resourceCount"=>array(
@@ -677,6 +679,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             array(
                 "_id"=>"t_illegal_spec",
                 "type"=>"http://talisaspire.com/schema#Work",
+                "from"=>"CBD_testing",
                 "fields"=>array(
                      array(
                          "predicates"=>array("rdf:type"),
@@ -716,6 +719,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             array(
                 "_id"=>"t_illegal_spec",
                 "type"=>"http://talisaspire.com/schema#Work",
+                "from"=>"CBD_testing",
                 "fields"=>array(
                      array(
                          "fieldName"=>"some_field",
@@ -755,6 +759,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             array(
                 "_id"=>"t_illegal_spec",
                 "type"=>"http://talisaspire.com/schema#Work",
+                "from"=>"CBD_testing",
                 "counts"=>array(
                      array(
                          "fieldName"=>"some_field",
@@ -794,6 +799,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             array(
                 "_id"=>"t_illegal_spec",
                 "type"=>"http://talisaspire.com/schema#Work",
+                "from"=>"CBD_testing",
                 "counts"=>array(
                      array(
                          "property"=>"some:property",
@@ -833,6 +839,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             array(
                 "_id"=>"t_illegal_spec",
                 "type"=>"http://talisaspire.com/schema#Work",
+                "from"=>"CBD_testing",
                 "counts"=>array(
                      array(
                          "fieldName"=>"someField",
