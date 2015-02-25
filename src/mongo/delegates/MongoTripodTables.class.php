@@ -39,13 +39,15 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
      * @var array
      * @static
      */
-    public static $conditionalOperators = array(
-        ">","<",">=", "<=", "==", "!=", "contains", "not contains"
-    );
+    public static $conditionalOperators = array(">","<",">=", "<=", "==", "!=", "contains", "not contains");
 
-    public static $arithmeticOperators = array(
-        "+", "-", "*", "/", "%"
-    );
+    /**
+     * Computed arithmetic config - list of allowed arithmetic operators
+     *
+     * @var array
+     * @static
+     */
+    public static $arithmeticOperators = array("+", "-", "*", "/", "%");
 
     /**
      * Construct accepts actual objects rather than strings as this class is a delegate of
