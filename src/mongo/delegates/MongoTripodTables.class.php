@@ -44,7 +44,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
     );
 
     public static $arithmeticOperators = array(
-        "+", "-", "*", "/", "%", "**"
+        "+", "-", "*", "/", "%"
     );
 
     /**
