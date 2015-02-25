@@ -353,7 +353,7 @@ class MongoTripodConfig
             throw new MongoTripodConfigException("Table spec does not contain from");
         }
 
-        $this->validateTableSpec($spec, 0);
+        $this->validateTableSpecPart($spec, 0);
     }
 
     /**
