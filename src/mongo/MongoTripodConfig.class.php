@@ -456,7 +456,7 @@ class MongoTripodConfig
                 {
                     throw new MongoTripodConfigException("Computed field spec contains more than one function");
                 }
-                $this->validateComputedFieldSpec($functions[0], $field['value'][$functions[0]], $availableFields);
+                $this->validateComputedFieldSpec($functions[0], $field['value'], $availableFields);
 
             }
         }
