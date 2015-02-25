@@ -391,7 +391,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
 
             if (isset($tableSpec['computed_fields']))
             {
-                $this->doComputedFields($doc, $tableSpec, $value);
+                $this->doComputedFields($tableSpec, $value);
             }
 
             // Remove temp fields from document
