@@ -421,7 +421,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
             {
                 if(isset($f['fieldName']) && isset($f['value']) && is_array($f['value']))
                 {
-                    $computedFunctions = array_intersect_key($f['value'], array_flip(self::$computedFieldFunctions));
+                    $computedFunctions = array_values(array_intersect(self::$computedFieldFunctions, array_keys($f['value'])));
                     $dest[$f['fieldName']] = $this->getComputedValue($computedFunctions[0], $f['value'], $dest);
                 }
             }
