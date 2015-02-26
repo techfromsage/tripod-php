@@ -601,6 +601,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
                 {
                     return $this->castValueType($dest[$key], $setType);
                 }
+                return null;
             }
             else
             {
