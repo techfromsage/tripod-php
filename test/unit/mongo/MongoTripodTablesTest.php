@@ -1002,11 +1002,12 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
     public function testConditionalComputedField()
     {
+
         $conditional = array(
             'fieldName'=>'foobar',
             'value'=>array(
                 '_conditional_'=>array(
-                    'if'=>[2,">",1],
+                    'if'=>array(2,">",1),
                     'then'=>'foo',
                     'else'=>'bar'
                 )
