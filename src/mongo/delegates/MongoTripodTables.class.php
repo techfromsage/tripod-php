@@ -564,7 +564,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
             {
                 if(is_array($conditionalSpec[$path]))
                 {
-                    $nestedComputedFunctions = array_intersect_key(self::$computedFieldFunctions, $conditionalSpec[$path]);
+                    $nestedComputedFunctions = array_intersect(self::$computedFieldFunctions, array_keys($conditionalSpec[$path]));
                     // This is 'just a regular old array'
                     if(empty($nestedComputedFunctions))
                     {
