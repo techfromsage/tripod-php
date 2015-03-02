@@ -17,11 +17,11 @@ $options = getopt(
 function showUsage()
 {
     $help = <<<END
-createTables2.php
+createTables.php
 
 Usage:
 
-php createTables2.php -c/--config path/to/tripod-config.json -s/--storename store-name [options]
+php createTables.php -c/--config path/to/tripod-config.json -s/--storename store-name [options]
 
 Options:
     -h --help               This help

@@ -14,11 +14,11 @@ $options = getopt(
 function showUsage()
 {
     $help = <<<END
-processQueue2.php
+processQueue.php
 
 Usage:
 
-php processQueue2.php -c/--config path/to/tripod-config.json [options]
+php processQueue.php -c/--config path/to/tripod-config.json [options]
 
 Options:
     -h --help               This help

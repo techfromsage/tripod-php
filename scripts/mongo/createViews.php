@@ -17,11 +17,11 @@ $options = getopt(
 function showUsage()
 {
     $help = <<<END
-createViews2.php
+createViews.php
 
 Usage:
 
-php createViews2.php -c/--config path/to/tripod-config.json -s/--storename store-name [options]
+php createViews.php -c/--config path/to/tripod-config.json -s/--storename store-name [options]
 
 Options:
     -h --help               This help
