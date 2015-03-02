@@ -690,51 +690,6 @@
                         }
                     ]
 
-                },
-                {
-                    "_id": "t_conditional_replace",
-                    "type": ["bibo:Book", "bibo:Document"],
-                    "from": "CBD_testing",
-                    "fields": [
-                        {
-                            "fieldName": "!rawType",
-                            "predicates": [{
-                                "join": {
-                                    "glue": " ",
-                                    "predicates": ["rdf:type"]
-                                }
-                            }]
-                        }
-                    ],
-                    "computed_fields": [
-                        {
-                            "fieldName": "type",
-                            "value": {
-                                "_replace_": {
-                                    "search":"bibo:",
-                                    "replace":"",
-                                    "subject":"$!rawType"
-                                }
-                            }
-                        },
-                        {
-                            "fieldName": "!contributorCount",
-                            "value": {
-                                "_conditional_": {
-                                    "if":["$!contributorCount"],
-                                    "then":"$!contributorCount",
-                                    "else": 0
-                                }
-                            }
-                        },
-                        {
-                            "fieldName": "totalContributorCount",
-                            "value": {
-                                "_arithmetic_":["$!creatorCount","+","$!contributorCount"]
-                            }
-                        }
-                    ]
-
                 }
             ]
         },

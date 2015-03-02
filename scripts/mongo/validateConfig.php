@@ -45,4 +45,12 @@ MongoTripodConfig::setValidationLevel(MongoTripodConfig::VALIDATE_MAX);
 
 MongoTripodConfig::setConfig(json_decode(file_get_contents($configLocation),true));
 
-MongoTripodConfig::getInstance();
+try {
+    MongoTripodConfig::getInstance();
+
+    echo "\nConfig OK\n";
+}
+catch(MongoTripodConfigException $e)
+{
+    echo "\nError: " . $e->getMessage() . "\n";
+}
