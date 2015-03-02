@@ -999,4 +999,18 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $g2->add_literal_triple("http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2",$g2->qname_to_uri("dct:publisher")," W. W. Norton & Co");
         $tripod->saveChanges($g1, $g2);
     }
+
+    public function testConditionalComputedField()
+    {
+        $conditional = array(
+            'fieldName'=>'foobar',
+            'value'=>array(
+                '_conditional_'=>array(
+                    'if'=>[2,">",1],
+                    'then'=>'foo',
+                    'else'=>'bar'
+                )
+            )
+        );
+    }
 }
