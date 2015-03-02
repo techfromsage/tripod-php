@@ -1000,18 +1000,5 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $tripod->saveChanges($g1, $g2);
     }
 
-    public function testConditionalComputedField()
-    {
 
-        $conditional = array(
-            'fieldName'=>'foobar',
-            'value'=>array(
-                '_conditional_'=>array(
-                    'if'=>array(2,">",1),
-                    'then'=>'foo',
-                    'else'=>'bar'
-                )
-            )
-        );
-    }
 }
