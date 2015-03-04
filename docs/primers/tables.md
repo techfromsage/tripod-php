@@ -9,6 +9,81 @@ Tablespecs
 
 TODO: see [the config documentation page](../config.md) for a brief intro.
 
+Tablespecs define the data that actually go into the resulting table row document.  They allow you to join across
+pods for property values in other graphs, as well as generate values based on counts and computed values based on
+other values in the data.
+
+There are a few required properties:
+
+```javascript
+{
+    "_id" : "t_some_table_name" // An identifier for the table type
+    "from" : "CBD_something" // The CBD pod to begin generating the data from
+    "type" : ["owl:Thing", "skos:Concept"] // the RDF type(s) to use as the initial filter to generate rows
+}
+```
+
+From here, the tablespec have at least one of the following properties: "fields", "counts", "joins", or "computed_fields".
+
+The value of all of these are are arrays of objects, except for "joins", whose value is an object.  Some examples:
+
+ ```javascript
+ {
+     "_id" : "t_some_table_name"
+     "from" : "CBD_something"
+     "type" : ["owl:Thing", "skos:Concept"]
+     "fields" : [
+        {
+            "fieldName": "title", // 'fieldName' is required in any field definition
+            "predicates": ["dct:title"] // Every field must have a 'predicates' or 'value' property
+        },
+        {
+            "fieldName": "resourceLink",
+            "value": "_link_" // This turns the subject's ID into a fully qualified uri
+        },
+        {
+            "fieldName": "!typeQname", // fieldNames preceded with '!' are temporary and will not be stored in the document
+            "predicates": ["rdf:type"]
+     ],
+     "counts": [
+        {
+            "fieldName": "partCount",
+            "property": "dct:hasPart" // will count how many time this property appears in this resource
+        }
+     ],
+     "joins": {
+        "dct:creator" : { // More or less the same as the top level of the tablespec
+            "from": "CBD_authors", // Optional, allows you to specify another pod to join on. If left blank, will use the same pod
+            "fields":
+            {
+                "fieldName": "authors",
+                "predicates": [
+                    { // There are modifiers that can be applied to the graph value before they're applied to the table row
+                        "join": {
+                            "glue": " ",
+                            "predicates": ["foaf:firstName", "foaf:surname"]
+                        }
+                    } // examples: join [combine multiple values into a string], lowercase, date [turns a string date into a MongoDate]
+                ]
+            }
+        }
+     },
+     "computed_fields": [ // this can only be at the top level of the tablespec, as it's applied after all other values are retrieved
+        {
+            "fieldName": "type",
+            "value": {
+                "_replace_" : { // _replace_ is a function name
+                    "search" : "bibo:"
+                    "replace" : "",
+                    "subject" : "!typeQname" // will turn 'bibo:Book' into 'Book'
+                }
+            }
+        }
+     ]
+ }
+ ```
+
+
 Usage
 -----
 
