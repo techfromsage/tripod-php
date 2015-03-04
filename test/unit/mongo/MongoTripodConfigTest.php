@@ -512,7 +512,8 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                         "filter"=>array("rdf:type.value"=>"http://talisaspire.com/schema#Resource"),
                         "property"=>"dct:isVersionOf"
                     )
-                )
+                ),
+                "joins"=>array("dct:hasVersion"=>array())
             )
         );
         $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");

@@ -322,6 +322,10 @@ class MongoTripodConfig
                 {
                     throw new MongoTripodConfigException("'" . $spec[_ID_KEY] . "[\"from\"]' property not set or references an undefined pod");
                 }
+                if(!isset($spec['joins']))
+                {
+                    throw new MongoTripodConfigException('Could not find any joins in view specification - usecase better served with select()');
+                }
                 $this->ifCountExistsWithoutTTLThrowException($spec);
                 if(isset($spec['to_data_source']))
                 {
