@@ -23,95 +23,136 @@ if(isset($appConfig['tripod']))
 }
 
 $app->group('/1', function() use ($app) {
-    $app->group('/:storeName/:podName', function() use ($app)
+    $app->group('/:storeName', function() use ($app)
     {
-        $app->group('/graph', function() use ($app) {
-            $app->get('/:encodedFqUri', function($storeName, $podName, $encodedFqUri) use ($app) {
-                MongoTripodConfig::setConfig(json_decode(file_get_contents('./config/tripod-config-'.$storeName .'.json'), true));
-                $tripodOptions['stat'] = getStat($app);
-                $tripod = new MongoTripod($podName, $storeName, $tripodOptions);
-                $contentType = $app->request()->getMediaType();
-                switch($contentType)
-                {
-                    case 'application/rdf+xml':
-                        $format = FORMAT_RDF_XML;
-                        break;
-                    case 'text/plain':
-                        $format = FORMAT_NTRIPLES;
-                        break;
-                    case 'text/turtle':
-                        $format = FORMAT_TURTLE;
-                        break;
-                    default:
-                        $format = FORMAT_RDF_JSON;
-                }
-                $graph =  $tripod->describeResource(base64_decode($encodedFqUri));
-                if($graph->is_empty())
-                {
-                    $app->response()->setStatus(404);
-                }
-                else
-                {
-                    $output = getFormattedGraph($graph, $format);
-                    $app->response()->headers()->set('Content-type', getContentType($format));
-                    echo $output;
-                }
-
-            });
-
-            $app->delete('/:encodedFqUri', function($storeName, $podName, $encodedFqUri) use ($app) {
-                $tripodOptions['stat'] = getStat($app);
-                $tripod = new MongoTripod($podName, $storeName, $tripodOptions);
-                $oldGraph = $tripod->describeResource(base64_decode($encodedFqUri));
-                $tripod->saveChanges($oldGraph, new ExtendedGraph());
-            });
-
-            $app->post('/', function($storeName, $podName) use ($app) {
-                $tripodOptions['stat'] = getStat($app);
-                $tripod = new MongoTripod($podName, $storeName, $tripodOptions);
-                $rawGraphData = $app->request()->getBody();
-                $graph = new MongoGraph();
-                $graph->add_rdf($rawGraphData);
-                $tripod->saveChanges(new ExtendedGraph(), $graph);
-            });
+        $app->get('/views/:viewId/:encodedFqUri', function($storeName, $viewSpecId, $encodedFqUri) use ($app)
+        {
+            MongoTripodConfig::setConfig(json_decode(file_get_contents('./config/tripod-config-'.$storeName .'.json'), true));
+            $viewSpec = MongoTripodConfig::getInstance()->getViewSpecification($storeName, $viewSpecId);
+            if(!$viewSpec)
+            {
+                $viewSpec = MongoTripodConfig::getInstance()->getViewSpecification($viewSpecId);
+            }
+            $podName = isset($viewSpec['from']) ? $viewSpec['from'] : null;
+            $tripodOptions['stat'] = getStat($app);
+            $tripod = new MongoTripod($podName, $storeName, $tripodOptions);
+            $contentType = $app->request()->getMediaType();
+            switch($contentType)
+            {
+                case 'application/rdf+xml':
+                    $format = FORMAT_RDF_XML;
+                    break;
+                case 'text/plain':
+                    $format = FORMAT_NTRIPLES;
+                    break;
+                case 'text/turtle':
+                    $format = FORMAT_TURTLE;
+                    break;
+                default:
+                    $format = FORMAT_RDF_JSON;
+            }
+            $graph =  $tripod->getViewForResource(base64_decode($encodedFqUri), $viewSpecId);
+            if($graph->is_empty())
+            {
+                $app->response()->setStatus(404);
+            }
+            else
+            {
+                $output = getFormattedGraph($graph, $format);
+                $app->response()->headers()->set('Content-type', getContentType($format));
+                echo $output;
+            }
         });
+        $app->group('/:podName', function() use ($app)
+        {
+            $app->group('/graph', function() use ($app) {
+                $app->get('/:encodedFqUri', function($storeName, $podName, $encodedFqUri) use ($app) {
+                    MongoTripodConfig::setConfig(json_decode(file_get_contents('./config/tripod-config-'.$storeName .'.json'), true));
+                    $tripodOptions['stat'] = getStat($app);
+                    $tripod = new MongoTripod($podName, $storeName, $tripodOptions);
+                    $contentType = $app->request()->getMediaType();
+                    switch($contentType)
+                    {
+                        case 'application/rdf+xml':
+                            $format = FORMAT_RDF_XML;
+                            break;
+                        case 'text/plain':
+                            $format = FORMAT_NTRIPLES;
+                            break;
+                        case 'text/turtle':
+                            $format = FORMAT_TURTLE;
+                            break;
+                        default:
+                            $format = FORMAT_RDF_JSON;
+                    }
+                    $graph =  $tripod->describeResource(base64_decode($encodedFqUri));
+                    if($graph->is_empty())
+                    {
+                        $app->response()->setStatus(404);
+                    }
+                    else
+                    {
+                        $output = getFormattedGraph($graph, $format);
+                        $app->response()->headers()->set('Content-type', getContentType($format));
+                        echo $output;
+                    }
 
-        $app->group('/change', function() use ($app) {
-            $app->post('/', function($storeName, $podName) use ($app) {
-              MongoTripodConfig::setConfig(json_decode(file_get_contents('./config/tripod-config-'.$storeName .'.json'), true));
-                $app->response()->setStatus(500);
-                $tripodOptions['stat'] = getStat($app);
-                $tripod = new MongoTripod($podName, $storeName, $tripodOptions);
-                $rawChangeData = $app->request()->post('data');
-                if($rawChangeData)
-                {
-                    $changeData = json_decode($rawChangeData, true);
-                    $from = new MongoGraph();
-                    $to = new MongoGraph();
-                    if(isset($changeData['originalCBDs']))
+                });
+
+                $app->delete('/:encodedFqUri', function($storeName, $podName, $encodedFqUri) use ($app) {
+                    $tripodOptions['stat'] = getStat($app);
+                    $tripod = new MongoTripod($podName, $storeName, $tripodOptions);
+                    $oldGraph = $tripod->describeResource(base64_decode($encodedFqUri));
+                    $tripod->saveChanges($oldGraph, new ExtendedGraph());
+                });
+
+                $app->post('/', function($storeName, $podName) use ($app) {
+                    $tripodOptions['stat'] = getStat($app);
+                    $tripod = new MongoTripod($podName, $storeName, $tripodOptions);
+                    $rawGraphData = $app->request()->getBody();
+                    $graph = new MongoGraph();
+                    $graph->add_rdf($rawGraphData);
+                    $tripod->saveChanges(new ExtendedGraph(), $graph);
+                });
+            });
+
+            $app->group('/change', function() use ($app) {
+                $app->post('/', function($storeName, $podName) use ($app) {
+                  MongoTripodConfig::setConfig(json_decode(file_get_contents('./config/tripod-config-'.$storeName .'.json'), true));
+                    $app->response()->setStatus(500);
+                    $tripodOptions['stat'] = getStat($app);
+                    $tripod = new MongoTripod($podName, $storeName, $tripodOptions);
+                    $rawChangeData = $app->request()->post('data');
+                    if($rawChangeData)
                     {
-                        foreach($changeData['originalCBDs'] as $change)
+                        $changeData = json_decode($rawChangeData, true);
+                        $from = new MongoGraph();
+                        $to = new MongoGraph();
+                        if(isset($changeData['originalCBDs']))
                         {
-                            $from->add_tripod_array($change);
+                            foreach($changeData['originalCBDs'] as $change)
+                            {
+                                $from->add_tripod_array($change);
+                            }
+                        }
+                        if(isset($changeData['newCBDs']))
+                        {
+                            foreach($changeData['newCBDs'] as $change)
+                            {
+                                $to->add_tripod_array($change);
+                            }
+                        }
+                        try
+                        {
+                            $tripod->saveChanges($from, $to);
+                            $app->response()->setStatus(202);
+                        }
+                        catch (Exception $e)
+                        {
+                            $app->response()->setStatus(400);
                         }
                     }
-                    if(isset($changeData['newCBDs']))
-                    {
-                        foreach($changeData['newCBDs'] as $change)
-                        {
-                            $to->add_tripod_array($change);
-                        }
-                    }
-                    try
-                    {
-                        $tripod->saveChanges($from, $to);
-                        $app->response()->setStatus(202);
-                    }
-                    catch (Exception $e)
-                    {
-                        $app->response()->setStatus(400);
-                    }
-                }
+                });
             });
         });
     });
