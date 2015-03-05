@@ -380,9 +380,27 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
 
                 $this->doJoins($doc,$viewSpec['joins'],$value,$from,$contextAlias,$buildImpactIndex);
 
+                $key = _ID_RESOURCE .":".$doc['_id'][_ID_RESOURCE].':'._ID_CONTEXT.':'.$doc['_id'][_ID_CONTEXT];
                 // add top level properties
-                $value[_GRAPHS][] = $this->extractProperties($doc,$viewSpec,$from);
+                $viewGraph = $this->extractProperties($doc,$viewSpec,$from);
+                if(isset($value[_GRAPHS][$key]))
+                {
+                    if($value[_GRAPHS][$key] != $viewGraph)
+                    {
+                        $value[_GRAPHS][$key] = $this->mergeGraphs(
+                            $doc['_id'],
+                            $value[_GRAPHS][$key],
+                            $viewGraph
+                        );
+                    }
+                }
+                else
+                {
+                    $value[_GRAPHS][$key] = $viewGraph;
+                }
 
+                $value[_GRAPHS] = array_values($value[_GRAPHS]);
+                $value[_IMPACT_INDEX] = array_unique($value[_IMPACT_INDEX]);
                 $generatedView['value'] = $value;
 
                 $collection->save($generatedView);
@@ -396,6 +414,14 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
                 'from'=>$from));
             $this->getStat()->timer(MONGO_CREATE_VIEW.".$viewId",$t->result());
         }
+    }
+
+    private function mergeGraphs($id, $originalGraphArray, $newGraphArray)
+    {
+        $g = new MongoGraph();
+        $g->add_tripod_array($originalGraphArray);
+        $g->add_tripod_array($newGraphArray);
+        return $g->to_tripod_array($id['r'], $id['c']);
     }
 
     /**
@@ -471,8 +497,26 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
 
                         // make sure any sequences are expanded before extracting properties
                         if (isset($ruleset['joins'])) $this->expandSequence($ruleset['joins'],$linkMatch);
+                        $key = _ID_RESOURCE .":".$linkMatch['_id'][_ID_RESOURCE].':'._ID_CONTEXT.':'.$linkMatch['_id'][_ID_CONTEXT];
+                        // add top level properties
+                        $viewGraph = $this->extractProperties($linkMatch,$ruleset,$from);
+                        if(isset($dest[_GRAPHS][$key]))
+                        {
+                            if($dest[_GRAPHS][$key] != $viewGraph)
+                            {
+                                $dest[_GRAPHS][$key] = $this->mergeGraphs(
+                                    $linkMatch['_id'],
+                                    $dest[_GRAPHS][$key],
+                                    $viewGraph
+                                );
+                            }
+                        }
+                        else
+                        {
+                            $dest[_GRAPHS][$key] = $viewGraph;
+                        }
 
-                        $dest[_GRAPHS][] = $this->extractProperties($linkMatch,$ruleset,$from);
+//                        $dest[_GRAPHS][] = $this->extractProperties($linkMatch,$ruleset,$from);
 
                         if (isset($ruleset['joins']))
                         {

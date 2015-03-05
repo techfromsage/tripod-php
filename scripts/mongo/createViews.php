@@ -87,7 +87,7 @@ function generateViews($id, $viewId, $storeName, $stat)
     {
         $viewSpec = MongoTripodConfig::getInstance()->getViewSpecification($viewId);
     }
-    echo $viewId;
+
     if (array_key_exists("from",$viewSpec))
     {
         MongoCursor::$timeout = -1;
