@@ -400,7 +400,10 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
                 }
 
                 $value[_GRAPHS] = array_values($value[_GRAPHS]);
-                $value[_IMPACT_INDEX] = array_unique($value[_IMPACT_INDEX]);
+                if(isset($value[_IMPACT_INDEX]))
+                {
+                    $value[_IMPACT_INDEX] = array_unique($value[_IMPACT_INDEX]);
+                }
                 $generatedView['value'] = $value;
 
                 $collection->save($generatedView);
