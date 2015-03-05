@@ -400,10 +400,6 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
                 }
 
                 $value[_GRAPHS] = array_values($value[_GRAPHS]);
-                if(isset($value[_IMPACT_INDEX]))
-                {
-                    $value[_IMPACT_INDEX] = array_unique($value[_IMPACT_INDEX]);
-                }
                 $generatedView['value'] = $value;
 
                 $collection->save($generatedView);
@@ -493,7 +489,7 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
 
                         // add linkMatch if there isn't already a graph for it in the dest obj
 //                        $addItemToImpactIndex = true;
-                        if ($buildImpactIndex)
+                        if ($buildImpactIndex && !in_array($linkMatch['_id'], $dest[_IMPACT_INDEX]))
                         {
                             $dest[_IMPACT_INDEX][] = $linkMatch['_id'];
                         }
