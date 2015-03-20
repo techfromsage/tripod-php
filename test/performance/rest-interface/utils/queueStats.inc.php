@@ -10,5 +10,5 @@ require_once dirname(dirname(__FILE__)) . '/src/Stat.class.php';
 $qConfig = MongoTripodConfig::getInstance()->getQueueConfig();
 StatConfig::setConfig(array('host'=>$queueOptions['host'],'port'=>$queueOptions['port']));
 $stat = new Stat($qConfig['database']);
-$stat->getStatEnvName($queueOptions['env']);
+$stat->setStatEnvName($queueOptions['env']);
 return $stat;

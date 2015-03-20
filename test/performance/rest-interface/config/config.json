@@ -10,5 +10,6 @@
             "generate_search_index_docs" : true
         },
         "readPreference":"primaryPreferred"
-    }
+    },
+    "read-retries": 0
 }
