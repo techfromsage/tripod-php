@@ -11,5 +11,5 @@
         },
         "readPreference":"primaryPreferred"
     },
-    "read-retries": 0
+    "read-multiplier": 0
 }

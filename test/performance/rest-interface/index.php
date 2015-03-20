@@ -22,9 +22,9 @@ if(isset($appConfig['tripod']))
     $tripodOptions = $appConfig['tripod'];
 }
 
-$numRetries = isset($appConfig['read-retries']) ? (int)$appConfig['read-retries'] : 0;
+$readRepeat = isset($appConfig['read-multiplier']) ? (int)$appConfig['read-multiplier'] : 0;
 
-define('NUM_RETRIES', $numRetries);
+define('READ_REPEAT_NUM', $readRepeat);
 
 $app->group('/1', function() use ($app) {
     $app->group('/:storeName', function() use ($app)
@@ -59,7 +59,7 @@ $app->group('/1', function() use ($app) {
                         $format = FORMAT_RDF_JSON;
                 }
                 $graph =  $tripod->getViewForResource(base64_decode($encodedFqUri), $viewSpecId);
-            } while(++$i < NUM_RETRIES);
+            } while(++$i < READ_REPEAT_NUM);
             if($graph->is_empty())
             {
                 $app->response()->setStatus(404);
@@ -99,7 +99,7 @@ $app->group('/1', function() use ($app) {
                                 $format = FORMAT_RDF_JSON;
                         }
                         $graph =  $tripod->describeResource(base64_decode($encodedFqUri));
-                    } while(++$i < NUM_RETRIES);
+                    } while(++$i < READ_REPEAT_NUM);
 
                     if($graph->is_empty())
                     {
