@@ -538,13 +538,13 @@ class MongoTripodConfig
     {
         switch($type)
         {
-            case '_conditional_':
+            case 'conditional':
                 $this->validateComputedConditionalSpec($spec[$type], $availableFields);
                 break;
-            case '_replace_':
+            case 'replace':
                 $this->validateComputedReplaceSpec($spec[$type], $availableFields);
                 break;
-            case '_arithmetic_':
+            case 'arithmetic':
                 $this->validateComputedArithmeticSpec($spec[$type], $availableFields);
                 break;
         }

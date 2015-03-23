@@ -681,7 +681,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
     }
 
     /**
-     * Test that _link_ modifier is derived from the joined resource id, rather than base
+     * Test that link modifier is derived from the joined resource id, rather than base
      * @access public
      * @return void
      */

@@ -39,7 +39,7 @@ The value of all of these are are arrays of objects, except for "joins", whose v
         },
         {
             "fieldName": "resourceLink",
-            "value": "_link_" // This turns the subject's ID into a fully qualified uri
+            "value": "link" // This turns the subject's ID into a fully qualified uri
         },
         {
             "fieldName": "!typeQname", // fieldNames preceded with '!' are temporary and will not be stored in the document

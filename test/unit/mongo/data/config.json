@@ -197,7 +197,7 @@
                             },
                             {
                                 "fieldName": "result.link",
-                                "value": "_link_"
+                                "value": "link"
                             }
                         ],
                         "joins": {
@@ -243,7 +243,7 @@
                             },
                             {
                                 "fieldName": "result.link",
-                                "value": "_link_"
+                                "value": "link"
                             },
                             {
                                 "fieldName": "rdftype",
@@ -554,7 +554,7 @@
                         },
                         {
                             "fieldName": "userProfileLink",
-                            "value": "_link_"
+                            "value": "link"
                         }
                     ]
                 },
@@ -566,7 +566,7 @@
                     "fields": [
                         {
                             "fieldName": "bookLink",
-                            "value": "_link_"
+                            "value": "link"
                         },
                         {
                             "fieldName": "authorUri",
@@ -582,7 +582,7 @@
                             "fields": [
                                 {
                                     "fieldName": "authorLink",
-                                    "value": "_link_"
+                                    "value": "link"
                                 },
                                 {
                                     "fieldName": "knowsUri",
@@ -594,7 +594,7 @@
                                     "fields": [
                                         {
                                             "fieldName": "knowsLink",
-                                            "value": "_link_"
+                                            "value": "link"
                                         }
                                     ]
                                 }
@@ -604,7 +604,7 @@
                             "fields": [
                                 {
                                     "fieldName": "workLink",
-                                    "value": "_link_"
+                                    "value": "link"
                                 }
                             ]
                         }
@@ -619,7 +619,7 @@
                             "fields": [
                                 {
                                     "fieldName": "contributorLink",
-                                    "value": "_link_"
+                                    "value": "link"
                                 }
                             ]
                         }

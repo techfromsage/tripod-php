@@ -206,6 +206,25 @@ abstract class MongoTripodBase
         }
     }
 
+    public function warningLog($message, $params=null)
+    {
+        if (self::getLogger()!=null)
+        {
+            self::getLogger()->getInstance()->warn("[TRIPOD_WARN] $message",$params);
+        }
+        else
+        {
+            echo "$message\n";
+            if ($params)
+            {
+                echo "Params: \n";
+                foreach ($params as $key=>$value)
+                {
+                    echo "$key: $value\n";
+                }
+            }
+        }
+    }
 
     public static $logger;
 

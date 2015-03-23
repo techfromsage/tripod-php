@@ -240,7 +240,11 @@ class MongoTripodSearchDocuments extends MongoTripodBase
             if(isset($f['value'])){
                 $values = array();
 
-                if($f['value'] == '_link_'){
+                if($f['value'] == '_link_' || $f['value'] == 'link'){
+                    if($f['value'] == '_link_')
+                    {
+                        $this->warningLog("Search spec value '_link_' is deprecated", $f);
+                    }
                     $values[] = $this->labeller->qname_to_alias($source['_id']['r']);
                 } else {
                     $values[] = $f['value'];

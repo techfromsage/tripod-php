@@ -31,7 +31,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
      * @var array
      * @static
      */
-    public static $computedFieldFunctions = array('_conditional_', "_replace_", "_arithmetic_");
+    public static $computedFieldFunctions = array('conditional', "replace", "arithmetic");
 
     /**
      * Computed conditional config - list of allowed conditional operators
@@ -48,6 +48,11 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
      * @static
      */
     public static $arithmeticOperators = array("+", "-", "*", "/", "%");
+
+    /**
+     * @var array
+     */
+    protected $temporaryFields = array();
 
     /**
      * Construct accepts actual objects rather than strings as this class is a delegate of
@@ -322,7 +327,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
     {
         $t = new Timer();
         $t->start();
-
+        $this->temporaryFields = array();
         $tableSpec = MongoTripodConfig::getInstance()->getTableSpecification($this->storeName, $tableType);
         $collection = $this->config->getCollectionForTable($this->storeName, $tableType);
 
@@ -395,8 +400,8 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
             }
 
             // Remove temp fields from document
-            $storedKeys = array_filter(array_keys($value), function($key) { return strpos($key, "!") !== 0; });
-            $generatedRow['value'] = array_intersect_key($value, array_flip($storedKeys));
+
+            $generatedRow['value'] = array_diff_key($value, array_flip($this->temporaryFields));
             $collection->save($generatedRow);
         }
 
@@ -421,6 +426,13 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
             {
                 if(isset($f['fieldName']) && isset($f['value']) && is_array($f['value']))
                 {
+                    if(isset($f['temporary']) && $f['temporary'] === true)
+                    {
+                        if(!in_array($f['fieldName'], $this->temporaryFields))
+                        {
+                            $this->temporaryFields[] = $f['fieldName'];
+                        }
+                    }
                     $computedFunctions = array_values(array_intersect(self::$computedFieldFunctions, array_keys($f['value'])));
                     $dest[$f['fieldName']] = $this->getComputedValue($computedFunctions[0], $f['value'], $dest);
                 }
@@ -439,13 +451,13 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         $value = null;
         switch($function)
         {
-            case '_conditional_':
+            case 'conditional':
                 $value = $this->generateConditionalValue($spec[$function], $dest);
                 break;
-            case '_replace_':
+            case 'replace':
                 $value = $this->generateReplaceValue($spec[$function], $dest);
                 break;
-            case '_arithmetic_':
+            case 'arithmetic':
                 $value = $this->computeArithmeticValue($spec[$function], $dest);
                 break;
         }
@@ -729,6 +741,13 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         {
             foreach ($spec['fields'] as $f)
             {
+                if(isset($f['temporary']) && $f['temporary'] === true)
+                {
+                    if(!in_array($f['fieldName'], $this->temporaryFields))
+                    {
+                        $this->temporaryFields[] = $f['fieldName'];
+                    }
+                }
                 if(isset($f['predicates']))
                 {
                     foreach ($f['predicates'] as $p)
@@ -773,8 +792,12 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
                 // Allow URI linking to the ID
                 if(isset($f['value']))
                 {
-                    if($f['value'] == '_link_')
+                    if($f['value'] == '_link_' || $f['value'] == 'link' )
                     {
+                        if($f['value'] == '_link_')
+                        {
+                            $this->warningLog("Table spec value '_link_' is deprecated", $f);
+                        }
                         // If value exists, set as array
                         if(isset($dest[$f['fieldName']]))
                         {
@@ -1005,6 +1028,13 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         foreach ($countSpec as $c)
         {
             $fieldName = $c['fieldName'];
+            if(isset($c['temporary']) && $c['temporary'] === true)
+            {
+                if(!in_array($fieldName, $this->temporaryFields))
+                {
+                    $this->temporaryFields[] = $fieldName;
+                }
+            }
             $applyRegex = (isset($c['regex'])) ? isset($c['regex']) : null;
             $count = 0;
             // just count predicates at current location
