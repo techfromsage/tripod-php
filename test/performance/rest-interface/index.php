@@ -22,36 +22,44 @@ if(isset($appConfig['tripod']))
     $tripodOptions = $appConfig['tripod'];
 }
 
+$readRepeat = isset($appConfig['read-repeat']) ? (int)$appConfig['read-repeat'] : 0;
+
+define('READ_REPEAT_NUM', $readRepeat);
+
 $app->group('/1', function() use ($app) {
     $app->group('/:storeName', function() use ($app)
     {
         $app->get('/views/:viewId/:encodedFqUri', function($storeName, $viewSpecId, $encodedFqUri) use ($app)
         {
             MongoTripodConfig::setConfig(json_decode(file_get_contents('./config/tripod-config-'.$storeName .'.json'), true));
-            $viewSpec = MongoTripodConfig::getInstance()->getViewSpecification($storeName, $viewSpecId);
-            if(!$viewSpec)
+            $i = 0;
+            do
             {
-                $viewSpec = MongoTripodConfig::getInstance()->getViewSpecification($viewSpecId);
-            }
-            $podName = isset($viewSpec['from']) ? $viewSpec['from'] : null;
-            $tripodOptions['stat'] = getStat($app);
-            $tripod = new MongoTripod($podName, $storeName, $tripodOptions);
-            $contentType = $app->request()->getMediaType();
-            switch($contentType)
-            {
-                case 'application/rdf+xml':
-                    $format = FORMAT_RDF_XML;
-                    break;
-                case 'text/plain':
-                    $format = FORMAT_NTRIPLES;
-                    break;
-                case 'text/turtle':
-                    $format = FORMAT_TURTLE;
-                    break;
-                default:
-                    $format = FORMAT_RDF_JSON;
-            }
-            $graph =  $tripod->getViewForResource(base64_decode($encodedFqUri), $viewSpecId);
+                $viewSpec = MongoTripodConfig::getInstance()->getViewSpecification($storeName, $viewSpecId);
+                if(!$viewSpec)
+                {
+                    $viewSpec = MongoTripodConfig::getInstance()->getViewSpecification($viewSpecId);
+                }
+                $podName = isset($viewSpec['from']) ? $viewSpec['from'] : null;
+                $tripodOptions['stat'] = getStat($app);
+                $tripod = new MongoTripod($podName, $storeName, $tripodOptions);
+                $contentType = $app->request()->getMediaType();
+                switch($contentType)
+                {
+                    case 'application/rdf+xml':
+                        $format = FORMAT_RDF_XML;
+                        break;
+                    case 'text/plain':
+                        $format = FORMAT_NTRIPLES;
+                        break;
+                    case 'text/turtle':
+                        $format = FORMAT_TURTLE;
+                        break;
+                    default:
+                        $format = FORMAT_RDF_JSON;
+                }
+                $graph =  $tripod->getViewForResource(base64_decode($encodedFqUri), $viewSpecId);
+            } while(++$i < READ_REPEAT_NUM);
             if($graph->is_empty())
             {
                 $app->response()->setStatus(404);
@@ -69,23 +77,30 @@ $app->group('/1', function() use ($app) {
                 $app->get('/:encodedFqUri', function($storeName, $podName, $encodedFqUri) use ($app) {
                     MongoTripodConfig::setConfig(json_decode(file_get_contents('./config/tripod-config-'.$storeName .'.json'), true));
                     $tripodOptions['stat'] = getStat($app);
-                    $tripod = new MongoTripod($podName, $storeName, $tripodOptions);
+
                     $contentType = $app->request()->getMediaType();
-                    switch($contentType)
+                    $i = 0;
+                    do
                     {
-                        case 'application/rdf+xml':
-                            $format = FORMAT_RDF_XML;
-                            break;
-                        case 'text/plain':
-                            $format = FORMAT_NTRIPLES;
-                            break;
-                        case 'text/turtle':
-                            $format = FORMAT_TURTLE;
-                            break;
-                        default:
-                            $format = FORMAT_RDF_JSON;
-                    }
-                    $graph =  $tripod->describeResource(base64_decode($encodedFqUri));
+                        $tripod = new MongoTripod($podName, $storeName, $tripodOptions);
+
+                        switch($contentType)
+                        {
+                            case 'application/rdf+xml':
+                                $format = FORMAT_RDF_XML;
+                                break;
+                            case 'text/plain':
+                                $format = FORMAT_NTRIPLES;
+                                break;
+                            case 'text/turtle':
+                                $format = FORMAT_TURTLE;
+                                break;
+                            default:
+                                $format = FORMAT_RDF_JSON;
+                        }
+                        $graph =  $tripod->describeResource(base64_decode($encodedFqUri));
+                    } while(++$i < READ_REPEAT_NUM);
+
                     if($graph->is_empty())
                     {
                         $app->response()->setStatus(404);
@@ -132,14 +147,20 @@ $app->group('/1', function() use ($app) {
                         {
                             foreach($changeData['originalCBDs'] as $change)
                             {
-                                $from->add_tripod_array($change);
+                                if(is_array($change) && isset($change[_ID_KEY]))
+                                {
+                                    $from->add_tripod_array($change);
+                                }
                             }
                         }
                         if(isset($changeData['newCBDs']))
                         {
                             foreach($changeData['newCBDs'] as $change)
                             {
-                                $to->add_tripod_array($change);
+                                if(is_array($change) && isset($change[_ID_KEY]))
+                                {
+                                    $to->add_tripod_array($change);
+                                }
                             }
                         }
                         try
@@ -149,6 +170,7 @@ $app->group('/1', function() use ($app) {
                         }
                         catch (Exception $e)
                         {
+                            error_log("POST failed: " . $e->getMessage());
                             $app->response()->setStatus(400);
                         }
                     }
