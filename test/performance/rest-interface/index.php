@@ -22,7 +22,7 @@ if(isset($appConfig['tripod']))
     $tripodOptions = $appConfig['tripod'];
 }
 
-$readRepeat = isset($appConfig['read-multiplier']) ? (int)$appConfig['read-multiplier'] : 0;
+$readRepeat = isset($appConfig['read-repeat']) ? (int)$appConfig['read-repeat'] : 0;
 
 define('READ_REPEAT_NUM', $readRepeat);
 
