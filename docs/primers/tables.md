@@ -42,8 +42,9 @@ The value of all of these are are arrays of objects, except for "joins", whose v
             "value": "link" // This turns the subject's ID into a fully qualified uri
         },
         {
-            "fieldName": "!typeQname", // fieldNames preceded with '!' are temporary and will not be stored in the document
-            "predicates": ["rdf:type"]
+            "fieldName": "typeQname",
+            "predicates": ["rdf:type"],
+            "temporary": true  // fieldNames with the temporary property set to true will not be stored in the document
      ],
      "counts": [
         {
@@ -75,13 +76,151 @@ The value of all of these are are arrays of objects, except for "joins", whose v
                 "_replace_" : { // _replace_ is a function name
                     "search" : "bibo:"
                     "replace" : "",
-                    "subject" : "!typeQname" // will turn 'bibo:Book' into 'Book'
+                    "subject" : "typeQname" // will turn 'bibo:Book' into 'Book'
                 }
             }
         }
      ]
  }
  ```
+
+Temporary fields
+----------------
+Any table field can be defined as temporary, whether it is defined in 'fields', 'counts', or 'computed_fields'.  Temporary
+fields will not be stored in the table row document.  Note: if a fieldName is designated as temporary *anywhere* within the
+table specification, it will apply to all references to that fieldName, e.g.
+
+```javascript
+{
+     "_id" : "t_some_table_name"
+     "from" : "CBD_something"
+     "type" : ["owl:Thing", "skos:Concept"]
+     "fields" : [
+        {
+            "fieldName": "foo",
+            "predicates": ["skos:label"],
+            "temporary": true
+        }
+     ],
+     "joins": {
+        "owl:sameAs" : {
+            "fields" : [
+                { // This field will not be saved
+                    "fieldName": "foo",
+                    "predicates": ["skos:label"]
+                }
+            ]
+        }
+     }
+}
+```
+
+Computed fields
+---------------
+Computed fields allow you to set a table row value based on functions run against other fields in the table row document.
+These are run *after* all of the CBD-based values ('fields', 'joins', and 'counts') has been gathered, and the 'computed_fields'
+property can *only* exist at the base level of the table specification.
+
+Computed fields *must* contain 'fieldName' and 'value' properties and 'value' must be a valid computed field function
+ specification.  Optionally, they may also contain a 'property' property.
+
+Computed fields are run in the order they appear in the specification, so a later fields can use the results of earlier functions.
+
+Functions can be nested, so the input values of a function can be supplied by another function, e.g.:
+
+```javascript
+{
+    ...
+    "computed_fields": [
+        {
+            "fieldName": "foo",
+            "value": {
+                "conditional" : // This defines the function to run
+                {
+                    "if:[
+                        {
+                            "arithmetic": // This will run an arithmetic function to set the left side of the condition
+                            {
+                                ["$x", "*", 10]
+                            }
+                        }, ">", 100
+                    ],
+                    "then": "foo",
+                    "else": "bar"
+                }
+            }
+
+        }
+    ]
+}
+```
+
+Only *one* function can be defined at a time, however.  This is *not* valid:
+
+```javascript
+{
+    ...
+    "computed_fields": [
+        {
+            "fieldName": "foo",
+            "value": {
+                "replace": {
+                    "search": "foo",
+                    "replace": "bar",
+                    "subject": "$x"
+                },
+                "arithmetic":["$x", "-", 4"]
+            }
+        }
+    ]
+}
+```
+
+Fields are referenced as variables defined by the fieldName prefixed with ``` $ ```: ``` "fieldName": "foo" ``` would be ``` $foo ```, etc.
+
+Conditional functions
+---------------------
+
+Conditionals let you set the value of the table field based on other values.  Conditionals *must* contain an 'if' property
+and must have either a 'then' or an 'else' property, or both.
+
+"if" expects an array with a length of 1 or 3 as its value: if the array's count is 1, it will just check for the existence
+of the value:
+
+```javascript
+{
+    "fieldName": "foo",
+    "value": {
+        "conditional": {
+            "if": ["$x"] // Does the fieldName 'x' have a value?
+            "then": true,
+            "else": false
+        }
+    }
+}
+```
+
+If the array's count is three, the 2nd value must be one of:
+">","<",">=", "<=", "==", "!=", "contains", "not contains", "~=", "!~"
+there is no strict type comparison.
+
+"then" and "else" values may be of any type, including another function.  To replicate 'else if', you can use another
+ conditional function as the value of 'else'.
+
+ Arithmetic functions
+ --------------------
+ Arithmetic functions allow you to do simple arithmetic with the values.  The function will try to cast the value to the
+ most appropriate type (first it will try float, then integer).
+
+ The arithmetic function's value is an array with 3 values: the first and last values can be arrays to allow for order of operations.
+
+ ```javascript
+ {
+    "fieldName": "foo",
+    "value": {
+        "arithmetic": [["$a", "+", "$b"], "*", ["$x", "+", "$y"]]
+    }
+ }
 
 
 Usage
