@@ -246,8 +246,6 @@ class MongoTripodSearchDocuments extends MongoTripodBase
                         $this->warningLog("Search spec value '_link_' is deprecated", $f);
                     }
                     $values[] = $this->labeller->qname_to_alias($source['_id']['r']);
-                } else {
-                    $values[] = $f['value'];
                 }
 
                 $this->addValuesToTarget($values, $f, $target);
