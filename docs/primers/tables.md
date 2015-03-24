@@ -221,7 +221,51 @@ there is no strict type comparison.
         "arithmetic": [["$a", "+", "$b"], "*", ["$x", "+", "$y"]]
     }
  }
+```
 
+The left and right values of the equation can also be nested functions:
+
+ ```javascript
+ {
+    "fieldName": "foo",
+    "value": {
+        "arithmetic": [
+            [{
+                "conditional": {
+                    "if":["$a" ">" "$c"],
+                    "then": "$a",
+                    "else": "$c"
+                }
+            }, "+", "$b"], "*", ["$x", "+", "$y"]
+        ]
+    }
+ }
+```
+
+Replace functions
+-----------------
+
+This function allows you to do a string replace.  Its syntax is analogous to PHP's ``` str_replace ``` function.
+
+It *must* have 'search', 'replace', and 'subject' properties.  Like ``` str_replace ```, 'search' and 'replace' can be
+   arrays.
+
+If, for this example, ``` $x ``` is "bibo:Article"
+
+```javascript
+{
+    "fieldName": "foo",
+    "value": {
+        "replace": {
+            "search": "bibo:",
+            "replace": "",
+            "subject": "$x"
+        }
+     }
+}
+```
+
+This would set 'foo' to 'Article'.
 
 Usage
 -----

@@ -622,6 +622,10 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         }
         elseif(is_array($value))
         {
+            if($this->isFunction($value))
+            {
+                return $this->getComputedValue(array_pop(array_keys($value)), $value, $dest);
+            }
             $aryValue = array();
             foreach($value as $v)
             {
@@ -631,6 +635,15 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         }
 
         return $this->castValueType($value, $setType);
+    }
+
+    /**
+     * @param mixed $value
+     * @return bool
+     */
+    protected function isFunction($value)
+    {
+        return (is_array($value) && count(array_keys($value)) === 1 && count(array_intersect(array_keys($value), self::$computedFieldFunctions)) ===1);
     }
 
     /**

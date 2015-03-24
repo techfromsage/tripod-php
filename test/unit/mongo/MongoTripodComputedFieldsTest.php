@@ -352,4 +352,92 @@ class MongoTripodComputedFieldsTest extends MongoTripodTestBase
         MongoTripodConfig::getInstance();
         $collection->drop();
     }
+
+    public function testNestArithmeticInConditionalIf()
+    {
+        $tableSpec = array(
+            "_id"=> "t_conditional_with_nested_arithmetic",
+            "type"=> array("bibo:Book", "bibo:Document"),
+            "from"=>"CBD_testing",
+            "computed_fields"=>array(
+                array(
+                    "fieldName"=>"foobar",
+                    "value"=>array(
+                        'conditional'=>array(
+                            'if'=>array(
+                                array('arithmetic'=>array(3,"+",3)),
+                                ">",
+                                array('arithmetic'=>array(4,"+",3)) // obviously this should never be true
+                            ),
+                            'then'=>'a',
+                            'else'=>'b'
+                        )
+                    )
+                )
+            )
+        );
+        $oldConfig = MongoTripodConfig::getConfig();
+        $newConfig = MongoTripodConfig::getConfig();
+        $newConfig['stores']['tripod_php_testing']['table_specifications'][] = $tableSpec;
+        MongoTripodConfig::setConfig($newConfig);
+        MongoTripodConfig::getInstance();
+        $this->tripod = new MongoTripod('CBD_testing', 'tripod_php_testing');
+        $this->loadBaseDataViaTripod();
+        $this->tripod->generateTableRows('t_conditional_with_nested_arithmetic');
+        $collection = MongoTripodConfig::getInstance()->getCollectionForTable('tripod_php_testing', 't_conditional_with_nested_arithmetic');
+        $tableDoc = $collection->findOne(array('_id.type'=>'t_conditional_with_nested_arithmetic'));
+
+        $this->assertEquals('b', $tableDoc['value']['foobar']);
+        MongoTripodConfig::setConfig($oldConfig);
+        MongoTripodConfig::getInstance();
+        $collection->drop();
+    }
+
+    public function testNestConditionalInArithmeticFunction()
+    {
+        $tableSpec = array(
+            "_id"=> "t_arithmetic_with_nested_conditional",
+            "type"=> array("bibo:Book", "bibo:Document"),
+            "from"=>"CBD_testing",
+            "fields"=>array(
+                array(
+                    "fieldName"=>"x",
+                    "predicates"=>array("foo:wibble")
+                )
+            ),
+            "computed_fields"=>array(
+                array(
+                    "fieldName"=>"foobar",
+                    "value"=>array(
+                        "arithmetic"=>array(
+                            array(
+                                "conditional"=>array(
+                                    "if"=>array('$x'), // Not set, so should be false
+                                    "then"=>'$x',
+                                    "else"=>100
+                                )
+                            ),
+                            "*",
+                            3
+                        )
+                    )
+                )
+            )
+        );
+        $oldConfig = MongoTripodConfig::getConfig();
+        $newConfig = MongoTripodConfig::getConfig();
+        $newConfig['stores']['tripod_php_testing']['table_specifications'][] = $tableSpec;
+        MongoTripodConfig::setConfig($newConfig);
+        MongoTripodConfig::getInstance();
+        $this->tripod = new MongoTripod('CBD_testing', 'tripod_php_testing');
+        $this->loadBaseDataViaTripod();
+        $this->tripod->generateTableRows('t_arithmetic_with_nested_conditional');
+        $collection = MongoTripodConfig::getInstance()->getCollectionForTable('tripod_php_testing', 't_arithmetic_with_nested_conditional');
+        $tableDoc = $collection->findOne(array('_id.type'=>'t_arithmetic_with_nested_conditional'));
+
+        $this->assertEquals(300, $tableDoc['value']['foobar']);
+        MongoTripodConfig::setConfig($oldConfig);
+        MongoTripodConfig::getInstance();
+        $collection->drop();
+    }
 }
