@@ -624,7 +624,8 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         {
             if($this->isFunction($value))
             {
-                return $this->getComputedValue(array_pop(array_keys($value)), $value, $dest);
+                $function = array_keys($value);
+                return $this->getComputedValue($function[0], $value, $dest);
             }
             $aryValue = array();
             foreach($value as $v)

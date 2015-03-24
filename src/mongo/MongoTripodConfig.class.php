@@ -699,7 +699,8 @@ class MongoTripodConfig
         {
             if(count(array_keys($spec[0])) === 1 && count(array_intersect(array_keys($spec[0]), MongoTripodTables::$computedFieldFunctions)) ===1)
             {
-                $this->validateComputedFieldSpec(array_pop(array_keys($spec[0])), $spec[0], $availableFields);
+                $function = array_keys($spec[0]);
+                $this->validateComputedFieldSpec($function[0], $spec[0], $availableFields);
             }
             else
             {
@@ -714,7 +715,8 @@ class MongoTripodConfig
         {
             if(count(array_keys($spec[2])) === 1 && count(array_intersect(array_keys($spec[2]), MongoTripodTables::$computedFieldFunctions)) ===1)
             {
-                $this->validateComputedFieldSpec(array_pop(array_keys($spec[2])), $spec[2], $availableFields);
+                $function = array_keys($spec[2]);
+                $this->validateComputedFieldSpec($function[0], $spec[2], $availableFields);
             }
             else
             {
