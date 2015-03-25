@@ -242,6 +242,9 @@ The left and right values of the equation can also be nested functions:
  }
 ```
 
+The second value must be one of:
+"+", "-", "*", "/", "%"
+
 Replace functions
 -----------------
 
