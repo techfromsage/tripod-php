@@ -197,7 +197,7 @@
                             },
                             {
                                 "fieldName": "result.link",
-                                "value": "_link_"
+                                "value": "link"
                             }
                         ],
                         "joins": {
@@ -243,7 +243,7 @@
                             },
                             {
                                 "fieldName": "result.link",
-                                "value": "_link_"
+                                "value": "link"
                             },
                             {
                                 "fieldName": "rdftype",
@@ -554,7 +554,7 @@
                         },
                         {
                             "fieldName": "userProfileLink",
-                            "value": "_link_"
+                            "value": "link"
                         }
                     ]
                 },
@@ -566,7 +566,7 @@
                     "fields": [
                         {
                             "fieldName": "bookLink",
-                            "value": "_link_"
+                            "value": "link"
                         },
                         {
                             "fieldName": "authorUri",
@@ -582,7 +582,7 @@
                             "fields": [
                                 {
                                     "fieldName": "authorLink",
-                                    "value": "_link_"
+                                    "value": "link"
                                 },
                                 {
                                     "fieldName": "knowsUri",
@@ -594,7 +594,7 @@
                                     "fields": [
                                         {
                                             "fieldName": "knowsLink",
-                                            "value": "_link_"
+                                            "value": "link"
                                         }
                                     ]
                                 }
@@ -604,14 +604,14 @@
                             "fields": [
                                 {
                                     "fieldName": "workLink",
-                                    "value": "_link_"
+                                    "value": "link"
                                 }
                             ]
                         }
                     }
                 },
                 {
-                    "_id": "t_link_multiple",
+                    "_id": "tlinkmultiple",
                     "type": "bibo:Document",
                     "from": "CBD_testing",
                     "joins": {
@@ -619,7 +619,7 @@
                             "fields": [
                                 {
                                     "fieldName": "contributorLink",
-                                    "value": "_link_"
+                                    "value": "link"
                                 }
                             ]
                         }
@@ -648,44 +648,49 @@
                     ]
                 },
                 {
-                    "_id": "t_conditional_creators",
+                    "_id": "tconditionalcreators",
                     "type": ["bibo:Book", "bibo:Document"],
                     "from": "CBD_testing",
                     "counts": [
                         {
-                            "fieldName": "!creatorCount",
-                            "property": "dct:creator"
+                            "fieldName": "creatorCount",
+                            "property": "dct:creator",
+                            "temporary": true
                         },
                         {
-                            "fieldName": "!contributorCount",
-                            "property": "dct:contributor"
+                            "fieldName": "contributorCount",
+                            "property": "dct:contributor",
+                            "temporary": true
                         }
                     ],
                     "computed_fields": [
                         {
-                            "fieldName": "!creatorCount",
+                            "fieldName": "creatorCount",
                             "value": {
-                                "_conditional_": {
-                                    "if":["$!creatorCount"],
-                                    "then":"$!creatorCount",
+                                "conditional": {
+                                    "if":["$creatorCount"],
+                                    "then":"$creatorCount",
                                     "else": 0
                                 }
-                            }
+                            },
+                            "temporary": true
+                            
                         },
                         {
-                            "fieldName": "!contributorCount",
+                            "fieldName": "contributorCount",
                             "value": {
-                                "_conditional_": {
-                                    "if":["$!contributorCount"],
-                                    "then":"$!contributorCount",
+                                "conditional": {
+                                    "if":["$contributorCount"],
+                                    "then":"$contributorCount",
                                     "else": 0
                                 }
-                            }
+                            },
+                            "temporary": true
                         },
                         {
                             "fieldName": "totalContributorCount",
                             "value": {
-                                "_arithmetic_":["$!creatorCount","+","$!contributorCount"]
+                                "arithmetic":["$creatorCount","+","$contributorCount"]
                             }
                         }
                     ]
