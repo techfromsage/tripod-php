@@ -325,7 +325,7 @@ This is very useful if you have specific volatile views and the freshest data is
 
 "value" defines a function to run on the property data.
 
-### "value" : "_link_"
+### "value" : "link"
 
 Creates a fully qualified URI from the alias value of the _current_ resource.  E.g.:
 
@@ -337,7 +337,7 @@ Creates a fully qualified URI from the alias value of the _current_ resource.  E
        {
             "fieldName" : "fooLink",
             "predicates" : [""],
-            "value" : "_link_"
+            "value" : "link"
        }
     ]
 }
@@ -356,7 +356,7 @@ would give the fully qualified URI of the base resource in field ``` fooLink ```
                {
                     "fieldName" : "barLink",
                     "predicates" : [""],
-                    "value" : "_link_"
+                    "value" : "link"
                }]
         }
     }

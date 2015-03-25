@@ -123,6 +123,14 @@ class MongoTripodConfig
      */
     protected $podConnections = array();
 
+    const VALIDATE_MIN = 'MIN';
+    const VALIDATE_MAX = 'MAX';
+
+    /**
+     * @var string
+     */
+    protected static $validationLevel = self::VALIDATE_MIN;
+
     /**
      * MongoTripodConfig should not be instantiated directly: use MongoTripodConfig::getInstance()
      */
@@ -239,7 +247,7 @@ class MongoTripodConfig
                                 $fieldsThatAreArrays = 0;
                                 foreach ($indexFields as $field=>$fieldVal)
                                 {
-                                    $cardinalityField = preg_replace('/\.value/','',$field);
+                                    $cardinalityField = str_replace('.value','',$field);
                                     if (!array_key_exists($cardinalityField,$this->cardinality[$storeName][$podName])||$this->cardinality[$storeName][$podName][$cardinalityField]!=1)
                                     {
                                         $fieldsThatAreArrays++;
@@ -269,6 +277,20 @@ class MongoTripodConfig
                     {
                         throw new MongoTripodConfigException("Search document spec does not contain " . _ID_KEY);
                     }
+                    if(!isset($spec['from']) || !in_array($spec['from'], $this->getPods($storeName)))
+                    {
+                        throw new MongoTripodConfigException("'" . $spec[_ID_KEY] . "[\"from\"]' property not set or references an undefined pod");
+                    }
+                    if(!isset($spec['filter']))
+                    {
+                        throw new MongoTripodConfigException("'" . $spec[_ID_KEY] . "[\"filter\"]' property not set");
+                    }
+
+                    if(!isset($spec['fields']) && !isset($spec['joins']))
+                    {
+                        throw new MongoTripodConfigException("'" . $spec[_ID_KEY] . "' contains no 'fields' or 'joins' properties");
+                    }
+
                     if($this->searchProviderClassName[$storeName] == SEARCH_PROVIDER_MONGO)
                     {
                         if(isset($spec['to_data_source']))
@@ -296,6 +318,14 @@ class MongoTripodConfig
                 {
                     throw new MongoTripodConfigException("View spec does not contain " . _ID_KEY);
                 }
+                if(!isset($spec['from']) || !in_array($spec['from'], $this->getPods($storeName)))
+                {
+                    throw new MongoTripodConfigException("'" . $spec[_ID_KEY] . "[\"from\"]' property not set or references an undefined pod");
+                }
+                if(!isset($spec['joins']))
+                {
+                    throw new MongoTripodConfigException('Could not find any joins in view specification - usecase better served with select()');
+                }
                 $this->ifCountExistsWithoutTTLThrowException($spec);
                 if(isset($spec['to_data_source']))
                 {
@@ -316,65 +346,7 @@ class MongoTripodConfig
             $this->tableSpecs[$storeName] = array();
             foreach ($tableSpecs as $spec)
             {
-                if(!isset($spec[_ID_KEY]))
-                {
-                    throw new MongoTripodConfigException("Table spec does not contain " . _ID_KEY);
-                }
-
-                // Get all "fields" in the spec
-                $fieldsInTableSpec = $this->findFieldsInTableSpec('fields', $spec);
-                // Loop through fields and validate
-                foreach($fieldsInTableSpec as $field)
-                {
-                    if (!isset($field['fieldName']))
-                    {
-                        throw new MongoTripodConfigException("Field spec does not contain fieldName");
-                    }
-
-                    if(isset($field['predicates']))
-                    {
-                        foreach($field['predicates'] as $p)
-                        {
-                            // If predicates is an array we've got modifiers
-                            if(is_array($p))
-                            {
-                                /*
-                                 * checkModifierFunctions will check if each predicate modifier is valid - it will
-                                 * check recursively through the predicate
-                                 */
-                                $this->checkModifierFunctions($p, MongoTripodTables::$predicateModifiers);
-                            }
-                        }
-                    }
-                    // fields can either have predicates or values
-                    elseif((!isset($field['value'])) || empty($field['value']))
-                    {
-                        throw new MongoTripodConfigException("Field spec does not contain predicates or value");
-                    }
-                }
-
-                // Get all "counts" in the spec
-                $fieldsInTableSpec = $this->findFieldsInTableSpec('counts', $spec);
-                // Loop through fields and validate
-                foreach($fieldsInTableSpec as $field)
-                {
-                    if (!isset($field['fieldName']))
-                    {
-                        throw new MongoTripodConfigException("Count spec does not contain fieldName");
-                    }
-
-                    if(isset($field['property']))
-                    {
-                        if (!is_string($field['property']))
-                        {
-                            throw new MongoTripodConfigException("Count spec property was not a string");
-                        }
-                    }
-                    else
-                    {
-                        throw new MongoTripodConfigException("Count spec does not contain property");
-                    }
-                }
+                $this->validateTableSpec($spec);
 
                 if(isset($spec['to_data_source']))
                 {
@@ -395,6 +367,422 @@ class MongoTripodConfig
 
     }
 
+    /**
+     * @param array $spec
+     * @throws MongoTripodConfigException
+     */
+    public function validateTableSpec(array $spec)
+    {
+        if(!isset($spec[_ID_KEY]))
+        {
+            throw new MongoTripodConfigException("Table spec does not contain " . _ID_KEY);
+        }
+
+        if(!isset($spec['from']))
+        {
+            throw new MongoTripodConfigException("Table spec does not contain from");
+        }
+
+        $this->validateTableSpecPart($spec, 0);
+    }
+
+    /**
+     * @param array $spec
+     * @param int $depth
+     * @throws MongoTripodConfigException
+     */
+    protected function validateTableSpecPart(array $spec, $depth=0)
+    {
+        $validationLevel = $this->getValidationLevel();
+        if(!isset($spec['fields']) && !isset($spec['joins']) && !isset($spec['counts']) && !isset($spec['computed_fields']))
+        {
+            throw new MongoTripodConfigException("Table spec part does not contain fields, joins, counts, or computed_fields");
+        }
+        if(isset($spec['fields']))
+        {
+            foreach($spec['fields'] as $field)
+            {
+                if (!isset($field['fieldName']))
+                {
+                    throw new MongoTripodConfigException("Field spec does not contain fieldName");
+                }
+
+                if(isset($field['predicates']))
+                {
+                    if($validationLevel == self::VALIDATE_MAX)
+                    {
+                        foreach($field['predicates'] as $p)
+                        {
+                            // If predicates is an array we've got modifiers
+                            if(is_array($p))
+                            {
+                                /*
+                                 * checkModifierFunctions will check if each predicate modifier is valid - it will
+                                 * check recursively through the predicate
+                                 */
+                                $this->checkModifierFunctions($p, MongoTripodTables::$predicateModifiers);
+                            }
+                        }
+                    }
+                }
+                // fields can either have predicates or values
+                elseif((!isset($field['value'])) || empty($field['value']))
+                {
+                    throw new MongoTripodConfigException("Field spec does not contain predicates or value");
+                }
+            }
+        }
+
+        if(isset($spec['counts']))
+        {
+            foreach($spec['counts'] as $count)
+            {
+                if (!isset($count['fieldName']))
+                {
+                    throw new MongoTripodConfigException("Count spec does not contain fieldName");
+                }
+
+                if(isset($count['property']))
+                {
+                    if (!is_string($count['property']))
+                    {
+                        throw new MongoTripodConfigException("Count spec property was not a string");
+                    }
+                }
+                else
+                {
+                    throw new MongoTripodConfigException("Count spec does not contain property");
+                }
+            }
+        }
+
+        if(isset($spec['computed_fields']))
+        {
+            if($depth > 0)
+            {
+                throw new MongoTripodConfigException("Table spec can only contain 'computed_fields' at the base level");
+            }
+
+            $validComputingFieldFunctions = MongoTripodTables::$computedFieldFunctions;
+            if($validationLevel == self::VALIDATE_MAX)
+            {
+                $availableFields = $this->getFieldNamesInSpec($spec);
+                $availableFields = array_map(function($field) { return '$' . $field; }, $availableFields);
+            }
+            foreach($spec['computed_fields'] as $field)
+            {
+                if (!isset($field['fieldName']))
+                {
+                    throw new MongoTripodConfigException("Computed field spec does not contain fieldName");
+                }
+                if (!isset($field['value']))
+                {
+                    throw new MongoTripodConfigException("Computed field spec does not contain value");
+                }
+
+                if(!is_array($field['value']))
+                {
+                    throw new MongoTripodConfigException("Compute field value does not contain computed field spec");
+                }
+
+                $functions = array_intersect(array_keys($field['value']), $validComputingFieldFunctions);
+
+                if(empty($functions))
+                {
+                    throw new MongoTripodConfigException("Computed field spec does not contain valid function");
+                }
+
+                if(count($functions) > 1)
+                {
+                    throw new MongoTripodConfigException("Computed field spec contains more than one function");
+                }
+                if($validationLevel == self::VALIDATE_MAX )
+                {
+                    $this->validateComputedFieldSpec($functions[0], $field['value'], $availableFields);
+                }
+            }
+        }
+
+        if(isset($spec['joins']))
+        {
+            $nextLevel = ($depth + 1);
+            foreach($spec['joins'] as $property=>$join)
+            {
+                $this->validateTableSpecPart($join, $nextLevel);
+            }
+        }
+    }
+
+    /**
+     * @return string
+     */
+    public function getValidationLevel()
+    {
+        return self::$validationLevel;
+    }
+
+    /**
+     * @param string $validationLevel
+     */
+    public static function setValidationLevel($validationLevel)
+    {
+        self::$validationLevel = $validationLevel;
+    }
+
+    /**
+     * @param string $type
+     * @param array $spec
+     * @param array $availableFields
+     */
+    protected function validateComputedFieldSpec($type, array $spec, array $availableFields)
+    {
+        switch($type)
+        {
+            case 'conditional':
+                $this->validateComputedConditionalSpec($spec[$type], $availableFields);
+                break;
+            case 'replace':
+                $this->validateComputedReplaceSpec($spec[$type], $availableFields);
+                break;
+            case 'arithmetic':
+                $this->validateComputedArithmeticSpec($spec[$type], $availableFields);
+                break;
+        }
+    }
+
+    /**
+     * @param array $spec
+     * @param array $availableFields
+     * @throws MongoTripodConfigException
+     */
+    protected function validateComputedConditionalSpec(array $spec, array $availableFields)
+    {
+        if(!isset($spec['if']))
+        {
+            throw new MongoTripodConfigException("Computed conditional spec does not contain an 'if' value");
+        }
+
+        if(!isset($spec['then']) && !isset($spec['else']))
+        {
+            throw new MongoTripodConfigException("Computed conditional spec must contain a then or else value");
+        }
+
+        if(!is_array($spec['if']))
+        {
+            throw new MongoTripodConfigException("Computed conditional field spec 'if' value must be an array");
+        }
+
+        if(count($spec['if']) !== 1 && count($spec['if']) !== 3)
+        {
+            throw new MongoTripodConfigException("Computed conditional field spec 'if' value array must have 1 or 3 values");
+        }
+
+        $this->validateSpecVariableReplacement($spec['if'][0], $availableFields);
+        if(isset($spec['if'][1]) && !in_array($spec['if'][1], MongoTripodTables::$conditionalOperators))
+        {
+            throw new MongoTripodConfigException("Invalid conditional operator '" . $spec['if'][1] . "' in conditional spec");
+        }
+
+        if(isset($spec['if'][2]))
+        {
+            $this->validateSpecVariableReplacement($spec['if'][2], $availableFields);
+        }
+
+        if(isset($spec['then']))
+        {
+            if(is_string($spec['then']))
+            {
+                $this->validateSpecVariableReplacement($spec['then'], $availableFields);
+            }
+            elseif(is_array($spec['then']))
+            {
+                $functions = array_intersect_key(array_keys($spec['then']), MongoTripodTables::$computedFieldFunctions);
+                switch(count($functions))
+                {
+                    case 0;
+                        break;
+                    case 1:
+                        $this->validateComputedFieldSpec($functions[0], $spec['then'], $availableFields);
+                        break;
+                    default:
+                        throw new MongoTripodConfigException("Computed conditional field 'then' value has more than one function");
+                        break;
+                }
+            }
+        }
+        if(isset($spec['else']))
+        {
+            if(is_string($spec['else']))
+            {
+                $this->validateSpecVariableReplacement($spec['else'], $availableFields);
+            }
+            elseif(is_array($spec['else']))
+            {
+                $functions = array_intersect_key(array_keys($spec['else']), MongoTripodTables::$computedFieldFunctions);
+                switch(count($functions))
+                {
+                    case 0;
+                        break;
+                    case 1:
+                        $this->validateComputedFieldSpec($functions[0], $spec['else'], $availableFields);
+                        break;
+                    default:
+                        throw new MongoTripodConfigException("Computed conditional field 'else' value has more than one function");
+                        break;
+                }
+            }
+        }
+    }
+
+    /**
+     * @param mixed $value
+     * @param array $availableFields
+     * @throws MongoTripodConfigException
+     */
+    protected function validateSpecVariableReplacement($value, array $availableFields)
+    {
+        if(is_string($value))
+        {
+            if(strpos($value, '$') === 0)
+            {
+                if(!in_array($value, $availableFields))
+                {
+                    throw new MongoTripodConfigException("Computed spec variable '$value' is not defined in table spec");
+                }
+            }
+        }
+        elseif(is_array($value))
+        {
+            foreach($value as $v)
+            {
+                $this->validateSpecVariableReplacement($v, $availableFields);
+            }
+        }
+    }
+
+    /**
+     * @param array $spec
+     * @param array $availableFields
+     * @throws MongoTripodConfigException
+     */
+    protected function validateComputedReplaceSpec(array $spec, array $availableFields)
+    {
+        if(!isset($spec['search']))
+        {
+            throw new MongoTripodConfigException("Computed replace spec does not contain 'search' value");
+        }
+        $this->validateSpecVariableReplacement($spec['search'], $availableFields);
+        if(!isset($spec['replace']))
+        {
+            throw new MongoTripodConfigException("Computed replace spec does not contain 'replace' value");
+        }
+        $this->validateSpecVariableReplacement($spec['replace'], $availableFields);
+        if(!isset($spec['subject']))
+        {
+            throw new MongoTripodConfigException("Computed replace spec does not contain 'subject' value");
+        }
+        $this->validateSpecVariableReplacement($spec['subject'], $availableFields);
+    }
+
+    /**
+     * @param array $spec
+     * @param array $availableFields
+     * @throws MongoTripodConfigException
+     */
+    protected function validateComputedArithmeticSpec(array $spec, array $availableFields)
+    {
+        if(count($spec) !== 3)
+        {
+            throw new MongoTripodConfigException("Computed arithmetic spec must contain 3 values");
+        }
+        if(is_array($spec[0]))
+        {
+            if(count(array_keys($spec[0])) === 1 && count(array_intersect(array_keys($spec[0]), MongoTripodTables::$computedFieldFunctions)) ===1)
+            {
+                $function = array_keys($spec[0]);
+                $this->validateComputedFieldSpec($function[0], $spec[0], $availableFields);
+            }
+            else
+            {
+                $this->validateComputedArithmeticSpec($spec[0], $availableFields);
+            }
+        }
+        else
+        {
+            $this->validateSpecVariableReplacement($spec[0], $availableFields);
+        }
+        if(is_array($spec[2]))
+        {
+            if(count(array_keys($spec[2])) === 1 && count(array_intersect(array_keys($spec[2]), MongoTripodTables::$computedFieldFunctions)) ===1)
+            {
+                $function = array_keys($spec[2]);
+                $this->validateComputedFieldSpec($function[0], $spec[2], $availableFields);
+            }
+            else
+            {
+                $this->validateComputedArithmeticSpec($spec[2], $availableFields);
+            }
+        }
+        else
+        {
+            $this->validateSpecVariableReplacement($spec[2], $availableFields);
+        }
+        if(!in_array($spec[1], MongoTripodTables::$arithmeticOperators))
+        {
+            throw new MongoTripodConfigException("Invalid arithmetic operator '" . $spec[1] . "' in computed arithmetic spec");
+        }
+    }
+
+    /**
+     * @param array $spec
+     * @return array
+     */
+    protected function getFieldNamesInSpec(array $spec)
+    {
+
+        $fieldNames = array();
+        if(isset($spec['fields']))
+        {
+            foreach($spec['fields'] as $field)
+            {
+                if(isset($field['fieldName']))
+                {
+                    $fieldNames[] = $field['fieldName'];
+                }
+            }
+        }
+        if(isset($spec['counts']))
+        {
+            foreach($spec['counts'] as $count)
+            {
+                if(isset($count['fieldName']))
+                {
+                    $fieldNames[] = $count['fieldName'];
+                }
+            }
+        }
+
+        if(isset($spec['computed_fields']))
+        {
+            foreach($spec['computed_fields'] as $field)
+            {
+                if(isset($field['fieldName']))
+                {
+                    $fieldNames[] = $field['fieldName'];
+                }
+            }
+        }
+
+        if(isset($spec['joins']))
+        {
+            foreach($spec['joins'] as $property=>$join)
+            {
+                $fieldNames = array_merge($fieldNames, $this->getFieldNamesInSpec($join));
+            }
+        }
+
+        return $fieldNames;
+    }
     /**
      * Creates an associative array of all predicates/properties associated with all table and search document specifications
      * @param string $storename

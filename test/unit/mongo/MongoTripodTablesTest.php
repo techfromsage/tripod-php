@@ -681,7 +681,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
     }
 
     /**
-     * Test that _link_ modifier is derived from the joined resource id, rather than base
+     * Test that link modifier is derived from the joined resource id, rather than base
      * @access public
      * @return void
      */
@@ -999,4 +999,6 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $g2->add_literal_triple("http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2",$g2->qname_to_uri("dct:publisher")," W. W. Norton & Co");
         $tripod->saveChanges($g1, $g2);
     }
+
+
 }

@@ -89,7 +89,7 @@
                             },
                             {
                                 "fieldName":"result.link",
-                                "value":"_link_"
+                                "value":"link"
                             },
                             {
                                 "fieldName":"rdftype",
@@ -142,7 +142,7 @@
                             },
                             {
                                 "fieldName":"result.link",
-                                "value":"_link_"
+                                "value":"link"
                             },
                             {
                                 "fieldName":"rdftype",

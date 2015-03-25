@@ -26,6 +26,35 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
     );
 
     /**
+     * Computed field config - A list of valid functions to write dynamic table row field values
+     *
+     * @var array
+     * @static
+     */
+    public static $computedFieldFunctions = array('conditional', "replace", "arithmetic");
+
+    /**
+     * Computed conditional config - list of allowed conditional operators
+     *
+     * @var array
+     * @static
+     */
+    public static $conditionalOperators = array(">","<",">=", "<=", "==", "!=", "contains", "not contains", "~=", "!~");
+
+    /**
+     * Computed arithmetic config - list of allowed arithmetic operators
+     *
+     * @var array
+     * @static
+     */
+    public static $arithmeticOperators = array("+", "-", "*", "/", "%");
+
+    /**
+     * @var array
+     */
+    protected $temporaryFields = array();
+
+    /**
      * Construct accepts actual objects rather than strings as this class is a delegate of
      * MongoTripod and should inherit connections set up there
      * @param string $storeName
@@ -298,13 +327,13 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
     {
         $t = new Timer();
         $t->start();
-
+        $this->temporaryFields = array();
         $tableSpec = MongoTripodConfig::getInstance()->getTableSpecification($this->storeName, $tableType);
         $collection = $this->config->getCollectionForTable($this->storeName, $tableType);
 
         if ($tableSpec==null)
         {
-            $this->debugLog("Cound not find a table specification for $tableType");
+            $this->debugLog("Could not find a table specification for $tableType");
             return null;
         }
 
@@ -365,7 +394,14 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
                 $this->doCounts($doc,$tableSpec['counts'],$value);
             }
 
-            $generatedRow['value'] = $value;
+            if (isset($tableSpec['computed_fields']))
+            {
+                $this->doComputedFields($tableSpec, $value);
+            }
+
+            // Remove temp fields from document
+
+            $generatedRow['value'] = array_diff_key($value, array_flip($this->temporaryFields));
             $collection->save($generatedRow);
         }
 
@@ -378,6 +414,332 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         $this->getStat()->timer(MONGO_CREATE_TABLE.".$tableType",$t->result());
     }
 
+    /**
+     * @param array $spec The table spec
+     * @param array $dest The table row document to save
+     */
+    protected function doComputedFields(array $spec, array &$dest)
+    {
+        if (isset($spec['computed_fields']))
+        {
+            foreach ($spec['computed_fields'] as $f)
+            {
+                if(isset($f['fieldName']) && isset($f['value']) && is_array($f['value']))
+                {
+                    if(isset($f['temporary']) && $f['temporary'] === true)
+                    {
+                        if(!in_array($f['fieldName'], $this->temporaryFields))
+                        {
+                            $this->temporaryFields[] = $f['fieldName'];
+                        }
+                    }
+                    $computedFunctions = array_values(array_intersect(self::$computedFieldFunctions, array_keys($f['value'])));
+                    $dest[$f['fieldName']] = $this->getComputedValue($computedFunctions[0], $f['value'], $dest);
+                }
+            }
+        }
+    }
+
+    /**
+     * @param string $function A defined computed value function
+     * @param array $spec The computed field spec
+     * @param array $dest The table row document to save
+     * @return mixed The computed value
+     */
+    protected function getComputedValue($function, array $spec, array &$dest)
+    {
+        $value = null;
+        switch($function)
+        {
+            case 'conditional':
+                $value = $this->generateConditionalValue($spec[$function], $dest);
+                break;
+            case 'replace':
+                $value = $this->generateReplaceValue($spec[$function], $dest);
+                break;
+            case 'arithmetic':
+                $value = $this->computeArithmeticValue($spec[$function], $dest);
+                break;
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param array $equation
+     * @param array $dest
+     * @return float|int|null
+     * @throws InvalidArgumentException
+     */
+    protected function computeArithmeticValue(array $equation, array &$dest)
+    {
+        if(count($equation) < 3)
+        {
+            throw new InvalidArgumentException("Equations must consist of an array with 3 values");
+        }
+        if(!in_array($equation[1], self::$arithmeticOperators))
+        {
+            throw new InvalidArgumentException("Invalid arithmetic operator");
+        }
+
+        $left = $this->rewriteVariableValue($equation[0], $dest, 'numeric');
+        $right = $this->rewriteVariableValue($equation[2], $dest, 'numeric');
+        if(is_array($left))
+        {
+            $left = $this->computeArithmeticValue($left, $dest);
+        }
+        if(is_array($right))
+        {
+            $right = $this->computeArithmeticValue($right, $dest);
+        }
+
+        switch($equation[1])
+        {
+            case "+":
+                $value = $left + $right;
+                break;
+            case "-":
+                $value = $left - $right;
+                break;
+            case "*":
+                $value = $left * $right;
+                break;
+            case "/":
+                $value = $left / $right;
+                break;
+            case "%":
+                $value = $left % $right;
+                break;
+            default:
+                $value = null;
+        }
+        return $value;
+    }
+
+    /**
+     * @param array $replaceSpec The replace value spec
+     * @param array $dest The table row document to save
+     * @return mixed
+     */
+    protected function generateReplaceValue(array $replaceSpec, array &$dest)
+    {
+        $search = null;
+        $replace = null;
+        $subject = null;
+        if(isset($replaceSpec['search']))
+        {
+            $search = $this->rewriteVariableValue($replaceSpec['search'], $dest);
+        }
+        if(isset($replaceSpec['replace']))
+        {
+            $replace = $this->rewriteVariableValue($replaceSpec['replace'], $dest);
+        }
+        if(isset($replaceSpec['subject']))
+        {
+            $subject = $this->rewriteVariableValue($replaceSpec['subject'], $dest);
+        }
+
+        return str_replace($search, $replace, $subject);
+    }
+
+    /**
+     * @param array $conditionalSpec The conditional spec
+     * @param array $dest The table row document to save
+     * @return mixed The computed value
+     */
+    protected function generateConditionalValue(array $conditionalSpec, array &$dest)
+    {
+        $value = null;
+        if(isset($conditionalSpec['if']) && is_array($conditionalSpec['if']))
+        {
+            $left = null;
+            $operator = null;
+            $right = null;
+            if(isset($conditionalSpec['if'][0]))
+            {
+                $left = $this->rewriteVariableValue($conditionalSpec['if'][0], $dest);
+            }
+            if(isset($conditionalSpec['if'][1]))
+            {
+                $operator = $conditionalSpec['if'][1];
+            }
+            if(isset($conditionalSpec['if'][2]))
+            {
+                $right = $this->rewriteVariableValue($conditionalSpec['if'][2], $dest);
+            }
+
+            $bool = $this->doConditional($left, $operator, $right);
+
+            $path = ($bool ? 'then' : 'else');
+
+            if(isset($conditionalSpec[$path]))
+            {
+                if(is_array($conditionalSpec[$path]))
+                {
+                    $nestedComputedFunctions = array_intersect(self::$computedFieldFunctions, array_keys($conditionalSpec[$path]));
+                    // This is 'just a regular old array'
+                    if(empty($nestedComputedFunctions))
+                    {
+                        return $this->rewriteVariableValue($conditionalSpec[$path], $dest);
+                    }
+
+                    return $this->getComputedValue($nestedComputedFunctions[0], $conditionalSpec[$path], $dest);
+
+                }
+                else
+                {
+                    return $this->rewriteVariableValue($conditionalSpec[$path], $dest);
+                }
+            }
+
+        }
+        return $value;
+    }
+
+    /**
+     * @param mixed $value The value to replace, if it contains a variable
+     * @param array $dest The table row document to save
+     * @param string|null $setType Force the return to be set to specified type
+     * @return mixed
+     */
+    protected function rewriteVariableValue($value, array &$dest, $setType=null)
+    {
+        if(is_string($value))
+        {
+            if(strpos($value, '$') === 0)
+            {
+                $key =  str_replace('$','', $value);
+                if(isset($dest[$key]))
+                {
+                    return $this->castValueType($dest[$key], $setType);
+                }
+                return null;
+            }
+            else
+            {
+                return $this->castValueType($value, $setType);
+            }
+        }
+        elseif(is_array($value))
+        {
+            if($this->isFunction($value))
+            {
+                $function = array_keys($value);
+                return $this->getComputedValue($function[0], $value, $dest);
+            }
+            $aryValue = array();
+            foreach($value as $v)
+            {
+                $aryValue[] = $this->rewriteVariableValue($v, $dest);
+            }
+            return $aryValue;
+        }
+
+        return $this->castValueType($value, $setType);
+    }
+
+    /**
+     * @param mixed $value
+     * @return bool
+     */
+    protected function isFunction($value)
+    {
+        return (is_array($value) && count(array_keys($value)) === 1 && count(array_intersect(array_keys($value), self::$computedFieldFunctions)) ===1);
+    }
+
+    /**
+     * @param mixed $value
+     * @param string|null $type
+     * @return mixed
+     */
+    protected function castValueType($value, $type=null)
+    {
+        switch($type)
+        {
+            case 'string':
+                $value = (string)$value;
+                break;
+            case 'bool':
+            case 'boolean':
+                $value = (bool)$value;
+                break;
+            case 'numeric':
+                if((!is_int($value)) && !is_float($value))
+                {
+                    if($value == (string)(int)$value)
+                    {
+                        $value = (int)$value;
+                    }
+                    else
+                    {
+                        $value = (float)$value;
+                    }
+                }
+                break;
+        }
+        return $value;
+    }
+
+    /**
+     * @param mixed $left The left value of the condition
+     * @param string $operator The comparison operator
+     * @param mixed $right The right value of the condition
+     * @return bool
+     * @throws InvalidArgumentException
+     */
+    protected function doConditional($left, $operator, $right)
+    {
+        if((!empty($operator)) && !in_array($operator, self::$conditionalOperators))
+        {
+            throw new InvalidArgumentException("Invalid conditional operator");
+        }
+        elseif(!$operator)
+        {
+            return ($left ? true : false);
+        }
+        $result = false;
+        switch($operator)
+        {
+            case ">":
+                $result = $left > $right;
+                break;
+            case ">=":
+                $result = $left >= $right;
+                break;
+            case "<":
+                $result = $left < $right;
+                break;
+            case "<=":
+                $result = $left <= $right;
+                break;
+            case "==":
+                $result = $left == $right;
+                break;
+            case "!=":
+                $result = $left != $right;
+                break;
+            case "contains":
+            case "not contains":
+                if(is_array($left))
+                {
+                    $bool = in_array($right, $left);
+                }
+                else
+                {
+
+                    $bool = (strpos((string)$left, (string)$right) !== false);
+                }
+                $result = ($bool && $operator != "not contains");
+                break;
+            case "~=":
+            case "!~":
+                $match = preg_match($right, $left);
+                $result = ($match > 0 && $operator != "!~");
+                break;
+
+        }
+        return $result;
+    }
 
     /**
      * Add fields to a table row
@@ -393,6 +755,13 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         {
             foreach ($spec['fields'] as $f)
             {
+                if(isset($f['temporary']) && $f['temporary'] === true)
+                {
+                    if(!in_array($f['fieldName'], $this->temporaryFields))
+                    {
+                        $this->temporaryFields[] = $f['fieldName'];
+                    }
+                }
                 if(isset($f['predicates']))
                 {
                     foreach ($f['predicates'] as $p)
@@ -437,8 +806,12 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
                 // Allow URI linking to the ID
                 if(isset($f['value']))
                 {
-                    if($f['value'] == '_link_')
+                    if($f['value'] == '_link_' || $f['value'] == 'link' )
                     {
+                        if($f['value'] == '_link_')
+                        {
+                            $this->warningLog("Table spec value '_link_' is deprecated", $f);
+                        }
                         // If value exists, set as array
                         if(isset($dest[$f['fieldName']]))
                         {
@@ -669,6 +1042,13 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         foreach ($countSpec as $c)
         {
             $fieldName = $c['fieldName'];
+            if(isset($c['temporary']) && $c['temporary'] === true)
+            {
+                if(!in_array($fieldName, $this->temporaryFields))
+                {
+                    $this->temporaryFields[] = $fieldName;
+                }
+            }
             $applyRegex = (isset($c['regex'])) ? isset($c['regex']) : null;
             $count = 0;
             // just count predicates at current location
