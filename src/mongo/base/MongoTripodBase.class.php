@@ -206,6 +206,10 @@ abstract class MongoTripodBase
         }
     }
 
+    /**
+     * @param $message
+     * @param array|null $params
+     */
     public function warningLog($message, $params=null)
     {
         if (self::getLogger()!=null)
@@ -214,15 +218,7 @@ abstract class MongoTripodBase
         }
         else
         {
-            echo "$message\n";
-            if ($params)
-            {
-                echo "Params: \n";
-                foreach ($params as $key=>$value)
-                {
-                    echo "$key: $value\n";
-                }
-            }
+            $this->debugLog($message, $params);
         }
     }
 
