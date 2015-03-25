@@ -73,7 +73,7 @@ The value of all of these are are arrays of objects, except for "joins", whose v
         {
             "fieldName": "type",
             "value": {
-                "_replace_" : { // _replace_ is a function name
+                "replace" : { // replace is a function name
                     "search" : "bibo:"
                     "replace" : "",
                     "subject" : "typeQname" // will turn 'bibo:Book' into 'Book'
