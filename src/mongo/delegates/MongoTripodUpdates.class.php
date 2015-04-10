@@ -191,6 +191,11 @@ class MongoTripodUpdates extends MongoTripodBase {
                     $this->getApplicableOperationsForResourceTypes($subjectsAndPredicatesOfChange, $contextAlias, $this->async)
                 );
 
+                foreach($this->async as $op=>$val)
+                {
+                    // TODO: collect underpants
+                }
+
                 // create subjects to process synchronously
                 $syncModifiedSubjects = array();
                 foreach($operationsToPerform[OP_SYNC] as $syncOp){
@@ -412,6 +417,100 @@ class MongoTripodUpdates extends MongoTripodBase {
             }
         }
         return false;
+    }
+
+    protected function getResourceIdentifiersInAffectedViewsForImpactedData(Array $subjectsAndPredicatesOfChange, $contextAlias, Array $affectedResources = array())
+    {
+        foreach($this->findImpactedViews(array_keys($subjectsAndPredicatesOfChange), $contextAlias) as $doc) {
+            $spec = $this->config->getViewSpecification($this->storeName, $doc[_ID_KEY]['type']);
+            if(!empty($spec)){
+                $fromPod = $spec['from'];
+
+                $docHash = md5($doc[_ID_KEY][_ID_RESOURCE] . $doc[_ID_KEY][_ID_CONTEXT]);
+
+                if(!array_key_exists($docHash, $affectedResources)){
+                    $affectedResources[$docHash] = array(
+                        'id'=>array(
+                            _ID_RESOURCE=>$doc[_ID_KEY][_ID_RESOURCE],
+                            _ID_CONTEXT=>$doc[_ID_KEY][_ID_CONTEXT],
+                        ),
+                        'pods'=>array()
+                    );
+                }
+                if(!in_array($fromPod, $affectedResources[$docHash]['pods'])) {
+                    $affectedResources[$docHash]['pods'][] = $fromPod;
+                }
+            }
+        }
+    }
+
+    protected function getResourceIdentifiersInAffectedTableRowsForImpactedData(Array $subjectsAndPredicatesOfChange, $contextAlias, Array $affectedResources = array())
+    {
+        foreach($this->findImpactedTableRows($subjectsAndPredicatesOfChange, $contextAlias) as $doc) {
+            $spec = $this->config->getTableSpecification($this->storeName, $doc[_ID_KEY][_ID_TYPE]);
+            $fromPod = $spec['from'];
+
+            $docHash = md5($doc[_ID_KEY][_ID_RESOURCE] . $doc[_ID_KEY][_ID_CONTEXT]);
+
+            if(!array_key_exists($docHash, $affectedResources)){
+                $affectedResources[$docHash] = array(
+                    'id'=>array(
+                        _ID_RESOURCE=>$doc[_ID_KEY][_ID_RESOURCE],
+                        _ID_CONTEXT=>$doc[_ID_KEY][_ID_CONTEXT],
+                    ),
+                    'pods'=>array(),
+                    'specTypes'=>array()
+                );
+            }
+
+            if(!in_array($fromPod, $affectedResources[$docHash]['pods']))
+            {
+                $affectedResources[$docHash]['pods'] = $fromPod;
+            }
+
+            // Save the specification type so we only have to regen resources in that table type
+            if(!in_array($doc[_ID_KEY][_ID_TYPE], $affectedResources[$docHash]['specTypes']))
+            {
+                $affectedResources[$docHash]['specTypes'][] = $doc[_ID_KEY][_ID_TYPE];
+            }
+        }
+
+        return $affectedResources;
+    }
+
+    protected function getResourceIdentifiersInAffectedSearchDocumentsForImpactedData(Array $subjectsAndPredicatesOfChange, $contextAlias, Array $affectedResources = array())
+    {
+        if($this->config->getSearchProviderClassName($this->storeName) !== null) {
+            foreach($this->tripod->getSearchIndexer()->findImpactedSearchDocuments($subjectsAndPredicatesOfChange, $contextAlias) as $doc) {
+                $spec = $this->config->getSearchDocumentSpecification($this->storeName, $doc[_ID_KEY][_ID_TYPE]);
+                $fromPod = $spec['from'];
+
+                $docHash = md5($doc[_ID_KEY][_ID_RESOURCE] . $doc[_ID_KEY][_ID_CONTEXT]);
+
+                if(!array_key_exists($docHash, $affectedResources))
+                {
+                    $affectedResources[$docHash] = array(
+                        'id'=>array(
+                            _ID_RESOURCE=>$doc[_ID_KEY][_ID_RESOURCE],
+                            _ID_CONTEXT=>$doc[_ID_KEY][_ID_CONTEXT],
+                        ),
+                        'pods'=>array(),
+                        'specTypes'=>array()
+                    );
+                }
+                if(!in_array($fromPod, $affectedResources[$docHash]['pods']))
+                {
+                    $affectedResources[$docHash]['pods'] = $fromPod;
+                }
+
+                // Save the specification type so we only have to regen resources in that table type
+                if(!in_array($doc[_ID_KEY][_ID_TYPE], $affectedResources[$docHash]['specTypes']))
+                {
+                    $affectedResources[$docHash]['specTypes'][] = $doc[_ID_KEY][_ID_TYPE];
+                }
+            }
+        }
+        return $affectedResources;
     }
 
     /**
