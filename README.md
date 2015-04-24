@@ -80,6 +80,8 @@ PHP =>5.2, although not for long, future releases are soon to be >5.3.0
 
 Mongo 2.x and up, although at least 2.2 is recommended to take advantage of database level locking, especially in the case of shared datasets.
 
+MongoPHP driver version 1.3.4 and up
+
 
 What does the config look like?
 ----
