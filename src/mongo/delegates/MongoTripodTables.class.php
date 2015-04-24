@@ -71,7 +71,7 @@ class MongoTripodTables extends CompositeBase
         $this->config = MongoTripodConfig::getInstance();
         $this->defaultContext = $this->labeller->uri_to_alias($defaultContext); // make sure default context is qnamed if applicable
         $this->stat = $stat;
-        $this->readPreference = MongoClient::RP_PRIMARY;
+        $this->readPreference = MongoClient::RP_PRIMARY;  // todo: figure out where this should go.
     }
 
     /**

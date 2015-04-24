@@ -22,7 +22,7 @@ class MongoTripodViews extends CompositeBase
         $this->defaultContext = $defaultContext;
         $this->config = MongoTripodConfig::getInstance();
         $this->stat = $stat;
-        $this->readPreference = MongoClient::RP_PRIMARY;
+        $this->readPreference = MongoClient::RP_PRIMARY; // todo: figure out where this should go.
     }
 
     public function getOperationType()

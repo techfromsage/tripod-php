@@ -33,7 +33,7 @@ class MongoTripodSearchIndexer extends CompositeBase
         } else {
             throw new TripodSearchException("Did not recognise Search Provider, or could not find class: $provider");
         }
-        $this->readPreference = MongoClient::RP_PRIMARY;
+        $this->readPreference = MongoClient::RP_PRIMARY;  // todo: figure out where this should go.
     }
 
     /**

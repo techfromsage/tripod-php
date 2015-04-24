@@ -137,6 +137,8 @@ abstract class CompositeBase extends MongoTripodBase implements IComposite
      */
     protected function checkIfTypeShouldTriggerOperation($rdfType, array $validTypes, $subjectPredicates)
     {
+        //todo: views wasn't using this code. Figure out why.
+
         // We don't know if this is an alias or a fqURI, nor what is in the valid types, necessarily
         $types = array($rdfType);
         try
