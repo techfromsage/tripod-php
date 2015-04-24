@@ -105,7 +105,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
 
         $this->collection = $this->config->getCollectionForCBD($storeName, $podName, $opts['readPreference']);
 
-        // fill in and default any missing keys for $async array
+        // fill in and default any missing keys for $async array. Default is views are sync, tables and search async
         $async = $opts[OP_ASYNC];
         if (!array_key_exists(OP_VIEWS,$async))
         {

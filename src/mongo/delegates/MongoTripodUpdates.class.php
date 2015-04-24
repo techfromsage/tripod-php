@@ -182,18 +182,17 @@ class MongoTripodUpdates extends MongoTripodBase {
 
                 $changes = $this->storeChanges($cs, array_keys($subjectsAndPredicatesOfChange),$contextAlias);
 
-                // calculate what operations need performing, based on the subjects and anything they impact
+                // calculate what synchronous operations need performing, based on the subjects and anything they impact
                 // Chain getApplicableOperationsForResourceTypes() through getOperationsForImpactedData()
-                $operationsToPerform  = $this->getOperationsForImpactedData(
+                $operationsToPerform  = $this->getSyncOperationsForImpactedData(
                     $subjectsAndPredicatesOfChange,
                     $contextAlias,
-                    $this->async,
-                    $this->getApplicableOperationsForResourceTypes($subjectsAndPredicatesOfChange, $contextAlias, $this->async)
+                    $this->getApplicableSyncOperationsForResourceTypes($subjectsAndPredicatesOfChange, $contextAlias)
                 );
 
                 // create subjects to process synchronously
                 $syncModifiedSubjects = array();
-                foreach($operationsToPerform[OP_SYNC] as $syncOp){
+                foreach($operationsToPerform as $syncOp){
                     if(in_array($syncOp['id'][_ID_RESOURCE], $changes['deletedSubjects'])){
                         $syncOp['delete'] = true;
                     } else {
@@ -210,9 +209,17 @@ class MongoTripodUpdates extends MongoTripodBase {
                     $this->processSyncOperations($syncModifiedSubjects);
                 }
 
+                // calculate what asynchronous operations need performing, based on the subjects and anything they impact
+                // Chain getApplicableOperationsForResourceTypes() through getOperationsForImpactedData()
+                $operationsToPerform  = $this->getAsyncOperationsForImpactedData(
+                    $subjectsAndPredicatesOfChange,
+                    $contextAlias,
+                    $this->getApplicableAsyncOperationsForResourceTypes($subjectsAndPredicatesOfChange, $contextAlias)
+                );
+
                 // now queue all async operations
                 $asyncModifiedSubjects = array();
-                foreach($operationsToPerform[OP_ASYNC] as $asyncOp){
+                foreach($operationsToPerform as $asyncOp){
                     if(in_array($asyncOp['id'][_ID_RESOURCE], $changes['deletedSubjects'])){
                         $asyncOp['delete'] = true;
                     } else {
@@ -242,21 +249,46 @@ class MongoTripodUpdates extends MongoTripodBase {
     }
 
     /**
-     * Returns the applicable operations based on the changed resources' rdf types
-     * For tables and search docs this is usually only really applicable for new resources and deleted resources
+     * Returns the applicable synchronous operations based on the changed resources' rdf types
      * @param array $subjectsAndPredicatesOfChange
      * @param string $contextAlias
      * @param array $asyncConfig
      * @param array $operations
      * @return array
      */
+    protected function getApplicableSyncOperationsForResourceTypes(Array $subjectsAndPredicatesOfChange,$contextAlias)
+    {
+        return $this->getApplicableOperationsForResourceTypes($subjectsAndPredicatesOfChange,$contextAlias,$this->getSyncOperationTypes());
+    }
+
+    /**
+     * Returns the applicable asynchronous operations based on the changed resources' rdf types
+     * @param array $subjectsAndPredicatesOfChange
+     * @param string $contextAlias
+     * @param array $asyncConfig
+     * @param array $operations
+     * @return array
+     */
+    protected function getApplicableASyncOperationsForResourceTypes(Array $subjectsAndPredicatesOfChange,$contextAlias)
+    {
+        return $this->getApplicableOperationsForResourceTypes($subjectsAndPredicatesOfChange,$contextAlias,$this->getAsyncOperationTypes());
+    }
+
+    /**
+     * Returns the applicable operations based on the changed resources' rdf types for the supplied $operationTypes
+     * For tables and search docs this is usually only really applicable for new resources and deleted resources
+     * @param array $subjectsAndPredicatesOfChange
+     * @param string $contextAlias
+     * @param array $operationTypes array of constants detailing the operations we're considering. Should only contain values OP_VIEWS,OP_TABLES,OP_SEARCH
+     * @return array
+     */
     protected function getApplicableOperationsForResourceTypes(
         Array $subjectsAndPredicatesOfChange,
         $contextAlias,
-        Array $asyncConfig,
-        Array $operations = array()
+        Array $operationTypes
     )
     {
+        $applicableOperations = array();
         $filter = array();
         $subjectsToAlias = array();
         foreach(array_keys($subjectsAndPredicatesOfChange) as $s){
@@ -270,14 +302,6 @@ class MongoTripodUpdates extends MongoTripodBase {
 
         if($docs->count() == 0 ) {
             return array();
-        }
-        if(!isset($operations[OP_SYNC]))
-        {
-            $operations[OP_SYNC]  = array();
-        }
-        if(!isset($operations[OP_ASYNC]))
-        {
-            $operations[OP_ASYNC] = array();
         }
 
 
@@ -316,56 +340,32 @@ class MongoTripodUpdates extends MongoTripodBase {
             }
             foreach($docTypes as $type)
             {
-                if(in_array($type, $viewTypes)){
-                    if($asyncConfig[OP_VIEWS] == true) {
-                        if(!array_key_exists($docHash, $operations[OP_ASYNC])){
-                            $operations[OP_ASYNC][$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
-                            $operations[OP_ASYNC][$docHash]['ops'][$this->getPodName()] = array();
-                        }
-                        array_push($operations[OP_ASYNC][$docHash]['ops'][$this->getPodName()], OP_VIEWS);
-                    } else{
-                        if(!array_key_exists($docHash, $operations[OP_SYNC])){
-                            $operations[OP_SYNC][$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
-                            $operations[OP_SYNC][$docHash]['ops'][$this->getPodName()] = array();
-                        }
-                        array_push($operations[OP_SYNC][$docHash]['ops'][$this->getPodName()], OP_VIEWS);
+                if(in_array(OP_VIEWS,$operationTypes) && in_array($type, $viewTypes)){
+                    if(!array_key_exists($docHash, $applicableOperations)){
+                        $applicableOperations[$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
+                        $applicableOperations[$docHash]['ops'][$this->getPodName()] = array();
                     }
+                    array_push($applicableOperations[$docHash]['ops'][$this->getPodName()], OP_VIEWS);
                 }
 
-                if($this->checkIfTypeShouldTriggerOperation($type, $tableTypes, $currentSubject)) {
-                    if($asyncConfig[OP_TABLES] == true) {
-                        if(!array_key_exists($docHash, $operations[OP_ASYNC])){
-                            $operations[OP_ASYNC][$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
-                            $operations[OP_ASYNC][$docHash]['ops'][$this->getPodName()] = array();
-                        }
-                        array_push($operations[OP_ASYNC][$docHash]['ops'][$this->getPodName()], OP_TABLES);
-                    } else{
-                        if(!array_key_exists($docHash, $operations[OP_SYNC])){
-                            $operations[OP_SYNC][$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
-                            $operations[OP_SYNC][$docHash]['ops'][$this->getPodName()] = array();
-                        }
-                        array_push($operations[OP_SYNC][$docHash]['ops'][$this->getPodName()], OP_TABLES);
+                if(in_array(OP_TABLES,$operationTypes) && $this->checkIfTypeShouldTriggerOperation($type, $tableTypes, $currentSubject)) {
+                    if(!array_key_exists($docHash, $applicableOperations)){
+                        $applicableOperations[$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
+                        $applicableOperations[$docHash]['ops'][$this->getPodName()] = array();
                     }
+                    array_push($applicableOperations[$docHash]['ops'][$this->getPodName()], OP_TABLES);
                 }
 
-                if($this->checkIfTypeShouldTriggerOperation($type, $searchTypes, $currentSubject)) {
-                    if($asyncConfig[OP_SEARCH] == true) {
-                        if(!array_key_exists($docHash, $operations[OP_ASYNC])){
-                            $operations[OP_ASYNC][$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
-                            $operations[OP_ASYNC][$docHash]['ops'][$this->getPodName()] = array();
-                        }
-                        array_push($operations[OP_ASYNC][$docHash]['ops'][$this->getPodName()], OP_SEARCH);
-                    } else{
-                        if(!array_key_exists($docHash, $operations[OP_SYNC])){
-                            $operations[OP_SYNC][$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
-                            $operations[OP_SYNC][$docHash]['ops'][$this->getPodName()] = array();
-                        }
-                        array_push($operations[OP_SYNC][$docHash]['ops'][$this->getPodName()], OP_SEARCH);
+                if(in_array(OP_SEARCH,$operationTypes) && $this->checkIfTypeShouldTriggerOperation($type, $searchTypes, $currentSubject)) {
+                    if(!array_key_exists($docHash, $applicableOperations)){
+                        $applicableOperations[$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
+                        $applicableOperations[$docHash]['ops'][$this->getPodName()] = array();
                     }
+                    array_push($applicableOperations[$docHash]['ops'][$this->getPodName()], OP_SEARCH);
                 }
             }
         }
-        return $operations;
+        return $applicableOperations;
     }
 
     /**
@@ -415,6 +415,32 @@ class MongoTripodUpdates extends MongoTripodBase {
     }
 
     /**
+     * Returns synchronous operations based on what views, tables, and search docs are affected by the saved changes
+     *
+     * @param array $subjectsAndPredicatesOfChange
+     * @param string $contextAlias
+     * @param array $asyncConfig
+     * @param array $operations
+     * @return array
+     */
+    protected function getSyncOperationsForImpactedData(Array $subjectsAndPredicatesOfChange, $contextAlias, Array $operations = array()) {
+        return $this->getOperationsForImpactedData($subjectsAndPredicatesOfChange,$contextAlias,$this->getSyncOperationTypes(),$operations);
+    }
+
+    /**
+     * Returns asynchronous operations based on what views, tables, and search docs are affected by the saved changes
+     *
+     * @param array $subjectsAndPredicatesOfChange
+     * @param string $contextAlias
+     * @param array $asyncConfig
+     * @param array $operations
+     * @return array
+     */
+    protected function getAsyncOperationsForImpactedData(Array $subjectsAndPredicatesOfChange, $contextAlias, Array $operations = array()) {
+        return $this->getOperationsForImpactedData($subjectsAndPredicatesOfChange,$contextAlias,$this->getAsyncOperationTypes(),$operations);
+    }
+
+    /**
      * Returns operations based on what views, tables, and search docs are affected by the saved changes
      *
      * @param array $subjectsAndPredicatesOfChange
@@ -423,27 +449,47 @@ class MongoTripodUpdates extends MongoTripodBase {
      * @param array $operations
      * @return array
      */
-    protected function getOperationsForImpactedData(Array $subjectsAndPredicatesOfChange, $contextAlias, Array $asyncConfig, Array $operations = array())
+    protected function getOperationsForImpactedData(Array $subjectsAndPredicatesOfChange, $contextAlias, Array $operationTypes, Array $operations = array())
     {
-        if(!isset($operations[OP_SYNC]))
-        {
-            $operations[OP_SYNC]  = array();
-        }
-        if(!isset($operations[OP_ASYNC]))
-        {
-            $operations[OP_ASYNC] = array();
+        if (empty($operations)) $operations = array();
+        if (in_array(OP_VIEWS,$operationTypes)) {
+            foreach($this->findImpactedViews(array_keys($subjectsAndPredicatesOfChange), $contextAlias) as $doc) {
+                $spec = $this->config->getViewSpecification($this->storeName, $doc[_ID_KEY]['type']);
+                if(!empty($spec)){
+                    $fromCollection = $spec['from'];
+
+                    $docHash = md5($doc[_ID_KEY][_ID_RESOURCE] . $doc[_ID_KEY][_ID_CONTEXT]);
+
+                    if(!array_key_exists($docHash, $operations)){
+                        $operations[$docHash] = array(
+                            'id'=>array(
+                                _ID_RESOURCE=>$doc[_ID_KEY][_ID_RESOURCE],
+                                _ID_CONTEXT=>$doc[_ID_KEY][_ID_CONTEXT],
+                            ),
+                            'ops'=>array()
+                        );
+                    }
+                    if(!array_key_exists($fromCollection, $operations[$docHash]['ops'])) {
+                        $operations[$docHash]['ops'][$fromCollection] = array();
+                    }
+                    if(!in_array(OP_VIEWS, $operations[$docHash]['ops'][$fromCollection]))
+                    {
+                        array_push($operations[$docHash]['ops'][$fromCollection], OP_VIEWS);
+                    }
+                }
+            }
+
         }
 
-        foreach($this->findImpactedViews(array_keys($subjectsAndPredicatesOfChange), $contextAlias) as $doc) {
-            $spec = $this->config->getViewSpecification($this->storeName, $doc[_ID_KEY]['type']);
-            if(!empty($spec)){
+        if (in_array(OP_TABLES,$operationTypes)) {
+            foreach($this->findImpactedTableRows($subjectsAndPredicatesOfChange, $contextAlias) as $doc) {
+                $spec = $this->config->getTableSpecification($this->storeName, $doc[_ID_KEY][_ID_TYPE]);
                 $fromCollection = $spec['from'];
 
                 $docHash = md5($doc[_ID_KEY][_ID_RESOURCE] . $doc[_ID_KEY][_ID_CONTEXT]);
-                $syncOrAsync = ($asyncConfig[OP_VIEWS] ? OP_ASYNC : OP_SYNC);
 
-                if(!array_key_exists($docHash, $operations[$syncOrAsync])){
-                    $operations[$syncOrAsync][$docHash] = array(
+                if(!array_key_exists($docHash, $operations)){
+                    $operations[$docHash] = array(
                         'id'=>array(
                             _ID_RESOURCE=>$doc[_ID_KEY][_ID_RESOURCE],
                             _ID_CONTEXT=>$doc[_ID_KEY][_ID_CONTEXT],
@@ -451,93 +497,68 @@ class MongoTripodUpdates extends MongoTripodBase {
                         'ops'=>array()
                     );
                 }
-                if(!array_key_exists($fromCollection, $operations[$syncOrAsync][$docHash]['ops'])) {
-                    $operations[$syncOrAsync][$docHash]['ops'][$fromCollection] = array();
+                if(!array_key_exists($fromCollection, $operations[$docHash]['ops'])) {
+                    $operations[$docHash]['ops'][$fromCollection] = array();
                 }
-                if(!in_array(OP_VIEWS, $operations[$syncOrAsync][$docHash]['ops'][$fromCollection]))
+                if(!in_array(OP_TABLES, $operations[$docHash]['ops'][$fromCollection]))
                 {
-                    array_push($operations[$syncOrAsync][$docHash]['ops'][$fromCollection], OP_VIEWS);
+                    array_push($operations[$docHash]['ops'][$fromCollection], OP_TABLES);
                 }
 
-            }
-        }
+                if(!array_key_exists('specTypes', $operations[$docHash])) {
+                    $operations[$docHash]['specTypes'] = array();
+                }
+                // Save the specification type so we only have to regen resources in that table type
+                if(!in_array($doc[_ID_KEY][_ID_TYPE], $operations[$docHash]['specTypes']))
+                {
+                    $operations[$docHash]['specTypes'][] = $doc[_ID_KEY][_ID_TYPE];
+                }
 
-        foreach($this->findImpactedTableRows($subjectsAndPredicatesOfChange, $contextAlias) as $doc) {
-            $spec = $this->config->getTableSpecification($this->storeName, $doc[_ID_KEY][_ID_TYPE]);
-            $fromCollection = $spec['from'];
-
-            $docHash = md5($doc[_ID_KEY][_ID_RESOURCE] . $doc[_ID_KEY][_ID_CONTEXT]);
-
-            $syncOrAsync = ($asyncConfig[OP_TABLES] ? OP_ASYNC : OP_SYNC);
-
-            if(!array_key_exists($docHash, $operations[$syncOrAsync])){
-                $operations[$syncOrAsync][$docHash] = array(
-                    'id'=>array(
-                        _ID_RESOURCE=>$doc[_ID_KEY][_ID_RESOURCE],
-                        _ID_CONTEXT=>$doc[_ID_KEY][_ID_CONTEXT],
-                    ),
-                    'ops'=>array()
-                );
-            }
-            if(!array_key_exists($fromCollection, $operations[$syncOrAsync][$docHash]['ops'])) {
-                $operations[$syncOrAsync][$docHash]['ops'][$fromCollection] = array();
-            }
-            if(!in_array(OP_TABLES, $operations[$syncOrAsync][$docHash]['ops'][$fromCollection]))
-            {
-                array_push($operations[$syncOrAsync][$docHash]['ops'][$fromCollection], OP_TABLES);
-            }
-
-            if(!array_key_exists('specTypes', $operations[$syncOrAsync][$docHash])) {
-                $operations[$syncOrAsync][$docHash]['specTypes'] = array();
-            }
-            // Save the specification type so we only have to regen resources in that table type
-            if(!in_array($doc[_ID_KEY][_ID_TYPE], $operations[$syncOrAsync][$docHash]['specTypes']))
-            {
-                $operations[$syncOrAsync][$docHash]['specTypes'][] = $doc[_ID_KEY][_ID_TYPE];
             }
 
         }
 
-        if($this->config->getSearchProviderClassName($this->storeName) !== null) {
-            foreach($this->tripod->getSearchIndexer()->findImpactedSearchDocuments($subjectsAndPredicatesOfChange, $contextAlias) as $doc) {
-                $spec = $this->config->getSearchDocumentSpecification($this->storeName, $doc[_ID_KEY][_ID_TYPE]);
-                $fromCollection = $spec['from'];
+        if (in_array(OP_SEARCH,$operationTypes)) {
+            if($this->config->getSearchProviderClassName($this->storeName) !== null) {
+                foreach($this->tripod->getSearchIndexer()->findImpactedSearchDocuments($subjectsAndPredicatesOfChange, $contextAlias) as $doc) {
+                    $spec = $this->config->getSearchDocumentSpecification($this->storeName, $doc[_ID_KEY][_ID_TYPE]);
+                    $fromCollection = $spec['from'];
 
-                $docHash = md5($doc[_ID_KEY][_ID_RESOURCE] . $doc[_ID_KEY][_ID_CONTEXT]);
+                    $docHash = md5($doc[_ID_KEY][_ID_RESOURCE] . $doc[_ID_KEY][_ID_CONTEXT]);
 
-                $syncOrAsync = ($asyncConfig[OP_SEARCH] ? OP_ASYNC : OP_SYNC);
+                    if(!array_key_exists($docHash, $operations))
+                    {
+                        $operations[$docHash] = array(
+                            'id'=>array(
+                                _ID_RESOURCE=>$doc[_ID_KEY][_ID_RESOURCE],
+                                _ID_CONTEXT=>$doc[_ID_KEY][_ID_CONTEXT],
+                            ),
+                            'ops'=>array()
+                        );
+                    }
+                    if(!array_key_exists($fromCollection, $operations[$docHash]['ops']))
+                    {
+                        $operations[$docHash]['ops'][$fromCollection] = array();
+                    }
+                    if(!in_array(OP_SEARCH, $operations[$docHash]['ops'][$fromCollection]))
+                    {
+                        array_push($operations[$docHash]['ops'][$fromCollection], OP_SEARCH);
+                    }
 
-                if(!array_key_exists($docHash, $operations[$syncOrAsync]))
-                {
-                    $operations[$syncOrAsync][$docHash] = array(
-                        'id'=>array(
-                            _ID_RESOURCE=>$doc[_ID_KEY][_ID_RESOURCE],
-                            _ID_CONTEXT=>$doc[_ID_KEY][_ID_CONTEXT],
-                        ),
-                        'ops'=>array()
-                    );
-                }
-                if(!array_key_exists($fromCollection, $operations[$syncOrAsync][$docHash]['ops']))
-                {
-                    $operations[$syncOrAsync][$docHash]['ops'][$fromCollection] = array();
-                }
-                if(!in_array(OP_SEARCH, $operations[$syncOrAsync][$docHash]['ops'][$fromCollection]))
-                {
-                    array_push($operations[$syncOrAsync][$docHash]['ops'][$fromCollection], OP_SEARCH);
-                }
+                    if(!array_key_exists('specTypes', $operations[$docHash]))
+                    {
+                        $operations[$docHash]['specTypes'] = array();
+                    }
+                    // Save the specification type so we only have to regen resources in that search type
+                    if(!in_array($doc[_ID_KEY][_ID_TYPE], $operations[$docHash]['specTypes']))
+                    {
+                        $operations[$docHash]['specTypes'][] = $doc[_ID_KEY][_ID_TYPE];
+                    }
 
-                if(!array_key_exists('specTypes', $operations[$syncOrAsync][$docHash]))
-                {
-                    $operations[$syncOrAsync][$docHash]['specTypes'] = array();
                 }
-                // Save the specification type so we only have to regen resources in that search type
-                if(!in_array($doc[_ID_KEY][_ID_TYPE], $operations[$syncOrAsync][$docHash]['specTypes']))
-                {
-                    $operations[$syncOrAsync][$docHash]['specTypes'][] = $doc[_ID_KEY][_ID_TYPE];
-                }
-
             }
         }
+
         // return an array of document ids with the operations we need to perform for each
         return $operations;
     }
@@ -1749,5 +1770,26 @@ class MongoTripodUpdates extends MongoTripodBase {
         }
         return $this->locksCollection;
 
+    }
+
+    private function getAsyncOperationTypes() {
+        $types = array();
+        foreach ($this->async as $op=>$isAsync) {
+            if ($isAsync)
+            {
+                $types[] = $op;
+            }
+        }
+        return $types;
+    }
+    private function getSyncOperationTypes() {
+        $types = array();
+        foreach ($this->async as $op=>$isAsync) {
+            if (!$isAsync)
+            {
+                $types[] = $op;
+            }
+        }
+        return $types;
     }
 }
