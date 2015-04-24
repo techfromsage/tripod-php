@@ -1399,12 +1399,16 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $queueDB->drop();
 
         // Make sure the dbs do not exist
-        $transactionMongo = new MongoClient($newConfig['data_sources'][$newConfig['transaction_log']['data_source']]['connection']);
+        $transactionConnInfo = $newConfig['data_sources'][$newConfig['transaction_log']['data_source']];
+        $options = isset($transactionConnInfo['replicaSet']) && !empty($transactionConnInfo['replicaSet']) ? array('replicaSet' => $transactionConnInfo['replicaSet']): array();
+        $transactionMongo = new MongoClient($transactionConnInfo['connection'], $options);
         $transactionDbInfo = $transactionMongo->listDBs();
         foreach($transactionDbInfo['databases'] as $db){
             $this->assertNotEquals($db['name'], $newConfig['transaction_log']['database'], $newConfig['queue']['database']);
         }
-        $queuesMongo = new MongoClient($newConfig['data_sources'][$newConfig['queue']['data_source']]['connection']);
+        $tqueuesConnInfo = $newConfig['data_sources'][$newConfig['transaction_log']['data_source']];
+        $options = isset($tqueuesConnInfo['replicaSet']) && !empty($tqueuesConnInfo['replicaSet']) ? array('replicaSet' => $tqueuesConnInfo['replicaSet']): array();
+        $queuesMongo = new MongoClient($tqueuesConnInfo['connection'], $options);
         $queuesDbInfo = $queuesMongo->listDBs();
         foreach($queuesDbInfo['databases'] as $db){
             $this->assertNotEquals($db['name'], $newConfig['transaction_log']['database'], $newConfig['queue']['database']);
