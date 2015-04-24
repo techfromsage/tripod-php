@@ -76,7 +76,7 @@ $tripod->saveChanges(
 Requirements
 ----
 
-PHP =>5.3.x
+PHP >= 5.3.x
 
 Mongo 2.x and up, although at least 2.2 is recommended to take advantage of database level locking, especially in the case of shared datasets.
 
