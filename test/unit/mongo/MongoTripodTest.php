@@ -787,20 +787,20 @@ class MongoTripodTest extends MongoTripodTestBase
 //        $oG->add_resource_triple($uri_2, $oG->qname_to_uri("rdf:type"), $oG->qname_to_uri("acorn:Resource"));
 //
 //        // just updates, all three operations async
-//        $mockTripod = $this->getMock('MongoTripod', array('queueASyncOperations','processSyncOperations'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/','async'=>array(OP_TABLES=>true,OP_VIEWS=>true,OP_SEARCH=>true))));
+//        $mockTripod = $this->getMock('MongoTripod', array('queueASyncOperations','processOperations'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/','async'=>array(OP_TABLES=>true,OP_VIEWS=>true,OP_SEARCH=>true))));
 //        $mockTripod->expects($this->once())->method('queueASyncOperations')->with(array('http://example.com/1', 'http://example.com/2'), array(), 'http://talisaspire.com/', array(OP_TABLES,OP_VIEWS,OP_SEARCH));
-//        $mockTripod->expects($this->never())->method('processSyncOperations');
+//        $mockTripod->expects($this->never())->method('processOperations');
 //        $mockTripod->saveChanges(new ExtendedGraph(), $oG,"http://talisaspire.com/");
 //
 //        // just deletes, search only
-//        $mockTripod = $this->getMock('MongoTripod', array('queueASyncOperations','processSyncOperations'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/','async'=>array(OP_TABLES=>false,OP_VIEWS=>false,OP_SEARCH=>true))));
+//        $mockTripod = $this->getMock('MongoTripod', array('queueASyncOperations','processOperations'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/','async'=>array(OP_TABLES=>false,OP_VIEWS=>false,OP_SEARCH=>true))));
 //        $mockTripod->expects($this->once())->method('queueASyncOperations')->with(array(), array('http://example.com/1', 'http://example.com/2'),'http://talisaspire.com/', array(OP_SEARCH));
-//        $mockTripod->expects($this->once())->method('processSyncOperations')->with(array(), array('http://example.com/1', 'http://example.com/2'),'http://talisaspire.com/', array(OP_TABLES,OP_VIEWS));
+//        $mockTripod->expects($this->once())->method('processOperations')->with(array(), array('http://example.com/1', 'http://example.com/2'),'http://talisaspire.com/', array(OP_TABLES,OP_VIEWS));
 //        $mockTripod->saveChanges($oG, new ExtendedGraph(),"http://talisaspire.com/");
 //
 //        // add data back into store, default async (should be tables and search)
-//        $mockTripod = $this->getMock('MongoTripod', array('queueASyncOperations','processSyncOperations'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
-//        $mockTripod->expects($this->once())->method('processSyncOperations')->with(array('http://example.com/1', 'http://example.com/2'), array(),'http://talisaspire.com/', array(OP_VIEWS));
+//        $mockTripod = $this->getMock('MongoTripod', array('queueASyncOperations','processOperations'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
+//        $mockTripod->expects($this->once())->method('processOperations')->with(array('http://example.com/1', 'http://example.com/2'), array(),'http://talisaspire.com/', array(OP_VIEWS));
 //        $mockTripod->expects($this->once())->method('queueASyncOperations')->with(array('http://example.com/1', 'http://example.com/2'), array(),'http://talisaspire.com/', array(OP_TABLES,OP_SEARCH));
 //        $mockTripod->saveChanges(new ExtendedGraph(), $oG,"http://talisaspire.com/");
 //
@@ -811,15 +811,15 @@ class MongoTripodTest extends MongoTripodTestBase
 //        $nG->remove_resource_triple($uri_2, $oG->qname_to_uri("rdf:type"), "http://foo/bar#Class2");
 //
 //        //default async
-//        $mockTripod = $this->getMock('MongoTripod', array('queueASyncOperations','processSyncOperations'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
+//        $mockTripod = $this->getMock('MongoTripod', array('queueASyncOperations','processOperations'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
 //        $mockTripod->expects($this->once())->method('queueASyncOperations')->with(array('http://example.com/1'), array('http://example.com/2'),'http://talisaspire.com/', array(OP_TABLES,OP_SEARCH));
-////        $mockTripod->expects($this->once())->method('processSyncOperations')->with(array(), array('http://example.com/1', 'http://example.com/2'),'http://talisaspire.com/', array(OP_VIEWS));
+////        $mockTripod->expects($this->once())->method('processOperations')->with(array(), array('http://example.com/1', 'http://example.com/2'),'http://talisaspire.com/', array(OP_VIEWS));
 //        $mockTripod->saveChanges($oG, $nG,"http://talisaspire.com/");
 //
 //        //no async
-//        $mockTripod = $this->getMock('MongoTripod', array('queueASyncOperations','processSyncOperations'), array('CBD_testing','tripod_php_testing',array('async'=>array(OP_TABLES=>false,OP_VIEWS=>false,OP_SEARCH=>false))));
+//        $mockTripod = $this->getMock('MongoTripod', array('queueASyncOperations','processOperations'), array('CBD_testing','tripod_php_testing',array('async'=>array(OP_TABLES=>false,OP_VIEWS=>false,OP_SEARCH=>false))));
 //        $mockTripod->expects($this->never())->method('queueASyncOperations');
-////        $mockTripod->expects($this->once())->method('processSyncOperations')->with(array(), array('http://example.com/1', 'http://example.com/2'),'http://talisaspire.com/', array(OP_VIEWS,OP_TABLES,OP_SEARCH));
+////        $mockTripod->expects($this->once())->method('processOperations')->with(array(), array('http://example.com/1', 'http://example.com/2'),'http://talisaspire.com/', array(OP_VIEWS,OP_TABLES,OP_SEARCH));
 //        $mockTripod->saveChanges($nG, $oG,"http://talisaspire.com/");
 //    }
 
@@ -912,9 +912,9 @@ class MongoTripodTest extends MongoTripodTestBase
 //        $oG->add_resource_triple($uri_1, $oG->qname_to_uri("rdf:type"), $oG->qname_to_uri("acorn:Resource"));
 //
 //        // just updates, all three operations async
-//        $mockTripod = $this->getMock('MongoTripod', array('queueASyncOperations','processSyncOperations'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/',"async"=>array(OP_TABLES=>true,OP_VIEWS=>true,OP_SEARCH=>true))));
+//        $mockTripod = $this->getMock('MongoTripod', array('queueASyncOperations','processOperations'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/',"async"=>array(OP_TABLES=>true,OP_VIEWS=>true,OP_SEARCH=>true))));
 //        $mockTripod->expects($this->once())->method('queueASyncOperations')->with(array('http://example.com/1'), array(), 'http://talisaspire.com/', array(OP_VIEWS, OP_TABLES));
-//        $mockTripod->expects($this->never())->method('processSyncOperations');
+//        $mockTripod->expects($this->never())->method('processOperations');
 //        $mockTripod->saveChanges(new ExtendedGraph(), $oG,"http://talisaspire.com/");
 //    }
 

@@ -45,7 +45,7 @@ class MongoTripodQueue extends MongoTripodBase
             $operations = $data['operations'];
             foreach ($operations as $operation)
             {
-                $observers[] = $tripod->getObserver($operation);
+                $observers[] = $tripod->getComposite($operation);
             }
 
             foreach($observers as $observer)

@@ -32,6 +32,16 @@ abstract class MongoTripodBase
     protected $stat = null;
 
     /**
+     * @var MongoDB
+     */
+    protected $db = null;
+
+    /**
+     * @var string
+     */
+    protected $readPreference;
+
+    /**
      * @return ITripodStat
      */
     public function getStat()
@@ -313,6 +323,36 @@ abstract class MongoTripodBase
     {
         return MongoTripodConfig::getInstance();
     }
+
+    /**
+     * @return MongoDB
+     */
+    protected function getDatabase()
+    {
+        if(!isset($this->db))
+        {
+            $this->db = $this->config->getDatabase(
+                $this->storeName,
+                $this->config->getDataSourceForPod($this->storeName, $this->podName),
+                $this->readPreference
+            );
+        }
+        return $this->db;
+    }
+
+    /**
+     * @return MongoCollection
+     */
+    protected function getCollection()
+    {
+        if(!isset($this->collection))
+        {
+            $this->collection = $this->getDatabase()->selectCollection($this->podName);
+        }
+
+        return $this->collection;
+    }
+
 }
 
 final class NoStat implements ITripodStat

@@ -27,11 +27,6 @@ class MongoTripodUpdates extends MongoTripodBase {
     private $originalDbReadPreference = array();
 
     /**
-     * @var string
-     */
-    private $readPreference;
-
-    /**
      * @var MongoTripod
      */
     protected $tripod;
@@ -46,11 +41,6 @@ class MongoTripodUpdates extends MongoTripodBase {
      * @var array
      */
     private $async = null;
-
-    /**
-     * @var MongoDB
-     */
-    protected $db;
 
     /**
      * @var MongoDB
@@ -151,29 +141,7 @@ class MongoTripodUpdates extends MongoTripodBase {
 
             if ($cs->has_changes())
             {
-                $subjectsAndPredicatesOfChange = array();
-                /** @noinspection PhpParamsInspection */
-                $changes = $cs->get_subjects_of_type($oldGraph->qname_to_uri("cs:ChangeSet"));
-                foreach ($changes as $change)
-                {
-                    $subject = $cs->get_first_resource($change,$oldGraph->qname_to_uri("cs:subjectOfChange"));
-
-                    if(!isset($subjectsAndPredicatesOfChange[$subject]))
-                    {
-                        $subjectsAndPredicatesOfChange[$subject] = array();
-                    }
-                    // If resource is not either completely new or deleted, specify the predicates affected
-                    if(!(empty($cs->before) || empty($cs->after)))
-                    {
-                        foreach($cs->get_subjects_where_resource(RDF_SUBJECT, $subject) as $changeNode)
-                        {
-                            foreach($cs->get_resource_triple_values($changeNode, RDF_PREDICATE) as $property)
-                            {
-                                $subjectsAndPredicatesOfChange[$subject][] = $this->labeller->uri_to_alias($property);
-                            }
-                        }
-                    }
-                }
+                $subjectsAndPredicatesOfChange = $this->getSubjectsAndPredicatesOfChange($cs, $oldGraph);
 
                 foreach($subjectsAndPredicatesOfChange as $subject=>$predicates)
                 {
@@ -182,54 +150,20 @@ class MongoTripodUpdates extends MongoTripodBase {
 
                 $changes = $this->storeChanges($cs, array_keys($subjectsAndPredicatesOfChange),$contextAlias);
 
-                // calculate what synchronous operations need performing, based on the subjects and anything they impact
-                // Chain getApplicableOperationsForResourceTypes() through getOperationsForImpactedData()
-                $operationsToPerform  = $this->getSyncOperationsForImpactedData(
-                    $subjectsAndPredicatesOfChange,
-                    $contextAlias,
-                    $this->getApplicableSyncOperationsForResourceTypes($subjectsAndPredicatesOfChange, $contextAlias)
-                );
-
-                // create subjects to process synchronously
                 $syncModifiedSubjects = array();
-                foreach($operationsToPerform as $syncOp){
-                    if(in_array($syncOp['id'][_ID_RESOURCE], $changes['deletedSubjects'])){
-                        $syncOp['delete'] = true;
-                    } else {
-                        $syncOp['delete'] = false;
-                    }
-
-                    foreach($syncOp['ops'] as $pod=>$ops){
-                        $specTypes = (isset($syncOp['specTypes']) ? $syncOp['specTypes'] : array());
-                        $syncModifiedSubjects[] = ModifiedSubject::create($syncOp['id'],array(),$ops, $specTypes, $this->getStoreName(), $pod, $syncOp['delete']);
-                    }
+                foreach($this->getSyncOperations() as $op)
+                {
+                    array_merge($syncModifiedSubjects,$this->tripod->getComposite($op)->getModifiedSubjects($subjectsAndPredicatesOfChange,$changes['deletedSubjects'],$contextAlias));
                 }
 
                 if(!empty($syncModifiedSubjects)){
-                    $this->processSyncOperations($syncModifiedSubjects);
+                    $this->processOperations($syncModifiedSubjects);
                 }
 
-                // calculate what asynchronous operations need performing, based on the subjects and anything they impact
-                // Chain getApplicableOperationsForResourceTypes() through getOperationsForImpactedData()
-                $operationsToPerform  = $this->getAsyncOperationsForImpactedData(
-                    $subjectsAndPredicatesOfChange,
-                    $contextAlias,
-                    $this->getApplicableAsyncOperationsForResourceTypes($subjectsAndPredicatesOfChange, $contextAlias)
-                );
-
-                // now queue all async operations
                 $asyncModifiedSubjects = array();
-                foreach($operationsToPerform as $asyncOp){
-                    if(in_array($asyncOp['id'][_ID_RESOURCE], $changes['deletedSubjects'])){
-                        $asyncOp['delete'] = true;
-                    } else {
-                        $asyncOp['delete'] = false;
-                    }
-
-                    foreach($asyncOp['ops'] as $pod=>$ops){
-                        $specTypes = (isset($asyncOp['specTypes']) ? $asyncOp['specTypes'] : array());
-                        $asyncModifiedSubjects[] = ModifiedSubject::create($asyncOp['id'],array(),$ops, $specTypes, $this->getStoreName(), $pod, $asyncOp['delete']);
-                    }
+                foreach($this->getAsyncOperations() as $op)
+                {
+                    array_merge($asyncModifiedSubjects,$this->tripod->getComposite($op)->getModifiedSubjects($subjectsAndPredicatesOfChange,$changes['deletedSubjects'],$contextAlias));
                 }
 
                 if(!empty($asyncModifiedSubjects)){
@@ -246,321 +180,6 @@ class MongoTripodUpdates extends MongoTripodBase {
         $this->resetOriginalReadPreference();
 
         return true;
-    }
-
-    /**
-     * Returns the applicable synchronous operations based on the changed resources' rdf types
-     * @param array $subjectsAndPredicatesOfChange
-     * @param string $contextAlias
-     * @param array $asyncConfig
-     * @param array $operations
-     * @return array
-     */
-    protected function getApplicableSyncOperationsForResourceTypes(Array $subjectsAndPredicatesOfChange,$contextAlias)
-    {
-        return $this->getApplicableOperationsForResourceTypes($subjectsAndPredicatesOfChange,$contextAlias,$this->getSyncOperationTypes());
-    }
-
-    /**
-     * Returns the applicable asynchronous operations based on the changed resources' rdf types
-     * @param array $subjectsAndPredicatesOfChange
-     * @param string $contextAlias
-     * @param array $asyncConfig
-     * @param array $operations
-     * @return array
-     */
-    protected function getApplicableASyncOperationsForResourceTypes(Array $subjectsAndPredicatesOfChange,$contextAlias)
-    {
-        return $this->getApplicableOperationsForResourceTypes($subjectsAndPredicatesOfChange,$contextAlias,$this->getAsyncOperationTypes());
-    }
-
-    /**
-     * Returns the applicable operations based on the changed resources' rdf types for the supplied $operationTypes
-     * For tables and search docs this is usually only really applicable for new resources and deleted resources
-     * @param array $subjectsAndPredicatesOfChange
-     * @param string $contextAlias
-     * @param array $operationTypes array of constants detailing the operations we're considering. Should only contain values OP_VIEWS,OP_TABLES,OP_SEARCH
-     * @return array
-     */
-    protected function getApplicableOperationsForResourceTypes(
-        Array $subjectsAndPredicatesOfChange,
-        $contextAlias,
-        Array $operationTypes
-    )
-    {
-        $applicableOperations = array();
-        $filter = array();
-        $subjectsToAlias = array();
-        foreach(array_keys($subjectsAndPredicatesOfChange) as $s){
-            $resourceAlias = $this->labeller->uri_to_alias($s);
-            $subjectsToAlias[$s] = $resourceAlias;
-            // build $filter for queries to impact index
-            $filter[] = array(_ID_RESOURCE=>$resourceAlias,_ID_CONTEXT=>$contextAlias);
-        }
-        $query = array(_ID_KEY=>array('$in'=>$filter));
-        $docs = $this->getCollection()->find($query, array(_ID_KEY=>true, 'rdf:type'=>true));
-
-        if($docs->count() == 0 ) {
-            return array();
-        }
-
-
-        $viewTypes   = $this->config->getTypesInViewSpecifications($this->storeName, $this->getPodName());
-        $tableTypes  = $this->config->getTypesInTableSpecifications($this->storeName, $this->getPodName());
-        $searchTypes = $this->config->getTypesInSearchSpecifications($this->storeName, $this->getPodName());
-
-        foreach($docs as $doc)
-        {
-            $docResource = $doc[_ID_KEY][_ID_RESOURCE];
-            $docContext  = $doc[_ID_KEY][_ID_CONTEXT];
-            $docHash     = md5($docResource.$docContext);
-
-            $docTypes = array();
-            if(isset($doc["rdf:type"])) {
-                if(isset($doc["rdf:type"][VALUE_URI])){
-                    $docTypes[] = $doc["rdf:type"][VALUE_URI];
-                } else {
-                    foreach($doc["rdf:type"] as $t){
-                        if(isset($t[VALUE_URI]))
-                        {
-                            $docTypes[] = $t[VALUE_URI];
-                        }
-                    }
-                }
-            }
-            $currentSubject = null;
-            if(isset($subjectsAndPredicatesOfChange[$docResource]))
-            {
-                $currentSubject = $subjectsAndPredicatesOfChange[$docResource];
-            }
-            elseif(isset($subjectsToAlias[$docResource]) &&
-                isset($subjectsAndPredicatesOfChange[$subjectsToAlias[$docResource]]))
-            {
-                $currentSubject = $subjectsAndPredicatesOfChange[$subjectsToAlias[$docResource]];
-            }
-            foreach($docTypes as $type)
-            {
-                if(in_array(OP_VIEWS,$operationTypes) && in_array($type, $viewTypes)){
-                    if(!array_key_exists($docHash, $applicableOperations)){
-                        $applicableOperations[$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
-                        $applicableOperations[$docHash]['ops'][$this->getPodName()] = array();
-                    }
-                    array_push($applicableOperations[$docHash]['ops'][$this->getPodName()], OP_VIEWS);
-                }
-
-                if(in_array(OP_TABLES,$operationTypes) && $this->checkIfTypeShouldTriggerOperation($type, $tableTypes, $currentSubject)) {
-                    if(!array_key_exists($docHash, $applicableOperations)){
-                        $applicableOperations[$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
-                        $applicableOperations[$docHash]['ops'][$this->getPodName()] = array();
-                    }
-                    array_push($applicableOperations[$docHash]['ops'][$this->getPodName()], OP_TABLES);
-                }
-
-                if(in_array(OP_SEARCH,$operationTypes) && $this->checkIfTypeShouldTriggerOperation($type, $searchTypes, $currentSubject)) {
-                    if(!array_key_exists($docHash, $applicableOperations)){
-                        $applicableOperations[$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
-                        $applicableOperations[$docHash]['ops'][$this->getPodName()] = array();
-                    }
-                    array_push($applicableOperations[$docHash]['ops'][$this->getPodName()], OP_SEARCH);
-                }
-            }
-        }
-        return $applicableOperations;
-    }
-
-    /**
-     * Test if the a particular type appears in the array of types associated with a particular spec and that the changeset
-     * includes rdf:type (or is empty, meaning addition or deletion vs. update)
-     * @param string $rdfType
-     * @param array $validTypes
-     * @param array|null $subjectPredicates
-     * @return bool
-     */
-    protected function checkIfTypeShouldTriggerOperation($rdfType, array $validTypes, $subjectPredicates)
-    {
-        // We don't know if this is an alias or a fqURI, nor what is in the valid types, necessarily
-        $types = array($rdfType);
-        try
-        {
-            $types[] = $this->labeller->qname_to_uri($rdfType);
-        }
-        catch(TripodLabellerException $e) {}
-        try
-        {
-            $types[] = $this->labeller->uri_to_alias($rdfType);
-        }
-        catch(TripodLabellerException $e) {}
-
-        $intersectingTypes = array_unique(array_intersect($types, $validTypes));
-
-        if(!empty($intersectingTypes))
-        {
-            // This means we're either adding or deleting a graph
-            if(empty($subjectPredicates))
-            {
-                return true;
-            }
-            // Check for alias in changed predicates
-            elseif(in_array('rdf:type', $subjectPredicates))
-            {
-                return true;
-            }
-            // Check for fully qualified URI in changed predicates
-            elseif(in_array(RDF_TYPE, $subjectPredicates))
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Returns synchronous operations based on what views, tables, and search docs are affected by the saved changes
-     *
-     * @param array $subjectsAndPredicatesOfChange
-     * @param string $contextAlias
-     * @param array $asyncConfig
-     * @param array $operations
-     * @return array
-     */
-    protected function getSyncOperationsForImpactedData(Array $subjectsAndPredicatesOfChange, $contextAlias, Array $operations = array()) {
-        return $this->getOperationsForImpactedData($subjectsAndPredicatesOfChange,$contextAlias,$this->getSyncOperationTypes(),$operations);
-    }
-
-    /**
-     * Returns asynchronous operations based on what views, tables, and search docs are affected by the saved changes
-     *
-     * @param array $subjectsAndPredicatesOfChange
-     * @param string $contextAlias
-     * @param array $asyncConfig
-     * @param array $operations
-     * @return array
-     */
-    protected function getAsyncOperationsForImpactedData(Array $subjectsAndPredicatesOfChange, $contextAlias, Array $operations = array()) {
-        return $this->getOperationsForImpactedData($subjectsAndPredicatesOfChange,$contextAlias,$this->getAsyncOperationTypes(),$operations);
-    }
-
-    /**
-     * Returns operations based on what views, tables, and search docs are affected by the saved changes
-     *
-     * @param array $subjectsAndPredicatesOfChange
-     * @param string $contextAlias
-     * @param array $asyncConfig
-     * @param array $operations
-     * @return array
-     */
-    protected function getOperationsForImpactedData(Array $subjectsAndPredicatesOfChange, $contextAlias, Array $operationTypes, Array $operations = array())
-    {
-        if (empty($operations)) $operations = array();
-        if (in_array(OP_VIEWS,$operationTypes)) {
-            foreach($this->findImpactedViews(array_keys($subjectsAndPredicatesOfChange), $contextAlias) as $doc) {
-                $spec = $this->config->getViewSpecification($this->storeName, $doc[_ID_KEY]['type']);
-                if(!empty($spec)){
-                    $fromCollection = $spec['from'];
-
-                    $docHash = md5($doc[_ID_KEY][_ID_RESOURCE] . $doc[_ID_KEY][_ID_CONTEXT]);
-
-                    if(!array_key_exists($docHash, $operations)){
-                        $operations[$docHash] = array(
-                            'id'=>array(
-                                _ID_RESOURCE=>$doc[_ID_KEY][_ID_RESOURCE],
-                                _ID_CONTEXT=>$doc[_ID_KEY][_ID_CONTEXT],
-                            ),
-                            'ops'=>array()
-                        );
-                    }
-                    if(!array_key_exists($fromCollection, $operations[$docHash]['ops'])) {
-                        $operations[$docHash]['ops'][$fromCollection] = array();
-                    }
-                    if(!in_array(OP_VIEWS, $operations[$docHash]['ops'][$fromCollection]))
-                    {
-                        array_push($operations[$docHash]['ops'][$fromCollection], OP_VIEWS);
-                    }
-                }
-            }
-
-        }
-
-        if (in_array(OP_TABLES,$operationTypes)) {
-            foreach($this->findImpactedTableRows($subjectsAndPredicatesOfChange, $contextAlias) as $doc) {
-                $spec = $this->config->getTableSpecification($this->storeName, $doc[_ID_KEY][_ID_TYPE]);
-                $fromCollection = $spec['from'];
-
-                $docHash = md5($doc[_ID_KEY][_ID_RESOURCE] . $doc[_ID_KEY][_ID_CONTEXT]);
-
-                if(!array_key_exists($docHash, $operations)){
-                    $operations[$docHash] = array(
-                        'id'=>array(
-                            _ID_RESOURCE=>$doc[_ID_KEY][_ID_RESOURCE],
-                            _ID_CONTEXT=>$doc[_ID_KEY][_ID_CONTEXT],
-                        ),
-                        'ops'=>array()
-                    );
-                }
-                if(!array_key_exists($fromCollection, $operations[$docHash]['ops'])) {
-                    $operations[$docHash]['ops'][$fromCollection] = array();
-                }
-                if(!in_array(OP_TABLES, $operations[$docHash]['ops'][$fromCollection]))
-                {
-                    array_push($operations[$docHash]['ops'][$fromCollection], OP_TABLES);
-                }
-
-                if(!array_key_exists('specTypes', $operations[$docHash])) {
-                    $operations[$docHash]['specTypes'] = array();
-                }
-                // Save the specification type so we only have to regen resources in that table type
-                if(!in_array($doc[_ID_KEY][_ID_TYPE], $operations[$docHash]['specTypes']))
-                {
-                    $operations[$docHash]['specTypes'][] = $doc[_ID_KEY][_ID_TYPE];
-                }
-
-            }
-
-        }
-
-        if (in_array(OP_SEARCH,$operationTypes)) {
-            if($this->config->getSearchProviderClassName($this->storeName) !== null) {
-                foreach($this->tripod->getSearchIndexer()->findImpactedSearchDocuments($subjectsAndPredicatesOfChange, $contextAlias) as $doc) {
-                    $spec = $this->config->getSearchDocumentSpecification($this->storeName, $doc[_ID_KEY][_ID_TYPE]);
-                    $fromCollection = $spec['from'];
-
-                    $docHash = md5($doc[_ID_KEY][_ID_RESOURCE] . $doc[_ID_KEY][_ID_CONTEXT]);
-
-                    if(!array_key_exists($docHash, $operations))
-                    {
-                        $operations[$docHash] = array(
-                            'id'=>array(
-                                _ID_RESOURCE=>$doc[_ID_KEY][_ID_RESOURCE],
-                                _ID_CONTEXT=>$doc[_ID_KEY][_ID_CONTEXT],
-                            ),
-                            'ops'=>array()
-                        );
-                    }
-                    if(!array_key_exists($fromCollection, $operations[$docHash]['ops']))
-                    {
-                        $operations[$docHash]['ops'][$fromCollection] = array();
-                    }
-                    if(!in_array(OP_SEARCH, $operations[$docHash]['ops'][$fromCollection]))
-                    {
-                        array_push($operations[$docHash]['ops'][$fromCollection], OP_SEARCH);
-                    }
-
-                    if(!array_key_exists('specTypes', $operations[$docHash]))
-                    {
-                        $operations[$docHash]['specTypes'] = array();
-                    }
-                    // Save the specification type so we only have to regen resources in that search type
-                    if(!in_array($doc[_ID_KEY][_ID_TYPE], $operations[$docHash]['specTypes']))
-                    {
-                        $operations[$docHash]['specTypes'][] = $doc[_ID_KEY][_ID_TYPE];
-                    }
-
-                }
-            }
-        }
-
-        // return an array of document ids with the operations we need to perform for each
-        return $operations;
     }
 
     /**
@@ -1062,7 +681,7 @@ class MongoTripodUpdates extends MongoTripodBase {
      * Processes each subject synchronously
      * @param ModifiedSubject[] $modifiedSubjects
      */
-    protected function processSyncOperations(Array $modifiedSubjects)
+    public function processOperations(Array $modifiedSubjects)
     {
         foreach($modifiedSubjects as $subject)
         {
@@ -1072,9 +691,9 @@ class MongoTripodUpdates extends MongoTripodBase {
             foreach ($operations as $op)
             {
                 if($data['collection'] == $this->getPodName()){
-                    $observer = $this->tripod->getObserver($op);
+                    $observer = $this->tripod->getComposite($op);
                 } else {
-                    $observer = $this->getMongoTripod($data)->getObserver($op);
+                    $observer = $this->getMongoTripod($data)->getComposite($op);
                 }
                 $subject->attach($observer);
             }
@@ -1578,175 +1197,6 @@ class MongoTripodUpdates extends MongoTripodBase {
         return (empty($contextAlias)) ? MongoTripodConfig::getInstance()->getDefaultContextAlias() : $contextAlias;
     }
 
-
-    /**
-     * Given a set of resources, this method returns the ids of the documents that are directly affected.
-     * As a note remember that if ResourceA has a view associated with it, then the impactIndex for ResourceA, will contain
-     * an entry for ResourceA as well as any other Resources.
-     * @param array $resourcesAndPredicates
-     * @param null $context
-     * @return array
-     */
-    protected function findImpactedTableRows(array $resourcesAndPredicates, $context = null)
-    {
-        $contextAlias = $this->getContextAlias($context);
-
-        $tablePredicates = array();
-
-        foreach(MongoTripodConfig::getInstance()->getTableSpecifications($this->storeName) as $tableSpec)
-        {
-            if(isset($tableSpec[_ID_KEY]))
-            {
-                $tablePredicates[$tableSpec[_ID_KEY]] = MongoTripodConfig::getInstance()->getDefinedPredicatesInSpec($this->storeName, $tableSpec[_ID_KEY]);
-            }
-        }
-
-        // build a filter - will be used for impactIndex detection and finding direct tables to re-gen
-        $tableFilters = array();
-        $resourceFilters = array();
-        foreach ($resourcesAndPredicates as $resource=>$resourcePredicates)
-        {
-            $resourceAlias = $this->labeller->uri_to_alias($resource);
-            $id = array(_ID_RESOURCE=>$resourceAlias,_ID_CONTEXT=>$contextAlias);
-            // If we don't have a working config or there are no predicates listed, remove all
-            // rows associated with the resource in all tables
-            if(empty($tablePredicates) || empty($resourcePredicates))
-            {
-                // build $filter for queries to impact index
-                $resourceFilters[] = $id;
-            }
-            else
-            {
-                foreach($tablePredicates as $tableType=>$predicates)
-                {
-                    // Only look for table rows if the changed predicates are actually defined in the tablespec
-                    if(array_intersect($resourcePredicates, $predicates))
-                    {
-                        if(!isset($tableFilters[$tableType]))
-                        {
-                            $tableFilters[$tableType] = array();
-                        }
-                        // build $filter for queries to impact index
-                        $tableFilters[$tableType][] = $id;
-                    }
-                }
-            }
-
-        }
-
-        if(empty($tableFilters) && !empty($resourceFilters))
-        {
-            $query = array("value."._IMPACT_INDEX=>array('$in'=>$resourceFilters));
-        }
-        else
-        {
-            $query = array();
-            foreach($tableFilters as $tableType=>$filters)
-            {
-                // first re-gen views where resources appear in the impact index
-                $query[] = array("value."._IMPACT_INDEX=>array('$in'=>$filters), '_id.'._ID_TYPE=>$tableType);
-            }
-
-            if(!empty($resourceFilters))
-            {
-                $query[] = array("value."._IMPACT_INDEX=>array('$in'=>$resourceFilters));
-            }
-
-            if(count($query) === 1)
-            {
-                $query = $query[0];
-            }
-            elseif(count($query) > 1)
-            {
-                $query = array('$or'=>$query);
-            }
-        }
-
-        if(empty($query))
-        {
-            return array();
-        }
-
-        $affectedTableRows = array();
-
-        foreach($this->config->getCollectionsForTables($this->storeName) as $collection)
-        {
-            $tableRows = $collection->find($query, array("_id"=>true));
-            foreach($tableRows as $t)
-            {
-                $affectedTableRows[] = $t;
-            }
-        }
-
-        return $affectedTableRows;
-    }
-
-
-    /**
-     * Given a set of resources, this method returns the ids of the documents that are directly affected.
-     * As a note remember that if ResourceA has a view associated with it, then the impactIndex for ResourceA, will contain
-     * an entry for ResourceA as well as any other Resources.
-     * @param $resources
-     * @param null $context
-     * @return array
-     */
-    protected function findImpactedViews($resources, $context = null)
-    {
-        $contextAlias = $this->getContextAlias($context);
-
-        // build a filter - will be used for impactIndex detection and finding direct views to re-gen
-        $filter = array();
-        foreach ($resources as $resource)
-        {
-            $resourceAlias = $this->labeller->uri_to_alias($resource);
-            // build $filter for queries to impact index
-            $filter[] = array("r"=>$resourceAlias,"c"=>$contextAlias);
-        }
-
-        // first re-gen views where resources appear in the impact index
-        $query = array("value."._IMPACT_INDEX=>array('$in'=>$filter));
-
-        $affectedViews = array();
-        foreach($this->config->getCollectionsForViews($this->storeName) as $collection)
-        {
-            $views = $collection->find($query,array("_id"=>true));
-            foreach($views as $v)
-            {
-                $affectedViews[] = $v;
-            }
-        }
-        return $affectedViews;
-    }
-
-    /**
-     * @return MongoDB
-     */
-    protected function getDatabase()
-    {
-        if(!isset($this->db))
-        {
-            $this->db = $this->config->getDatabase(
-                $this->storeName,
-                $this->config->getDataSourceForPod($this->storeName, $this->podName),
-                $this->readPreference
-            );
-        }
-        return $this->db;
-    }
-
-    /**
-     * @return MongoCollection
-     */
-    protected function getCollection()
-    {
-        if(!isset($this->collection))
-        {
-            $this->collection = $this->getDatabase()->selectCollection($this->podName);
-        }
-
-        return $this->collection;
-    }
-
     /**
      * @return MongoDB
      */
@@ -1772,7 +1222,11 @@ class MongoTripodUpdates extends MongoTripodBase {
 
     }
 
-    private function getAsyncOperationTypes() {
+    /**
+     * @return array
+     */
+    private function getAsyncOperations()
+    {
         $types = array();
         foreach ($this->async as $op=>$isAsync) {
             if ($isAsync)
@@ -1782,7 +1236,12 @@ class MongoTripodUpdates extends MongoTripodBase {
         }
         return $types;
     }
-    private function getSyncOperationTypes() {
+
+    /**
+     * @return array
+     */
+    private function getSyncOperations()
+    {
         $types = array();
         foreach ($this->async as $op=>$isAsync) {
             if (!$isAsync)
@@ -1791,5 +1250,36 @@ class MongoTripodUpdates extends MongoTripodBase {
             }
         }
         return $types;
+    }
+
+    /**
+     * @return array
+     */
+    private function getSubjectsAndPredicatesOfChange(ChangeSet $cs, ExtendedGraph $oldGraph)
+    {
+        $subjectsAndPredicatesOfChange = array();
+        /** @noinspection PhpParamsInspection */
+        $changes = $cs->get_subjects_of_type($oldGraph->qname_to_uri("cs:ChangeSet"));
+        foreach ($changes as $change)
+        {
+            $subject = $cs->get_first_resource($change,$oldGraph->qname_to_uri("cs:subjectOfChange"));
+
+            if(!isset($subjectsAndPredicatesOfChange[$subject]))
+            {
+                $subjectsAndPredicatesOfChange[$subject] = array();
+            }
+            // If resource is not either completely new or deleted, specify the predicates affected
+            if(!(empty($cs->before) || empty($cs->after)))
+            {
+                foreach($cs->get_subjects_where_resource(RDF_SUBJECT, $subject) as $changeNode)
+                {
+                    foreach($cs->get_resource_triple_values($changeNode, RDF_PREDICATE) as $property)
+                    {
+                        $subjectsAndPredicatesOfChange[$subject][] = $this->labeller->uri_to_alias($property);
+                    }
+                }
+            }
+        }
+        return $subjectsAndPredicatesOfChange;
     }
 }

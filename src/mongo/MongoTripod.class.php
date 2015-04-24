@@ -7,6 +7,8 @@ require_once TRIPOD_DIR.'mongo/MongoTripodConstants.php';
 require_once TRIPOD_DIR.'mongo/MongoGraph.class.php';
 require_once TRIPOD_DIR.'mongo/ModifiedSubject.class.php';
 require_once TRIPOD_DIR.'mongo/base/MongoTripodBase.class.php';
+require_once TRIPOD_DIR.'mongo/IComposite.php';
+require_once TRIPOD_DIR.'mongo/base/CompositeBase.class.php';
 require_once TRIPOD_DIR.'mongo/delegates/MongoTransactionLog.class.php';
 require_once TRIPOD_DIR.'mongo/delegates/MongoTripodUpdates.class.php';
 require_once TRIPOD_DIR.'mongo/delegates/MongoTripodViews.class.php';
@@ -103,6 +105,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
         //max retries to get lock
         $this->retriesToGetLock = $opts['retriesToGetLock'];
 
+        var_dump($podName);
         $this->collection = $this->config->getCollectionForCBD($storeName, $podName, $opts['readPreference']);
 
         // fill in and default any missing keys for $async array. Default is views are sync, tables and search async
@@ -595,12 +598,12 @@ class MongoTripod extends MongoTripodBase implements ITripod
 
 
     /**
-     * Returns the correct observer as per the supported operation
-     * @param $operation string must be either views, tables or search
-     * @return SplObserver
+     * Returns the composite that can perform the supported operation
+     * @param $operation string must be either OP_VIEWS, OP_TABLES or OP_SEARCH
+     * @return IComposite
      * @throws TripodException when an unsupported operation is requested
      */
-    public function getObserver($operation)
+    public function getComposite($operation)
     {
         switch ($operation)
         {

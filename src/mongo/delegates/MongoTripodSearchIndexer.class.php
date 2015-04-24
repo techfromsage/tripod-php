@@ -5,7 +5,7 @@
     require_once TRIPOD_DIR . 'exceptions/TripodSearchException.class.php';
 
 
-class MongoTripodSearchIndexer extends MongoTripodBase implements SplObserver
+class MongoTripodSearchIndexer extends CompositeBase
 {
     private $tripod = null;
 
@@ -22,6 +22,7 @@ class MongoTripodSearchIndexer extends MongoTripodBase implements SplObserver
     {
         $this->tripod = $tripod;
         $this->storeName = $tripod->getStoreName();
+        $this->podName = $tripod->podName;
         $this->labeller = new MongoTripodLabeller();
         $this->stat = $tripod->getStat();
         $this->config = MongoTripodConfig::getInstance();
@@ -32,6 +33,7 @@ class MongoTripodSearchIndexer extends MongoTripodBase implements SplObserver
         } else {
             throw new TripodSearchException("Did not recognise Search Provider, or could not find class: $provider");
         }
+        $this->readPreference = MongoClient::RP_PRIMARY;
     }
 
     /**
@@ -61,6 +63,20 @@ class MongoTripodSearchIndexer extends MongoTripodBase implements SplObserver
         }
 
         $this->generateAndIndexSearchDocuments($resourceUri, $context, $podName, $specTypes);
+    }
+
+    public function getTypesInSpecification()
+    {
+        return $this->config->getTypesInSearchSpecifications($this->storeName, $this->getPodName());
+    }
+
+    /**
+     * Returns the operation this composite can satisfy
+     * @return string
+     */
+    public function getOperationType()
+    {
+        return OP_SEARCH;
     }
 
     /**
@@ -125,7 +141,7 @@ class MongoTripodSearchIndexer extends MongoTripodBase implements SplObserver
         }
     }
 
-    public function findImpactedSearchDocuments($resourcesAndPredicates, $context)
+    public function findImpactedComposites($resourcesAndPredicates, $context)
     {
         return $this->getSearchProvider()->findImpactedDocuments($resourcesAndPredicates, $context);
     }

@@ -55,7 +55,7 @@
 
    <target name="test" depends="init, unittest, perftest"  description="Runs all tests"/>
 
-   <target name="unittest" depends="init" description="Runs the Unit test suite">
+   <target name="unittest"  description="Runs the Unit test suite">
         <exec dir="${unit.test.dir}" executable="${vendor.dir}/bin/phpunit" failonerror="true">
             <arg line="--filter ${test} --log-junit ${output.dir}/unittest-report.xml" />
         </exec>

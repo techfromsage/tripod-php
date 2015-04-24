@@ -2,7 +2,7 @@
 
 require_once TRIPOD_DIR . 'mongo/base/MongoTripodBase.class.php';
 
-class MongoTripodViews extends MongoTripodBase implements SplObserver
+class MongoTripodViews extends CompositeBase
 {
 
     /**
@@ -13,7 +13,7 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
      * @param $defaultContext
      * @param null $stat
      */
-    function __construct($storeName, MongoCollection $collection,$defaultContext,$stat=null)
+    function __construct($storeName, MongoCollection $collection,$defaultContext,$stat=null) // todo: $collection -> podname
     {
         $this->storeName = $storeName;
         $this->labeller = new MongoTripodLabeller();
@@ -22,6 +22,12 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
         $this->defaultContext = $defaultContext;
         $this->config = MongoTripodConfig::getInstance();
         $this->stat = $stat;
+        $this->readPreference = MongoClient::RP_PRIMARY;
+    }
+
+    public function getOperationType()
+    {
+        return OP_VIEWS;
     }
 
     /**
@@ -41,6 +47,41 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
         $context        = $queuedItem[_ID_CONTEXT];
 
         $this->generateViews(array($resourceUri),$context);
+    }
+
+    public function getTypesInSpecification()
+    {
+        return $this->config->getTypesInViewSpecifications($this->storeName, $this->getPodName());
+    }
+
+    public function findImpactedComposites($resourcesAndPredicates, $contextAlias)
+    {
+        $resources = array_keys($resourcesAndPredicates);
+
+        $contextAlias = $this->getContextAlias($contextAlias); // belt and braces
+
+        // build a filter - will be used for impactIndex detection and finding direct views to re-gen
+        $filter = array();
+        foreach ($resources as $resource)
+        {
+            $resourceAlias = $this->labeller->uri_to_alias($resource);
+            // build $filter for queries to impact index
+            $filter[] = array("r"=>$resourceAlias,"c"=>$contextAlias);
+        }
+
+        // first re-gen views where resources appear in the impact index
+        $query = array("value."._IMPACT_INDEX=>array('$in'=>$filter));
+
+        $affectedViews = array();
+        foreach($this->config->getCollectionsForViews($this->storeName) as $collection)
+        {
+            $views = $collection->find($query,array("_id"=>true));
+            foreach($views as $v)
+            {
+                $affectedViews[] = $v;
+            }
+        }
+        return $affectedViews;
     }
 
 

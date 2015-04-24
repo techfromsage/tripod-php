@@ -3,7 +3,7 @@
 require_once TRIPOD_DIR . 'mongo/MongoTripodConstants.php';
 require_once TRIPOD_DIR . 'mongo/base/MongoTripodBase.class.php';
 
-class MongoTripodTables extends MongoTripodBase implements SplObserver
+class MongoTripodTables extends CompositeBase
 {
     /**
      * Modifier config - list of allowed functions and their attributes that can be passed through in tablespecs.json
@@ -71,6 +71,7 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
         $this->config = MongoTripodConfig::getInstance();
         $this->defaultContext = $this->labeller->uri_to_alias($defaultContext); // make sure default context is qnamed if applicable
         $this->stat = $stat;
+        $this->readPreference = MongoClient::RP_PRIMARY;
     }
 
     /**
@@ -105,6 +106,115 @@ class MongoTripodTables extends MongoTripodBase implements SplObserver
             $this->generateTableRowsForResource($resourceUri,$context,$specTypes);
         }
     }
+
+    public function getTypesInSpecification()
+    {
+        return $this->config->getTypesInTableSpecifications($this->storeName, $this->getPodName());
+    }
+
+    public function findImpactedComposites($resourcesAndPredicates, $contextAlias)
+    {
+        $contextAlias = $this->getContextAlias($contextAlias); // belt and braces
+
+        $tablePredicates = array();
+
+        foreach(MongoTripodConfig::getInstance()->getTableSpecifications($this->storeName) as $tableSpec)
+        {
+            if(isset($tableSpec[_ID_KEY]))
+            {
+                $tablePredicates[$tableSpec[_ID_KEY]] = MongoTripodConfig::getInstance()->getDefinedPredicatesInSpec($this->storeName, $tableSpec[_ID_KEY]);
+            }
+        }
+
+        // build a filter - will be used for impactIndex detection and finding direct tables to re-gen
+        $tableFilters = array();
+        $resourceFilters = array();
+        foreach ($resourcesAndPredicates as $resource=>$resourcePredicates)
+        {
+            $resourceAlias = $this->labeller->uri_to_alias($resource);
+            $id = array(_ID_RESOURCE=>$resourceAlias,_ID_CONTEXT=>$contextAlias);
+            // If we don't have a working config or there are no predicates listed, remove all
+            // rows associated with the resource in all tables
+            if(empty($tablePredicates) || empty($resourcePredicates))
+            {
+                // build $filter for queries to impact index
+                $resourceFilters[] = $id;
+            }
+            else
+            {
+                foreach($tablePredicates as $tableType=>$predicates)
+                {
+                    // Only look for table rows if the changed predicates are actually defined in the tablespec
+                    if(array_intersect($resourcePredicates, $predicates))
+                    {
+                        if(!isset($tableFilters[$tableType]))
+                        {
+                            $tableFilters[$tableType] = array();
+                        }
+                        // build $filter for queries to impact index
+                        $tableFilters[$tableType][] = $id;
+                    }
+                }
+            }
+
+        }
+
+        if(empty($tableFilters) && !empty($resourceFilters))
+        {
+            $query = array("value."._IMPACT_INDEX=>array('$in'=>$resourceFilters));
+        }
+        else
+        {
+            $query = array();
+            foreach($tableFilters as $tableType=>$filters)
+            {
+                // first re-gen views where resources appear in the impact index
+                $query[] = array("value."._IMPACT_INDEX=>array('$in'=>$filters), '_id.'._ID_TYPE=>$tableType);
+            }
+
+            if(!empty($resourceFilters))
+            {
+                $query[] = array("value."._IMPACT_INDEX=>array('$in'=>$resourceFilters));
+            }
+
+            if(count($query) === 1)
+            {
+                $query = $query[0];
+            }
+            elseif(count($query) > 1)
+            {
+                $query = array('$or'=>$query);
+            }
+        }
+
+        if(empty($query))
+        {
+            return array();
+        }
+
+        $affectedTableRows = array();
+
+        foreach($this->config->getCollectionsForTables($this->storeName) as $collection)
+        {
+            $tableRows = $collection->find($query, array("_id"=>true));
+            foreach($tableRows as $t)
+            {
+                $affectedTableRows[] = $t;
+            }
+        }
+
+        return $affectedTableRows;
+    }
+
+    /**
+     * Returns the operation this composite can satisfy
+     * @return string
+     */
+    public function getOperationType()
+    {
+        $this->config->getTypesInTableSpecifications($this->storeName, $this->getPodName());
+    }
+
 
     public function getTableRows($tableSpecId,$filter=array(),$sortBy=array(),$offset=0,$limit=10)
     {
