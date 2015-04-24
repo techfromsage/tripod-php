@@ -1399,10 +1399,15 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $queueDB->drop();
 
         // Make sure the dbs do not exist
-        $mongo = new MongoClient(MongoTripodConfig::getInstance()->getConnStr('tripod_php_testing'));
-        $dbInfo = $mongo->listDBs();
-        foreach($dbInfo['databases'] as $db){
-            $this->assertFalse(in_array($db['name'], array($newConfig['transaction_log']['database'], $newConfig['queue']['database'])));
+        $transactionMongo = new MongoClient($newConfig['data_sources'][$newConfig['transaction_log']['data_source']]['connection']);
+        $transactionDbInfo = $transactionMongo->listDBs();
+        foreach($transactionDbInfo['databases'] as $db){
+            $this->assertNotEquals($db['name'], $newConfig['transaction_log']['database'], $newConfig['queue']['database']);
+        }
+        $queuesMongo = new MongoClient($newConfig['data_sources'][$newConfig['queue']['data_source']]['connection']);
+        $queuesDbInfo = $queuesMongo->listDBs();
+        foreach($queuesDbInfo['databases'] as $db){
+            $this->assertNotEquals($db['name'], $newConfig['transaction_log']['database'], $newConfig['queue']['database']);
         }
 
         // Start adding some data
@@ -1421,31 +1426,34 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $this->tripod->saveChanges($graph, $newGraph);
 
         // Make sure the dbs do now exist
-        $mongo = new MongoClient(MongoTripodConfig::getInstance()->getConnStr('tripod_php_testing'));
-        $dbInfo = $mongo->listDBs();
+        $transactionDbInfo = $transactionMongo->listDBs();
         $transactionDbExists = false;
-        $queueDbExists = false;
-        foreach($dbInfo['databases'] as $db){
+        foreach($transactionDbInfo['databases'] as $db){
             if($db['name'] === $newConfig['transaction_log']['database']){
                 $transactionDbExists = true;
             }
-            if($db['name'] === $newConfig['queue']['database']){
+        }
+        $this->assertTrue($transactionDbExists);
+
+        $queuesDbInfo = $queuesMongo->listDBs();
+        $queueDbExists = false;
+        foreach($queuesDbInfo['databases'] as $db) {
+            if ($db['name'] === $newConfig['queue']['database']) {
                 $queueDbExists = true;
             }
         }
-        $this->assertTrue($transactionDbExists);
         $this->assertTrue($queueDbExists);
 
         // Make sure the data in the dbs look right
-        $transactionColletion = $mongo->selectCollection($newConfig['transaction_log']['database'], $newConfig['transaction_log']['collection']);
+        $transactionColletion = $transactionMongo->selectCollection($newConfig['transaction_log']['database'], $newConfig['transaction_log']['collection']);
         $transactionCount = $transactionColletion->count();
         $transactionExampleDocument = $transactionColletion->findOne();
         $this->assertEquals(18, $transactionCount);
         $this->assertContains('transaction_', $transactionExampleDocument["_id"]);
 
-        $queueColletion = $mongo->selectCollection($newConfig['queue']['database'], $newConfig['queue']['collection']);
-        $transactionCount = $queueColletion->count();
-        $transactionExampleDocument = $queueColletion->findOne();
+        $queueCollection = $queuesMongo->selectCollection($newConfig['queue']['database'], $newConfig['queue']['collection']);
+        $transactionCount = $queueCollection->count();
+        $transactionExampleDocument = $queueCollection->findOne();
         $this->assertEquals(7, $transactionCount);
         $this->assertContains('queued', $transactionExampleDocument["status"]);
         $this->assertArrayHasKey('operations', $transactionExampleDocument);
