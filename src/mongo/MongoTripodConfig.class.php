@@ -2047,7 +2047,7 @@ class MongoTripodConfig
             $connectionOptions['replicaSet'] = $dataSource['replicaSet'];
         }
         $client = new MongoClient($dataSource['connection'], $connectionOptions);
-        $db = $client->selectDB($this->queueConfig['database']);
+        $db = $client->selectDB($this->tConfig['database']);
         $db->setReadPreference($readPreference);
         return $db;
     }
