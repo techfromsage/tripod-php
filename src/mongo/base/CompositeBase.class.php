@@ -71,8 +71,6 @@ abstract class CompositeBase extends MongoTripodBase implements IComposite
         foreach($this->findImpactedComposites($subjectsAndPredicatesOfChange, $contextAlias) as $doc) {
             $spec = $this->getSpecification($this->storeName, $doc[_ID_KEY]['type']);
             if(!empty($spec)){
-                $fromCollection = $spec['from'];
-
                 $docHash = md5($doc[_ID_KEY][_ID_RESOURCE] . $doc[_ID_KEY][_ID_CONTEXT]);
 
                 if(!array_key_exists($docHash, $operations)){
@@ -80,18 +78,9 @@ abstract class CompositeBase extends MongoTripodBase implements IComposite
                         'id'=>array(
                             _ID_RESOURCE=>$doc[_ID_KEY][_ID_RESOURCE],
                             _ID_CONTEXT=>$doc[_ID_KEY][_ID_CONTEXT],
-                        ),
-                        'ops'=>array()
+                        )
                     );
                 }
-                if(!array_key_exists($fromCollection, $operations[$docHash]['ops'])) {
-                    $operations[$docHash]['ops'][$fromCollection] = array();
-                }
-                if(!in_array($this->getOperationType(), $operations[$docHash]['ops'][$fromCollection]))
-                {
-                    array_push($operations[$docHash]['ops'][$fromCollection], $this->getOperationType());
-                }
-
                 if(!array_key_exists('specTypes', $operations[$docHash])) {
                     $operations[$docHash]['specTypes'] = array();
                 }
@@ -105,17 +94,14 @@ abstract class CompositeBase extends MongoTripodBase implements IComposite
 
         // convert operations to subjects
         $modifiedSubjects = array();
-        foreach($operations as $syncOp){
-            if(in_array($syncOp['id'][_ID_RESOURCE], $deletedSubjects)){
-                $syncOp['delete'] = true;
+        foreach($operations as $operation){
+            if(in_array($operation['id'][_ID_RESOURCE], $deletedSubjects)){
+                $operation['delete'] = true;
             } else {
-                $syncOp['delete'] = false;
+                $operation['delete'] = false;
             }
-
-            foreach($syncOp['ops'] as $pod=>$ops){
-                $specTypes = (isset($syncOp['specTypes']) ? $syncOp['specTypes'] : array());
-                $modifiedSubjects[] = ModifiedSubject::create($syncOp['id'],array(),$ops, $specTypes, $this->getStoreName(), $pod, $syncOp['delete']);
-            }
+            $specTypes = (isset($operation['specTypes']) ? $operation['specTypes'] : array());
+            $modifiedSubjects[] = ModifiedSubject::create($operation['id'], $this, $specTypes, $this->getStoreName(), $this->getPodName(), $operation['delete']);
         }
         return $modifiedSubjects;
     }
@@ -156,19 +142,16 @@ abstract class CompositeBase extends MongoTripodBase implements IComposite
             // This means we're either adding or deleting a graph
             if(empty($subjectPredicates))
             {
-                echo "returning true";
                 return true;
             }
             // Check for alias in changed predicates
             elseif(in_array('rdf:type', $subjectPredicates))
             {
-                echo "returning true";
                 return true;
             }
             // Check for fully qualified URI in changed predicates
             elseif(in_array(RDF_TYPE, $subjectPredicates))
             {
-                echo "returning true";
                 return true;
             }
         }

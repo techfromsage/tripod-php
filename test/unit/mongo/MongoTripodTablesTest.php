@@ -303,7 +303,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $data["r"] = "http://foo";
         $data["c"] = "context";
         $data["delete"] = true;
-        $mockTables->update(new ModifiedSubject($data));
+        $mockTables->update(new ModifiedSubject($data,$mockTables));
     }
 
     public function testUpdateWillGenerateRows()
@@ -315,7 +315,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $data = array();
         $data["r"] = "http://foo";
         $data["c"] = "context";
-        $mockTables->update(new ModifiedSubject($data));
+        $mockTables->update(new ModifiedSubject($data,$mockTables));
     }
 
     public function testGenerateTableRows()
@@ -381,7 +381,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $data = array();
         $data["r"] = "http://basedata.com/b/2";
         $data["c"] = "http://basedata.com/b/DefaultGraph";
-        $this->tripodTables->update(new ModifiedSubject($data));
+        $this->tripodTables->update(new ModifiedSubject($data,$this->tripodTables));
 
         $rows = $this->tripodTables->getTableRows("t_work2");
 
@@ -392,7 +392,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $data = array();
         $data["r"] = "baseData:2";
         $data["c"] = "baseData:DefaultGraph";
-        $this->tripodTables->update(new ModifiedSubject($data));
+        $this->tripodTables->update(new ModifiedSubject($data,$this->tripodTables));
 
         $rows = $this->tripodTables->getTableRows("t_work2");
 
@@ -403,7 +403,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $data = array();
         $data["r"] = "http://basedata.com/b/2";
         $data["c"] = "baseData:DefaultGraph";
-        $this->tripodTables->update(new ModifiedSubject($data));
+        $this->tripodTables->update(new ModifiedSubject($data,$this->tripodTables));
 
         $rows = $this->tripodTables->getTableRows("t_work2");
 
@@ -414,7 +414,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $data = array();
         $data["r"] = "baseData:2";
         $data["c"] = "http://basedata.com/b/DefaultGraph";
-        $this->tripodTables->update(new ModifiedSubject($data));
+        $this->tripodTables->update(new ModifiedSubject($data,$this->tripodTables));
 
         $rows = $this->tripodTables->getTableRows("t_work2");
 
@@ -971,24 +971,23 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             ->method('storeChanges')
             ->will($this->returnValue(array('deletedSubjects'=>array())));
 
-        $tripodUpdate->expects($this->atLeastOnce())
-            ->method('findImpactedTableRows')
-            ->will($this->returnValue(array()));
-
         $tripod->expects($this->atLeastOnce())
             ->method('getDataUpdater')
             ->will($this->returnValue($tripodUpdate));
 
         $tables = $this->getMock('MongoTripodTables',
-            array('generateTableRowsForResource'),
+            array('generateTableRowsForResource','findImpactedComposites'),
             array($tripod->getStoreName(), $this->getTripodCollection($tripod), "http://talisaspire.com/")
         );
 
         $tables->expects($this->never())
             ->method('generateTableRowsForResource');
 
+        $tables->expects($this->atLeastOnce())
+            ->method('findImpactedComposites')
+            ->will($this->returnValue(array()));
 
-        $tripod->expects($this->never())
+        $tripod->expects($this->atLeastOnce())
             ->method('getTripodTables')
             ->will($this->returnValue($tables));
 

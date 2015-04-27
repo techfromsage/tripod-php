@@ -41,24 +41,22 @@ class MongoTripodQueue extends MongoTripodBase
 
             $tripod = $this->getMongoTripod($data);
 
-            $observers = array();
             $operations = $data['operations'];
-            foreach ($operations as $operation)
+            $modifiedSubjects = array();
+            foreach($operations as $op)
             {
-                $observers[] = $tripod->getComposite($operation);
-            }
-
-            foreach($observers as $observer)
-            {
-                /* @var $observer SplObserver */
-                $queuedItem->attach($observer);
+                $composite = $tripod->getComposite($op);
+                $modifiedSubjects = array_merge($modifiedSubjects,$composite->getModifiedSubjects($queuedItem['subjectsAndPredicatesOfChange'],$queuedItem['deletedSubjects'],$queuedItem['$contextAlias']));
             }
 
             try
             {
-                // notify observers
-                $this->debugLog("Queue processing item {$data['r']} with operations ".implode(", ",$operations));
-                $queuedItem->notify();
+                if(!empty($modifiedSubjects)){
+                    /* @var $subject ModifiedSubject */
+                    foreach ($modifiedSubjects as $subject) {
+                        $subject->notify();
+                    }
+                }
                 $this->removeItem($queuedItem);
             }
             catch(Exception $e)
@@ -66,6 +64,7 @@ class MongoTripodQueue extends MongoTripodBase
                 $this->errorLog("Error processing item in queue: ".$e->getMessage(),array("data"=>$data));
                 $this->failItem($queuedItem, $e->getMessage()."\n".$e->getTraceAsString());
             }
+
             // stat time taken to process item, from time it was created (queued)
             $timeTaken = ($now->usec/1000 + $now->sec*1000) - ($createdOn->usec/1000 + $createdOn->sec*1000);
             $this->getStat()->timer(MONGO_QUEUE_SUCCESS,$timeTaken);
@@ -75,10 +74,9 @@ class MongoTripodQueue extends MongoTripodBase
     }
 
     protected function getMongoTripod($data) {
-        // TODO: remove reference to 'database'?
         return new MongoTripod(
-            $data['collection'],
-            $data['database'],
+            $data['storeName'],
+            $data['podName'],
             array('stat'=>$this->stat));
     }
 
@@ -86,9 +84,8 @@ class MongoTripodQueue extends MongoTripodBase
      * Add an item to the index queue
      * @param ModifiedSubject $subject
      */
-    public function addItem(ModifiedSubject $subject)
+    public function addItem(array $data)
     {
-        $data = $subject->getData();
         $data["_id"] = $this->getUniqId();
         $data["createdOn"] = new MongoDate();
         $data['status'] = "queued";
@@ -100,9 +97,8 @@ class MongoTripodQueue extends MongoTripodBase
      *
      * @param $subject ModifiedSubject the item to remove from the queue
      */
-    public function removeItem(ModifiedSubject $subject)
+    public function removeItem(array $data)
     {
-        $data = $subject->getData();
         $id = $data['_id'];
         $this->collection->remove(array("_id"=>$id));
     }
@@ -113,9 +109,8 @@ class MongoTripodQueue extends MongoTripodBase
      * @param $subject ModifiedSubject the item to fail
      * @param $errorMessage, any error message you wish to be logged with the queued item
      */
-    public function failItem(ModifiedSubject $subject, $errorMessage=null)
+    public function failItem(array $data, $errorMessage=null)
     {
-        $data = $subject->getData();
         $id = $data['_id'];
         $this->collection->update(
             array("_id"=>$id),
@@ -146,7 +141,7 @@ class MongoTripodQueue extends MongoTripodBase
         {
             if(!empty($response['value']))
             {
-                return new ModifiedSubject($response['value']);
+                return $response['value'];
             }
             else
             {

@@ -1260,7 +1260,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
 
         // Add an item to the queue
         $queue = new MongoTripodQueue();
-        $item = new ModifiedSubject(array('collection'=>'CBD_wibble', 'database'=>'foo'));
+        $item = array('podName'=>'CBD_wibble', 'storeName'=>'foo');
         $queue->addItem($item);
 
         // Generate views and tables

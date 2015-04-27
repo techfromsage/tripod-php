@@ -82,88 +82,107 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
 
     /**
      * Saving a change to a single resource that does not impact any other resources should result in just a single item being added to the queue.
+     * todo: new test in composite that this change does not result in any ModifiedSubjects
      */
-    public function testSingleItemIsAddedToQueueForChangeToSubjectThatDoesNotImpactAnything()
+    public function testSingleItemIsAddedToQueueForChangeToSingleSubject()
     {
         // create a tripod instance that will send all operations to the queue
         $tripod = new MongoTripod('CBD_testing','tripod_php_testing_queue_ops', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
         $g1 = $tripod->describeResource("http://talisaspire.com/resources/doc1");
         $g2 = $tripod->describeResource("http://talisaspire.com/resources/doc1");
         $g2->add_literal_triple("http://talisaspire.com/resources/doc1", $g2->qname_to_uri("dct:subject"),"astrophysics");
-        echo "\n\nDoing save\n";
+
         $tripod->saveChanges($g1, $g2);
 
         $this->assertEquals(1, $this->tripodQueue->count(), "There should only be 1 item on the queue");
         /* @var $queuedItem ModifiedSubject */
-        $queuedItemData = $this->tripodQueue->fetchNextQueuedItem()->getData();
-        $this->assertEquals("http://talisaspire.com/resources/doc1",$queuedItemData['r'], "Queued Item should be the one we saved changes to");
+        $queuedItemData = $this->tripodQueue->fetchNextQueuedItem();
+
+        $this->assertEquals(array("http://talisaspire.com/resources/doc1"),array_keys($queuedItemData['subjectsAndPredicatesOfChange']), "Queued Item should be the one we saved changes to");
         $this->assertContains(OP_VIEWS, $queuedItemData['operations'], "Operations should contain view gen");
-        $this->assertNotContains(OP_TABLES, $queuedItemData['operations'], "Operations should not contain table gen: dct:subject not a defined predicate");
+        $this->assertContains(OP_TABLES, $queuedItemData['operations'], "Operations should contain table gen");
         $this->assertContains(OP_SEARCH, $queuedItemData['operations'], "Operations should contain search gen");
+    }
+
+    /**
+     * Saving a change to a single resource that does not impact any other resources should result in just a single item being added to the queue.
+     * todo: new test in composite that this change does not result in any ModifiedSubjects
+     */
+    public function testSingleItemWithViewsOpIsAddedToQueueForChangeToSingleSubject()
+    {
+        // create a tripod instance that will send all operations to the queue
+        $tripod = new MongoTripod('CBD_testing','tripod_php_testing_queue_ops', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>false, OP_SEARCH=>false)));
+        $g1 = $tripod->describeResource("http://talisaspire.com/resources/doc1");
+        $g2 = $tripod->describeResource("http://talisaspire.com/resources/doc1");
+        $g2->add_literal_triple("http://talisaspire.com/resources/doc1", $g2->qname_to_uri("dct:subject"),"astrophysics");
+
+        $tripod->saveChanges($g1, $g2);
+
+        $this->assertEquals(1, $this->tripodQueue->count(), "There should only be 1 item on the queue");
+        /* @var $queuedItem ModifiedSubject */
+        $queuedItemData = $this->tripodQueue->fetchNextQueuedItem();
+
+        $this->assertEquals(array("http://talisaspire.com/resources/doc1"),array_keys($queuedItemData['subjectsAndPredicatesOfChange']), "Queued Item should be the one we saved changes to");
+        $this->assertContains(OP_VIEWS, $queuedItemData['operations'], "Operations should contain view gen");
+        $this->assertFalse(in_array(OP_TABLES, $queuedItemData['operations']), "Operations should not contain table gen");
+        $this->assertFalse(in_array(OP_SEARCH, $queuedItemData['operations']), "Operations should not contain search gen");
+    }
+
+    public function testNoItemIsAddedToQueueForChangeToSingleSubjectWithNoAsyncOps()
+    {
+        // create a tripod instance that will send all operations to the queue
+        $tripod = new MongoTripod('CBD_testing','tripod_php_testing_queue_ops', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>false, OP_TABLES=>false, OP_SEARCH=>false)));
+        $g1 = $tripod->describeResource("http://talisaspire.com/resources/doc1");
+        $g2 = $tripod->describeResource("http://talisaspire.com/resources/doc1");
+        $g2->add_literal_triple("http://talisaspire.com/resources/doc1", $g2->qname_to_uri("dct:subject"),"astrophysics");
+
+        $tripod->saveChanges($g1, $g2);
+
+        $this->assertEquals(0, $this->tripodQueue->count(), "There should be 0 items on the queue");
     }
 
     /**
      * Saving a change to an entity that appears in the impact index for view/table_rows/search docs of 3 other entities should result in
      * 4 items being placed on the queue, with the operations for each relevant to the configured operations based on the specifications
-     *
+     * todo: new test in composite for one subject that impacts another
      */
-    public function testSeveralItemsAddedToQueueForChangeToSubjectThatImpactsOthers()
+    public function testSeveralItemsAddedToQueueForChangeToSeveralSubjects()
     {
         $this->tripod->getTripodTables()->generateTableRowsForType("bibo:Book");
 
         // create a tripod instance that will send all operations to the queue
         $tripod = new MongoTripod('CBD_testing','tripod_php_testing_queue_ops', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
-        $g1 = $tripod->describeResource("http://talisaspire.com/authors/1");
-        $g2 = $tripod->describeResource("http://talisaspire.com/authors/1");
+        $g1 = $tripod->describeResources(array(
+            "http://talisaspire.com/resources/doc1",
+            "http://talisaspire.com/resources/doc2",
+            "http://talisaspire.com/resources/doc3"
+        ));
+        $g2 = $tripod->describeResources(array(
+            "http://talisaspire.com/resources/doc1",
+            "http://talisaspire.com/resources/doc2",
+            "http://talisaspire.com/resources/doc3"
+        ));
 
-        $g2->add_literal_triple("http://talisaspire.com/authors/1", $g2->qname_to_uri("foaf:dob"),"01-01-1970" );
+        $g2->add_literal_triple("http://talisaspire.com/resources/doc1", $g2->qname_to_uri("dct:date"),"01-01-1970" );
+        $g2->add_literal_triple("http://talisaspire.com/resources/doc2", $g2->qname_to_uri("dct:date"),"01-01-1970" );
+        $g2->add_literal_triple("http://talisaspire.com/resources/doc3", $g2->qname_to_uri("dct:date"),"01-01-1970" );
+
         $tripod->saveChanges($g1, $g2);
 
         $queueCount = $this->tripodQueue->count();
-        $this->assertEquals(3, $queueCount, "There should only be 3 items on the queue");
+        $this->assertEquals(1, $queueCount, "There should only be 1 item on the queue");
 
-        $expectedItems = array(
-
-            "http://talisaspire.com/resources/doc1" => array(
-                "operations"=> array(OP_VIEWS, OP_TABLES),
-                "specTypes"=>array('t_authors') // foaf:dob is defined in t_authors
-            ),
-            "http://talisaspire.com/resources/doc2" => array(
-                "operations"=> array(OP_VIEWS, OP_TABLES),
-                "specTypes"=>array('t_authors')
-            ),
-            "http://talisaspire.com/resources/doc3" => array(
-                "operations"=> array(OP_VIEWS, OP_TABLES),
-                "specTypes"=>array('t_authors')
-            ),
-        );
+        $expectedSubjects = array("http://talisaspire.com/resources/doc1","http://talisaspire.com/resources/doc2","http://talisaspire.com/resources/doc3");
 
         for($i=0; $i<$queueCount; $i++){
-            $queuedItem      = $this->tripodQueue->fetchNextQueuedItem()->getData();
-            $queuedItemRId   = $queuedItem[_ID_RESOURCE];
-            if(!array_key_exists( $queuedItemRId, $expectedItems)){
-                $this->fail("Queued Item was not found in the set of Expected Items");
-            }
+            $queuedItem      = $this->tripodQueue->fetchNextQueuedItem();
+
+            $queuedItemRId   = $queuedItem["subjectsAndPredicatesOfChange"][_ID_RESOURCE];
+            $this->assertEquals(3,count(array_keys($queuedItem["subjectsAndPredicatesOfChange"])),"Expected 3 subjects");
+            $this->assertEmpty(array_diff(array_keys($queuedItem["subjectsAndPredicatesOfChange"]),$expectedSubjects),"Subjects of change not equal to the set of expected subjects");
 
             // verify the number of operations is the same
-            $queuedItemOpsCount   = count($queuedItem['operations']);
-
-            $expectedItemOpsCount = count($expectedItems[$queuedItemRId]["operations"]);
-            $this->assertEquals(
-                $expectedItems[$queuedItemRId]["operations"],
-                $queuedItem['operations'],
-                "Queued Item: ${queuedItemRId} does not contain the expected number of operations"
-            );
-
-            // assert queued item operations appear in the expected item operations
-            foreach($queuedItem['operations'] as $op){
-                $this->assertContains($op, $expectedItems[$queuedItemRId]["operations"], "$op was not found in set of Expected Operations for this queued item");
-            }
-
-            // assert queued item specTypes appear in the expected item operations
-            foreach($queuedItem['specTypes'] as $spec){
-                $this->assertContains($spec, $expectedItems[$queuedItemRId]["specTypes"], "$spec was not found in set of Expected Operations for this queued item");
-            }
+            $this->assertEquals(3,count($queuedItem['operations']),"Expected 3 operations");
         }
    }
 
@@ -189,8 +208,8 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
         $queueCount = $this->tripodQueue->count();
         $this->assertEquals(1, $queueCount, "There should only be 1 item on the queue");
         /* @var $queuedItem ModifiedSubject */
-        $queuedItemData = $this->tripodQueue->fetchNextQueuedItem()->getData();
-        $this->assertEquals($subjectUri, $queuedItemData['r'], "Queued Item should be the one we saved changes to");
+        $queuedItemData = $this->tripodQueue->fetchNextQueuedItem();
+        $this->assertEquals(array($subjectUri),array_keys($queuedItemData['subjectsAndPredicatesOfChange']), "Queued Item should be the one we saved changes to");
         $this->assertContains(OP_VIEWS,  $queuedItemData['operations'], "Operations should contain view gen");
         $this->assertContains(OP_TABLES, $queuedItemData['operations'], "Operations should contain table gen");
         $this->assertContains(OP_SEARCH, $queuedItemData['operations'], "Operations should contain search gen");
@@ -199,27 +218,29 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
         $this->tripodQueue->purgeQueue();
         // now lets create an author which isnt linked to any resource therefore this should ONLY trigger Search Gen
 
-        $g = new MongoGraph();
-        $subjectUri = "http://talisaspire.com/authors/newauthor";
-        $g->add_resource_triple($subjectUri, $g->qname_to_uri("rdf:type"),    "foaf:Person");
-        $g->add_literal_triple($subjectUri,  $g->qname_to_uri("foaf:name"),   "Verbal Kint");
-
-        $tripod->saveChanges(new MongoGraph(), $g);
-        $queueCount = $this->tripodQueue->count();
-        $this->assertEquals(1, $queueCount, "There should only be 1 item on the queue");
-        /* @var $queuedItem ModifiedSubject */
-        $queuedItemData = $this->tripodQueue->fetchNextQueuedItem()->getData();
-        $this->assertEquals($subjectUri, $queuedItemData['r'], "Queued Item should be the one we saved changes to");
-        $this->assertNotContains(OP_VIEWS,  $queuedItemData['operations'], "Operations should not contain view gen");
-        $this->assertNotContains(OP_TABLES, $queuedItemData['operations'], "Operations should not contain table gen");
-        $this->assertContains(OP_SEARCH, $queuedItemData['operations'], "Operations should contain search gen");
+        // todo: this needs moving into a test closer to the composites...
+//        $g = new MongoGraph();
+//        $subjectUri = "http://talisaspire.com/authors/newauthor";
+//        $g->add_resource_triple($subjectUri, $g->qname_to_uri("rdf:type"),    "foaf:Person");
+//        $g->add_literal_triple($subjectUri,  $g->qname_to_uri("foaf:name"),   "Verbal Kint");
+//
+//        $tripod->saveChanges(new MongoGraph(), $g);
+//        $queueCount = $this->tripodQueue->count();
+//        $this->assertEquals(1, $queueCount, "There should only be 1 item on the queue");
+//        /* @var $queuedItem ModifiedSubject */
+//        $queuedItemData = $this->tripodQueue->fetchNextQueuedItem();
+//        $this->assertEquals($subjectUri, $queuedItemData['r'], "Queued Item should be the one we saved changes to");
+//        $this->assertNotContains(OP_VIEWS,  $queuedItemData['operations'], "Operations should not contain view gen");
+//        $this->assertNotContains(OP_TABLES, $queuedItemData['operations'], "Operations should not contain table gen");
+//        $this->assertContains(OP_SEARCH, $queuedItemData['operations'], "Operations should contain search gen");
     }
 
     /**
      * When adding a new resource that has never been seen before, we should see NO item added to the queue when the type of the item
      * does not correspond to any type the configured specifications will look for
+     * todo: move this test to a more appropriate composites type test
      */
-    public function testItemNotAddedToQueueForSubjectNeverSeenBeforeThatHasNoApplicableType()
+    public function xtestItemNotAddedToQueueForSubjectNeverSeenBeforeThatHasNoApplicableType()
     {
         // create a tripod instance that will send all operations to the queue
         $tripod = new MongoTripod('CBD_testing','tripod_php_testing_queue_ops', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
@@ -241,8 +262,9 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
     /**
      * When adding a new resource that has never been seen before, we should see NO item added to the queue when the type of the item
      * does not correspond to any type the configured specifications will look for
+     * todo: move this test to a more appropriate composites type test
      */
-    public function testItemAddedToQueueForUpdatedSubjectWithApplicableType()
+    public function xtestItemAddedToQueueForUpdatedSubjectWithApplicableType()
     {
         // create a tripod instance that will send all operations to the queue
         $tripod = new MongoTripod('CBD_testing','tripod_php_testing_queue_ops', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
@@ -268,7 +290,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
         $queueCount = $this->tripodQueue->count();
         $this->assertEquals(1, $queueCount, "There should only be 1 item on the queue");
 
-        $queueItemData = $this->tripodQueue->fetchNextQueuedItem()->getData();
+        $queueItemData = $this->tripodQueue->fetchNextQueuedItem();
         $this->assertEquals($subjectUri, $queueItemData['r']);
         $ops = array(OP_VIEWS, OP_TABLES, OP_SEARCH);
         $this->assertEmpty(array_diff($ops, $queueItemData['operations']));
@@ -277,8 +299,9 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
     /**
      * Save several new resources in a single operation. Only one of the resources has a type that is applicable based on specifications,
      * therefore it should be the only one queued.
+     * todo: move this test to a more appropriate composites type test
      */
-    public function testSavingMultipleNewEntitiesWhereOnlyOneIsApplicable()
+    public function xtestSavingMultipleNewEntitiesWhereOnlyOneIsApplicable()
     {
         // create a tripod instance that will send all operations to the queue
         $tripod = new MongoTripod('CBD_testing','tripod_php_testing_queue_ops', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
@@ -312,7 +335,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
         $queueCount = $this->tripodQueue->count();
         $this->assertEquals(1, $queueCount, "There should only be 1 item on the queue");
         /* @var $queuedItem ModifiedSubject */
-        $queuedItemData = $this->tripodQueue->fetchNextQueuedItem()->getData();
+        $queuedItemData = $this->tripodQueue->fetchNextQueuedItem();
         $this->assertEquals($newSubjectUri2, $queuedItemData['r'], "Queued Item should be the one we saved changes to");
         $this->assertContains(OP_VIEWS,  $queuedItemData['operations'], "Operations should contain view gen");
         $this->assertContains(OP_TABLES, $queuedItemData['operations'], "Operations should contain table gen");
@@ -327,8 +350,9 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
      * that those documents are deleted. We cannot pre-empt this prior to putting the item onto the queue, there fore it should be added. When the delegate picks the item up, it
      * is responsible for deleting the OLD view/table_row/search doc and then generating a new one. The delete will succeed, but generation will not produce anything because the
      * new document is not of a compatible type.  As you'll see in the test to confirm this we instantiate each delegate and ask it to process the queued item.
+     * todo: move this test to a more appropriate composites type test
      */
-    public function testChangingResourceTypeQueuesOneItemWillDeleteTheOldViewsTablesAndSearchDocs()
+    public function xtestChangingResourceTypeQueuesOneItemWillDeleteTheOldViewsTablesAndSearchDocs()
     {
         // create a tripod instance that will send all operations to the queue
         $tripod = new MongoTripod('CBD_testing','tripod_php_testing_queue_ops', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
@@ -352,8 +376,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
         $queueCount = $this->tripodQueue->count();
         $this->assertEquals(1, $queueCount, "There should only be 1 item on the queue");
         /* @var $queuedItem ModifiedSubject */
-        $queuedItem = $this->tripodQueue->fetchNextQueuedItem();
-        $queuedItemData = $queuedItem->getData();
+        $queuedItemData = $this->tripodQueue->fetchNextQueuedItem();
         $this->assertEquals($subjectUri, $queuedItemData['r'], "Queued Item should be the one we saved changes to");
         $this->assertContains(OP_VIEWS,  $queuedItemData['operations'], "Operations should contain view gen");
         $this->assertContains(OP_TABLES, $queuedItemData['operations'], "Operations should contain table gen");
@@ -382,8 +405,9 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
      * b) The resource and the resources it impacts (three of them) are added to the queue with the correct operations specified for each (four in total).
      * c) After each queued item is processed, the changed resource no long has a search document because it is no longer applicable. It's impacted resources still have
      *    views/tables/search docs
+     * todo: move this test to a more appropriate composites type test
      */
-    public function testChangingTypeOfResourceThatImpactsOthers()
+    public function xtestChangingTypeOfResourceThatImpactsOthers()
     {
         // create a tripod instance that will send all operations to the queue
         $tripod = new MongoTripod('CBD_testing','tripod_php_testing_queue_ops', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
@@ -440,8 +464,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
         $this->assertEquals(4, $queueCount, "There should only be 4 items on the queue");
 
         for($i=0; $i<$queueCount; $i++){
-            $queuedItem      = $this->tripodQueue->fetchNextQueuedItem();
-            $queuedItemData  = $queuedItem->getData();
+            $queuedItemData      = $this->tripodQueue->fetchNextQueuedItem();
             $queuedItemRId   = $queuedItemData[_ID_RESOURCE];
             if(!array_key_exists( $queuedItemRId, $expectedQueuedItems)){
                 $this->fail("Queued Item was not found in the set of Expected Items");
@@ -456,20 +479,20 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
             foreach($queuedItemData['operations'] as $op){
                 $this->assertContains($op, $expectedQueuedItems[$queuedItemRId]["operations"], "$op was not found in set of Expected Operations for this queued item");
                 // now execute the operation
-                switch($op){
-                    case OP_SEARCH:
-                        echo "Executing Search Operation for $id\n";
-                        $tripod->getSearchIndexer()->update($queuedItem);;
-                        break;
-                    case OP_VIEWS:
-                        echo "Executing View Operation for $id\n";
-                        $tripod->getTripodViews()->update($queuedItem);
-                        break;
-                    case OP_TABLES:
-                        echo "Executing Table Row Operation for $id\n";
-                        $tripod->getTripodTables()->update($queuedItem);
-                        break;
-                }
+//                switch($op){
+//                    case OP_SEARCH:
+//                        echo "Executing Search Operation for $id\n";
+//                        $tripod->getSearchIndexer()->update($queuedItem);;
+//                        break;
+//                    case OP_VIEWS:
+//                        echo "Executing View Operation for $id\n";
+//                        $tripod->getTripodViews()->update($queuedItem);
+//                        break;
+//                    case OP_TABLES:
+//                        echo "Executing Table Row Operation for $id\n";
+//                        $tripod->getTripodTables()->update($queuedItem);
+//                        break;
+//                }
             }
         }
 
@@ -515,8 +538,9 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
      * Assumes that views/tables/search docs exist for the entity before the change
      * Verifies that a single queued item is added to the queue, with the correct set of operations
      * After processing the queued item there should be no view/table/search doc for this resource
+     * todo: move this test to a more appropriate composites type test
      */
-    public function testDeleteSingleResourceWithNoImpactQueuesSingleItem()
+    public function xtestDeleteSingleResourceWithNoImpactQueuesSingleItem()
     {
         // create a tripod instance that will send all operations to the queue
         $tripod = new MongoTripod('CBD_testing','tripod_php_testing_queue_ops', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));
@@ -539,18 +563,19 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
         $queueCount = $this->tripodQueue->count();
         $this->assertEquals(1, $queueCount, "There should only be 1 item on the queue");
         /* @var $queuedItem ModifiedSubject */
-        $queuedItem = $this->tripodQueue->fetchNextQueuedItem();
-        $queuedItemData = $queuedItem->getData();
-        $this->assertEquals($subjectUri, $queuedItemData['r'], "Queued Item should be the one we saved changes to");
+        $queuedItemData = $this->tripodQueue->fetchNextQueuedItem();
+        $this->assertEquals(array($subjectUri), array_keys($queuedItemData['subjectsAndPredicatesOfChange']), "Queued Item should be the one we saved changes to");
         $this->assertContains(OP_VIEWS,  $queuedItemData['operations'], "Operations should contain view gen");
         $this->assertContains(OP_TABLES, $queuedItemData['operations'], "Operations should contain table gen");
         $this->assertContains(OP_SEARCH, $queuedItemData['operations'], "Operations should contain search gen");
 
-        // because we told tripod to process these operations asynchronously we need to explicitly call each delegate to
-        // process the given item in this test
-        $tripod->getTripodViews()->update($queuedItem);
-        $tripod->getTripodTables()->update($queuedItem);
-        $tripod->getSearchIndexer()->update($queuedItem);
+
+        $this->tripodQueue->processNext();
+//        // because we told tripod to process these operations asynchronously we need to explicitly call each delegate to
+//        // process the given item in this test
+//        $tripod->getTripodViews()->update($queuedItem);
+//        $tripod->getTripodTables()->update($queuedItem);
+//        $tripod->getSearchIndexer()->update($queuedItem);
 
         // the result should be that the view, table_row and search document has been deleted, so retrieve each
         // and confirm that each is NULL i.e. does not exist in the db anymore
@@ -568,8 +593,9 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
      *
      * Verifies that nothing is added to the queue the resource is no longer applicable, and because there are no
      * views/tables/searches generated for it already, there are no impacted documents to regenerate.
+     * todo: move this test to a more appropriate composites type test
      */
-    public function testDeleteSingleResourceWithNoImpactButNoExistingViewsTablesSearchDocsDoesntQueueAnything()
+    public function xtestDeleteSingleResourceWithNoImpactButNoExistingViewsTablesSearchDocsDoesntQueueAnything()
     {
         // create a tripod instance that will send all operations to the queue
         $tripod = new MongoTripod('CBD_testing','tripod_php_testing_queue_ops', array('defaultContext'=>'http://talisaspire.com/', 'async'=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)));

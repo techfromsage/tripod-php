@@ -9,10 +9,11 @@ class ModifiedSubject implements SplSubject
     private $observers;
     private $data;
 
-    public function __construct($data)
+    public function __construct($data,IComposite $composite)
     {
         $this->data = $data;
         $this->observers = new SplObjectStorage();
+        $this->attach($composite);
     }
 
     public function getData()
@@ -75,7 +76,7 @@ class ModifiedSubject implements SplSubject
      * @return ModifiedSubject
      * @throws TripodException
      */
-    public static function create(Array $resourceId, Array $types, Array $operations, Array $specTypes, $storeName, $podName, $delete=false)
+    public static function create(Array $resourceId, SplObserver $observer, Array $specTypes, $storeName, $podName, $delete=false)
     {
         if (!is_array($resourceId) || !array_key_exists(_ID_RESOURCE,$resourceId) || !array_key_exists(_ID_CONTEXT,$resourceId))
         {
@@ -87,16 +88,10 @@ class ModifiedSubject implements SplSubject
             _ID_CONTEXT=>$resourceId[_ID_CONTEXT],
             "database"=>$storeName,
             "collection"=>$podName,
-            "operations"=>$operations
         );
         if(isset($resourceId[_ID_TYPE]))
         {
             $data[_ID_TYPE] = $resourceId[_ID_TYPE];
-        }
-
-        if(!empty($types))
-        {
-            $data['rdf:type'] = $types;
         }
 
         if(!empty($specTypes))
@@ -109,6 +104,6 @@ class ModifiedSubject implements SplSubject
             $data['delete']=true;
         }
 
-        return new ModifiedSubject($data);
+        return new ModifiedSubject($data,$observer);
     }
 }

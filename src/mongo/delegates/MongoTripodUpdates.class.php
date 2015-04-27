@@ -153,22 +153,15 @@ class MongoTripodUpdates extends MongoTripodBase {
                 $syncModifiedSubjects = array();
                 foreach($this->getSyncOperations() as $op)
                 {
-                    $syncModifiedSubjects = array_merge($syncModifiedSubjects,$this->tripod->getComposite($op)->getModifiedSubjects($subjectsAndPredicatesOfChange,$changes['deletedSubjects'],$contextAlias));
+                    $opSubjects = $this->tripod->getComposite($op)->getModifiedSubjects($subjectsAndPredicatesOfChange,$changes['deletedSubjects'],$contextAlias);
+                    $syncModifiedSubjects = array_merge($syncModifiedSubjects,$opSubjects);
                 }
 
                 if(!empty($syncModifiedSubjects)){
                     $this->processOperations($syncModifiedSubjects);
                 }
 
-                $asyncModifiedSubjects = array();
-                foreach($this->getAsyncOperations() as $op)
-                {
-                    $asyncModifiedSubjects = array_merge($asyncModifiedSubjects,$this->tripod->getComposite($op)->getModifiedSubjects($subjectsAndPredicatesOfChange,$changes['deletedSubjects'],$contextAlias));
-                }
-
-                if(!empty($asyncModifiedSubjects)){
-                    $this->queueASyncOperations($asyncModifiedSubjects);
-                }
+                $this->queueASyncOperations($subjectsAndPredicatesOfChange,$changes['deletedSubjects'],$contextAlias);
             }
         }
         catch(Exception $e){
@@ -686,23 +679,15 @@ class MongoTripodUpdates extends MongoTripodBase {
         foreach($modifiedSubjects as $subject)
         {
             /* @var $subject ModifiedSubject */
-            $data = $subject->getData();
-            $operations = $data['operations'];
-            foreach ($operations as $op)
-            {
-                if($data['collection'] == $this->getPodName()){
-                    $observer = $this->tripod->getComposite($op);
-                } else {
-                    $observer = $this->getMongoTripod($data)->getComposite($op);
-                }
-                $subject->attach($observer);
-            }
             $t = new Timer();
             $t->start();
 
             $subject->notify();
 
             $t->stop();
+
+            $data = $subject->getData();
+
             $this->timingLog(MONGO_ON_THE_FLY_MR,array(
                 "duration"=>$t->result(),
                 "operations"=>var_export($data['operations'],true),
@@ -722,21 +707,18 @@ class MongoTripodUpdates extends MongoTripodBase {
      * Adds the operations to the queue to be performed asynchronously
      * @param ModifiedSubject[] $modifiedSubjects
      */
-    protected function queueASyncOperations(Array $modifiedSubjects)
+    protected function queueASyncOperations($subjectsAndPredicatesOfChange,$deletedSubjects,$contextAlias)
     {
-        foreach ($modifiedSubjects as $subject)
-        {
-            /* @var $subject ModifiedSubject */
-            $data = $subject->getData();
-            $this->debugLog(MONGO_ADD_TO_QUEUE,array(
-                    "operations"=>var_export($data['operations'],true),
-                    "database"=>$data['database'],
-                    "collection"=>$data['collection'],
-                    "resource"=>$data[_ID_RESOURCE]
-                )
-            );
-            $this->getStat()->increment(MONGO_ADD_TO_QUEUE);
-            $this->getQueue()->addItem($subject);
+        $ops = $this->getAsyncOperations();
+        if (!empty($ops)) {
+            $this->getQueue()->addItem(array(
+                "subjectsAndPredicatesOfChange"=>$subjectsAndPredicatesOfChange,
+                "deletedSubjects"=>$deletedSubjects,
+                "contextAlias"=>$contextAlias,
+                "storeName"=>$this->storeName,
+                "podName"=>$this->podName,
+                "operations"=>$ops
+            ));
         }
     }
 
