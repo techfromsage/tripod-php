@@ -105,7 +105,6 @@ class MongoTripod extends MongoTripodBase implements ITripod
         //max retries to get lock
         $this->retriesToGetLock = $opts['retriesToGetLock'];
 
-        var_dump($podName);
         $this->collection = $this->config->getCollectionForCBD($storeName, $podName, $opts['readPreference']);
 
         // fill in and default any missing keys for $async array. Default is views are sync, tables and search async

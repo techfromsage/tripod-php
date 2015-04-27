@@ -22,57 +22,54 @@ abstract class CompositeBase extends MongoTripodBase implements IComposite
         $query = array(_ID_KEY=>array('$in'=>$filter));
         $docs = $this->getCollection()->find($query, array(_ID_KEY=>true, 'rdf:type'=>true));
 
-        if($docs->count() == 0 ) {
-            return array();
-        }
-
-
         $types = $this->getTypesInSpecification();
 
-        foreach($docs as $doc)
-        {
-            $docResource = $doc[_ID_KEY][_ID_RESOURCE];
-            $docContext  = $doc[_ID_KEY][_ID_CONTEXT];
-            $docHash     = md5($docResource.$docContext);
+        if($docs->count() !== 0 ) {
+            foreach($docs as $doc)
+            {
+                $docResource = $doc[_ID_KEY][_ID_RESOURCE];
+                $docContext  = $doc[_ID_KEY][_ID_CONTEXT];
+                $docHash     = md5($docResource.$docContext);
 
-            $docTypes = array();
-            if(isset($doc["rdf:type"])) {
-                if(isset($doc["rdf:type"][VALUE_URI])){
-                    $docTypes[] = $doc["rdf:type"][VALUE_URI];
-                } else {
-                    foreach($doc["rdf:type"] as $t){
-                        if(isset($t[VALUE_URI]))
-                        {
-                            $docTypes[] = $t[VALUE_URI];
+                $docTypes = array();
+                if(isset($doc["rdf:type"])) {
+                    if(isset($doc["rdf:type"][VALUE_URI])){
+                        $docTypes[] = $doc["rdf:type"][VALUE_URI];
+                    } else {
+                        foreach($doc["rdf:type"] as $t){
+                            if(isset($t[VALUE_URI]))
+                            {
+                                $docTypes[] = $t[VALUE_URI];
+                            }
                         }
                     }
                 }
-            }
 
-            $currentSubject = null;
-            if(isset($subjectsAndPredicatesOfChange[$docResource]))
-            {
-                $currentSubject = $subjectsAndPredicatesOfChange[$docResource];
-            }
-            elseif(isset($subjectsToAlias[$docResource]) &&
-                isset($subjectsAndPredicatesOfChange[$subjectsToAlias[$docResource]]))
-            {
-                $currentSubject = $subjectsAndPredicatesOfChange[$subjectsToAlias[$docResource]];
-            }
-            foreach($docTypes as $type)
-            {
-                if($this->checkIfTypeShouldTriggerOperation($type, $types, $currentSubject)) {
-                    if(!array_key_exists($docHash, $operations)){
-                        $operations[$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
-                        $operations[$docHash]['ops'][$this->getPodName()] = array();
+                $currentSubject = null;
+                if(isset($subjectsAndPredicatesOfChange[$docResource]))
+                {
+                    $currentSubject = $subjectsAndPredicatesOfChange[$docResource];
+                }
+                elseif(isset($subjectsToAlias[$docResource]) &&
+                    isset($subjectsAndPredicatesOfChange[$subjectsToAlias[$docResource]]))
+                {
+                    $currentSubject = $subjectsAndPredicatesOfChange[$subjectsToAlias[$docResource]];
+                }
+                foreach($docTypes as $type)
+                {
+                    if($this->checkIfTypeShouldTriggerOperation($type, $types, $currentSubject)) {
+                        if(!array_key_exists($docHash, $operations)){
+                            $operations[$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
+                            $operations[$docHash]['ops'][$this->getPodName()] = array();
+                        }
+                        array_push($operations[$docHash]['ops'][$this->getPodName()], $this->getOperationType());
                     }
-                    array_push($operations[$docHash]['ops'][$this->getPodName()], $this->getOperationType());
                 }
             }
         }
 
         foreach($this->findImpactedComposites($subjectsAndPredicatesOfChange, $contextAlias) as $doc) {
-            $spec = $this->config->getViewSpecification($this->storeName, $doc[_ID_KEY]['type']);
+            $spec = $this->getSpecification($this->storeName, $doc[_ID_KEY]['type']);
             if(!empty($spec)){
                 $fromCollection = $spec['from'];
 
@@ -90,7 +87,7 @@ abstract class CompositeBase extends MongoTripodBase implements IComposite
                 if(!array_key_exists($fromCollection, $operations[$docHash]['ops'])) {
                     $operations[$docHash]['ops'][$fromCollection] = array();
                 }
-                if(!in_array(OP_VIEWS, $operations[$docHash]['ops'][$fromCollection]))
+                if(!in_array($this->getOperationType(), $operations[$docHash]['ops'][$fromCollection]))
                 {
                     array_push($operations[$docHash]['ops'][$fromCollection], $this->getOperationType());
                 }
@@ -127,6 +124,8 @@ abstract class CompositeBase extends MongoTripodBase implements IComposite
 
     public abstract function findImpactedComposites($resourcesAndPredicates,$contextAlias);
 
+    public abstract function getSpecification($storeName, $composite_id);
+
     /**
      * Test if the a particular type appears in the array of types associated with a particular spec and that the changeset
      * includes rdf:type (or is empty, meaning addition or deletion vs. update)
@@ -138,7 +137,6 @@ abstract class CompositeBase extends MongoTripodBase implements IComposite
     protected function checkIfTypeShouldTriggerOperation($rdfType, array $validTypes, $subjectPredicates)
     {
         //todo: views wasn't using this code. Figure out why.
-
         // We don't know if this is an alias or a fqURI, nor what is in the valid types, necessarily
         $types = array($rdfType);
         try
@@ -153,22 +151,24 @@ abstract class CompositeBase extends MongoTripodBase implements IComposite
         catch(TripodLabellerException $e) {}
 
         $intersectingTypes = array_unique(array_intersect($types, $validTypes));
-
         if(!empty($intersectingTypes))
         {
             // This means we're either adding or deleting a graph
             if(empty($subjectPredicates))
             {
+                echo "returning true";
                 return true;
             }
             // Check for alias in changed predicates
             elseif(in_array('rdf:type', $subjectPredicates))
             {
+                echo "returning true";
                 return true;
             }
             // Check for fully qualified URI in changed predicates
             elseif(in_array(RDF_TYPE, $subjectPredicates))
             {
+                echo "returning true";
                 return true;
             }
         }

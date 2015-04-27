@@ -206,13 +206,18 @@ class MongoTripodTables extends CompositeBase
         return $affectedTableRows;
     }
 
+    public function getSpecification($storeName, $tableSpecId)
+    {
+        return $this->config->getTableSpecification($storeName,$tableSpecId);
+    }
+
     /**
      * Returns the operation this composite can satisfy
      * @return string
      */
     public function getOperationType()
     {
-        $this->config->getTypesInTableSpecifications($this->storeName, $this->getPodName());
+        return OP_TABLES;
     }
 
 

@@ -153,7 +153,7 @@ class MongoTripodUpdates extends MongoTripodBase {
                 $syncModifiedSubjects = array();
                 foreach($this->getSyncOperations() as $op)
                 {
-                    array_merge($syncModifiedSubjects,$this->tripod->getComposite($op)->getModifiedSubjects($subjectsAndPredicatesOfChange,$changes['deletedSubjects'],$contextAlias));
+                    $syncModifiedSubjects = array_merge($syncModifiedSubjects,$this->tripod->getComposite($op)->getModifiedSubjects($subjectsAndPredicatesOfChange,$changes['deletedSubjects'],$contextAlias));
                 }
 
                 if(!empty($syncModifiedSubjects)){
@@ -163,7 +163,7 @@ class MongoTripodUpdates extends MongoTripodBase {
                 $asyncModifiedSubjects = array();
                 foreach($this->getAsyncOperations() as $op)
                 {
-                    array_merge($asyncModifiedSubjects,$this->tripod->getComposite($op)->getModifiedSubjects($subjectsAndPredicatesOfChange,$changes['deletedSubjects'],$contextAlias));
+                    $asyncModifiedSubjects = array_merge($asyncModifiedSubjects,$this->tripod->getComposite($op)->getModifiedSubjects($subjectsAndPredicatesOfChange,$changes['deletedSubjects'],$contextAlias));
                 }
 
                 if(!empty($asyncModifiedSubjects)){

@@ -90,6 +90,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
         $g1 = $tripod->describeResource("http://talisaspire.com/resources/doc1");
         $g2 = $tripod->describeResource("http://talisaspire.com/resources/doc1");
         $g2->add_literal_triple("http://talisaspire.com/resources/doc1", $g2->qname_to_uri("dct:subject"),"astrophysics");
+        echo "\n\nDoing save\n";
         $tripod->saveChanges($g1, $g2);
 
         $this->assertEquals(1, $this->tripodQueue->count(), "There should only be 1 item on the queue");

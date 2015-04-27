@@ -79,6 +79,11 @@ class MongoTripodSearchIndexer extends CompositeBase
         return OP_SEARCH;
     }
 
+    public function getSpecification($storeName, $specId)
+    {
+        return $this->config->getSearchDocumentSpecification($storeName,$specId);
+    }
+
     /**
      * Removes all existing documents for the supplied resource and regenerate the search documents
      * @param string $resourceUri

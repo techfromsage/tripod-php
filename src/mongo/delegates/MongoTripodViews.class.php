@@ -84,6 +84,10 @@ class MongoTripodViews extends CompositeBase
         return $affectedViews;
     }
 
+    public function getSpecification($storeName, $viewSpecId)
+    {
+        return $this->config->getViewSpecification($storeName,$viewSpecId);
+    }
 
     /**
      * Return all views, restricted by $filter conditions, for given $viewType
