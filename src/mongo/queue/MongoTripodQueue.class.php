@@ -33,6 +33,10 @@ class MongoTripodQueue extends MongoTripodBase
     {
         $now = new MongoDate();
         $data = $this->fetchNextQueuedItem();
+
+        // set the config to what is received
+        MongoTripodConfig::setConfig($data["tripodConfig"]);
+
         if(!empty($data))
         {
             /* @var $createdOn MongoDate */

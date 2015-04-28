@@ -92,7 +92,7 @@ class MongoTripodQueueTest extends MongoTripodTestBase
         $mockQueue = $this->getMock('MongoTripodQueue', array('getUniqId'), array());
         $mockQueue->expects($this->any())->method('getUniqId')->will($this->returnValue($itemId));
 
-        $mockQueue->addItem(new ChangeSet(),array(),$this->tripod->storeName,$this->tripod->podName,array(OP_VIEWS));
+        $mockQueue->addItem(new ChangeSet(),array(),"foo","CBD_wibble",array(OP_VIEWS));
         $item = $mockQueue->getItem($itemId);
 
         $this->assertContains('qid_', $item['_id']);
