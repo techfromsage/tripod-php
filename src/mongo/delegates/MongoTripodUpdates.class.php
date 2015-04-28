@@ -148,7 +148,7 @@ class MongoTripodUpdates extends MongoTripodBase {
                 $this->processSyncOperations($cs,$changes['deletedSubjects'],$contextAlias);
 
                 // Schedule calculation of any async activity
-                $this->getQueue()->addItem($cs,$changes['deletedSubjects'],$this->storeName,$this->podName,$this->getAsyncOperations());
+                $this->queueAsyncOperations($cs,$changes['deletedSubjects'],$contextAlias);
             }
         }
         catch(Exception $e){
@@ -663,7 +663,7 @@ class MongoTripodUpdates extends MongoTripodBase {
      * Processes each subject synchronously
      * @param ModifiedSubject[] $modifiedSubjects
      */
-    public function processSyncOperations(ChangeSet $cs, $deletedSubjects, $contextAlias)
+    protected function processSyncOperations(ChangeSet $cs, $deletedSubjects, $contextAlias)
     {
         $syncModifiedSubjects = array();
         foreach($this->getSyncOperations() as $op)
@@ -706,23 +706,19 @@ class MongoTripodUpdates extends MongoTripodBase {
      */
     protected function queueASyncOperations(ChangeSet $cs,$deletedSubjects,$contextAlias)
     {
-        $ops = $this->getAsyncOperations();
-        if (!empty($ops)) {
+        $operations = $this->getAsyncOperations();
+        if (!empty($operations)) {
+            $data = array(
+                "changeSet" => $cs->to_json(),
+                "deletedSubjects" => $deletedSubjects,
+                "operations" => $operations,
+                "tripodConfig" => MongoTripodConfig::getConfig(),
+                "storeName" => $this->storeName,
+                "podName" => $this->podName,
+                "contextAlias" => $contextAlias
+            );
+            Resque::enqueue(TRIPOD_DISCOVER_QUEUE,"DiscoverModifiedSubjects",$data);
         }
-    }
-
-    /**
-     * Returns the queue
-     * @return MongoTripodQueue
-     */
-    protected function getQueue()
-    {
-        if(empty($this->queue))
-        {
-            $this->queue = new MongoTripodQueue();
-        }
-
-        return $this->queue;
     }
 
     //////// LOCKS \\\\\\\\

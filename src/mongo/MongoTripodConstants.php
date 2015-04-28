@@ -64,7 +64,8 @@ define('MONGO_ROLLBACK','MONGO_ROLLBACK');
 define('MONGO_LOCK','MONGO_LOCK');
 define('MONGO_ADD_TO_QUEUE','MONGO_ADD_TO_QUEUE');
 define('MONGO_QUEUE_FAIL','MONGO_QUEUE_FAIL');
-define('MONGO_QUEUE_SUCCESS','MONGO_QUEUE_SUCCESS');
+define('MONGO_QUEUE_DISCOVER_SUCCESS','MONGO_QUEUE_DISCOVER_SUCCESS');
+define('MONGO_QUEUE_APPLY_OPERATION_SUCCESS','MONGO_QUEUE_APPLY_OPERATION_SUCCESS');
 define('MONGO_CREATE_SEARCH_DOC','MONGO_CREATE_SEARCH_DOC');
 define('MONGO_CONNECTION_ERROR','MONGO_CONNECTION_ERROR');
 
@@ -76,3 +77,34 @@ define('AUDIT_STATUS_ERROR', 'ERROR');
 
 // Mongo constants
 define('DEFAULT_MONGO_CONNECT_TIMEOUT_MS', 20000);
+
+// queue name
+$tDiscoverQueueEnv = getenv("TRIPOD_DISCOVER_QUEUE");
+if (!empty($tDiscoverQueueEnv))
+{
+    define("TRIPOD_DISCOVER_QUEUE",$tDiscoverQueueEnv);
+}
+elseif(defined('APP_ENV'))
+{
+    define("TRIPOD_DISCOVER_QUEUE","tripod::".APP_ENV."::discover");
+}
+else
+{
+    // default
+    define("TRIPOD_DISCOVER_QUEUE","tripod::discover");
+}
+
+$tApplyQueueEnv = getenv("TRIPOD_APPLY_QUEUE");
+if (!empty($tApplyQueueEnv))
+{
+    define("TRIPOD_APPLY_QUEUE",$tApplyQueueEnv);
+}
+elseif(defined('APP_ENV'))
+{
+    define("TRIPOD_APPLY_QUEUE","tripod::".APP_ENV."::apply");
+}
+else
+{
+    // default
+    define("TRIPOD_APPLY_QUEUE","tripod::apply");
+}

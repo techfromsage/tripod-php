@@ -191,7 +191,7 @@ abstract class MongoTripodBase
         }
         else
         {
-            echo "$message\n";
+            echo "[TRIPOD_DEBUG] $message\n";
             if ($params) print_r($params);
         }
     }
@@ -204,7 +204,7 @@ abstract class MongoTripodBase
         }
         else
         {
-            echo "$message\n";
+            echo "[TRIPOD_ERR] $message\n";
             if ($params)
             {
                 echo "Params: \n";
