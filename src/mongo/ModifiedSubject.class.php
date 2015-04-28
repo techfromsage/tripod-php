@@ -6,19 +6,24 @@
  */
 class ModifiedSubject implements SplSubject
 {
-    private $observers;
+    /* @var $observer IComposite */
+    private $observer;
     private $data;
 
     public function __construct($data,IComposite $composite)
     {
         $this->data = $data;
-        $this->observers = new SplObjectStorage();
         $this->attach($composite);
     }
 
     public function getData()
     {
         return $this->data;
+    }
+
+    public function getOperation()
+    {
+        return $this->observer->getOperationType();
     }
 
     /**
@@ -32,7 +37,7 @@ class ModifiedSubject implements SplSubject
      */
     public function attach(SplObserver $observer)
     {
-        $this->observers->attach($observer);
+        $this->observer = $observer;
     }
 
     /**
@@ -46,7 +51,7 @@ class ModifiedSubject implements SplSubject
      */
     public function detach(SplObserver $observer)
     {
-        $this->observers->detach($observer);
+        $this->observer = null;
     }
 
     /**
@@ -57,11 +62,8 @@ class ModifiedSubject implements SplSubject
      */
     public function notify()
     {
-        foreach ($this->observers as $observer)
-        {
-            /* @var $observer SplObserver */
-            $observer->update($this);
-        }
+        /* @var $observer SplObserver */
+        $this->observer->update($this);
     }
 
     /**
