@@ -1,5 +1,8 @@
 <?php
+
 if(!defined('TRIPOD_DIR')) define('TRIPOD_DIR', dirname(__FILE__) . '/' );
+
+require_once TRIPOD_DIR.'../vendor/autoload.php';
 
 if (version_compare(phpversion(), '5.3.0', '<')) {
     // php version isn't high enough for ARC, use legacy <5.3.0 version
@@ -13,6 +16,24 @@ else
 
 require_once ARC_DIR.'ARC2.php';
 
+require_once TRIPOD_DIR.'classes/Timer.class.php';
+require_once TRIPOD_DIR.'exceptions/TripodException.class.php';
+require_once TRIPOD_DIR.'exceptions/TripodSearchException.class.php';
+require_once TRIPOD_DIR.'exceptions/TripodCardinalityException.class.php';
+require_once TRIPOD_DIR.'mongo/MongoTripodConstants.php';
+require_once TRIPOD_DIR.'mongo/MongoGraph.class.php';
+require_once TRIPOD_DIR.'mongo/ModifiedSubject.class.php';
+require_once TRIPOD_DIR.'mongo/base/MongoTripodBase.class.php';
+require_once TRIPOD_DIR.'mongo/IComposite.php';
+require_once TRIPOD_DIR.'mongo/base/CompositeBase.class.php';
+require_once TRIPOD_DIR.'mongo/delegates/MongoTransactionLog.class.php';
+require_once TRIPOD_DIR.'mongo/delegates/MongoTripodUpdates.class.php';
+require_once TRIPOD_DIR.'mongo/delegates/MongoTripodViews.class.php';
+require_once TRIPOD_DIR.'mongo/delegates/MongoTripodTables.class.php';
+require_once TRIPOD_DIR.'mongo/delegates/MongoTripodSearchIndexer.class.php';
+require_once TRIPOD_DIR.'mongo/queue/MongoTripodQueue.class.php';
+require_once TRIPOD_DIR.'ITripod.php';
+require_once TRIPOD_DIR.'classes/ChangeSet.class.php';
 require_once TRIPOD_DIR.'/mongo/MongoTripod.class.php';
 
 define('RDF_TYPE', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
