@@ -14,5 +14,5 @@ interface IComposite extends SplObserver
      * @param $contextAlias
      * @return mixed
      */
-    public function getModifiedSubjects($subjectsAndPredicatesOfChange,$deletedSubjects,$contextAlias);
+    public function getModifiedSubjects(ChangeSet $cs,$deletedSubjects,$contextAlias);
 }

@@ -141,27 +141,14 @@ class MongoTripodUpdates extends MongoTripodBase {
 
             if ($cs->has_changes())
             {
-                $subjectsAndPredicatesOfChange = $this->getSubjectsAndPredicatesOfChange($cs, $oldGraph);
+                // store the actual CBDs
+                $changes = $this->storeChanges($cs, $contextAlias);
 
-                foreach($subjectsAndPredicatesOfChange as $subject=>$predicates)
-                {
-                    $subjectsAndPredicatesOfChange[$subject] = array_unique($predicates);
-                }
+                // Process any syncronous operations
+                $this->processSyncOperations($cs,$changes['deletedSubjects'],$contextAlias);
 
-                $changes = $this->storeChanges($cs, array_keys($subjectsAndPredicatesOfChange),$contextAlias);
-
-                $syncModifiedSubjects = array();
-                foreach($this->getSyncOperations() as $op)
-                {
-                    $opSubjects = $this->tripod->getComposite($op)->getModifiedSubjects($subjectsAndPredicatesOfChange,$changes['deletedSubjects'],$contextAlias);
-                    $syncModifiedSubjects = array_merge($syncModifiedSubjects,$opSubjects);
-                }
-
-                if(!empty($syncModifiedSubjects)){
-                    $this->processOperations($syncModifiedSubjects);
-                }
-
-                $this->queueASyncOperations($subjectsAndPredicatesOfChange,$changes['deletedSubjects'],$contextAlias);
+                // Schedule calculation of any async activity
+                $this->getQueue()->addItem($cs,$changes['deletedSubjects'],$this->storeName,$this->podName,$this->getAsyncOperations());
             }
         }
         catch(Exception $e){
@@ -282,11 +269,12 @@ class MongoTripodUpdates extends MongoTripodBase {
      * @throws TripodException
      * @throws Exception
      */
-    protected function storeChanges(ChangeSet $cs, Array $subjectsOfChange, $contextAlias)
+    protected function storeChanges(ChangeSet $cs, $contextAlias)
     {
         $t = new Timer();
         $t->start();
 
+        $subjectsOfChange = $cs->get_subjects_of_change();
         $transaction_id = $this->generateTransactionId();
 
         // store the details of the transaction in the transaction log
@@ -340,7 +328,8 @@ class MongoTripodUpdates extends MongoTripodBase {
                     'description'=>'Save Failed Rolling back transaction:' . $e->getMessage(),
                     'transaction_id'=>$transaction_id,
                     'subjectsOfChange'=>implode(",",$subjectsOfChange),
-                    'mongoDriverError' => $this->getDatabase()->lastError()
+                    'mongoDriverError' => $this->getDatabase()->lastError(),
+                    'exceptionMessage' => $e->getMessage()
                 )
             );
             $this->rollbackTransaction($transaction_id, $originalCBDs, $e);
@@ -674,28 +663,36 @@ class MongoTripodUpdates extends MongoTripodBase {
      * Processes each subject synchronously
      * @param ModifiedSubject[] $modifiedSubjects
      */
-    public function processOperations(Array $modifiedSubjects)
+    public function processSyncOperations(ChangeSet $cs, $deletedSubjects, $contextAlias)
     {
-        foreach($modifiedSubjects as $subject)
+        $syncModifiedSubjects = array();
+        foreach($this->getSyncOperations() as $op)
         {
-            /* @var $subject ModifiedSubject */
-            $t = new Timer();
-            $t->start();
+            $opSubjects = $this->tripod->getComposite($op)->getModifiedSubjects($cs,$deletedSubjects,$contextAlias);
+            $syncModifiedSubjects = array_merge($syncModifiedSubjects,$opSubjects);
+        }
 
-            $subject->notify();
+        if (!empty($syncModifiedSubjects)) {
+            foreach($syncModifiedSubjects as $subject)
+            {
+                /* @var $subject ModifiedSubject */
+                $t = new Timer();
+                $t->start();
 
-            $t->stop();
+                $subject->notify();
 
-            $data = $subject->getData();
+                $t->stop();
 
-            $this->timingLog(MONGO_ON_THE_FLY_MR,array(
-                "duration"=>$t->result(),
-                "operations"=>var_export($data['operations'],true),
-                "database"=>$data['database'],
-                "collection"=>$data['collection'],
-                "resource"=>$data[_ID_RESOURCE]
-            ));
-            $this->getStat()->timer(MONGO_ON_THE_FLY_MR,$t->result());
+                $data = $subject->getData();
+
+                $this->timingLog(MONGO_ON_THE_FLY_MR,array(
+                    "duration"=>$t->result(),
+                    "database"=>$data['database'],
+                    "collection"=>$data['collection'],
+                    "resource"=>$data[_ID_RESOURCE]
+                ));
+                $this->getStat()->timer(MONGO_ON_THE_FLY_MR,$t->result());
+            }
         }
     }
 
@@ -707,18 +704,10 @@ class MongoTripodUpdates extends MongoTripodBase {
      * Adds the operations to the queue to be performed asynchronously
      * @param ModifiedSubject[] $modifiedSubjects
      */
-    protected function queueASyncOperations($subjectsAndPredicatesOfChange,$deletedSubjects,$contextAlias)
+    protected function queueASyncOperations(ChangeSet $cs,$deletedSubjects,$contextAlias)
     {
         $ops = $this->getAsyncOperations();
         if (!empty($ops)) {
-            $this->getQueue()->addItem(array(
-                "subjectsAndPredicatesOfChange"=>$subjectsAndPredicatesOfChange,
-                "deletedSubjects"=>$deletedSubjects,
-                "contextAlias"=>$contextAlias,
-                "storeName"=>$this->storeName,
-                "podName"=>$this->podName,
-                "operations"=>$ops
-            ));
         }
     }
 
@@ -1232,36 +1221,5 @@ class MongoTripodUpdates extends MongoTripodBase {
             }
         }
         return $types;
-    }
-
-    /**
-     * @return array
-     */
-    private function getSubjectsAndPredicatesOfChange(ChangeSet $cs, ExtendedGraph $oldGraph)
-    {
-        $subjectsAndPredicatesOfChange = array();
-        /** @noinspection PhpParamsInspection */
-        $changes = $cs->get_subjects_of_type($oldGraph->qname_to_uri("cs:ChangeSet"));
-        foreach ($changes as $change)
-        {
-            $subject = $cs->get_first_resource($change,$oldGraph->qname_to_uri("cs:subjectOfChange"));
-
-            if(!isset($subjectsAndPredicatesOfChange[$subject]))
-            {
-                $subjectsAndPredicatesOfChange[$subject] = array();
-            }
-            // If resource is not either completely new or deleted, specify the predicates affected
-            if(!(empty($cs->before) || empty($cs->after)))
-            {
-                foreach($cs->get_subjects_where_resource(RDF_SUBJECT, $subject) as $changeNode)
-                {
-                    foreach($cs->get_resource_triple_values($changeNode, RDF_PREDICATE) as $property)
-                    {
-                        $subjectsAndPredicatesOfChange[$subject][] = $this->labeller->uri_to_alias($property);
-                    }
-                }
-            }
-        }
-        return $subjectsAndPredicatesOfChange;
     }
 }

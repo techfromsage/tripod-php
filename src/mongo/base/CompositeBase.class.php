@@ -8,8 +8,10 @@
  */
 abstract class CompositeBase extends MongoTripodBase implements IComposite
 {
-    public function getModifiedSubjects($subjectsAndPredicatesOfChange,$deletedSubjects,$contextAlias)
+    public function getModifiedSubjects(ChangeSet $cs,$deletedSubjects,$contextAlias)
     {
+        $subjectsAndPredicatesOfChange = $cs->get_subjects_and_predicates_of_change();
+
         $operations = array();
         $filter = array();
         $subjectsToAlias = array();

@@ -36,7 +36,7 @@ class MongoTripodQueueTest extends MongoTripodTestBase
     public function testAddToIndexQueue()
     {
         // add item to queue
-        $this->indexQueue->addItem(array());
+        $this->indexQueue->addItem(new ChangeSet(),array(),"foo","CBD_wibble",array(OP_VIEWS));
 
         // retrieve it and assert properties
         $data = $this->indexQueue->fetchNextQueuedItem();
@@ -50,7 +50,7 @@ class MongoTripodQueueTest extends MongoTripodTestBase
     public function testRemoveFromIndexQueue()
     {
         // add an item, verify that its there
-        $this->indexQueue->addItem(array());
+        $this->indexQueue->addItem(new ChangeSet(),array(),"foo","CBD_wibble",array(OP_VIEWS));
         $data = $this->indexQueue->fetchNextQueuedItem();
         $this->assertEquals('processing', $data['status']);
         $this->assertInstanceOf('MongoDate', $data['createdOn']);
@@ -65,7 +65,7 @@ class MongoTripodQueueTest extends MongoTripodTestBase
     public function testUpdateQueuedItemStatusToFailed()
     {
         // add an item, verify that its there
-        $this->indexQueue->addItem(array());
+        $this->indexQueue->addItem(new ChangeSet(),array(),"foo","CBD_wibble",array(OP_VIEWS));
         $data = $this->indexQueue->fetchNextQueuedItem();
         $this->assertEquals('processing', $data['status']);
         $this->assertInstanceOf('MongoDate', $data['createdOn']);
@@ -88,10 +88,11 @@ class MongoTripodQueueTest extends MongoTripodTestBase
     {
         $itemId = 'qid_test';
 
+        /* @var $mockQueue MongoTripodQueue */
         $mockQueue = $this->getMock('MongoTripodQueue', array('getUniqId'), array());
         $mockQueue->expects($this->any())->method('getUniqId')->will($this->returnValue($itemId));
 
-        $mockQueue->addItem(array());
+        $mockQueue->addItem(new ChangeSet(),array(),$this->tripod->storeName,$this->tripod->podName,array(OP_VIEWS));
         $item = $mockQueue->getItem($itemId);
 
         $this->assertContains('qid_', $item['_id']);

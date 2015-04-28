@@ -97,7 +97,10 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
         $g2 = $tripod->describeResource("http://talisaspire.com/authors/1");
         $g2->add_literal_triple("http://talisaspire.com/authors/1", $g2->qname_to_uri("foaf:name"),"Bill Shakespeare" );
 
+        echo "Test starts\n\n";
         $tripod->saveChanges($g1, $g2);
+
+        return;
 
         // Now make a change that affects a different search document - Create new document
         $tripod = $this->getMock(

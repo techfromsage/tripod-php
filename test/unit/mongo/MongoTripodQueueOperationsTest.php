@@ -98,7 +98,10 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
         /* @var $queuedItem ModifiedSubject */
         $queuedItemData = $this->tripodQueue->fetchNextQueuedItem();
 
-        $this->assertEquals(array("http://talisaspire.com/resources/doc1"),array_keys($queuedItemData['subjectsAndPredicatesOfChange']), "Queued Item should be the one we saved changes to");
+        $cs = new ChangeSet();
+        $cs->from_json($queuedItemData['changeSet']);
+
+        $this->assertEquals(array("http://talisaspire.com/resources/doc1"),$cs->get_subjects_of_change(), "Queued Item should be the one we saved changes to");
         $this->assertContains(OP_VIEWS, $queuedItemData['operations'], "Operations should contain view gen");
         $this->assertContains(OP_TABLES, $queuedItemData['operations'], "Operations should contain table gen");
         $this->assertContains(OP_SEARCH, $queuedItemData['operations'], "Operations should contain search gen");
@@ -122,7 +125,10 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
         /* @var $queuedItem ModifiedSubject */
         $queuedItemData = $this->tripodQueue->fetchNextQueuedItem();
 
-        $this->assertEquals(array("http://talisaspire.com/resources/doc1"),array_keys($queuedItemData['subjectsAndPredicatesOfChange']), "Queued Item should be the one we saved changes to");
+        $cs = new ChangeSet();
+        $cs->from_json($queuedItemData['changeSet']);
+
+        $this->assertEquals(array("http://talisaspire.com/resources/doc1"),$cs->get_subjects_of_change(), "Queued Item should be the one we saved changes to");
         $this->assertContains(OP_VIEWS, $queuedItemData['operations'], "Operations should contain view gen");
         $this->assertFalse(in_array(OP_TABLES, $queuedItemData['operations']), "Operations should not contain table gen");
         $this->assertFalse(in_array(OP_SEARCH, $queuedItemData['operations']), "Operations should not contain search gen");
@@ -177,9 +183,11 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
         for($i=0; $i<$queueCount; $i++){
             $queuedItem      = $this->tripodQueue->fetchNextQueuedItem();
 
-            $queuedItemRId   = $queuedItem["subjectsAndPredicatesOfChange"][_ID_RESOURCE];
-            $this->assertEquals(3,count(array_keys($queuedItem["subjectsAndPredicatesOfChange"])),"Expected 3 subjects");
-            $this->assertEmpty(array_diff(array_keys($queuedItem["subjectsAndPredicatesOfChange"]),$expectedSubjects),"Subjects of change not equal to the set of expected subjects");
+            $cs = new ChangeSet();
+            $cs->from_json($queuedItem['changeSet']);
+
+            $this->assertEquals(3,count($cs->get_subjects_of_change()),"Expected 3 subjects");
+            $this->assertEmpty(array_diff($cs->get_subjects_of_change(),$expectedSubjects),"Subjects of change not equal to the set of expected subjects");
 
             // verify the number of operations is the same
             $this->assertEquals(3,count($queuedItem['operations']),"Expected 3 operations");
@@ -209,7 +217,11 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
         $this->assertEquals(1, $queueCount, "There should only be 1 item on the queue");
         /* @var $queuedItem ModifiedSubject */
         $queuedItemData = $this->tripodQueue->fetchNextQueuedItem();
-        $this->assertEquals(array($subjectUri),array_keys($queuedItemData['subjectsAndPredicatesOfChange']), "Queued Item should be the one we saved changes to");
+
+        $cs = new ChangeSet();
+        $cs->from_json($queuedItemData['changeSet']);
+
+        $this->assertEquals(array($subjectUri),$cs->get_subjects_of_change(), "Queued Item should be the one we saved changes to");
         $this->assertContains(OP_VIEWS,  $queuedItemData['operations'], "Operations should contain view gen");
         $this->assertContains(OP_TABLES, $queuedItemData['operations'], "Operations should contain table gen");
         $this->assertContains(OP_SEARCH, $queuedItemData['operations'], "Operations should contain search gen");

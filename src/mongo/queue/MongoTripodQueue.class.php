@@ -32,10 +32,9 @@ class MongoTripodQueue extends MongoTripodBase
     public function processNext()
     {
         $now = new MongoDate();
-        $queuedItem = $this->fetchNextQueuedItem();
-        if($queuedItem !== NULL)
+        $data = $this->fetchNextQueuedItem();
+        if(!empty($data))
         {
-            $data = $queuedItem->getData();
             /* @var $createdOn MongoDate */
             $createdOn = $data['createdOn'];
 
@@ -43,10 +42,15 @@ class MongoTripodQueue extends MongoTripodBase
 
             $operations = $data['operations'];
             $modifiedSubjects = array();
+
+            // de-serialize changeset
+            $cs = new ChangeSet();
+            $cs->from_json($data["changeSet"]);
+
             foreach($operations as $op)
             {
                 $composite = $tripod->getComposite($op);
-                $modifiedSubjects = array_merge($modifiedSubjects,$composite->getModifiedSubjects($queuedItem['subjectsAndPredicatesOfChange'],$queuedItem['deletedSubjects'],$queuedItem['$contextAlias']));
+                $modifiedSubjects = array_merge($modifiedSubjects,$composite->getModifiedSubjects($cs,$data['deletedSubjects'],$data['contextAlias']));
             }
 
             try
@@ -57,12 +61,12 @@ class MongoTripodQueue extends MongoTripodBase
                         $subject->notify();
                     }
                 }
-                $this->removeItem($queuedItem);
+                $this->removeItem($data);
             }
             catch(Exception $e)
             {
                 $this->errorLog("Error processing item in queue: ".$e->getMessage(),array("data"=>$data));
-                $this->failItem($queuedItem, $e->getMessage()."\n".$e->getTraceAsString());
+                $this->failItem($data, $e->getMessage()."\n".$e->getTraceAsString());
             }
 
             // stat time taken to process item, from time it was created (queued)
@@ -84,12 +88,21 @@ class MongoTripodQueue extends MongoTripodBase
      * Add an item to the index queue
      * @param ModifiedSubject $subject
      */
-    public function addItem(array $data)
+    public function addItem(ChangeSet $cs,array $deletedSubjects,$storeName,$podName,$operations)
     {
-        $data["_id"] = $this->getUniqId();
-        $data["createdOn"] = new MongoDate();
-        $data['status'] = "queued";
-        $this->collection->insert($data);
+        if (!empty($operations)) {
+            $data = array();
+            $data["changeSet"] = $cs->to_json();
+            $data["deletedSubjects"] = $deletedSubjects;
+            $data["operations"] = $operations;
+            $data["tripodConfig"] = MongoTripodConfig::getConfig();
+            $data["storeName"] = $storeName;
+            $data["podName"] = $podName;
+            $data["_id"] = $this->getUniqId();
+            $data["createdOn"] = new MongoDate();
+            $data['status'] = "queued";
+            $this->collection->insert($data);
+        }
     }
 
     /**
@@ -123,7 +136,7 @@ class MongoTripodQueue extends MongoTripodBase
     /**
      * This item grabs the next queued item, it sets the state of the queued item to processing before returning it.
      *
-     * @return null|ModifiedSubject if nothing in the queue, otherwise it returns the first document it finds.
+     * @return null|array if nothing in the queue, otherwise it returns the first document it finds.
      * @throws Exception
      */
     public function fetchNextQueuedItem()

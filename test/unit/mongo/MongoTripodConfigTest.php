@@ -1258,10 +1258,9 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $newGraph->add_literal_triple($subject, $labeller->qname_to_uri('foaf:email'), 'anne@example.com');
         $this->tripod->saveChanges($graph, $newGraph);
 
-        // Add an item to the queue
+        // Add an item to the queue todo: why?
         $queue = new MongoTripodQueue();
-        $item = array('podName'=>'CBD_wibble', 'storeName'=>'foo');
-        $queue->addItem($item);
+        $queue->addItem(new ChangeSet(),array(),"foo","CBD_wibble",array(OP_VIEWS));
 
         // Generate views and tables
         foreach($config->getViewSpecifications($storeName) as $viewId=>$viewSpec)

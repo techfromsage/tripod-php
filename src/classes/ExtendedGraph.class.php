@@ -47,6 +47,9 @@ class ExtendedGraph
         'xsd' => 'http://www.w3.org/2001/XMLSchema#',
     );
 
+    /**
+     * @var Labeller
+     */
     var $_labeller;
 
     function __construct($graph=false){
@@ -58,7 +61,6 @@ class ExtendedGraph
                 $this->_index = $graph;
             }
         }
-
     }
 
     function __destruct(){
