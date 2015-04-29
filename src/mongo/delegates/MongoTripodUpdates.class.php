@@ -717,7 +717,7 @@ class MongoTripodUpdates extends MongoTripodBase {
                 "podName" => $this->podName,
                 "contextAlias" => $contextAlias
             );
-            Resque::enqueue(TRIPOD_DISCOVER_QUEUE,"DiscoverModifiedSubjects",$data);
+            Resque::enqueue(MongoTripodConfig::getDiscoverQueueName(),"DiscoverModifiedSubjects",$data);
         }
     }
 

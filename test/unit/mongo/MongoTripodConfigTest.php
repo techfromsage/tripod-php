@@ -84,7 +84,6 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                 ),
             )
         );
-        $config['queue'] = array("database"=>"queue","collection"=>"q_queue","data_source"=>"mongo");
         $config["transaction_log"] = array(
             "database"=>"transactions",
             "collection"=>"transaction_log",
@@ -124,7 +123,6 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                 )
             )
         );
-        $config['queue'] = array("database"=>"queue","collection"=>"q_queue","data_source"=>"mongo1");
         $config["transaction_log"] = array(
             "database"=>"transactions",
             "collection"=>"transaction_log",
@@ -178,7 +176,6 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                 "data_source"=>"rs"
             )
         );
-        $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"rs");
 
         MongoTripodConfig::setConfig($config);
         $mtc = MongoTripodConfig::getInstance();
@@ -212,7 +209,6 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                 ),
             )
         );
-        $config['queue'] = array("database"=>"queue","collection"=>"q_queue","data_source"=>"mongo1");
 
         MongoTripodConfig::setConfig($config);
         $mtc = MongoTripodConfig::getInstance();
@@ -252,7 +248,6 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                 )
             )
         );
-        $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db1");
 
         MongoTripodConfig::setConfig($config);
         $mtc = MongoTripodConfig::getInstance();
@@ -264,90 +259,6 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $this->assertEquals('MongoSearchProvider', $config->getSearchProviderClassName('tripod_php_testing'));
 
         $this->assertEquals(3, count($config->getSearchDocumentSpecifications('tripod_php_testing')));
-    }
-
-    public function testQueueConfig()
-    {
-        $config = MongoTripodConfig::getInstance();
-        $queueConfig = $config->getQueueConfig();
-        $this->assertEquals('tripod_php_testing',$queueConfig['database']);
-        $this->assertEquals('q_queue',$queueConfig['collection']);
-        $this->assertEquals('mongodb://localhost',$config->getQueueConnStr());
-    }
-
-    public function testQueueRepSetConnStr()
-    {
-        $config=array();
-        $config["defaultContext"] = "http://talisaspire.com/";
-        $config['data_sources'] = array(
-            'mongo'=>array(
-                'type'=>'mongo',
-                'connection'=>'mongodb://localhost'
-            ),
-            'queue'=>array(
-                'type'=>'mongo',
-                "connection"=>"mongodb://qhost:27017,qhost:27018/admin",
-                "replicaSet" => "myrepset"
-            )
-        );
-        $config["stores"] = array(
-            "tripod_php_testing" => array(
-                "data_source"=>"mongo",
-                "pods" => array(
-                    "CBD_testing" => array()
-                )
-            )
-        );
-        $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"mongo");
-        $config['queue'] = array(
-            "database"=>"queue",
-            "collection"=>"q_queue",
-            "data_source"=>"queue"
-        );
-
-        MongoTripodConfig::setConfig($config);
-        $mtc = MongoTripodConfig::getInstance();
-        $this->assertEquals("mongodb://qhost:27017,qhost:27018/admin",$mtc->getQueueConnStr());
-    }
-
-    public function testQueueRepSetConnStrThrowsException()
-    {
-        $this->setExpectedException(
-                   'MongoTripodConfigException',
-                   'Connection string for \'queue\' must include /admin database when connecting to Replica Set');
-
-        $config=array();
-        $config["defaultContext"] = "http://talisaspire.com/";
-        $config["data_sources"] = array(
-            "db1" => array(
-                "type"=>"mongo",
-                "connection"=>"mongodb://localhost"
-            ),
-            "queue" => array(
-                "type"=>"mongo",
-                "connection"=>"mongodb://qhost:27017,qhost:27018",
-                "replicaSet" => "myrepset"
-            ),
-        );
-        $config["stores"] = array(
-            "tripod_php_testing" => array(
-                "data_source"=>"db1",
-                "pods" => array(
-                    "CBD_testing" => array()
-                ),
-            )
-        );
-        $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db1");
-        $config['queue'] = array(
-            "database"=>"queue",
-            "collection"=>"q_queue",
-            "data_source"=>"queue"
-
-        );
-
-        MongoTripodConfig::setConfig($config);
-        $mtc = MongoTripodConfig::getInstance();
-        $connStr = $mtc->getQueueConnStr();
     }
 
     public function testCardinalityRuleWithNoNamespace()
@@ -375,7 +286,6 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                 )
             )
         );
-        $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");
         MongoTripodConfig::setConfig($config);
         $mtc = MongoTripodConfig::getInstance();
     }
@@ -516,7 +426,6 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                 "joins"=>array("dct:hasVersion"=>array())
             )
         );
-        $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");
         MongoTripodConfig::setConfig($config);
         $mtc = MongoTripodConfig::getInstance();
     }
@@ -561,7 +470,6 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                 )
             )
         );
-        $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");
         MongoTripodConfig::setConfig($config);
         $mtc = MongoTripodConfig::getInstance();
     }
@@ -604,7 +512,6 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                 )
             )
         );
-        $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");
         MongoTripodConfig::setConfig($config);
         $mtc = MongoTripodConfig::getInstance();
     }
@@ -650,7 +557,6 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                 )
             )
         );
-        $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");
         MongoTripodConfig::setConfig($config);
         $mtc = MongoTripodConfig::getInstance();
     }
@@ -690,7 +596,6 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                 )
             )
         );
-        $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");
         MongoTripodConfig::setConfig($config);
         $mtc = MongoTripodConfig::getInstance();
     }
@@ -730,7 +635,6 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                 )
             )
         );
-        $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");
         MongoTripodConfig::setConfig($config);
         $mtc = MongoTripodConfig::getInstance();
     }
@@ -770,7 +674,6 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                 )
             )
         );
-        $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");
         MongoTripodConfig::setConfig($config);
         $mtc = MongoTripodConfig::getInstance();
     }
@@ -810,7 +713,6 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                 )
             )
         );
-        $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");
         MongoTripodConfig::setConfig($config);
         $mtc = MongoTripodConfig::getInstance();
     }
@@ -851,7 +753,6 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                 )
             )
         );
-        $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");
         MongoTripodConfig::setConfig($config);
         $mtc = MongoTripodConfig::getInstance();
     }
@@ -894,7 +795,6 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                 )
             )
         );
-        $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");
         MongoTripodConfig::setConfig($config);
         $mtc = MongoTripodConfig::getInstance();
     }
@@ -946,10 +846,6 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             "tlog"=>array(
                 "type"=>"mongo",
                 "connection"=>"mongodb://abc:zyx@localhost:27018"
-            ),
-            "queue"=>array(
-                "type"=>"mongo",
-                "connection"=>"mongodb://localhost"
             )
         );
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log", "data_source"=>"tlog");
@@ -969,7 +865,6 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                 )
             )
         );
-        $config['queue'] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"queue");
         MongoTripodConfig::setConfig($config);
         $mtc = MongoTripodConfig::getInstance();
         $this->assertEquals("myreplicaset", $mtc->getReplicaSetName($mtc->getDefaultDataSourceForStore("tripod_php_testing")));
@@ -1065,11 +960,6 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             )
         );
         $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"mongo1");
-        $config['queue'] = array(
-            "database"=>"testing_queue",
-            "collection"=>"q_queue",
-            "data_source"=>"mongo1"
-        );
 
         MongoTripodConfig::setConfig($config);
         $mtc = MongoTripodConfig::getInstance();
@@ -1282,7 +1172,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $collectionsForDataSource = array();
         $collectionsForDataSource['rs1'] = array(
             VIEWS_COLLECTION, SEARCH_INDEX_COLLECTION, TABLE_ROWS_COLLECTION, 'CBD_testing',
-            AUDIT_MANUAL_ROLLBACKS_COLLECTION, LOCKS_COLLECTION, 'q_queue'
+            AUDIT_MANUAL_ROLLBACKS_COLLECTION, LOCKS_COLLECTION
         );
 
         $collectionsForDataSource['rs2'] = array(VIEWS_COLLECTION, SEARCH_INDEX_COLLECTION, TABLE_ROWS_COLLECTION, 'CBD_testing_2', 'transaction_log');

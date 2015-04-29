@@ -78,33 +78,8 @@ define('AUDIT_STATUS_ERROR', 'ERROR');
 // Mongo constants
 define('DEFAULT_MONGO_CONNECT_TIMEOUT_MS', 20000);
 
-// queue name
-$tDiscoverQueueEnv = getenv("TRIPOD_DISCOVER_QUEUE");
-if (!empty($tDiscoverQueueEnv))
-{
-    define("TRIPOD_DISCOVER_QUEUE",$tDiscoverQueueEnv);
-}
-elseif(defined('APP_ENV'))
-{
-    define("TRIPOD_DISCOVER_QUEUE","tripod::".APP_ENV."::discover");
-}
-else
-{
-    // default
-    define("TRIPOD_DISCOVER_QUEUE","tripod::discover");
-}
+// queue constants
+define("MONGO_TRIPOD_RESQUE_SERVER","MONGO_TRIPOD_RESQUE_SERVER");
+define("TRIPOD_DISCOVER_QUEUE","TRIPOD_DISCOVER_QUEUE");
+define("TRIPOD_APPLY_QUEUE","TRIPOD_APPLY_QUEUE");
 
-$tApplyQueueEnv = getenv("TRIPOD_APPLY_QUEUE");
-if (!empty($tApplyQueueEnv))
-{
-    define("TRIPOD_APPLY_QUEUE",$tApplyQueueEnv);
-}
-elseif(defined('APP_ENV'))
-{
-    define("TRIPOD_APPLY_QUEUE","tripod::".APP_ENV."::apply");
-}
-else
-{
-    // default
-    define("TRIPOD_APPLY_QUEUE","tripod::apply");
-}

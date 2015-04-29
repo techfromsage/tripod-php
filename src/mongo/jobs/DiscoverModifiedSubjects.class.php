@@ -37,7 +37,7 @@ class DiscoverModifiedSubjects extends JobBase {
                 foreach ($modifiedSubjects as $subject) {
                     $subjectData = $subject->getData();
                     $this->debugLog("Adding operation {$subject->getOperation()} for subject {$subjectData["r"]} to queue ".TRIPOD_APPLY_QUEUE);
-                    Resque::enqueue(TRIPOD_APPLY_QUEUE,"ApplyOperation",array(
+                    Resque::enqueue(MongoTripodConfig::getApplyQueueName(),"ApplyOperation",array(
                         "operation"=>$subject->getOperation(),
                         "subjectData"=>$subjectData,
                         "tripodConfig"=>$this->args["tripodConfig"]

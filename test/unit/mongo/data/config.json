@@ -670,10 +670,5 @@
         "database": "tripod_php_testing",
         "collection" : "transaction_log",
         "data_source" : "rs2"
-    },
-    "queue": {
-        "database": "tripod_php_testing",
-        "collection": "q_queue",
-        "data_source" : "rs1"
     }
 }
