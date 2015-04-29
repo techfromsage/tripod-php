@@ -66,7 +66,7 @@ class MongoSearchProvider implements ITripodSearchProvider
      * @throws TripodSearchException if there was an error removing the document
      * @return mixed
      */
-    public function deleteDocument($resource, $context, $specId = null)
+    public function deleteDocument($resource, $context, $specId = array())
     {
         $query = array(_ID_KEY . '.' . _ID_RESOURCE => $this->labeller->uri_to_alias($resource),  _ID_KEY . '.' . _ID_CONTEXT => $context);
         try {

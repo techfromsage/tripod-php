@@ -31,20 +31,15 @@ class MongoTripodViews extends CompositeBase
     }
 
     /**
-     * (PHP 5 &gt;= 5.1.0)<br/>
      * Receive update from subject
-     * @link http://php.net/manual/en/splobserver.update.php
-     * @param SplSubject $subject <p>
-     * The <b>SplSubject</b> notifying the observer of an update.
-     * </p>
+     * @param ImpactedSubject
      * @return void
      */
-    public function update(SplSubject $subject)
+    public function update(ImpactedSubject $subject)
     {
-        /* @var $subject ModifiedSubject */
-        $queuedItem = $subject->getData();
-        $resourceUri    = $queuedItem[_ID_RESOURCE];
-        $context        = $queuedItem[_ID_CONTEXT];
+        $resource = $subject->getResourceId();
+        $resourceUri    = $resource[_ID_RESOURCE];
+        $context        = $resource[_ID_CONTEXT];
 
         $this->generateViews(array($resourceUri),$context);
     }

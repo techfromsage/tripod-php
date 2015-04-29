@@ -37,32 +37,22 @@ class MongoTripodSearchIndexer extends CompositeBase
     }
 
     /**
-     * (PHP 5 &gt;= 5.1.0)<br/>
      * Receive update from subject
-     * @link http://php.net/manual/en/splobserver.update.php
-     * @param SplSubject $subject <p>
-     * The <b>SplSubject</b> notifying the observer of an update.
-     * </p>
+     * @param ImpactedSubject
      * @return void
      */
-    public function update(SplSubject $subject)
+    public function update(ImpactedSubject $subject)
     {
-        /* @var $subject ModifiedSubject */
-        $queuedItem = $subject->getData();
+        $resource = $subject->getResourceId();
+        $resourceUri    = $resource[_ID_RESOURCE];
+        $context        = $resource[_ID_CONTEXT];
 
-        $resourceUri    = $queuedItem['r'];
-        $context        = $queuedItem['c'];
-
-        $podName = $queuedItem['collection'];
-
-        $specTypes = null;
-
-        if(isset($queuedItem['specTypes']))
-        {
-            $specTypes = $queuedItem['specTypes'];
-        }
-
-        $this->generateAndIndexSearchDocuments($resourceUri, $context, $podName, $specTypes);
+        $this->generateAndIndexSearchDocuments(
+            $resourceUri,
+            $context,
+            $subject->getPodName(),
+            $subject->getSpecTypes()
+        );
     }
 
     public function getTypesInSpecification()
@@ -91,7 +81,7 @@ class MongoTripodSearchIndexer extends CompositeBase
      * @param string $podName
      * @param array | string | null $specType
      */
-    public function generateAndIndexSearchDocuments($resourceUri, $context, $podName, $specType = null)
+    public function generateAndIndexSearchDocuments($resourceUri, $context, $podName, $specType = array())
     {
         $mongoCollection    = $this->config->getCollectionForCBD($this->storeName, $podName);
 

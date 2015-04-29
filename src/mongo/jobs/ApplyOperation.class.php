@@ -15,11 +15,17 @@ class ApplyOperation extends JobBase {
             // set the config to what is received
             MongoTripodConfig::setConfig($this->args["tripodConfig"]);
 
-            $this->debugLog("Getting composite for ".$this->args["operation"]);
-            $composite = $this->getMongoTripod($this->args["subjectData"]["database"],$this->args["subjectData"]["collection"])->getComposite($this->args["operation"]);
+            $subjectAsArray = $this->args["subject"];
+            $subject = new ImpactedSubject(
+                $subjectAsArray["resourceId"],
+                $subjectAsArray["operation"],
+                $subjectAsArray["storeName"],
+                $subjectAsArray["podName"],
+                $subjectAsArray["specTypes"],
+                $subjectAsArray["delete"]
+            );
 
-            $subject = new ModifiedSubject($this->args["subjectData"],$composite);
-            $subject->notify();
+            $subject->update();
 
             $timer->stop();
             // stat time taken to process item, from time it was created (queued)
@@ -40,6 +46,6 @@ class ApplyOperation extends JobBase {
      */
     protected function getMandatoryArgs()
     {
-        return array("tripodConfig","subjectData","operation");
+        return array("tripodConfig","subject");
     }
 }

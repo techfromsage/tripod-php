@@ -661,39 +661,38 @@ class MongoTripodUpdates extends MongoTripodBase {
 
     /**
      * Processes each subject synchronously
-     * @param ModifiedSubject[] $modifiedSubjects
+     * @param ImpactedSubject[] $modifiedSubjects
      */
     protected function processSyncOperations(ChangeSet $cs, $deletedSubjects, $contextAlias)
     {
         $syncModifiedSubjects = array();
         foreach($this->getSyncOperations() as $op)
         {
-            $opSubjects = $this->tripod->getComposite($op)->getModifiedSubjects($cs,$deletedSubjects,$contextAlias);
+            $composite = $this->tripod->getComposite($op);
+            $opSubjects = $composite->getImpactedSubjects($cs,$deletedSubjects,$contextAlias);
+            if (!empty($opSubjects)) {
+                foreach($opSubjects as $subject)
+                {
+                    /* @var $subject ImpactedSubject */
+                    $t = new Timer();
+                    $t->start();
+
+                    $composite->update($subject);
+
+                    $t->stop();
+
+                    $this->timingLog(MONGO_ON_THE_FLY_MR,array(
+                        "duration"=>$t->result(),
+                        "storeName"=>$subject->getStoreName(),
+                        "podName"=>$subject->getPodName(),
+                        "resourceId"=>$subject->getResourceId()
+                    ));
+                    $this->getStat()->timer(MONGO_ON_THE_FLY_MR,$t->result());
+                }
+            }
             $syncModifiedSubjects = array_merge($syncModifiedSubjects,$opSubjects);
         }
 
-        if (!empty($syncModifiedSubjects)) {
-            foreach($syncModifiedSubjects as $subject)
-            {
-                /* @var $subject ModifiedSubject */
-                $t = new Timer();
-                $t->start();
-
-                $subject->notify();
-
-                $t->stop();
-
-                $data = $subject->getData();
-
-                $this->timingLog(MONGO_ON_THE_FLY_MR,array(
-                    "duration"=>$t->result(),
-                    "database"=>$data['database'],
-                    "collection"=>$data['collection'],
-                    "resource"=>$data[_ID_RESOURCE]
-                ));
-                $this->getStat()->timer(MONGO_ON_THE_FLY_MR,$t->result());
-            }
-        }
     }
 
 
@@ -702,7 +701,7 @@ class MongoTripodUpdates extends MongoTripodBase {
 
     /**
      * Adds the operations to the queue to be performed asynchronously
-     * @param ModifiedSubject[] $modifiedSubjects
+     * @param ImpactedSubject[] $modifiedSubjects
      */
     protected function queueASyncOperations(ChangeSet $cs,$deletedSubjects,$contextAlias)
     {

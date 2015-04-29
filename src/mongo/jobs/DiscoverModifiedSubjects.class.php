@@ -29,17 +29,16 @@ class DiscoverModifiedSubjects extends JobBase {
             foreach($operations as $op)
             {
                 $composite = $tripod->getComposite($op);
-                $modifiedSubjects = array_merge($modifiedSubjects,$composite->getModifiedSubjects($cs,$this->args['deletedSubjects'],$this->args['contextAlias']));
+                $modifiedSubjects = array_merge($modifiedSubjects,$composite->getImpactedSubjects($cs,$this->args['deletedSubjects'],$this->args['contextAlias']));
             }
 
             if(!empty($modifiedSubjects)){
-                /* @var $subject ModifiedSubject */
+                /* @var $subject ImpactedSubject */
                 foreach ($modifiedSubjects as $subject) {
-                    $subjectData = $subject->getData();
-                    $this->debugLog("Adding operation {$subject->getOperation()} for subject {$subjectData["r"]} to queue ".TRIPOD_APPLY_QUEUE);
+                    $resourceId = $subject->getResourceId();
+                    $this->debugLog("Adding operation {$subject->getOperation()} for subject {$resourceId[_ID_RESOURCE]} to queue ".MongoTripodConfig::getApplyQueueName());
                     Resque::enqueue(MongoTripodConfig::getApplyQueueName(),"ApplyOperation",array(
-                        "operation"=>$subject->getOperation(),
-                        "subjectData"=>$subjectData,
+                        "subject"=>$subject->toArray(),
                         "tripodConfig"=>$this->args["tripodConfig"]
                     ));
                 }

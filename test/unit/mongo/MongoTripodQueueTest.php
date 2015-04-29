@@ -128,7 +128,7 @@ class MongoTripodQueueDeadTestRefactor
             array($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),"http://talisaspire.com/")
         );
         // set up the queue item
-        $queuedItem = new ModifiedSubject(array(
+        $queuedItem = new ImpactedSubject(array(
             "_id"=>'blah',
             "r"=>"http://talisaspire.com/works/4d101f63c10a6",
             "c"=>'http://talisaspire.com/',
@@ -178,7 +178,7 @@ class MongoTripodQueueDeadTestRefactor
         );
 
         // set up the queue item
-        $queuedItem = new ModifiedSubject(array(
+        $queuedItem = new ImpactedSubject(array(
             "_id"=>'blah',
             "r"=>"http://talisaspire.com/works/4d101f63c10a6",
             "c"=>'http://talisaspire.com/',
@@ -224,7 +224,7 @@ class MongoTripodQueueDeadTestRefactor
         $mockSearchIndexer = $this->getMock("MongoTripodSearchIndexer",array("update"),array($this->tripod));
 
         // set up the queue item
-        $queuedItem = new ModifiedSubject(array(
+        $queuedItem = new ImpactedSubject(array(
             "_id"=>'blah',
             "r"=>"http://talisaspire.com/works/4d101f63c10a6",
             "c"=>'http://talisaspire.com/',
@@ -272,7 +272,7 @@ class MongoTripodQueueDeadTestRefactor
     public function xtestProcessNextCallsObserversUpdateForAll()
     {
         // set up the queue item
-        $queuedItem = new ModifiedSubject(array(
+        $queuedItem = new ImpactedSubject(array(
             "_id"=>'blah',
             "r"=>"http://talisaspire.com/works/4d101f63c10a6",
             "c"=>'http://talisaspire.com/',
@@ -321,7 +321,7 @@ class MongoTripodQueueDeadTestRefactor
     public function xtestProcessNextCallsObserversUpdateForNone()
     {
         // set up the queue item
-        $queuedItem = new ModifiedSubject(array(
+        $queuedItem = new ImpactedSubject(array(
             "_id"=>'blah',
             "r"=>"http://talisaspire.com/works/4d101f63c10a6",
             "c"=>'http://talisaspire.com/',

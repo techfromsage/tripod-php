@@ -97,7 +97,7 @@ class MongoTripodQueueOperationsDeadTestRefactor
         $tripod->saveChanges($g1, $g2);
 
         $this->assertEquals(1, $this->tripodQueue->count(), "There should only be 1 item on the queue");
-        /* @var $queuedItem ModifiedSubject */
+        /* @var $queuedItem ImpactedSubject */
         $queuedItemData = $this->tripodQueue->fetchNextQueuedItem();
 
         $cs = new ChangeSet();
@@ -124,7 +124,7 @@ class MongoTripodQueueOperationsDeadTestRefactor
         $tripod->saveChanges($g1, $g2);
 
         $this->assertEquals(1, $this->tripodQueue->count(), "There should only be 1 item on the queue");
-        /* @var $queuedItem ModifiedSubject */
+        /* @var $queuedItem ImpactedSubject */
         $queuedItemData = $this->tripodQueue->fetchNextQueuedItem();
 
         $cs = new ChangeSet();
@@ -217,7 +217,7 @@ class MongoTripodQueueOperationsDeadTestRefactor
         $tripod->saveChanges(new MongoGraph(), $g);
         $queueCount = $this->tripodQueue->count();
         $this->assertEquals(1, $queueCount, "There should only be 1 item on the queue");
-        /* @var $queuedItem ModifiedSubject */
+        /* @var $queuedItem ImpactedSubject */
         $queuedItemData = $this->tripodQueue->fetchNextQueuedItem();
 
         $cs = new ChangeSet();
@@ -348,7 +348,7 @@ class MongoTripodQueueOperationsDeadTestRefactor
         $tripod->saveChanges(new MongoGraph(), $g);
         $queueCount = $this->tripodQueue->count();
         $this->assertEquals(1, $queueCount, "There should only be 1 item on the queue");
-        /* @var $queuedItem ModifiedSubject */
+        /* @var $queuedItem ImpactedSubject */
         $queuedItemData = $this->tripodQueue->fetchNextQueuedItem();
         $this->assertEquals($newSubjectUri2, $queuedItemData['r'], "Queued Item should be the one we saved changes to");
         $this->assertContains(OP_VIEWS,  $queuedItemData['operations'], "Operations should contain view gen");
@@ -389,7 +389,7 @@ class MongoTripodQueueOperationsDeadTestRefactor
 
         $queueCount = $this->tripodQueue->count();
         $this->assertEquals(1, $queueCount, "There should only be 1 item on the queue");
-        /* @var $queuedItem ModifiedSubject */
+        /* @var $queuedItem ImpactedSubject */
         $queuedItemData = $this->tripodQueue->fetchNextQueuedItem();
         $this->assertEquals($subjectUri, $queuedItemData['r'], "Queued Item should be the one we saved changes to");
         $this->assertContains(OP_VIEWS,  $queuedItemData['operations'], "Operations should contain view gen");
@@ -576,7 +576,7 @@ class MongoTripodQueueOperationsDeadTestRefactor
 
         $queueCount = $this->tripodQueue->count();
         $this->assertEquals(1, $queueCount, "There should only be 1 item on the queue");
-        /* @var $queuedItem ModifiedSubject */
+        /* @var $queuedItem ImpactedSubject */
         $queuedItemData = $this->tripodQueue->fetchNextQueuedItem();
         $this->assertEquals(array($subjectUri), array_keys($queuedItemData['subjectsAndPredicatesOfChange']), "Queued Item should be the one we saved changes to");
         $this->assertContains(OP_VIEWS,  $queuedItemData['operations'], "Operations should contain view gen");

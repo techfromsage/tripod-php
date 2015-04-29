@@ -1,5 +1,5 @@
 <?php
-interface IComposite extends SplObserver
+interface IComposite
 {
     /**
      * Returns the operation this composite can satisfy
@@ -14,5 +14,7 @@ interface IComposite extends SplObserver
      * @param $contextAlias
      * @return mixed
      */
-    public function getModifiedSubjects(ChangeSet $cs,$deletedSubjects,$contextAlias);
+    public function getImpactedSubjects(ChangeSet $cs,$deletedSubjects,$contextAlias);
+
+    public function update(ImpactedSubject $subject);
 }

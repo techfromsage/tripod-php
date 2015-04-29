@@ -8,11 +8,11 @@
  */
 abstract class CompositeBase extends MongoTripodBase implements IComposite
 {
-    public function getModifiedSubjects(ChangeSet $cs,$deletedSubjects,$contextAlias)
+    public function getImpactedSubjects(ChangeSet $cs,$deletedSubjects,$contextAlias)
     {
         $subjectsAndPredicatesOfChange = $cs->get_subjects_and_predicates_of_change();
 
-        $operations = array();
+        $candidates = array();
         $filter = array();
         $subjectsToAlias = array();
         foreach(array_keys($subjectsAndPredicatesOfChange) as $s){
@@ -60,52 +60,53 @@ abstract class CompositeBase extends MongoTripodBase implements IComposite
                 foreach($docTypes as $type)
                 {
                     if($this->checkIfTypeShouldTriggerOperation($type, $types, $currentSubject)) {
-                        if(!array_key_exists($docHash, $operations)){
-                            $operations[$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
-                            $operations[$docHash]['ops'][$this->getPodName()] = array();
+                        if(!array_key_exists($docHash, $candidates)){
+                            $candidates[$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
+                            $candidates[$docHash]['ops'][$this->getPodName()] = array();
                         }
-                        array_push($operations[$docHash]['ops'][$this->getPodName()], $this->getOperationType());
+                        array_push($candidates[$docHash]['ops'][$this->getPodName()], $this->getOperationType());
                     }
                 }
             }
         }
 
+        // add to this any composites
         foreach($this->findImpactedComposites($subjectsAndPredicatesOfChange, $contextAlias) as $doc) {
             $spec = $this->getSpecification($this->storeName, $doc[_ID_KEY]['type']);
             if(!empty($spec)){
                 $docHash = md5($doc[_ID_KEY][_ID_RESOURCE] . $doc[_ID_KEY][_ID_CONTEXT]);
 
-                if(!array_key_exists($docHash, $operations)){
-                    $operations[$docHash] = array(
+                if(!array_key_exists($docHash, $candidates)){
+                    $candidates[$docHash] = array(
                         'id'=>array(
                             _ID_RESOURCE=>$doc[_ID_KEY][_ID_RESOURCE],
                             _ID_CONTEXT=>$doc[_ID_KEY][_ID_CONTEXT],
                         )
                     );
                 }
-                if(!array_key_exists('specTypes', $operations[$docHash])) {
-                    $operations[$docHash]['specTypes'] = array();
+                if(!array_key_exists('specTypes', $candidates[$docHash])) {
+                    $candidates[$docHash]['specTypes'] = array();
                 }
                 // Save the specification type so we only have to regen resources in that table type
-                if(!in_array($doc[_ID_KEY][_ID_TYPE], $operations[$docHash]['specTypes']))
+                if(!in_array($doc[_ID_KEY][_ID_TYPE], $candidates[$docHash]['specTypes']))
                 {
-                    $operations[$docHash]['specTypes'][] = $doc[_ID_KEY][_ID_TYPE];
+                    $candidates[$docHash]['specTypes'][] = $doc[_ID_KEY][_ID_TYPE];
                 }
             }
         }
 
         // convert operations to subjects
-        $modifiedSubjects = array();
-        foreach($operations as $operation){
-            if(in_array($operation['id'][_ID_RESOURCE], $deletedSubjects)){
-                $operation['delete'] = true;
+        $impactedSubjects = array();
+        foreach($candidates as $candidate){
+            if(in_array($candidate['id'][_ID_RESOURCE], $deletedSubjects)){
+                $candidate['delete'] = true;
             } else {
-                $operation['delete'] = false;
+                $candidate['delete'] = false;
             }
-            $specTypes = (isset($operation['specTypes']) ? $operation['specTypes'] : array());
-            $modifiedSubjects[] = ModifiedSubject::create($operation['id'], $this, $specTypes, $this->getStoreName(), $this->getPodName(), $operation['delete']);
+            $specTypes = (isset($candidate['specTypes']) ? $candidate['specTypes'] : array());
+            $impactedSubjects[] = new ImpactedSubject($candidate['id'], $this->getOperationType(), $this->getStoreName(), $this->getPodName(), $specTypes, $candidate['delete']);
         }
-        return $modifiedSubjects;
+        return $impactedSubjects;
     }
 
     public abstract function getTypesInSpecification();

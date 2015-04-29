@@ -18,7 +18,7 @@ interface ITripodSearchProvider
      * @throws TripodSearchException if there was an error removing the document
      * @return mixed
      */
-    public function deleteDocument($resource, $context, $specId=null);
+    public function deleteDocument($resource, $context, $specId=array());
 
     /**
      * Returns the ids of all documents that contain and impact index entry

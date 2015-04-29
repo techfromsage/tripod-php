@@ -17,7 +17,7 @@ require_once TRIPOD_DIR.'exceptions/TripodSearchException.class.php';
 require_once TRIPOD_DIR.'exceptions/TripodCardinalityException.class.php';
 require_once TRIPOD_DIR.'mongo/MongoTripodConstants.php';
 require_once TRIPOD_DIR.'mongo/MongoGraph.class.php';
-require_once TRIPOD_DIR.'mongo/ModifiedSubject.class.php';
+require_once TRIPOD_DIR.'mongo/ImpactedSubject.class.php';
 require_once TRIPOD_DIR.'mongo/base/MongoTripodBase.class.php';
 require_once TRIPOD_DIR.'mongo/IComposite.php';
 require_once TRIPOD_DIR.'mongo/base/CompositeBase.class.php';
