@@ -3,7 +3,6 @@
 /**
  * A subject that has been involved in an modification event (create/update, delete) and will therefore require
  * view, table and search doc generation
- * todo: this is misnamed. Instead it should be ImpactedSubject. Remove SplSubject interface as no longer makes sense with 1-1 mapping to observer.
  */
 class ImpactedSubject
 {
