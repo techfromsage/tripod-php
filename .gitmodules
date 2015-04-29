@@ -1,3 +1,0 @@
-[submodule "lib/arc"]
-	path = lib/arc
-	url = https://github.com/talis/arc2-php52.git
