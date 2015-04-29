@@ -263,7 +263,9 @@ class ChangeSet extends MongoGraph {
             {
                 $subjectsAndPredicatesOfChange[$subject] = array();
             }
-            // If resource is not either completely new or deleted, specify the predicates affected // todo: is this right? What if we have mixed changes??
+            // If resource is not either completely new or deleted, specify the predicates affected
+            // todo: q. is this right? What if we have mixed changes?? a. This is to hint to the getImpactedComposites that it should consider all the properties have potentially changed.
+            // todo: instead the changeset itself should not care about that and the getImpactedComposites should receive the output of MongoTripodUpdates::applyChangeset and use that to make decisions instead of the Changeset
             if(!(empty($this->before) || empty($this->after)))
             {
                 foreach($this->get_subjects_where_resource(RDF_SUBJECT, $subject) as $changeNode)

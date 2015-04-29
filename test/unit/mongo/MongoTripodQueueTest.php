@@ -1,9 +1,11 @@
 <?php
 require_once 'MongoTripodTestBase.php';
 require_once 'src/mongo/MongoTripod.class.php';
-require_once 'src/mongo/queue/MongoTripodQueue.class.php';
 
-class MongoTripodQueueTest extends MongoTripodTestBase
+/**
+ * todo: refactor this whole class as queue is dead.
+ */
+class MongoTripodQueueDeadTestRefactor
 {
     /**
      * @var MongoTripod

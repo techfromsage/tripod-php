@@ -4,6 +4,8 @@ require_once TRIPOD_DIR.'ITripodStat.php';
 
 $TOTAL_TIME=0;
 
+use Monolog\Logger;
+
 abstract class MongoTripodBase
 {
     /**
@@ -169,85 +171,49 @@ abstract class MongoTripodBase
 
     // @codeCoverageIgnoreStart
 
-    // todo: tidy up logging mess and make it work consistently between projects
     public function timingLog($type, $params)
     {
-        global $TOTAL_TIME;
-        if (array_key_exists("duration",$params))
-        {
-            $TOTAL_TIME += $params["duration"];
-            $params['cumulative'] = $TOTAL_TIME;
-        }
-
-        if (self::getLogger()!=null)
-            self::getLogger()->getInstance()->debug('[TRIPOD_TIMING:'.$type.']', $params);
+        $this->log(Psr\Log\LogLevel::INFO,$type,$params); // todo: timing log is a bit weird. Should it infact go in a different channel? Is it just debug?
     }
 
     public function debugLog($message, $params=null)
     {
-        if (self::getLogger()!=null)
-        {
-            ($params==null) ? self::getLogger()->getInstance()->debug("[TRIPOD_DEBUG] $message") : self::getLogger()->getInstance()->debug("[TRIPOD_DEBUG] $message", $params);
-        }
-        else
-        {
-            echo "$message\n";
-            if ($params) print_r($params);
-        }
+        $this->log(Psr\Log\LogLevel::DEBUG,$message,$params);
     }
 
     public function errorLog($message, $params=null)
     {
-        if (self::getLogger()!=null)
-        {
-            self::getLogger()->getInstance()->error("[TRIPOD_ERR] $message",$params);
-        }
-        else
-        {
-            echo "$message\n";
-            if ($params)
-            {
-                echo "Params: \n";
-                foreach ($params as $key=>$value)
-                {
-                    echo "$key: $value\n";
-                }
-            }
-        }
+        $this->log(Psr\Log\LogLevel::ERROR,$message,$params);
+    }
+
+    public function warningLog($message, $params=null)
+    {
+        $this->log(Psr\Log\LogLevel::WARNING,$message,$params);
+    }
+
+    private function log($level, $message,$params)
+    {
+        ($params==null) ? self::getLogger()->log($level, $message) : self::getLogger()->log($level, $message, $params);
     }
 
     /**
-     * @param $message
-     * @param array|null $params
+     * @var Psr\Log\LoggerInterface
      */
-    public function warningLog($message, $params=null)
-    {
-        if (self::getLogger()!=null)
-        {
-            self::getLogger()->getInstance()->warn("[TRIPOD_WARN] $message",$params);
-        }
-        else
-        {
-            $this->debugLog($message, $params);
-        }
-    }
-
     public static $logger;
 
     /**
      * @static
-     * @return object a Logger
+     * @return Psr\Log\LoggerInterface;
      */
     public static function getLogger()
     {
-        if (self::$logger)
+        if (self::$logger == null)
         {
-            return self::$logger;
+            $log = new \Monolog\Logger('TRIPOD');
+//            $log->pushHandler(); todo: which handler to push by default?
+            self::$logger = $log;
         }
-        else
-        {
-            return null;
-        }
+        return self::$logger;
     }
     // @codeCoverageIgnoreEnd
 

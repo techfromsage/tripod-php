@@ -79,12 +79,6 @@ class MongoTripodConfig
     protected $tConfig = array();
 
     /**
-     * Queue db config
-     * @var array
-     */
-    protected $queueConfig = array();
-
-    /**
      * The value should be the name of a class that implement iTripodSearchProvider keyed by storename
      * @var array
      */
@@ -172,15 +166,6 @@ class MongoTripodConfig
         }
         $this->tConfig["database"] = $this->getMandatoryKey("database",$transactionConfig,'transaction_log');
         $this->tConfig["collection"] = $this->getMandatoryKey("collection",$transactionConfig,'transaction_log');
-
-        $queueConfig = $this->getMandatoryKey("queue",$config);
-        $this->queueConfig["database"] = $this->getMandatoryKey("database",$queueConfig,'queue');
-        $this->queueConfig["collection"] = $this->getMandatoryKey("collection",$queueConfig,'queue');
-        $this->queueConfig["data_source"] = $this->getMandatoryKey("data_source",$queueConfig,'queue');
-        if(!isset($this->dataSources[$this->queueConfig['data_source']]))
-        {
-            throw new MongoTripodConfigException("Queue data source, " . $this->queueConfig['data_source'] . ", was not defined");
-        }
 
         // A 'pod' corresponds to a logical database
         $this->databases = $this->getMandatoryKey("stores",$config);
@@ -1296,16 +1281,6 @@ class MongoTripodConfig
     }
 
     /**
-     * Returns the queue database connection string
-     *
-     * @return string
-     * @throws MongoTripodConfigException
-     */
-    public function getQueueConnStr() {
-        return $this->getConnStrForDataSource($this->queueConfig['data_source']);
-    }
-
-    /**
      * Returns a replica set name for the database, if one has been defined
      * @param $datasource
      * @return string|null
@@ -1701,15 +1676,6 @@ class MongoTripodConfig
     }
 
     /**
-     * Returns the MongoTripodQueue connection config
-     * @return array
-     */
-    public function getQueueConfig()
-    {
-        return $this->queueConfig;
-    }
-
-    /**
      * @param string $storeName
      * @return string|null
      */
@@ -2007,31 +1973,6 @@ class MongoTripodConfig
      * @return MongoDB
      * @throws MongoTripodConfigException
      */
-    public function getQueueDatabase($readPreference = MongoClient::RP_PRIMARY_PREFERRED)
-    {
-
-        if(!isset($this->dataSources[$this->queueConfig['data_source']]))
-        {
-            throw new MongoTripodConfigException("Data source '" . $this->queueConfig['data_source'] . "' not in configuration");
-        }
-        $connectionOptions = array();
-        $dataSource = $this->dataSources[$this->queueConfig['data_source']];
-        $connectionOptions['connectTimeoutMS'] = (isset($dataSource['connectTimeoutMS']) ? $dataSource['connectTimeoutMS'] : DEFAULT_MONGO_CONNECT_TIMEOUT_MS);
-
-        if(isset($dataSource['replicaSet']) && !empty($dataSource['replicaSet'])) {
-            $connectionOptions['replicaSet'] = $dataSource['replicaSet'];
-        }
-        $client = new MongoClient($dataSource['connection'], $connectionOptions);
-        $db = $client->selectDB($this->queueConfig['database']);
-        $db->setReadPreference($readPreference);
-        return $db;
-    }
-
-    /**
-     * @param $readPreference
-     * @return MongoDB
-     * @throws MongoTripodConfigException
-     */
     public function getTransactionLogDatabase($readPreference = MongoClient::RP_PRIMARY_PREFERRED)
     {
 
@@ -2047,9 +1988,46 @@ class MongoTripodConfig
             $connectionOptions['replicaSet'] = $dataSource['replicaSet'];
         }
         $client = new MongoClient($dataSource['connection'], $connectionOptions);
-        $db = $client->selectDB($this->queueConfig['database']);
+        $db = $client->selectDB($this->tConfig['database']);
         $db->setReadPreference($readPreference);
         return $db;
     }
+
+    public static function getDiscoverQueueName()
+    {
+        return self::getQueueName(TRIPOD_DISCOVER_QUEUE,"discover");
+    }
+
+    public static function getApplyQueueName()
+    {
+        return self::getQueueName(TRIPOD_APPLY_QUEUE,"apply");
+    }
+
+    private static function getQueueName($envVar,$type)
+    {
+        $default = (defined('APP_ENV')) ? "tripod::".APP_ENV."::$type" : "tripod::$type";
+        return self::getenv($envVar,$default);
+    }
+
+    public static function getResqueServer()
+    {
+        return self::getenv(MONGO_TRIPOD_RESQUE_SERVER,"localhost:6379");
+    }
+
+    private static function getenv($env, $default = false)
+    {
+        $var = getenv($env);
+        if(isset($var) && $var != '')
+        {
+            return $var;
+        }
+        if($default !== false)
+        {
+            return $default;
+        }
+        throw new MongoTripodConfigException("Missing value for environmental variable $env");
+    }
+
+
 }
 class MongoTripodConfigException extends Exception {}

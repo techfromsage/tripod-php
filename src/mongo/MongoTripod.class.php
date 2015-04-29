@@ -1,22 +1,5 @@
 <?php
-require_once TRIPOD_DIR.'classes/Timer.class.php';
-require_once TRIPOD_DIR.'exceptions/TripodException.class.php';
-require_once TRIPOD_DIR.'exceptions/TripodSearchException.class.php';
-require_once TRIPOD_DIR.'exceptions/TripodCardinalityException.class.php';
-require_once TRIPOD_DIR.'mongo/MongoTripodConstants.php';
-require_once TRIPOD_DIR.'mongo/MongoGraph.class.php';
-require_once TRIPOD_DIR.'mongo/ModifiedSubject.class.php';
-require_once TRIPOD_DIR.'mongo/base/MongoTripodBase.class.php';
-require_once TRIPOD_DIR.'mongo/IComposite.php';
-require_once TRIPOD_DIR.'mongo/base/CompositeBase.class.php';
-require_once TRIPOD_DIR.'mongo/delegates/MongoTransactionLog.class.php';
-require_once TRIPOD_DIR.'mongo/delegates/MongoTripodUpdates.class.php';
-require_once TRIPOD_DIR.'mongo/delegates/MongoTripodViews.class.php';
-require_once TRIPOD_DIR.'mongo/delegates/MongoTripodTables.class.php';
-require_once TRIPOD_DIR.'mongo/delegates/MongoTripodSearchIndexer.class.php';
-require_once TRIPOD_DIR.'mongo/queue/MongoTripodQueue.class.php';
-require_once TRIPOD_DIR.'ITripod.php';
-require_once TRIPOD_DIR.'classes/ChangeSet.class.php';
+
 
 /** @noinspection PhpIncludeInspection */
 
