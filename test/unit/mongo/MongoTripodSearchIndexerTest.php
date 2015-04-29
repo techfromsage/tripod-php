@@ -9,8 +9,9 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
     protected function setUp()
     {
         parent::setUp();
-        $queue = new MongoTripodQueue();
-        $queue->purgeQueue();
+        // todo: remove
+//        $queue = new MongoTripodQueue();
+//        $queue->purgeQueue();
         $this->tripod = new MongoTripod("CBD_testing", "tripod_php_testing", array("async"=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>false)));
         foreach(MongoTripodConfig::getInstance()->getCollectionsForSearch($this->tripod->getStoreName()) as $collection)
         {

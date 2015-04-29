@@ -50,8 +50,8 @@ class MongoTripodQueueOperationsDeadTestRefactor
         $this->tripodTransactionLog = new MongoTransactionLog();
         $this->tripodTransactionLog->purgeAllTransactions();
 
-        $this->tripodQueue = new MongoTripodQueue();
-        $this->tripodQueue->purgeQueue();
+//        $this->tripodQueue = new MongoTripodQueue();
+//        $this->tripodQueue->purgeQueue();
 
         $this->tripod = new MongoTripod('CBD_testing','tripod_php_testing_queue_ops',array('defaultContext'=>'http://talisaspire.com/','async'=>array(OP_VIEWS=>false, OP_TABLES=>false, OP_SEARCH=>false)));
         $this->getTripodCollection($this->tripod)->drop();

@@ -1259,8 +1259,8 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $this->tripod->saveChanges($graph, $newGraph);
 
         // Add an item to the queue todo: why?
-        $queue = new MongoTripodQueue();
-        $queue->addItem(new ChangeSet(),array(),"foo","CBD_wibble",array(OP_VIEWS));
+//        $queue = new MongoTripodQueue();
+//        $queue->addItem(new ChangeSet(),array(),"foo","CBD_wibble",array(OP_VIEWS));
 
         // Generate views and tables
         foreach($config->getViewSpecifications($storeName) as $viewId=>$viewSpec)

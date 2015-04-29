@@ -39,8 +39,9 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $this->loadBaseDataViaTripod();
 
         // purge Queue
-        $queue = new MongoTripodQueue();
-        $queue->purgeQueue();
+       // todo: remove
+//        $queue = new MongoTripodQueue();
+//        $queue->purgeQueue();
 
         $this->tablesConstParams = array($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),'http://talisaspire.com/');
 
