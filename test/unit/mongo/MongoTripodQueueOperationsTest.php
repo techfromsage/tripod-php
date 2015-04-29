@@ -42,7 +42,9 @@ class MongoTripodQueueOperationsDeadTestRefactor
         echo "\nTest: {$className}->{$testName}\n";
 
         // make sure log statements don't go to stdout during tests...
-        MongoTripodBase::$logger = new AnonymousLogger();
+        $log = new \Monolog\Logger("unittest");
+        $log->pushHandler(new \Monolog\Handler\NullHandler());
+        MongoTripodBase::$logger = $log;
 
 
         $this->tripodTransactionLog = new MongoTransactionLog();

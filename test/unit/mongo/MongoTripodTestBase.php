@@ -17,30 +17,6 @@ define('MONGO_MAIN_DB', 'acorn');
 define('MONGO_MAIN_COLLECTION', 'CBD_harvest');
 define('MONGO_USER_COLLECTION', 'CBD_user');
 
-class AnonymousLogger
-{
-    static function getInstance()
-    {
-        return new AnonymousLogger();
-    }
-    function error($message,$params=null)
-    {
-        // useful, do something
-        echo "$message\n";
-        if ($params)
-        {
-            foreach ($params as $key=>$value)
-            {
-                echo "$key: " . print_r($value, true) . "\n";
-            }
-        }
-    }
-    function debug($message)
-    {
-        // do nothing
-    }
-}
-
 class MongoTripodTestBase extends PHPUnit_Framework_TestCase
 {
 
@@ -110,7 +86,9 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         echo "\nTest: {$className}->{$testName}\n";
 
         // make sure log statements don't go to stdout during tests...
-        MongoTripodBase::$logger = new AnonymousLogger();
+        $log = new \Monolog\Logger("unittest");
+        $log->pushHandler(new \Monolog\Handler\NullHandler());
+        MongoTripodBase::$logger = $log;
     }
 
 
