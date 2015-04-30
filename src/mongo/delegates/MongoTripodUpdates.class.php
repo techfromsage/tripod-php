@@ -145,10 +145,10 @@ class MongoTripodUpdates extends MongoTripodBase {
                 $changes = $this->storeChanges($cs, $contextAlias);
 
                 // Process any syncronous operations
-                $this->processSyncOperations($cs,$changes['deletedSubjects'],$contextAlias);
+                $this->processSyncOperations($cs,$contextAlias);
 
                 // Schedule calculation of any async activity
-                $this->queueAsyncOperations($cs,$changes['deletedSubjects'],$contextAlias);
+                $this->queueAsyncOperations($cs,$contextAlias);
             }
         }
         catch(Exception $e){
@@ -663,13 +663,13 @@ class MongoTripodUpdates extends MongoTripodBase {
      * Processes each subject synchronously
      * @param ImpactedSubject[] $modifiedSubjects
      */
-    protected function processSyncOperations(ChangeSet $cs, $deletedSubjects, $contextAlias)
+    protected function processSyncOperations(ChangeSet $cs, $contextAlias)
     {
         $syncModifiedSubjects = array();
         foreach($this->getSyncOperations() as $op)
         {
             $composite = $this->tripod->getComposite($op);
-            $opSubjects = $composite->getImpactedSubjects($cs,$deletedSubjects,$contextAlias);
+            $opSubjects = $composite->getImpactedSubjects($cs,$contextAlias);
             if (!empty($opSubjects)) {
                 foreach($opSubjects as $subject)
                 {
@@ -703,20 +703,19 @@ class MongoTripodUpdates extends MongoTripodBase {
      * Adds the operations to the queue to be performed asynchronously
      * @param ImpactedSubject[] $modifiedSubjects
      */
-    protected function queueASyncOperations(ChangeSet $cs,$deletedSubjects,$contextAlias)
+    protected function queueASyncOperations(ChangeSet $cs,$contextAlias)
     {
         $operations = $this->getAsyncOperations();
         if (!empty($operations)) {
             $data = array(
                 "changeSet" => $cs->to_json(),
-                "deletedSubjects" => $deletedSubjects,
                 "operations" => $operations,
                 "tripodConfig" => MongoTripodConfig::getConfig(),
                 "storeName" => $this->storeName,
                 "podName" => $this->podName,
                 "contextAlias" => $contextAlias
             );
-            Resque::enqueue(MongoTripodConfig::getDiscoverQueueName(),"DiscoverModifiedSubjects",$data);
+            Resque::enqueue(MongoTripodConfig::getDiscoverQueueName(),"DiscoverImpactedSubjects",$data);
         }
     }
 

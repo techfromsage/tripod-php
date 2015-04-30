@@ -7,7 +7,7 @@
 class ImpactedSubject
 {
     /**
-     * @var String
+     * @var string
      */
     private $operation;
 
@@ -64,15 +64,7 @@ class ImpactedSubject
     }
 
     /**
-     * @return boolean
-     */
-    public function getDelete()
-    {
-        return $this->delete;
-    }
-
-    /**
-     * @return String
+     * @return string
      */
     public function getOperation()
     {
@@ -129,7 +121,12 @@ class ImpactedSubject
 
     public function update()
     {
-        $tripod = new MongoTripod($this->getPodName(),$this->getStoreName(),array("readPreference"=>MongoClient::RP_PRIMARY));
+        $tripod = $this->getTripod();
         $tripod->getComposite($this->operation)->update($this);
+    }
+
+    protected function getTripod()
+    {
+        return new MongoTripod($this->getPodName(),$this->getStoreName(),array("readPreference"=>MongoClient::RP_PRIMARY));
     }
 }

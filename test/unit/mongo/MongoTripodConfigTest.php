@@ -1621,4 +1621,15 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $this->setExpectedException('MongoTripodConfigException', "Invalid arithmetic operator '#' in computed arithmetic spec");
         MongoTripodConfig::getInstance();
     }
+
+    public function testGetResqueServer()
+    {
+        MongoTripodConfig::setValidationLevel(MongoTripodConfig::VALIDATE_MAX);
+
+        if(!getenv(MONGO_TRIPOD_RESQUE_SERVER))
+        {
+            putenv(MONGO_TRIPOD_RESQUE_SERVER . "=localhost:6379");
+        }
+        $this->assertEquals(getenv(MONGO_TRIPOD_RESQUE_SERVER), MongoTripodConfig::getResqueServer());
+    }
 }

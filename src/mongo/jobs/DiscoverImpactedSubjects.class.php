@@ -1,13 +1,13 @@
 <?php
 
-class DiscoverModifiedSubjects extends JobBase {
+class DiscoverImpactedSubjects extends JobBase {
 
     public function perform()
     {
         try
         {
 
-            $this->debugLog("DiscoverModifiedSubjects::perform() start");
+            $this->debugLog("DiscoverImpactedSubjects::perform() start");
 
             $timer = new Timer();
             $timer->start();
@@ -29,7 +29,7 @@ class DiscoverModifiedSubjects extends JobBase {
             foreach($operations as $op)
             {
                 $composite = $tripod->getComposite($op);
-                $modifiedSubjects = array_merge($modifiedSubjects,$composite->getImpactedSubjects($cs,$this->args['deletedSubjects'],$this->args['contextAlias']));
+                $modifiedSubjects = array_merge($modifiedSubjects,$composite->getImpactedSubjects($cs,$this->args['contextAlias']));
             }
 
             if(!empty($modifiedSubjects)){
@@ -47,7 +47,7 @@ class DiscoverModifiedSubjects extends JobBase {
             // stat time taken to process item, from time it was created (queued)
             $timer->stop();
             $this->getStat()->timer(MONGO_QUEUE_DISCOVER_SUCCESS,$timer->result());
-            $this->debugLog("DiscoverModifiedSubjects::perform() done in {$timer->result()}ms");
+            $this->debugLog("DiscoverImpactedSubjects::perform() done in {$timer->result()}ms");
 
         }
         catch(Exception $e)
@@ -58,11 +58,11 @@ class DiscoverModifiedSubjects extends JobBase {
     }
 
     /**
-     * Validate args for DiscoverModifiedSubjects
+     * Validate args for DiscoverImpactedSubjects
      * @return array
      */
     protected function getMandatoryArgs()
     {
-        return array("tripodConfig","storeName","podName","changeSet","operations","deletedSubjects","contextAlias");
+        return array("tripodConfig","storeName","podName","changeSet","operations","contextAlias");
     }
 }

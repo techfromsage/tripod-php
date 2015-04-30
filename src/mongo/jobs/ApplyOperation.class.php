@@ -41,7 +41,7 @@ class ApplyOperation extends JobBase {
     }
 
     /**
-     * Validate args for DiscoverModifiedSubjects
+     * Validate args for ApplyOperation
      * @return array
      */
     protected function getMandatoryArgs()

@@ -296,9 +296,9 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
     public function testUpdateWillDeleteItem()
     {
-        $mockTables = $this->getMock('MongoTripodTables', array('deleteTableRowsForResource','generateTableRowsForResource'), $this->tablesConstParams);
+        $mockTables = $this->getMock('MongoTripodTables', array('deleteTableRowsForResource','generateTableRowsForType'), $this->tablesConstParams);
         $mockTables->expects($this->once())->method('deleteTableRowsForResource')->with("http://foo","context");
-        $mockTables->expects($this->never())->method('generateTableRowsForResource');
+        $mockTables->expects($this->never())->method('generateTableRowsForType');
 
         $mockTables->update(new ImpactedSubject(array("r"=>"http://foo","c"=>"context"),OP_TABLES,"foo","bar",array("t_table"),true));
     }

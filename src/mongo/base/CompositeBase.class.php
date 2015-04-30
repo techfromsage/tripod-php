@@ -8,7 +8,7 @@
  */
 abstract class CompositeBase extends MongoTripodBase implements IComposite
 {
-    public function getImpactedSubjects(ChangeSet $cs,$deletedSubjects,$contextAlias)
+    public function getImpactedSubjects(ChangeSet $cs,$contextAlias)
     {
         $subjectsAndPredicatesOfChange = $cs->get_subjects_and_predicates_of_change();
 
@@ -98,13 +98,8 @@ abstract class CompositeBase extends MongoTripodBase implements IComposite
         // convert operations to subjects
         $impactedSubjects = array();
         foreach($candidates as $candidate){
-            if(in_array($candidate['id'][_ID_RESOURCE], $deletedSubjects)){
-                $candidate['delete'] = true;
-            } else {
-                $candidate['delete'] = false;
-            }
             $specTypes = (isset($candidate['specTypes']) ? $candidate['specTypes'] : array());
-            $impactedSubjects[] = new ImpactedSubject($candidate['id'], $this->getOperationType(), $this->getStoreName(), $this->getPodName(), $specTypes, $candidate['delete']);
+            $impactedSubjects[] = new ImpactedSubject($candidate['id'], $this->getOperationType(), $this->getStoreName(), $this->getPodName(), $specTypes);
         }
         return $impactedSubjects;
     }

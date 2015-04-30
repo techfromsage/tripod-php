@@ -76,6 +76,7 @@ class MongoTripodTables extends CompositeBase
     }
 
     /**
+     * @todo Test that deleted subject works properly now that Subject->delete is removed
      * Receive update from subject
      * @param ImpactedSubject
      * @return void
@@ -86,14 +87,7 @@ class MongoTripodTables extends CompositeBase
         $resourceUri    = $resource[_ID_RESOURCE];
         $context        = $resource[_ID_CONTEXT];
 
-        if($subject->getDelete())
-        {
-            $this->deleteTableRowsForResource($resourceUri,$context,$subject->getSpecTypes());
-        }
-        else
-        {
-            $this->generateTableRowsForResource($resourceUri,$context,$subject->getSpecTypes());
-        }
+        $this->generateTableRowsForResource($resourceUri,$context,$subject->getSpecTypes());
     }
 
     public function getTypesInSpecification()
