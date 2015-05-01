@@ -417,6 +417,7 @@ class MongoTripodUpdates extends MongoTripodBase {
      */
     protected function applyChangeSet(ChangeSet $cs, $originalCBDs, $contextAlias, $transaction_id)
     {
+        $subjectsAndPredicatesOfChange = array();
         if (preg_match('/^CBD_/',$this->getCollection()->getName()))
         {
             // how many subjects of change?
@@ -434,6 +435,10 @@ class MongoTripodUpdates extends MongoTripodBase {
             foreach ($changes as $change)
             {
                 $subjectOfChange = $cs->get_first_resource($change,$this->labeller->qname_to_uri("cs:subjectOfChange"));
+                if(!array_key_exists($subjectOfChange, $subjectsAndPredicatesOfChange))
+                {
+                    $subjectsAndPredicatesOfChange[$subjectOfChange] = array();
+                }
                 $criteria = array(
                     _ID_KEY=>array(_ID_RESOURCE=>$this->labeller->uri_to_alias($subjectOfChange),_ID_CONTEXT=>$contextAlias)
                 );
@@ -458,6 +463,12 @@ class MongoTripodUpdates extends MongoTripodBase {
                 foreach ($removals as $r)
                 {
                     $predicate = $cs->get_first_resource($r["value"],$this->labeller->qname_to_uri("rdf:predicate"));
+
+                    if(!in_array($predicate, $subjectsAndPredicatesOfChange[$subjectOfChange]))
+                    {
+                        $subjectsAndPredicatesOfChange[$subjectOfChange][] = $predicate;
+                    }
+
                     $object = $cs->get_subject_property_values($r["value"],$this->labeller->qname_to_uri("rdf:object"));
 
                     $isUri = ($object[0]['type']=="uri");
@@ -487,6 +498,12 @@ class MongoTripodUpdates extends MongoTripodBase {
                 foreach ($additions as $r)
                 {
                     $predicate = $cs->get_first_resource($r["value"],$this->labeller->qname_to_uri("rdf:predicate"));
+
+                    if(!in_array($predicate, $subjectsAndPredicatesOfChange[$subjectOfChange]))
+                    {
+                        $subjectsAndPredicatesOfChange[$subjectOfChange][] = $predicate;
+                    }
+
                     $object = $cs->get_subject_property_values($r["value"],$this->labeller->qname_to_uri("rdf:object"));
 
                     $isUri = ($object[0]['type']=="uri");
@@ -613,24 +630,30 @@ class MongoTripodUpdates extends MongoTripodBase {
 
             }
 
-            $updatedSubjects = array();
-            $deletedSubjects = array();
-            foreach($updates as $u)
-            {
-                $updatedSubjects[] = $u['criteria'][_ID_KEY][_ID_RESOURCE];
-            }
+// @todo: do we need any of this anymore?
+//            $updatedSubjects = array();
+//            $deletedSubjects = array();
+//            foreach($updates as $u)
+//            {
+//                $updatedSubjects[] = $u['criteria'][_ID_KEY][_ID_RESOURCE];
+//            }
+//
+//            foreach($deletes as $d)
+//            {
+//                $deletedSubjects[] = $d['criteria'][_ID_KEY][_ID_RESOURCE];
+//            }
+//
+//            $retval = array();
+//            $retval['newCBDs'] = $newCBDs;
+//            $retval['updatedSubjects'] = $updatedSubjects;
+//            $retval['deletedSubjects'] = $deletedSubjects;
+//
+//            return $retval;
 
-            foreach($deletes as $d)
-            {
-                $deletedSubjects[] = $d['criteria'][_ID_KEY][_ID_RESOURCE];
-            }
-
-            $retval = array();
-            $retval['newCBDs'] = $newCBDs;
-            $retval['updatedSubjects'] = $updatedSubjects;
-            $retval['deletedSubjects'] = $deletedSubjects;
-
-            return $retval;
+            return array(
+                'newCBDs'=>$newCBDs,
+                'subjectsAndPredicatesOfChange'=>$subjectsAndPredicatesOfChange
+            );
         }
         else
         {
