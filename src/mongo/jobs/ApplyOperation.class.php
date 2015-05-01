@@ -21,8 +21,7 @@ class ApplyOperation extends JobBase {
                 $subjectAsArray["operation"],
                 $subjectAsArray["storeName"],
                 $subjectAsArray["podName"],
-                $subjectAsArray["specTypes"],
-                $subjectAsArray["delete"]
+                $subjectAsArray["specTypes"]
             );
 
             $subject->update();

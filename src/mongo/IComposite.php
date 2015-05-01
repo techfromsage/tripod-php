@@ -9,11 +9,11 @@ interface IComposite
 
     /**
      * Returns the subjects that this composite will need to regenerate given changes made to the underlying dataset
-     * @param ChangeSet $cs
+     * @param array $subjectsAndPredicatesOfChange
      * @param string $contextAlias
      * @return mixed
      */
-    public function getImpactedSubjects(ChangeSet $cs,$contextAlias);
+    public function getImpactedSubjects(Array $subjectsAndPredicatesOfChange,$contextAlias);
 
     public function update(ImpactedSubject $subject);
 }

@@ -151,7 +151,7 @@ class MongoTripodTables extends CompositeBase
             $query = array();
             foreach($tableFilters as $tableType=>$filters)
             {
-                // first re-gen views where resources appear in the impact index
+                // first re-gen table rows where resources appear in the impact index
                 $query[] = array("value."._IMPACT_INDEX=>array('$in'=>$filters), '_id.'._ID_TYPE=>$tableType);
             }
 

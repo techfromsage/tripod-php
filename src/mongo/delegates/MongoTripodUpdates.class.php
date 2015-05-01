@@ -628,35 +628,35 @@ class MongoTripodUpdates extends MongoTripodBase {
 
             }
 
-// @todo: do we need any of this anymore?
-//            $updatedSubjects = array();
-//            $deletedSubjects = array();
-//            foreach($updates as $u)
-//            {
-//                $updatedSubjects[] = $u['criteria'][_ID_KEY][_ID_RESOURCE];
-//            }
-//
-//            foreach($deletes as $d)
-//            {
-//                $deletedSubjects[] = $d['criteria'][_ID_KEY][_ID_RESOURCE];
-//            }
-//
-//            $retval = array();
-//            $retval['newCBDs'] = $newCBDs;
-//            $retval['updatedSubjects'] = $updatedSubjects;
-//            $retval['deletedSubjects'] = $deletedSubjects;
-//
-//            return $retval;
-
             return array(
                 'newCBDs'=>$newCBDs,
-                'subjectsAndPredicatesOfChange'=>$subjectsAndPredicatesOfChange
+                'subjectsAndPredicatesOfChange'=>$this->subjectsAndPredicatesOfChangeUrisToAliases($subjectsAndPredicatesOfChange)
             );
         }
         else
         {
             throw new Exception("Attempted to update a non-CBD collection");
         }
+    }
+
+    /**
+     * Normalize our subjects and predicates of change to use aliases rather than fq uris
+     * @param array $subjectsAndPredicatesOfChange
+     * @return array
+     */
+    protected function subjectsAndPredicatesOfChangeUrisToAliases(array $subjectsAndPredicatesOfChange)
+    {
+        $aliases = array();
+        foreach($subjectsAndPredicatesOfChange as $subject=>$predicates)
+        {
+            $subjectAlias = $this->labeller->uri_to_alias($subject);
+            $aliases[$subjectAlias] = array();
+            foreach($predicates as $predicate)
+            {
+                $aliases[$subjectAlias][] = $this->labeller->uri_to_alias($predicate);
+            }
+        }
+        return $aliases;
     }
 
     /**

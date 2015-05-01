@@ -55,5 +55,15 @@ abstract class JobBase extends MongoTripodBase
     }
 
 
+    /**
+     * @todo This was copied and pasted from MongoTripodUpdates, so need to isolate that code smell
+     * @param string $queueName
+     * @param string $class
+     * @param array $data
+     */
+    protected function submitJob($queueName, $class, Array $data)
+    {
+        Resque::enqueue($queueName, $class, $data);
+    }
 }
 

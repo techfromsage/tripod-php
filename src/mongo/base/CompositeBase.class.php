@@ -8,10 +8,8 @@
  */
 abstract class CompositeBase extends MongoTripodBase implements IComposite
 {
-    public function getImpactedSubjects(ChangeSet $cs,$contextAlias)
+    public function getImpactedSubjects(Array $subjectsAndPredicatesOfChange,$contextAlias)
     {
-        $subjectsAndPredicatesOfChange = $cs->get_subjects_and_predicates_of_change();
-
         $candidates = array();
         $filter = array();
         $subjectsToAlias = array();
@@ -137,6 +135,13 @@ abstract class CompositeBase extends MongoTripodBase implements IComposite
         $intersectingTypes = array_unique(array_intersect($types, $validTypes));
         if(!empty($intersectingTypes))
         {
+            // Views should always invalidate
+            if($this instanceof MongoTripodViews)
+            {
+                return true;
+            }
+
+            // Table rows and Search documents only need to be invalidated if their rdf:type property has changed
             // This means we're either adding or deleting a graph
             if(empty($subjectPredicates))
             {

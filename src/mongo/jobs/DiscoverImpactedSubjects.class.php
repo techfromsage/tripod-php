@@ -22,14 +22,12 @@ class DiscoverImpactedSubjects extends JobBase {
             $operations = $this->args['operations'];
             $modifiedSubjects = array();
 
-            // de-serialize changeset
-            $cs = new ChangeSet();
-            $cs->from_json($this->args["changeSet"]);
+            $subjectsAndPredicatesOfChange = $this->args['changes'];
 
             foreach($operations as $op)
             {
                 $composite = $tripod->getComposite($op);
-                $modifiedSubjects = array_merge($modifiedSubjects,$composite->getImpactedSubjects($cs,$this->args['contextAlias']));
+                $modifiedSubjects = array_merge($modifiedSubjects,$composite->getImpactedSubjects($subjectsAndPredicatesOfChange,$this->args['contextAlias']));
             }
 
             if(!empty($modifiedSubjects)){
@@ -37,7 +35,7 @@ class DiscoverImpactedSubjects extends JobBase {
                 foreach ($modifiedSubjects as $subject) {
                     $resourceId = $subject->getResourceId();
                     $this->debugLog("Adding operation {$subject->getOperation()} for subject {$resourceId[_ID_RESOURCE]} to queue ".MongoTripodConfig::getApplyQueueName());
-                    Resque::enqueue(MongoTripodConfig::getApplyQueueName(),"ApplyOperation",array(
+                    $this->submitJob(MongoTripodConfig::getApplyQueueName(),"ApplyOperation",array(
                         "subject"=>$subject->toArray(),
                         "tripodConfig"=>$this->args["tripodConfig"]
                     ));
@@ -63,6 +61,6 @@ class DiscoverImpactedSubjects extends JobBase {
      */
     protected function getMandatoryArgs()
     {
-        return array("tripodConfig","storeName","podName","changeSet","operations","contextAlias");
+        return array("tripodConfig","storeName","podName","changes","operations","contextAlias");
     }
 }

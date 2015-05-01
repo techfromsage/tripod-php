@@ -31,12 +31,7 @@ class ImpactedSubject
      */
     private $podName;
 
-    /**
-     * @var bool
-     */
-    private $delete;
-
-    public function __construct(Array $resourceId, $operation, $storeName, $podName, Array $specTypes=array(), $delete=false )
+    public function __construct(Array $resourceId, $operation, $storeName, $podName, Array $specTypes=array())
     {
         if (!is_array($resourceId) || !array_key_exists(_ID_RESOURCE,$resourceId) || !array_key_exists(_ID_CONTEXT,$resourceId))
         {
@@ -59,8 +54,6 @@ class ImpactedSubject
         $this->storeName = $storeName;
         $this->podName = $podName;
         $this->specTypes = $specTypes;
-        $this->delete = $delete;
-
     }
 
     /**
@@ -114,8 +107,7 @@ class ImpactedSubject
             "operation" => $this->operation,
             "specTypes" => $this->specTypes,
             "storeName" => $this->storeName,
-            "podName" => $this->podName,
-            "delete" => $this->delete
+            "podName" => $this->podName
         );
     }
 

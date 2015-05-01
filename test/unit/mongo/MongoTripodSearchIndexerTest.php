@@ -9,9 +9,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
     protected function setUp()
     {
         parent::setUp();
-        // todo: remove
-//        $queue = new MongoTripodQueue();
-//        $queue->purgeQueue();
+
         $this->tripod = new MongoTripod("CBD_testing", "tripod_php_testing", array("async"=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>false)));
         foreach(MongoTripodConfig::getInstance()->getCollectionsForSearch($this->tripod->getStoreName()) as $collection)
         {
@@ -56,6 +54,8 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
                 )
             )
         );
+
+        // @todo: how did this trigger anything in the first place?!
         $tripodUpdate->expects($this->atLeastOnce())
             ->method('storeChanges')
             ->will($this->returnValue(array('deletedSubjects'=>array())));
