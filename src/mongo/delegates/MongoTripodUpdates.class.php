@@ -142,13 +142,13 @@ class MongoTripodUpdates extends MongoTripodBase {
             if ($cs->has_changes())
             {
                 // store the actual CBDs
-                $changes = $this->storeChanges($cs, $contextAlias);
+                $subjectsAndPredicatesOfChange = $this->storeChanges($cs, $contextAlias);
 
                 // Process any syncronous operations
-                $this->processSyncOperations($cs,$contextAlias);
+                $this->processSyncOperations($subjectsAndPredicatesOfChange,$contextAlias);
 
                 // Schedule calculation of any async activity
-                $this->queueAsyncOperations($cs,$contextAlias);
+                $this->queueAsyncOperations($subjectsAndPredicatesOfChange,$contextAlias);
             }
         }
         catch(Exception $e){
@@ -263,11 +263,9 @@ class MongoTripodUpdates extends MongoTripodBase {
 
     /**
      * @param ChangeSet $cs Change-set to apply
-     * @param array $subjectsOfChange array of subjects of change
      * @param string $contextAlias
-     * @return array
      * @throws TripodException
-     * @throws Exception
+     * @return array An array of subjects and predicates that have been changed
      */
     protected function storeChanges(ChangeSet $cs, $contextAlias)
     {
@@ -318,7 +316,7 @@ class MongoTripodUpdates extends MongoTripodBase {
             $this->timingLog(MONGO_WRITE, array('duration'=>$t->result(), 'subjectsOfChange'=>implode(", ",$subjectsOfChange)));
             $this->getStat()->timer(MONGO_WRITE.".{$this->getPodName()}",$t->result());
 
-            return $changes;
+            return $changes['subjectsAndPredicatesOfChange'];
         }
         catch(Exception $e)
         {
@@ -684,15 +682,16 @@ class MongoTripodUpdates extends MongoTripodBase {
 
     /**
      * Processes each subject synchronously
-     * @param ImpactedSubject[] $modifiedSubjects
+     * @param array $subjectsAndPredicatesOfChange
+     * @param string $contextAlias
      */
-    protected function processSyncOperations(ChangeSet $cs, $contextAlias)
+    protected function processSyncOperations(Array $subjectsAndPredicatesOfChange, $contextAlias)
     {
         $syncModifiedSubjects = array();
         foreach($this->getSyncOperations() as $op)
         {
             $composite = $this->tripod->getComposite($op);
-            $opSubjects = $composite->getImpactedSubjects($cs,$contextAlias);
+            $opSubjects = $composite->getImpactedSubjects($subjectsAndPredicatesOfChange,$contextAlias);
             if (!empty($opSubjects)) {
                 foreach($opSubjects as $subject)
                 {
@@ -724,22 +723,34 @@ class MongoTripodUpdates extends MongoTripodBase {
 
     /**
      * Adds the operations to the queue to be performed asynchronously
-     * @param ImpactedSubject[] $modifiedSubjects
+     * @param array $subjectsAndPredicatesOfChange
+     * @param string $contextAlias
      */
-    protected function queueASyncOperations(ChangeSet $cs,$contextAlias)
+    protected function queueASyncOperations(Array $subjectsAndPredicatesOfChange,$contextAlias)
     {
         $operations = $this->getAsyncOperations();
         if (!empty($operations)) {
             $data = array(
-                "changeSet" => $cs->to_json(),
+                "changes" => $subjectsAndPredicatesOfChange,
                 "operations" => $operations,
                 "tripodConfig" => MongoTripodConfig::getConfig(),
                 "storeName" => $this->storeName,
                 "podName" => $this->podName,
                 "contextAlias" => $contextAlias
             );
-            Resque::enqueue(MongoTripodConfig::getDiscoverQueueName(),"DiscoverImpactedSubjects",$data);
+            $this->submitJob(MongoTripodConfig::getDiscoverQueueName(),"DiscoverImpactedSubjects",$data);
         }
+    }
+
+    /**
+     * @todo Should this abstracted to another class so queue backends can be swapped (e.g. 0mq, RabbitMQ, SQS, etc.)?
+     * @param string $queueName
+     * @param string $class
+     * @param array $data
+     */
+    protected function submitJob($queueName, $class, Array $data)
+    {
+        Resque::enqueue($queueName, $class, $data);
     }
 
     //////// LOCKS \\\\\\\\
