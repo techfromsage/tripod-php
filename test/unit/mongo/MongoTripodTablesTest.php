@@ -877,9 +877,15 @@ class MongoTripodTablesTest extends MongoTripodTestBase
                 )
             )
         );
+
+        $labeller = new MongoTripodLabeller();
+        $subjectsAndPredicatesOfChange = array(
+            $labeller->uri_to_alias("http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2")=>array("dct:title")
+        );
+
         $tripodUpdate->expects($this->atLeastOnce())
             ->method('storeChanges')
-            ->will($this->returnValue(array('deletedSubjects'=>array())));
+            ->will($this->returnValue($subjectsAndPredicatesOfChange));
 
         $tripod->expects($this->atLeastOnce())
             ->method('getDataUpdater')
