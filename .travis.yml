@@ -18,6 +18,6 @@ before_script:
   - mongod --port 29017 --dbpath /tmp/mongodb-alt --fork --logpath /tmp/mongodb-alt.log
   - sleep 15
 
-env: TRIPOD_DATASOURCE_RS2_CONFIG='{"type":"mongo","connection":"mongo:\/\/127.0.0.1:29017"}'
+env: TRIPOD_DATASOURCE_RS2_CONFIG='{"type":"mongo","connection":"mongo:\/\/localhost:29017"}'
 
 script: ant
