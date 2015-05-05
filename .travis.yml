@@ -11,7 +11,8 @@ services:
 
 before_install:
   - mkdir /tmp/mongodb-alt
-  - mongod --port 29017 --dbpath /tmp/mongodb-alt
+  - mongod --port 29017 --dbpath /tmp/mongodb-alt --fork --logpath /tmp/mongodb-alt.log
+
 
 install:
   - composer install
