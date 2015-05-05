@@ -14,6 +14,7 @@ install:
 
 before_script:
   - echo "extension = mongo.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+  - mkdir /tmp/mongodb-alt
   - mongod --port 29017 --dbpath /tmp/mongodb-alt --fork --logpath /tmp/mongodb-alt.log
   - sleep 15
 
