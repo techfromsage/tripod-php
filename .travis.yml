@@ -14,7 +14,7 @@ install:
 
 before_script:
   - echo "extension = mongo.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
-  - mongod --port 29017 --dbpath /var/mongodb-alt --fork --logpath /var/log/mongodb-alt.log
+  - mongod --port 29017 --dbpath /tmp/mongodb-alt --fork --logpath /tmp/mongodb-alt.log
   - sleep 15
 
 env: TRIPOD_DATASOURCE_RS2_CONFIG={"type":"mongo","connection":"mongo://127.0.0.1:29017"}
