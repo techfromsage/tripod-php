@@ -778,20 +778,87 @@ class MongoTripodTest extends MongoTripodTestBase
 
 
 // TODO: need to completely re-write this test
-//    public function testOperationsAreDoneSyncAndASync()
-//    {
-//        $uri_1 = "http://example.com/1";
-//        $uri_2 = "http://example.com/2";
-//        $oG = new MongoGraph();
-//        $oG->add_resource_triple($uri_1, $oG->qname_to_uri("rdf:type"), $oG->qname_to_uri("acorn:Resource"));
-//        $oG->add_resource_triple($uri_2, $oG->qname_to_uri("rdf:type"), $oG->qname_to_uri("acorn:Resource"));
-//
-//        // just updates, all three operations async
-//        $mockTripod = $this->getMock('MongoTripod', array('queueASyncOperations','processOperations'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/','async'=>array(OP_TABLES=>true,OP_VIEWS=>true,OP_SEARCH=>true))));
-//        $mockTripod->expects($this->once())->method('queueASyncOperations')->with(array('http://example.com/1', 'http://example.com/2'), array(), 'http://talisaspire.com/', array(OP_TABLES,OP_VIEWS,OP_SEARCH));
-//        $mockTripod->expects($this->never())->method('processOperations');
-//        $mockTripod->saveChanges(new ExtendedGraph(), $oG,"http://talisaspire.com/");
-//
+    public function testDiscoverImpactedSubjectsAreDoneSyncAndASync()
+    {
+        $uri_1 = "http://example.com/1";
+        $uri_2 = "http://example.com/2";
+        $oG = new MongoGraph();
+        $oG->add_resource_triple($uri_1, $oG->qname_to_uri("rdf:type"), $oG->qname_to_uri("acorn:Resource"));
+        $oG->add_resource_triple($uri_2, $oG->qname_to_uri("rdf:type"), $oG->qname_to_uri("acorn:Resource"));
+
+        // just updates, all three operations async
+        /** @var MongoTripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
+        $mockTripod = $this->getMock(
+            'MongoTripod',
+            array(
+                'getDataUpdater'
+            ),
+            array(
+                'CBD_testing',
+                'tripod_php_testing',
+                array(
+                    'defaultContext'=>'http://talisaspire.com/',
+                    OP_ASYNC=>array(
+                        OP_TABLES=>true,
+                        OP_VIEWS=>true,
+                        OP_SEARCH=>true
+                    )
+                )
+            )
+        );
+
+        $mockTripodUpdates = $this->getMock(
+            'MongoTripodUpdates',
+            array(
+                'storeChanges',
+                'getComposite',
+                'submitJob'
+            ),
+            array(
+                $mockTripod,
+                array(
+                    OP_ASYNC=>array(
+                        OP_TABLES=>true,
+                        OP_VIEWS=>true,
+                        OP_SEARCH=>true
+                    )
+                )
+            )
+        );
+
+        $labeller = new MongoTripodLabeller();
+
+        $subjectsAndPredicatesOfChange = array(
+            $labeller->uri_to_alias('http://example.com/1')=>array('rdf:type'),
+            $labeller->uri_to_alias('http://example.com/2')=>array('rdf:type')
+        );
+
+        $jobData = array(
+            'changes'=>$subjectsAndPredicatesOfChange,
+            'operations'=>array(OP_TABLES, OP_VIEWS, OP_SEARCH),
+            'tripodConfig'=>MongoTripodConfig::getConfig(),
+            'storeName'=>'tripod_php_testing',
+            'podName'=>'CBD_testing',
+            'contextAlias'=>'http://talisaspire.com/'
+        );
+
+        // getComposite() should only be called if there are synchronous operations
+        $mockTripodUpdates->expects($this->never())
+            ->method('getComposite');
+        $mockTripodUpdates->expects($this->once())
+            ->method('submitJob')
+            ->with(MongoTripodConfig::getDiscoverQueueName(),"DiscoverImpactedSubjects", $jobData);
+
+        $mockTripodUpdates->expects($this->once())
+            ->method('storeChanges')
+            ->will($this->returnValue($subjectsAndPredicatesOfChange));
+
+        $mockTripod->expects($this->once())
+            ->method('getDataUpdater')
+            ->will($this->returnValue($mockTripodUpdates));
+
+        $mockTripod->saveChanges(new ExtendedGraph(), $oG,"http://talisaspire.com/");
+
 //        // just deletes, search only
 //        $mockTripod = $this->getMock('MongoTripod', array('queueASyncOperations','processOperations'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/','async'=>array(OP_TABLES=>false,OP_VIEWS=>false,OP_SEARCH=>true))));
 //        $mockTripod->expects($this->once())->method('queueASyncOperations')->with(array(), array('http://example.com/1', 'http://example.com/2'),'http://talisaspire.com/', array(OP_SEARCH));
@@ -821,7 +888,7 @@ class MongoTripodTest extends MongoTripodTestBase
 //        $mockTripod->expects($this->never())->method('queueASyncOperations');
 ////        $mockTripod->expects($this->once())->method('processOperations')->with(array(), array('http://example.com/1', 'http://example.com/2'),'http://talisaspire.com/', array(OP_VIEWS,OP_TABLES,OP_SEARCH));
 //        $mockTripod->saveChanges($nG, $oG,"http://talisaspire.com/");
-//    }
+    }
 
     public function testWriteToUnconfiguredCollectionThrowsException()
     {

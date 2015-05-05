@@ -62,7 +62,6 @@ class MongoTripodUpdates extends MongoTripodBase {
         $this->storeName = $tripod->getStoreName();
         $this->podName = $tripod->getPodName();
         $this->stat = $tripod->getStat();
-        
         $this->labeller = new MongoTripodLabeller();
         $opts = array_merge(array(
                 'defaultContext'=>null,
@@ -71,7 +70,6 @@ class MongoTripodUpdates extends MongoTripodBase {
                 'readPreference'=>MongoClient::RP_PRIMARY_PREFERRED,
                 'retriesToGetLock' => 20)
             ,$opts);
-
         $this->readPreference = $opts['readPreference'];
         $this->config = $this->getMongoTripodConfigInstance();
 
