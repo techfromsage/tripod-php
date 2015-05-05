@@ -10,6 +10,7 @@ services:
   - redis
 
 before_install:
+  - mkdir /tmp/mongodb-alt
   - mongod --port 29017 --dbpath /tmp/mongodb-alt
 
 install:
@@ -17,7 +18,6 @@ install:
 
 before_script:
   - echo "extension = mongo.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
-  - mkdir /tmp/mongodb-alt
   - sleep 15
 
 env: TRIPOD_DATASOURCE_RS2_CONFIG='{"type":"mongo","connection":"mongo:\/\/localhost:29017"}'
