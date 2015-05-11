@@ -777,7 +777,6 @@ class MongoTripodTest extends MongoTripodTestBase
     }
 
 
-// TODO: need to completely re-write this test
     public function testDiscoverImpactedSubjectsAreDoneAllOperationsSync()
     {
         $uri_1 = "http://example.com/1";
@@ -1034,12 +1033,6 @@ class MongoTripodTest extends MongoTripodTestBase
 
     public function testDiscoverImpactedSubjectsForDefaultOperationsSetting()
     {
-//
-//        // add data back into store, default async (should be tables and search)
-//        $mockTripod = $this->getMock('MongoTripod', array('queueASyncOperations','processOperations'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
-//        $mockTripod->expects($this->once())->method('processOperations')->with(array('http://example.com/1', 'http://example.com/2'), array(),'http://talisaspire.com/', array(OP_VIEWS));
-//        $mockTripod->expects($this->once())->method('queueASyncOperations')->with(array('http://example.com/1', 'http://example.com/2'), array(),'http://talisaspire.com/', array(OP_TABLES,OP_SEARCH));
-//        $mockTripod->saveChanges(new ExtendedGraph(), $oG,"http://talisaspire.com/");
         $uri_1 = "http://example.com/1";
         $uri_2 = "http://example.com/2";
         $oG = new MongoGraph();
@@ -1163,14 +1156,6 @@ class MongoTripodTest extends MongoTripodTestBase
             );
 
         $mockTripod->saveChanges($oG,$nG,"http://talisaspire.com/");
-
-
-//
-//        //no async
-//        $mockTripod = $this->getMock('MongoTripod', array('queueASyncOperations','processOperations'), array('CBD_testing','tripod_php_testing',array('async'=>array(OP_TABLES=>false,OP_VIEWS=>false,OP_SEARCH=>false))));
-//        $mockTripod->expects($this->never())->method('queueASyncOperations');
-////        $mockTripod->expects($this->once())->method('processOperations')->with(array(), array('http://example.com/1', 'http://example.com/2'),'http://talisaspire.com/', array(OP_VIEWS,OP_TABLES,OP_SEARCH));
-//        $mockTripod->saveChanges($nG, $oG,"http://talisaspire.com/");
     }
 
     public function testWriteToUnconfiguredCollectionThrowsException()
