@@ -790,7 +790,8 @@ class MongoTripodTest extends MongoTripodTestBase
         $mockTripod = $this->getMock(
             'MongoTripod',
             array(
-                'getDataUpdater'
+                'getDataUpdater',
+                'getComposite'
             ),
             array(
                 'CBD_testing',
@@ -810,7 +811,6 @@ class MongoTripodTest extends MongoTripodTestBase
             'MongoTripodUpdates',
             array(
                 'storeChanges',
-                'getComposite',
                 'submitJob'
             ),
             array(
@@ -842,7 +842,7 @@ class MongoTripodTest extends MongoTripodTestBase
         );
 
         // getComposite() should only be called if there are synchronous operations
-        $mockTripodUpdates->expects($this->never())
+        $mockTripod->expects($this->never())
             ->method('getComposite');
         $mockTripodUpdates->expects($this->once())
             ->method('submitJob')
