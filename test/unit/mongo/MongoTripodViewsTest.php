@@ -1080,6 +1080,143 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         }
     }
 
+    /**
+     * Test that a change to a resource that isn't covered by a viewspec or in an impact index still triggers the discover
+     * impacted subjects operation and returns nothing
+     */
+    public function testResourceUpdateNotCoveredBySpecStillTriggersOperations()
+    {
+        $context = 'http://talisaspire.com/';
+
+        $labeller = new MongoTripodLabeller();
+        // First add a graph
+        $originalGraph = new ExtendedGraph();
+
+        $uri1 = 'http://example.com/resources/' . uniqid();
+        $originalGraph->add_resource_triple($uri1, RDF_TYPE, $labeller->qname_to_uri('bibo:Document'));
+        $originalGraph->add_literal_triple($uri1, $labeller->qname_to_uri('dct:title'), 'How to speak American like a native');
+        $originalGraph->add_literal_triple($uri1, $labeller->qname_to_uri('dct:subject'), 'Languages -- \'Murrican');
+
+
+        $originalSubjectsAndPredicatesOfChange = array(
+            $labeller->uri_to_alias($uri1)=>array('rdf:type','dct:title','dct:subject')
+        );
+
+        $updatedSubjectsAndPredicatesOfChange = array(
+            $labeller->uri_to_alias($uri1)=>array('dct:subject')
+        );
+
+        /** @var MongoTripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
+        $mockTripod = $this->getMock(
+            'MongoTripod',
+            array(
+                'getDataUpdater', 'getComposite'
+            ),
+            array(
+                'CBD_testing',
+                'tripod_php_testing',
+                array(
+                    'defaultContext'=>$context,
+                    OP_ASYNC=>array(
+                        OP_TABLES=>true,
+                        OP_VIEWS=>false,
+                        OP_SEARCH=>true
+                    )
+                )
+            )
+        );
+
+        $mockTripodUpdates = $this->getMock(
+            'MongoTripodUpdates',
+            array(
+                'processSyncOperations',
+                'queueAsyncOperations'
+            ),
+            array(
+                $mockTripod,
+                array(
+                    OP_ASYNC=>array(
+                        OP_TABLES=>true,
+                        OP_VIEWS=>false,
+                        OP_SEARCH=>true
+                    )
+                )
+            )
+        );
+
+        $mockViews = $this->getMock('MongoTripodViews',
+            array('generateViewsForResourcesOfType'),
+            array(
+                'tripod_php_testing',
+                MongoTripodConfig::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                $context
+            )
+        );
+
+        $mockTripod->expects($this->exactly(2))
+            ->method('getDataUpdater')
+            ->will($this->returnValue($mockTripodUpdates));
+
+        $mockTripod->expects($this->exactly(2))
+            ->method('getComposite')
+            ->with(OP_VIEWS)
+            ->will($this->returnValue($mockViews));
+
+        $mockTripodUpdates->expects($this->exactly(2))
+            ->method('processSyncOperations')
+            ->withConsecutive(
+                array(
+                    $this->equalTo($originalSubjectsAndPredicatesOfChange),
+                    $this->equalTo($context)
+                ),
+                array(
+                    $this->equalTo($updatedSubjectsAndPredicatesOfChange),
+                    $this->equalTo($context)
+                )
+            );
+
+        $mockTripodUpdates->expects($this->exactly(2))
+            ->method('queueAsyncOperations')
+            ->withConsecutive(
+                array(
+                    $this->equalTo($originalSubjectsAndPredicatesOfChange),
+                    $this->equalTo($context)
+                ),
+                array(
+                    $this->equalTo($updatedSubjectsAndPredicatesOfChange),
+                    $this->equalTo($context)
+                )
+            );
+
+        $mockViews->expects($this->never())
+            ->method('generateViewsForResourcesOfType');
+
+        $mockTripod->saveChanges(new ExtendedGraph(), $originalGraph);
+
+        /** @var MongoTripodViews $view */
+        $view = $mockTripod->getComposite(OP_VIEWS);
+        $this->assertInstanceOf('MongoTripodViews', $view);
+
+        $impactedSubjects = $view->getImpactedSubjects($originalSubjectsAndPredicatesOfChange, $context);
+
+        $this->assertEmpty($impactedSubjects);
+
+        $newGraph = $originalGraph->get_subject_subgraph($uri1);
+        $newGraph->replace_literal_triple($uri1, $labeller->qname_to_uri('dct:subject'), 'Languages -- \'Murrican', 'Languages -- English, American');
+
+        $mockTripod->saveChanges($originalGraph, $newGraph);
+
+
+        /** @var MongoTripodViews $view */
+        $view = $mockTripod->getComposite(OP_VIEWS);
+        $this->assertInstanceOf('MongoTripodViews', $view);
+
+        $impactedSubjects = $view->getImpactedSubjects($updatedSubjectsAndPredicatesOfChange, $context);
+
+        $this->assertEmpty($impactedSubjects);
+
+    }
+
     function fetchGraphInGetViewForResourcesCallback()
     {
         $uri1 = "http://uri1";
