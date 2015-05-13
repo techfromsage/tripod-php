@@ -909,7 +909,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             OP_TABLES,
             'tripod_php_testing',
             'CBD_testing',
-            array("t_distinct", "t_join_source_count_regex")
+            array("t_join_source_count_regex", "t_distinct")
         );
 
         $impactedSubjects = $table->getImpactedSubjects($subjectsAndPredicatesOfChange, $context);
