@@ -58,11 +58,14 @@ abstract class CompositeBase extends MongoTripodBase implements IComposite
                 foreach($docTypes as $type)
                 {
                     if($this->checkIfTypeShouldTriggerOperation($type, $types, $currentSubject)) {
-                        if(!array_key_exists($docHash, $candidates)){
-                            $candidates[$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
-                            $candidates[$docHash]['ops'][$this->getPodName()] = array();
+                        if(!array_key_exists($this->getPodName(), $candidates))
+                        {
+                            $candidates[$this->getPodName()] = array();
                         }
-                        array_push($candidates[$docHash]['ops'][$this->getPodName()], $this->getOperationType());
+                        if(!array_key_exists($docHash, $candidates[$this->getPodName()])){
+                            $candidates[$this->getPodName()][$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
+                        }
+                        array_push($candidates[$this->getPodName()][$docHash]['ops'], $this->getOperationType());
                     }
                 }
             }
@@ -71,33 +74,40 @@ abstract class CompositeBase extends MongoTripodBase implements IComposite
         // add to this any composites
         foreach($this->findImpactedComposites($subjectsAndPredicatesOfChange, $contextAlias) as $doc) {
             $spec = $this->getSpecification($this->storeName, $doc[_ID_KEY]['type']);
-            if(!empty($spec)){
+            if(is_array($spec) && array_key_exists('from', $spec)){
+                if(!array_key_exists($spec['from'], $candidates))
+                {
+                    $candidates[$spec['from']] = array();
+                }
                 $docHash = md5($doc[_ID_KEY][_ID_RESOURCE] . $doc[_ID_KEY][_ID_CONTEXT]);
 
-                if(!array_key_exists($docHash, $candidates)){
-                    $candidates[$docHash] = array(
+                if(!array_key_exists($docHash, $candidates[$spec['from']])){
+                    $candidates[$spec['from']][$docHash] = array(
                         'id'=>array(
                             _ID_RESOURCE=>$doc[_ID_KEY][_ID_RESOURCE],
                             _ID_CONTEXT=>$doc[_ID_KEY][_ID_CONTEXT],
                         )
                     );
                 }
-                if(!array_key_exists('specTypes', $candidates[$docHash])) {
-                    $candidates[$docHash]['specTypes'] = array();
+                if(!array_key_exists('specTypes', $candidates[$spec['from']][$docHash])) {
+                    $candidates[$spec['from']][$docHash]['specTypes'] = array();
                 }
                 // Save the specification type so we only have to regen resources in that table type
-                if(!in_array($doc[_ID_KEY][_ID_TYPE], $candidates[$docHash]['specTypes']))
+                if(!in_array($doc[_ID_KEY][_ID_TYPE], $candidates[$spec['from']][$docHash]['specTypes']))
                 {
-                    $candidates[$docHash]['specTypes'][] = $doc[_ID_KEY][_ID_TYPE];
+                    $candidates[$spec['from']][$docHash]['specTypes'][] = $doc[_ID_KEY][_ID_TYPE];
                 }
             }
         }
 
         // convert operations to subjects
         $impactedSubjects = array();
-        foreach($candidates as $candidate){
-            $specTypes = (isset($candidate['specTypes']) ? $candidate['specTypes'] : array());
-            $impactedSubjects[] = new ImpactedSubject($candidate['id'], $this->getOperationType(), $this->getStoreName(), $this->getPodName(), $specTypes);
+        foreach(array_keys($candidates) as $podName){
+            foreach($candidates[$podName] as $candidate)
+            {
+                $specTypes = (isset($candidate['specTypes']) ? $candidate['specTypes'] : array());
+                $impactedSubjects[] = new ImpactedSubject($candidate['id'], $this->getOperationType(), $this->getStoreName(), $podName, $specTypes);
+            }
         }
         return $impactedSubjects;
     }
