@@ -151,6 +151,72 @@ class ApplyOperationTest extends MongoTripodTestBase
         $applyOperation->perform();
     }
 
+    public function testApplySearchOperation()
+    {
+        $this->setArgs();
+        $applyOperation = $this->getMockBuilder('ApplyOperation')
+            ->setMethods(array('createImpactedSubject'))
+            ->getMock();
+
+        $this->setArgs();
+        $impactedSubject = new ImpactedSubject(
+            array(
+                _ID_RESOURCE=>'http://example.com/resources/foo',
+                _ID_CONTEXT=>'http://talisaspire.com/'
+            ),
+            OP_SEARCH,
+            'tripod_php_testing',
+            'CBD_testing',
+            array('t_resource')
+        );
+        $this->args['subject'] = $impactedSubject->toArray();
+
+        $applyOperation->args = $this->args;
+
+        $subject = $this->getMockBuilder('ImpactedSubject')
+            ->setMethods(array('getTripod'))
+            ->setConstructorArgs(
+                array(
+                    array(
+                        _ID_RESOURCE=>'http://example.com/resources/foo',
+                        _ID_CONTEXT=>'http://talisaspire.com'
+                    ),
+                    OP_SEARCH,
+                    'tripod_php_testing',
+                    'CBD_testing'
+                )
+            )->getMock();
+
+        $tripod = $this->getMockBuilder('MongoTripod')
+            ->setMethods(array('getComposite'))
+            ->setConstructorArgs(array('CBD_testing', 'tripod_php_testing'))
+            ->getMock();
+
+        $search = $this->getMockBuilder('MongoTripodSearchIndexer')
+            ->setMethods(array('update'))
+            ->setConstructorArgs(array($tripod))
+            ->getMock();
+
+        $applyOperation->expects($this->once())
+            ->method('createImpactedSubject')
+            ->will($this->returnValue($subject));
+
+        $subject->expects($this->once())
+            ->method('getTripod')
+            ->will($this->returnValue($tripod));
+
+        $tripod->expects($this->once())
+            ->method('getComposite')
+            ->with(OP_SEARCH)
+            ->will($this->returnValue($search));
+
+        $search->expects($this->once())
+            ->method('update')
+            ->with($subject);
+
+        $applyOperation->perform();
+    }
+
     protected function setArgs()
     {
         $subject = new ImpactedSubject(
