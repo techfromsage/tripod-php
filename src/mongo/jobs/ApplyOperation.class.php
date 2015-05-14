@@ -15,14 +15,7 @@ class ApplyOperation extends JobBase {
             // set the config to what is received
             MongoTripodConfig::setConfig($this->args["tripodConfig"]);
 
-            $subjectAsArray = $this->args["subject"];
-            $subject = new ImpactedSubject(
-                $subjectAsArray["resourceId"],
-                $subjectAsArray["operation"],
-                $subjectAsArray["storeName"],
-                $subjectAsArray["podName"],
-                $subjectAsArray["specTypes"]
-            );
+            $subject = $this->createImpactedSubject($this->args['subject']);
 
             $subject->update();
 
@@ -37,6 +30,17 @@ class ApplyOperation extends JobBase {
             $this->errorLog("Caught exception in ".get_class($this).": ".$e->getMessage());
             throw $e;
         }
+    }
+    
+    protected function createImpactedSubject(array $args)
+    {
+        return new ImpactedSubject(
+            $args["resourceId"],
+            $args["operation"],
+            $args["storeName"],
+            $args["podName"],
+            $args["specTypes"]
+        );        
     }
 
     /**
