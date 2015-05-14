@@ -888,7 +888,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             OP_TABLES,
             $this->defaultStoreName,
             $this->defaultPodName,
-            array("t_join_source_count_regex", "t_distinct")
+            array("t_distinct","t_join_source_count_regex")
         );
 
         $impactedSubjects = $table->getImpactedSubjects($subjectsAndPredicatesOfChange, $this->defaultContext);
