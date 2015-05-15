@@ -136,11 +136,20 @@ class MongoTripodSearchIndexer extends CompositeBase
         }
     }
 
-    public function findImpactedComposites($resourcesAndPredicates, $context)
+    /**
+     * @param array $resourcesAndPredicates
+     * @param string $context
+     * @return array|mixed
+     */
+    public function findImpactedComposites(Array $resourcesAndPredicates, $context)
     {
         return $this->getSearchProvider()->findImpactedDocuments($resourcesAndPredicates, $context);
     }
 
+    /**
+     * @param string $typeId
+     * @return array|bool
+     */
     public function deleteSearchDocumentsByTypeId($typeId)
     {
     	return $this->getSearchProvider()->deleteSearchDocumentsByTypeId($typeId);
