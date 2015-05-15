@@ -1412,7 +1412,6 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         foreach($expectedImpactedSubjects as $subject)
         {
-            var_dump($subject->toArray());
             $tables->update($subject);
         }
 

@@ -458,15 +458,185 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
 
     public function testDeleteResourceCreatesImpactedSubjects()
     {
-        $uri = 'http://talisaspire.com/resources/doc5';
+        $uri = 'http://example.com/resources/' . uniqid();
         $labeller = new MongoTripodLabeller();
         $uriAlias = $labeller->uri_to_alias($uri);
 
-        $this->tripod->getSearchIndexer()->generateAndIndexSearchDocuments($uriAlias, $this->defaultContext, $this->defaultPodName);
+        $creatorUri = 'http://example.com/identities/oscar-wilde';
+        $creatorUriAlias = $labeller->uri_to_alias($creatorUri);
 
-        $subjectsAndPredicatesOfChange = array($uriAlias=>array());
+        $graph = new ExtendedGraph();
+        $graph->add_resource_triple(
+            $uri,
+            RDF_TYPE,
+            $labeller->qname_to_uri('acorn:Resource')
+        );
+        $graph->add_resource_triple(
+            $uri,
+            RDF_TYPE,
+            $labeller->qname_to_uri('bibo:Book')
+        );
+        $graph->add_literal_triple(
+            $uri,
+            $labeller->qname_to_uri('dct:title'),
+            'The Importance of Being Earnest'
+        );
+        $graph->add_literal_triple(
+            $uri,
+            $labeller->qname_to_uri('dct:subject'),
+            'Plays -- Satire'
+        );
+        $graph->add_resource_triple(
+            $uri,
+            $labeller->qname_to_uri('dct:creator'),
+            $creatorUri
+        );
 
-        $searchIndexer = new MongoTripodSearchIndexer($this->tripod);
+        $uri2 = 'http://example.com/resources/' . uniqid();
+        $uriAlias2 = $labeller->uri_to_alias($uri2);
+
+        $graph2 = new ExtendedGraph();
+        $graph2->add_resource_triple(
+            $uri2,
+            RDF_TYPE,
+            $labeller->qname_to_uri('acorn:Resource')
+        );
+        $graph2->add_resource_triple(
+            $uri2,
+            RDF_TYPE,
+            $labeller->qname_to_uri('bibo:Book')
+        );
+        $graph2->add_literal_triple(
+            $uri2,
+            $labeller->qname_to_uri('dct:title'),
+            'The Picture of Dorian Gray'
+        );
+        $graph2->add_literal_triple(
+            $uri2,
+            $labeller->qname_to_uri('dct:subject'),
+            'Portraits -- Fiction'
+        );
+        $graph2->add_resource_triple(
+            $uri2,
+            $labeller->qname_to_uri('dct:creator'),
+            $creatorUri
+        );
+
+        $graph3 = new ExtendedGraph();
+        $graph3->add_resource_triple(
+            $creatorUri,
+            RDF_TYPE,
+            $labeller->qname_to_uri('foaf:Person')
+        );
+        $graph3->add_literal_triple(
+            $creatorUri,
+            $labeller->qname_to_uri('foaf:name'),
+            'Oscar Wilde'
+        );
+
+        // Save the graphs and ensure that table rows are generated
+        $tripod = new MongoTripod(
+            $this->defaultPodName,
+            $this->defaultStoreName,
+            array(
+                'defaultContext'=>$this->defaultContext,
+                OP_ASYNC=>array(
+                    OP_VIEWS=>false,
+                    OP_TABLES=>false,
+                    OP_SEARCH=>false
+                )
+            )
+        );
+
+        // Save the author graph first so the joins work
+        $tripod->saveChanges(new ExtendedGraph(), $graph3);
+
+        $tripod->saveChanges(new ExtendedGraph(), $graph);
+
+        $collection = MongoTripodConfig::getInstance()->getCollectionForSearchDocument($this->defaultStoreName, 'i_search_resource');
+
+        $query = array(
+            _ID_KEY=> array(
+                _ID_RESOURCE=>$uriAlias,
+                _ID_CONTEXT=>$this->defaultContext,
+                _ID_TYPE=>'i_search_resource'
+            )
+        );
+        $this->assertEquals(1, $collection->count($query));
+
+        $tripod->saveChanges(new ExtendedGraph(), $graph2);
+
+        $query[_ID_KEY][_ID_RESOURCE] = $uriAlias2;
+        $this->assertEquals(1, $collection->count($query));
+
+        $impactQuery = array(
+            _ID_KEY.'.'._ID_TYPE=>'i_search_resource',
+            '_impactIndex'=>array(
+                _ID_RESOURCE=>$creatorUriAlias,
+                _ID_CONTEXT=>$this->defaultContext
+            ),
+            'result.author'=>'Oscar Wilde'
+        );
+        $this->assertEquals(2, $collection->count($impactQuery));
+
+        $mockTripod = $this->getMockBuilder('MongoTripod')
+            ->setMethods(array('getDataUpdater'))
+            ->setConstructorArgs(
+                array(
+                    $this->defaultPodName,
+                    $this->defaultStoreName,
+                    array(
+                        'defaultContext'=>$this->defaultContext,
+                        OP_ASYNC=>array(
+                            OP_VIEWS=>false,
+                            OP_TABLES=>false,
+                            OP_SEARCH=>false
+                        )
+                    )
+                )
+            )->getMock();
+
+        $mockTripodUpdates = $this->getMockBuilder('MongoTripodUpdates')
+            ->setConstructorArgs(
+                array(
+                    $mockTripod,
+                    array(
+                        'defaultContext'=>$this->defaultContext,
+                        OP_ASYNC=>array(
+                            OP_VIEWS=>false,
+                            OP_TABLES=>false,
+                            OP_SEARCH=>false
+                        )
+                    )
+                )
+            )->setMethods(array('processSyncOperations'))
+            ->getMock();
+
+        $mockTripod->expects($this->once())
+            ->method('getDataUpdater')
+            ->will($this->returnValue($mockTripodUpdates));
+
+        $expectedSubjectsAndPredicatesOfChange = array(
+            $creatorUriAlias=>array('rdf:type','foaf:name')
+        );
+
+        $mockTripodUpdates->expects($this->once())
+            ->method('processSyncOperations')
+            ->with(
+                $expectedSubjectsAndPredicatesOfChange,
+                $this->defaultContext
+            );
+
+
+        // Delete creator resource
+        $mockTripod->saveChanges($graph3, new ExtendedGraph());
+
+        $deletedGraph = $mockTripod->describeResource($creatorUri);
+        $this->assertTrue($deletedGraph->is_empty());
+
+        // Manually walk through the tables operation
+        /** @var MongoTripodSearchIndexer $search */
+        $search = $mockTripod->getComposite(OP_SEARCH);
 
         $expectedImpactedSubjects = array(
             new ImpactedSubject(
@@ -478,9 +648,52 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
                 $this->defaultStoreName,
                 $this->defaultPodName,
                 array('i_search_resource')
+            ),
+            new ImpactedSubject(
+                array(
+                    _ID_RESOURCE=>$uriAlias2,
+                    _ID_CONTEXT=>$this->defaultContext
+                ),
+                OP_SEARCH,
+                $this->defaultStoreName,
+                $this->defaultPodName,
+                array('i_search_resource')
             )
         );
-        $this->assertEquals($expectedImpactedSubjects, $searchIndexer->getImpactedSubjects($subjectsAndPredicatesOfChange, $this->defaultContext));
+
+        $this->assertEquals($expectedImpactedSubjects, $search->getImpactedSubjects($expectedSubjectsAndPredicatesOfChange, $this->defaultContext));
+
+        foreach($expectedImpactedSubjects as $subject)
+        {
+            $search->update($subject);
+        }
+
+        $query = array(
+            _ID_KEY=> array(
+                _ID_RESOURCE=>$uriAlias,
+                _ID_CONTEXT=>$this->defaultContext,
+                _ID_TYPE=>'i_search_resource'
+            )
+        );
+        $this->assertEquals(1, $collection->count($query));
+
+        $query[_ID_KEY][_ID_RESOURCE] = $uriAlias2;
+        $this->assertEquals(1, $collection->count($query));
+
+
+        // Deleted resource will still be impact indexes because join still exists
+        $impactQuery = array(
+            _ID_KEY.'.'._ID_TYPE=>'i_search_resource',
+            '_impactIndex'=>array(
+                _ID_RESOURCE=>$creatorUriAlias,
+                _ID_CONTEXT=>$this->defaultContext
+            )
+        );
+        $this->assertEquals(2, $collection->count($impactQuery));
+
+        // But the document should have been regenerated without the value
+        $impactQuery['result.author'] = 'Oscar Wilde';
+        $this->assertEquals(0, $collection->count($impactQuery));
     }
 
 }
