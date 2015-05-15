@@ -1244,37 +1244,146 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
     public function testDeleteResourceCreatesImpactedSubjects()
     {
-        $uri = 'http://example.com/resources/' . uniqid();
+        $uri = 'http://example.com/users/' . uniqid();
         $labeller = new MongoTripodLabeller();
         $uriAlias = $labeller->uri_to_alias($uri);
 
-        $tableRow = array(
-            _ID_KEY=>array(
-                _ID_RESOURCE=>$uriAlias,
-                _ID_CONTEXT=>$this->defaultContext,
-                _ID_TYPE=>'t_resource'
-            ),
-            'value'=>array(
-                '_impactIndex'=>array(
-                    _ID_RESOURCE=>$uriAlias,
-                    _ID_CONTEXT=>$this->defaultContext
-                ),
-                'foo'=>'bar',
-                'bar'=>'baz'
+        $graph = new ExtendedGraph();
+        $graph->add_resource_triple(
+            $uri,
+            RDF_TYPE,
+            $labeller->qname_to_uri('spec:User')
+        );
+        $graph->add_literal_triple(
+            $uri,
+            $labeller->qname_to_uri('foaf:firstName'),
+            'Anne'
+        );
+        $graph->add_literal_triple(
+            $uri,
+            $labeller->qname_to_uri('foaf:surname'),
+            'Onymous'
+        );
+
+        $uri2 = 'http://example.com/users/' . uniqid();
+        $uriAlias2 = $labeller->uri_to_alias($uri2);
+
+        $graph2 = new ExtendedGraph();
+        $graph2->add_resource_triple(
+            $uri2,
+            RDF_TYPE,
+            $labeller->qname_to_uri('spec:User')
+        );
+        $graph2->add_literal_triple(
+            $uri2,
+            $labeller->qname_to_uri('foaf:firstName'),
+            'Ann'
+        );
+        $graph2->add_literal_triple(
+            $uri2,
+            $labeller->qname_to_uri('foaf:surname'),
+            'O\'ther'
+        );
+
+        // Save the graphs and ensure that table rows are generated
+        $tripod = new MongoTripod(
+            $this->defaultPodName,
+            $this->defaultStoreName,
+            array(
+                'defaultContext'=>$this->defaultContext,
+                OP_ASYNC=>array(
+                    OP_VIEWS=>false,
+                    OP_TABLES=>false,
+                    OP_SEARCH=>false
+                )
             )
         );
 
-        // Add a fictional table row
-        $collection = MongoTripodConfig::getInstance()->getCollectionForTable($this->defaultStoreName, 't_resource');
-        $collection->insert($tableRow);
+        $tripod->saveChanges(new ExtendedGraph(), $graph);
 
-        $subjectsAndPredicatesOfChange = array($uriAlias=>array());
-
-        $tables = new MongoTripodTables(
-            $this->defaultStoreName,
-            MongoTripodConfig::getInstance()->getCollectionForCBD($this->defaultStoreName, $this->defaultPodName),
-            $this->defaultContext
+        $tableRows = $tripod->getTableRows(
+            't_users',
+            array(
+                _ID_KEY . '.' . _ID_RESOURCE=>$uriAlias,
+                _ID_KEY . '.' . _ID_CONTEXT=>$this->defaultContext
+            )
         );
+
+        $this->assertEquals(1, $tableRows['head']['count']);
+
+        $tripod->saveChanges(new ExtendedGraph(), $graph2);
+
+        $tableRows = $tripod->getTableRows(
+            't_users',
+            array(
+                _ID_KEY . '.' . _ID_RESOURCE=>$uriAlias2,
+                _ID_KEY . '.' . _ID_CONTEXT=>$this->defaultContext
+            )
+        );
+
+        $this->assertEquals(1, $tableRows['head']['count']);
+
+        $mockTripod = $this->getMockBuilder('MongoTripod')
+            ->setMethods(array('getDataUpdater'))
+            ->setConstructorArgs(
+                array(
+                    $this->defaultPodName,
+                    $this->defaultStoreName,
+                    array(
+                        'defaultContext'=>$this->defaultContext,
+                        OP_ASYNC=>array(
+                            OP_VIEWS=>false,
+                            OP_TABLES=>false,
+                            OP_SEARCH=>false
+                        )
+                    )
+                )
+            )->getMock();
+
+        $mockTripodUpdates = $this->getMockBuilder('MongoTripodUpdates')
+            ->setConstructorArgs(
+                array(
+                    $mockTripod,
+                    array(
+                        'defaultContext'=>$this->defaultContext,
+                        OP_ASYNC=>array(
+                            OP_VIEWS=>false,
+                            OP_TABLES=>false,
+                            OP_SEARCH=>false
+                        )
+                    )
+                )
+            )->setMethods(array('processSyncOperations'))
+            ->getMock();
+
+        $mockTripod->expects($this->once())
+            ->method('getDataUpdater')
+            ->will($this->returnValue($mockTripodUpdates));
+
+        $expectedSubjectsAndPredicatesOfChange = array(
+            $uriAlias=>array('rdf:type','foaf:firstName','foaf:surname'),
+            $uriAlias2=>array('rdf:type','foaf:firstName','foaf:surname'),
+        );
+
+        $mockTripodUpdates->expects($this->once())
+            ->method('processSyncOperations')
+            ->with(
+                $expectedSubjectsAndPredicatesOfChange,
+                $this->defaultContext
+            );
+
+        $graph->add_graph($graph2);
+
+        // Delete both user resources
+        $mockTripod->saveChanges($graph, new ExtendedGraph());
+
+        $deletedGraph = $mockTripod->describeResources(array($uri, $uri2));
+
+        $this->assertTrue($deletedGraph->is_empty());
+
+        // Manually walk through the tables operation
+        /** @var MongoTripodTables $tables */
+        $tables = $mockTripod->getComposite(OP_TABLES);
 
         $expectedImpactedSubjects = array(
             new ImpactedSubject(
@@ -1285,10 +1394,48 @@ class MongoTripodTablesTest extends MongoTripodTestBase
                 OP_TABLES,
                 $this->defaultStoreName,
                 $this->defaultPodName,
-                array('t_resource')
+                array('t_users')
+            ),
+            new ImpactedSubject(
+                array(
+                    _ID_RESOURCE=>$uriAlias2,
+                    _ID_CONTEXT=>$this->defaultContext
+                ),
+                OP_TABLES,
+                $this->defaultStoreName,
+                $this->defaultPodName,
+                array('t_users')
             )
         );
-        $this->assertEquals($expectedImpactedSubjects, $tables->getImpactedSubjects($subjectsAndPredicatesOfChange, $this->defaultContext));
+
+        $this->assertEquals($expectedImpactedSubjects, $tables->getImpactedSubjects($expectedSubjectsAndPredicatesOfChange, $this->defaultContext));
+
+        foreach($expectedImpactedSubjects as $subject)
+        {
+            var_dump($subject->toArray());
+            $tables->update($subject);
+        }
+
+
+        $tableRows = $tripod->getTableRows(
+            't_users',
+            array(
+                _ID_KEY . '.' . _ID_RESOURCE=>$uriAlias,
+                _ID_KEY . '.' . _ID_CONTEXT=>$this->defaultContext
+            )
+        );
+
+        $this->assertEquals(0, $tableRows['head']['count']);
+
+        $tableRows = $tripod->getTableRows(
+            't_users',
+            array(
+                _ID_KEY . '.' . _ID_RESOURCE=>$uriAlias2,
+                _ID_KEY . '.' . _ID_CONTEXT=>$this->defaultContext
+            )
+        );
+
+        $this->assertEquals(0, $tableRows['head']['count']);
     }
 
     /**
