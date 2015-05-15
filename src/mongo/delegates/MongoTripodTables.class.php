@@ -90,12 +90,22 @@ class MongoTripodTables extends CompositeBase
         $this->generateTableRowsForResource($resourceUri,$context,$subject->getSpecTypes());
     }
 
+    /**
+     * Returns an array of the rdf types that will trigger the table specification
+     * @return array
+     */
     public function getTypesInSpecification()
     {
         return $this->config->getTypesInTableSpecifications($this->storeName, $this->getPodName());
     }
 
-    public function findImpactedComposites($resourcesAndPredicates, $contextAlias)
+    /**
+     * Returns an array of table rows that are impacted by the changes
+     * @param array $resourcesAndPredicates
+     * @param string $contextAlias
+     * @return array
+     */
+    public function findImpactedComposites(Array $resourcesAndPredicates, $contextAlias)
     {
         $contextAlias = $this->getContextAlias($contextAlias); // belt and braces
 
@@ -203,7 +213,15 @@ class MongoTripodTables extends CompositeBase
         return OP_TABLES;
     }
 
-
+    /**
+     * Query the tables collection and return the results
+     * @param string $tableSpecId
+     * @param array $filter
+     * @param array $sortBy
+     * @param int $offset
+     * @param int $limit
+     * @return array
+     */
     public function getTableRows($tableSpecId,$filter=array(),$sortBy=array(),$offset=0,$limit=10)
     {
         $t = new Timer();
@@ -277,7 +295,7 @@ class MongoTripodTables extends CompositeBase
     {
         $resourceAlias = $this->labeller->uri_to_alias($resource);
         $contextAlias = $this->getContextAlias($context);
-        $query = array(_ID_KEY . '.' . _ID_RESOURCE => $this->labeller->uri_to_alias($resource),  _ID_KEY . '.' . _ID_CONTEXT => $context);
+        $query = array(_ID_KEY . '.' . _ID_RESOURCE => $resourceAlias,  _ID_KEY . '.' . _ID_CONTEXT => $contextAlias);
         $specNames = array();
         $specTypes = $this->config->getTableSpecifications($this->storeName);
         if (empty($specType)) {
@@ -308,7 +326,7 @@ class MongoTripodTables extends CompositeBase
 
     /**
      * This method will delete all table rows where the _id.type matches the specified $tableId
-     * @param $tableId
+     * @param string $tableId
      */
     public function deleteTableRowsByTableId($tableId) {
         $tableSpec = MongoTripodConfig::getInstance()->getTableSpecification($this->storeName, $tableId);
@@ -325,7 +343,7 @@ class MongoTripodTables extends CompositeBase
     /**
      * This method handles invalidation and regeneration of table rows based on impact index, before delegating to
      * generateTableRowsForType() for re-generation of any table rows for the $resource
-     * @param $resource
+     * @param string $resource
      * @param string|null $context
      * @param array $specTypes
      */
@@ -421,6 +439,12 @@ class MongoTripodTables extends CompositeBase
         }
     }
 
+    /**
+     * @param string $tableType
+     * @param string|null $resource
+     * @param string|null $context
+     * @return null //@todo: this should be a bool
+     */
     public function generateTableRows($tableType,$resource=null,$context=null)
     {
         $t = new Timer();

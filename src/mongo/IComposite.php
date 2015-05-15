@@ -15,5 +15,10 @@ interface IComposite
      */
     public function getImpactedSubjects(Array $subjectsAndPredicatesOfChange,$contextAlias);
 
+    /**
+     * Invalidate/regenerate the composite based on the impacted subject
+     * @param ImpactedSubject $subject
+     * @return void
+     */
     public function update(ImpactedSubject $subject);
 }

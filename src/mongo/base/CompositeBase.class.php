@@ -8,6 +8,12 @@
  */
 abstract class CompositeBase extends MongoTripodBase implements IComposite
 {
+    /**
+     * Returns an array of ImpactedSubjects based on the subjects and predicates of change
+     * @param array $subjectsAndPredicatesOfChange
+     * @param string $contextAlias
+     * @return ImpactedSubject[]
+     */
     public function getImpactedSubjects(Array $subjectsAndPredicatesOfChange,$contextAlias)
     {
         $candidates = array();
@@ -45,27 +51,26 @@ abstract class CompositeBase extends MongoTripodBase implements IComposite
                     }
                 }
 
-                $currentSubject = null;
+                $currentSubjectProperties = array();
                 if(isset($subjectsAndPredicatesOfChange[$docResource]))
                 {
-                    $currentSubject = $subjectsAndPredicatesOfChange[$docResource];
+                    $currentSubjectProperties = $subjectsAndPredicatesOfChange[$docResource];
                 }
                 elseif(isset($subjectsToAlias[$docResource]) &&
                     isset($subjectsAndPredicatesOfChange[$subjectsToAlias[$docResource]]))
                 {
-                    $currentSubject = $subjectsAndPredicatesOfChange[$subjectsToAlias[$docResource]];
+                    $currentSubjectProperties = $subjectsAndPredicatesOfChange[$subjectsToAlias[$docResource]];
                 }
                 foreach($docTypes as $type)
                 {
-                    if($this->checkIfTypeShouldTriggerOperation($type, $types, $currentSubject)) {
+                    if($this->checkIfTypeShouldTriggerOperation($type, $types, $currentSubjectProperties)) {
                         if(!array_key_exists($this->getPodName(), $candidates))
                         {
                             $candidates[$this->getPodName()] = array();
                         }
                         if(!array_key_exists($docHash, $candidates[$this->getPodName()])){
-                            $candidates[$this->getPodName()][$docHash] = array('id'=>$doc[_ID_KEY], 'ops'=>array());
+                            $candidates[$this->getPodName()][$docHash] = array('id'=>$doc[_ID_KEY]);
                         }
-                        array_push($candidates[$this->getPodName()][$docHash]['ops'], $this->getOperationType());
                     }
                 }
             }
@@ -112,10 +117,25 @@ abstract class CompositeBase extends MongoTripodBase implements IComposite
         return $impactedSubjects;
     }
 
+    /**
+     * Returns an array of the rdf types that will trigger the specification
+     * @return array
+     */
     public abstract function getTypesInSpecification();
 
-    public abstract function findImpactedComposites($resourcesAndPredicates,$contextAlias);
+    /**
+     * @param array $resourcesAndPredicates
+     * @param string $contextAlias
+     * @return mixed // @todo: This may eventually return a either a MongoCursor or array
+     */
+    public abstract function findImpactedComposites(Array $resourcesAndPredicates,$contextAlias);
 
+    /**
+     * Returns the specification config
+     * @param string $storeName
+     * @param string $composite_id The specification id
+     * @return array|null
+     */
     public abstract function getSpecification($storeName, $composite_id);
 
     /**
@@ -123,10 +143,10 @@ abstract class CompositeBase extends MongoTripodBase implements IComposite
      * includes rdf:type (or is empty, meaning addition or deletion vs. update)
      * @param string $rdfType
      * @param array $validTypes
-     * @param array|null $subjectPredicates
+     * @param array $subjectPredicates
      * @return bool
      */
-    protected function checkIfTypeShouldTriggerOperation($rdfType, array $validTypes, $subjectPredicates)
+    protected function checkIfTypeShouldTriggerOperation($rdfType, array $validTypes, Array $subjectPredicates)
     {
         // We don't know if this is an alias or a fqURI, nor what is in the valid types, necessarily
         $types = array($rdfType);

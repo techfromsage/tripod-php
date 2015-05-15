@@ -31,6 +31,15 @@ class ImpactedSubject
      */
     private $podName;
 
+    /**
+     * @param array $resourceId
+     * @param string $operation
+     * @param string $storeName
+     * @param string $podName
+     * @param array $specTypes
+     * @throws TripodException
+     * @throws Exception
+     */
     public function __construct(Array $resourceId, $operation, $storeName, $podName, Array $specTypes=array())
     {
         if (!is_array($resourceId) || !array_key_exists(_ID_RESOURCE,$resourceId) || !array_key_exists(_ID_CONTEXT,$resourceId))
@@ -111,12 +120,19 @@ class ImpactedSubject
         );
     }
 
+    /**
+     * Perform the update on the composite defined by the operation
+     */
     public function update()
     {
         $tripod = $this->getTripod();
         $tripod->getComposite($this->operation)->update($this);
     }
 
+    /**
+     * For mocking
+     * @return MongoTripod
+     */
     protected function getTripod()
     {
         return new MongoTripod($this->getPodName(),$this->getStoreName(),array("readPreference"=>MongoClient::RP_PRIMARY));

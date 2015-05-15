@@ -2,6 +2,10 @@
 
 class DiscoverImpactedSubjects extends JobBase {
 
+    /**
+     * Run the DiscoverImpactedSubjects job
+     * @throws Exception
+     */
     public function perform()
     {
         try

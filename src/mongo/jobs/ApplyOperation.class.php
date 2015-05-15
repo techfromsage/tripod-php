@@ -1,6 +1,10 @@
 <?php
 
 class ApplyOperation extends JobBase {
+    /**
+     * Run the ApplyOperation job
+     * @throws Exception
+     */
     public function perform()
     {
         try
@@ -31,7 +35,12 @@ class ApplyOperation extends JobBase {
             throw $e;
         }
     }
-    
+
+    /**
+     * For mocking
+     * @param array $args
+     * @return ImpactedSubject
+     */
     protected function createImpactedSubject(array $args)
     {
         return new ImpactedSubject(
