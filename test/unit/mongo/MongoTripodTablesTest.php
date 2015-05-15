@@ -1001,4 +1001,51 @@ class MongoTripodTablesTest extends MongoTripodTestBase
     }
 
 
+    public function testRemoveTableSpecDoesNotAffectInvalidation()
+    {
+        foreach(MongoTripodConfig::getInstance()->getTableSpecifications($this->tripod->getStoreName()) as $specId=>$spec)
+        {
+            $this->generateTableRows($specId);
+        }
+
+
+        $context = 'http://talisaspire.com/';
+        $uri = "http://talisaspire.com/works/4d101f63c10a6";
+
+        $collection = MongoTripodConfig::getInstance()->getCollectionForTable('tripod_php_testing', 't_resource');
+        $this->assertGreaterThan(0, $collection->count(array('_id.type'=>'t_resource', 'value._impactIndex'=>array(_ID_RESOURCE=>$uri, _ID_CONTEXT=>$context))));
+        $config = MongoTripodConfig::getConfig();
+        unset($config['stores']['tripod_php_testing']['table_specifications'][0]);
+        MongoTripodConfig::setConfig($config);
+
+
+        /** @var PHPUnit_Framework_MockObject_MockObject|MongoTripod $mockTripod */
+        $mockTripod = $this->getMockBuilder('MongoTripod')
+            ->setMethods(array('getDataUpdater'))
+            ->setConstructorArgs(array('CBD_testing','tripod_php_testing',array('defaultContext'=>$context)))
+            ->getMock();
+
+        /** @var PHPUnit_Framework_MockObject_MockObject|MongoTripodUpdates $mockTripodUpdates */
+        $mockTripodUpdates = $this->getMockBuilder('MongoTripodUpdates')
+            ->setMethods(array('processSyncOperations'))
+            ->setConstructorArgs(array($mockTripod, array('defaultContext'=>$context, OP_ASYNC=>array(OP_VIEWS=>true, OP_TABLES=>false, OP_SEARCH=>true))))
+            ->getMock();
+
+        $mockTripod->expects($this->once())
+            ->method('getDataUpdater')
+            ->will($this->returnValue($mockTripodUpdates));
+
+        $mockTripodUpdates->expects($this->never())
+            ->method('processSyncOperations');
+
+
+        $labeller = new MongoTripodLabeller();
+
+        $originalGraph = $mockTripod->describeResource($uri);
+        $updatedGraph = $originalGraph->get_subject_subgraph($uri);
+        $updatedGraph->add_literal_triple($uri, $labeller->qname_to_uri('dct:description'), 'Physics textbook');
+
+        $mockTripod->saveChanges($originalGraph, $updatedGraph);
+    }
+
 }
