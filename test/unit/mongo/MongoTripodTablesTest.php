@@ -889,7 +889,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             $this->defaultStoreName,
             $this->defaultPodName,
             // Order of these doesn't matter - if the test fails, reverse the order and try again
-            array("t_join_source_count_regex", "t_distinct")
+            array("t_distinct","t_join_source_count_regex")
         );
 
         $impactedSubjects = $table->getImpactedSubjects($subjectsAndPredicatesOfChange, $this->defaultContext);
