@@ -1,7 +1,7 @@
 <?php
 
 $options = getopt(
-    "c:s:ht:i:",
+    "c:s:q:ht:i:a",
     array(
         "config:",
         "storename:",
@@ -11,6 +11,8 @@ $options = getopt(
         "id:",
         "help",
         "stat-loader:",
+        "queue",
+        "async"
     )
 );
 
@@ -29,6 +31,8 @@ Options:
     -s --storename          Store to create tables for (required)
     -t --spec               Only create for specified table specs
     -i --id                 Resource ID to regenerate table rows for
+    -a --async              Generate table rows via queue
+    -q --queue              Queue name to place jobs on (defaults to configured TRIPOD_APPLY_QUEUE value)
 
     --stat-loader           Path to script to initialize a Stat object.  Note, it *must* return an iTripodStat object!
     --tripod-dir            Path to tripod directory base
@@ -80,7 +84,7 @@ require_once 'mongo/MongoTripod.class.php';
  * @param string|null $storeName
  * @param iTripodStat|null $stat
  */
-function generateTables($id, $tableId, $storeName, $stat = null)
+function generateTables($id, $tableId, $storeName, $stat = null, $queue = null)
 {
     $tableSpec = MongoTripodConfig::getInstance()->getTableSpecification($storeName, $tableId);
     if(empty($tableSpec)) // Older version of Tripod being used?
@@ -102,7 +106,7 @@ function generateTables($id, $tableId, $storeName, $stat = null)
         else
         {
             print " for all tables....\n";
-            $tTables->generateTableRows($tableId);
+            $tTables->generateTableRows($tableId, null, null, $queue);
         }
     }
 }
@@ -139,6 +143,18 @@ else
     $id = null;
 }
 
+$queue = null;
+if(isset($options['a']) || isset($options['async']))
+{
+    if(isset($options['q']) || isset($options['queue']))
+    {
+        $queue = $options['queue'];
+    }
+    else
+    {
+        $queue = MongoTripodConfig::getInstance()->getApplyQueueName();
+    }
+}
 
 $stat = null;
 
@@ -149,13 +165,13 @@ if(isset($options['stat-loader']))
 
 if ($tableId)
 {
-    generateTables($id, $tableId, $storeName, $stat);
+    generateTables($id, $tableId, $storeName, $stat, $queue);
 }
 else
 {
     foreach(MongoTripodConfig::getInstance()->getTableSpecifications($storeName) as $tableSpec)
     {
-        generateTables($id, $tableSpec['_id'], $storeName, $stat);
+        generateTables($id, $tableSpec['_id'], $storeName, $stat, $queue);
     }
 }
 

@@ -1,7 +1,7 @@
 <?php
 
 $options = getopt(
-    "c:s:hv:i:",
+    "c:s:q:hv:i:a",
     array(
         "config:",
         "storename:",
@@ -11,6 +11,8 @@ $options = getopt(
         "id:",
         "help",
         "stat-loader:",
+        "queue",
+        "async"
     )
 );
 
@@ -29,6 +31,8 @@ Options:
     -s --storename          Store to create views for (required)
     -v --spec               Only create for specified view specs
     -i --id                 Resource ID to regenerate views for
+    -a --async              Generate table rows via queue
+    -q --queue              Queue name to place jobs on (defaults to configured TRIPOD_APPLY_QUEUE value)
 
     --stat-loader           Path to script to initialize a Stat object.  Note, it *must* return an iTripodStat object!
     --tripod-dir            Path to tripod directory base
@@ -80,7 +84,7 @@ require_once 'mongo/MongoTripod.class.php';
  * @param string $storeName
  * @param iTripodStat|null $stat
  */
-function generateViews($id, $viewId, $storeName, $stat)
+function generateViews($id, $viewId, $storeName, $stat, $queue)
 {
     $viewSpec = MongoTripodConfig::getInstance()->getViewSpecification($storeName, $viewId);
     if(empty($viewSpec)) // Older version of Tripod being used?
@@ -140,6 +144,19 @@ else
     $id = null;
 }
 
+$queue = null;
+if(isset($options['a']) || isset($options['async']))
+{
+    if(isset($options['q']) || isset($options['queue']))
+    {
+        $queue = $options['queue'];
+    }
+    else
+    {
+        $queue = MongoTripodConfig::getInstance()->getApplyQueueName();
+    }
+}
+
 $stat = null;
 
 if(isset($options['stat-loader']))
@@ -149,13 +166,13 @@ if(isset($options['stat-loader']))
 
 if ($viewId)
 {
-    generateViews($id, $viewId, $storeName, $stat);
+    generateViews($id, $viewId, $storeName, $stat, $queue);
 }
 else
 {
     foreach(MongoTripodConfig::getInstance()->getViewSpecifications($storeName) as $viewSpec)
     {
-        generateViews($id, $viewSpec['_id'], $storeName, $stat);
+        generateViews($id, $viewSpec['_id'], $storeName, $stat), $queue;
     }
 }
 
