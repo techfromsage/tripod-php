@@ -1,9 +1,10 @@
 <?php
 
+namespace Tripod\Mongo;
 /**
  * Todo: How to inject correct stat class... :-S
  */
-abstract class JobBase extends MongoTripodBase
+abstract class JobBase extends TripodBase
 {
     private $mongoTripod;
 
@@ -11,16 +12,16 @@ abstract class JobBase extends MongoTripodBase
      * For mocking
      * @param string $storeName
      * @param string $podName
-     * @return MongoTripod
+     * @return Tripod
      */
     protected function getMongoTripod($storeName,$podName) {
         if ($this->mongoTripod == null) {
-            $this->mongoTripod = new MongoTripod(
+            $this->mongoTripod = new Tripod(
                 $podName,
                 $storeName,
                 array(
                     'stat'=>$this->getStat(),
-                    'readPreference'=>MongoClient::RP_PRIMARY // important: make sure we always read from the primary
+                    'readPreference'=>\MongoClient::RP_PRIMARY // important: make sure we always read from the primary
                 )
             );
         }
@@ -35,7 +36,7 @@ abstract class JobBase extends MongoTripodBase
 
     /**
      * Validate the arguments for this job
-     * @throws Exception
+     * @throws \Exception
      */
     protected function validateArgs()
     {
@@ -45,7 +46,7 @@ abstract class JobBase extends MongoTripodBase
             {
                 $message = "Argument $arg was not present in supplied job args for job ".get_class($this);
                 $this->errorLog($message);
-                throw new Exception($message);
+                throw new \Exception($message);
             }
         }
     }
@@ -76,7 +77,7 @@ abstract class JobBase extends MongoTripodBase
      */
     protected function submitJob($queueName, $class, Array $data)
     {
-        Resque::enqueue($queueName, $class, $data);
+        \Resque::enqueue($queueName, $class, $data);
     }
 }
 

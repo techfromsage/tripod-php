@@ -1,11 +1,13 @@
 <?php
+
+namespace Tripod\Mongo;
 /**
  * Holds the global configuration for Tripod
  */
-class MongoTripodConfig
+class Config
 {
     /**
-     * @var MongoTripodConfig
+     * @var Config
      */
     private static $instance;
 
@@ -15,7 +17,7 @@ class MongoTripodConfig
     private static $config;
 
     /**
-     * @var MongoTripodLabeller
+     * @var Labeller
      */
     private $labeller = null;
 
@@ -126,7 +128,7 @@ class MongoTripodConfig
     protected static $validationLevel = self::VALIDATE_MIN;
 
     /**
-     * MongoTripodConfig should not be instantiated directly: use MongoTripodConfig::getInstance()
+     * Config should not be instantiated directly: use Config::getInstance()
      */
     private function __construct() {}
 
@@ -134,7 +136,7 @@ class MongoTripodConfig
      * Used to load the config from self::config when new instance is generated
      *
      * @param array $config
-     * @throws MongoTripodConfigException
+     * @throws \Tripod\Exceptions\ConfigException
      */
     protected function loadConfig(Array $config)
     {
@@ -149,11 +151,11 @@ class MongoTripodConfig
         {
             if(!array_key_exists('type', $c))
             {
-                throw new MongoTripodConfigException("No 'type' set for data source $source");
+                throw new \Tripod\Exceptions\ConfigException("No 'type' set for data source $source");
             }
             if(!array_key_exists('connection', $c))
             {
-                throw new MongoTripodConfigException("No connection information set for data source $source");
+                throw new \Tripod\Exceptions\ConfigException("No connection information set for data source $source");
             }
             $this->dataSources[$source] = $c;
         }
@@ -162,7 +164,7 @@ class MongoTripodConfig
         $this->tConfig["data_source"] = $this->getMandatoryKey('data_source', $transactionConfig, 'transaction_log');
         if(!isset($this->dataSources[$this->tConfig['data_source']]))
         {
-            throw new MongoTripodConfigException("Transaction log data source, " . $this->tConfig['data_source'] . ", was not defined");
+            throw new \Tripod\Exceptions\ConfigException("Transaction log data source, " . $this->tConfig['data_source'] . ", was not defined");
         }
         $this->tConfig["database"] = $this->getMandatoryKey("database",$transactionConfig,'transaction_log');
         $this->tConfig["collection"] = $this->getMandatoryKey("collection",$transactionConfig,'transaction_log');
@@ -209,7 +211,7 @@ class MongoTripodConfig
                             }
                             else
                             {
-                                throw new MongoTripodConfigException("Cardinality '{$qname}' does not have the namespace defined");
+                                throw new \Tripod\Exceptions\ConfigException("Cardinality '{$qname}' does not have the namespace defined");
                             }
                         }
                     }
@@ -239,7 +241,7 @@ class MongoTripodConfig
                                     }
                                     if ($fieldsThatAreArrays>1)
                                     {
-                                        throw new MongoTripodConfigException("Compound index $indexName has more than one field with cardinality > 1 - mongo will not be able to build this index");
+                                        throw new \Tripod\Exceptions\ConfigException("Compound index $indexName has more than one field with cardinality > 1 - mongo will not be able to build this index");
                                     }
                                 }
                             } // @codeCoverageIgnoreStart
@@ -260,20 +262,20 @@ class MongoTripodConfig
                 {
                     if(!isset($spec[_ID_KEY]))
                     {
-                        throw new MongoTripodConfigException("Search document spec does not contain " . _ID_KEY);
+                        throw new \Tripod\Exceptions\ConfigException("Search document spec does not contain " . _ID_KEY);
                     }
                     if(!isset($spec['from']) || !in_array($spec['from'], $this->getPods($storeName)))
                     {
-                        throw new MongoTripodConfigException("'" . $spec[_ID_KEY] . "[\"from\"]' property not set or references an undefined pod");
+                        throw new \Tripod\Exceptions\ConfigException("'" . $spec[_ID_KEY] . "[\"from\"]' property not set or references an undefined pod");
                     }
                     if(!isset($spec['filter']))
                     {
-                        throw new MongoTripodConfigException("'" . $spec[_ID_KEY] . "[\"filter\"]' property not set");
+                        throw new \Tripod\Exceptions\ConfigException("'" . $spec[_ID_KEY] . "[\"filter\"]' property not set");
                     }
 
                     if(!isset($spec['fields']) && !isset($spec['joins']))
                     {
-                        throw new MongoTripodConfigException("'" . $spec[_ID_KEY] . "' contains no 'fields' or 'joins' properties");
+                        throw new \Tripod\Exceptions\ConfigException("'" . $spec[_ID_KEY] . "' contains no 'fields' or 'joins' properties");
                     }
 
                     if($this->searchProviderClassName[$storeName] == SEARCH_PROVIDER_MONGO)
@@ -282,7 +284,7 @@ class MongoTripodConfig
                         {
                             if(!isset($this->dataSources[$spec['to_data_source']]))
                             {
-                                throw new MongoTripodConfigException("'" . $spec[_ID_KEY] . "[\"to_data_source\"]' property references an undefined data source");
+                                throw new \Tripod\Exceptions\ConfigException("'" . $spec[_ID_KEY] . "[\"to_data_source\"]' property references an undefined data source");
                             }
                         }
                         else
@@ -301,22 +303,22 @@ class MongoTripodConfig
             {
                 if(!isset($spec[_ID_KEY]))
                 {
-                    throw new MongoTripodConfigException("View spec does not contain " . _ID_KEY);
+                    throw new \Tripod\Exceptions\ConfigException("View spec does not contain " . _ID_KEY);
                 }
                 if(!isset($spec['from']) || !in_array($spec['from'], $this->getPods($storeName)))
                 {
-                    throw new MongoTripodConfigException("'" . $spec[_ID_KEY] . "[\"from\"]' property not set or references an undefined pod");
+                    throw new \Tripod\Exceptions\ConfigException("'" . $spec[_ID_KEY] . "[\"from\"]' property not set or references an undefined pod");
                 }
                 if(!isset($spec['joins']))
                 {
-                    throw new MongoTripodConfigException('Could not find any joins in view specification - usecase better served with select()');
+                    throw new \Tripod\Exceptions\ConfigException('Could not find any joins in view specification - usecase better served with select()');
                 }
                 $this->ifCountExistsWithoutTTLThrowException($spec);
                 if(isset($spec['to_data_source']))
                 {
                     if(!isset($this->dataSources[$spec['to_data_source']]))
                     {
-                        throw new MongoTripodConfigException("'" . $spec[_ID_KEY] . "[\"to_data_source\"]' property references an undefined data source");
+                        throw new \Tripod\Exceptions\ConfigException("'" . $spec[_ID_KEY] . "[\"to_data_source\"]' property references an undefined data source");
                     }
                 }
                 else
@@ -337,7 +339,7 @@ class MongoTripodConfig
                 {
                     if(!isset($this->dataSources[$spec['to_data_source']]))
                     {
-                        throw new MongoTripodConfigException("'" . $spec[_ID_KEY] . "[\"to_data_source\"]' property references an undefined data source");
+                        throw new \Tripod\Exceptions\ConfigException("'" . $spec[_ID_KEY] . "[\"to_data_source\"]' property references an undefined data source");
                     }
                 }
                 else
@@ -354,18 +356,18 @@ class MongoTripodConfig
 
     /**
      * @param array $spec
-     * @throws MongoTripodConfigException
+     * @throws \Tripod\Exceptions\ConfigException
      */
     public function validateTableSpec(array $spec)
     {
         if(!isset($spec[_ID_KEY]))
         {
-            throw new MongoTripodConfigException("Table spec does not contain " . _ID_KEY);
+            throw new \Tripod\Exceptions\ConfigException("Table spec does not contain " . _ID_KEY);
         }
 
         if(!isset($spec['from']))
         {
-            throw new MongoTripodConfigException("Table spec does not contain from");
+            throw new \Tripod\Exceptions\ConfigException("Table spec does not contain from");
         }
 
         $this->validateTableSpecPart($spec, 0);
@@ -374,14 +376,14 @@ class MongoTripodConfig
     /**
      * @param array $spec
      * @param int $depth
-     * @throws MongoTripodConfigException
+     * @throws \Tripod\Exceptions\ConfigException
      */
     protected function validateTableSpecPart(array $spec, $depth=0)
     {
         $validationLevel = $this->getValidationLevel();
         if(!isset($spec['fields']) && !isset($spec['joins']) && !isset($spec['counts']) && !isset($spec['computed_fields']))
         {
-            throw new MongoTripodConfigException("Table spec part does not contain fields, joins, counts, or computed_fields");
+            throw new \Tripod\Exceptions\ConfigException("Table spec part does not contain fields, joins, counts, or computed_fields");
         }
         if(isset($spec['fields']))
         {
@@ -389,7 +391,7 @@ class MongoTripodConfig
             {
                 if (!isset($field['fieldName']))
                 {
-                    throw new MongoTripodConfigException("Field spec does not contain fieldName");
+                    throw new \Tripod\Exceptions\ConfigException("Field spec does not contain fieldName");
                 }
 
                 if(isset($field['predicates']))
@@ -405,7 +407,7 @@ class MongoTripodConfig
                                  * checkModifierFunctions will check if each predicate modifier is valid - it will
                                  * check recursively through the predicate
                                  */
-                                $this->checkModifierFunctions($p, MongoTripodTables::$predicateModifiers);
+                                $this->checkModifierFunctions($p, Tables::$predicateModifiers);
                             }
                         }
                     }
@@ -413,7 +415,7 @@ class MongoTripodConfig
                 // fields can either have predicates or values
                 elseif((!isset($field['value'])) || empty($field['value']))
                 {
-                    throw new MongoTripodConfigException("Field spec does not contain predicates or value");
+                    throw new \Tripod\Exceptions\ConfigException("Field spec does not contain predicates or value");
                 }
             }
         }
@@ -424,19 +426,19 @@ class MongoTripodConfig
             {
                 if (!isset($count['fieldName']))
                 {
-                    throw new MongoTripodConfigException("Count spec does not contain fieldName");
+                    throw new \Tripod\Exceptions\ConfigException("Count spec does not contain fieldName");
                 }
 
                 if(isset($count['property']))
                 {
                     if (!is_string($count['property']))
                     {
-                        throw new MongoTripodConfigException("Count spec property was not a string");
+                        throw new \Tripod\Exceptions\ConfigException("Count spec property was not a string");
                     }
                 }
                 else
                 {
-                    throw new MongoTripodConfigException("Count spec does not contain property");
+                    throw new \Tripod\Exceptions\ConfigException("Count spec does not contain property");
                 }
             }
         }
@@ -445,10 +447,10 @@ class MongoTripodConfig
         {
             if($depth > 0)
             {
-                throw new MongoTripodConfigException("Table spec can only contain 'computed_fields' at the base level");
+                throw new \Tripod\Exceptions\ConfigException("Table spec can only contain 'computed_fields' at the base level");
             }
 
-            $validComputingFieldFunctions = MongoTripodTables::$computedFieldFunctions;
+            $validComputingFieldFunctions = Tables::$computedFieldFunctions;
             if($validationLevel == self::VALIDATE_MAX)
             {
                 $availableFields = $this->getFieldNamesInSpec($spec);
@@ -458,28 +460,28 @@ class MongoTripodConfig
             {
                 if (!isset($field['fieldName']))
                 {
-                    throw new MongoTripodConfigException("Computed field spec does not contain fieldName");
+                    throw new \Tripod\Exceptions\ConfigException("Computed field spec does not contain fieldName");
                 }
                 if (!isset($field['value']))
                 {
-                    throw new MongoTripodConfigException("Computed field spec does not contain value");
+                    throw new \Tripod\Exceptions\ConfigException("Computed field spec does not contain value");
                 }
 
                 if(!is_array($field['value']))
                 {
-                    throw new MongoTripodConfigException("Compute field value does not contain computed field spec");
+                    throw new \Tripod\Exceptions\ConfigException("Compute field value does not contain computed field spec");
                 }
 
                 $functions = array_intersect(array_keys($field['value']), $validComputingFieldFunctions);
 
                 if(empty($functions))
                 {
-                    throw new MongoTripodConfigException("Computed field spec does not contain valid function");
+                    throw new \Tripod\Exceptions\ConfigException("Computed field spec does not contain valid function");
                 }
 
                 if(count($functions) > 1)
                 {
-                    throw new MongoTripodConfigException("Computed field spec contains more than one function");
+                    throw new \Tripod\Exceptions\ConfigException("Computed field spec contains more than one function");
                 }
                 if($validationLevel == self::VALIDATE_MAX )
                 {
@@ -538,34 +540,34 @@ class MongoTripodConfig
     /**
      * @param array $spec
      * @param array $availableFields
-     * @throws MongoTripodConfigException
+     * @throws \Tripod\Exceptions\ConfigException
      */
     protected function validateComputedConditionalSpec(array $spec, array $availableFields)
     {
         if(!isset($spec['if']))
         {
-            throw new MongoTripodConfigException("Computed conditional spec does not contain an 'if' value");
+            throw new \Tripod\Exceptions\ConfigException("Computed conditional spec does not contain an 'if' value");
         }
 
         if(!isset($spec['then']) && !isset($spec['else']))
         {
-            throw new MongoTripodConfigException("Computed conditional spec must contain a then or else value");
+            throw new \Tripod\Exceptions\ConfigException("Computed conditional spec must contain a then or else value");
         }
 
         if(!is_array($spec['if']))
         {
-            throw new MongoTripodConfigException("Computed conditional field spec 'if' value must be an array");
+            throw new \Tripod\Exceptions\ConfigException("Computed conditional field spec 'if' value must be an array");
         }
 
         if(count($spec['if']) !== 1 && count($spec['if']) !== 3)
         {
-            throw new MongoTripodConfigException("Computed conditional field spec 'if' value array must have 1 or 3 values");
+            throw new \Tripod\Exceptions\ConfigException("Computed conditional field spec 'if' value array must have 1 or 3 values");
         }
 
         $this->validateSpecVariableReplacement($spec['if'][0], $availableFields);
-        if(isset($spec['if'][1]) && !in_array($spec['if'][1], MongoTripodTables::$conditionalOperators))
+        if(isset($spec['if'][1]) && !in_array($spec['if'][1], Tables::$conditionalOperators))
         {
-            throw new MongoTripodConfigException("Invalid conditional operator '" . $spec['if'][1] . "' in conditional spec");
+            throw new \Tripod\Exceptions\ConfigException("Invalid conditional operator '" . $spec['if'][1] . "' in conditional spec");
         }
 
         if(isset($spec['if'][2]))
@@ -581,7 +583,7 @@ class MongoTripodConfig
             }
             elseif(is_array($spec['then']))
             {
-                $functions = array_intersect_key(array_keys($spec['then']), MongoTripodTables::$computedFieldFunctions);
+                $functions = array_intersect_key(array_keys($spec['then']), Tables::$computedFieldFunctions);
                 switch(count($functions))
                 {
                     case 0;
@@ -590,7 +592,7 @@ class MongoTripodConfig
                         $this->validateComputedFieldSpec($functions[0], $spec['then'], $availableFields);
                         break;
                     default:
-                        throw new MongoTripodConfigException("Computed conditional field 'then' value has more than one function");
+                        throw new \Tripod\Exceptions\ConfigException("Computed conditional field 'then' value has more than one function");
                         break;
                 }
             }
@@ -603,7 +605,7 @@ class MongoTripodConfig
             }
             elseif(is_array($spec['else']))
             {
-                $functions = array_intersect_key(array_keys($spec['else']), MongoTripodTables::$computedFieldFunctions);
+                $functions = array_intersect_key(array_keys($spec['else']), Tables::$computedFieldFunctions);
                 switch(count($functions))
                 {
                     case 0;
@@ -612,7 +614,7 @@ class MongoTripodConfig
                         $this->validateComputedFieldSpec($functions[0], $spec['else'], $availableFields);
                         break;
                     default:
-                        throw new MongoTripodConfigException("Computed conditional field 'else' value has more than one function");
+                        throw new \Tripod\Exceptions\ConfigException("Computed conditional field 'else' value has more than one function");
                         break;
                 }
             }
@@ -622,7 +624,7 @@ class MongoTripodConfig
     /**
      * @param mixed $value
      * @param array $availableFields
-     * @throws MongoTripodConfigException
+     * @throws \Tripod\Exceptions\ConfigException
      */
     protected function validateSpecVariableReplacement($value, array $availableFields)
     {
@@ -632,7 +634,7 @@ class MongoTripodConfig
             {
                 if(!in_array($value, $availableFields))
                 {
-                    throw new MongoTripodConfigException("Computed spec variable '$value' is not defined in table spec");
+                    throw new \Tripod\Exceptions\ConfigException("Computed spec variable '$value' is not defined in table spec");
                 }
             }
         }
@@ -648,23 +650,23 @@ class MongoTripodConfig
     /**
      * @param array $spec
      * @param array $availableFields
-     * @throws MongoTripodConfigException
+     * @throws \Tripod\Exceptions\ConfigException
      */
     protected function validateComputedReplaceSpec(array $spec, array $availableFields)
     {
         if(!isset($spec['search']))
         {
-            throw new MongoTripodConfigException("Computed replace spec does not contain 'search' value");
+            throw new \Tripod\Exceptions\ConfigException("Computed replace spec does not contain 'search' value");
         }
         $this->validateSpecVariableReplacement($spec['search'], $availableFields);
         if(!isset($spec['replace']))
         {
-            throw new MongoTripodConfigException("Computed replace spec does not contain 'replace' value");
+            throw new \Tripod\Exceptions\ConfigException("Computed replace spec does not contain 'replace' value");
         }
         $this->validateSpecVariableReplacement($spec['replace'], $availableFields);
         if(!isset($spec['subject']))
         {
-            throw new MongoTripodConfigException("Computed replace spec does not contain 'subject' value");
+            throw new \Tripod\Exceptions\ConfigException("Computed replace spec does not contain 'subject' value");
         }
         $this->validateSpecVariableReplacement($spec['subject'], $availableFields);
     }
@@ -672,17 +674,17 @@ class MongoTripodConfig
     /**
      * @param array $spec
      * @param array $availableFields
-     * @throws MongoTripodConfigException
+     * @throws \Tripod\Exceptions\ConfigException
      */
     protected function validateComputedArithmeticSpec(array $spec, array $availableFields)
     {
         if(count($spec) !== 3)
         {
-            throw new MongoTripodConfigException("Computed arithmetic spec must contain 3 values");
+            throw new \Tripod\Exceptions\ConfigException("Computed arithmetic spec must contain 3 values");
         }
         if(is_array($spec[0]))
         {
-            if(count(array_keys($spec[0])) === 1 && count(array_intersect(array_keys($spec[0]), MongoTripodTables::$computedFieldFunctions)) ===1)
+            if(count(array_keys($spec[0])) === 1 && count(array_intersect(array_keys($spec[0]), Tables::$computedFieldFunctions)) ===1)
             {
                 $function = array_keys($spec[0]);
                 $this->validateComputedFieldSpec($function[0], $spec[0], $availableFields);
@@ -698,7 +700,7 @@ class MongoTripodConfig
         }
         if(is_array($spec[2]))
         {
-            if(count(array_keys($spec[2])) === 1 && count(array_intersect(array_keys($spec[2]), MongoTripodTables::$computedFieldFunctions)) ===1)
+            if(count(array_keys($spec[2])) === 1 && count(array_intersect(array_keys($spec[2]), Tables::$computedFieldFunctions)) ===1)
             {
                 $function = array_keys($spec[2]);
                 $this->validateComputedFieldSpec($function[0], $spec[2], $availableFields);
@@ -712,9 +714,9 @@ class MongoTripodConfig
         {
             $this->validateSpecVariableReplacement($spec[2], $availableFields);
         }
-        if(!in_array($spec[1], MongoTripodTables::$arithmeticOperators))
+        if(!in_array($spec[1], Tables::$arithmeticOperators))
         {
-            throw new MongoTripodConfigException("Invalid arithmetic operator '" . $spec[1] . "' in computed arithmetic spec");
+            throw new \Tripod\Exceptions\ConfigException("Invalid arithmetic operator '" . $spec[1] . "' in computed arithmetic spec");
         }
     }
 
@@ -1001,7 +1003,7 @@ class MongoTripodConfig
      * @param array $array
      * @param mixed $parent
      * @param string|null $parentKey
-     * @throws MongoTripodConfigException
+     * @throws \Tripod\Exceptions\ConfigException
      */
     public function checkModifierFunctions(array $array, $parent, $parentKey = null)
     {
@@ -1012,16 +1014,16 @@ class MongoTripodConfig
             {
                 // Check config
                 // Valid configs can be top level modifiers and their attributes inside - you can have a top level modifier
-                //      inside a top level modifier - that's why we also check MongoTripodTables::$predicatesModifiers direct
-                if(!array_key_exists($k, $parent) && !array_key_exists($k, MongoTripodTables::$predicateModifiers))
+                //      inside a top level modifier - that's why we also check TripodTables::$predicatesModifiers direct
+                if(!array_key_exists($k, $parent) && !array_key_exists($k, Tables::$predicateModifiers))
                 {
-                    throw new MongoTripodConfigException("Invalid modifier: '".$k."' in key '".$parentKey."'");
+                    throw new \Tripod\Exceptions\ConfigException("Invalid modifier: '".$k."' in key '".$parentKey."'");
                 }
 
                 // If this config value is a top level modifier, use that as the parent so that we can check the attributes
-                if(array_key_exists($k, MongoTripodTables::$predicateModifiers))
+                if(array_key_exists($k, Tables::$predicateModifiers))
                 {
-                    $this->checkModifierFunctions($v, MongoTripodTables::$predicateModifiers[$k], $k);
+                    $this->checkModifierFunctions($v, Tables::$predicateModifiers[$k], $k);
                 } else
                 {
                     $this->checkModifierFunctions($v, $parent[$k], $k);
@@ -1033,7 +1035,7 @@ class MongoTripodConfig
                 // Check key
                 if(!array_key_exists($k, $parent))
                 {
-                    throw new MongoTripodConfigException("Invalid modifier: '".$k."' in key '".$parentKey."'");
+                    throw new \Tripod\Exceptions\ConfigException("Invalid modifier: '".$k."' in key '".$parentKey."'");
                 }
             }
         }
@@ -1065,22 +1067,22 @@ class MongoTripodConfig
 
     /**
      * Since this is a singleton class, use this method to create a new config instance.
-     * @uses MongoTripodConfig::setConfig() Configuration must be set prior to calling this method. To generate a completely new object, set a new config
+     * @uses Config::setConfig() Configuration must be set prior to calling this method. To generate a completely new object, set a new config
      * @codeCoverageIgnore
      * @static
-     * @throws MongoTripodConfigException
+     * @throws \Tripod\Exceptions\ConfigException
      * @internal param string $specName
-     * @return MongoTripodConfig
+     * @return Config
      */
     public static function getInstance()
     {
         if (!isset(self::$config))
         {
-            throw new MongoTripodConfigException("Call MongoTripodConfig::setConfig() first");
+            throw new \Tripod\Exceptions\ConfigException("Call Config::setConfig() first");
         }
         if (!isset(self::$instance))
         {
-            self::$instance = new MongoTripodConfig();
+            self::$instance = new Config();
             self::$instance->loadConfig(self::$config);
         }
         return self::$instance;
@@ -1088,7 +1090,7 @@ class MongoTripodConfig
 
     /**
      * set the config
-     * @usedby MongoTripodConfig::getInstance()
+     * @usedby Config::getInstance()
      * @param array $config
      */
     public static function setConfig(Array $config)
@@ -1206,7 +1208,7 @@ class MongoTripodConfig
      *
      * @param string $storeName
      * @param string $podName
-     * @throws MongoTripodConfigException
+     * @throws \Tripod\Exceptions\ConfigException
      * @return string
      */
     public function getDataSourceForPod($storeName, $podName)
@@ -1215,7 +1217,7 @@ class MongoTripodConfig
         {
             return $this->podConnections[$storeName][$podName];
         }
-        throw new MongoTripodConfigException("'{$podName}' not configured for store '{$storeName}'");
+        throw new \Tripod\Exceptions\ConfigException("'{$podName}' not configured for store '{$storeName}'");
     }
 
     /**
@@ -1223,7 +1225,7 @@ class MongoTripodConfig
      *
      * @param string $storeName
      * @param string|null $podName
-     * @throws MongoTripodConfigException
+     * @throws \Tripod\Exceptions\ConfigException
      * @return string
      */
     public function getConnStr($storeName, $podName = null)
@@ -1239,18 +1241,18 @@ class MongoTripodConfig
             {
                 return $this->getConnStrForDataSource($pods[$podName]['data_source']);
             }
-            throw new MongoTripodConfigException("Collection $podName does not exist for database $storeName");
+            throw new \Tripod\Exceptions\ConfigException("Collection $podName does not exist for database $storeName");
         }
         else
         {
-            throw new MongoTripodConfigException("Database $storeName does not exist in configuration");
+            throw new \Tripod\Exceptions\ConfigException("Database $storeName does not exist in configuration");
         }
     }
 
     /**
      * Returns the transaction log database connection string
      * @return string
-     * @throws MongoTripodConfigException
+     * @throws \Tripod\Exceptions\ConfigException
      */
     public function getTransactionLogConnStr() {
         return $this->getConnStrForDataSource($this->tConfig['data_source']);
@@ -1259,13 +1261,13 @@ class MongoTripodConfig
     /**
      * @param $dataSource
      * @return string
-     * @throws MongoTripodConfigException
+     * @throws \Tripod\Exceptions\ConfigException
      */
     protected function getConnStrForDataSource($dataSource)
     {
         if(!array_key_exists($dataSource, $this->dataSources))
         {
-            throw new MongoTripodConfigException("Data source '{$dataSource}' not configured");
+            throw new \Tripod\Exceptions\ConfigException("Data source '{$dataSource}' not configured");
         }
         $ds = $this->dataSources[$dataSource];
         if(array_key_exists("replicaSet", $ds) && !empty($ds["replicaSet"])) {
@@ -1273,7 +1275,7 @@ class MongoTripodConfig
             if ($this->isConnectionStringValidForRepSet($connStr)){
                 return $connStr;
             } else {
-                throw new MongoTripodConfigException("Connection string for '{$dataSource}' must include /admin database when connecting to Replica Set");
+                throw new \Tripod\Exceptions\ConfigException("Connection string for '{$dataSource}' must include /admin database when connecting to Replica Set");
             }
         } else {
             return $ds['connection'];
@@ -1528,13 +1530,13 @@ class MongoTripodConfig
     /* PROTECTED FUNCTIONS */
 
     /**
-     * @return MongoTripodLabeller
+     * @return Labeller
      */
     protected function getLabeller()
     {
         if ($this->labeller==null)
         {
-            $this->labeller = new MongoTripodLabeller();
+            $this->labeller = new Labeller();
         }
         return $this->labeller;
     }
@@ -1570,7 +1572,7 @@ class MongoTripodConfig
      * If we have 'counts' in a view spec, a 'ttl' must be defined.
      * Note: this does not apply to tables or search docs
      * @param array $spec
-     * @throws MongoTripodConfigException
+     * @throws \Tripod\Exceptions\ConfigException
      */
     private function ifCountExistsWithoutTTLThrowException($spec)
     {
@@ -1590,7 +1592,7 @@ class MongoTripodConfig
             }
             if (array_key_exists("counts",$spec))
             {
-                throw new MongoTripodConfigException("Aggregate function counts exists in spec, but no TTL defined");
+                throw new \Tripod\Exceptions\ConfigException("Aggregate function counts exists in spec, but no TTL defined");
             }
             else
             {
@@ -1605,13 +1607,13 @@ class MongoTripodConfig
      * @param array $a
      * @param string $configName
      * @return mixed
-     * @throws MongoTripodConfigException
+     * @throws \Tripod\Exceptions\ConfigException
      */
     private function getMandatoryKey($key,Array $a,$configName='config')
     {
         if (!array_key_exists($key,$a))
         {
-            throw new MongoTripodConfigException("Mandatory config key [$key] is missing from $configName");
+            throw new \Tripod\Exceptions\ConfigException("Mandatory config key [$key] is missing from $configName");
         }
         return $a[$key];
     }
@@ -1688,14 +1690,14 @@ class MongoTripodConfig
      * @param $storeName
      * @param string|null $dataSource
      * @param string $readPreference
-     * @throws MongoTripodConfigException
-     * @return MongoDB
+     * @throws \Tripod\Exceptions\ConfigException
+     * @return \MongoDB
      */
-    public function getDatabase($storeName, $dataSource = null, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    public function getDatabase($storeName, $dataSource = null, $readPreference = \MongoClient::RP_PRIMARY_PREFERRED)
     {
         if(!isset($this->dbConfig[$storeName]))
         {
-            throw new MongoTripodConfigException("Store name '{$storeName}' not in configuration");
+            throw new \Tripod\Exceptions\ConfigException("Store name '{$storeName}' not in configuration");
         }
 
         if(!$dataSource)
@@ -1705,7 +1707,7 @@ class MongoTripodConfig
 
         if(!isset($this->dataSources[$dataSource]))
         {
-            throw new MongoTripodConfigException("Data source '{$dataSource}' not in configuration");
+            throw new \Tripod\Exceptions\ConfigException("Data source '{$dataSource}' not in configuration");
         }
         $connectionOptions = array();
         $ds = $this->dataSources[$dataSource];
@@ -1714,18 +1716,18 @@ class MongoTripodConfig
         if(isset($ds['replicaSet']) && !empty($ds['replicaSet'])) {
             $connectionOptions['replicaSet'] = $ds['replicaSet'];
         }
-        $client = new MongoClient($ds['connection'], $connectionOptions);
+        $client = new \MongoClient($ds['connection'], $connectionOptions);
         $db = $client->selectDB($this->dbConfig[$storeName]['database']);
         $db->setReadPreference($readPreference);
         return $db;
     }
 
     /**
-     * @param MongoDB $db
+     * @param \MongoDB $db
      * @param string $collectionName
-     * @return MongoCollection
+     * @return \MongoCollection
      */
-    protected function getMongoCollection(MongoDB $db, $collectionName)
+    protected function getMongoCollection(\MongoDB $db, $collectionName)
     {
         return $db->selectCollection($collectionName);
     }
@@ -1734,10 +1736,10 @@ class MongoTripodConfig
      * @param string $storeName
      * @param string $podName
      * @param string $readPreference
-     * @throws MongoTripodConfigException
-     * @return MongoCollection
+     * @throws \Tripod\Exceptions\ConfigException
+     * @return \MongoCollection
      */
-    public function getCollectionForCBD($storeName, $podName, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    public function getCollectionForCBD($storeName, $podName, $readPreference = \MongoClient::RP_PRIMARY_PREFERRED)
     {
         if(isset($this->podConnections[$storeName]) && isset($this->podConnections[$storeName][$podName]))
         {
@@ -1746,17 +1748,17 @@ class MongoTripodConfig
                 $podName
             );
         }
-        throw new MongoTripodConfigException("Collection name '{$podName}' not in configuration for store '{$storeName}'");
+        throw new \Tripod\Exceptions\ConfigException("Collection name '{$podName}' not in configuration for store '{$storeName}'");
     }
 
     /**
      * @param string $storeName
      * @param string $viewId
      * @param string $readPreference
-     * @throws MongoTripodConfigException
-     * @return MongoCollection
+     * @throws \Tripod\Exceptions\ConfigException
+     * @return \MongoCollection
      */
-    public function getCollectionForView($storeName, $viewId, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    public function getCollectionForView($storeName, $viewId, $readPreference = \MongoClient::RP_PRIMARY_PREFERRED)
     {
         if(isset($this->viewSpecs[$storeName]) && isset($this->viewSpecs[$storeName][$viewId]))
         {
@@ -1765,17 +1767,17 @@ class MongoTripodConfig
                 VIEWS_COLLECTION
             );
         }
-        throw new MongoTripodConfigException("View id '{$viewId}' not in configuration for store '{$storeName}'");
+        throw new \Tripod\Exceptions\ConfigException("View id '{$viewId}' not in configuration for store '{$storeName}'");
     }
 
     /**
      * @param string $storeName
      * @param string $searchDocumentId
      * @param string $readPreference
-     * @throws MongoTripodConfigException
-     * @return MongoCollection
+     * @throws \Tripod\Exceptions\ConfigException
+     * @return \MongoCollection
      */
-    public function getCollectionForSearchDocument($storeName, $searchDocumentId, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    public function getCollectionForSearchDocument($storeName, $searchDocumentId, $readPreference = \MongoClient::RP_PRIMARY_PREFERRED)
     {
         if(array_key_exists($storeName, $this->searchDocSpecs) && array_key_exists($searchDocumentId, $this->searchDocSpecs[$storeName]))
         {
@@ -1784,17 +1786,17 @@ class MongoTripodConfig
                 SEARCH_INDEX_COLLECTION
             );
         }
-        throw new MongoTripodConfigException("Search document id '{$searchDocumentId}' not in configuration for store '{$storeName}'");
+        throw new \Tripod\Exceptions\ConfigException("Search document id '{$searchDocumentId}' not in configuration for store '{$storeName}'");
     }
 
     /**
      * @param string $storeName
      * @param string $tableId
      * @param string $readPreference
-     * @throws MongoTripodConfigException
-     * @return MongoCollection
+     * @throws \Tripod\Exceptions\ConfigException
+     * @return \MongoCollection
      */
-    public function getCollectionForTable($storeName, $tableId, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    public function getCollectionForTable($storeName, $tableId, $readPreference = \MongoClient::RP_PRIMARY_PREFERRED)
     {
         if(isset($this->tableSpecs[$storeName][$tableId]) && isset($this->tableSpecs[$storeName][$tableId]))
         {
@@ -1803,17 +1805,17 @@ class MongoTripodConfig
                 TABLE_ROWS_COLLECTION
             );
         }
-        throw new MongoTripodConfigException("Table id '{$tableId}' not in configuration for store '{$storeName}'");
+        throw new \Tripod\Exceptions\ConfigException("Table id '{$tableId}' not in configuration for store '{$storeName}'");
     }
 
     /**
      * @param string $storeName
      * @param array $tables
      * @param string $readPreference
-     * @throws MongoTripodConfigException
-     * @return MongoCollection[]
+     * @throws \Tripod\Exceptions\ConfigException
+     * @return \MongoCollection[]
      */
-    public function getCollectionsForTables($storeName, array $tables = array(), $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    public function getCollectionsForTables($storeName, array $tables = array(), $readPreference = \MongoClient::RP_PRIMARY_PREFERRED)
     {
         if(!isset($this->tableSpecs[$storeName]))
         {
@@ -1832,7 +1834,7 @@ class MongoTripodConfig
             }
             else
             {
-                throw new MongoTripodConfigException("Table id '{$table}' not in configuration for store '{$storeName}'");
+                throw new \Tripod\Exceptions\ConfigException("Table id '{$table}' not in configuration for store '{$storeName}'");
             }
         }
 
@@ -1851,10 +1853,10 @@ class MongoTripodConfig
      * @param string $storeName
      * @param array $views
      * @param string $readPreference
-     * @throws MongoTripodConfigException
-     * @return MongoCollection[]
+     * @throws \Tripod\Exceptions\ConfigException
+     * @return \MongoCollection[]
      */
-    public function getCollectionsForViews($storeName, array $views = array(), $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    public function getCollectionsForViews($storeName, array $views = array(), $readPreference = \MongoClient::RP_PRIMARY_PREFERRED)
     {
         if(!isset($this->viewSpecs[$storeName]))
         {
@@ -1873,7 +1875,7 @@ class MongoTripodConfig
             }
             else
             {
-                throw new MongoTripodConfigException("View id '{$view}' not in configuration for store '{$storeName}'");
+                throw new \Tripod\Exceptions\ConfigException("View id '{$view}' not in configuration for store '{$storeName}'");
             }
         }
 
@@ -1892,10 +1894,10 @@ class MongoTripodConfig
      * @param string $storeName
      * @param array $searchSpecIds
      * @param string $readPreference
-     * @throws MongoTripodConfigException
-     * @return MongoCollection[]
+     * @throws \Tripod\Exceptions\ConfigException
+     * @return \MongoCollection[]
      */
-    public function getCollectionsForSearch($storeName, array $searchSpecIds = array(), $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    public function getCollectionsForSearch($storeName, array $searchSpecIds = array(), $readPreference = \MongoClient::RP_PRIMARY_PREFERRED)
     {
         if(!isset($this->searchDocSpecs[$storeName]))
         {
@@ -1914,7 +1916,7 @@ class MongoTripodConfig
             }
             else
             {
-                throw new MongoTripodConfigException("Search document spec id '{$searchSpec}' not in configuration for store '{$storeName}'");
+                throw new \Tripod\Exceptions\ConfigException("Search document spec id '{$searchSpec}' not in configuration for store '{$storeName}'");
             }
         }
 
@@ -1932,9 +1934,9 @@ class MongoTripodConfig
     /**
      * @param string $storeName
      * @param string $readPreference
-     * @return MongoCollection
+     * @return \MongoCollection
      */
-    public function getCollectionForTTLCache($storeName, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    public function getCollectionForTTLCache($storeName, $readPreference = \MongoClient::RP_PRIMARY_PREFERRED)
     {
         return $this->getMongoCollection(
             $this->getDatabase($storeName, $this->dbConfig[$storeName]['data_source'], $readPreference),
@@ -1945,9 +1947,9 @@ class MongoTripodConfig
     /**
      * @param string $storeName
      * @param string $readPreference
-     * @return MongoCollection
+     * @return \MongoCollection
      */
-    public function getCollectionForLocks($storeName, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    public function getCollectionForLocks($storeName, $readPreference = \MongoClient::RP_PRIMARY_PREFERRED)
     {
         return $this->getMongoCollection(
             $this->getDatabase($storeName, $this->dbConfig[$storeName]['data_source'], $readPreference),
@@ -1958,9 +1960,9 @@ class MongoTripodConfig
     /**
      * @param string $storeName
      * @param string $readPreference
-     * @return MongoCollection
+     * @return \MongoCollection
      */
-    public function getCollectionForManualRollbackAudit($storeName, $readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    public function getCollectionForManualRollbackAudit($storeName, $readPreference = \MongoClient::RP_PRIMARY_PREFERRED)
     {
         return $this->getMongoCollection(
             $this->getDatabase($storeName, $this->dbConfig[$storeName]['data_source'], $readPreference),
@@ -1970,15 +1972,15 @@ class MongoTripodConfig
 
     /**
      * @param $readPreference
-     * @return MongoDB
-     * @throws MongoTripodConfigException
+     * @return \MongoDB
+     * @throws \Tripod\Exceptions\ConfigException
      */
-    public function getTransactionLogDatabase($readPreference = MongoClient::RP_PRIMARY_PREFERRED)
+    public function getTransactionLogDatabase($readPreference = \MongoClient::RP_PRIMARY_PREFERRED)
     {
 
         if(!isset($this->dataSources[$this->tConfig['data_source']]))
         {
-            throw new MongoTripodConfigException("Data source '" . $this->tConfig['data_source'] . "' not in configuration");
+            throw new \Tripod\Exceptions\ConfigException("Data source '" . $this->tConfig['data_source'] . "' not in configuration");
         }
         $connectionOptions = array();
         $dataSource = $this->dataSources[$this->tConfig['data_source']];
@@ -1987,33 +1989,53 @@ class MongoTripodConfig
         if(isset($dataSource['replicaSet']) && !empty($dataSource['replicaSet'])) {
             $connectionOptions['replicaSet'] = $dataSource['replicaSet'];
         }
-        $client = new MongoClient($dataSource['connection'], $connectionOptions);
+        $client = new \MongoClient($dataSource['connection'], $connectionOptions);
         $db = $client->selectDB($this->tConfig['database']);
         $db->setReadPreference($readPreference);
         return $db;
     }
 
+    /**
+     * @return string
+     */
     public static function getDiscoverQueueName()
     {
         return self::getQueueName(TRIPOD_DISCOVER_QUEUE,"discover");
     }
 
+    /**
+     * @return string
+     */
     public static function getApplyQueueName()
     {
         return self::getQueueName(TRIPOD_APPLY_QUEUE,"apply");
     }
 
+    /**
+     * @param string $envVar
+     * @param string $type
+     * @return string
+     */
     private static function getQueueName($envVar,$type)
     {
         $default = (defined('APP_ENV')) ? "tripod::".APP_ENV."::$type" : "tripod::$type";
         return self::getenv($envVar,$default);
     }
 
+    /**
+     * @return string
+     */
     public static function getResqueServer()
     {
         return self::getenv(MONGO_TRIPOD_RESQUE_SERVER,"localhost:6379");
     }
 
+    /**
+     * @param string $env
+     * @param bool $default
+     * @return bool|string
+     * @throws \Tripod\Exceptions\ConfigException
+     */
     private static function getenv($env, $default = false)
     {
         $var = getenv($env);
@@ -2025,9 +2047,6 @@ class MongoTripodConfig
         {
             return $default;
         }
-        throw new MongoTripodConfigException("Missing value for environmental variable $env");
+        throw new \Tripod\Exceptions\ConfigException("Missing value for environmental variable $env");
     }
-
-
 }
-class MongoTripodConfigException extends Exception {}

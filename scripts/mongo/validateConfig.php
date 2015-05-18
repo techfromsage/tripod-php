@@ -19,7 +19,7 @@ php validateConfig.php -c/--config path/to/tripod-config.json [options]
 
 Options:
     -h --help               This help
-    -c --config             path to MongoTripodConfig configuration (required)
+    -c --config             path to Config configuration (required)
 END;
     echo $help;
 }
@@ -38,8 +38,8 @@ set_include_path(
     . PATH_SEPARATOR . $tripodBasePath.'/src/classes');
 
 require_once 'tripod.inc.php';
-require_once 'mongo/MongoTripod.class.php';
-require_once 'mongo/MongoTripodConfig.class.php';
+require_once 'mongo/Tripods.php';
+require_once 'mongo/TripodConfigs.php';
 
 MongoTripodConfig::setValidationLevel(MongoTripodConfig::VALIDATE_MAX);
 

@@ -1,10 +1,20 @@
 <?php
+
+namespace Tripod\Mongo;
+
 /** @noinspection PhpIncludeInspection */
 require_once TRIPOD_DIR.'classes/Labeller.class.php';
-require_once TRIPOD_DIR.'exceptions/TripodLabellerException.class.php';
+require_once TRIPOD_DIR . 'exceptions/LabellerException.class.php';
 
-class MongoTripodLabeller extends Labeller {
+/**
+ * Class Labeller
+ * @package Tripod\Mongo
+ */
+class Labeller extends \Tripod\Labeller {
 
+    /**
+     * Constructor
+     */
     function __construct()
     {
         // only default minimal ns - make app define the rest
@@ -14,7 +24,7 @@ class MongoTripodLabeller extends Labeller {
             'owl' => 'http://www.w3.org/2002/07/owl#',
             'cs' => 'http://purl.org/vocab/changeset/schema#',
         );
-        $config = MongoTripodConfig::getInstance();
+        $config = Config::getInstance();
         $ns = $config->getNamespaces();
         foreach ($ns as $prefix=>$uri)
         {
@@ -32,7 +42,7 @@ class MongoTripodLabeller extends Labeller {
         {
             $retVal = $this->uri_to_qname($uri);
         }
-        catch (TripodLabellerException $e) {}
+        catch (\Tripod\Exceptions\LabellerException $e) {}
         return (empty($retVal)) ? $uri : $retVal;
     }
 
@@ -46,27 +56,37 @@ class MongoTripodLabeller extends Labeller {
         {
             $retVal = $this->qname_to_uri($qname);
         }
-        catch (TripodLabellerException $e) {}
+        catch (\Tripod\Exceptions\LabellerException $e) {}
         return (empty($retVal)) ? $qname : $retVal;
     }
 
+    /**
+     * @param string $qName
+     * @return string
+     * @throws \Tripod\Exceptions\LabellerException
+     */
     public function qname_to_uri($qName)
     {
         $retVal = parent::qname_to_uri($qName);
-        if (empty($retVal)) throw new TripodLabellerException($qName);
+        if (empty($retVal)) throw new \Tripod\Exceptions\LabellerException($qName);
         return $retVal;
     }
 
 
     // overrides the default behaviour of trying to return a ns even if the prefix is not registered - instead, throw exception
-    function get_prefix($ns) {
+    /**
+     * @param string $ns
+     * @return string
+     * @throws \Tripod\Exceptions\LabellerException
+     */
+    public function get_prefix($ns) {
         $prefix = array_search($ns, $this->_ns);
         if ( $prefix != null && $prefix !== FALSE) {
             return $prefix;
         }
         else
         {
-            throw new TripodLabellerException($ns);
+            throw new \Tripod\Exceptions\LabellerException($ns);
         }
     }
 }

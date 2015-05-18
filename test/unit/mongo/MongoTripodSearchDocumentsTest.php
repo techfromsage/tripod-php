@@ -1,6 +1,8 @@
 <?php
 require_once 'MongoTripodTestBase.php';
 
+use \Tripod\Mongo\SearchDocuments;
+
 class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
 {
     protected $defaultContext = 'http://talisaspire.com/';
@@ -13,18 +15,18 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
 	{
 		parent::setUp();
 	
-		$this->tripod = new MongoTripod('CBD_testing', 'tripod_php_testing');
+		$this->tripod = new \Tripod\Mongo\Tripod('CBD_testing', 'tripod_php_testing');
 		$this->getTripodCollection($this->tripod)->drop();
         $this->loadBaseSearchDataViaTripod();
-        foreach(MongoTripodConfig::getInstance()->getCollectionsForSearch($this->tripod->getStoreName()) as $collection)
+        foreach(\Tripod\Mongo\Config::getInstance()->getCollectionsForSearch($this->tripod->getStoreName()) as $collection)
         {
             $collection->drop();
         }
 	}
 
-    protected function getMongoTripodSearchDocuments(MongoTripod $tripod)
+    protected function getMongoTripodSearchDocuments(\Tripod\Mongo\Tripod $tripod)
     {
-        return new MongoTripodSearchDocuments(
+        return new SearchDocuments(
             $tripod->getStoreName(),
             $this->getTripodCollection($tripod),
             'http://talisaspire.com/'
@@ -47,7 +49,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
 	
 	public function testGenerateSearchDocumentBasedOnSpecIdReturnNullForInvalidSearchSpecId()
 	{
-		$mockSearchDocuments = $this->getMock('MongoTripodSearchDocuments',
+		$mockSearchDocuments = $this->getMock('SearchDocuments',
 											array('getSearchDocumentSpecification'), 
 											array($this->tripod->getStoreName(), $this->getTripodCollection($this->tripod), 'http://talisaspire.com/'));
 		
@@ -77,7 +79,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
 	public function testGenerateSearchDocumentBasedOnSpecIdWithFieldNamePredicatesHavingNoValueInCollection()
 	{
 		$searchSpecs = json_decode('{"_id":"i_search_resource","type":["bibo:Book"],"from":"CBD_testing","filter":[{"condition":{"dct:title.l":{"$exists":true}}}],"indices":[{"fieldName":"search_terms","predicates":["dct:title","dct:subject"]},{"fieldName":"other_terms","predicates":["rdf:type"]}],"fields":[{"fieldName":"result.title","predicates":["dct:title"],"limit":1},{"fieldName":"result.link","value":"link"},{"fieldName":"rdftype","predicates":["rdf:type"],"limit":1}],"joins":{"dct:creator":{"indices":[{"fieldName":"search_terms","predicates":["foaf:name"]}],"fields":[{"fieldName":"result.author","predicates":["foaf:name"],"limit":1}, {"fieldName":"result.role","predicates":["siocAccess:Role"], "limit":1}] } }}', true);
-		$mockSearchDocuments = $this->getMock('MongoTripodSearchDocuments',
+		$mockSearchDocuments = $this->getMock('SearchDocuments',
 				array('getSearchDocumentSpecification'),
 				array($this->tripod->getStoreName(), $this->getTripodCollection($this->tripod), 'http://talisaspire.com/'));
 		$mockSearchDocuments->expects($this->once())
@@ -94,25 +96,25 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
 
         $uri = "http://talisaspire.com/resources/doc1";
 
-        $labeller = new MongoTripodLabeller();
+        $labeller = new \Tripod\Mongo\Labeller();
         $subjectsAndPredicatesOfChange = array(
             $labeller->uri_to_alias($uri)=>array("dct:subject")
         );
 
         $this->tripod->getSearchIndexer()->generateAndIndexSearchDocuments($uri, $this->defaultContext, $this->defaultPodName);
 
-        /** @var MongoTripodSearchIndexer|PHPUnit_Framework_MockObject_MockObject $searchIndexer */
-        $searchIndexer = $this->getMock('MongoTripodSearchIndexer',
+        /** @var \Tripod\Mongo\SearchIndexer|PHPUnit_Framework_MockObject_MockObject $searchIndexer */
+        $searchIndexer = $this->getMock('SearchIndexer',
             array('getSearchDocumentGenerator'),
             array($this->tripod)
         );
 
-        $searchDocuments = $this->getMockBuilder('MongoTripodSearchDocuments')
+        $searchDocuments = $this->getMockBuilder('SearchDocuments')
             ->setMethods(array('generateSearchDocumentBasedOnSpecId'))
             ->setConstructorArgs(
                 array(
                     $this->defaultStoreName,
-                    MongoTripodConfig::getInstance()->getCollectionForCBD($this->defaultStoreName, $this->defaultPodName),
+                    \Tripod\Mongo\Config::getInstance()->getCollectionForCBD($this->defaultStoreName, $this->defaultPodName),
                     $this->defaultContext
                 )
             )->getMock();
@@ -128,7 +130,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
         $impactedSubjects = $searchIndexer->getImpactedSubjects($subjectsAndPredicatesOfChange, $this->defaultContext);
 
         $expectedImpactedSubjects = array(
-            new ImpactedSubject(
+            new \Tripod\Mongo\ImpactedSubject(
                 array(
                     _ID_RESOURCE=>$uri,
                     _ID_CONTEXT=>$this->defaultContext
@@ -152,7 +154,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
     {
         $uri = "http://talisaspire.com/resources/doc1";
 
-        $labeller = new MongoTripodLabeller();
+        $labeller = new Tripod\Mongo\Labeller();
         $subjectsAndPredicatesOfChange = array(
             $labeller->uri_to_alias($uri)=>array("dct:description")
         );
@@ -166,7 +168,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
     public function testUpdateOfResourceInImpactIndexTriggersRegenerationOfSearchDocs()
     {
         $uri = "http://talisaspire.com/authors/2";
-        $labeller = new MongoTripodLabeller();
+        $labeller = new Tripod\Mongo\Labeller();
 
         $this->tripod->getSearchIndexer()->generateAndIndexSearchDocuments(
             "http://talisaspire.com/resources/doc4",
@@ -178,18 +180,18 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
             $labeller->uri_to_alias($uri)=>array('foaf:name')
         );
 
-        /** @var MongoTripodSearchIndexer|PHPUnit_Framework_MockObject_MockObject $searchIndexer */
-        $searchIndexer = $this->getMock('MongoTripodSearchIndexer',
+        /** @var \Tripod\Mongo\SearchIndexer|PHPUnit_Framework_MockObject_MockObject $searchIndexer */
+        $searchIndexer = $this->getMock('SearchIndexer',
             array('getSearchDocumentGenerator'),
             array($this->tripod)
         );
 
-        $searchDocuments = $this->getMockBuilder('MongoTripodSearchDocuments')
+        $searchDocuments = $this->getMockBuilder('SearchDocuments')
             ->setMethods(array('generateSearchDocumentBasedOnSpecId'))
             ->setConstructorArgs(
                 array(
                     $this->defaultStoreName,
-                    MongoTripodConfig::getInstance()->getCollectionForCBD($this->defaultStoreName, $this->defaultPodName),
+                    \Tripod\Mongo\Config::getInstance()->getCollectionForCBD($this->defaultStoreName, $this->defaultPodName),
                     $this->defaultContext
                 )
             )->getMock();
@@ -205,7 +207,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
         $impactedSubjects = $searchIndexer->getImpactedSubjects($subjectsAndPredicatesOfChange, $this->defaultContext);
 
         $expectedImpactedSubjects = array(
-            new ImpactedSubject(
+            new \Tripod\Mongo\ImpactedSubject(
                 array(
                     _ID_RESOURCE=>"http://talisaspire.com/resources/doc4",
                     _ID_CONTEXT=>$this->defaultContext
@@ -230,8 +232,8 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
         $uri = 'http://example.com/resources/' . uniqid();
 
 
-        $labeller = new MongoTripodLabeller();
-        $graph = new ExtendedGraph();
+        $labeller = new Tripod\Mongo\Labeller();
+        $graph = new \Tripod\ExtendedGraph();
         // This should trigger a search document regeneration, even though issn isn't in the search doc spec
         $graph->add_resource_triple($uri, RDF_TYPE, $labeller->qname_to_uri('baseData:Wibble'));
         $graph->add_literal_triple($uri, $labeller->qname_to_uri('bibo:issn'), '1234-5678');
@@ -242,9 +244,9 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
             )
         );
 
-        /** @var MongoTripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
+        /** @var \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
         $mockTripod = $this->getMock(
-            'MongoTripod',
+            'Tripod',
             array(
                 'getDataUpdater'
             ),
@@ -262,9 +264,9 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
             )
         );
 
-        /** @var MongoTripodUpdates|PHPUnit_Framework_MockObject_MockObject $mockTripodUpdates */
+        /** @var \Tripod\Mongo\Updates|PHPUnit_Framework_MockObject_MockObject $mockTripodUpdates */
         $mockTripodUpdates = $this->getMock(
-            'MongoTripodUpdates',
+            'Updates',
             array(
                 'processSyncOperations',
                 'queueAsyncOperations'
@@ -299,18 +301,18 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
                 $this->defaultContext
             );
 
-        /** @var MongoTripodSearchIndexer|PHPUnit_Framework_MockObject_MockObject $searchIndexer */
-        $searchIndexer = $this->getMock('MongoTripodSearchIndexer',
+        /** @var \Tripod\Mongo\SearchIndexer|PHPUnit_Framework_MockObject_MockObject $searchIndexer */
+        $searchIndexer = $this->getMock('SearchIndexer',
             array('getSearchDocumentGenerator'),
             array($this->tripod)
         );
 
-        $searchDocuments = $this->getMockBuilder('MongoTripodSearchDocuments')
+        $searchDocuments = $this->getMockBuilder('SearchDocuments')
             ->setMethods(array('generateSearchDocumentBasedOnSpecId'))
             ->setConstructorArgs(
                 array(
                     $this->defaultStoreName,
-                    MongoTripodConfig::getInstance()->getCollectionForCBD($this->defaultStoreName, $this->defaultPodName),
+                    \Tripod\Mongo\Config::getInstance()->getCollectionForCBD($this->defaultStoreName, $this->defaultPodName),
                     $this->defaultContext
                 )
             )->getMock();
@@ -323,12 +325,12 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
             ->method('generateSearchDocumentBasedOnSpecId')
             ->with('i_search_filter_parse',$labeller->uri_to_alias($uri), $this->defaultContext);
 
-        $mockTripod->saveChanges(new ExtendedGraph(), $graph);
+        $mockTripod->saveChanges(new \Tripod\ExtendedGraph(), $graph);
 
         $impactedSubjects = $searchIndexer->getImpactedSubjects($subjectsAndPredicatesOfChange, $this->defaultContext);
 
         $expectedImpactedSubjects = array(
-            new ImpactedSubject(
+            new \Tripod\Mongo\ImpactedSubject(
                 array(
                     _ID_RESOURCE=>$labeller->uri_to_alias($uri),
                     _ID_CONTEXT=>$this->defaultContext
@@ -352,10 +354,10 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
     public function testUpdateToResourceWithMatchingRdfTypeShouldOnlyRegenerateIfRdfTypeIsPartOfUpdate()
     {
         $uri = "http://talisaspire.com/resources/doc3";
-        $labeller = new MongoTripodLabeller();
+        $labeller = new Tripod\Mongo\Labeller();
         $uriAlias = $labeller->uri_to_alias($uri);
 
-        $searchIndexer = new MongoTripodSearchIndexer($this->tripod);
+        $searchIndexer = new \Tripod\Mongo\SearchIndexer($this->tripod);
 
         $subjectsAndPredicatesOfChange = array($uriAlias =>array('dct:subject'));
 
@@ -364,7 +366,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
         $subjectsAndPredicatesOfChange = array($uriAlias =>array('dct:subject', 'rdf:type'));
 
         $expectedImpactedSubjects = array(
-            new ImpactedSubject(
+            new \Tripod\Mongo\ImpactedSubject(
                 array(
                     _ID_RESOURCE=>$uriAlias,
                     _ID_CONTEXT=>$this->defaultContext
@@ -383,18 +385,18 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
     public function testNewResourceThatDoesNotMatchAnythingCreatesNoImpactedSubjects()
     {
         $uri = 'http://example.com/resources/' . uniqid();
-        $labeller = new MongoTripodLabeller();
+        $labeller = new Tripod\Mongo\Labeller();
         $uriAlias = $labeller->uri_to_alias($uri);
 
-        $graph = new ExtendedGraph();
+        $graph = new \Tripod\ExtendedGraph();
         $graph->add_resource_triple($uri, RDF_TYPE, $labeller->qname_to_uri('bibo:Proceedings'));
         $graph->add_literal_triple($uri, $labeller->qname_to_uri('dct:title'), "A title");
 
         $subjectsAndPredicatesOfChange = array($uriAlias=>array('rdf:type', 'dct:title'));
 
-        /** @var MongoTripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
+        /** @var \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
         $mockTripod = $this->getMock(
-            'MongoTripod',
+            'Tripod',
             array(
                 'getDataUpdater'
             ),
@@ -412,9 +414,9 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
             )
         );
 
-        /** @var MongoTripodUpdates|PHPUnit_Framework_MockObject_MockObject $mockTripodUpdates */
+        /** @var \Tripod\Mongo\Updates|PHPUnit_Framework_MockObject_MockObject $mockTripodUpdates */
         $mockTripodUpdates = $this->getMock(
-            'MongoTripodUpdates',
+            'Updates',
             array(
                 'processSyncOperations',
                 'queueAsyncOperations'
@@ -449,7 +451,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
                 $this->defaultContext
             );
 
-        $mockTripod->saveChanges(new ExtendedGraph(), $graph);
+        $mockTripod->saveChanges(new \Tripod\ExtendedGraph(), $graph);
 
         $searchIndexer = $mockTripod->getComposite(OP_SEARCH);
 
@@ -459,13 +461,13 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
     public function testDeleteResourceCreatesImpactedSubjects()
     {
         $uri = 'http://example.com/resources/' . uniqid();
-        $labeller = new MongoTripodLabeller();
+        $labeller = new Tripod\Mongo\Labeller();
         $uriAlias = $labeller->uri_to_alias($uri);
 
         $creatorUri = 'http://example.com/identities/oscar-wilde';
         $creatorUriAlias = $labeller->uri_to_alias($creatorUri);
 
-        $graph = new ExtendedGraph();
+        $graph = new \Tripod\ExtendedGraph();
         $graph->add_resource_triple(
             $uri,
             RDF_TYPE,
@@ -495,7 +497,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
         $uri2 = 'http://example.com/resources/' . uniqid();
         $uriAlias2 = $labeller->uri_to_alias($uri2);
 
-        $graph2 = new ExtendedGraph();
+        $graph2 = new \Tripod\ExtendedGraph();
         $graph2->add_resource_triple(
             $uri2,
             RDF_TYPE,
@@ -522,7 +524,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
             $creatorUri
         );
 
-        $graph3 = new ExtendedGraph();
+        $graph3 = new \Tripod\ExtendedGraph();
         $graph3->add_resource_triple(
             $creatorUri,
             RDF_TYPE,
@@ -535,7 +537,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
         );
 
         // Save the graphs and ensure that table rows are generated
-        $tripod = new MongoTripod(
+        $tripod = new \Tripod\Mongo\Tripod(
             $this->defaultPodName,
             $this->defaultStoreName,
             array(
@@ -549,11 +551,11 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
         );
 
         // Save the author graph first so the joins work
-        $tripod->saveChanges(new ExtendedGraph(), $graph3);
+        $tripod->saveChanges(new \Tripod\ExtendedGraph(), $graph3);
 
-        $tripod->saveChanges(new ExtendedGraph(), $graph);
+        $tripod->saveChanges(new \Tripod\ExtendedGraph(), $graph);
 
-        $collection = MongoTripodConfig::getInstance()->getCollectionForSearchDocument($this->defaultStoreName, 'i_search_resource');
+        $collection = \Tripod\Mongo\Config::getInstance()->getCollectionForSearchDocument($this->defaultStoreName, 'i_search_resource');
 
         $query = array(
             _ID_KEY=> array(
@@ -564,7 +566,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
         );
         $this->assertEquals(1, $collection->count($query));
 
-        $tripod->saveChanges(new ExtendedGraph(), $graph2);
+        $tripod->saveChanges(new \Tripod\ExtendedGraph(), $graph2);
 
         $query[_ID_KEY][_ID_RESOURCE] = $uriAlias2;
         $this->assertEquals(1, $collection->count($query));
@@ -579,7 +581,8 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
         );
         $this->assertEquals(2, $collection->count($impactQuery));
 
-        $mockTripod = $this->getMockBuilder('MongoTripod')
+        /** @var \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
+        $mockTripod = $this->getMockBuilder('Tripod')
             ->setMethods(array('getDataUpdater'))
             ->setConstructorArgs(
                 array(
@@ -596,7 +599,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
                 )
             )->getMock();
 
-        $mockTripodUpdates = $this->getMockBuilder('MongoTripodUpdates')
+        $mockTripodUpdates = $this->getMockBuilder('Updates')
             ->setConstructorArgs(
                 array(
                     $mockTripod,
@@ -629,17 +632,17 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
 
 
         // Delete creator resource
-        $mockTripod->saveChanges($graph3, new ExtendedGraph());
+        $mockTripod->saveChanges($graph3, new \Tripod\ExtendedGraph());
 
         $deletedGraph = $mockTripod->describeResource($creatorUri);
         $this->assertTrue($deletedGraph->is_empty());
 
         // Manually walk through the tables operation
-        /** @var MongoTripodSearchIndexer $search */
+        /** @var \Tripod\Mongo\SearchIndexer $search */
         $search = $mockTripod->getComposite(OP_SEARCH);
 
         $expectedImpactedSubjects = array(
-            new ImpactedSubject(
+            new \Tripod\Mongo\ImpactedSubject(
                 array(
                     _ID_RESOURCE=>$uriAlias,
                     _ID_CONTEXT=>$this->defaultContext
@@ -649,7 +652,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
                 $this->defaultPodName,
                 array('i_search_resource')
             ),
-            new ImpactedSubject(
+            new \Tripod\Mongo\ImpactedSubject(
                 array(
                     _ID_RESOURCE=>$uriAlias2,
                     _ID_CONTEXT=>$this->defaultContext

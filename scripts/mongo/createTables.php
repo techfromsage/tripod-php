@@ -25,7 +25,7 @@ php createTables.php -c/--config path/to/tripod-config.json -s/--storename store
 
 Options:
     -h --help               This help
-    -c --config             path to MongoTripodConfig configuration (required)
+    -c --config             path to Config configuration (required)
     -s --storename          Store to create tables for (required)
     -t --spec               Only create for specified table specs
     -i --id                 Resource ID to regenerate table rows for
@@ -71,8 +71,8 @@ set_include_path(
 
 require_once 'tripod.inc.php';
 require_once 'classes/Timer.class.php';
-require_once 'mongo/MongoTripodConfig.class.php';
-require_once 'mongo/MongoTripod.class.php';
+require_once 'mongo/Config.class.php';
+require_once 'mongo/Tripod.class.php';
 
 /**
  * @param string|null $id
@@ -82,10 +82,10 @@ require_once 'mongo/MongoTripod.class.php';
  */
 function generateTables($id, $tableId, $storeName, $stat = null)
 {
-    $tableSpec = MongoTripodConfig::getInstance()->getTableSpecification($storeName, $tableId);
+    $tableSpec = TripodConfig::getInstance()->getTableSpecification($storeName, $tableId);
     if(empty($tableSpec)) // Older version of Tripod being used?
     {
-        $tableSpec = MongoTripodConfig::getInstance()->getTableSpecification($tableId);
+        $tableSpec = TripodConfig::getInstance()->getTableSpecification($tableId);
     }
     if (array_key_exists("from",$tableSpec))
     {
@@ -93,7 +93,7 @@ function generateTables($id, $tableId, $storeName, $stat = null)
 
         print "Generating $tableId";
         $tripod = new MongoTripod($tableSpec['from'], $storeName, array('stat'=>$stat));
-        $tTables = $tripod->getTripodTables();//new MongoTripodTables($tripod->storeName,$tripod->collection,$tripod->defaultContext);
+        $tTables = $tripod->getTripodTables();//new Tables($tripod->storeName,$tripod->collection,$tripod->defaultContext);
         if ($id)
         {
             print " for $id....\n";
@@ -110,7 +110,7 @@ function generateTables($id, $tableId, $storeName, $stat = null)
 $t = new Timer();
 $t->start();
 
-MongoTripodConfig::setConfig(json_decode(file_get_contents($configLocation),true));
+TripodConfig::setConfig(json_decode(file_get_contents($configLocation),true));
 
 if(isset($options['s']) || isset($options['storename']))
 {
@@ -153,7 +153,7 @@ if ($tableId)
 }
 else
 {
-    foreach(MongoTripodConfig::getInstance()->getTableSpecifications($storeName) as $tableSpec)
+    foreach(TripodConfig::getInstance()->getTableSpecifications($storeName) as $tableSpec)
     {
         generateTables($id, $tableSpec['_id'], $storeName, $stat);
     }

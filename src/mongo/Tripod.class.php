@@ -1,32 +1,33 @@
 <?php
 
+namespace Tripod\Mongo;
 
 /** @noinspection PhpIncludeInspection */
 
 $TOTAL_TIME=0;
 
-class MongoTripod extends MongoTripodBase implements ITripod
+/**
+ * Class Tripod
+ * @package Tripod\Mongo
+ */
+class Tripod extends TripodBase implements \Tripod\ITripod
 {
 
     /**
-     * @var MongoTripodViews
+     * @var Views
      */
     private $tripod_views = null;
 
     /**
-     * @var MongoTripodTables
+     * @var Tables
      */
     private $tripod_tables = null;
 
     /**
-     * @var MongoTripodSearchIndexer
+     * @var SearchIndexer
      */
     private $search_indexer = null;
 
-    /**
-     * @var MongoTripodQueue
-     */
-    private $queue = null;
 
     /**
      * @var array The original read preference gets stored here
@@ -51,12 +52,12 @@ class MongoTripod extends MongoTripodBase implements ITripod
     private $retriesToGetLock;
 
     /**
-     * @var MongoTripodUpdates
+     * @var Updates
      */
     private $dataUpdater;
 
     /**
-     * Constructor for MongoTripod
+     * Constructor for Tripod
      *
      * @param string $podName
      * @param string $storeName
@@ -73,12 +74,12 @@ class MongoTripod extends MongoTripodBase implements ITripod
                 'defaultContext'=>null,
                 OP_ASYNC=>array(OP_VIEWS=>false,OP_TABLES=>true,OP_SEARCH=>true),
                 'stat'=>null,
-                'readPreference'=>MongoClient::RP_PRIMARY_PREFERRED,
+                'readPreference'=>\MongoClient::RP_PRIMARY_PREFERRED,
                 'retriesToGetLock' => 20)
             ,$opts);
         $this->podName = $podName;
         $this->storeName = $storeName;
-        $this->config = $this->getMongoTripodConfigInstance();
+        $this->config = $this->getTripodConfigInstance();
 
         $this->labeller = $this->getLabeller();
 
@@ -153,26 +154,54 @@ class MongoTripod extends MongoTripodBase implements ITripod
         return $this->fetchGraph($query,MONGO_MULTIDESCRIBE);
     }
 
+    /**
+     * @param string $resource
+     * @param string $viewType
+     * @return MongoGraph
+     */
     public function getViewForResource($resource, $viewType)
     {
         return $this->getTripodViews()->getViewForResource($resource,$viewType);
     }
 
+    /**
+     * @param array $resources
+     * @param string $viewType
+     * @return MongoGraph
+     */
     public function getViewForResources(Array $resources, $viewType)
     {
         return $this->getTripodViews()->getViewForResources($resources,$viewType);
     }
 
+    /**
+     * @param array $filter
+     * @param string $viewType
+     * @return MongoGraph
+     */
     public function getViews(Array $filter, $viewType)
     {
         return $this->getTripodViews()->getViews($filter,$viewType);
     }
 
+    /**
+     * @param string $tableType
+     * @param array $filter
+     * @param array $sortBy
+     * @param int $offset
+     * @param int $limit
+     * @return array
+     */
     public function getTableRows($tableType, $filter = array(), $sortBy = array(), $offset = 0, $limit = 10)
     {
         return $this->getTripodTables()->getTableRows($tableType,$filter,$sortBy,$offset,$limit);
     }
 
+    /**
+     * @param string $tableType
+     * @param string|null $resource
+     * @param string|null $context
+     */
     public function generateTableRows($tableType, $resource = null, $context = null)
     {
         $this->getTripodTables()->generateTableRows($tableType,$resource,$context);
@@ -191,16 +220,16 @@ class MongoTripod extends MongoTripodBase implements ITripod
 
     /**
      * Create and apply a changeset which is the delta between $oldGraph and $newGraph
-     * @param ExtendedGraph $oldGraph
-     * @param ExtendedGraph $newGraph
+     * @param \Tripod\ExtendedGraph $oldGraph
+     * @param \Tripod\ExtendedGraph $newGraph
      * @param $context
      * @param null $description
      * @return bool
-     * @throws TripodException
+     * @throws \Tripod\Exceptions\Exception
      */
     public function saveChanges(
-        ExtendedGraph $oldGraph,
-        ExtendedGraph $newGraph,
+        \Tripod\ExtendedGraph $oldGraph,
+        \Tripod\ExtendedGraph $newGraph,
         $context=null,
         $description=null)
     {
@@ -223,7 +252,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
      * @param $transaction_id
      * @param $reason
      * @return bool
-     * @throws Exception, if something goes wrong when unlocking documents, or creating audit entries.
+     * @throws \Exception, if something goes wrong when unlocking documents, or creating audit entries.
      */
     public function removeInertLocks($transaction_id, $reason)
     {
@@ -241,11 +270,11 @@ class MongoTripod extends MongoTripodBase implements ITripod
      *  -offset     the offset to skip to when returning results
      *
      * this method looks for the above keys in the params array and naively passes them to the search provider which will
-     * throw TripodSearchException if any of the params are invalid
+     * throw SearchException if any of the params are invalid
      *
      * @param Array $params
-     * @throws TripodException - if search provider cannot be found
-     * @throws TripodSearchException - if something goes wrong
+     * @throws \Tripod\Exceptions\Exception - if search provider cannot be found
+     * @throws \Tripod\Exceptions\SearchException - if something goes wrong
      * @return Array results
      */
     public function search(Array $params)
@@ -260,9 +289,9 @@ class MongoTripod extends MongoTripodBase implements ITripod
         $provider = $this->config->getSearchProviderClassName($this->storeName);
 
         if(class_exists($provider)){
-            $timer = new Timer();
+            $timer = new \Tripod\Timer();
             $timer->start();
-            /** @var $searchProvider ITripodSearchProvider */
+            /** @var $searchProvider \Tripod\ITripodSearchProvider */
             $searchProvider = new $provider($this);
             $results =  $searchProvider->search($q, $type, $indices, $fields, $limit, $offset);
             $timer->stop();
@@ -271,7 +300,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
             $this->getStat()->timer('SEARCH',$timer->result());
             return $results;
         } else {
-            throw new TripodException("Unknown Search Provider: $provider");
+            throw new \Tripod\Exceptions\Exception("Unknown Search Provider: $provider");
         }
     }
 
@@ -284,7 +313,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
      */
     public function getCount($query,$groupBy=null,$ttl=null)
     {
-        $t = new Timer();
+        $t = new \Tripod\Timer();
         $t->start();
 
         $id = null;
@@ -298,8 +327,8 @@ class MongoTripod extends MongoTripodBase implements ITripod
             if (!empty($candidate))
             {
                 $this->debugLog("Found candidate",array("candidate"=>$candidate));
-                $ttlTo = new MongoDate($candidate['created']->sec+$ttl);
-                if ($ttlTo>(new MongoDate()))
+                $ttlTo = new \MongoDate($candidate['created']->sec+$ttl);
+                if ($ttlTo>(new \MongoDate()))
                 {
                     // cache hit!
                     $this->debugLog("Cache hit",array("id"=>$id));
@@ -320,7 +349,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
                 $results = $this->collection->group(
                     $groupBy,
                     array("count"=>0),
-                    new MongoCode("function(obj,prev) { prev.count++; }"),
+                    new \MongoCode("function(obj,prev) { prev.count++; }"),
                     $query);
             }
             else
@@ -334,7 +363,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
                 $cachedResults = array();
                 $cachedResults['_id'] = $id;
                 $cachedResults['results'] = $results;
-                $cachedResults['created'] = new MongoDate();
+                $cachedResults['created'] = new \MongoDate();
                 $this->debugLog("Adding result to cache",$cachedResults);
                 $this->config->getCollectionForTTLCache($this->storeName)->insert($cachedResults);
             }
@@ -361,7 +390,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
      */
     public function select($query,$fields,$sortBy=null,$limit=null,$offset=0,$context=null)
     {
-        $t = new Timer();
+        $t = new \Tripod\Timer();
         $t->start();
 
         $contextAlias = $this->getContextAlias($context);
@@ -498,19 +527,19 @@ class MongoTripod extends MongoTripodBase implements ITripod
                 _ID_RESOURCE=>$resource,
                 _ID_CONTEXT=>$this->getContextAlias($context)));
         $doc = $this->collection->findOne($query,array(_UPDATED_TS=>true));
-        /* @var $lastUpdatedDate MongoDate */
+        /* @var $lastUpdatedDate \MongoDate */
         $lastUpdatedDate = ($doc!=null && array_key_exists(_UPDATED_TS,$doc)) ? $doc[_UPDATED_TS] : null;
         return ($lastUpdatedDate==null) ? '' : $lastUpdatedDate->__toString();
     }
 
     /**
-     * @return MongoTripodViews
+     * @return Views
      */
     public function getTripodViews()
     {
         if($this->tripod_views==null)
         {
-            $this->tripod_views = new MongoTripodViews(
+            $this->tripod_views = new Views(
                 $this->storeName,
                 $this->collection,
                 $this->defaultContext,
@@ -521,13 +550,13 @@ class MongoTripod extends MongoTripodBase implements ITripod
     }
 
     /**
-     * @return MongoTripodTables
+     * @return Tables
      */
     public function getTripodTables()
     {
         if ($this->tripod_tables==null)
         {
-            $this->tripod_tables = new MongoTripodTables(
+            $this->tripod_tables = new Tables(
                 $this->storeName,
                 $this->collection,
                 $this->defaultContext,
@@ -538,21 +567,21 @@ class MongoTripod extends MongoTripodBase implements ITripod
     }
 
     /**
-     * @return MongoTripodSearchIndexer
+     * @return SearchIndexer
      */
     public function getSearchIndexer()
     {
         if ($this->search_indexer==null)
         {
-            $this->search_indexer = new MongoTripodSearchIndexer($this);
+            $this->search_indexer = new SearchIndexer($this);
         }
         return $this->search_indexer;
     }
 
     /**
-     * @param MongoTransactionLog $transactionLog
+     * @param TransactionLog $transactionLog
      */
-    public function setTransactionLog(MongoTransactionLog $transactionLog)
+    public function setTransactionLog(TransactionLog $transactionLog)
     {
         $this->getDataUpdater()->setTransactionLog($transactionLog);
     }
@@ -571,11 +600,11 @@ class MongoTripod extends MongoTripodBase implements ITripod
 
     /**
      * For mocking
-     * @return MongoTripodConfig
+     * @return Config
      */
-    protected function getMongoTripodConfigInstance()
+    protected function getTripodConfigInstance()
     {
-        return MongoTripodConfig::getInstance();
+        return Config::getInstance();
     }
 
 
@@ -583,7 +612,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
      * Returns the composite that can perform the supported operation
      * @param $operation string must be either OP_VIEWS, OP_TABLES or OP_SEARCH
      * @return IComposite
-     * @throws TripodException when an unsupported operation is requested
+     * @throws \Tripod\Exceptions\Exception when an unsupported operation is requested
      */
     public function getComposite($operation)
     {
@@ -596,23 +625,23 @@ class MongoTripod extends MongoTripodBase implements ITripod
             case OP_SEARCH:
                 return $this->getSearchIndexer();
             default:
-                throw new TripodException("Undefined operation '$operation' requested");
+                throw new \Tripod\Exceptions\Exception("Undefined operation '$operation' requested");
         }
     }
 
     /**
      * For mocking
-     * @return MongoTripodLabeller
+     * @return Labeller
      */
     protected function getLabeller()
     {
-        return new MongoTripodLabeller();
+        return new Labeller();
     }
 
     /**
      * Returns the delegate object for saving data in Mongo
      *
-     * @return MongoTripodUpdates
+     * @return Updates
      */
     protected function getDataUpdater()
     {
@@ -627,7 +656,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
                 'retriesToGetLock' => $this->retriesToGetLock
             );
 
-            $this->dataUpdater = new MongoTripodUpdates($this, $opts);
+            $this->dataUpdater = new Updates($this, $opts);
         }
         return $this->dataUpdater;
     }

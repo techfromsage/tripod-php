@@ -30,9 +30,9 @@ Quickstart
 ```php
 require_once("tripod.inc.php");
 
-MongoTripodConfig::setConfig($conf); // set the config, usually read in as JSON from a file
+Config::setConfig($conf); // set the config, usually read in as JSON from a file
 
-$tripod = new MongoTripod(
+$tripod = new Tripod(
   "CBD_users", // pod (read: MongoDB collection) we're working with
   "myapp" // store (read: MongoDB database)  we're working with
 );
@@ -65,7 +65,7 @@ $tripod->saveChanges(
 );
 
 // save, but background all the expensive view/table/search generation
-$tripod = new MongoTripod("CBD_users",  "usersdb", array(
+$tripod = new Tripod("CBD_users",  "usersdb", array(
     'async' = array(OP_VIEWS,OP_TABLES,OP_SEARCH) // async opt says what to do later via a queue rather than as part of the save
   )
 );
@@ -91,7 +91,7 @@ What does the config look like?
 
 [Read the full docs](/docs/config.md)
 
-Before you can do anything with tripod you need to initialise the config via the ```MongoTripodConfig::setConfig()``` method. This takes an associative array which can generally be decoded from a JSON string. Here's an example:
+Before you can do anything with tripod you need to initialise the config via the ```Config::setConfig()``` method. This takes an associative array which can generally be decoded from a JSON string. Here's an example:
 
 ```javascript
 {

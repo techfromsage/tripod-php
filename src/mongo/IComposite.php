@@ -1,4 +1,11 @@
 <?php
+
+namespace Tripod\Mongo;
+
+/**
+ * Class IComposite
+ * @package Tripod\Mongo
+ */
 interface IComposite
 {
     /**

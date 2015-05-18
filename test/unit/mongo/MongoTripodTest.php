@@ -1,15 +1,14 @@
 <?php
 require_once 'MongoTripodTestBase.php';
-require_once 'src/mongo/MongoTripod.class.php';
-
+require_once 'src/mongo/Tripod.class.php';
 class MongoTripodTest extends MongoTripodTestBase
 {
     /**
-     * @var MongoTripod | PHPUnit_Framework_MockObject_MockObject
+     * @var \Tripod\Mongo\Tripod | PHPUnit_Framework_MockObject_MockObject
      */
     protected $tripod = null;
     /**
-     * @var MongoTransactionLog
+     * @var \Tripod\Mongo\TransactionLog
      */
     protected $tripodTransactionLog = null;
 
@@ -17,17 +16,17 @@ class MongoTripodTest extends MongoTripodTestBase
     {
         parent::setup();
 
-        $this->tripodTransactionLog = new MongoTransactionLog();
+        $this->tripodTransactionLog = new \Tripod\Mongo\TransactionLog();
         $this->tripodTransactionLog->purgeAllTransactions();
 
         // Stub ouf 'addToElastic' search to prevent writes into Elastic Search happening by default.
-        $this->tripod = $this->getMock('MongoTripod', array('addToSearchIndexQueue'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
+        $this->tripod = $this->getMock('Tripod', array('addToSearchIndexQueue'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
         $this->tripod->expects($this->any())->method('addToSearchIndexQueue');
 
         $this->getTripodCollection($this->tripod)->drop();
 
-        // Lock collection no longer available from MongoTripod, so drop it manually
-        MongoTripodConfig::getInstance()->getCollectionForLocks($this->tripod->getStoreName())->drop();
+        // Lock collection no longer available from Tripod, so drop it manually
+        \Tripod\Mongo\Config::getInstance()->getCollectionForLocks($this->tripod->getStoreName())->drop();
 
         $this->tripod->setTransactionLog($this->tripodTransactionLog);
 
@@ -314,7 +313,7 @@ class MongoTripodTest extends MongoTripodTestBase
 
     public function testSaveFailsWhenOldGraphIsInvalidNoDataInStoreForObj()
     {
-        $this->setExpectedException('TripodException', 'Error storing changes');
+        $this->setExpectedException('Exception', 'Error storing changes');
 
         $uri = 'http://example.com/resources/1';
 
@@ -330,7 +329,7 @@ class MongoTripodTest extends MongoTripodTestBase
 
     public function testInterleavingUpdateFailsIfUnderlyingDataHasChanged()
     {
-        $this->setExpectedException('TripodException', 'Error storing changes');
+        $this->setExpectedException('Exception', 'Error storing changes');
 
         $uri = 'http://example.com/resources/1';
 
@@ -338,9 +337,9 @@ class MongoTripodTest extends MongoTripodTestBase
         // canned response will simulate that the underlying data has changed
         $doc = array("_id"=>$uri, "rdf:type"=>array(array('value'=>$g->qname_to_uri("acorn:Resource"), 'type'=>'uri')));
 
-        $mockTripod = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
+        $mockTripod = $this->getMock('Tripod', array('getDataUpdater'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
 
-        $mockTripodUpdate = $this->getMock('MongoTripodUpdates', array('getDocumentForUpdate'), array($mockTripod));
+        $mockTripodUpdate = $this->getMock('Updates', array('getDocumentForUpdate'), array($mockTripod));
         $mockTripodUpdate->expects($this->once())->method('getDocumentForUpdate')->with($uri)->will($this->returnValue($doc));
         $mockTripod->expects($this->atLeastOnce())
             ->method('getDataUpdater')
@@ -357,7 +356,7 @@ class MongoTripodTest extends MongoTripodTestBase
 
     public function testInterleavingUpdateFailsIfCriteriaIsNotValidAtPointOfSave()
     {
-        $this->setExpectedException('TripodException', 'Error storing changes');
+        $this->setExpectedException('Exception', 'Error storing changes');
 
         // save some data in the store
         $uri = 'http://example.com/resources/1';
@@ -369,9 +368,9 @@ class MongoTripodTest extends MongoTripodTestBase
         // canned response will simulate that the underlying data has changed
         $doc = array("_id"=>$uri, "_version"=>3,"rdf:type"=>array(array('value'=>$g->qname_to_uri("acorn:Resource"), 'type'=>'uri')));
 
-        $mockTripod = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
+        $mockTripod = $this->getMock('Tripod', array('getDataUpdater'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
 
-        $mockTripodUpdate = $this->getMock('MongoTripodUpdates', array('getDocumentForUpdate'), array($mockTripod));
+        $mockTripodUpdate = $this->getMock('Updates', array('getDocumentForUpdate'), array($mockTripod));
         $mockTripodUpdate->expects($this->once())->method('getDocumentForUpdate')->with($uri)->will($this->returnValue($doc));
         $mockTripod->expects($this->atLeastOnce())
             ->method('getDataUpdater')
@@ -509,8 +508,8 @@ class MongoTripodTest extends MongoTripodTestBase
     public function testSetReadPreferenceWhenSavingChanges(){
         $subjectOne = "http://talisaspire.com/works/checkReadPreferencesWrite";
         /** @var $tripodMock MongoTripod **/
-        $tripodMock = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
-        $tripodUpdate = $this->getMock('MongoTripodUpdates',
+        $tripodMock = $this->getMock('Tripod', array('getDataUpdater'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
+        $tripodUpdate = $this->getMock('Updates',
             array('addToSearchIndexQueue','setReadPreferenceToPrimary','resetOriginalReadPreference'), array($tripodMock));
         $tripodUpdate
             ->expects($this->once(0))
@@ -535,8 +534,8 @@ class MongoTripodTest extends MongoTripodTestBase
     public function testReadPreferencesAreRestoredWhenErrorSavingChanges(){
         $subjectOne = "http://talisaspire.com/works/checkReadPreferencesAreRestoredOnError";
         /** @var $tripodMock MongoTripod **/
-        $tripodMock = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
-        $tripodUpdate = $this->getMock('MongoTripodUpdates',
+        $tripodMock = $this->getMock('Tripod', array('getDataUpdater'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
+        $tripodUpdate = $this->getMock('Updates',
             array('addToSearchIndexQueue','resetOriginalReadPreference','getContextAlias'), array($tripodMock));
 
         $tripodUpdate
@@ -560,15 +559,15 @@ class MongoTripodTest extends MongoTripodTestBase
 
     public function testReadPreferencesOverMultipleSaves(){
         $subjectOne = "http://talisaspire.com/works/checkReadPreferencesOverMultipleSaves";
-        /** @var MongoTestTripod $tripodMock **/
+        /** @var TestTripod $tripodMock **/
         $tripodMock = $this->getMock(
-            'MongoTestTripod',
+            'TestTripod',
             array('getDataUpdater'),
             array('CBD_testing','tripod_php_testing',
                 array('defaultContext'=>'http://talisaspire.com/', 'readPreference'=>MongoClient::RP_SECONDARY_PREFERRED))
         );
 
-        $tripodUpdate = $this->getMock('MongoTripodUpdates',
+        $tripodUpdate = $this->getMock('Updates',
             array('addToSearchIndexQueue', 'validateGraphCardinality'), array($tripodMock));
         $tripodUpdate
             ->expects($this->any())
@@ -625,7 +624,7 @@ class MongoTripodTest extends MongoTripodTestBase
 
         $this->lockDocument($subjectOne,"transaction_101");
 
-        $this->setExpectedException('TripodException', "Error storing changes: Did not obtain locks on documents");
+        $this->setExpectedException('Exception', "Error storing changes: Did not obtain locks on documents");
 
         $g = new MongoGraph();
         $g->add_literal_triple($subjectOne, $g->qname_to_uri("dct:title"), "Title one");
@@ -733,7 +732,7 @@ class MongoTripodTest extends MongoTripodTestBase
 
     public function testSaveChangesWithInvalidCardinality()
     {
-        $this->setExpectedException('TripodCardinalityException', "Cardinality failed on http://foo/bar/1 for 'rdf:type' - should only have 1 value and has: http://foo/bar#Class1, http://foo/bar#Class2");
+        $this->setExpectedException('CardinalityException', "Cardinality failed on http://foo/bar/1 for 'rdf:type' - should only have 1 value and has: http://foo/bar#Class1, http://foo/bar#Class2");
 
         $config = array();
         $config['namespaces'] = array('rdf'=>'http://www.w3.org/1999/02/22-rdf-syntax-ns#');
@@ -764,7 +763,7 @@ class MongoTripodTest extends MongoTripodTestBase
         $config['queue'] = array("database"=>"queue","collection"=>"q_queue","data_source"=>"db");
 
         // Override the config defined in base test class as we need specific config here.
-        MongoTripodConfig::setConfig($config);
+        \Tripod\Mongo\Config::setConfig($config);
 
         $tripod = new MongoTripod('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/'));
 
@@ -788,7 +787,7 @@ class MongoTripodTest extends MongoTripodTestBase
         // just updates, all three operations async
         /** @var MongoTripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
         $mockTripod = $this->getMock(
-            'MongoTripod',
+            'Tripod',
             array(
                 'getDataUpdater',
                 'getComposite'
@@ -808,7 +807,7 @@ class MongoTripodTest extends MongoTripodTestBase
         );
 
         $mockTripodUpdates = $this->getMock(
-            'MongoTripodUpdates',
+            'Updates',
             array(
                 'storeChanges',
                 'submitJob'
@@ -835,7 +834,7 @@ class MongoTripodTest extends MongoTripodTestBase
         $jobData = array(
             'changes'=>$subjectsAndPredicatesOfChange,
             'operations'=>array(OP_TABLES, OP_VIEWS, OP_SEARCH),
-            'tripodConfig'=>MongoTripodConfig::getConfig(),
+            'tripodConfig'=>\Tripod\Mongo\Config::getConfig(),
             'storeName'=>'tripod_php_testing',
             'podName'=>'CBD_testing',
             'contextAlias'=>'http://talisaspire.com/'
@@ -846,7 +845,7 @@ class MongoTripodTest extends MongoTripodTestBase
             ->method('getComposite');
         $mockTripodUpdates->expects($this->once())
             ->method('submitJob')
-            ->with(MongoTripodConfig::getDiscoverQueueName(),"DiscoverImpactedSubjects", $jobData);
+            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"DiscoverImpactedSubjects", $jobData);
 
         $mockTripodUpdates->expects($this->once())
             ->method('storeChanges')
@@ -868,7 +867,7 @@ class MongoTripodTest extends MongoTripodTestBase
         $oG->add_resource_triple($uri_2, $oG->qname_to_uri("rdf:type"), $oG->qname_to_uri("acorn:Resource"));
 //        // just deletes, search only
         $mockTripod = $this->getMock(
-            'MongoTripod',
+            'Tripod',
             array('getDataUpdater','getComposite'),
             array(
                 'CBD_testing',
@@ -881,7 +880,7 @@ class MongoTripodTest extends MongoTripodTestBase
         );
 
         $mockTripodUpdates = $this->getMock(
-            'MongoTripodUpdates',
+            'Updates',
             array(
                 'storeChanges',
                 'submitJob'
@@ -899,21 +898,21 @@ class MongoTripodTest extends MongoTripodTestBase
         );
 
         $mockViews = $this->getMock(
-            'MongoTripodViews',
+            'Views',
             array('getImpactedSubjects', 'update'),
             array(
                 'tripod_php_testing',
-                MongoTripodConfig::getInstance()->getCollectionForCBD('tripod_php_testing','CBD_testing'),
+                \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing','CBD_testing'),
                 'http://talisaspire.com/'
             )
         );
 
         $mockTables = $this->getMock(
-            'MongoTripodTables',
+            'Tables',
             array('getImpactedSubjects', 'update'),
             array(
                 'tripod_php_testing',
-                MongoTripodConfig::getInstance()->getCollectionForCBD('tripod_php_testing','CBD_testing'),
+                \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing','CBD_testing'),
                 'http://talisaspire.com/'
             )
         );
@@ -929,7 +928,7 @@ class MongoTripodTest extends MongoTripodTestBase
         $jobData = array(
             'changes'=>$subjectsAndPredicatesOfChange,
             'operations'=>array(OP_SEARCH),
-            'tripodConfig'=>MongoTripodConfig::getConfig(),
+            'tripodConfig'=>\Tripod\Mongo\Config::getConfig(),
             'storeName'=>'tripod_php_testing',
             'podName'=>'CBD_testing',
             'contextAlias'=>'http://talisaspire.com/'
@@ -1009,7 +1008,7 @@ class MongoTripodTest extends MongoTripodTestBase
 
         $mockTripodUpdates->expects($this->once())
             ->method('submitJob')
-            ->with(MongoTripodConfig::getDiscoverQueueName(),"DiscoverImpactedSubjects", $jobData);
+            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"DiscoverImpactedSubjects", $jobData);
 
         $mockTripodUpdates->expects($this->once())
             ->method('storeChanges')
@@ -1048,7 +1047,7 @@ class MongoTripodTest extends MongoTripodTestBase
 
         /** @var MongoTripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
         $mockTripod = $this->getMock(
-            'MongoTripod',
+            'Tripod',
             array(
                 'getComposite',
                 'getDataUpdater'
@@ -1061,7 +1060,7 @@ class MongoTripodTest extends MongoTripodTestBase
         );
 
         $mockTripodUpdates = $this->getMock(
-            'MongoTripodUpdates',
+            'Updates',
             array(
                 'storeChanges',
                 'submitJob'
@@ -1080,11 +1079,11 @@ class MongoTripodTest extends MongoTripodTestBase
         );
 
         $mockViews = $this->getMock(
-            'MongoTripodViews',
+            'Views',
             array('getImpactedSubjects', 'update'),
             array(
                 'tripod_php_testing',
-                MongoTripodConfig::getInstance()->getCollectionForCBD('tripod_php_testing','CBD_testing'),
+                \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing','CBD_testing'),
                 'http://talisaspire.com/'
             )
         );
@@ -1120,7 +1119,7 @@ class MongoTripodTest extends MongoTripodTestBase
         $jobData = array(
             'changes'=>$subjectsAndPredicatesOfChange,
             'operations'=>array(OP_TABLES, OP_SEARCH),
-            'tripodConfig'=>MongoTripodConfig::getConfig(),
+            'tripodConfig'=>\Tripod\Mongo\Config::getConfig(),
             'storeName'=>'tripod_php_testing',
             'podName'=>'CBD_testing',
             'contextAlias'=>'http://talisaspire.com/'
@@ -1134,7 +1133,7 @@ class MongoTripodTest extends MongoTripodTestBase
 
         $mockTripodUpdates->expects($this->once())
             ->method('submitJob')
-            ->with(MongoTripodConfig::getDiscoverQueueName(),"DiscoverImpactedSubjects", $jobData);
+            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"DiscoverImpactedSubjects", $jobData);
 
         $mockTripodUpdates->expects($this->once())
             ->method('storeChanges')
@@ -1160,7 +1159,7 @@ class MongoTripodTest extends MongoTripodTestBase
 
     public function testWriteToUnconfiguredCollectionThrowsException()
     {
-//        TripodException: testing:SOME_COLLECTION is not referenced within config, so cannot be written to
+//        Exception: testing:SOME_COLLECTION is not referenced within config, so cannot be written to
         $this->setExpectedException(
             'MongoTripodConfigException',
             'Collection name \'SOME_COLLECTION\' not in configuration');
@@ -1240,14 +1239,14 @@ class MongoTripodTest extends MongoTripodTestBase
 //        $config = json_decode(file_get_contents($configFileName), true);
 //
 //        $config['search_config'] = array();
-//        MongoTripodConfig::setConfig($config);
+//        Config::setConfig($config);
 //
 //        $uri_1 = "http://example.com/1";
 //        $oG = new MongoGraph();
 //        $oG->add_resource_triple($uri_1, $oG->qname_to_uri("rdf:type"), $oG->qname_to_uri("acorn:Resource"));
 //
 //        // just updates, all three operations async
-//        $mockTripod = $this->getMock('MongoTripod', array('queueASyncOperations','processOperations'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/',"async"=>array(OP_TABLES=>true,OP_VIEWS=>true,OP_SEARCH=>true))));
+//        $mockTripod = $this->getMock('Tripod', array('queueASyncOperations','processOperations'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/',"async"=>array(OP_TABLES=>true,OP_VIEWS=>true,OP_SEARCH=>true))));
 //        $mockTripod->expects($this->once())->method('queueASyncOperations')->with(array('http://example.com/1'), array(), 'http://talisaspire.com/', array(OP_VIEWS, OP_TABLES));
 //        $mockTripod->expects($this->never())->method('processOperations');
 //        $mockTripod->saveChanges(new ExtendedGraph(), $oG,"http://talisaspire.com/");
@@ -1554,8 +1553,8 @@ class MongoTripodTest extends MongoTripodTestBase
             ->will($this->throwException(new Exception('Some unexpected error occurred.')));
 
         /* @var $tripod PHPUnit_Framework_MockObject_MockObject */
-        $tripod = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
-        $tripodUpdate = $this->getMock('MongoTripodUpdates', array('getAuditManualRollbacksCollection'), array($tripod));
+        $tripod = $this->getMock('Tripod', array('getDataUpdater'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
+        $tripodUpdate = $this->getMock('Updates', array('getAuditManualRollbacksCollection'), array($tripod));
 
         $tripodUpdate
             ->expects($this->once())
@@ -1591,8 +1590,8 @@ class MongoTripodTest extends MongoTripodTestBase
             ->with(array("_id" => $mongoDocumentId), array('$set' => array("status" => AUDIT_STATUS_ERROR, _UPDATED_TS => $mongoDate, 'error' => 'Some unexpected error occurred.')));
 
         /* @var $tripod PHPUnit_Framework_MockObject_MockObject */
-        $tripod = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
-        $tripodUpdate = $this->getMock('MongoTripodUpdates',
+        $tripod = $this->getMock('Tripod', array('getDataUpdater'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
+        $tripodUpdate = $this->getMock('Updates',
             array('unlockAllDocuments', 'generateIdForNewMongoDocument', 'getMongoDate', 'getAuditManualRollbacksCollection'),
             array($tripod));
         
@@ -1650,8 +1649,8 @@ class MongoTripodTest extends MongoTripodTestBase
             ->with(array("_id" => $mongoDocumentId), array('$set' => array("status" => AUDIT_STATUS_COMPLETED, _UPDATED_TS => $mongoDate)));
 
         /* @var MongoTripod PHPUnit_Framework_MockObject_MockObject */
-        $tripod = $this->getMock('MongoTripod', array('getDataUpdater'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
-        $tripodUpdate = $this->getMock('MongoTripodUpdates',
+        $tripod = $this->getMock('Tripod', array('getDataUpdater'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
+        $tripodUpdate = $this->getMock('Updates',
             array('unlockAllDocuments', 'generateIdForNewMongoDocument', 'getMongoDate', 'getAuditManualRollbacksCollection'),
             array($tripod));
         
@@ -1707,7 +1706,7 @@ class MongoTripodTest extends MongoTripodTestBase
 //        $newGraph->add_literal_triple('http://talisaspire.com/foo/1', 'http://talisaspire.com/schema#foo1', 'foo2');
 //
 //        // Prevent writes to Mongo but check what should be send to Elastic Search
-//        $mockTripod = $this->getMock('MongoTripod', array('generateSearchDocument', 'storeChanges'), array('CBD_testing','tripod_php_testing'));
+//        $mockTripod = $this->getMock('Tripod', array('generateSearchDocument', 'storeChanges'), array('CBD_testing','tripod_php_testing'));
 //        $mockTripod->expects($this->any())->method('storeChanges')->will($this->returnValue(true));
 //        $mockTripod->expects($this->any())->method('generateSearchDocument');
 //        //$mockTripod->expects($this->once())->method('generateSearchDocument')->with('http://purl.org/ontology/bibo/Book', 'http://talisaspire.com/foo/1');

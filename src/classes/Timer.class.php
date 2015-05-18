@@ -1,4 +1,11 @@
 <?php
+
+namespace Tripod;
+
+/**
+ * Class Timer
+ * @package Tripod
+ */
 class Timer
 {
     /**
@@ -39,18 +46,18 @@ class Timer
 
     /**
      * Calculate difference between start and end time of event and return in milli-seconds.
+     * @throws \Exception
      * @return number time difference in milliseconds between stat and end time of event
-     * @throws Exception, if either of or both  of start or stop method are not called before this method
      */
     public function result()
     {
         if (is_null($this->start_time))
         {
-            throw new Exception('Timer: start method not called !');
+            throw new \Exception('Timer: start method not called !');
         }
         else if (is_null($this->end_time))
         {
-            throw new Exception('Timer: stop method not called !');
+            throw new \Exception('Timer: stop method not called !');
         }
 
         if ($this->result==null)
@@ -68,17 +75,17 @@ class Timer
     /**
      * Calculate difference between start and end time of event and return in micro-seconds.
      * @return number time difference in micro seconds between stat and end time of event
-     * @throws Exception, if either of or both  of start or stop method are not called before this method
+     * @throws \Exception, if either of or both  of start or stop method are not called before this method
      */
     public function microResult()
     {
         if (is_null($this->start_time))
         {
-            throw new Exception('Timer: start method not called !');
+            throw new \Exception('Timer: start method not called !');
         }
         else if (is_null($this->end_time))
         {
-            throw new Exception('Timer: stop method not called !');
+            throw new \Exception('Timer: stop method not called !');
         }
 
         if ($this->micro_result==null)

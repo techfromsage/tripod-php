@@ -2,6 +2,8 @@
 require_once 'MongoTripodTestBase.php';
 require_once 'src/mongo/MongoGraph.class.php';
 
+use \Tripod\Mongo\MongoGraph;
+
 class MongoGraphTest extends MongoTripodTestBase
 {
     protected function setUp()
@@ -17,14 +19,14 @@ class MongoGraphTest extends MongoTripodTestBase
 
     public function testUriToQNameOnUnRegisteredNS()
     {
-        $this->setExpectedException('TripodLabellerException', 'Could not label: http://someunregisteredns/');
+        $this->setExpectedException('LabellerException', 'Could not label: http://someunregisteredns/');
         $g = new MongoGraph();
         $g->uri_to_qname('http://someunregisteredns/title');
     }
 
     public function testQNameToUriOnUnRegisteredNS()
     {
-        $this->setExpectedException('TripodLabellerException', 'Could not label: someunregisteredns:title');
+        $this->setExpectedException('LabellerException', 'Could not label: someunregisteredns:title');
         $g = new MongoGraph();
         $g->qname_to_uri('someunregisteredns:title');
     }
@@ -43,7 +45,7 @@ class MongoGraphTest extends MongoTripodTestBase
 
         $expected = "<http://example.com/1> <http://purl.org/dc/terms/title> \"some literal title\" <http://talisaspire.com/> .
 <http://example.com/1> <http://purl.org/dc/terms/source> <http://www.google.com> <http://talisaspire.com/> .\n";
-        $this->assertEquals($expected, $g->to_nquads(MongoTripodConfig::getInstance()->getDefaultContextAlias()));
+        $this->assertEquals($expected, $g->to_nquads(\Tripod\Mongo\Config::getInstance()->getDefaultContextAlias()));
     }
 
     public function testToNQuadsTwoGraphsWithDifferentContext()
@@ -69,7 +71,7 @@ class MongoGraphTest extends MongoTripodTestBase
 
     public function testAddTripodArrayThrowsException()
     {
-        $this->setExpectedException('TripodException', 'Value passed to add_tripod_array is not of type array');
+        $this->setExpectedException('Exception', 'Value passed to add_tripod_array is not of type array');
         $g = new MongoGraph();
         $g->add_tripod_array(null);
     }

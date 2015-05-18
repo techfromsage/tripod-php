@@ -1,6 +1,6 @@
 <?php
 require_once 'MongoTripodTestBase.php';
-require_once 'src/mongo/MongoTripodConfig.class.php';
+require_once 'src/mongo/Config.class.php';
 require_once 'src/mongo/util/TriplesUtil.class.php';
 
 class TriplesUtilTest extends MongoTripodTestBase

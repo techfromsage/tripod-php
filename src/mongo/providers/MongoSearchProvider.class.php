@@ -1,13 +1,26 @@
 <?php
+
+namespace Tripod\Mongo;
+
 require_once TRIPOD_DIR.'mongo/MongoTripodConstants.php';
-require_once TRIPOD_DIR.'mongo/delegates/MongoTripodSearchDocuments.class.php';
+require_once TRIPOD_DIR . 'mongo/delegates/SearchDocuments.class.php';
 require_once TRIPOD_DIR.'mongo/providers/ITripodSearchProvider.php';
 require_once TRIPOD_DIR.'classes/Timer.class.php';
 
-class MongoSearchProvider implements ITripodSearchProvider
+/**
+ * Class MongoSearchProvider
+ * @package Tripod\Mongo
+ */
+class MongoSearchProvider implements \Tripod\ITripodSearchProvider
 {
+    /**
+     * @var Tripod
+     */
     private $tripod = null;
 
+    /**
+     * @var Labeller
+     */
     private $labeller = null;
 
     private $stopWords = array("a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "aren't", "as", "at", "be", "because", "been", "before", "being", "below", "between", "both", "but", "by", "can't", "cannot", "could", "couldn't", "did", "didn't", "do", "does", "doesn't", "doing", "don't", "down", "during", "each", "few", "for", "from", "further", "had", "hadn't", "has", "hasn't", "have", "haven't", "having", "he", "he'd", "he'll", "he's", "her", "here", "here's", "hers", "herself", "him", "himself", "his", "how", "how's", "i", "i'd", "i'll", "i'm", "i've", "if", "in", "into", "is", "isn't", "it", "it's", "its", "itself", "let's", "me", "more", "most", "mustn't", "my", "myself", "no", "nor", "not", "of", "off", "on", "once", "only", "or", "other", "ought", "our", "ours ", "ourselves", "out", "over", "own", "same", "shan't", "she", "she'd", "she'll", "she's", "should", "shouldn't", "so", "some", "such", "than", "that", "that's", "the", "their", "theirs", "them", "themselves", "then", "there", "there's", "these", "they", "they'd", "they'll", "they're", "they've", "this", "those", "through", "to", "too", "under", "until", "up", "very", "was", "wasn't", "we", "we'd", "we'll", "we're", "we've", "were", "weren't", "what", "what's", "when", "when's", "where", "where's", "which", "while", "who", "who's", "whom", "why", "why's", "with", "won't", "would", "wouldn't", "you", "you'd", "you'll", "you're", "you've", "your", "yours", "yourself", "yourselves");
@@ -18,22 +31,25 @@ class MongoSearchProvider implements ITripodSearchProvider
     protected $storeName;
 
     /**
-     * @var MongoTripodConfig
+     * @var Config
      */
     protected $config;
 
-    public function __construct(MongoTripod $tripod)
+    /**
+     * @param Tripod $tripod
+     */
+    public function __construct(Tripod $tripod)
     {
         $this->tripod = $tripod;
         $this->storeName = $tripod->getStoreName();
-        $this->labeller = new MongoTripodLabeller();
-        $this->config = MongoTripodConfig::getInstance();
+        $this->labeller = new Labeller();
+        $this->config = Config::getInstance();
     }
 
     /**
      * Indexes the given document
      * @param array $document the document to index
-     * @throws TripodSearchException if there was an error indexing the document
+     * @throws \Tripod\Exceptions\SearchException if there was an error indexing the document
      * @return mixed
      */
     public function indexDocument($document)
@@ -44,7 +60,7 @@ class MongoSearchProvider implements ITripodSearchProvider
         }
         else
         {
-            throw new TripodSearchException("No search document type specified in document");
+            throw new \Tripod\Exceptions\SearchException("No search document type specified in document");
         }
 
         try {
@@ -52,8 +68,8 @@ class MongoSearchProvider implements ITripodSearchProvider
             $collection->ensureIndex(array('_id.r' => 1, '_id.c' => 1), array('background' => 1));
             $collection->ensureIndex(array('_impactIndex' => 1), array('background' => 1));
             $collection->save($document);
-        } catch (Exception $e) {
-            throw new TripodSearchException("Failed to Index Document \n" . print_r($document, true), 0, $e);
+        } catch (\Exception $e) {
+            throw new \Tripod\Exceptions\SearchException("Failed to Index Document \n" . print_r($document, true), 0, $e);
         }
     }
 
@@ -63,7 +79,7 @@ class MongoSearchProvider implements ITripodSearchProvider
      * @param string $resource
      * @param string $context
      * @param string|array|null $specId
-     * @throws TripodSearchException if there was an error removing the document
+     * @throws \Tripod\Exceptions\SearchException if there was an error removing the document
      * @return mixed
      */
     public function deleteDocument($resource, $context, $specId = array())
@@ -98,8 +114,8 @@ class MongoSearchProvider implements ITripodSearchProvider
             {
                 $collection->remove($query);
             }
-        } catch (Exception $e) {
-            throw new TripodSearchException("Failed to Remove Document with id \n" . print_r($query, true), 0, $e);
+        } catch (\Exception $e) {
+            throw new \Tripod\Exceptions\SearchException("Failed to Remove Document with id \n" . print_r($query, true), 0, $e);
         }
     }
 
@@ -203,19 +219,29 @@ class MongoSearchProvider implements ITripodSearchProvider
         return $searchDocs;
     }
 
+    /**
+     * @param string $q
+     * @param string $type
+     * @param array $indices
+     * @param array $fields
+     * @param int $limit
+     * @param int $offset
+     * @return array|mixed
+     * @throws \Tripod\Exceptions\SearchException
+     */
     public function search($q, $type, $indices=array(), $fields=array(), $limit=10, $offset=0)
     {
-        if(empty($q))       { throw new TripodSearchException("You must specify a query"); }
-        if(empty($type))    { throw new TripodSearchException("You must specify the search document type to restrict the query to"); }
-        if(empty($indices)) { throw new TripodSearchException("You must specify at least one index from the search document specification to query against"); }
-        if(empty($fields))  { throw new TripodSearchException("You must specify at least one field from the search document specification to return"); }
+        if(empty($q))       { throw new \Tripod\Exceptions\SearchException("You must specify a query"); }
+        if(empty($type))    { throw new \Tripod\Exceptions\SearchException("You must specify the search document type to restrict the query to"); }
+        if(empty($indices)) { throw new \Tripod\Exceptions\SearchException("You must specify at least one index from the search document specification to query against"); }
+        if(empty($fields))  { throw new \Tripod\Exceptions\SearchException("You must specify at least one field from the search document specification to return"); }
 
         if(!is_numeric($limit) || $limit < 0 ){
-            throw new TripodSearchException("Value for limit must be a positive number");
+            throw new \Tripod\Exceptions\SearchException("Value for limit must be a positive number");
         }
 
         if(!is_numeric($offset) || $offset < 0 ){
-            throw new TripodSearchException("Value for offset must be a positive number");
+            throw new \Tripod\Exceptions\SearchException("Value for offset must be a positive number");
         }
 
         $original_terms = explode(" ",trim(strtolower($q)));
@@ -226,7 +252,7 @@ class MongoSearchProvider implements ITripodSearchProvider
 
         $regexes = array();
         foreach($terms as $t){
-            $regexes[] = new MongoRegex("/{$t}/");
+            $regexes[] = new \MongoRegex("/{$t}/");
         }
 
         $query = array();
@@ -246,7 +272,7 @@ class MongoSearchProvider implements ITripodSearchProvider
         foreach($fields as $field){
             $fieldsToReturn[$field] = 1;
         }
-        $searchTimer = new Timer();
+        $searchTimer = new \Tripod\Timer();
         $searchTimer->start();
         $cursor = $this->config->getCollectionForSearchDocument($this->storeName, $type)
             ->find($query, $fieldsToReturn)
@@ -308,14 +334,14 @@ class MongoSearchProvider implements ITripodSearchProvider
      * If type id is not specified this method will throw an exception.
      * @param string $typeId search type id
      * @return bool|array  response returned by mongo
-     * @throws TripodException if there was an error performing the operation
+     * @throws \Tripod\Exceptions\Exception if there was an error performing the operation
      */
     public function deleteSearchDocumentsByTypeId($typeId)
     {
     	$searchSpec = $this->getSearchDocumentSpecification($typeId);
     	if ($searchSpec == null)
     	{    		
-    		throw new TripodSearchException("Could not find a search specification for $typeId");
+    		throw new \Tripod\Exceptions\SearchException("Could not find a search specification for $typeId");
     	}
     	    	
     	return $this->config->getCollectionForSearchDocument($this->storeName, $typeId)
@@ -329,6 +355,6 @@ class MongoSearchProvider implements ITripodSearchProvider
      */
     protected function getSearchDocumentSpecification($typeId)
     {
-    	return MongoTripodConfig::getInstance()->getSearchDocumentSpecification($this->storeName, $typeId);
+    	return Config::getInstance()->getSearchDocumentSpecification($this->storeName, $typeId);
     }
 }

@@ -1,12 +1,12 @@
 <?php
+
+namespace Tripod\Mongo;
+
 /**
- * Created by JetBrains PhpStorm.
- * User: chris
- * Date: 24/04/2015
- * Time: 15:05
- * To change this template use File | Settings | File Templates.
+ * Class CompositeBase
+ * @package Tripod\Mongo
  */
-abstract class CompositeBase extends MongoTripodBase implements IComposite
+abstract class CompositeBase extends TripodBase implements IComposite
 {
     /**
      * Returns an array of ImpactedSubjects based on the subjects and predicates of change
@@ -154,18 +154,18 @@ abstract class CompositeBase extends MongoTripodBase implements IComposite
         {
             $types[] = $this->labeller->qname_to_uri($rdfType);
         }
-        catch(TripodLabellerException $e) {}
+        catch(\Tripod\Exceptions\LabellerException $e) {}
         try
         {
             $types[] = $this->labeller->uri_to_alias($rdfType);
         }
-        catch(TripodLabellerException $e) {}
+        catch(\Tripod\Exceptions\LabellerException $e) {}
 
         $intersectingTypes = array_unique(array_intersect($types, $validTypes));
         if(!empty($intersectingTypes))
         {
             // Views should always invalidate
-            if($this instanceof MongoTripodViews)
+            if($this instanceof Views)
             {
                 return true;
             }

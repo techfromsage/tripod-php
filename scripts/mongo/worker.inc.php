@@ -6,4 +6,4 @@ $logger = new \Monolog\Logger("TRIPOD-WORKER");
 $logger->pushHandler(new \Monolog\Handler\StreamHandler('php://stderr', Psr\Log\LogLevel::WARNING)); // resque too chatty on NOTICE & INFO. YMMV
 
 // this is so tripod itself uses the same logger
-MongoTripodBase::$logger = new \Monolog\Logger("TRIPOD-JOB",array(new \Monolog\Handler\StreamHandler('php://stderr', Psr\Log\LogLevel::DEBUG)));
+\Tripod\Mongo\TripodBase::$logger = new \Monolog\Logger("TRIPOD-JOB",array(new \Monolog\Handler\StreamHandler('php://stderr', Psr\Log\LogLevel::DEBUG)));

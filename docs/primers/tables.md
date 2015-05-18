@@ -275,7 +275,7 @@ Usage
 
 ```php
 
-$tripod = MongoTripod("CBD_resources", "resources", array("async"=>array(OP_VIEWS=>false, OP_TABLES=>false, OP_SEARCH=>false)));
+$tripod = Tripod("CBD_resources", "resources", array("async"=>array(OP_VIEWS=>false, OP_TABLES=>false, OP_SEARCH=>false)));
 
 // Here is the id the tableSpec
 $tableSpec = 't_resources';

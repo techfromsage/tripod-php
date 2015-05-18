@@ -1,10 +1,16 @@
 <?php
 
+namespace Tripod\Mongo;
+
+/**
+ * Class DiscoverImpactedSubjects
+ * @package Tripod\Mongo
+ */
 class DiscoverImpactedSubjects extends JobBase {
 
     /**
      * Run the DiscoverImpactedSubjects job
-     * @throws Exception
+     * @throws \Exception
      */
     public function perform()
     {
@@ -13,13 +19,13 @@ class DiscoverImpactedSubjects extends JobBase {
 
             $this->debugLog("DiscoverImpactedSubjects::perform() start");
 
-            $timer = new Timer();
+            $timer = new \Tripod\Timer();
             $timer->start();
 
             $this->validateArgs();
 
             // set the config to what is received
-            MongoTripodConfig::setConfig($this->args["tripodConfig"]);
+            Config::setConfig($this->args["tripodConfig"]);
 
             $tripod = $this->getMongoTripod($this->args["storeName"],$this->args["podName"]);
 
@@ -39,7 +45,7 @@ class DiscoverImpactedSubjects extends JobBase {
                 foreach ($modifiedSubjects as $subject) {
                     $resourceId = $subject->getResourceId();
                     $this->debugLog("Adding operation {$subject->getOperation()} for subject {$resourceId[_ID_RESOURCE]} to queue ".MongoTripodConfig::getApplyQueueName());
-                    $this->submitJob(MongoTripodConfig::getApplyQueueName(),"ApplyOperation",array(
+                    $this->submitJob(Config::getApplyQueueName(),"\Tripod\Mongo\ApplyOperation",array(
                         "subject"=>$subject->toArray(),
                         "tripodConfig"=>$this->args["tripodConfig"]
                     ));
@@ -52,7 +58,7 @@ class DiscoverImpactedSubjects extends JobBase {
             $this->debugLog("DiscoverImpactedSubjects::perform() done in {$timer->result()}ms");
 
         }
-        catch(Exception $e)
+        catch(\Exception $e)
         {
             $this->errorLog("Caught exception in ".get_class($this).": ".$e->getMessage());
             throw $e;

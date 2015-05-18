@@ -25,7 +25,7 @@ php createViews.php -c/--config path/to/tripod-config.json -s/--storename store-
 
 Options:
     -h --help               This help
-    -c --config             path to MongoTripodConfig configuration (required)
+    -c --config             path to Config configuration (required)
     -s --storename          Store to create views for (required)
     -v --spec               Only create for specified view specs
     -i --id                 Resource ID to regenerate views for
@@ -71,8 +71,8 @@ set_include_path(
 
 require_once 'tripod.inc.php';
 require_once 'classes/Timer.class.php';
-require_once 'mongo/MongoTripodConfig.class.php';
-require_once 'mongo/MongoTripod.class.php';
+require_once 'mongo/TripodConfigs.php';
+require_once 'mongo/Tripods.php';
 
 /**
  * @param string|null $id
@@ -94,7 +94,7 @@ function generateViews($id, $viewId, $storeName, $stat)
 
         print "Generating $viewId";
         $tripod = new MongoTripod($viewSpec['from'], $storeName, array('stat'=>$stat));
-        $views = $tripod->getTripodViews();//new MongoTripodViews($tripod->storeName,$tripod->collection,$tripod->defaultContext);
+        $views = $tripod->getTripodViews();//new Views($tripod->storeName,$tripod->collection,$tripod->defaultContext);
         if ($id)
         {
             print " for $id....\n";

@@ -13,7 +13,7 @@ define("SEARCH_PROVIDER_MONGO", 'MongoSearchProvider');
 define("SEARCH_PROVIDER_ELASTIC_SEARCH", 'es');
 
 
-// MongoTripod document properties
+// Tripod document properties
 define('_ID_KEY', '_id');
 define('_ID_RESOURCE','r');
 define('_ID_CONTEXT','c');
@@ -29,7 +29,7 @@ define('VALUE_LITERAL','l');
 define('_UPDATED_TS', '_uts');
 define('_CREATED_TS', '_cts');
 
-// operations that MongoTripod performs
+// operations that Tripod performs
 define('OP_VIEWS','generate_views');
 define('OP_TABLES','generate_table_rows');
 define('OP_SEARCH','generate_search_index_docs');

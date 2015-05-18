@@ -5,8 +5,7 @@ set_include_path(
         . PATH_SEPARATOR . dirname(dirname(dirname(__FILE__))).'/src/classes');
 
 require_once 'tripod.inc.php';
-require_once 'mongo/MongoTripodConfig.class.php';
-require_once 'mongo/MongoGraph.class.php';
+require_once 'mongo/Config.class.phpquire_once 'mongo/MongoGraph.class.php';
 require_once 'mongo/util/TriplesUtil.class.php';
 
 ini_set('memory_limit','32M');

@@ -1,4 +1,11 @@
 <?php
+
+namespace Tripod;
+
+/**
+ * Class ITripod
+ * @package Tripod
+ */
 interface ITripod
 {
     // graph functions

@@ -1,12 +1,16 @@
 <?php
     require_once 'MongoTripodTestBase.php';
-    require_once 'src/mongo/MongoTripod.class.php';
-    require_once 'src/mongo/delegates/MongoTripodSearchIndexer.class.php';
+    require_once 'src/mongo/Tripod.class.php';
+    require_once 'src/mongo/delegates/SearchIndexer.class.php';
     require_once 'src/mongo/providers/MongoSearchProvider.class.php';
+
+use \Tripod\Mongo\Tripod;
+use \Tripod\Mongo\SearchIndexer;
+use \Tripod\Mongo\MongoSearchProvider;
 
 class MongoSearchProviderTest extends MongoTripodTestBase
 {
-    /** @var $indexer MongoTripodSearchIndexer */
+    /** @var $indexer SearchIndexer */
     private $indexer;
 
     /** @var $indexer MongoSearchProvider */
@@ -16,17 +20,17 @@ class MongoSearchProviderTest extends MongoTripodTestBase
     {
         parent::setUp();
 
-        $this->tripodTransactionLog = new MongoTransactionLog();
+        $this->tripodTransactionLog = new \Tripod\Mongo\TransactionLog();
         $this->tripodTransactionLog->purgeAllTransactions();
 
-        $this->tripod = new MongoTripod('CBD_testing', 'tripod_php_testing');
-        $this->indexer = new MongoTripodSearchIndexer($this->tripod);
+        $this->tripod = new Tripod('CBD_testing', 'tripod_php_testing');
+        $this->indexer = new SearchIndexer($this->tripod);
         $this->searchProvider = new MongoSearchProvider($this->tripod);
         $this->getTripodCollection($this->tripod)->drop();
 
         $this->loadBaseSearchDataViaTripod();
 
-        foreach(MongoTripodConfig::getInstance()->getCollectionsForSearch($this->tripod->getStoreName()) as $collection)
+        foreach(\Tripod\Mongo\Config::getInstance()->getCollectionsForSearch($this->tripod->getStoreName()) as $collection)
         {
             $collection->drop();
         }
@@ -170,7 +174,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
         );
 
         // loop through every expected document and assert that it exists, and that each property matches the value we defined above.
-        $searchCollection = MongoTripodConfig::getInstance()->getCollectionForSearchDocument($this->tripod->getStoreName(), 'i_search_resource');
+        $searchCollection = \Tripod\Mongo\Config::getInstance()->getCollectionForSearchDocument($this->tripod->getStoreName(), 'i_search_resource');
         foreach($expectedSearchDocs as $expectedSearchDoc){
             $this->assertDocumentExists($expectedSearchDoc["_id"], $searchCollection);
             $this->assertDocumentHasProperty($expectedSearchDoc["_id"], "result", $expectedSearchDoc["result"], $searchCollection);
@@ -194,7 +198,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
         $this->assertEquals(11, $actualSearchDocumentCount, "Should only be 11 search documents now that one of them has had its type changed with no corresponding search doc spec");
 
 
-        foreach(MongoTripodConfig::getInstance()->getCollectionsForSearch('tripod_php_testing') as $collection)
+        foreach(\Tripod\Mongo\Config::getInstance()->getCollectionsForSearch('tripod_php_testing') as $collection)
         {
             $this->assertNull(
                 $collection->findOne(array("_id.r"=>"http://talisaspire.com/resources/doc1")),
@@ -224,7 +228,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
         $this->assertEquals(12, $actualSearchDocumentCount, "Should only be 12 search documents");
 
-        foreach(MongoTripodConfig::getInstance()->getCollectionsForSearch('tripod_php_testing') as $collection)
+        foreach(\Tripod\Mongo\Config::getInstance()->getCollectionsForSearch('tripod_php_testing') as $collection)
         {
             $result = $collection->findOne(array("_id.r"=>"http://talisaspire.com/resources/doc1"));
             if($result)
@@ -260,7 +264,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
         $results = array();
         // We don't know where exactly these might have stored
-        foreach(MongoTripodConfig::getInstance()->getCollectionsForSearch('tripod_php_testing') as $collection)
+        foreach(\Tripod\Mongo\Config::getInstance()->getCollectionsForSearch('tripod_php_testing') as $collection)
         {
             foreach($collection->find(array("_id.r"=>"http://talisaspire.com/resources/doc1")) as $result)
             {
@@ -307,7 +311,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
         $results = array();
         // We don't know where exactly these might have stored
-        foreach(MongoTripodConfig::getInstance()->getCollectionsForSearch('tripod_php_testing') as $collection)
+        foreach(\Tripod\Mongo\Config::getInstance()->getCollectionsForSearch('tripod_php_testing') as $collection)
         {
             foreach($collection->find(array("_id.r"=>"http://talisaspire.com/resources/doc1")) as $result)
             {
@@ -331,38 +335,38 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
     public function testSearchThrowsExceptionIfNoQuery()
     {
-        $this->setExpectedException("TripodSearchException","You must specify a query");
+        $this->setExpectedException("SearchException","You must specify a query");
         $this->searchProvider->search("", "i_search_resource",  array("search_terms"), array("result"), 3, 0);
     }
 
     public function testSearchThrowsExceptionIfNoType()
     {
-        $this->setExpectedException("TripodSearchException","You must specify the search document type to restrict the query to");
+        $this->setExpectedException("SearchException","You must specify the search document type to restrict the query to");
         $this->searchProvider->search("poetry", "",  array("search_terms"), array("result"), 3, 0);
     }
 
     public function testSearchThrowsExceptionIfSearchIndicesEmpty()
     {
-        $this->setExpectedException("TripodSearchException","You must specify at least one index from the search document specification to query against");
+        $this->setExpectedException("SearchException","You must specify at least one index from the search document specification to query against");
         $this->searchProvider->search("poetry", "i_search_resource",  array(), array("result"), 3, 0);
     }
 
     public function testSearchThrowsExceptionIfFieldsToReturnEmpty()
     {
-        $this->setExpectedException("TripodSearchException","You must specify at least one field from the search document specification to return");
+        $this->setExpectedException("SearchException","You must specify at least one field from the search document specification to return");
         $this->searchProvider->search("poetry", "i_search_resource",  array("search_terms"), array(), 3, 0);
     }
 
 
     public function testSearchThrowsExceptionIfLimitIsNegative()
     {
-        $this->setExpectedException("TripodSearchException","Value for limit must be a positive number");
+        $this->setExpectedException("SearchException","Value for limit must be a positive number");
         $this->searchProvider->search("poetry", "i_search_resource",  array("search_terms"), array("result"), -3, 0);
     }
 
     public function testSearchThrowsExceptionIfOffsetIsNegative()
     {
-        $this->setExpectedException("TripodSearchException","Value for offset must be a positive number");
+        $this->setExpectedException("SearchException","Value for offset must be a positive number");
         $this->searchProvider->search("poetry", "i_search_resource",  array("search_terms"), array("result"), 3, -1);
     }
 
@@ -503,7 +507,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
     						->with('i_some_type')
     						->will($this->returnValue(null));
     	
-    	$this->setExpectedException("TripodException","Could not find a search specification for i_some_type");
+    	$this->setExpectedException("Exception","Could not find a search specification for i_some_type");
     	$mockSearchProvider->deleteSearchDocumentsByTypeId('i_some_type');
     }
     
@@ -524,7 +528,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
         {
     	    $mockSearchProvider->deleteSearchDocumentsByTypeId('i_some_type');
         }
-        catch(MongoTripodConfigException $e)
+        catch(\Tripod\Exceptions\ConfigException $e)
         {
             $this->assertEquals("Search document id 'i_some_type' not in configuration for store 'tripod_php_testing'", $e->getMessage());
         }
@@ -595,21 +599,21 @@ class MongoSearchProviderTest extends MongoTripodTestBase
     }
 
     /**
-     * @param MongoTripod $tripod
+     * @param Tripod $tripod
      * @param array $specs
      * @return int
      */
-    protected function getCountForSearchSpecs(MongoTripod $tripod, $specs = array())
+    protected function getCountForSearchSpecs(Tripod $tripod, $specs = array())
     {
         $count = 0;
         if(empty($specs))
         {
-            $specs = MongoTripodConfig::getInstance()->getSearchDocumentSpecifications($tripod->getStoreName(), null, true);
+            $specs = \Tripod\Mongo\Config::getInstance()->getSearchDocumentSpecifications($tripod->getStoreName(), null, true);
         }
 
         foreach($specs as $spec)
         {
-            $count += MongoTripodConfig::getInstance()->getCollectionForSearchDocument($tripod->getStoreName(), $spec)->count(array('_id.type'=>$spec));
+            $count += \Tripod\Mongo\Config::getInstance()->getCollectionForSearchDocument($tripod->getStoreName(), $spec)->count(array('_id.type'=>$spec));
         }
         return $count;
     }

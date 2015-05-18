@@ -1,6 +1,13 @@
 <?php
-require_once(TRIPOD_DIR."mongo/MongoTripodConfig.class.php");
 
+namespace Tripod\Mongo;
+
+require_once(TRIPOD_DIR . "mongo/Config.class.php");
+
+/**
+ * Class IndexUtils
+ * @package Tripod\Mongo
+ */
 class IndexUtils
 {
     /**
@@ -15,11 +22,11 @@ class IndexUtils
     {
         //MongoCursor::$timeout = -1; // set this otherwise you'll see timeout errors for large indexes
 
-        $config = MongoTripodConfig::getInstance();
+        $config = Config::getInstance();
         $dbs = ($dbName==null) ? $config->getDbs() : array($dbName);
         foreach ($dbs as $dbName)
         {
-            $collections = MongoTripodConfig::getInstance()->getIndexesGroupedByCollection($dbName);
+            $collections = Config::getInstance()->getIndexesGroupedByCollection($dbName);
             foreach ($collections as $collectionName=>$indexes)
             {
 

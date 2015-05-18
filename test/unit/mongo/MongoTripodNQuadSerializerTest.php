@@ -1,7 +1,10 @@
 <?php
 require_once 'MongoTripodTestBase.php';
 require_once 'src/mongo/MongoGraph.class.php';
-require_once 'src/mongo/serializers/MongoTripodNQuadSerializer.class.php';
+require_once 'src/mongo/serializers/NQuadSerializer.class.php';
+
+use \Tripod\Mongo\MongoGraph;
+use \Tripod\Mongo\NQuadSerializer;
 
 class MongoTripodNQuadSerializerTest extends MongoTripodTestBase
 {
@@ -19,8 +22,8 @@ class MongoTripodNQuadSerializerTest extends MongoTripodTestBase
         $expected = "<http://example.com/1> <http://purl.org/dc/terms/title> \"some literal title\" <http://talisaspire.com/> .
 <http://example.com/1> <http://purl.org/dc/terms/source> <http://www.google.com> <http://talisaspire.com/> .\n";
 
-        $serializer = new MongoTripodNQuadSerializer();
-        $actual = $serializer->getSerializedIndex($g->_index, MongoTripodConfig::getInstance()->getDefaultContextAlias());
+        $serializer = new NQuadSerializer();
+        $actual = $serializer->getSerializedIndex($g->_index, \Tripod\Mongo\Config::getInstance()->getDefaultContextAlias());
 
         $this->assertEquals($expected, $actual);
     }
@@ -133,8 +136,8 @@ class MongoTripodNQuadSerializerTest extends MongoTripodTestBase
 <http://basedata.com/b/bar1234> <http://purl.org/dc/terms/title> \"Another document title\" <http://talisaspire.com/> .
 ";
         
-        $serializer = new MongoTripodNQuadSerializer();
-        $actual = $serializer->getSerializedIndex($g->_index, MongoTripodConfig::getInstance()->getDefaultContextAlias());
+        $serializer = new NQuadSerializer();
+        $actual = $serializer->getSerializedIndex($g->_index, \Tripod\Mongo\Config::getInstance()->getDefaultContextAlias());
 
         $this->assertEquals($expected, $actual);
     }

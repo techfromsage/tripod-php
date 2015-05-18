@@ -1,30 +1,39 @@
 <?php
 
-require_once TRIPOD_DIR . 'mongo/base/MongoTripodBase.class.php';
+namespace Tripod\Mongo;
 
-class MongoTripodViews extends CompositeBase
+require_once TRIPOD_DIR . 'mongo/base/TripodBase.class.php';
+
+/**
+ * Class Views
+ * @package Tripod\Mongo
+ */
+class Views extends CompositeBase
 {
 
     /**
      * Construct accepts actual objects rather than strings as this class is a delegate of
-     * MongoTripod and should inherit connections set up there
+     * Tripod and should inherit connections set up there
      * @param string $storeName
-     * @param MongoCollection $collection
+     * @param \MongoCollection $collection
      * @param $defaultContext
      * @param null $stat
      */
-    function __construct($storeName, MongoCollection $collection,$defaultContext,$stat=null) // todo: $collection -> podname
+    function __construct($storeName, \MongoCollection $collection,$defaultContext,$stat=null) // todo: $collection -> podname
     {
         $this->storeName = $storeName;
-        $this->labeller = new MongoTripodLabeller();
+        $this->labeller = new Labeller();
         $this->collection = $collection;
         $this->podName = $collection->getName();
         $this->defaultContext = $defaultContext;
-        $this->config = MongoTripodConfig::getInstance();
+        $this->config = Config::getInstance();
         $this->stat = $stat;
-        $this->readPreference = MongoClient::RP_PRIMARY; // todo: figure out where this should go.
+        $this->readPreference = \MongoClient::RP_PRIMARY; // todo: figure out where this should go.
     }
 
+    /**
+     * @return string
+     */
     public function getOperationType()
     {
         return OP_VIEWS;
@@ -87,6 +96,11 @@ class MongoTripodViews extends CompositeBase
         return $affectedViews;
     }
 
+    /**
+     * @param string $storeName
+     * @param string $viewSpecId
+     * @return array|null
+     */
     public function getSpecification($storeName, $viewSpecId)
     {
         return $this->config->getViewSpecification($storeName,$viewSpecId);
@@ -117,7 +131,7 @@ class MongoTripodViews extends CompositeBase
                 $query['value.'._GRAPHS.'.'.$predicate] = $object;
             }
         }
-        $viewCollection = $this->getMongoTripodConfigInstance()->getCollectionForView($this->storeName, $viewType);
+        $viewCollection = $this->getConfigInstance()->getCollectionForView($this->storeName, $viewType);
         return $this->fetchGraph($query,MONGO_VIEW,$viewCollection);
     }
 
@@ -142,7 +156,7 @@ class MongoTripodViews extends CompositeBase
         $graph = $this->fetchGraph($query,MONGO_VIEW,$viewCollection);
         if ($graph->is_empty())
         {
-            $viewSpec = MongoTripodConfig::getInstance()->getViewSpecification($this->storeName, $viewType);
+            $viewSpec = Config::getInstance()->getViewSpecification($this->storeName, $viewType);
             if($viewSpec == null)
             {
                 return new MongoGraph();
@@ -194,11 +208,11 @@ class MongoTripodViews extends CompositeBase
             $regrabResources = array();
             foreach($missingSubjects as $missingSubject)
             {
-                $viewSpec = $this->getMongoTripodConfigInstance()->getViewSpecification($this->storeName, $viewType);
+                $viewSpec = $this->getConfigInstance()->getViewSpecification($this->storeName, $viewType);
                 $fromCollection = $this->getFromCollectionForViewSpec($viewSpec);
 
                 $missingSubjectAlias = $this->labeller->uri_to_alias($missingSubject);
-                $doc = $this->getMongoTripodConfigInstance()->getCollectionForCBD($this->storeName, $fromCollection)
+                $doc = $this->getConfigInstance()->getCollectionForCBD($this->storeName, $fromCollection)
                     ->findOne(array( "_id" => array("r"=>$missingSubjectAlias,"c"=>$contextAlias)));
 
                 if($doc == NULL)
@@ -227,6 +241,12 @@ class MongoTripodViews extends CompositeBase
         return $g;
     }
 
+    /**
+     * @param string|array $resourceUriOrArray
+     * @param string $context
+     * @param string $viewType
+     * @return array
+     */
     private function createTripodViewIdsFromResourceUris($resourceUriOrArray,$context,$viewType)
     {
         $contextAlias = $this->getContextAlias($context);
@@ -254,7 +274,7 @@ class MongoTripodViews extends CompositeBase
             $resourceAlias = $this->labeller->uri_to_alias($resource);
 
             // delete any views this resource is involved in. It's type may have changed so it's not enough just to regen it with it's new type below.
-            foreach (MongoTripodConfig::getInstance()->getViewSpecifications($this->storeName) as $type=>$spec)
+            foreach (Config::getInstance()->getViewSpecifications($this->storeName) as $type=>$spec)
             {
                 if($spec['from']==$this->podName){
                     $this->config->getCollectionForView($this->storeName, $type)
@@ -297,7 +317,7 @@ class MongoTripodViews extends CompositeBase
      * @param $rdfType
      * @param null $resource
      * @param null $context
-     * @throws Exception
+     * @throws \Exception
      * @return mixed
      */
     public function generateViewsForResourcesOfType($rdfType,$resource=null,$context=null)
@@ -305,7 +325,7 @@ class MongoTripodViews extends CompositeBase
         $rdfType = $this->labeller->qname_to_alias($rdfType);
         $rdfTypeAlias = $this->labeller->uri_to_alias($rdfType);
         $foundSpec = false;
-        $viewSpecs = MongoTripodConfig::getInstance()->getViewSpecifications($this->storeName);
+        $viewSpecs = Config::getInstance()->getViewSpecifications($this->storeName);
         foreach($viewSpecs as $key=>$viewSpec)
         {
             // check for rdfType and rdfTypeAlias
@@ -328,10 +348,9 @@ class MongoTripodViews extends CompositeBase
     /**
      * This method will delete all views where the _id.type of the viewmatches the specified $viewId
      * @param $viewId
-     * @internal param $tableId
      */
     public function deleteViewsByViewId($viewId){
-        $viewSpec = MongoTripodConfig::getInstance()->getViewSpecification($this->storeName, $viewId);
+        $viewSpec = Config::getInstance()->getViewSpecification($this->storeName, $viewId);
         if ($viewSpec==null)
         {
             $this->debugLog("Could not find a view specification with viewId '$viewId'");
@@ -347,13 +366,13 @@ class MongoTripodViews extends CompositeBase
      * @param $viewId
      * @param null $resource
      * @param null $context
-     * @throws TripodViewException
+     * @throws \Tripod\Exceptions\ViewException
      * @return array
      */
     public function generateView($viewId,$resource=null,$context=null)
     {
         $contextAlias = $this->getContextAlias($context);
-        $viewSpec = MongoTripodConfig::getInstance()->getViewSpecification($this->storeName, $viewId);
+        $viewSpec = Config::getInstance()->getViewSpecification($this->storeName, $viewId);
         if ($viewSpec==null)
         {
             $this->debugLog("Could not find a view specification for $resource with viewId '$viewId'");
@@ -361,7 +380,7 @@ class MongoTripodViews extends CompositeBase
         }
         else
         {
-            $t = new Timer();
+            $t = new \Tripod\Timer();
             $t->start();
 
             $from = $this->getFromCollectionForViewSpec($viewSpec);
@@ -369,7 +388,7 @@ class MongoTripodViews extends CompositeBase
 
             if (!isset($viewSpec['joins']))
             {
-                throw new TripodViewException('Could not find any joins in view specification - usecase better served with select()');
+                throw new \Tripod\Exceptions\ViewException('Could not find any joins in view specification - usecase better served with select()');
             }
 
             // ensure both the ID field and the impactIndex indexes are correctly set up
@@ -419,7 +438,7 @@ class MongoTripodViews extends CompositeBase
                 if (isset($viewSpec['ttl']))
                 {
                     $buildImpactIndex=false;
-                    $value[_EXPIRES] = new MongoDate($this->getExpirySecFromNow($viewSpec['ttl']));
+                    $value[_EXPIRES] = new \MongoDate($this->getExpirySecFromNow($viewSpec['ttl']));
                 }
                 else
                 {
@@ -677,11 +696,11 @@ class MongoTripodViews extends CompositeBase
 
     /**
      * @param string $viewSpecId
-     * @return MongoCollection
+     * @return \MongoCollection
      */
     protected function getCollectionForViewSpec($viewSpecId)
     {
-        return $this->getMongoTripodConfigInstance()->getCollectionForView($this->storeName, $viewSpecId);
+        return $this->getConfigInstance()->getCollectionForView($this->storeName, $viewSpecId);
     }
 
 }

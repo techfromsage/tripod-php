@@ -8,7 +8,7 @@ set_include_path(
 require_once 'tripod.inc.php';
 require_once 'classes/Timer.class.php';
 require_once 'mongo/util/IndexUtils.class.php';
-require_once 'mongo/MongoTripodConfig.class.php';
+require_once 'mongo/TripodConfigs.php';
 
 if ($argc!=2&&$argc!=3&&$argc!=4)
 {

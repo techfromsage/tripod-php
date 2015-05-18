@@ -6,11 +6,11 @@ set_include_path(
     . PATH_SEPARATOR . dirname(dirname(dirname(__FILE__))).'/src');
 
 require_once('tripod.inc.php');
-require_once TRIPOD_DIR.'mongo/MongoTripodConfig.class.php';
-require_once TRIPOD_DIR.'mongo/base/MongoTripodBase.class.php';
+require_once TRIPOD_DIR . 'mongo/Config.class.php';
+require_once TRIPOD_DIR . 'mongo/base/TripodBase.class.php';
 
 /**
- * A quick performance test to see what amount of time in consumed in specific methods of MongoTripodConfig class
+ * A quick performance test to see what amount of time in consumed in specific methods of Config class
  *
  * Class MongoTripodConfigTest
  */
@@ -60,7 +60,7 @@ class MongoTripodConfigTest extends PHPUnit_Framework_TestCase
      * Note: Current version of this test tried to create 1000 objects within 6000ms which is reasonable at this time.
      *       Any change to this class if make it a more a big number it should be validated and tested to ensure performance impact.
      *
-     * Create some instances of TripodConfig to see what amount of time is taken in creating instance and processing in constructor.
+     * Create some instances of Config to see what amount of time is taken in creating instance and processing in constructor.
      */
     public function testCreateMongoTripodConfigObject()
     {
@@ -68,15 +68,15 @@ class MongoTripodConfigTest extends PHPUnit_Framework_TestCase
 
         //Let's try to create 1000 objects to see how much time they take.
         for($i =0; $i < self::BENCHMARK_OBJECT_CREATE_ITERATIONS; $i++) {
-            MongoTripodConfig::setConfig($this->config);
-            $instance = MongoTripodConfig::getInstance();
+            \Tripod\Mongo\Config::setConfig($this->config);
+            $instance = \Tripod\Mongo\Config::getInstance();
         }
 
         $testEndTime = microtime();
         $this->assertLessThan(
             self::BENCHMARK_OBJECT_CREATE_TIME,
             $this->getTimeDifference($testStartTime, $testEndTime),
-            "It should always take less than " . self::BENCHMARK_OBJECT_CREATE_TIME . "ms to create " . self::BENCHMARK_OBJECT_CREATE_ITERATIONS . " objects of MongoTripodConfig class"
+            "It should always take less than " . self::BENCHMARK_OBJECT_CREATE_TIME . "ms to create " . self::BENCHMARK_OBJECT_CREATE_ITERATIONS . " objects of Config class"
         );
     }
 

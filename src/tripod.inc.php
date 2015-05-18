@@ -12,29 +12,32 @@ if(!defined('ARC_DIR')) define('ARC_DIR', TRIPOD_DIR. '../vendor/semsol/arc2/' )
 //require_once ARC_DIR.'ARC2.php';
 
 require_once TRIPOD_DIR.'classes/Timer.class.php';
-require_once TRIPOD_DIR.'exceptions/TripodException.class.php';
-require_once TRIPOD_DIR.'exceptions/TripodSearchException.class.php';
-require_once TRIPOD_DIR.'exceptions/TripodCardinalityException.class.php';
+require_once TRIPOD_DIR . 'exceptions/Exception.class.php';
+require_once TRIPOD_DIR . 'exceptions/SearchException.class.php';
+require_once TRIPOD_DIR . 'exceptions/CardinalityException.class.php';
+require_once TRIPOD_DIR . 'exceptions/ConfigException.class.php';
+require_once TRIPOD_DIR . 'exceptions/LabellerException.class.php';
+require_once TRIPOD_DIR . 'exceptions/ViewException.class.php';
 require_once TRIPOD_DIR.'mongo/MongoTripodConstants.php';
 require_once TRIPOD_DIR.'mongo/MongoGraph.class.php';
 require_once TRIPOD_DIR.'mongo/ImpactedSubject.class.php';
-require_once TRIPOD_DIR.'mongo/base/MongoTripodBase.class.php';
+require_once TRIPOD_DIR . 'mongo/base/TripodBase.class.php';
 require_once TRIPOD_DIR.'mongo/IComposite.php';
 require_once TRIPOD_DIR.'mongo/base/CompositeBase.class.php';
-require_once TRIPOD_DIR.'mongo/delegates/MongoTransactionLog.class.php';
-require_once TRIPOD_DIR.'mongo/delegates/MongoTripodUpdates.class.php';
-require_once TRIPOD_DIR.'mongo/delegates/MongoTripodViews.class.php';
-require_once TRIPOD_DIR.'mongo/delegates/MongoTripodTables.class.php';
-require_once TRIPOD_DIR.'mongo/delegates/MongoTripodSearchIndexer.class.php';
+require_once TRIPOD_DIR . 'mongo/delegates/TransactionLog.class.php';
+require_once TRIPOD_DIR . 'mongo/delegates/Updates.class.php';
+require_once TRIPOD_DIR . 'mongo/delegates/Views.class.php';
+require_once TRIPOD_DIR . 'mongo/delegates/Tables.class.php';
+require_once TRIPOD_DIR . 'mongo/delegates/SearchIndexer.class.php';
 require_once TRIPOD_DIR.'ITripod.php';
 require_once TRIPOD_DIR.'classes/ChangeSet.class.php';
-require_once TRIPOD_DIR.'/mongo/MongoTripod.class.php';
+require_once TRIPOD_DIR . '/mongo/Tripod.class.php';
 
 require_once TRIPOD_DIR.'/mongo/base/JobBase.class.php';
 require_once TRIPOD_DIR . '/mongo/jobs/DiscoverImpactedSubjects.class.php';
 require_once TRIPOD_DIR.'/mongo/jobs/ApplyOperation.class.php';
 
-Resque::setBackend(MongoTripodConfig::getResqueServer());
+Resque::setBackend(\Tripod\Mongo\Config::getResqueServer());
 
 define('RDF_TYPE', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
 define('RDF_SUBJECT', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#subject');

@@ -2,6 +2,9 @@
 
 require_once 'MongoTripodTestBase.php';
 
+use \Tripod\Mongo\ApplyOperation;
+use \Tripod\Mongo\ImpactedSubject;
+
 class ApplyOperationTest extends MongoTripodTestBase
 {
     protected $args = array();
@@ -49,16 +52,16 @@ class ApplyOperationTest extends MongoTripodTestBase
                 )
             )->getMock();
 
-        $tripod = $this->getMockBuilder('MongoTripod')
+        $tripod = $this->getMockBuilder('Tripod')
             ->setMethods(array('getComposite'))
             ->setConstructorArgs(array('CBD_testing', 'tripod_php_testing'))
             ->getMock();
 
-        $views = $this->getMockBuilder('MongoTripodViews')
+        $views = $this->getMockBuilder('Views')
             ->setMethods(array('update'))
             ->setConstructorArgs(array(
                 'tripod_php_testing',
-                MongoTripodConfig::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
                 'http://talisapire.com/'
             ))->getMock();
 
@@ -118,16 +121,16 @@ class ApplyOperationTest extends MongoTripodTestBase
                 )
             )->getMock();
 
-        $tripod = $this->getMockBuilder('MongoTripod')
+        $tripod = $this->getMockBuilder('Tripod')
             ->setMethods(array('getComposite'))
             ->setConstructorArgs(array('CBD_testing', 'tripod_php_testing'))
             ->getMock();
 
-        $tables = $this->getMockBuilder('MongoTripodTables')
+        $tables = $this->getMockBuilder('Tables')
             ->setMethods(array('update'))
             ->setConstructorArgs(array(
                 'tripod_php_testing',
-                MongoTripodConfig::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
                 'http://talisapire.com/'
             ))->getMock();
 
@@ -187,12 +190,12 @@ class ApplyOperationTest extends MongoTripodTestBase
                 )
             )->getMock();
 
-        $tripod = $this->getMockBuilder('MongoTripod')
+        $tripod = $this->getMockBuilder('Tripod')
             ->setMethods(array('getComposite'))
             ->setConstructorArgs(array('CBD_testing', 'tripod_php_testing'))
             ->getMock();
 
-        $search = $this->getMockBuilder('MongoTripodSearchIndexer')
+        $search = $this->getMockBuilder('SearchIndexer')
             ->setMethods(array('update'))
             ->setConstructorArgs(array($tripod))
             ->getMock();
@@ -230,7 +233,7 @@ class ApplyOperationTest extends MongoTripodTestBase
         );
 
         $this->args = array(
-            'tripodConfig'=>MongoTripodConfig::getConfig(),
+            'tripodConfig'=>\Tripod\Mongo\Config::getConfig(),
             'subject'=>$subject->toArray()
         );
     }

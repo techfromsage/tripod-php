@@ -1,24 +1,32 @@
 <?php
 
-require_once TRIPOD_DIR . 'mongo/MongoTripodConfig.class.php';
+namespace Tripod\Mongo;
+require_once TRIPOD_DIR . 'mongo/Config.class.php';
 
-class MongoTransactionLog
+/**
+ * Class TransactionLog
+ * @package Tripod\Mongo
+ */
+class TransactionLog
 {
     private $transaction_db = null;
     private $transaction_collection = null;
     protected $config = null;
 
+    /**
+     * Constructor
+     */
     public function __construct()
     {
-        $config = MongoTripodConfig::getInstance();
+        $config = Config::getInstance();
         $this->config = $config->getTransactionLogConfig();
         // connect to transaction db
         $connStr = $config->getTransactionLogConnStr();
         $m = null;
         if(isset($this->config['replicaSet']) && !empty($this->config['replicaSet'])) {
-            $m = new MongoClient($connStr, array("replicaSet"=>$this->config['replicaSet']));
+            $m = new \MongoClient($connStr, array("replicaSet"=>$this->config['replicaSet']));
         } else {
-            $m = new MongoClient($connStr);
+            $m = new \MongoClient($connStr);
         }
 
         $this->transaction_db = $config->getTransactionLogDatabase();
@@ -31,7 +39,7 @@ class MongoTransactionLog
      * @param array $originalCBDs - an array of the serialized CBDs
      * @param string $storeName - the name of the database the changes are being applied to
      * @param string $podName - the name of the collection, in the database, the changes are being applied to
-     * @throws TripodException
+     * @throws \Tripod\Exceptions\Exception
      */
     public function createNewTransaction($transaction_id, $changes, $originalCBDs, $storeName, $podName)
     {
@@ -41,7 +49,7 @@ class MongoTransactionLog
             "collectionName"=>$podName,
             "changes" => $changes,
             "status" => "in_progress",
-            "startTime" => new MongoDate(),
+            "startTime" => new \MongoDate(),
             "originalCBDs"=>$originalCBDs,
             "sessionId" => ((session_id() != '') ? session_id() : '')
         );
@@ -49,7 +57,7 @@ class MongoTransactionLog
         $ret = $this->insertTransaction($transaction);
 
         if(isset($ret['err']) && $ret['err'] != NULL ){
-            throw new TripodException("Error creating new transaction: " . var_export($ret,true));
+            throw new \Tripod\Exceptions\Exception("Error creating new transaction: " . var_export($ret,true));
         }
     }
 
@@ -57,10 +65,10 @@ class MongoTransactionLog
      * Updates the status of a transaction to cancelling.
      * If you passed in an Exception, the exception is logged in the transaction log.
      *
-     * @param $transaction_id - the id of the transaction you wish to cancel
-     * @param Exception - pass in the exception you wish to log
+     * @param string $transaction_id the id of the transaction you wish to cancel
+     * @param \Exception $error pass in the exception you wish to log
      */
-    public function cancelTransaction($transaction_id, Exception $error=null)
+    public function cancelTransaction($transaction_id, \Exception $error=null)
     {
         $params = array('status' => 'cancelling');
         if($error!=null)
@@ -79,12 +87,12 @@ class MongoTransactionLog
      * Updates the status of a transaction to failed, and adds a fail time.
      * If you passed in an Exception, the exception is logged in the transaction log
      *
-     * @param $transaction_id - the id of the transaction you wish to set as failed
-     * @param Exception - exception you wish to log
+     * @param string $transaction_id the id of the transaction you wish to set as failed
+     * @param \Exception $error exception you wish to log
      */
-    public function failTransaction($transaction_id, Exception $error=null)
+    public function failTransaction($transaction_id, \Exception $error=null)
     {
-        $params = array('status' => 'failed', 'failedTime' => new MongoDate());
+        $params = array('status' => 'failed', 'failedTime' => new \MongoDate());
         if($error!=null)
         {
             $params['error'] = array('reason'=>$error->getMessage(), 'trace'=>$error->getTraceAsString());
@@ -100,15 +108,15 @@ class MongoTransactionLog
     /**
      * Update the status of a transaction to completed, and adds an end time
      *
-     * @param $transaction_id - the id of the transaction you want to mark as completed
-     * @param $newCBDs array of CBD's that represent the after state for each modified entity
+     * @param string $transaction_id - the id of the transaction you want to mark as completed
+     * @param array $newCBDs array of CBD's that represent the after state for each modified entity
      */
-    public function completeTransaction($transaction_id, $newCBDs)
+    public function completeTransaction($transaction_id, Array $newCBDs)
     {
 
         $this->updateTransaction(
             array("_id" => $transaction_id),
-            array('$set' => array('status' => 'completed', 'endTime' => new MongoDate(), 'newCBDs'=>$newCBDs)),
+            array('$set' => array('status' => 'completed', 'endTime' => new \MongoDate(), 'newCBDs'=>$newCBDs)),
             array('w' => 1)
         );
     }
@@ -116,7 +124,7 @@ class MongoTransactionLog
     /**
      * Retrieves a transaction from the transaction based on its id.  The transaction is returned as an array
      *
-     * @param $transaction_id - the id of the transaction you wish to retrieve from the transaction log
+     * @param string $transaction_id - the id of the transaction you wish to retrieve from the transaction log
      * @return Array representing the transaction document
      */
     public function getTransaction($transaction_id)
@@ -138,8 +146,8 @@ class MongoTransactionLog
      * @param string $podName
      * @param string|null $fromDate only transactions after this specified date will be replayed. This must be a datetime string i.e. '2010-01-15 00:00:00'
      * @param string|null $toDate only transactions after this specified date will be replayed. This must be a datetime string i.e. '2010-01-15 00:00:00'
-     * @return MongoCursor
-     * @throws InvalidArgumentException
+     * @return \MongoCursor
+     * @throws \InvalidArgumentException
      */
     public function getCompletedTransactions($storeName=null, $podName=null, $fromDate=null, $toDate=null)
     {
@@ -154,10 +162,10 @@ class MongoTransactionLog
 
         if(!empty($fromDate)) {
             $q = array();
-            $q['$gte'] = new MongoDate(strtotime($fromDate));
+            $q['$gte'] = new \MongoDate(strtotime($fromDate));
 
             if(!empty($toDate)){
-                $q['$lte'] = new MongoDate(strtotime($toDate));
+                $q['$lte'] = new \MongoDate(strtotime($toDate));
             }
 
             $query['endTime'] = $q;
@@ -175,8 +183,8 @@ class MongoTransactionLog
     }
 
     /**
-     * @param dbName = database name to filter on (optional)
-     * @param collectionName = collectionName to filter on (optional)
+     * @param string $storeName database name to filter on (optional)
+     * @param string $podName collectionName to filter on (optional)
      * @return int Total number of completed transactions in the transaction log
      * @codeCoverageIgnore
      */
@@ -196,7 +204,7 @@ class MongoTransactionLog
 
     /**
      * Proxy method to help with test mocking
-     * @param $transaction
+     * @param array $transaction
      * @return array|bool
      * @codeCoverageIgnore
      */
@@ -207,9 +215,9 @@ class MongoTransactionLog
 
     /**
      * Proxy method to help with test mocking
-     * @param $query
-     * @param $update
-     * @param $options
+     * @param array $query
+     * @param array $update
+     * @param array $options
      * @return bool
      * @codeCoverageIgnore
      */

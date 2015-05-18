@@ -1,9 +1,15 @@
 <?php
 
+namespace Tripod\Mongo;
+
+/**
+ * Class ApplyOperation
+ * @package Tripod\Mongo
+ */
 class ApplyOperation extends JobBase {
     /**
      * Run the ApplyOperation job
-     * @throws Exception
+     * @throws \Exception
      */
     public function perform()
     {
@@ -11,13 +17,13 @@ class ApplyOperation extends JobBase {
         {
             $this->debugLog("ApplyOperation::perform() start");
 
-            $timer = new Timer();
+            $timer = new \Tripod\Timer();
             $timer->start();
 
             $this->validateArgs();
 
             // set the config to what is received
-            MongoTripodConfig::setConfig($this->args["tripodConfig"]);
+            Config::setConfig($this->args["tripodConfig"]);
 
             $subject = $this->createImpactedSubject($this->args['subject']);
 
@@ -29,7 +35,7 @@ class ApplyOperation extends JobBase {
 
             $this->debugLog("ApplyOperation::perform() done in {$timer->result()}ms");
         }
-        catch (Exception $e)
+        catch (\Exception $e)
         {
             $this->errorLog("Caught exception in ".get_class($this).": ".$e->getMessage());
             throw $e;

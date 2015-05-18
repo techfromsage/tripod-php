@@ -1,11 +1,17 @@
 <?php
-    require_once TRIPOD_DIR . 'mongo/MongoTripodConstants.php';
-    require_once TRIPOD_DIR . 'mongo/delegates/MongoTripodSearchDocuments.class.php';
-    require_once TRIPOD_DIR . 'mongo/providers/MongoSearchProvider.class.php';
-    require_once TRIPOD_DIR . 'exceptions/TripodSearchException.class.php';
 
+namespace Tripod\Mongo;
 
-class MongoTripodSearchIndexer extends CompositeBase
+require_once TRIPOD_DIR . 'mongo/MongoTripodConstants.php';
+require_once TRIPOD_DIR . 'mongo/delegates/SearchDocuments.class.php';
+require_once TRIPOD_DIR . 'mongo/providers/MongoSearchProvider.class.php';
+require_once TRIPOD_DIR . 'exceptions/SearchException.class.php';
+
+/**
+ * Class SearchIndexer
+ * @package Tripod\Mongo
+ */
+class SearchIndexer extends CompositeBase
 {
     private $tripod = null;
 
@@ -14,26 +20,30 @@ class MongoTripodSearchIndexer extends CompositeBase
     protected $stat = null;
 
     /**
-     * @var $configuredProvider ITripodSearchProvider
+     * @var $configuredProvider \Tripod\ITripodSearchProvider
      */
     private $configuredProvider = null;
 
-    public function __construct(MongoTripod $tripod)
+    /**
+     * @param Tripod $tripod
+     * @throws \Tripod\Exceptions\SearchException
+     */
+    public function __construct(Tripod $tripod)
     {
         $this->tripod = $tripod;
         $this->storeName = $tripod->getStoreName();
         $this->podName = $tripod->podName;
-        $this->labeller = new MongoTripodLabeller();
+        $this->labeller = new Labeller();
         $this->stat = $tripod->getStat();
-        $this->config = MongoTripodConfig::getInstance();
+        $this->config = Config::getInstance();
         $provider = $this->config->getSearchProviderClassName($this->tripod->getStoreName());
 
         if(class_exists($provider)){
             $this->configuredProvider = new $provider($this->tripod);
         } else {
-            throw new TripodSearchException("Did not recognise Search Provider, or could not find class: $provider");
+            throw new \Tripod\Exceptions\SearchException("Did not recognise Search Provider, or could not find class: $provider");
         }
-        $this->readPreference = MongoClient::RP_PRIMARY;  // todo: figure out where this should go.
+        $this->readPreference = \MongoClient::RP_PRIMARY;  // todo: figure out where this should go.
     }
 
     /**
@@ -55,6 +65,9 @@ class MongoTripodSearchIndexer extends CompositeBase
         );
     }
 
+    /**
+     * @return array
+     */
     public function getTypesInSpecification()
     {
         return $this->config->getTypesInSearchSpecifications($this->storeName, $this->getPodName());
@@ -69,6 +82,11 @@ class MongoTripodSearchIndexer extends CompositeBase
         return OP_SEARCH;
     }
 
+    /**
+     * @param string $storeName
+     * @param string $specId
+     * @return array|null
+     */
     public function getSpecification($storeName, $specId)
     {
         return $this->config->getSearchDocumentSpecification($storeName,$specId);
@@ -157,7 +175,7 @@ class MongoTripodSearchIndexer extends CompositeBase
     
 
     /**
-     * @return ITripodSearchProvider
+     * @return \Tripod\ITripodSearchProvider
      */
     protected function getSearchProvider()
     {
@@ -165,15 +183,19 @@ class MongoTripodSearchIndexer extends CompositeBase
     }
 
     /**
-     * @param MongoCollection $collection
+     * @param \MongoCollection $collection
      * @param string $context
-     * @return MongoTripodSearchDocuments
+     * @return SearchDocuments
      */
-    protected function getSearchDocumentGenerator($collection, $context )
+    protected function getSearchDocumentGenerator(\MongoCollection $collection, $context )
     {
-        return new MongoTripodSearchDocuments($this->storeName, $collection, $context, $this->tripod->getStat());
+        return new SearchDocuments($this->storeName, $collection, $context, $this->tripod->getStat());
     }
 
+    /**
+     * @param array $input
+     * @return array
+     */
     protected function deDupe(Array $input)
     {
         $output = array();

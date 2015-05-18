@@ -1,6 +1,6 @@
 <?php
 require_once 'MongoTripodTestBase.php';
-require_once 'src/mongo/MongoTripod.class.php';
+require_once 'src/mongo/Tripod.class.php';
 require_once 'src/mongo/MongoGraph.class.php';
 
 
@@ -10,8 +10,8 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
     {
         parent::setUp();
 
-        $this->tripod = new MongoTripod("CBD_testing", "tripod_php_testing", array("async"=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>false)));
-        foreach(MongoTripodConfig::getInstance()->getCollectionsForSearch($this->tripod->getStoreName()) as $collection)
+        $this->tripod = new \Tripod\Mongo\Tripod("CBD_testing", "tripod_php_testing", array("async"=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>false)));
+        foreach(\Tripod\Mongo\Config::getInstance()->getCollectionsForSearch($this->tripod->getStoreName()) as $collection)
         {
             $collection->drop();
         }
@@ -23,7 +23,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
     {
         // First make a change that affects a search document
         $tripod = $this->getMock(
-            'MongoTripod',
+            '\Tripod\Mongo\Tripod',
             array('getSearchIndexer', 'getDataUpdater'),
             array(
                 'CBD_testing',
@@ -40,7 +40,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
         );
 
         $tripodUpdate = $this->getMock(
-            'MongoTripodUpdates',
+            '\Tripod\Mongo\Updates',
             array('storeChanges'),
             array(
                 $tripod,
@@ -55,7 +55,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             )
         );
 
-        $labeller = new MongoTripodLabeller();
+        $labeller = new \Tripod\Mongo\Labeller();
         $subjectsAndPredicatesOfChange = array(
             $labeller->uri_to_alias("http://talisaspire.com/authors/1")=>array("foaf:name")
         );
@@ -68,7 +68,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             ->method('getDataUpdater')
             ->will($this->returnValue($tripodUpdate));
 
-        $searchIndexer = $this->getMock('MongoTripodSearchIndexer',
+        $searchIndexer = $this->getMock('SearchIndexer',
             array('getSearchProvider'),
             array($tripod)
         );
@@ -106,7 +106,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
 
         // Now make a change that affects a different search document - Create new document
         $tripod = $this->getMock(
-            'MongoTripod',
+            'Tripod',
             array('getSearchIndexer'),
             array(
                 'CBD_testing',
@@ -122,7 +122,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             )
         );
 
-        $searchIndexer = $this->getMock('MongoTripodSearchIndexer',
+        $searchIndexer = $this->getMock('SearchIndexer',
             array('getSearchProvider'),
             array($tripod)
         );
@@ -152,11 +152,11 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             ->method('getSearchIndexer')
             ->will($this->returnValue($searchIndexer));
 
-        $list = new ExtendedGraph();
+        $list = new \Tripod\ExtendedGraph();
         $list->add_resource_triple("http://talisaspire.com/lists/1234", RDF_TYPE, "http://purl.org/vocab/resourcelist/schema#List");
         $list->add_literal_triple("http://talisaspire.com/lists/1234", "http://rdfs.org/sioc/spec/name", "Testing list");
 
-        $tripod->saveChanges(new ExtendedGraph(), $list);
+        $tripod->saveChanges(new \Tripod\ExtendedGraph(), $list);
 
         // Regen our search docs for real since this step was overridden in the stub
         $this->tripod->getSearchIndexer()->generateAndIndexSearchDocuments(
@@ -167,7 +167,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
 
         // Now make a change to the last document
         $tripod = $this->getMock(
-            'MongoTripod',
+            '\Tripod\Mongo\Tripod',
             array('getSearchIndexer'),
             array(
                 'CBD_testing',
@@ -183,7 +183,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             )
         );
 
-        $searchIndexer = $this->getMock('MongoTripodSearchIndexer',
+        $searchIndexer = $this->getMock('SearchIndexer',
             array('getSearchProvider'),
             array($tripod)
         );
@@ -234,7 +234,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
 
         // Now make a change that shouldn't affect any search docs
         $tripod = $this->getMock(
-            'MongoTripod',
+            'Tripod',
             array('getSearchIndexer', 'getDataUpdater'),
             array(
                 'CBD_testing',
@@ -251,7 +251,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
         );
 
         $tripodUpdate = $this->getMock(
-            'MongoTripodUpdates',
+            'Updates',
             array('storeChanges'),
             array(
                 $tripod,
@@ -273,7 +273,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             ->method('getDataUpdater')
             ->will($this->returnValue($tripodUpdate));
 
-        $searchIndexer = $this->getMock('MongoTripodSearchIndexer',
+        $searchIndexer = $this->getMock('SearchIndexer',
             array('getSearchProvider', 'update'),
             array($tripod)
         );
@@ -314,7 +314,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
      */
     public function testSavingMultipleNewEntitiesResultsInOneImpactedSubject()
     {
-        $tripod = $this->getMockBuilder('MongoTripod')
+        $tripod = $this->getMockBuilder('Tripod')
             ->setMethods(array('getDataUpdater'))
             ->setConstructorArgs(
                 array(
@@ -331,7 +331,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
                 )
             )->getMock();
 
-        $tripodUpdates = $this->getMockBuilder('MongoTripodUpdates')
+        $tripodUpdates = $this->getMockBuilder('Updates')
             ->setMethods(array('submitJob'))
             ->setConstructorArgs(
                 array(
@@ -352,7 +352,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             ->will($this->returnValue($tripodUpdates));
 
         // first lets add a book, which should trigger a search doc, view and table gen for a single item
-        $g = new MongoGraph();
+        $g = new \Tripod\Mongo\MongoGraph();
         $newSubjectUri1 = "http://talisaspire.com/resources/newdoc1";
         $newSubjectUri2 = "http://talisaspire.com/resources/newdoc2";
         $newSubjectUri3 = "http://talisaspire.com/resources/newdoc3";
@@ -380,13 +380,13 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             $newSubjectUri2=>array('rdf:type','dct:creator','dct:title','dct:subject'),
             $newSubjectUri3=>array('rdf:type','dct:creator','dct:title','dct:subject')
         );
-        $tripod->saveChanges(new MongoGraph(), $g);
+        $tripod->saveChanges(new \Tripod\Mongo\MongoGraph(), $g);
 
         /** @var MongoTripodTables $tables */
         $search = $tripod->getComposite(OP_SEARCH);
 
         $expectedImpactedSubjects = array(
-            new ImpactedSubject(
+            new \Tripod\Mongo\ImpactedSubject(
                 array(
                     _ID_RESOURCE=>$newSubjectUri2,
                     _ID_CONTEXT=>'http://talisaspire.com/'

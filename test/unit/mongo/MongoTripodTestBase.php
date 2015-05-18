@@ -7,8 +7,8 @@ set_include_path(
   . PATH_SEPARATOR . dirname(dirname(dirname(dirname(__FILE__)))).'/src');
 
 require_once('tripod.inc.php');
-require_once TRIPOD_DIR.'mongo/MongoTripodConfig.class.php';
-require_once TRIPOD_DIR.'mongo/base/MongoTripodBase.class.php';
+require_once TRIPOD_DIR . 'mongo/Config.class.php';
+require_once TRIPOD_DIR . 'mongo/base/TripodBase.class.php';
 
 /**
  * Mongo Config For Main DB
@@ -21,11 +21,11 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
 {
 
     /**
-     * @var MongoTripod
+     * @var \Tripod\Mongo\Tripod
      */
     protected $tripod = null;
     /**
-     * @var MongoTransactionLog
+     * @var \Tripod\Mongo\TransactionLog
      */
     protected $tripodTransactionLog = null;
 
@@ -59,9 +59,9 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         $docs = json_decode(file_get_contents(dirname(__FILE__).$filename), true);
         foreach ($docs as $d)
         {
-            $g = new MongoGraph();
+            $g = new \Tripod\Mongo\MongoGraph();
             $g->add_tripod_array($d);
-            $this->tripod->saveChanges(new ExtendedGraph(), $g,$d['_id'][_ID_CONTEXT]);
+            $this->tripod->saveChanges(new \Tripod\ExtendedGraph(), $g,$d['_id'][_ID_CONTEXT]);
         }
     }
 
@@ -79,7 +79,7 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         {
             $config['data_sources']['rs2'] = json_decode(getenv('TRIPOD_DATASOURCE_RS2_CONFIG'), true);
         }
-        MongoTripodConfig::setConfig($config);
+        \Tripod\Mongo\Config::setConfig($config);
 
         $className = get_class($this);
         $testName = $this->getName();
@@ -88,7 +88,7 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         // make sure log statements don't go to stdout during tests...
         $log = new \Monolog\Logger("unittest");
         $log->pushHandler(new \Monolog\Handler\NullHandler());
-        MongoTripodBase::$logger = $log;
+        \Tripod\Mongo\TripodBase::$logger = $log;
     }
 
 
@@ -96,7 +96,7 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
 
     protected function addDocument($doc, $toTransactionLog=false)
     {
-        $config = MongoTripodConfig::getInstance();
+        $config = \Tripod\Mongo\Config::getInstance();
         if($toTransactionLog == true)
         {
             return $this->getTlogCollection()->insert($doc, array("w"=>1));
@@ -110,14 +110,14 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
 
     protected function getTlogCollection()
     {
-        $config = MongoTripodConfig::getInstance();
+        $config = \Tripod\Mongo\Config::getInstance();
         $tLogConfig = $config->getTransactionLogConfig();
         return $config->getTransactionLogDatabase()->selectCollection($tLogConfig['collection']);
     }
 
-    protected function getTripodCollection(MongoTripod $tripod)
+    protected function getTripodCollection(\Tripod\Mongo\Tripod $tripod)
     {
-        $config = MongoTripodConfig::getInstance();
+        $config = \Tripod\Mongo\Config::getInstance();
         $pods = $config->getPods($tripod->getStoreName());
         $podName = $tripod->getPodName();
         $dataSource = $config->getDataSourceForPod($tripod->getStoreName(), $podName);
@@ -138,7 +138,7 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         {
             return $this->getTripodCollection($this->tripod)->findOne(array("_id"=>$_id));
         }
-        elseif($collection instanceof MongoTripod)
+        elseif($collection instanceof \Tripod\Mongo\Tripod)
         {
             return $this->getTripodCollection($collection)->findOne(array("_id"=>$_id));
         }
@@ -205,7 +205,7 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
     protected function assertDocumentVersion($_id, $expectedValue=null, $hasVersion=true, $tripod=null, $fromTransactionLog=false)
     {
         // just make sure $_id is aliased
-        $labeller = new MongoTripodLabeller();
+        $labeller = new \Tripod\Mongo\Labeller();
         foreach ($_id as $key=>$value)
         {
             $_id[$key] = $labeller->uri_to_alias($value);
@@ -238,7 +238,7 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
     protected function assertDocumentHasProperty($_id, $property, $expectedValue=null, $tripod=null, $fromTransactionLog=false)
     {
         // just make sure $_id is aliased
-        $labeller = new MongoTripodLabeller();
+        $labeller = new \Tripod\Mongo\Labeller();
         foreach ($_id as $key=>$value)
         {
             $_id[$key] = $labeller->uri_to_alias($value);
@@ -261,7 +261,7 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
     protected function assertDocumentDoesNotHaveProperty($_id, $property, $tripod=null, $fromTransactionLog=false)
     {
         // just make sure $_id is aliased
-        $labeller = new MongoTripodLabeller();
+        $labeller = new \Tripod\Mongo\Labeller();
         foreach ($_id as $key=>$value)
         {
             $_id[$key] = $labeller->uri_to_alias($value);
@@ -300,32 +300,32 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         }
     }
 
-    protected function assertHasLiteralTriple(ExtendedGraph $graph, $s, $p, $o)
+    protected function assertHasLiteralTriple(\Tripod\ExtendedGraph $graph, $s, $p, $o)
     {
         $this->assertTrue($graph->has_literal_triple($s, $p, $o), "Graph did not contain the literal triple: <{$s}> <{$p}> \"{$o}\"");
     }
 
-    protected function assertHasResourceTriple(ExtendedGraph $graph, $s, $p, $o)
+    protected function assertHasResourceTriple(\Tripod\ExtendedGraph $graph, $s, $p, $o)
     {
         $this->assertTrue($graph->has_resource_triple($s, $p, $o), "Graph did not contain the resource triple: <{$s}> <{$p}> <{$o}>");
     }
 
-    protected function assertDoesNotHaveLiteralTriple(ExtendedGraph $graph, $s, $p, $o)
+    protected function assertDoesNotHaveLiteralTriple(\Tripod\ExtendedGraph $graph, $s, $p, $o)
     {
         $this->assertFalse($graph->has_literal_triple($s, $p, $o), "Graph should not contain the literal triple: <{$s}> <{$p}> \"{$o}\"");
     }
 
-    protected function assertDoesNotHaveResourceTriple(ExtendedGraph $graph, $s, $p, $o)
+    protected function assertDoesNotHaveResourceTriple(\Tripod\ExtendedGraph $graph, $s, $p, $o)
     {
         $this->assertFalse($graph->has_resource_triple($s, $p, $o), "Graph should not contain the resource triple: <{$s}> <{$p}> <{$o}>");
     }
 
     protected function lockDocument($subject, $transaction_id)
     {
-        $collection = MongoTripodConfig::getInstance()->getCollectionForLocks('tripod_php_testing');
-        $labeller = new MongoTripodLabeller();
+        $collection = \Tripod\Mongo\Config::getInstance()->getCollectionForLocks('tripod_php_testing');
+        $labeller = new \Tripod\Mongo\Labeller();
         $doc = array(
-            '_id' => array(_ID_RESOURCE => $labeller->uri_to_alias($subject), _ID_CONTEXT => MongoTripodConfig::getInstance()->getDefaultContextAlias()),
+            '_id' => array(_ID_RESOURCE => $labeller->uri_to_alias($subject), _ID_CONTEXT => \Tripod\Mongo\Config::getInstance()->getDefaultContextAlias()),
             _LOCKED_FOR_TRANS => $transaction_id,
             _LOCKED_FOR_TRANS_TS=>new MongoDate()
         );
@@ -333,7 +333,7 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
     }
 }
 
-class MongoTestTripod extends MongoTripod
+class TestTripod extends \Tripod\Mongo\Tripod
 {
     public function getCollectionReadPreference()
     {
@@ -341,7 +341,7 @@ class MongoTestTripod extends MongoTripod
     }
 }
 
-class MongoTripodTestConfig extends MongoTripodConfig
+class TripodTestConfig extends \Tripod\Mongo\Config
 {
     public function __construct() {}
     public function loadConfig(array $config)
