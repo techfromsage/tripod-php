@@ -344,13 +344,14 @@ class MongoTripodViews extends CompositeBase
 
     /**
      * Given a specific $viewId, generates a single view for the $resource
-     * @param $viewId
-     * @param null $resource
-     * @param null $context
+     * @param string $viewId
+     * @param string|null $resource
+     * @param string|null $context
+     * @param string|null $queueName Queue for background bulk generation
      * @throws TripodViewException
      * @return array
      */
-    public function generateView($viewId,$resource=null,$context=null)
+    public function generateView($viewId,$resource=null,$context=null,$queueName=null)
     {
         $contextAlias = $this->getContextAlias($context);
         $viewSpec = MongoTripodConfig::getInstance()->getViewSpecification($this->storeName, $viewId);
@@ -409,31 +410,49 @@ class MongoTripodViews extends CompositeBase
             $docs = $this->config->getCollectionForCBD($this->storeName, $from)->find($filter);
             foreach ($docs as $doc)
             {
-                // set up ID
-                $generatedView = array("_id"=>array(_ID_RESOURCE=>$doc["_id"][_ID_RESOURCE],_ID_CONTEXT=>$doc["_id"][_ID_CONTEXT],_ID_TYPE=>$viewSpec['_id']));
-                $value = array(); // everything must go in the value object todo: this is a hang over from map reduce days, engineer out once we have stability on new PHP method for M/R
-
-                $value[_GRAPHS] = array();
-
-                $buildImpactIndex=true;
-                if (isset($viewSpec['ttl']))
+                if($queueName && !$resource)
                 {
-                    $buildImpactIndex=false;
-                    $value[_EXPIRES] = new MongoDate($this->getExpirySecFromNow($viewSpec['ttl']));
+                    $subject = new ImpactedSubject(
+                        $doc['_id'],
+                        OP_VIEWS,
+                        $this->storeName,
+                        $from,
+                        array($viewId)
+                    );
+
+                    $this->submitJob($queueName, 'ApplyOperation', array(
+                        "subject"=>$subject->toArray(),
+                        "tripodConfig"=>MongoTripodConfig::getConfig()
+                    ));
                 }
                 else
                 {
-                    $value[_IMPACT_INDEX] = array($doc['_id']);
+                    // set up ID
+                    $generatedView = array("_id"=>array(_ID_RESOURCE=>$doc["_id"][_ID_RESOURCE],_ID_CONTEXT=>$doc["_id"][_ID_CONTEXT],_ID_TYPE=>$viewSpec['_id']));
+                    $value = array(); // everything must go in the value object todo: this is a hang over from map reduce days, engineer out once we have stability on new PHP method for M/R
+
+                    $value[_GRAPHS] = array();
+
+                    $buildImpactIndex=true;
+                    if (isset($viewSpec['ttl']))
+                    {
+                        $buildImpactIndex=false;
+                        $value[_EXPIRES] = new MongoDate($this->getExpirySecFromNow($viewSpec['ttl']));
+                    }
+                    else
+                    {
+                        $value[_IMPACT_INDEX] = array($doc['_id']);
+                    }
+
+                    $this->doJoins($doc,$viewSpec['joins'],$value,$from,$contextAlias,$buildImpactIndex);
+
+                    // add top level properties
+                    $value[_GRAPHS][] = $this->extractProperties($doc,$viewSpec,$from);
+
+                    $generatedView['value'] = $value;
+
+                    $collection->save($generatedView);
                 }
-
-                $this->doJoins($doc,$viewSpec['joins'],$value,$from,$contextAlias,$buildImpactIndex);
-
-                // add top level properties
-                $value[_GRAPHS][] = $this->extractProperties($doc,$viewSpec,$from);
-
-                $generatedView['value'] = $value;
-
-                $collection->save($generatedView);
             }
 
             $t->stop();

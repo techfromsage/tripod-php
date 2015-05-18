@@ -102,12 +102,12 @@ function generateViews($id, $viewId, $storeName, $stat, $queue)
         if ($id)
         {
             print " for $id....\n";
-            $views->generateView($viewId, $id);
+            $views->generateView($viewId, $id, null, $queue);
         }
         else
         {
             print " for all views....\n";
-            $views->generateView($viewId, null);
+            $views->generateView($viewId, null, null, $queue);
         }
     }
 }
@@ -172,7 +172,7 @@ else
 {
     foreach(MongoTripodConfig::getInstance()->getViewSpecifications($storeName) as $viewSpec)
     {
-        generateViews($id, $viewSpec['_id'], $storeName, $stat), $queue;
+        generateViews($id, $viewSpec['_id'], $storeName, $stat, $queue);
     }
 }
 

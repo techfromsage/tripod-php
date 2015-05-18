@@ -443,6 +443,7 @@ class MongoTripodTables extends CompositeBase
      * @param string $tableType
      * @param string|null $resource
      * @param string|null $context
+     * @param string|null $queueName Queue for background bulk generation
      * @return null //@todo: this should be a bool
      */
     public function generateTableRows($tableType,$resource=null,$context=null,$queueName=null)
