@@ -1,6 +1,10 @@
 <?php
 
 class ApplyOperation extends JobBase {
+    /**
+     * Run the ApplyOperation job
+     * @throws Exception
+     */
     public function perform()
     {
         try
@@ -15,15 +19,7 @@ class ApplyOperation extends JobBase {
             // set the config to what is received
             MongoTripodConfig::setConfig($this->args["tripodConfig"]);
 
-            $subjectAsArray = $this->args["subject"];
-            $subject = new ImpactedSubject(
-                $subjectAsArray["resourceId"],
-                $subjectAsArray["operation"],
-                $subjectAsArray["storeName"],
-                $subjectAsArray["podName"],
-                $subjectAsArray["specTypes"],
-                $subjectAsArray["delete"]
-            );
+            $subject = $this->createImpactedSubject($this->args['subject']);
 
             $subject->update();
 
@@ -41,7 +37,23 @@ class ApplyOperation extends JobBase {
     }
 
     /**
-     * Validate args for DiscoverModifiedSubjects
+     * For mocking
+     * @param array $args
+     * @return ImpactedSubject
+     */
+    protected function createImpactedSubject(array $args)
+    {
+        return new ImpactedSubject(
+            $args["resourceId"],
+            $args["operation"],
+            $args["storeName"],
+            $args["podName"],
+            $args["specTypes"]
+        );        
+    }
+
+    /**
+     * Validate args for ApplyOperation
      * @return array
      */
     protected function getMandatoryArgs()

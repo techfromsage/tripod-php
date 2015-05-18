@@ -62,7 +62,6 @@ class MongoTripodUpdates extends MongoTripodBase {
         $this->storeName = $tripod->getStoreName();
         $this->podName = $tripod->getPodName();
         $this->stat = $tripod->getStat();
-        
         $this->labeller = new MongoTripodLabeller();
         $opts = array_merge(array(
                 'defaultContext'=>null,
@@ -71,7 +70,6 @@ class MongoTripodUpdates extends MongoTripodBase {
                 'readPreference'=>MongoClient::RP_PRIMARY_PREFERRED,
                 'retriesToGetLock' => 20)
             ,$opts);
-
         $this->readPreference = $opts['readPreference'];
         $this->config = $this->getMongoTripodConfigInstance();
 
@@ -142,13 +140,13 @@ class MongoTripodUpdates extends MongoTripodBase {
             if ($cs->has_changes())
             {
                 // store the actual CBDs
-                $changes = $this->storeChanges($cs, $contextAlias);
+                $subjectsAndPredicatesOfChange = $this->storeChanges($cs, $contextAlias);
 
                 // Process any syncronous operations
-                $this->processSyncOperations($cs,$changes['deletedSubjects'],$contextAlias);
+                $this->processSyncOperations($subjectsAndPredicatesOfChange,$contextAlias);
 
                 // Schedule calculation of any async activity
-                $this->queueAsyncOperations($cs,$changes['deletedSubjects'],$contextAlias);
+                $this->queueAsyncOperations($subjectsAndPredicatesOfChange,$contextAlias);
             }
         }
         catch(Exception $e){
@@ -263,11 +261,9 @@ class MongoTripodUpdates extends MongoTripodBase {
 
     /**
      * @param ChangeSet $cs Change-set to apply
-     * @param array $subjectsOfChange array of subjects of change
      * @param string $contextAlias
-     * @return array
      * @throws TripodException
-     * @throws Exception
+     * @return array An array of subjects and predicates that have been changed
      */
     protected function storeChanges(ChangeSet $cs, $contextAlias)
     {
@@ -318,7 +314,7 @@ class MongoTripodUpdates extends MongoTripodBase {
             $this->timingLog(MONGO_WRITE, array('duration'=>$t->result(), 'subjectsOfChange'=>implode(", ",$subjectsOfChange)));
             $this->getStat()->timer(MONGO_WRITE.".{$this->getPodName()}",$t->result());
 
-            return $changes;
+            return $changes['subjectsAndPredicatesOfChange'];
         }
         catch(Exception $e)
         {
@@ -417,6 +413,7 @@ class MongoTripodUpdates extends MongoTripodBase {
      */
     protected function applyChangeSet(ChangeSet $cs, $originalCBDs, $contextAlias, $transaction_id)
     {
+        $subjectsAndPredicatesOfChange = array();
         if (preg_match('/^CBD_/',$this->getCollection()->getName()))
         {
             // how many subjects of change?
@@ -434,6 +431,10 @@ class MongoTripodUpdates extends MongoTripodBase {
             foreach ($changes as $change)
             {
                 $subjectOfChange = $cs->get_first_resource($change,$this->labeller->qname_to_uri("cs:subjectOfChange"));
+                if(!array_key_exists($subjectOfChange, $subjectsAndPredicatesOfChange))
+                {
+                    $subjectsAndPredicatesOfChange[$subjectOfChange] = array();
+                }
                 $criteria = array(
                     _ID_KEY=>array(_ID_RESOURCE=>$this->labeller->uri_to_alias($subjectOfChange),_ID_CONTEXT=>$contextAlias)
                 );
@@ -458,6 +459,12 @@ class MongoTripodUpdates extends MongoTripodBase {
                 foreach ($removals as $r)
                 {
                     $predicate = $cs->get_first_resource($r["value"],$this->labeller->qname_to_uri("rdf:predicate"));
+
+                    if(!in_array($predicate, $subjectsAndPredicatesOfChange[$subjectOfChange]))
+                    {
+                        $subjectsAndPredicatesOfChange[$subjectOfChange][] = $predicate;
+                    }
+
                     $object = $cs->get_subject_property_values($r["value"],$this->labeller->qname_to_uri("rdf:object"));
 
                     $isUri = ($object[0]['type']=="uri");
@@ -487,6 +494,12 @@ class MongoTripodUpdates extends MongoTripodBase {
                 foreach ($additions as $r)
                 {
                     $predicate = $cs->get_first_resource($r["value"],$this->labeller->qname_to_uri("rdf:predicate"));
+
+                    if(!in_array($predicate, $subjectsAndPredicatesOfChange[$subjectOfChange]))
+                    {
+                        $subjectsAndPredicatesOfChange[$subjectOfChange][] = $predicate;
+                    }
+
                     $object = $cs->get_subject_property_values($r["value"],$this->labeller->qname_to_uri("rdf:object"));
 
                     $isUri = ($object[0]['type']=="uri");
@@ -613,29 +626,35 @@ class MongoTripodUpdates extends MongoTripodBase {
 
             }
 
-            $updatedSubjects = array();
-            $deletedSubjects = array();
-            foreach($updates as $u)
-            {
-                $updatedSubjects[] = $u['criteria'][_ID_KEY][_ID_RESOURCE];
-            }
-
-            foreach($deletes as $d)
-            {
-                $deletedSubjects[] = $d['criteria'][_ID_KEY][_ID_RESOURCE];
-            }
-
-            $retval = array();
-            $retval['newCBDs'] = $newCBDs;
-            $retval['updatedSubjects'] = $updatedSubjects;
-            $retval['deletedSubjects'] = $deletedSubjects;
-
-            return $retval;
+            return array(
+                'newCBDs'=>$newCBDs,
+                'subjectsAndPredicatesOfChange'=>$this->subjectsAndPredicatesOfChangeUrisToAliases($subjectsAndPredicatesOfChange)
+            );
         }
         else
         {
             throw new Exception("Attempted to update a non-CBD collection");
         }
+    }
+
+    /**
+     * Normalize our subjects and predicates of change to use aliases rather than fq uris
+     * @param array $subjectsAndPredicatesOfChange
+     * @return array
+     */
+    protected function subjectsAndPredicatesOfChangeUrisToAliases(array $subjectsAndPredicatesOfChange)
+    {
+        $aliases = array();
+        foreach($subjectsAndPredicatesOfChange as $subject=>$predicates)
+        {
+            $subjectAlias = $this->labeller->uri_to_alias($subject);
+            $aliases[$subjectAlias] = array();
+            foreach($predicates as $predicate)
+            {
+                $aliases[$subjectAlias][] = $this->labeller->uri_to_alias($predicate);
+            }
+        }
+        return $aliases;
     }
 
     /**
@@ -661,15 +680,16 @@ class MongoTripodUpdates extends MongoTripodBase {
 
     /**
      * Processes each subject synchronously
-     * @param ImpactedSubject[] $modifiedSubjects
+     * @param array $subjectsAndPredicatesOfChange
+     * @param string $contextAlias
      */
-    protected function processSyncOperations(ChangeSet $cs, $deletedSubjects, $contextAlias)
+    protected function processSyncOperations(Array $subjectsAndPredicatesOfChange, $contextAlias)
     {
         $syncModifiedSubjects = array();
         foreach($this->getSyncOperations() as $op)
         {
             $composite = $this->tripod->getComposite($op);
-            $opSubjects = $composite->getImpactedSubjects($cs,$deletedSubjects,$contextAlias);
+            $opSubjects = $composite->getImpactedSubjects($subjectsAndPredicatesOfChange,$contextAlias);
             if (!empty($opSubjects)) {
                 foreach($opSubjects as $subject)
                 {
@@ -701,23 +721,34 @@ class MongoTripodUpdates extends MongoTripodBase {
 
     /**
      * Adds the operations to the queue to be performed asynchronously
-     * @param ImpactedSubject[] $modifiedSubjects
+     * @param array $subjectsAndPredicatesOfChange
+     * @param string $contextAlias
      */
-    protected function queueASyncOperations(ChangeSet $cs,$deletedSubjects,$contextAlias)
+    protected function queueASyncOperations(Array $subjectsAndPredicatesOfChange,$contextAlias)
     {
         $operations = $this->getAsyncOperations();
         if (!empty($operations)) {
             $data = array(
-                "changeSet" => $cs->to_json(),
-                "deletedSubjects" => $deletedSubjects,
+                "changes" => $subjectsAndPredicatesOfChange,
                 "operations" => $operations,
                 "tripodConfig" => MongoTripodConfig::getConfig(),
                 "storeName" => $this->storeName,
                 "podName" => $this->podName,
                 "contextAlias" => $contextAlias
             );
-            Resque::enqueue(MongoTripodConfig::getDiscoverQueueName(),"DiscoverModifiedSubjects",$data);
+            $this->submitJob(MongoTripodConfig::getDiscoverQueueName(),"DiscoverImpactedSubjects",$data);
         }
+    }
+
+    /**
+     * @todo Should this abstracted to another class so queue backends can be swapped (e.g. 0mq, RabbitMQ, SQS, etc.)?
+     * @param string $queueName
+     * @param string $class
+     * @param array $data
+     */
+    protected function submitJob($queueName, $class, Array $data)
+    {
+        Resque::enqueue($queueName, $class, $data);
     }
 
     //////// LOCKS \\\\\\\\

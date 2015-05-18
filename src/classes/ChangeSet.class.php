@@ -5,7 +5,7 @@
  * Adapted from Moriarty's changeset
  * @see https://code.google.com/p/moriarty/source/browse/trunk/changeset.class.php
  */
-class ChangeSet extends MongoGraph {
+class ChangeSet extends ExtendedGraph {
 
     protected $subjectOfChange;
     var $before = array();
@@ -245,46 +245,6 @@ class ChangeSet extends MongoGraph {
             $subjects[] = $this->get_first_resource($change,$this->qname_to_uri("cs:subjectOfChange"));
         }
         return array_unique($subjects);
-    }
-
-    /**
-     * Returns the predicates of change keyed by the subject
-     * @return array
-     */
-    function get_subjects_and_predicates_of_change() {
-        $subjectsAndPredicatesOfChange = array();
-        /** @noinspection PhpParamsInspection */
-        $changes = $this->get_subjects_of_type($this->qname_to_uri("cs:ChangeSet"));
-        foreach ($changes as $change)
-        {
-            $subject = $this->get_first_resource($change,$this->qname_to_uri("cs:subjectOfChange"));
-
-            if(!isset($subjectsAndPredicatesOfChange[$subject]))
-            {
-                $subjectsAndPredicatesOfChange[$subject] = array();
-            }
-            // If resource is not either completely new or deleted, specify the predicates affected
-            // todo: q. is this right? What if we have mixed changes?? a. This is to hint to the getImpactedComposites that it should consider all the properties have potentially changed.
-            // todo: instead the changeset itself should not care about that and the getImpactedComposites should receive the output of MongoTripodUpdates::applyChangeset and use that to make decisions instead of the Changeset
-            if(!(empty($this->before) || empty($this->after)))
-            {
-                foreach($this->get_subjects_where_resource(RDF_SUBJECT, $subject) as $changeNode)
-                {
-                    foreach($this->get_resource_triple_values($changeNode, RDF_PREDICATE) as $property)
-                    {
-                        $subjectsAndPredicatesOfChange[$subject][] = $this->_labeller->uri_to_alias($property);
-                    }
-                }
-            }
-        }
-
-        // unique predicates
-        foreach($subjectsAndPredicatesOfChange as $subject=>$predicates)
-        {
-            $subjectsAndPredicatesOfChange[$subject] = array_unique($predicates);
-        }
-
-        return $subjectsAndPredicatesOfChange;
     }
 }
 ?>

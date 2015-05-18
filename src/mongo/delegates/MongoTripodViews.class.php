@@ -44,12 +44,20 @@ class MongoTripodViews extends CompositeBase
         $this->generateViews(array($resourceUri),$context);
     }
 
+    /**
+     * @return array
+     */
     public function getTypesInSpecification()
     {
         return $this->config->getTypesInViewSpecifications($this->storeName, $this->getPodName());
     }
 
-    public function findImpactedComposites($resourcesAndPredicates, $contextAlias)
+    /**
+     * @param array $resourcesAndPredicates
+     * @param string $contextAlias
+     * @return array|mixed
+     */
+    public function findImpactedComposites(Array $resourcesAndPredicates, $contextAlias)
     {
         $resources = array_keys($resourcesAndPredicates);
 

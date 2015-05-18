@@ -7,6 +7,12 @@ abstract class JobBase extends MongoTripodBase
 {
     private $mongoTripod;
 
+    /**
+     * For mocking
+     * @param string $storeName
+     * @param string $podName
+     * @return MongoTripod
+     */
     protected function getMongoTripod($storeName,$podName) {
         if ($this->mongoTripod == null) {
             $this->mongoTripod = new MongoTripod(
@@ -44,16 +50,33 @@ abstract class JobBase extends MongoTripodBase
         }
     }
 
+    /**
+     * @param string $message
+     * @param mixed $params
+     */
     public function debugLog($message, $params = null)
     {
         parent::debugLog("[PID ".getmypid()."] ".$message, $params);
     }
 
+    /**
+     * @param string $message
+     * @param mixed $params
+     */
     public function errorLog($message, $params = null)
     {
         parent::errorLog("[PID ".getmypid()."] ".$message, $params);
     }
 
 
+    /**
+     * @param string $queueName
+     * @param string $class
+     * @param array $data
+     */
+    protected function submitJob($queueName, $class, Array $data)
+    {
+        Resque::enqueue($queueName, $class, $data);
+    }
 }
 

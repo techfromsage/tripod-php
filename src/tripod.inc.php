@@ -31,7 +31,7 @@ require_once TRIPOD_DIR.'classes/ChangeSet.class.php';
 require_once TRIPOD_DIR.'/mongo/MongoTripod.class.php';
 
 require_once TRIPOD_DIR.'/mongo/base/JobBase.class.php';
-require_once TRIPOD_DIR.'/mongo/jobs/DiscoverModifiedSubjects.class.php';
+require_once TRIPOD_DIR . '/mongo/jobs/DiscoverImpactedSubjects.class.php';
 require_once TRIPOD_DIR.'/mongo/jobs/ApplyOperation.class.php';
 
 Resque::setBackend(MongoTripodConfig::getResqueServer());

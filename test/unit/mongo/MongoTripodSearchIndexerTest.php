@@ -9,9 +9,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
     protected function setUp()
     {
         parent::setUp();
-        // todo: remove
-//        $queue = new MongoTripodQueue();
-//        $queue->purgeQueue();
+
         $this->tripod = new MongoTripod("CBD_testing", "tripod_php_testing", array("async"=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>false)));
         foreach(MongoTripodConfig::getInstance()->getCollectionsForSearch($this->tripod->getStoreName()) as $collection)
         {
@@ -56,9 +54,15 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
                 )
             )
         );
+
+        $labeller = new MongoTripodLabeller();
+        $subjectsAndPredicatesOfChange = array(
+            $labeller->uri_to_alias("http://talisaspire.com/authors/1")=>array("foaf:name")
+        );
+
         $tripodUpdate->expects($this->atLeastOnce())
             ->method('storeChanges')
-            ->will($this->returnValue(array('deletedSubjects'=>array())));
+            ->will($this->returnValue($subjectsAndPredicatesOfChange));
 
         $tripod->expects($this->atLeastOnce())
             ->method('getDataUpdater')
@@ -302,6 +306,100 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
         $g2 = $tripod->describeResource("http://talisaspire.com/authors/1");
         $g2->add_literal_triple("http://talisaspire.com/authors/1", $g2->qname_to_uri("foaf:dob"),"1564-04-26" );
         $tripod->saveChanges($g1, $g2);
+    }
+
+    /**
+     * Save several new resources in a single operation. Only one of the resources has a type that is applicable based on specifications,
+     * therefore only one ImpactedSubject should be created
+     */
+    public function testSavingMultipleNewEntitiesResultsInOneImpactedSubject()
+    {
+        $tripod = $this->getMockBuilder('MongoTripod')
+            ->setMethods(array('getDataUpdater'))
+            ->setConstructorArgs(
+                array(
+                    'CBD_testing',
+                    'tripod_php_testing',
+                    array(
+                        'defaultContext'=>'http://talisaspire.com/',
+                        OP_ASYNC=>array(
+                            OP_VIEWS=>true,
+                            OP_TABLES=>true,
+                            OP_SEARCH=>true
+                        )
+                    )
+                )
+            )->getMock();
+
+        $tripodUpdates = $this->getMockBuilder('MongoTripodUpdates')
+            ->setMethods(array('submitJob'))
+            ->setConstructorArgs(
+                array(
+                    $tripod,
+                    array(
+                        'defaultContext'=>'http://talisaspire.com/',
+                        OP_ASYNC=>array(
+                            OP_VIEWS=>true,
+                            OP_TABLES=>true,
+                            OP_SEARCH=>true
+                        )
+                    )
+                )
+            )->getMock();
+
+        $tripod->expects($this->once())
+            ->method('getDataUpdater')
+            ->will($this->returnValue($tripodUpdates));
+
+        // first lets add a book, which should trigger a search doc, view and table gen for a single item
+        $g = new MongoGraph();
+        $newSubjectUri1 = "http://talisaspire.com/resources/newdoc1";
+        $newSubjectUri2 = "http://talisaspire.com/resources/newdoc2";
+        $newSubjectUri3 = "http://talisaspire.com/resources/newdoc3";
+
+        $g->add_resource_triple($newSubjectUri1, $g->qname_to_uri("rdf:type"),    $g->qname_to_uri("bibo:Article")); // there are no specs that are applicable for this type alone
+        $g->add_resource_triple($newSubjectUri1, $g->qname_to_uri("dct:creator"), "http://talisaspire.com/authors/1");
+        $g->add_literal_triple($newSubjectUri1,  $g->qname_to_uri("dct:title"),   "This is a new resource");
+        $g->add_literal_triple($newSubjectUri1,  $g->qname_to_uri("dct:subject"), "history");
+        $g->add_literal_triple($newSubjectUri1,  $g->qname_to_uri("dct:subject"), "philosophy");
+
+        $g->add_resource_triple($newSubjectUri2, $g->qname_to_uri("rdf:type"),    $g->qname_to_uri("bibo:Book")); // this is the only resource that should be queued
+        $g->add_resource_triple($newSubjectUri2, $g->qname_to_uri("rdf:type"),    $g->qname_to_uri("acorn:Resource"));
+        $g->add_resource_triple($newSubjectUri2, $g->qname_to_uri("dct:creator"), "http://talisaspire.com/authors/1");
+        $g->add_literal_triple($newSubjectUri2,  $g->qname_to_uri("dct:title"),   "This is another new resource");
+        $g->add_literal_triple($newSubjectUri2,  $g->qname_to_uri("dct:subject"), "maths");
+        $g->add_literal_triple($newSubjectUri2,  $g->qname_to_uri("dct:subject"), "science");
+
+        $g->add_resource_triple($newSubjectUri3, $g->qname_to_uri("rdf:type"),    $g->qname_to_uri("bibo:Journal")); // there are no specs that are applicable for this type alone
+        $g->add_resource_triple($newSubjectUri3, $g->qname_to_uri("dct:creator"), "http://talisaspire.com/authors/1");
+        $g->add_literal_triple($newSubjectUri3,  $g->qname_to_uri("dct:title"),   "This is yet another new resource");
+        $g->add_literal_triple($newSubjectUri3,  $g->qname_to_uri("dct:subject"), "art");
+        $g->add_literal_triple($newSubjectUri3,  $g->qname_to_uri("dct:subject"), "design");
+        $subjectsAndPredicatesOfChange = array(
+            $newSubjectUri1=>array('rdf:type','dct:creator','dct:title','dct:subject'),
+            $newSubjectUri2=>array('rdf:type','dct:creator','dct:title','dct:subject'),
+            $newSubjectUri3=>array('rdf:type','dct:creator','dct:title','dct:subject')
+        );
+        $tripod->saveChanges(new MongoGraph(), $g);
+
+        /** @var MongoTripodTables $tables */
+        $search = $tripod->getComposite(OP_SEARCH);
+
+        $expectedImpactedSubjects = array(
+            new ImpactedSubject(
+                array(
+                    _ID_RESOURCE=>$newSubjectUri2,
+                    _ID_CONTEXT=>'http://talisaspire.com/'
+                ),
+                OP_SEARCH,
+                'tripod_php_testing',
+                'CBD_testing',
+                array()
+            )
+        );
+
+        $impactedSubjects = $search->getImpactedSubjects($subjectsAndPredicatesOfChange, 'http://talisaspire.com/');
+        $this->assertEquals($expectedImpactedSubjects, $impactedSubjects);
     }
 
 }

@@ -22,6 +22,13 @@ class MongoTripodTablesTest extends MongoTripodTestBase
     protected $tripodTables = null;
 
     private $tablesConstParams = null;
+    
+    protected $defaultContext = 'http://talisaspire.com/';
+    
+    protected $defaultStoreName = 'tripod_php_testing';
+    
+    protected $defaultPodName = 'CBD_testing';
+
 
     protected function setUp()
     {
@@ -31,17 +38,12 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $this->tripodTransactionLog = new MongoTransactionLog();
         $this->tripodTransactionLog->purgeAllTransactions();
 
-        $this->tripod = new MongoTripod("CBD_testing", "tripod_php_testing", array("async"=>array(OP_VIEWS=>false, OP_TABLES=>false, OP_SEARCH=>false)));
+        $this->tripod = new MongoTripod($this->defaultPodName, $this->defaultStoreName, array("async"=>array(OP_VIEWS=>false, OP_TABLES=>false, OP_SEARCH=>false)));
 
         $this->getTripodCollection($this->tripod)->drop();
         $this->tripod->setTransactionLog($this->tripodTransactionLog);
 
         $this->loadBaseDataViaTripod();
-
-        // purge Queue
-       // todo: remove
-//        $queue = new MongoTripodQueue();
-//        $queue->purgeQueue();
 
         $this->tablesConstParams = array($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),'http://talisaspire.com/');
 
@@ -74,10 +76,10 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             )
         );
         $config["stores"] = array(
-            "tripod_php_testing" => array(
+            $this->defaultStoreName => array(
                 "data_source"=>"db",
                 "pods" => array(
-                    "CBD_testing" => array()
+                    $this->defaultPodName => array()
                 )
             )
         );
@@ -124,34 +126,6 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $expectedIsbn13s = array("9780393929691","9780393929691-2","9780393929691-3");
         $this->assertEquals($expectedIsbn13s,$t2['results'][0]['isbn13']);
     }
-
-// TODO: work out if these tests are still relevant necessary now that impacted documents are calculated outside the update() method
-//    public function testTripodQueuedWorkTriggersRegenerationOfTwoResources()
-//    {
-//        $mockTables = $this->getMock('MongoTripodTables', array('generateTableRows'), $this->tablesConstParams);
-//        $mockTables->expects($this->at(0))->method('generateTableRows')->with("t_resource","http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA","http://talisaspire.com/");
-//        $mockTables->expects($this->at(1))->method('generateTableRows')->with("t_resource","http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2","http://talisaspire.com/");
-//
-//        // generate table rows
-//        $this->tripodTables->generateTableRows("t_resource");
-//
-//        $queuedItem = new ModifiedSubject(array("r"=>"http://talisaspire.com/works/4d101f63c10a6","c"=>'http://talisaspire.com/'));
-//        // next, trigger regen for work we know is associated with 2x resources. Should trigger view regen for resources
-//        $mockTables->update($queuedItem);
-//    }
-//
-//    public function testTripodQueuedWorkTriggersRegenerationOfOneResource()
-//    {
-//        $mockTables = $this->getMock('MongoTripodTables', array('generateTableRows'), $this->tablesConstParams);
-//        $mockTables->expects($this->once())->method('generateTableRows')->with("t_resource","http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2","http://talisaspire.com/");
-//
-//        // generate table rows
-//        $this->tripodTables->generateTableRows("t_resource",'http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2');
-//
-//        $queuedItem = new ModifiedSubject(array("r"=>"http://talisaspire.com/works/4d101f63c10a6","c"=>'http://talisaspire.com/'));
-//        // next, trigger regen for work we know is associated with resource above. Should trigger view regen for resource
-//        $mockTables->update($queuedItem);
-//    }
 
     public function testGenerateTableRowsWithCounts()
     {
@@ -296,9 +270,9 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
     public function testUpdateWillDeleteItem()
     {
-        $mockTables = $this->getMock('MongoTripodTables', array('deleteTableRowsForResource','generateTableRowsForResource'), $this->tablesConstParams);
+        $mockTables = $this->getMock('MongoTripodTables', array('deleteTableRowsForResource','generateTableRowsForType'), $this->tablesConstParams);
         $mockTables->expects($this->once())->method('deleteTableRowsForResource')->with("http://foo","context");
-        $mockTables->expects($this->never())->method('generateTableRowsForResource');
+        $mockTables->expects($this->never())->method('generateTableRowsForType');
 
         $mockTables->update(new ImpactedSubject(array("r"=>"http://foo","c"=>"context"),OP_TABLES,"foo","bar",array("t_table"),true));
     }
@@ -844,31 +818,18 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             $this->generateTableRows($specId);
         }
 
+        
+        $uri = "http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2";
+
         /** @var PHPUnit_Framework_MockObject_MockObject|MongoTripod $tripod */
         $tripod = $this->getMock(
             'MongoTripod',
-            array('getTripodTables', 'getDataUpdater'),
+            array('getComposite'),
             array(
-                'CBD_testing',
-                'tripod_php_testing',
+                $this->defaultPodName,
+                $this->defaultStoreName,
                 array(
-                    'defaultContext'=>'http://talisaspire.com/',
-                    'async'=>array(
-                        OP_VIEWS=>true,
-                        OP_TABLES=>true,
-                        OP_SEARCH=>false
-                    )
-                )
-            )
-        );
-
-        $tripodUpdate = $this->getMock(
-            'MongoTripodUpdates',
-            array('storeChanges'),
-            array(
-                $tripod,
-                array(
-                    'defaultContext'=>'http://talisaspire.com/',
+                    'defaultContext'=>$this->defaultContext,
                     'async'=>array(
                         OP_VIEWS=>true,
                         OP_TABLES=>false,
@@ -877,36 +838,80 @@ class MongoTripodTablesTest extends MongoTripodTestBase
                 )
             )
         );
-        $tripodUpdate->expects($this->atLeastOnce())
-            ->method('storeChanges')
-            ->will($this->returnValue(array('deletedSubjects'=>array())));
 
-        $tripod->expects($this->atLeastOnce())
-            ->method('getDataUpdater')
-            ->will($this->returnValue($tripodUpdate));
-
-        $tables = $this->getMock('MongoTripodTables',
-            array('generateTableRowsForResource'),
-            array($tripod->getStoreName(), $this->getTripodCollection($tripod), "http://talisaspire.com/")
+        $labeller = new MongoTripodLabeller();
+        $subjectsAndPredicatesOfChange = array(
+            $labeller->uri_to_alias($uri)=>array("dct:title")
         );
 
-        $tables->expects($this->once())
-            ->method('generateTableRowsForResource')
-            ->with(
-                $this->equalTo("http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2"),
-                'http://talisaspire.com/',
-                $this->equalTo(array("t_distinct", "t_join_source_count_regex"), 0, 10, true)); // <- These are the specs with dct:title defined
+        $tables = $this->getMock('MongoTripodTables',
+            array('generateTableRows'),
+            array(
+                $tripod->getStoreName(),
+                $this->getTripodCollection($tripod),
+                "http://talisaspire.com/"
+            )
+        );
+
+        $tables->expects($this->exactly(2))
+            ->method('generateTableRows')
+            ->withConsecutive(
+                array(
+                    $this->equalTo('t_distinct'),
+                    $this->equalTo($uri),
+                    $this->equalTo($this->defaultContext)
+                ),
+                array(
+                    $this->equalTo('t_join_source_count_regex'),
+                    $this->equalTo($uri),
+                    $this->equalTo($this->defaultContext)
+                )
+            );
 
 
-        $tripod->expects($this->atLeastOnce())
-            ->method('getTripodTables')
+        $tripod->expects($this->once())
+            ->method('getComposite')
+            ->with(OP_TABLES)
             ->will($this->returnValue($tables));
 
-        /** @var MongoTripod $tripod */
-        $g1 = $tripod->describeResource("http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2");
-        $g2 = $tripod->describeResource("http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2");
-        $g2->add_literal_triple("http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2",$g2->qname_to_uri("dct:title"),"Physics 3rd Edition: Physics for Engineers and Scientists");
-        $tripod->saveChanges($g1, $g2);
+        // Walk through the processSyncOperations process manually for tables
+
+        /** @var MongoTripodTables $table */
+        $table = $tripod->getComposite(OP_TABLES);
+        $this->assertInstanceOf('MongoTripodTables', $table);
+
+        $expectedImpactedSubject = new ImpactedSubject(
+            array(
+                _ID_RESOURCE=>$labeller->uri_to_alias($uri),
+                _ID_CONTEXT=>$this->defaultContext
+            ),
+            OP_TABLES,
+            $this->defaultStoreName,
+            $this->defaultPodName,
+            // Order of these doesn't matter - if the test fails, reverse the order and try again
+            array("t_distinct","t_join_source_count_regex")
+        );
+
+        $impactedSubjects = $table->getImpactedSubjects($subjectsAndPredicatesOfChange, $this->defaultContext);
+
+        $this->assertEquals($expectedImpactedSubject, $impactedSubjects[0]);
+
+        foreach($impactedSubjects as $subject)
+        {
+            $table->update($subject);
+        }
+
+        // This should be 0, because we mocked the actual adding of the regenerated table.  If it's zero, however,
+        // it means we successfully deleted the views with $uri1 in the impactIndex
+        $collections = MongoTripodConfig::getInstance()->getCollectionsForTables($this->defaultStoreName);
+        foreach($collections as $collection)
+        {
+            $query = array(
+                'value._impactIndex'=>array('r'=>$labeller->uri_to_alias($uri), 'c'=>$this->defaultContext),
+                '_id.type'=>array('$in'=>array("t_distinct", "t_join_source_count_regex", ))
+            );
+            $this->assertEquals(0, $collection->count($query));
+        }
     }
 
     public function testTableRowsNotGeneratedWhenUndefinedPredicateChanges()
@@ -916,70 +921,613 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             $this->generateTableRows($specId);
         }
 
-        /** @var PHPUnit_Framework_MockObject_MockObject|MongoTripod $tripod */
-        $tripod = $this->getMock(
-            'MongoTripod',
-            array('getTripodTables', 'getDataUpdater'),
-            array(
-                'CBD_testing',
-                'tripod_php_testing',
-                array(
-                    'defaultContext'=>'http://talisaspire.com/',
-                    'async'=>array(
-                        OP_VIEWS=>true,
-                        OP_TABLES=>true,
-                        OP_SEARCH=>false
-                    )
-                )
+        
+        $uri = "http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2";
+
+        $labeller = new MongoTripodLabeller();
+        $subjectsAndPredicatesOfChange = array(
+            $labeller->uri_to_alias($uri)=>array("dct:description")
+        );
+
+        // Walk through the processSyncOperations process manually for tables
+
+        $table = new MongoTripodTables(
+            $this->defaultStoreName,
+            MongoTripodConfig::getInstance()->getCollectionForCBD($this->defaultStoreName, $this->defaultPodName),
+            $this->defaultContext
+        );
+
+
+        $impactedSubjects = $table->getImpactedSubjects($subjectsAndPredicatesOfChange, $this->defaultContext);
+
+        $this->assertEmpty($impactedSubjects);
+    }
+
+    public function testUpdateOfResourceInImpactIndexTriggersRegenerationTableRows()
+    {
+        
+        /** @var MongoTripodTables|PHPUnit_Framework_MockObject_MockObject $mockTables */
+        $mockTables = $this->getMock(
+            'MongoTripodTables',
+            array('generateTableRows'),
+            $this->tablesConstParams
+        );
+
+        $mockTables->expects($this->at(0))
+            ->method('generateTableRows')
+            ->with(
+                "t_resource",
+                "http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA",
+                $this->defaultContext
+            );
+
+        $mockTables->expects($this->at(1))
+            ->method('generateTableRows')
+            ->with(
+                "t_resource",
+                "http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2",
+                $this->defaultContext
+            );
+
+        $labeller = new MongoTripodLabeller();
+        // generate table rows
+        $this->tripodTables->generateTableRows("t_resource");
+
+        $subjectsAndPredicatesOfChange = array(
+            $labeller->uri_to_alias("http://talisaspire.com/works/4d101f63c10a6")=>array(
+                'bibo:isbn13'
             )
         );
 
-        $tripodUpdate = $this->getMock(
-            'MongoTripodUpdates',
-            array('storeChanges', 'findImpactedTableRows'),
-            array(
-                $tripod,
+        $expectedImpactedSubjects = array(
+            new ImpactedSubject(
                 array(
-                    'defaultContext'=>'http://talisaspire.com/',
-                    'async'=>array(
-                        OP_VIEWS=>true,
+                    _ID_RESOURCE=>"http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA",
+                    _ID_CONTEXT=>$this->defaultContext
+                ),
+                OP_TABLES,
+                $this->defaultStoreName,
+                $this->defaultPodName,
+                array('t_resource')
+            ),
+            new ImpactedSubject(
+                array(
+                    _ID_RESOURCE=>"http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2",
+                    _ID_CONTEXT=>$this->defaultContext
+                ),
+                OP_TABLES,
+                $this->defaultStoreName,
+                $this->defaultPodName,
+                array('t_resource')
+            )
+        );
+
+        $impactedSubjects = $mockTables->getImpactedSubjects($subjectsAndPredicatesOfChange, $this->defaultContext);
+
+        $this->assertEquals($expectedImpactedSubjects, $impactedSubjects);
+
+        // next, trigger regen for work we know is associated with 2x resources. Should trigger view regen for resources
+        foreach($impactedSubjects as $subject)
+        {
+            $mockTables->update($subject);
+        }
+    }
+
+    public function testRdfTypeTriggersGenerationOfTableRows()
+    {
+        $uri = 'http://example.com/resources/' . uniqid();
+        
+
+        $labeller = new MongoTripodLabeller();
+        $graph = new ExtendedGraph();
+        // This should trigger a table row regeneration, even though issn isn't in the tablespec
+        $graph->add_resource_triple($uri, RDF_TYPE, $labeller->qname_to_uri('acorn:Resource'));
+        $graph->add_literal_triple($uri, $labeller->qname_to_uri('bibo:issn'), '1234-5678');
+
+        $subjectsAndPredicatesOfChange = array(
+            $labeller->uri_to_alias($uri) => array(
+                'rdf:type','bibo:issn'
+            )
+        );
+
+        /** @var MongoTripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
+        $mockTripod = $this->getMock(
+            'MongoTripod',
+            array(
+                'getDataUpdater'
+            ),
+            array(
+                $this->defaultPodName,
+                $this->defaultStoreName,
+                array(
+                    'defaultContext'=>$this->defaultContext,
+                    OP_ASYNC=>array(
                         OP_TABLES=>false,
+                        OP_VIEWS=>true,
                         OP_SEARCH=>true
                     )
                 )
             )
         );
-        $tripodUpdate->expects($this->atLeastOnce())
-            ->method('storeChanges')
-            ->will($this->returnValue(array('deletedSubjects'=>array())));
 
-        $tripod->expects($this->atLeastOnce())
-            ->method('getDataUpdater')
-            ->will($this->returnValue($tripodUpdate));
-
-        $tables = $this->getMock('MongoTripodTables',
-            array('generateTableRowsForResource','findImpactedComposites'),
-            array($tripod->getStoreName(), $this->getTripodCollection($tripod), "http://talisaspire.com/")
+        /** @var MongoTripodUpdates|PHPUnit_Framework_MockObject_MockObject $mockTripodUpdates */
+        $mockTripodUpdates = $this->getMock(
+            'MongoTripodUpdates',
+            array(
+                'processSyncOperations',
+                'queueAsyncOperations'
+            ),
+            array(
+                $mockTripod,
+                array(
+                    OP_ASYNC=>array(
+                        OP_TABLES=>false,
+                        OP_VIEWS=>true,
+                        OP_SEARCH=>true
+                    )
+                )
+            )
         );
 
-        $tables->expects($this->never())
-            ->method('generateTableRowsForResource');
+        $mockTripod->expects($this->once())
+            ->method('getDataUpdater')
+            ->will($this->returnValue($mockTripodUpdates));
 
-        $tables->expects($this->atLeastOnce())
-            ->method('findImpactedComposites')
-            ->will($this->returnValue(array()));
+        $mockTripodUpdates->expects($this->once())
+            ->method('processSyncOperations')
+            ->with(
+                $subjectsAndPredicatesOfChange,
+                $this->defaultContext
+            );
 
-        $tripod->expects($this->atLeastOnce())
-            ->method('getTripodTables')
-            ->will($this->returnValue($tables));
+        $mockTripodUpdates->expects($this->once())
+            ->method('queueAsyncOperations')
+            ->with(
+                $subjectsAndPredicatesOfChange,
+                $this->defaultContext
+            );
 
-        /** @var MongoTripod $tripod */
-        $g1 = $tripod->describeResource("http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2");
-        $g2 = $tripod->describeResource("http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2");
-        // No table spec uses dct:publisher
-        $g2->add_literal_triple("http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2",$g2->qname_to_uri("dct:publisher")," W. W. Norton & Co");
-        $tripod->saveChanges($g1, $g2);
+        /** @var MongoTripodTables|PHPUnit_Framework_MockObject_MockObject $mockTables */
+        $mockTables = $this->getMock(
+            'MongoTripodTables',
+            array('generateTableRowsForType'),
+            array(
+                $this->defaultStoreName,
+                MongoTripodConfig::getInstance()->getCollectionForCBD($this->defaultStoreName, $this->defaultPodName),
+                $this->defaultContext
+            )
+        );
+
+        $mockTables->expects($this->once())
+            ->method('generateTableRowsForType')
+            ->with(
+                'acorn:Resource',
+                $labeller->uri_to_alias($uri),
+                $this->defaultContext,
+                array()
+            );
+
+        $expectedImpactedSubjects = array(
+            new ImpactedSubject(
+                array(
+                    _ID_RESOURCE=>$labeller->uri_to_alias($uri),
+                    _ID_CONTEXT=>$this->defaultContext
+                ),
+                OP_TABLES,
+                $this->defaultStoreName,
+                $this->defaultPodName,
+                array()
+            )
+        );
+
+        $mockTripod->saveChanges(new ExtendedGraph(), $graph);
+
+        $impactedSubjects = $mockTables->getImpactedSubjects($subjectsAndPredicatesOfChange, $this->defaultContext);
+
+        $this->assertEquals($expectedImpactedSubjects, $impactedSubjects);
+        foreach($impactedSubjects as $subject)
+        {
+            $mockTables->update($subject);
+        }
     }
 
+    public function testUpdateToResourceWithMatchingRdfTypeShouldOnlyRegenerateIfRdfTypeIsPartOfUpdate()
+    {
+        $uri = "http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA";
+        $labeller = new MongoTripodLabeller();
+        $uriAlias = $labeller->uri_to_alias($uri);
 
+        $tables = new MongoTripodTables(
+            $this->defaultStoreName,
+            MongoTripodConfig::getInstance()->getCollectionForCBD($this->defaultStoreName, $this->defaultPodName),
+            $this->defaultContext
+        );
+
+        $subjectsAndPredicatesOfChange = array($uriAlias =>array('dct:subject'));
+
+        $this->assertEmpty($tables->getImpactedSubjects($subjectsAndPredicatesOfChange, $this->defaultContext));
+
+        $subjectsAndPredicatesOfChange = array($uriAlias =>array('dct:subject', 'rdf:type'));
+
+        $expectedImpactedSubjects = array(
+            new ImpactedSubject(
+                array(
+                    _ID_RESOURCE=>$uriAlias,
+                    _ID_CONTEXT=>$this->defaultContext
+                ),
+                OP_TABLES,
+                $this->defaultStoreName,
+                $this->defaultPodName,
+                array()
+            )
+        );
+
+        $impactedSubjects = $tables->getImpactedSubjects($subjectsAndPredicatesOfChange, $this->defaultContext);
+        $this->assertEquals($expectedImpactedSubjects, $impactedSubjects);
+    }
+
+    public function testNewResourceThatDoesNotMatchAnythingCreatesNoImpactedSubjects()
+    {
+        $uri = 'http://example.com/resources/' . uniqid();
+        $labeller = new MongoTripodLabeller();
+        $uriAlias = $labeller->uri_to_alias($uri);
+
+        $graph = new ExtendedGraph();
+        $graph->add_resource_triple($uri, RDF_TYPE, $labeller->qname_to_uri('bibo:Proceedings'));
+        $graph->add_literal_triple($uri, $labeller->qname_to_uri('dct:title'), "A title");
+
+        $subjectsAndPredicatesOfChange = array($uriAlias=>array('rdf:type', 'dct:title'));
+
+        /** @var MongoTripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
+        $mockTripod = $this->getMock(
+            'MongoTripod',
+            array(
+                'getDataUpdater'
+            ),
+            array(
+                $this->defaultPodName,
+                $this->defaultStoreName,
+                array(
+                    'defaultContext'=>$this->defaultContext,
+                    OP_ASYNC=>array(
+                        OP_TABLES=>false,
+                        OP_VIEWS=>true,
+                        OP_SEARCH=>true
+                    )
+                )
+            )
+        );
+
+        /** @var MongoTripodUpdates|PHPUnit_Framework_MockObject_MockObject $mockTripodUpdates */
+        $mockTripodUpdates = $this->getMock(
+            'MongoTripodUpdates',
+            array(
+                'processSyncOperations',
+                'queueAsyncOperations'
+            ),
+            array(
+                $mockTripod,
+                array(
+                    OP_ASYNC=>array(
+                        OP_TABLES=>false,
+                        OP_VIEWS=>true,
+                        OP_SEARCH=>true
+                    )
+                )
+            )
+        );
+
+        $mockTripod->expects($this->once())
+            ->method('getDataUpdater')
+            ->will($this->returnValue($mockTripodUpdates));
+
+        $mockTripodUpdates->expects($this->once())
+            ->method('processSyncOperations')
+            ->with(
+                $subjectsAndPredicatesOfChange,
+                $this->defaultContext
+            );
+
+        $mockTripodUpdates->expects($this->once())
+            ->method('queueAsyncOperations')
+            ->with(
+                $subjectsAndPredicatesOfChange,
+                $this->defaultContext
+            );
+
+        $mockTripod->saveChanges(new ExtendedGraph(), $graph);
+
+        $tables = $mockTripod->getComposite(OP_TABLES);
+
+        $this->assertEmpty($tables->getImpactedSubjects($subjectsAndPredicatesOfChange, $this->defaultContext));
+    }
+
+    public function testDeleteResourceCreatesImpactedSubjects()
+    {
+        $uri = 'http://example.com/users/' . uniqid();
+        $labeller = new MongoTripodLabeller();
+        $uriAlias = $labeller->uri_to_alias($uri);
+
+        $graph = new ExtendedGraph();
+        $graph->add_resource_triple(
+            $uri,
+            RDF_TYPE,
+            $labeller->qname_to_uri('spec:User')
+        );
+        $graph->add_literal_triple(
+            $uri,
+            $labeller->qname_to_uri('foaf:firstName'),
+            'Anne'
+        );
+        $graph->add_literal_triple(
+            $uri,
+            $labeller->qname_to_uri('foaf:surname'),
+            'Onymous'
+        );
+
+        $uri2 = 'http://example.com/users/' . uniqid();
+        $uriAlias2 = $labeller->uri_to_alias($uri2);
+
+        $graph2 = new ExtendedGraph();
+        $graph2->add_resource_triple(
+            $uri2,
+            RDF_TYPE,
+            $labeller->qname_to_uri('spec:User')
+        );
+        $graph2->add_literal_triple(
+            $uri2,
+            $labeller->qname_to_uri('foaf:firstName'),
+            'Ann'
+        );
+        $graph2->add_literal_triple(
+            $uri2,
+            $labeller->qname_to_uri('foaf:surname'),
+            'O\'ther'
+        );
+
+        // Save the graphs and ensure that table rows are generated
+        $tripod = new MongoTripod(
+            $this->defaultPodName,
+            $this->defaultStoreName,
+            array(
+                'defaultContext'=>$this->defaultContext,
+                OP_ASYNC=>array(
+                    OP_VIEWS=>false,
+                    OP_TABLES=>false,
+                    OP_SEARCH=>false
+                )
+            )
+        );
+
+        $tripod->saveChanges(new ExtendedGraph(), $graph);
+
+        $tableRows = $tripod->getTableRows(
+            't_users',
+            array(
+                _ID_KEY . '.' . _ID_RESOURCE=>$uriAlias,
+                _ID_KEY . '.' . _ID_CONTEXT=>$this->defaultContext
+            )
+        );
+
+        $this->assertEquals(1, $tableRows['head']['count']);
+
+        $tripod->saveChanges(new ExtendedGraph(), $graph2);
+
+        $tableRows = $tripod->getTableRows(
+            't_users',
+            array(
+                _ID_KEY . '.' . _ID_RESOURCE=>$uriAlias2,
+                _ID_KEY . '.' . _ID_CONTEXT=>$this->defaultContext
+            )
+        );
+
+        $this->assertEquals(1, $tableRows['head']['count']);
+
+        $mockTripod = $this->getMockBuilder('MongoTripod')
+            ->setMethods(array('getDataUpdater'))
+            ->setConstructorArgs(
+                array(
+                    $this->defaultPodName,
+                    $this->defaultStoreName,
+                    array(
+                        'defaultContext'=>$this->defaultContext,
+                        OP_ASYNC=>array(
+                            OP_VIEWS=>false,
+                            OP_TABLES=>false,
+                            OP_SEARCH=>false
+                        )
+                    )
+                )
+            )->getMock();
+
+        $mockTripodUpdates = $this->getMockBuilder('MongoTripodUpdates')
+            ->setConstructorArgs(
+                array(
+                    $mockTripod,
+                    array(
+                        'defaultContext'=>$this->defaultContext,
+                        OP_ASYNC=>array(
+                            OP_VIEWS=>false,
+                            OP_TABLES=>false,
+                            OP_SEARCH=>false
+                        )
+                    )
+                )
+            )->setMethods(array('processSyncOperations'))
+            ->getMock();
+
+        $mockTripod->expects($this->once())
+            ->method('getDataUpdater')
+            ->will($this->returnValue($mockTripodUpdates));
+
+        $expectedSubjectsAndPredicatesOfChange = array(
+            $uriAlias=>array('rdf:type','foaf:firstName','foaf:surname'),
+            $uriAlias2=>array('rdf:type','foaf:firstName','foaf:surname'),
+        );
+
+        $mockTripodUpdates->expects($this->once())
+            ->method('processSyncOperations')
+            ->with(
+                $expectedSubjectsAndPredicatesOfChange,
+                $this->defaultContext
+            );
+
+        $graph->add_graph($graph2);
+
+        // Delete both user resources
+        $mockTripod->saveChanges($graph, new ExtendedGraph());
+
+        $deletedGraph = $mockTripod->describeResources(array($uri, $uri2));
+
+        $this->assertTrue($deletedGraph->is_empty());
+
+        // Manually walk through the tables operation
+        /** @var MongoTripodTables $tables */
+        $tables = $mockTripod->getComposite(OP_TABLES);
+
+        $expectedImpactedSubjects = array(
+            new ImpactedSubject(
+                array(
+                    _ID_RESOURCE=>$uriAlias,
+                    _ID_CONTEXT=>$this->defaultContext
+                ),
+                OP_TABLES,
+                $this->defaultStoreName,
+                $this->defaultPodName,
+                array('t_users')
+            ),
+            new ImpactedSubject(
+                array(
+                    _ID_RESOURCE=>$uriAlias2,
+                    _ID_CONTEXT=>$this->defaultContext
+                ),
+                OP_TABLES,
+                $this->defaultStoreName,
+                $this->defaultPodName,
+                array('t_users')
+            )
+        );
+
+        $this->assertEquals($expectedImpactedSubjects, $tables->getImpactedSubjects($expectedSubjectsAndPredicatesOfChange, $this->defaultContext));
+
+        foreach($expectedImpactedSubjects as $subject)
+        {
+            $tables->update($subject);
+        }
+
+
+        $tableRows = $tripod->getTableRows(
+            't_users',
+            array(
+                _ID_KEY . '.' . _ID_RESOURCE=>$uriAlias,
+                _ID_KEY . '.' . _ID_CONTEXT=>$this->defaultContext
+            )
+        );
+
+        $this->assertEquals(0, $tableRows['head']['count']);
+
+        $tableRows = $tripod->getTableRows(
+            't_users',
+            array(
+                _ID_KEY . '.' . _ID_RESOURCE=>$uriAlias2,
+                _ID_KEY . '.' . _ID_CONTEXT=>$this->defaultContext
+            )
+        );
+
+        $this->assertEquals(0, $tableRows['head']['count']);
+    }
+
+    /**
+     * Save several new resources in a single operation. Only one of the resources has a type that is applicable based on specifications,
+     * therefore only one ImpactedSubject should be created
+     */
+    public function testSavingMultipleNewEntitiesResultsInOneImpactedSubject()
+    {
+        $tripod = $this->getMockBuilder('MongoTripod')
+            ->setMethods(array('getDataUpdater'))
+            ->setConstructorArgs(
+                array(
+                    'CBD_testing',
+                    'tripod_php_testing',
+                    array(
+                        'defaultContext'=>'http://talisaspire.com/',
+                        OP_ASYNC=>array(
+                            OP_VIEWS=>true,
+                            OP_TABLES=>true,
+                            OP_SEARCH=>true
+                        )
+                    )
+                )
+            )->getMock();
+
+        $tripodUpdates = $this->getMockBuilder('MongoTripodUpdates')
+            ->setMethods(array('submitJob'))
+            ->setConstructorArgs(
+                array(
+                    $tripod,
+                    array(
+                        'defaultContext'=>'http://talisaspire.com/',
+                        OP_ASYNC=>array(
+                            OP_VIEWS=>true,
+                            OP_TABLES=>true,
+                            OP_SEARCH=>true
+                        )
+                    )
+                )
+            )->getMock();
+
+        $tripod->expects($this->once())
+            ->method('getDataUpdater')
+            ->will($this->returnValue($tripodUpdates));
+
+        // first lets add a book, which should trigger a search doc, view and table gen for a single item
+        $g = new MongoGraph();
+        $newSubjectUri1 = "http://talisaspire.com/resources/newdoc1";
+        $newSubjectUri2 = "http://talisaspire.com/resources/newdoc2";
+        $newSubjectUri3 = "http://talisaspire.com/resources/newdoc3";
+
+        $g->add_resource_triple($newSubjectUri1, $g->qname_to_uri("rdf:type"),    $g->qname_to_uri("bibo:Article")); // there are no specs that are applicable for this type alone
+        $g->add_resource_triple($newSubjectUri1, $g->qname_to_uri("dct:creator"), "http://talisaspire.com/authors/1");
+        $g->add_literal_triple($newSubjectUri1,  $g->qname_to_uri("dct:title"),   "This is a new resource");
+        $g->add_literal_triple($newSubjectUri1,  $g->qname_to_uri("dct:subject"), "history");
+        $g->add_literal_triple($newSubjectUri1,  $g->qname_to_uri("dct:subject"), "philosophy");
+
+        $g->add_resource_triple($newSubjectUri2, $g->qname_to_uri("rdf:type"),    $g->qname_to_uri("bibo:Book")); // this is the only resource that should be queued
+        $g->add_resource_triple($newSubjectUri2, $g->qname_to_uri("rdf:type"),    $g->qname_to_uri("acorn:Resource"));
+        $g->add_resource_triple($newSubjectUri2, $g->qname_to_uri("dct:creator"), "http://talisaspire.com/authors/1");
+        $g->add_literal_triple($newSubjectUri2,  $g->qname_to_uri("dct:title"),   "This is another new resource");
+        $g->add_literal_triple($newSubjectUri2,  $g->qname_to_uri("dct:subject"), "maths");
+        $g->add_literal_triple($newSubjectUri2,  $g->qname_to_uri("dct:subject"), "science");
+
+        $g->add_resource_triple($newSubjectUri3, $g->qname_to_uri("rdf:type"),    $g->qname_to_uri("bibo:Journal")); // there are no specs that are applicable for this type alone
+        $g->add_resource_triple($newSubjectUri3, $g->qname_to_uri("dct:creator"), "http://talisaspire.com/authors/1");
+        $g->add_literal_triple($newSubjectUri3,  $g->qname_to_uri("dct:title"),   "This is yet another new resource");
+        $g->add_literal_triple($newSubjectUri3,  $g->qname_to_uri("dct:subject"), "art");
+        $g->add_literal_triple($newSubjectUri3,  $g->qname_to_uri("dct:subject"), "design");
+        $subjectsAndPredicatesOfChange = array(
+            $newSubjectUri1=>array('rdf:type','dct:creator','dct:title','dct:subject'),
+            $newSubjectUri2=>array('rdf:type','dct:creator','dct:title','dct:subject'),
+            $newSubjectUri3=>array('rdf:type','dct:creator','dct:title','dct:subject')
+        );
+        $tripod->saveChanges(new MongoGraph(), $g);
+
+        /** @var MongoTripodTables $tables */
+        $tables = $tripod->getComposite(OP_TABLES);
+
+        $expectedImpactedSubjects = array(
+            new ImpactedSubject(
+                array(
+                    _ID_RESOURCE=>$newSubjectUri2,
+                    _ID_CONTEXT=>'http://talisaspire.com/'
+                ),
+                OP_TABLES,
+                'tripod_php_testing',
+                'CBD_testing',
+                array()
+            )
+        );
+
+        $impactedSubjects = $tables->getImpactedSubjects($subjectsAndPredicatesOfChange, 'http://talisaspire.com/');
+        $this->assertEquals($expectedImpactedSubjects, $impactedSubjects);
+    }
 }

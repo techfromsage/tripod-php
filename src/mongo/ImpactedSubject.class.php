@@ -7,7 +7,7 @@
 class ImpactedSubject
 {
     /**
-     * @var String
+     * @var string
      */
     private $operation;
 
@@ -32,11 +32,15 @@ class ImpactedSubject
     private $podName;
 
     /**
-     * @var bool
+     * @param array $resourceId
+     * @param string $operation
+     * @param string $storeName
+     * @param string $podName
+     * @param array $specTypes
+     * @throws TripodException
+     * @throws Exception
      */
-    private $delete;
-
-    public function __construct(Array $resourceId, $operation, $storeName, $podName, Array $specTypes=array(), $delete=false )
+    public function __construct(Array $resourceId, $operation, $storeName, $podName, Array $specTypes=array())
     {
         if (!is_array($resourceId) || !array_key_exists(_ID_RESOURCE,$resourceId) || !array_key_exists(_ID_CONTEXT,$resourceId))
         {
@@ -59,20 +63,10 @@ class ImpactedSubject
         $this->storeName = $storeName;
         $this->podName = $podName;
         $this->specTypes = $specTypes;
-        $this->delete = $delete;
-
     }
 
     /**
-     * @return boolean
-     */
-    public function getDelete()
-    {
-        return $this->delete;
-    }
-
-    /**
-     * @return String
+     * @return string
      */
     public function getOperation()
     {
@@ -122,14 +116,25 @@ class ImpactedSubject
             "operation" => $this->operation,
             "specTypes" => $this->specTypes,
             "storeName" => $this->storeName,
-            "podName" => $this->podName,
-            "delete" => $this->delete
+            "podName" => $this->podName
         );
     }
 
+    /**
+     * Perform the update on the composite defined by the operation
+     */
     public function update()
     {
-        $tripod = new MongoTripod($this->getPodName(),$this->getStoreName(),array("readPreference"=>MongoClient::RP_PRIMARY));
+        $tripod = $this->getTripod();
         $tripod->getComposite($this->operation)->update($this);
+    }
+
+    /**
+     * For mocking
+     * @return MongoTripod
+     */
+    protected function getTripod()
+    {
+        return new MongoTripod($this->getPodName(),$this->getStoreName(),array("readPreference"=>MongoClient::RP_PRIMARY));
     }
 }
