@@ -38,19 +38,19 @@ set_include_path(
     . PATH_SEPARATOR . $tripodBasePath.'/src/classes');
 
 require_once 'tripod.inc.php';
-require_once 'mongo/Tripods.php';
-require_once 'mongo/TripodConfigs.php';
+require_once 'mongo/Tripod.class.php';
+require_once 'mongo/Config.class.php';
 
-MongoTripodConfig::setValidationLevel(MongoTripodConfig::VALIDATE_MAX);
+\Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
 
-MongoTripodConfig::setConfig(json_decode(file_get_contents($configLocation),true));
+\Tripod\Mongo\Config::setConfig(json_decode(file_get_contents($configLocation),true));
 
 try {
-    MongoTripodConfig::getInstance();
+    \Tripod\Mongo\Config::getInstance();
 
     echo "\nConfig OK\n";
 }
-catch(MongoTripodConfigException $e)
+catch(\Tripod\Exceptions\ConfigException $e)
 {
     echo "\nError: " . $e->getMessage() . "\n";
 }

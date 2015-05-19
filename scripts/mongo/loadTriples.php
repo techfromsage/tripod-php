@@ -9,7 +9,15 @@ require_once 'tripod.inc.php';
 require_once 'mongo/util/TriplesUtil.class.php';
 require_once 'classes/Timer.class.php';
 
-function load(TriplesUtil $loader,$subject,Array $triples,Array &$errors,$podName,$storeName)
+/**
+ * @param \Tripod\Mongo\TriplesUtil $loader
+ * @param string $subject
+ * @param array $triples
+ * @param array $errors
+ * @param string $podName
+ * @param string $storeName
+ */
+function load(\Tripod\Mongo\TriplesUtil $loader,$subject,Array $triples,Array &$errors,$podName,$storeName)
 {
     try
     {
@@ -22,7 +30,7 @@ function load(TriplesUtil $loader,$subject,Array $triples,Array &$errors,$podNam
     }
 }
 
-$timer = new Timer();
+$timer = new \Tripod\Timer();
 $timer->start();
 
 if ($argc!=4)
@@ -34,13 +42,13 @@ array_shift($argv);
 
 $storeName = $argv[0];
 $podName = $argv[1];
-MongoTripodConfig::setConfig(json_decode(file_get_contents($argv[2]),true));
+\Tripod\Mongo\Config::setConfig(json_decode(file_get_contents($argv[2]),true));
 
 $i=0;
 $currentSubject = "";
 $triples = array();
 $errors = array(); // array of subjects that failed to insert, even after retry...
-$loader = new TriplesUtil();
+$loader = new \Tripod\Mongo\TriplesUtil();
 
 while (($line = fgets(STDIN)) !== false) {
     $i++;

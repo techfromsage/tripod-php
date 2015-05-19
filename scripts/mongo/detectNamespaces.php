@@ -5,7 +5,8 @@ set_include_path(
         . PATH_SEPARATOR . dirname(dirname(dirname(__FILE__))).'/src/classes');
 
 require_once 'tripod.inc.php';
-require_once 'mongo/Config.class.phpquire_once 'mongo/MongoGraph.class.php';
+require_once 'mongo/Config.class.php';
+require_once 'mongo/MongoGraph.class.php';
 require_once 'mongo/util/TriplesUtil.class.php';
 
 ini_set('memory_limit','32M');
@@ -40,10 +41,10 @@ $config = array(
     ),
 );
 
-MongoTripodConfig::setConfig($config);
+\Tripod\Mongo\Config::setConfig($config);
 
 
-$util = new TriplesUtil();
+$util = new \Tripod\Mongo\TriplesUtil();
 $objectNs = array();
 $i=0;
 while (($line = fgets(STDIN)) !== false) {
@@ -91,7 +92,7 @@ while (($line = fgets(STDIN)) !== false) {
                 $newNsConfig[$prefix] = $n;
                 echo "\nFound ns $n suggest prefix $prefix";
                 $config["namespaces"] = array_merge($config["namespaces"],$newNsConfig);
-                MongoTripodConfig::setConfig($config);
+                \Tripod\Mongo\Config::setConfig($config);
             }
         }
         $ns = $util->extractMissingObjectNs($triples);
@@ -117,7 +118,7 @@ while (($line = fgets(STDIN)) !== false) {
                     $newNsConfig[$prefix] = $n;
                     echo "\nFound object ns $n occurs > 500 times, suggest prefix $prefix";
                     $config["namespaces"] = array_merge($config["namespaces"],$newNsConfig);
-                    MongoTripodConfig::setConfig($config);
+                    \Tripod\Mongo\Config::setConfig($config);
                 }
             }
         }
@@ -130,6 +131,10 @@ while (($line = fgets(STDIN)) !== false) {
 
 print "Suggested namespace configuration:\n\n";
 
+/**
+ * @param string $json
+ * @return string
+ */
 function indent($json) {
 
     $result      = '';
