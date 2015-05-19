@@ -27,7 +27,7 @@ class DiscoverImpactedSubjects extends JobBase {
             // set the config to what is received
             Config::setConfig($this->args["tripodConfig"]);
 
-            $tripod = $this->getMongoTripod($this->args["storeName"],$this->args["podName"]);
+            $tripod = $this->getTripod($this->args["storeName"],$this->args["podName"]);
 
             $operations = $this->args['operations'];
             $modifiedSubjects = array();

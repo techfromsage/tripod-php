@@ -6,7 +6,7 @@ namespace Tripod\Mongo;
  */
 abstract class JobBase extends TripodBase
 {
-    private $mongoTripod;
+    private $tripod;
 
     /**
      * For mocking
@@ -14,9 +14,9 @@ abstract class JobBase extends TripodBase
      * @param string $podName
      * @return Tripod
      */
-    protected function getMongoTripod($storeName,$podName) {
-        if ($this->mongoTripod == null) {
-            $this->mongoTripod = new Tripod(
+    protected function getTripod($storeName,$podName) {
+        if ($this->tripod == null) {
+            $this->tripod = new Tripod(
                 $podName,
                 $storeName,
                 array(
@@ -25,7 +25,7 @@ abstract class JobBase extends TripodBase
                 )
             );
         }
-        return $this->mongoTripod;
+        return $this->tripod;
     }
 
     /**

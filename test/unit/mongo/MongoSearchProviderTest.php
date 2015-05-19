@@ -4,16 +4,15 @@
     require_once 'src/mongo/delegates/SearchIndexer.class.php';
     require_once 'src/mongo/providers/MongoSearchProvider.class.php';
 
-use \Tripod\Mongo\Tripod;
-use \Tripod\Mongo\SearchIndexer;
-use \Tripod\Mongo\MongoSearchProvider;
-
+/**
+ * Class MongoSearchProviderTest
+ */
 class MongoSearchProviderTest extends MongoTripodTestBase
 {
-    /** @var $indexer SearchIndexer */
+    /** @var $indexer \Tripod\Mongo\SearchIndexer */
     private $indexer;
 
-    /** @var $indexer MongoSearchProvider */
+    /** @var $indexer \Tripod\Mongo\MongoSearchProvider */
     private $searchProvider;
 
     protected function setUp()
@@ -23,9 +22,9 @@ class MongoSearchProviderTest extends MongoTripodTestBase
         $this->tripodTransactionLog = new \Tripod\Mongo\TransactionLog();
         $this->tripodTransactionLog->purgeAllTransactions();
 
-        $this->tripod = new Tripod('CBD_testing', 'tripod_php_testing');
-        $this->indexer = new SearchIndexer($this->tripod);
-        $this->searchProvider = new MongoSearchProvider($this->tripod);
+        $this->tripod = new \Tripod\Mongo\Tripod('CBD_testing', 'tripod_php_testing');
+        $this->indexer = new \Tripod\Mongo\SearchIndexer($this->tripod);
+        $this->searchProvider = new \Tripod\Mongo\MongoSearchProvider($this->tripod);
         $this->getTripodCollection($this->tripod)->drop();
 
         $this->loadBaseSearchDataViaTripod();
@@ -228,6 +227,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
         $this->assertEquals(12, $actualSearchDocumentCount, "Should only be 12 search documents");
 
+        $result = array();
         foreach(\Tripod\Mongo\Config::getInstance()->getCollectionsForSearch('tripod_php_testing') as $collection)
         {
             $result = $collection->findOne(array("_id.r"=>"http://talisaspire.com/resources/doc1"));
@@ -518,7 +518,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
     	$this->assertEquals(12, $actualSearchDocumentCount, "Should have generated 12 search documents based on searchData.json");
 
-        /** @var MongoSearchProvider|PHPUnit_Framework_MockObject_MockObject $mockSearchProvider */
+        /** @var \Tripod\Mongo\MongoSearchProvider|PHPUnit_Framework_MockObject_MockObject $mockSearchProvider */
     	$mockSearchProvider = $this->getMock("\Tripod\Mongo\MongoSearchProvider", array('getSearchDocumentSpecification'), array($this->tripod));
     	$mockSearchProvider->expects($this->once())
 				    	->method('getSearchDocumentSpecification')
@@ -599,11 +599,11 @@ class MongoSearchProviderTest extends MongoTripodTestBase
     }
 
     /**
-     * @param Tripod $tripod
+     * @param \Tripod\Mongo\Tripod $tripod
      * @param array $specs
      * @return int
      */
-    protected function getCountForSearchSpecs(Tripod $tripod, $specs = array())
+    protected function getCountForSearchSpecs(\Tripod\Mongo\Tripod $tripod, $specs = array())
     {
         $count = 0;
         if(empty($specs))

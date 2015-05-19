@@ -110,11 +110,11 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
             ));
 
         $discoverImpactedSubjects = $this->getMockBuilder('\Tripod\Mongo\DiscoverImpactedSubjects')
-            ->setMethods(array('getMongoTripod', 'submitJob'))
+            ->setMethods(array('getTripod', 'submitJob'))
             ->getMock();
 
         $discoverImpactedSubjects->expects($this->once())
-            ->method('getMongoTripod')
+            ->method('getTripod')
             ->will($this->returnValue($tripod));
 
         $discoverImpactedSubjects->args = $this->args;

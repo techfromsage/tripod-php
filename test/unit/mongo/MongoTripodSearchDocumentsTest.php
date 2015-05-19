@@ -24,7 +24,11 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
         }
 	}
 
-    protected function getMongoTripodSearchDocuments(\Tripod\Mongo\Tripod $tripod)
+    /**
+     * @param \Tripod\Mongo\Tripod $tripod
+     * @return SearchDocuments
+     */
+    protected function getSearchDocuments(\Tripod\Mongo\Tripod $tripod)
     {
         return new \Tripod\Mongo\SearchDocuments(
             $tripod->getStoreName(),
@@ -36,14 +40,14 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
 	public function testGenerateSearchDocumentBasedOnSpecIdThrowsExceptionWithEmptyResource()
 	{
 		$this->setExpectedException("Exception","Resource must be specified");		
-		$searchDocuments = $this->getMongoTripodSearchDocuments($this->tripod);
+		$searchDocuments = $this->getSearchDocuments($this->tripod);
 		$searchDocuments->generateSearchDocumentBasedOnSpecId('i_search_resource', null, 'http://talisaspire.com/');
 	}
 	
 	public function testGenerateSearchDocumentBasedOnSpecIdThrowsExceptionWithEmptyContext()
 	{
 		$this->setExpectedException("Exception","Context must be specified");
-        $searchDocuments = $this->getMongoTripodSearchDocuments($this->tripod);
+        $searchDocuments = $this->getSearchDocuments($this->tripod);
 		$searchDocuments->generateSearchDocumentBasedOnSpecId('i_search_resource', 'http://talisaspire.com/resource/1', null);
 	}
 	
@@ -64,14 +68,14 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
 	
 	public function testGenerateSearchDocumentBasedOnSpecIdReturnNullIfNoMatchForResourceFound()
 	{
-        $searchDocuments = $this->getMongoTripodSearchDocuments($this->tripod);
+        $searchDocuments = $this->getSearchDocuments($this->tripod);
         $generatedDocuments = $searchDocuments->generateSearchDocumentBasedOnSpecId('i_search_resource', 'http://talisaspire.com/resource/1', 'http://talisaspire.com/');
 		$this->assertNull($generatedDocuments);
 	}
 	
 	public function testGenerateSearchDocumentBasedOnSpecId()
 	{
-        $searchDocuments = $this->getMongoTripodSearchDocuments($this->tripod);
+        $searchDocuments = $this->getSearchDocuments($this->tripod);
 		$generatedDocuments = $searchDocuments->generateSearchDocumentBasedOnSpecId('i_search_resource', 'http://talisaspire.com/resources/doc1', 'http://talisaspire.com/');	
 		$this->assertEquals('http://talisaspire.com/resources/doc1' , $generatedDocuments['_id']['r']);
 	}

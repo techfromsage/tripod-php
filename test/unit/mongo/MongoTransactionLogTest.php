@@ -25,7 +25,7 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         //Mongo::setPoolSize(200);
 
         // Stub ouf 'addToElastic' search to prevent writes into Elastic Search happening by default.
-        /** @var \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject tripod */
+        /** @var \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject $tripod */
         $this->tripod = $this->getMock('\Tripod\Mongo\Tripod', array('addToSearchIndexQueue'), array('CBD_testing','tripod_php_testing'));
         $this->tripod->expects($this->any())->method('addToSearchIndexQueue');
 

@@ -17,6 +17,9 @@ define('MONGO_MAIN_DB', 'acorn');
 define('MONGO_MAIN_COLLECTION', 'CBD_harvest');
 define('MONGO_USER_COLLECTION', 'CBD_user');
 
+/**
+ * Class MongoTripodTestBase
+ */
 class MongoTripodTestBase extends PHPUnit_Framework_TestCase
 {
 
@@ -55,6 +58,9 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         $this->loadDataViaTripod('/data/searchData.json');
     }
 
+    /**
+     * @param string $filename
+     */
     private function loadDataViaTripod($filename){
         $docs = json_decode(file_get_contents(dirname(__FILE__).$filename), true);
         foreach ($docs as $d)
@@ -108,6 +114,9 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         }
     }
 
+    /**
+     * @return MongoCollection
+     */
     protected function getTlogCollection()
     {
         $config = \Tripod\Mongo\Config::getInstance();
@@ -115,6 +124,10 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         return $config->getTransactionLogDatabase()->selectCollection($tLogConfig['collection']);
     }
 
+    /**
+     * @param \Tripod\Mongo\Tripod $tripod
+     * @return MongoCollection
+     */
     protected function getTripodCollection(\Tripod\Mongo\Tripod $tripod)
     {
         $config = \Tripod\Mongo\Config::getInstance();
@@ -127,6 +140,12 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         )->selectCollection($tripod->getPodName());
     }
 
+    /**
+     * @param mixed $_id
+     * @param \MongoCollection|null $collection
+     * @param bool $fromTransactionLog
+     * @return array|null
+     */
     protected function getDocument($_id, $collection=null, $fromTransactionLog=false)
     {
         if($fromTransactionLog==true)
@@ -148,7 +167,13 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         }
     }
 
-    protected function assertChangesForGivenSubject($changes, $subjectOfChange, $expectedNumberOfAdditions, $expectedNumberOfRemovals)
+    /**
+     * @param array $changes
+     * @param string $subjectOfChange
+     * @param int $expectedNumberOfAdditions
+     * @param int $expectedNumberOfRemovals
+     */
+    protected function assertChangesForGivenSubject(Array $changes, $subjectOfChange, $expectedNumberOfAdditions, $expectedNumberOfRemovals)
     {
         $changeSet = null;
 
@@ -195,13 +220,24 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         $this->assertEquals($expectedNumberOfRemovals, $actualRemovals, "Number of removals did not match expectd value");
     }
 
-    protected function assertTransactionDate($doc, $key)
+    /**
+     * @param array $doc
+     * @param string $key
+     */
+    protected function assertTransactionDate(Array $doc, $key)
     {
         $this->assertTrue(isset($doc[$key]), 'the date property: {$key} was not present in document');
         $this->assertTrue(!empty($doc[$key]->sec),'the date property: {$key} does not have a "sec" property');
         $this->assertTrue(!empty($doc[$key]->usec), 'the date property: {$key} does not have a "usec" property');
     }
 
+    /**
+     * @param mixed $_id
+     * @param int|null $expectedValue
+     * @param bool $hasVersion
+     * @param \Tripod\Mongo\Tripod|null $tripod
+     * @param bool $fromTransactionLog
+     */
     protected function assertDocumentVersion($_id, $expectedValue=null, $hasVersion=true, $tripod=null, $fromTransactionLog=false)
     {
         // just make sure $_id is aliased
@@ -273,6 +309,11 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
     }
 
 
+    /**
+     * @param mixed $_id
+     * @param \Tripod\Mongo\Tripod|null $tripod
+     * @param bool $fromTransactionLog
+     */
     protected function assertDocumentExists($_id, $tripod=null, $fromTransactionLog=false)
     {
         $doc = $this->getDocument($_id, $tripod, $fromTransactionLog);
@@ -280,9 +321,13 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         $this->assertEquals($_id, $doc["_id"], "Actual Document _id :[" . print_r($doc['_id'], true) . "] did not match expected value of " . print_r($_id, true));
     }
 
+    /**
+     * @param mixed $_id
+     * @param \Tripod\Mongo\Tripod|null $tripod
+     * @param bool $useTransactionTripod
+     */
     protected function assertDocumentHasBeenDeleted($_id, $tripod=null, $useTransactionTripod=false)
     {
-        //$this->assertNull($this->getDocument($_id, $useTransactionTripod), "Document with _id:[{$_id}] exists, but it should not");
         $doc = $this->getDocument($_id, $tripod, $useTransactionTripod);
         if($useTransactionTripod)
         {
@@ -300,26 +345,54 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         }
     }
 
+    /**
+     * @param \Tripod\ExtendedGraph $graph
+     * @param string $s
+     * @param string $p
+     * @param string $o
+     */
     protected function assertHasLiteralTriple(\Tripod\ExtendedGraph $graph, $s, $p, $o)
     {
         $this->assertTrue($graph->has_literal_triple($s, $p, $o), "Graph did not contain the literal triple: <{$s}> <{$p}> \"{$o}\"");
     }
 
+    /**
+     * @param \Tripod\ExtendedGraph $graph
+     * @param string $s
+     * @param string $p
+     * @param string $o
+     */
     protected function assertHasResourceTriple(\Tripod\ExtendedGraph $graph, $s, $p, $o)
     {
         $this->assertTrue($graph->has_resource_triple($s, $p, $o), "Graph did not contain the resource triple: <{$s}> <{$p}> <{$o}>");
     }
 
+    /**
+     * @param \Tripod\ExtendedGraph $graph
+     * @param string $s
+     * @param string $p
+     * @param string $o
+     */
     protected function assertDoesNotHaveLiteralTriple(\Tripod\ExtendedGraph $graph, $s, $p, $o)
     {
         $this->assertFalse($graph->has_literal_triple($s, $p, $o), "Graph should not contain the literal triple: <{$s}> <{$p}> \"{$o}\"");
     }
 
+    /**
+     * @param \Tripod\ExtendedGraph $graph
+     * @param string $s
+     * @param string $p
+     * @param string $o
+     */
     protected function assertDoesNotHaveResourceTriple(\Tripod\ExtendedGraph $graph, $s, $p, $o)
     {
         $this->assertFalse($graph->has_resource_triple($s, $p, $o), "Graph should not contain the resource triple: <{$s}> <{$p}> <{$o}>");
     }
 
+    /**
+     * @param string $subject
+     * @param string $transaction_id
+     */
     protected function lockDocument($subject, $transaction_id)
     {
         $collection = \Tripod\Mongo\Config::getInstance()->getCollectionForLocks('tripod_php_testing');
@@ -333,17 +406,33 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
     }
 }
 
+/**
+ * Class TestTripod
+ */
 class TestTripod extends \Tripod\Mongo\Tripod
 {
+    /**
+     * @return array
+     */
     public function getCollectionReadPreference()
     {
         return $this->collection->getReadPreference();
     }
 }
 
+/**
+ * Class TripodTestConfig
+ */
 class TripodTestConfig extends \Tripod\Mongo\Config
 {
+    /**
+     * Constructor
+     */
     public function __construct() {}
+
+    /**
+     * @param array $config
+     */
     public function loadConfig(array $config)
     {
         parent::loadConfig($config);
