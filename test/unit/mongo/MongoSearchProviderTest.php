@@ -335,38 +335,38 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
     public function testSearchThrowsExceptionIfNoQuery()
     {
-        $this->setExpectedException("SearchException","You must specify a query");
+        $this->setExpectedException("\Tripod\Exceptions\SearchException","You must specify a query");
         $this->searchProvider->search("", "i_search_resource",  array("search_terms"), array("result"), 3, 0);
     }
 
     public function testSearchThrowsExceptionIfNoType()
     {
-        $this->setExpectedException("SearchException","You must specify the search document type to restrict the query to");
+        $this->setExpectedException("\Tripod\Exceptions\SearchException","You must specify the search document type to restrict the query to");
         $this->searchProvider->search("poetry", "",  array("search_terms"), array("result"), 3, 0);
     }
 
     public function testSearchThrowsExceptionIfSearchIndicesEmpty()
     {
-        $this->setExpectedException("SearchException","You must specify at least one index from the search document specification to query against");
+        $this->setExpectedException("\Tripod\Exceptions\SearchException","You must specify at least one index from the search document specification to query against");
         $this->searchProvider->search("poetry", "i_search_resource",  array(), array("result"), 3, 0);
     }
 
     public function testSearchThrowsExceptionIfFieldsToReturnEmpty()
     {
-        $this->setExpectedException("SearchException","You must specify at least one field from the search document specification to return");
+        $this->setExpectedException("\Tripod\Exceptions\SearchException","You must specify at least one field from the search document specification to return");
         $this->searchProvider->search("poetry", "i_search_resource",  array("search_terms"), array(), 3, 0);
     }
 
 
     public function testSearchThrowsExceptionIfLimitIsNegative()
     {
-        $this->setExpectedException("SearchException","Value for limit must be a positive number");
+        $this->setExpectedException("\Tripod\Exceptions\SearchException","Value for limit must be a positive number");
         $this->searchProvider->search("poetry", "i_search_resource",  array("search_terms"), array("result"), -3, 0);
     }
 
     public function testSearchThrowsExceptionIfOffsetIsNegative()
     {
-        $this->setExpectedException("SearchException","Value for offset must be a positive number");
+        $this->setExpectedException("\Tripod\Exceptions\SearchException","Value for offset must be a positive number");
         $this->searchProvider->search("poetry", "i_search_resource",  array("search_terms"), array("result"), 3, -1);
     }
 
@@ -501,7 +501,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
     
     public function testDeleteSearchDocumentsByTypeIdThrowsExceptionForInvalidType()
     {
-    	$mockSearchProvider = $this->getMock("MongoSearchProvider", array('getSearchDocumentSpecification'), array($this->tripod));
+    	$mockSearchProvider = $this->getMock("\Tripod\Mongo\MongoSearchProvider", array('getSearchDocumentSpecification'), array($this->tripod));
     	$mockSearchProvider->expects($this->once())
     						->method('getSearchDocumentSpecification')
     						->with('i_some_type')
@@ -519,7 +519,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
     	$this->assertEquals(12, $actualSearchDocumentCount, "Should have generated 12 search documents based on searchData.json");
 
         /** @var MongoSearchProvider|PHPUnit_Framework_MockObject_MockObject $mockSearchProvider */
-    	$mockSearchProvider = $this->getMock("MongoSearchProvider", array('getSearchDocumentSpecification'), array($this->tripod));
+    	$mockSearchProvider = $this->getMock("\Tripod\Mongo\MongoSearchProvider", array('getSearchDocumentSpecification'), array($this->tripod));
     	$mockSearchProvider->expects($this->once())
 				    	->method('getSearchDocumentSpecification')
 				    	->with('i_some_type')
@@ -546,7 +546,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
     	$this->assertEquals(12, $actualSearchDocumentCount, "Should have generated 12 search documents based on searchData.json");
     	 
-    	$mockSearchProvider = $this->getMock("MongoSearchProvider", array('getSearchDocumentSpecification'), array($this->tripod));
+    	$mockSearchProvider = $this->getMock("\Tripod\Mongo\MongoSearchProvider", array('getSearchDocumentSpecification'), array($this->tripod));
     	$mockSearchProvider->expects($this->once())
     					->method('getSearchDocumentSpecification')
 				    	->with('i_search_resource')
@@ -584,7 +584,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
     	$this->assertEquals(13, $updatedSearchDocumentCount, "Should have generated 13 search documents after adding a new document to collection");
     
-    	$mockSearchProvider = $this->getMock("MongoSearchProvider", array('getSearchDocumentSpecification'), array($this->tripod));
+    	$mockSearchProvider = $this->getMock("\Tripod\Mongo\MongoSearchProvider", array('getSearchDocumentSpecification'), array($this->tripod));
     	$mockSearchProvider->expects($this->once())
 				    	->method('getSearchDocumentSpecification')
 				    	->with('i_search_resource')

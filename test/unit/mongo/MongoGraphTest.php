@@ -19,14 +19,14 @@ class MongoGraphTest extends MongoTripodTestBase
 
     public function testUriToQNameOnUnRegisteredNS()
     {
-        $this->setExpectedException('LabellerException', 'Could not label: http://someunregisteredns/');
+        $this->setExpectedException('\Tripod\Exceptions\LabellerException', 'Could not label: http://someunregisteredns/');
         $g = new MongoGraph();
         $g->uri_to_qname('http://someunregisteredns/title');
     }
 
     public function testQNameToUriOnUnRegisteredNS()
     {
-        $this->setExpectedException('LabellerException', 'Could not label: someunregisteredns:title');
+        $this->setExpectedException('\Tripod\Exceptions\LabellerException', 'Could not label: someunregisteredns:title');
         $g = new MongoGraph();
         $g->qname_to_uri('someunregisteredns:title');
     }

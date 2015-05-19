@@ -9,7 +9,7 @@ define('AUDIT_MANUAL_ROLLBACKS_COLLECTION','audit_manual_rollbacks');
 
 // search
 define('SEARCH_INDEX_COLLECTION', 'search');
-define("SEARCH_PROVIDER_MONGO", 'MongoSearchProvider');
+define("SEARCH_PROVIDER_MONGO", '\Tripod\Mongo\MongoSearchProvider');
 define("SEARCH_PROVIDER_ELASTIC_SEARCH", 'es');
 
 

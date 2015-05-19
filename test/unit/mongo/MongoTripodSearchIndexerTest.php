@@ -3,7 +3,9 @@ require_once 'MongoTripodTestBase.php';
 require_once 'src/mongo/Tripod.class.php';
 require_once 'src/mongo/MongoGraph.class.php';
 
-
+/**
+ * Class MongoTripodSearchIndexerTest
+ */
 class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
 
     protected function setUp()
@@ -68,12 +70,12 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             ->method('getDataUpdater')
             ->will($this->returnValue($tripodUpdate));
 
-        $searchIndexer = $this->getMock('SearchIndexer',
+        $searchIndexer = $this->getMock('\Tripod\Mongo\SearchIndexer',
             array('getSearchProvider'),
             array($tripod)
         );
 
-        $searchProvider = $this->getMock('MongoSearchProvider',
+        $searchProvider = $this->getMock('\Tripod\Mongo\MongoSearchProvider',
             array('deleteDocument','indexDocument'),
             array($tripod)
         );
@@ -106,7 +108,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
 
         // Now make a change that affects a different search document - Create new document
         $tripod = $this->getMock(
-            'Tripod',
+            '\Tripod\Mongo\Tripod',
             array('getSearchIndexer'),
             array(
                 'CBD_testing',
@@ -122,12 +124,12 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             )
         );
 
-        $searchIndexer = $this->getMock('SearchIndexer',
+        $searchIndexer = $this->getMock('\Tripod\Mongo\SearchIndexer',
             array('getSearchProvider'),
             array($tripod)
         );
 
-        $searchProvider = $this->getMock('MongoSearchProvider',
+        $searchProvider = $this->getMock('\Tripod\Mongo\MongoSearchProvider',
             array('deleteDocument','indexDocument'),
             array($tripod)
         );
@@ -183,12 +185,12 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             )
         );
 
-        $searchIndexer = $this->getMock('SearchIndexer',
+        $searchIndexer = $this->getMock('\Tripod\Mongo\SearchIndexer',
             array('getSearchProvider'),
             array($tripod)
         );
 
-        $searchProvider = $this->getMock('MongoSearchProvider',
+        $searchProvider = $this->getMock('\Tripod\Mongo\MongoSearchProvider',
             array('deleteDocument','indexDocument'),
             array($tripod)
         );
@@ -234,7 +236,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
 
         // Now make a change that shouldn't affect any search docs
         $tripod = $this->getMock(
-            'Tripod',
+            '\Tripod\Mongo\Tripod',
             array('getSearchIndexer', 'getDataUpdater'),
             array(
                 'CBD_testing',
@@ -251,7 +253,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
         );
 
         $tripodUpdate = $this->getMock(
-            'Updates',
+            '\Tripod\Mongo\Updates',
             array('storeChanges'),
             array(
                 $tripod,
@@ -273,12 +275,12 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             ->method('getDataUpdater')
             ->will($this->returnValue($tripodUpdate));
 
-        $searchIndexer = $this->getMock('SearchIndexer',
+        $searchIndexer = $this->getMock('\Tripod\Mongo\SearchIndexer',
             array('getSearchProvider', 'update'),
             array($tripod)
         );
 
-        $searchProvider = $this->getMock('MongoSearchProvider',
+        $searchProvider = $this->getMock('\Tripod\Mongo\MongoSearchProvider',
             array('deleteDocument','indexDocument'),
             array($tripod)
         );
@@ -314,7 +316,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
      */
     public function testSavingMultipleNewEntitiesResultsInOneImpactedSubject()
     {
-        $tripod = $this->getMockBuilder('Tripod')
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Tripod')
             ->setMethods(array('getDataUpdater'))
             ->setConstructorArgs(
                 array(
@@ -331,7 +333,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
                 )
             )->getMock();
 
-        $tripodUpdates = $this->getMockBuilder('Updates')
+        $tripodUpdates = $this->getMockBuilder('\Tripod\Mongo\Updates')
             ->setMethods(array('submitJob'))
             ->setConstructorArgs(
                 array(
@@ -382,7 +384,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
         );
         $tripod->saveChanges(new \Tripod\Mongo\MongoGraph(), $g);
 
-        /** @var MongoTripodTables $tables */
+        /** @var \Tripod\Mongo\Tables $tables */
         $search = $tripod->getComposite(OP_SEARCH);
 
         $expectedImpactedSubjects = array(

@@ -44,7 +44,7 @@ class DiscoverImpactedSubjects extends JobBase {
                 /* @var $subject ImpactedSubject */
                 foreach ($modifiedSubjects as $subject) {
                     $resourceId = $subject->getResourceId();
-                    $this->debugLog("Adding operation {$subject->getOperation()} for subject {$resourceId[_ID_RESOURCE]} to queue ".MongoTripodConfig::getApplyQueueName());
+                    $this->debugLog("Adding operation {$subject->getOperation()} for subject {$resourceId[_ID_RESOURCE]} to queue ".Config::getApplyQueueName());
                     $this->submitJob(Config::getApplyQueueName(),"\Tripod\Mongo\ApplyOperation",array(
                         "subject"=>$subject->toArray(),
                         "tripodConfig"=>$this->args["tripodConfig"]

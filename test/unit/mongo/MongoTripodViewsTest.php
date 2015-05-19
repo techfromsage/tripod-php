@@ -4,9 +4,11 @@ require_once 'MongoTripodTestBase.php';
 require_once 'src/mongo/Tripod.class.php';
 require_once 'src/mongo/delegates/Views.class.php';
 
+use \Tripod\Mongo\Views;
+
 class MongoTripodViewsTest extends MongoTripodTestBase {
     /**
-     * @var Views
+     * @var \Tripod\Mongo\Views
      */
     protected $tripodViews = null;
 
@@ -19,9 +21,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $this->tripodTransactionLog->purgeAllTransactions();
 
         // Stub ouf 'addToElastic' search to prevent writes into Elastic Search happening by default.
-        /** @var Tripod|PHPUnit_Framework_MockObject_MockObject $this->tripod */
+        /** @var \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject $this->tripod */
         $this->tripod = $this->getMock(
-            'Tripod',
+            '\Tripod\Mongo\Tripod',
             array('addToSearchIndexQueue'),
             array('CBD_testing','tripod_php_testing',
                 array(
@@ -107,7 +109,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
     public function testGenerateViewWithTTL()
     {
         $expiryDate = new MongoDate(time()+300);
-        $mockTripodViews = $this->getMock('Views', array('getExpirySecFromNow'), $this->viewsConstParams);
+        $mockTripodViews = $this->getMock('\Tripod\Mongo\Views', array('getExpirySecFromNow'), $this->viewsConstParams);
         $mockTripodViews->expects($this->once())->method('getExpirySecFromNow')->with(300)->will($this->returnValue((time()+300)));
 
         $mockTripodViews->getViewForResource("http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA","v_resource_full_ttl");
@@ -184,13 +186,13 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
     public function testTTLViewIsRegeneratedOnFetch()
     {
         // make mock return expiry date in past...
-        $mockTripodViews = $this->getMock('Views', array('getExpirySecFromNow'), $this->viewsConstParams);
+        $mockTripodViews = $this->getMock('\Tripod\Mongo\Views', array('getExpirySecFromNow'), $this->viewsConstParams);
         $mockTripodViews->expects($this->once())->method('getExpirySecFromNow')->with(300)->will($this->returnValue((time()-300)));
 
         $mockTripodViews->generateView("v_resource_full_ttl","http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA");
 
         // now mock out generate views and check it's called...
-        $mockTripodViews2 = $this->getMock('Views', array('generateView'), $this->viewsConstParams);
+        $mockTripodViews2 = $this->getMock('\Tripod\Mongo\Views', array('generateView'), $this->viewsConstParams);
         $mockTripodViews2->expects($this->once())->method('generateView')->with('v_resource_full_ttl','http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA');
 
         $mockTripodViews2->getViewForResource('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA','v_resource_full_ttl');
@@ -202,7 +204,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         /**
          * @var $mockTripodViews \Tripod\Mongo\Views
          */
-        $mockTripodViews = $this->getMock('Views', array('getExpirySecFromNow'), $this->viewsConstParams);
+        $mockTripodViews = $this->getMock('\Tripod\Mongo\Views', array('getExpirySecFromNow'), $this->viewsConstParams);
         $mockTripodViews->expects($this->once())->method('getExpirySecFromNow')->with(300)->will($this->returnValue((time()+300)));
 
         $mockTripodViews->getViewForResource("http://talisaspire.com/works/4d101f63c10a6","v_counts");
@@ -270,7 +272,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         // use a mock heron-in to make sure generateView is not called again for different combinations of qname/full uri
 
         /* @var $mockTripodViews \Tripod\Mongo\Views */
-        $mockTripodViews = $this->getMock('Views', array('generateView'), $this->viewsConstParams);
+        $mockTripodViews = $this->getMock('\Tripod\Mongo\Views', array('generateView'), $this->viewsConstParams);
         $mockTripodViews->expects($this->never())->method('generateView');
 
         $g3 = $mockTripodViews->getViewForResource("http://basedata.com/b/2","v_work_see_also","http://basedata.com/b/DefaultGraph");
@@ -284,14 +286,14 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
     public function testGenerateViewsForResourcesOfTypeWithNamespace()
     {
         /* @var $mockTripodViews \Tripod\Mongo\Views */
-        $mockTripodViews = $this->getMock('Views', array('generateView'), $this->viewsConstParams);
+        $mockTripodViews = $this->getMock('\Tripod\Mongo\Views', array('generateView'), $this->viewsConstParams);
         $mockTripodViews->expects($this->atLeastOnce())->method('generateView')->will($this->returnValue(array("ok"=>true)));
 
         // spec is namespaced, acorn:Work, can it resolve?
         $mockTripodViews->generateViewsForResourcesOfType("http://talisaspire.com/schema#Work");
 
         /* @var $mockTripodViews \Tripod\Mongo\Views */
-        $mockTripodViews = $this->getMock('Views', array('generateView'), $this->viewsConstParams);
+        $mockTripodViews = $this->getMock('\Tripod\Mongo\Views', array('generateView'), $this->viewsConstParams);
         $mockTripodViews->expects($this->atLeastOnce())->method('generateView')->will($this->returnValue(array("ok"=>true)));
 
         // spec is fully qualified, http://talisaspire.com/shema#Work2, can it resolve?
@@ -317,7 +319,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             )
         );
 
-        $returnedGraph = new ExtendedGraph();
+        $returnedGraph = new \Tripod\ExtendedGraph();
         $returnedGraph->add_literal_triple($uri1,'http://somepred','someval');
 
         $mockDb = $this->getMock("MongoDB", array("selectCollection"),array(new MongoClient(),"test"));
@@ -348,8 +350,8 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
 
         /* @var $mockTripodViews|PHPUnit_Framework_MockObject_MockObject Views */
         $mockTripodViews = $this->getMock(
-            'Views',
-            array('generateView','fetchGraph', 'getMongoTripodConfigInstance'),
+            '\Tripod\Mongo\Views',
+            array('generateView','fetchGraph', 'getConfigInstance'),
             array('tripod_php_testing',$mockColl,$context)
         );
 
@@ -362,7 +364,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             ->will($this->returnValue($returnedGraph));
 
         $mockTripodViews->expects($this->atLeastOnce())
-            ->method('getMongoTripodConfigInstance')
+            ->method('getConfigInstance')
             ->will($this->returnValue($mockConfig));
 
         $resultGraph = $mockTripodViews->getViewForResources(array($uri1,$uri2),$viewType,$context);
@@ -407,8 +409,8 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
 
         /* @var $mockTripodViews \Tripod\Mongo\Views */
         $mockTripodViews = $this->getMock(
-            'Views',
-            array('generateView','fetchGraph','getMongoTripodConfigInstance'),
+            '\Tripod\Mongo\Views',
+            array('generateView','fetchGraph','getConfigInstance'),
             array('tripod_php_testing',$mockColl,$context)
         );
 
@@ -422,12 +424,12 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             ->will($this->returnCallback(array($this, 'fetchGraphInGetViewForResourcesCallback')));
 
         $mockTripodViews->expects($this->atLeastOnce())
-            ->method('getMongoTripodConfigInstance')
+            ->method('getConfigInstance')
             ->will($this->returnValue($mockConfig));
 
         $resultGraph = $mockTripodViews->getViewForResources(array($uri1,$uri2),$viewType,$context);
 
-        $expectedGraph = new ExtendedGraph();
+        $expectedGraph = new \Tripod\ExtendedGraph();
         $expectedGraph->add_literal_triple($uri1,'http://somepred','someval');
         $expectedGraph->add_literal_triple($uri2,'http://somepred','someval');
 
@@ -438,9 +440,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
     {
         $context = 'http://talisaspire.com/';
 
-        $labeller = new MongoTripodLabeller();
+        $labeller = new \Tripod\Mongo\Labeller();
         // First add a graph
-        $originalGraph = new ExtendedGraph();
+        $originalGraph = new \Tripod\ExtendedGraph();
 
         $uri1 = 'http://example.com/resources/' . uniqid();
         $originalGraph->add_resource_triple($uri1, RDF_TYPE, $labeller->qname_to_uri('acorn:Resource'));
@@ -451,8 +453,8 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $originalGraph->add_literal_triple($uri2, $labeller->qname_to_uri('dct:subject'), 'Things grouped by no specific criteria');
 
         $originalGraph->add_resource_triple($uri1, $labeller->qname_to_uri('dct:isVersionOf'), $uri2);
-        $tripod = new MongoTripod('CBD_testing', 'tripod_php_testing', array('defaultContext'=>$context));
-        $tripod->saveChanges(new ExtendedGraph(), $originalGraph);
+        $tripod = new \Tripod\Mongo\Tripod('CBD_testing', 'tripod_php_testing', array('defaultContext'=>$context));
+        $tripod->saveChanges(new \Tripod\ExtendedGraph(), $originalGraph);
 
         $collections = \Tripod\Mongo\Config::getInstance()->getCollectionsForViews('tripod_php_testing', array('v_resource_full', 'v_resource_full_ttl', 'v_resource_to_single_source'));
 
@@ -467,9 +469,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             )
         );
 
-        /** @var MongoTripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
+        /** @var \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
         $mockTripod = $this->getMock(
-            'Tripod',
+            '\Tripod\Mongo\Tripod',
             array(
                 'getDataUpdater', 'getComposite'
             ),
@@ -488,7 +490,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         );
 
         $mockTripodUpdates = $this->getMock(
-            'Updates',
+            '\Tripod\Mongo\Updates',
             array(
                 'processSyncOperations',
                 'queueAsyncOperations'
@@ -505,7 +507,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             )
         );
 
-        $mockViews = $this->getMock('Views',
+        $mockViews = $this->getMock('\Tripod\Mongo\Views',
             array('generateViewsForResourcesOfType'),
             array(
                 'tripod_php_testing',
@@ -541,16 +543,16 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             ->method('generateViewsForResourcesOfType');
 
 
-        $mockTripod->saveChanges($originalGraph->get_subject_subgraph($uri1), new ExtendedGraph());
+        $mockTripod->saveChanges($originalGraph->get_subject_subgraph($uri1), new \Tripod\ExtendedGraph());
 
         // Walk through the processSyncOperations process manually for views
 
         /** @var \Tripod\Mongo\Views $view */
         $view = $mockTripod->getComposite(OP_VIEWS);
-        $this->assertInstanceOf('Views', $view);
+        $this->assertInstanceOf('\Tripod\Mongo\Views', $view);
 
         $expectedImpactedSubjects = array(
-            new ImpactedSubject(
+            new \Tripod\Mongo\ImpactedSubject(
                 array(
                     _ID_RESOURCE=>$labeller->uri_to_alias($uri1),
                     _ID_CONTEXT=>$context
@@ -587,9 +589,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
     {
         $context = 'http://talisaspire.com/';
 
-        $labeller = new MongoTripodLabeller();
+        $labeller = new \Tripod\Mongo\Labeller();
         // First add a graph
-        $originalGraph = new ExtendedGraph();
+        $originalGraph = new \Tripod\ExtendedGraph();
 
         $uri1 = 'http://example.com/resources/' . uniqid();
         $originalGraph->add_resource_triple($uri1, RDF_TYPE, $labeller->qname_to_uri('acorn:Resource'));
@@ -600,8 +602,8 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $originalGraph->add_literal_triple($uri2, $labeller->qname_to_uri('dct:subject'), 'Things grouped by no specific criteria');
 
         $originalGraph->add_resource_triple($uri1, $labeller->qname_to_uri('dct:isVersionOf'), $uri2);
-        $tripod = new MongoTripod('CBD_testing', 'tripod_php_testing', array('defaultContext'=>$context));
-        $tripod->saveChanges(new ExtendedGraph(), $originalGraph);
+        $tripod = new \Tripod\Mongo\Tripod('CBD_testing', 'tripod_php_testing', array('defaultContext'=>$context));
+        $tripod->saveChanges(new \Tripod\ExtendedGraph(), $originalGraph);
 
         $collections = \Tripod\Mongo\Config::getInstance()->getCollectionsForViews('tripod_php_testing', array('v_resource_full', 'v_resource_full_ttl', 'v_resource_to_single_source'));
 
@@ -616,9 +618,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             )
         );
 
-        /** @var MongoTripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
+        /** @var \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
         $mockTripod = $this->getMock(
-            'Tripod',
+            '\Tripod\Mongo\Tripod',
             array(
                 'getDataUpdater', 'getComposite'
             ),
@@ -637,7 +639,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         );
 
         $mockTripodUpdates = $this->getMock(
-            'Updates',
+            '\Tripod\Mongo\Updates',
             array(
                 'processSyncOperations',
                 'queueAsyncOperations'
@@ -654,7 +656,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             )
         );
 
-        $mockViews = $this->getMock('Views',
+        $mockViews = $this->getMock('\Tripod\Mongo\Views',
             array('generateView'),
             array(
                 'tripod_php_testing',
@@ -708,16 +710,16 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             );
 
 
-        $mockTripod->saveChanges($originalGraph->get_subject_subgraph($uri2), new ExtendedGraph());
+        $mockTripod->saveChanges($originalGraph->get_subject_subgraph($uri2), new \Tripod\ExtendedGraph());
 
         // Walk through the processSyncOperations process manually for views
 
         /** @var \Tripod\Mongo\Views $view */
         $view = $mockTripod->getComposite(OP_VIEWS);
-        $this->assertInstanceOf('Views', $view);
+        $this->assertInstanceOf('\Tripod\Mongo\Views', $view);
 
         $expectedImpactedSubjects = array(
-            new ImpactedSubject(
+            new \Tripod\Mongo\ImpactedSubject(
                 array(
                     _ID_RESOURCE=>$labeller->uri_to_alias($uri1), // The impacted subject should still be $uri, since $uri2 is just in the impactIndex
                     _ID_CONTEXT=>$context
@@ -755,9 +757,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
     {
         $context = 'http://talisaspire.com/';
 
-        $labeller = new MongoTripodLabeller();
+        $labeller = new \Tripod\Mongo\Labeller();
         // First add a graph
-        $originalGraph = new ExtendedGraph();
+        $originalGraph = new \Tripod\ExtendedGraph();
 
         $uri1 = 'http://example.com/resources/' . uniqid();
         $originalGraph->add_resource_triple($uri1, RDF_TYPE, $labeller->qname_to_uri('acorn:Resource'));
@@ -768,8 +770,8 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $originalGraph->add_literal_triple($uri2, $labeller->qname_to_uri('dct:subject'), 'Things grouped by no specific criteria');
 
         $originalGraph->add_resource_triple($uri1, $labeller->qname_to_uri('dct:isVersionOf'), $uri2);
-        $tripod = new MongoTripod('CBD_testing', 'tripod_php_testing', array('defaultContext'=>$context));
-        $tripod->saveChanges(new ExtendedGraph(), $originalGraph);
+        $tripod = new \Tripod\Mongo\Tripod('CBD_testing', 'tripod_php_testing', array('defaultContext'=>$context));
+        $tripod->saveChanges(new \Tripod\ExtendedGraph(), $originalGraph);
 
         $collections = \Tripod\Mongo\Config::getInstance()->getCollectionsForViews('tripod_php_testing', array('v_resource_full', 'v_resource_full_ttl', 'v_resource_to_single_source'));
 
@@ -782,9 +784,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             $labeller->uri_to_alias($uri2)=>array('dct:subject')
         );
 
-        /** @var MongoTripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
+        /** @var \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
         $mockTripod = $this->getMock(
-            'Tripod',
+            '\Tripod\Mongo\Tripod',
             array(
                 'getDataUpdater', 'getComposite'
             ),
@@ -803,7 +805,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         );
 
         $mockTripodUpdates = $this->getMock(
-            'Updates',
+            '\Tripod\Mongo\Updates',
             array(
                 'processSyncOperations',
                 'queueAsyncOperations'
@@ -820,7 +822,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             )
         );
 
-        $mockViews = $this->getMock('Views',
+        $mockViews = $this->getMock('\Tripod\Mongo\Views',
             array('generateView'),
             array(
                 'tripod_php_testing',
@@ -882,10 +884,10 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
 
         /** @var \Tripod\Mongo\Views $view */
         $view = $mockTripod->getComposite(OP_VIEWS);
-        $this->assertInstanceOf('Views', $view);
+        $this->assertInstanceOf('\Tripod\Mongo\Views', $view);
 
         $expectedImpactedSubjects = array(
-            new ImpactedSubject(
+            new \Tripod\Mongo\ImpactedSubject(
                 array(
                     _ID_RESOURCE=>$labeller->uri_to_alias($uri1), // The impacted subject should still be $uri, since $uri2 is just in the impactIndex
                     _ID_CONTEXT=>$context
@@ -922,9 +924,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
     {
         $context = 'http://talisaspire.com/';
 
-        $labeller = new MongoTripodLabeller();
+        $labeller = new \Tripod\Mongo\Labeller();
         // First add a graph
-        $originalGraph = new ExtendedGraph();
+        $originalGraph = new \Tripod\ExtendedGraph();
 
         $uri1 = 'http://example.com/resources/' . uniqid();
         $originalGraph->add_resource_triple($uri1, RDF_TYPE, $labeller->qname_to_uri('acorn:Resource'));
@@ -935,8 +937,8 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $originalGraph->add_literal_triple($uri2, $labeller->qname_to_uri('dct:subject'), 'Things grouped by no specific criteria');
 
         $originalGraph->add_resource_triple($uri1, $labeller->qname_to_uri('dct:isVersionOf'), $uri2);
-        $tripod = new MongoTripod('CBD_testing', 'tripod_php_testing', array('defaultContext'=>$context));
-        $tripod->saveChanges(new ExtendedGraph(), $originalGraph);
+        $tripod = new \Tripod\Mongo\Tripod('CBD_testing', 'tripod_php_testing', array('defaultContext'=>$context));
+        $tripod->saveChanges(new \Tripod\ExtendedGraph(), $originalGraph);
 
         $collections = \Tripod\Mongo\Config::getInstance()->getCollectionsForViews('tripod_php_testing', array('v_resource_full', 'v_resource_full_ttl', 'v_resource_to_single_source'));
 
@@ -949,9 +951,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             $labeller->uri_to_alias($uri1)=>array('dct:title')
         );
 
-        /** @var MongoTripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
+        /** @var \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
         $mockTripod = $this->getMock(
-            'Tripod',
+            '\Tripod\Mongo\Tripod',
             array(
                 'getDataUpdater', 'getComposite'
             ),
@@ -970,7 +972,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         );
 
         $mockTripodUpdates = $this->getMock(
-            'Updates',
+            '\Tripod\Mongo\Updates',
             array(
                 'processSyncOperations',
                 'queueAsyncOperations'
@@ -987,7 +989,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             )
         );
 
-        $mockViews = $this->getMock('Views',
+        $mockViews = $this->getMock('\Tripod\Mongo\Views',
             array('generateView'),
             array(
                 'tripod_php_testing',
@@ -1048,10 +1050,10 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
 
         /** @var \Tripod\Mongo\Views $view */
         $view = $mockTripod->getComposite(OP_VIEWS);
-        $this->assertInstanceOf('Views', $view);
+        $this->assertInstanceOf('\Tripod\Mongo\Views', $view);
 
         $expectedImpactedSubjects = array(
-            new ImpactedSubject(
+            new \Tripod\Mongo\ImpactedSubject(
                 array(
                     _ID_RESOURCE=>$labeller->uri_to_alias($uri1), // The impacted subject should still be $uri, since $uri2 is just in the impactIndex
                     _ID_CONTEXT=>$context
@@ -1088,9 +1090,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
     {
         $context = 'http://talisaspire.com/';
 
-        $labeller = new MongoTripodLabeller();
+        $labeller = new \Tripod\Mongo\Labeller();
         // First add a graph
-        $originalGraph = new ExtendedGraph();
+        $originalGraph = new \Tripod\ExtendedGraph();
 
         $uri1 = 'http://example.com/resources/' . uniqid();
         $originalGraph->add_resource_triple($uri1, RDF_TYPE, $labeller->qname_to_uri('bibo:Document'));
@@ -1106,9 +1108,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             $labeller->uri_to_alias($uri1)=>array('dct:subject')
         );
 
-        /** @var MongoTripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
+        /** @var \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
         $mockTripod = $this->getMock(
-            'Tripod',
+            '\Tripod\Mongo\Tripod',
             array(
                 'getDataUpdater', 'getComposite'
             ),
@@ -1127,7 +1129,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         );
 
         $mockTripodUpdates = $this->getMock(
-            'Updates',
+            '\Tripod\Mongo\Updates',
             array(
                 'processSyncOperations',
                 'queueAsyncOperations'
@@ -1144,7 +1146,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             )
         );
 
-        $mockViews = $this->getMock('Views',
+        $mockViews = $this->getMock('\Tripod\Mongo\Views',
             array('generateViewsForResourcesOfType'),
             array(
                 'tripod_php_testing',
@@ -1191,11 +1193,11 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $mockViews->expects($this->never())
             ->method('generateViewsForResourcesOfType');
 
-        $mockTripod->saveChanges(new ExtendedGraph(), $originalGraph);
+        $mockTripod->saveChanges(new \Tripod\ExtendedGraph(), $originalGraph);
 
         /** @var \Tripod\Mongo\Views $view */
         $view = $mockTripod->getComposite(OP_VIEWS);
-        $this->assertInstanceOf('Views', $view);
+        $this->assertInstanceOf('\Tripod\Mongo\Views', $view);
 
         $impactedSubjects = $view->getImpactedSubjects($originalSubjectsAndPredicatesOfChange, $context);
 
@@ -1209,7 +1211,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
 
         /** @var \Tripod\Mongo\Views $view */
         $view = $mockTripod->getComposite(OP_VIEWS);
-        $this->assertInstanceOf('Views', $view);
+        $this->assertInstanceOf('\Tripod\Mongo\Views', $view);
 
         $impactedSubjects = $view->getImpactedSubjects($updatedSubjectsAndPredicatesOfChange, $context);
 
@@ -1223,7 +1225,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
      */
     public function testSavingMultipleNewEntitiesResultsInOneImpactedSubject()
     {
-        $tripod = $this->getMockBuilder('Tripod')
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Tripod')
             ->setMethods(array('getDataUpdater'))
             ->setConstructorArgs(
                 array(
@@ -1240,7 +1242,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
                 )
             )->getMock();
 
-        $tripodUpdates = $this->getMockBuilder('Updates')
+        $tripodUpdates = $this->getMockBuilder('\Tripod\Mongo\Updates')
             ->setMethods(array('submitJob'))
             ->setConstructorArgs(
                 array(
@@ -1261,7 +1263,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             ->will($this->returnValue($tripodUpdates));
 
         // first lets add a book, which should trigger a search doc, view and table gen for a single item
-        $g = new MongoGraph();
+        $g = new \Tripod\Mongo\MongoGraph();
         $newSubjectUri1 = "http://talisaspire.com/resources/newdoc1";
         $newSubjectUri2 = "http://talisaspire.com/resources/newdoc2";
         $newSubjectUri3 = "http://talisaspire.com/resources/newdoc3";
@@ -1289,13 +1291,13 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             $newSubjectUri2=>array('rdf:type','dct:creator','dct:title','dct:subject'),
             $newSubjectUri3=>array('rdf:type','dct:creator','dct:title','dct:subject')
         );
-        $tripod->saveChanges(new MongoGraph(), $g);
+        $tripod->saveChanges(new \Tripod\Mongo\MongoGraph(), $g);
 
         /** @var \Tripod\Mongo\Views $views */
         $views = $tripod->getComposite(OP_VIEWS);
 
         $expectedImpactedSubjects = array(
-            new ImpactedSubject(
+            new \Tripod\Mongo\ImpactedSubject(
                 array(
                     _ID_RESOURCE=>$newSubjectUri2,
                     _ID_CONTEXT=>'http://talisaspire.com/'
@@ -1311,7 +1313,10 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $this->assertEquals($expectedImpactedSubjects, $impactedSubjects);
     }
 
-    function fetchGraphInGetViewForResourcesCallback()
+    /**
+     * @return \Tripod\ExtendedGraph
+     */
+    public function fetchGraphInGetViewForResourcesCallback()
     {
         $uri1 = "http://uri1";
         $uri2 = "http://uri2";
@@ -1322,17 +1327,18 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $query1 = array("_id"=>array('$in'=>array(array("r"=>$uri1,"c"=>$context,"type"=>$viewType),array("r"=>$uri2,"c"=>$context,"type"=>$viewType))));
         $query2 = array("_id"=>array('$in'=>array(array("r"=>$uri2,"c"=>$context,"type"=>$viewType))));
 
-        $returnedGraph1 = new ExtendedGraph();
+        $returnedGraph1 = new \Tripod\ExtendedGraph();
         $returnedGraph1->add_literal_triple($uri1,'http://somepred','someval');
 
-        $returnedGraph2 = new ExtendedGraph();
+        $returnedGraph2 = new \Tripod\ExtendedGraph();
         $returnedGraph2->add_literal_triple($uri2,'http://somepred','someval');
 
         $args = func_get_args();
         if($args[0]==$query1){
             return $returnedGraph1;
         }
-        else if($args[0]==$query2){
+        elseif($args[0]==$query2)
+        {
             return $returnedGraph2;
         }
         else

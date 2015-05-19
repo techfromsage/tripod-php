@@ -26,7 +26,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
 
     protected function getMongoTripodSearchDocuments(\Tripod\Mongo\Tripod $tripod)
     {
-        return new SearchDocuments(
+        return new \Tripod\Mongo\SearchDocuments(
             $tripod->getStoreName(),
             $this->getTripodCollection($tripod),
             'http://talisaspire.com/'
@@ -49,9 +49,11 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
 	
 	public function testGenerateSearchDocumentBasedOnSpecIdReturnNullForInvalidSearchSpecId()
 	{
-		$mockSearchDocuments = $this->getMock('SearchDocuments',
-											array('getSearchDocumentSpecification'), 
-											array($this->tripod->getStoreName(), $this->getTripodCollection($this->tripod), 'http://talisaspire.com/'));
+		$mockSearchDocuments = $this->getMock(
+            '\Tripod\Mongo\SearchDocuments',
+            array('getSearchDocumentSpecification'),
+            array($this->tripod->getStoreName(), $this->getTripodCollection($this->tripod), 'http://talisaspire.com/')
+        );
 		
 		$mockSearchDocuments->expects($this->once())
 							->method('getSearchDocumentSpecification')
@@ -79,9 +81,13 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
 	public function testGenerateSearchDocumentBasedOnSpecIdWithFieldNamePredicatesHavingNoValueInCollection()
 	{
 		$searchSpecs = json_decode('{"_id":"i_search_resource","type":["bibo:Book"],"from":"CBD_testing","filter":[{"condition":{"dct:title.l":{"$exists":true}}}],"indices":[{"fieldName":"search_terms","predicates":["dct:title","dct:subject"]},{"fieldName":"other_terms","predicates":["rdf:type"]}],"fields":[{"fieldName":"result.title","predicates":["dct:title"],"limit":1},{"fieldName":"result.link","value":"link"},{"fieldName":"rdftype","predicates":["rdf:type"],"limit":1}],"joins":{"dct:creator":{"indices":[{"fieldName":"search_terms","predicates":["foaf:name"]}],"fields":[{"fieldName":"result.author","predicates":["foaf:name"],"limit":1}, {"fieldName":"result.role","predicates":["siocAccess:Role"], "limit":1}] } }}', true);
-		$mockSearchDocuments = $this->getMock('SearchDocuments',
-				array('getSearchDocumentSpecification'),
-				array($this->tripod->getStoreName(), $this->getTripodCollection($this->tripod), 'http://talisaspire.com/'));
+
+        $mockSearchDocuments = $this->getMock(
+            '\Tripod\Mongo\SearchDocuments',
+            array('getSearchDocumentSpecification'),
+            array($this->tripod->getStoreName(), $this->getTripodCollection($this->tripod), 'http://talisaspire.com/')
+        );
+
 		$mockSearchDocuments->expects($this->once())
 							->method('getSearchDocumentSpecification')
 							->will($this->returnValue($searchSpecs));
@@ -104,12 +110,12 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
         $this->tripod->getSearchIndexer()->generateAndIndexSearchDocuments($uri, $this->defaultContext, $this->defaultPodName);
 
         /** @var \Tripod\Mongo\SearchIndexer|PHPUnit_Framework_MockObject_MockObject $searchIndexer */
-        $searchIndexer = $this->getMock('SearchIndexer',
+        $searchIndexer = $this->getMock('\Tripod\Mongo\SearchIndexer',
             array('getSearchDocumentGenerator'),
             array($this->tripod)
         );
 
-        $searchDocuments = $this->getMockBuilder('SearchDocuments')
+        $searchDocuments = $this->getMockBuilder('\Tripod\Mongo\SearchDocuments')
             ->setMethods(array('generateSearchDocumentBasedOnSpecId'))
             ->setConstructorArgs(
                 array(
@@ -181,12 +187,12 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
         );
 
         /** @var \Tripod\Mongo\SearchIndexer|PHPUnit_Framework_MockObject_MockObject $searchIndexer */
-        $searchIndexer = $this->getMock('SearchIndexer',
+        $searchIndexer = $this->getMock('\Tripod\Mongo\SearchIndexer',
             array('getSearchDocumentGenerator'),
             array($this->tripod)
         );
 
-        $searchDocuments = $this->getMockBuilder('SearchDocuments')
+        $searchDocuments = $this->getMockBuilder('\Tripod\Mongo\SearchDocuments')
             ->setMethods(array('generateSearchDocumentBasedOnSpecId'))
             ->setConstructorArgs(
                 array(
@@ -246,7 +252,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
 
         /** @var \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
         $mockTripod = $this->getMock(
-            'Tripod',
+            '\Tripod\Mongo\Tripod',
             array(
                 'getDataUpdater'
             ),
@@ -266,7 +272,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
 
         /** @var \Tripod\Mongo\Updates|PHPUnit_Framework_MockObject_MockObject $mockTripodUpdates */
         $mockTripodUpdates = $this->getMock(
-            'Updates',
+            '\Tripod\Mongo\Updates',
             array(
                 'processSyncOperations',
                 'queueAsyncOperations'
@@ -302,12 +308,13 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
             );
 
         /** @var \Tripod\Mongo\SearchIndexer|PHPUnit_Framework_MockObject_MockObject $searchIndexer */
-        $searchIndexer = $this->getMock('SearchIndexer',
+        $searchIndexer = $this->getMock(
+            '\Tripod\Mongo\SearchIndexer',
             array('getSearchDocumentGenerator'),
             array($this->tripod)
         );
 
-        $searchDocuments = $this->getMockBuilder('SearchDocuments')
+        $searchDocuments = $this->getMockBuilder('\Tripod\Mongo\SearchDocuments')
             ->setMethods(array('generateSearchDocumentBasedOnSpecId'))
             ->setConstructorArgs(
                 array(
@@ -396,7 +403,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
 
         /** @var \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
         $mockTripod = $this->getMock(
-            'Tripod',
+            '\Tripod\Mongo\Tripod',
             array(
                 'getDataUpdater'
             ),
@@ -416,7 +423,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
 
         /** @var \Tripod\Mongo\Updates|PHPUnit_Framework_MockObject_MockObject $mockTripodUpdates */
         $mockTripodUpdates = $this->getMock(
-            'Updates',
+            '\Tripod\Mongo\Updates',
             array(
                 'processSyncOperations',
                 'queueAsyncOperations'
@@ -582,7 +589,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
         $this->assertEquals(2, $collection->count($impactQuery));
 
         /** @var \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
-        $mockTripod = $this->getMockBuilder('Tripod')
+        $mockTripod = $this->getMockBuilder('\Tripod\Mongo\Tripod')
             ->setMethods(array('getDataUpdater'))
             ->setConstructorArgs(
                 array(
@@ -599,7 +606,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
                 )
             )->getMock();
 
-        $mockTripodUpdates = $this->getMockBuilder('Updates')
+        $mockTripodUpdates = $this->getMockBuilder('\Tripod\Mongo\Updates')
             ->setConstructorArgs(
                 array(
                     $mockTripod,

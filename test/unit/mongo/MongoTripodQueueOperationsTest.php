@@ -10,7 +10,6 @@ require_once 'src/mongo/Tripod.class.php';
  * Tripod Queue, and for each of those items added to the queue the correct operations are listed; furthermore in some cases that when operations are performed
  * the results are as we would expect. For that reason this suite is more than just a series of unit tests, feels more like a set of integration tests since we
  * are testing a chained flow of events.
- * todo: refactor this whole lot due to resque
  */
 class MongoTripodQueueOperations extends MongoTripodTestBase
 {
@@ -49,7 +48,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
                 )
             )->getMock();
 
-        $tripodUpdates = $this->getMockBuilder('Updates')
+        $tripodUpdates = $this->getMockBuilder('\Tripod\Mongo\Updates')
             ->setMethods(array('processSyncOperations','submitJob'))
             ->setConstructorArgs(array(
                 $tripod,
@@ -81,7 +80,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
 
         $tripodUpdates->expects($this->once())
             ->method('submitJob')
-            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"DiscoverImpactedSubjects",$data);
+            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"\Tripod\Mongo\DiscoverImpactedSubjects",$data);
 
 
         $g1 = $tripod->describeResource("http://talisaspire.com/resources/doc1");
@@ -101,7 +100,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
     public function testSingleItemWithViewsOpIsAddedToQueueForChangeToSingleSubject()
     {
         // create a tripod instance that will send all operations to the queue
-        $tripod = $this->getMockBuilder('Tripod')
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Tripod')
             ->setMethods(array('getDataUpdater', 'getComposite'))
             ->setConstructorArgs(
                 array(
@@ -114,7 +113,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
                 )
             )->getMock();
 
-        $tripodUpdates = $this->getMockBuilder('Updates')
+        $tripodUpdates = $this->getMockBuilder('\Tripod\Mongo\Updates')
             ->setMethods(array('processSyncOperations','submitJob'))
             ->setConstructorArgs(array(
                 $tripod,
@@ -149,7 +148,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
 
         $tripodUpdates->expects($this->once())
             ->method('submitJob')
-            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"DiscoverImpactedSubjects",$data);
+            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"\Tripod\Mongo\DiscoverImpactedSubjects",$data);
 
 
         $g1 = $tripod->describeResource("http://talisaspire.com/resources/doc1");
@@ -166,7 +165,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
     public function testNoItemIsAddedToQueueForChangeToSingleSubjectWithNoAsyncOps()
     {
         // create a tripod instance that will send all operations to the queue
-        $tripod = $this->getMockBuilder('Tripod')
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Tripod')
             ->setMethods(array('getDataUpdater', 'getComposite'))
             ->setConstructorArgs(
                 array(
@@ -179,7 +178,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
                 )
             )->getMock();
 
-        $tripodUpdates = $this->getMockBuilder('Updates')
+        $tripodUpdates = $this->getMockBuilder('\Tripod\Mongo\Updates')
             ->setMethods(array('processSyncOperations','submitJob'))
             ->setConstructorArgs(array(
                 $tripod,
@@ -273,7 +272,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
 
         $tripodUpdates->expects($this->once())
             ->method('submitJob')
-            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"DiscoverImpactedSubjects",$data);
+            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"\Tripod\Mongo\DiscoverImpactedSubjects",$data);
 
         $g1 = $tripod->describeResources(array(
             "http://talisaspire.com/resources/doc1",

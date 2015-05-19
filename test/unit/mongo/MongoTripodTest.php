@@ -1,6 +1,10 @@
 <?php
 require_once 'MongoTripodTestBase.php';
 require_once 'src/mongo/Tripod.class.php';
+
+/**
+ * Class MongoTripodTest
+ */
 class MongoTripodTest extends MongoTripodTestBase
 {
     /**
@@ -20,7 +24,16 @@ class MongoTripodTest extends MongoTripodTestBase
         $this->tripodTransactionLog->purgeAllTransactions();
 
         // Stub ouf 'addToElastic' search to prevent writes into Elastic Search happening by default.
-        $this->tripod = $this->getMock('Tripod', array('addToSearchIndexQueue'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
+        $this->tripod = $this->getMock(
+            '\Tripod\Mongo\Tripod',
+            array('addToSearchIndexQueue'),
+            array(
+                'CBD_testing',
+                'tripod_php_testing',
+                array('defaultContext'=>'http://talisaspire.com/')
+            )
+        );
+
         $this->tripod->expects($this->any())->method('addToSearchIndexQueue');
 
         $this->getTripodCollection($this->tripod)->drop();
@@ -199,7 +212,7 @@ class MongoTripodTest extends MongoTripodTestBase
     public function testTripodSaveChangesRemovesLiteralTriple()
     {
         $oG = $this->tripod->describeResource('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA');
-        $nG = new MongoGraph();
+        $nG = new \Tripod\Mongo\MongoGraph();
         $nG->add_graph($oG);
         $nG->remove_literal_triple('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA', $nG->qname_to_uri('searchterms:title'), 'Physics 3rd Edition');
 
@@ -211,7 +224,7 @@ class MongoTripodTest extends MongoTripodTestBase
     public function testTripodSaveChangesAddsLiteralTriple()
     {
         $oG = $this->tripod->describeResource('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA');
-        $nG = new MongoGraph();
+        $nG = new \Tripod\Mongo\MongoGraph();
         $nG->add_graph($oG);
         $nG->add_literal_triple('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA', $nG->qname_to_uri('searchterms:title'), 'TEST TITLE');
 
@@ -227,9 +240,9 @@ class MongoTripodTest extends MongoTripodTestBase
      */
     public function testTripodSaveChangesRemovesLiteralTripleUsingEmptyNewGraphAndPartialOldGraph()
     {
-        $oG = new MongoGraph();
+        $oG = new \Tripod\Mongo\MongoGraph();
         $oG->add_literal_triple('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA', $oG->qname_to_uri("bibo:isbn13"), "9780393929690");
-        $nG = new MongoGraph();
+        $nG = new \Tripod\Mongo\MongoGraph();
 
         $this->tripod->saveChanges($oG, $nG, "http://talisaspire.com/", 'my changes');
 
@@ -245,8 +258,8 @@ class MongoTripodTest extends MongoTripodTestBase
      */
     public function testTripodSaveChangesAddsLiteralTripleUsingEmptyOldGraph()
     {
-        $oG = new MongoGraph();
-        $nG = new MongoGraph();
+        $oG = new \Tripod\Mongo\MongoGraph();
+        $nG = new \Tripod\Mongo\MongoGraph();
         $nG->add_graph($oG);
         $nG->add_literal_triple('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA', $nG->qname_to_uri('searchterms:title'), 'TEST TITLE');
 
@@ -258,7 +271,7 @@ class MongoTripodTest extends MongoTripodTestBase
     public function testTripodSaveChangesUpdatesLiteralTriple()
     {
         $oG = $this->tripod->describeResource('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA');
-        $nG = new MongoGraph();
+        $nG = new \Tripod\Mongo\MongoGraph();
         $nG->add_graph($oG);
         $nG->remove_literal_triple('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA', $nG->qname_to_uri('searchterms:title'), 'Physics 3rd Edition');
         $nG->add_literal_triple('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA', $nG->qname_to_uri('searchterms:title'), 'TEST TITLE');
@@ -276,10 +289,10 @@ class MongoTripodTest extends MongoTripodTestBase
     {
         $uri = 'http://example.com/resources/1';
 
-        $g = new MongoGraph();
+        $g = new \Tripod\Mongo\MongoGraph();
         $g->add_resource_triple($uri, $g->qname_to_uri("rdf:type"), $g->qname_to_uri("acorn:Resource"));
         $g->add_literal_triple($uri, $g->qname_to_uri("dct:title"), "wibble");
-        $this->tripod->saveChanges(new MongoGraph(), $g,"http://talisaspire.com/", "something new");
+        $this->tripod->saveChanges(new \Tripod\Mongo\MongoGraph(), $g,"http://talisaspire.com/", "something new");
 
         $uG = $this->tripod->describeResource($uri);
 
@@ -293,10 +306,10 @@ class MongoTripodTest extends MongoTripodTestBase
         $uri = 'http://example.com/resources/1';
 
         // create a new entity and save it
-        $g = new MongoGraph();
+        $g = new \Tripod\Mongo\MongoGraph();
         $g->add_resource_triple($uri, $g->qname_to_uri("rdf:type"), $g->qname_to_uri("acorn:Resource"));
         $g->add_literal_triple($uri, $g->qname_to_uri("dct:title"), "wibble");
-        $this->tripod->saveChanges(new MongoGraph(), $g,"http://talisaspire.com/", "something new");
+        $this->tripod->saveChanges(new \Tripod\Mongo\MongoGraph(), $g,"http://talisaspire.com/", "something new");
 
         // retrieve it and make sure it was saved correctly
         $uG = $this->tripod->describeResource($uri);
@@ -305,7 +318,7 @@ class MongoTripodTest extends MongoTripodTestBase
         $this->assertTrue($uG->has_literal_triple( $uri, $g->qname_to_uri("dct:title"), "wibble"), "Graph should contain literal triple we added");
 
         // now remove all knowledge about it, then describe the resource again, should be an empty graph
-        $this->tripod->saveChanges($uG, new MongoGraph(),"http://talisaspire.com/", "murder death kill");
+        $this->tripod->saveChanges($uG, new \Tripod\Mongo\MongoGraph(),"http://talisaspire.com/", "murder death kill");
         $g = $this->tripod->describeResource($uri);
 
         $this->assertTrue($g->is_empty());
@@ -318,10 +331,10 @@ class MongoTripodTest extends MongoTripodTestBase
         $uri = 'http://example.com/resources/1';
 
         // create a new entity and save it
-        $oG = new MongoGraph();
+        $oG = new \Tripod\Mongo\MongoGraph();
         $oG->add_resource_triple($uri, $oG->qname_to_uri("rdf:type"), $oG->qname_to_uri("acorn:Resource"));
 
-        $nG = new MongoGraph();
+        $nG = new \Tripod\Mongo\MongoGraph();
         $nG->add_resource_triple($uri, $nG->qname_to_uri("rdf:type"), $nG->qname_to_uri("acorn:List"));
 
         $result = $this->tripod->saveChanges($oG, $nG,"http://talisaspire.com/");
@@ -333,22 +346,39 @@ class MongoTripodTest extends MongoTripodTestBase
 
         $uri = 'http://example.com/resources/1';
 
-        $g = new MongoGraph();
+        $g = new \Tripod\Mongo\MongoGraph();
         // canned response will simulate that the underlying data has changed
         $doc = array("_id"=>$uri, "rdf:type"=>array(array('value'=>$g->qname_to_uri("acorn:Resource"), 'type'=>'uri')));
 
-        $mockTripod = $this->getMock('Tripod', array('getDataUpdater'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
+        $mockTripod = $this->getMock(
+            '\Tripod\Mongo\Tripod',
+            array('getDataUpdater'),
+            array(
+                'CBD_testing',
+                'tripod_php_testing',
+                array('defaultContext'=>'http://talisaspire.com/')
+            )
+        );
 
-        $mockTripodUpdate = $this->getMock('Updates', array('getDocumentForUpdate'), array($mockTripod));
-        $mockTripodUpdate->expects($this->once())->method('getDocumentForUpdate')->with($uri)->will($this->returnValue($doc));
+        $mockTripodUpdate = $this->getMock(
+            '\Tripod\Mongo\Updates',
+            array('getDocumentForUpdate'),
+            array($mockTripod)
+        );
+
+        $mockTripodUpdate->expects($this->once())
+            ->method('getDocumentForUpdate')
+            ->with($uri)
+            ->will($this->returnValue($doc));
+
         $mockTripod->expects($this->atLeastOnce())
             ->method('getDataUpdater')
             ->will($this->returnValue($mockTripodUpdate));
         $mockTripod->setTransactionLog($this->tripodTransactionLog);
 
-        $oG = new MongoGraph();
+        $oG = new \Tripod\Mongo\MongoGraph();
         $oG->add_resource_triple($uri, $oG->qname_to_uri("rdf:type"), $oG->qname_to_uri("acorn:Book"));
-        $nG = new MongoGraph();
+        $nG = new \Tripod\Mongo\MongoGraph();
         $nG->add_resource_triple($uri, $nG->qname_to_uri("rdf:type"), $nG->qname_to_uri("acorn:Foo"));
 
         $result = $mockTripod->saveChanges($oG, $nG,"http://talisaspire.com/");
@@ -361,26 +391,44 @@ class MongoTripodTest extends MongoTripodTestBase
         // save some data in the store
         $uri = 'http://example.com/resources/1';
 
-        $g = new MongoGraph();
+        $g = new \Tripod\Mongo\MongoGraph();
         $g->add_resource_triple($uri, $g->qname_to_uri("rdf:type"), $g->qname_to_uri("acorn:Book"));
-        $this->tripod->saveChanges(new MongoGraph(), $g,"http://talisaspire.com/");
+        $this->tripod->saveChanges(new \Tripod\Mongo\MongoGraph(), $g,"http://talisaspire.com/");
 
         // canned response will simulate that the underlying data has changed
         $doc = array("_id"=>$uri, "_version"=>3,"rdf:type"=>array(array('value'=>$g->qname_to_uri("acorn:Resource"), 'type'=>'uri')));
 
-        $mockTripod = $this->getMock('Tripod', array('getDataUpdater'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
+        $mockTripod = $this->getMock(
+            '\Tripod\Mongo\Tripod',
+            array('getDataUpdater'),
+            array(
+                'CBD_testing',
+                'tripod_php_testing',
+                array('defaultContext'=>'http://talisaspire.com/')
+            )
+        );
 
-        $mockTripodUpdate = $this->getMock('Updates', array('getDocumentForUpdate'), array($mockTripod));
-        $mockTripodUpdate->expects($this->once())->method('getDocumentForUpdate')->with($uri)->will($this->returnValue($doc));
+        $mockTripodUpdate = $this->getMock(
+            '\Tripod\Mongo\Updates',
+            array('getDocumentForUpdate'),
+            array($mockTripod)
+        );
+
+        $mockTripodUpdate->expects($this->once())
+            ->method('getDocumentForUpdate')
+            ->with($uri)
+            ->will($this->returnValue($doc));
+
         $mockTripod->expects($this->atLeastOnce())
             ->method('getDataUpdater')
             ->will($this->returnValue($mockTripodUpdate));
+
         $mockTripod->setTransactionLog($this->tripodTransactionLog);
 
-        $oG = new MongoGraph();
+        $oG = new \Tripod\Mongo\MongoGraph();
         $oG->add_resource_triple($uri, $oG->qname_to_uri("rdf:type"), $oG->qname_to_uri("acorn:Resource"));
 
-        $nG = new MongoGraph();
+        $nG = new \Tripod\Mongo\MongoGraph();
         $nG->add_resource_triple($uri, $nG->qname_to_uri("rdf:type"), $nG->qname_to_uri("acorn:Foo"));
 
         $result = $mockTripod->saveChanges($oG, $nG,"http://talisaspire.com/");
@@ -391,12 +439,12 @@ class MongoTripodTest extends MongoTripodTestBase
         $uri = 'http://example.com/resources/1';
 
         // save a graph to the store
-        $oG = new MongoGraph();
+        $oG = new \Tripod\Mongo\MongoGraph();
         $oG->add_resource_triple($uri, $oG->qname_to_uri("rdf:type"), $oG->qname_to_uri("acorn:Resource"));
         $oG->add_literal_triple($uri, $oG->qname_to_uri("dct:title"), "Some title");
         $oG->add_literal_triple($uri, $oG->qname_to_uri("dct:title"), "Another title");
         $oG->add_literal_triple($uri, $oG->qname_to_uri("dct:title"), "Yet another title");
-        $this->tripod->saveChanges(new MongoGraph(), $oG,"http://talisaspire.com/");
+        $this->tripod->saveChanges(new \Tripod\Mongo\MongoGraph(), $oG,"http://talisaspire.com/");
 
         // retrieve it and make sure it was saved correctly
         $g = $this->tripod->describeResource($uri);
@@ -412,15 +460,15 @@ class MongoTripodTest extends MongoTripodTestBase
         $uri = 'http://example.com/resources/1';
 
         // save a graph to the store
-        $oG = new MongoGraph();
+        $oG = new \Tripod\Mongo\MongoGraph();
         $oG->add_resource_triple($uri, $oG->qname_to_uri("rdf:type"), $oG->qname_to_uri("acorn:Resource"));
         $oG->add_literal_triple($uri, $oG->qname_to_uri("dct:title"), "Some title");
         $oG->add_literal_triple($uri, $oG->qname_to_uri("dct:title"), "Another title");
         $oG->add_literal_triple($uri, $oG->qname_to_uri("dct:title"), "Yet another title");
-        $this->tripod->saveChanges(new MongoGraph(), $oG,"http://talisaspire.com/");
+        $this->tripod->saveChanges(new \Tripod\Mongo\MongoGraph(), $oG,"http://talisaspire.com/");
 
         // remove all three dct:title triples
-        $g2 = new MongoGraph();
+        $g2 = new \Tripod\Mongo\MongoGraph();
         $g2->add_resource_triple($uri, $oG->qname_to_uri("rdf:type"), $oG->qname_to_uri("acorn:Resource"));
         $this->tripod->saveChanges($oG, $g2,"http://talisaspire.com/");
 
@@ -437,14 +485,14 @@ class MongoTripodTest extends MongoTripodTestBase
         $uri = 'http://example.com/resources/1';
 
         // save a graph to the store
-        $oG = new MongoGraph();
+        $oG = new \Tripod\Mongo\MongoGraph();
         $oG->add_resource_triple($uri, $oG->qname_to_uri("rdf:type"), $oG->qname_to_uri("acorn:Resource"));
         $oG->add_literal_triple($uri, $oG->qname_to_uri("dct:title"), "Some title");
         $oG->add_literal_triple($uri, $oG->qname_to_uri("dct:title"), "Another title");
         $oG->add_literal_triple($uri, $oG->qname_to_uri("dct:title"), "Yet another title");
-        $this->tripod->saveChanges(new MongoGraph(), $oG,"http://talisaspire.com/");
+        $this->tripod->saveChanges(new \Tripod\Mongo\MongoGraph(), $oG,"http://talisaspire.com/");
 
-        $g2= new MongoGraph();
+        $g2= new \Tripod\Mongo\MongoGraph();
         $g2->add_resource_triple($uri, $g2->qname_to_uri("rdf:type"), $g2->qname_to_uri("acorn:Resource"));
         $g2->add_literal_triple($uri, $g2->qname_to_uri("dct:title"), "Updated Some title");
         $g2->add_literal_triple($uri, $g2->qname_to_uri("dct:title"), "Updated Another title");
@@ -471,17 +519,17 @@ class MongoTripodTest extends MongoTripodTestBase
         $uri = 'http://example.com/resources/1';
 
         // save a graph to the store
-        $oG = new MongoGraph();
+        $oG = new \Tripod\Mongo\MongoGraph();
         $oG->add_resource_triple($uri, $oG->qname_to_uri("rdf:type"), $oG->qname_to_uri("acorn:Resource"));
         $oG->add_literal_triple($uri, $oG->qname_to_uri("dct:title"), "Title one");
         $oG->add_literal_triple($uri, $oG->qname_to_uri("dct:title"), "Title two");
         $oG->add_literal_triple($uri, $oG->qname_to_uri("dct:title"), "Title three");
         $oG->add_literal_triple($uri, $oG->qname_to_uri("dct:title"), "Title four");
         $oG->add_literal_triple($uri, $oG->qname_to_uri("dct:title"), "Title five");
-        $this->tripod->saveChanges(new MongoGraph(), $oG,"http://talisaspire.com/");
+        $this->tripod->saveChanges(new \Tripod\Mongo\MongoGraph(), $oG,"http://talisaspire.com/");
 
         // new data
-        $g2= new MongoGraph();
+        $g2= new \Tripod\Mongo\MongoGraph();
         $g2->add_resource_triple($uri, $g2->qname_to_uri("rdf:type"), $g2->qname_to_uri("acorn:Resource"));
         $g2->add_literal_triple($uri, $g2->qname_to_uri("dct:title"), "New Title one");
         $g2->add_literal_triple($uri, $g2->qname_to_uri("dct:title"), "New Title two");
@@ -507,10 +555,23 @@ class MongoTripodTest extends MongoTripodTestBase
 
     public function testSetReadPreferenceWhenSavingChanges(){
         $subjectOne = "http://talisaspire.com/works/checkReadPreferencesWrite";
-        /** @var $tripodMock MongoTripod **/
-        $tripodMock = $this->getMock('Tripod', array('getDataUpdater'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
-        $tripodUpdate = $this->getMock('Updates',
-            array('addToSearchIndexQueue','setReadPreferenceToPrimary','resetOriginalReadPreference'), array($tripodMock));
+        /** @var $tripodMock \Tripod\Mongo\Tripod **/
+        $tripodMock = $this->getMock(
+            '\Tripod\Mongo\Tripod', 
+            array('getDataUpdater'), 
+            array(
+                'CBD_testing',
+                'tripod_php_testing',
+                array('defaultContext'=>'http://talisaspire.com/')
+            )
+        );
+        
+        $tripodUpdate = $this->getMock(
+            '\Tripod\Mongo\Updates',
+            array('addToSearchIndexQueue','setReadPreferenceToPrimary','resetOriginalReadPreference'), 
+            array($tripodMock)
+        );
+        
         $tripodUpdate
             ->expects($this->once(0))
             ->method('setReadPreferenceToPrimary');
@@ -518,14 +579,15 @@ class MongoTripodTest extends MongoTripodTestBase
         $tripodUpdate
             ->expects($this->once())
             ->method('resetOriginalReadPreference');
+        
         $tripodMock
             ->expects($this->once())
             ->method('getDataUpdater')
             ->will($this->returnValue($tripodUpdate));
 
-        $g = new MongoGraph();
+        $g = new \Tripod\Mongo\MongoGraph();
         $g->add_literal_triple($subjectOne, $g->qname_to_uri("dct:title"), "Title one");
-        $tripodMock->saveChanges(new MongoGraph(), $g,"http://talisaspire.com/");
+        $tripodMock->saveChanges(new \Tripod\Mongo\MongoGraph(), $g,"http://talisaspire.com/");
     }
 
     /**
@@ -533,10 +595,23 @@ class MongoTripodTest extends MongoTripodTestBase
      */
     public function testReadPreferencesAreRestoredWhenErrorSavingChanges(){
         $subjectOne = "http://talisaspire.com/works/checkReadPreferencesAreRestoredOnError";
-        /** @var $tripodMock MongoTripod **/
-        $tripodMock = $this->getMock('Tripod', array('getDataUpdater'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
-        $tripodUpdate = $this->getMock('Updates',
-            array('addToSearchIndexQueue','resetOriginalReadPreference','getContextAlias'), array($tripodMock));
+        /** @var $tripodMock \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject **/
+        $tripodMock = $this->getMock(
+            '\Tripod\Mongo\Tripod', 
+            array('getDataUpdater'), 
+            array(
+                'CBD_testing',
+                'tripod_php_testing',
+                array('defaultContext'=>'http://talisaspire.com/')
+            )
+        );
+
+        /** @var $tripodUpdate \Tripod\Mongo\Updates|PHPUnit_Framework_MockObject_MockObject **/
+        $tripodUpdate = $this->getMock(
+            '\Tripod\Mongo\Updates',
+            array('addToSearchIndexQueue','resetOriginalReadPreference','getContextAlias'), 
+            array($tripodMock)
+        );
 
         $tripodUpdate
             ->expects($this->once())
@@ -552,9 +627,9 @@ class MongoTripodTest extends MongoTripodTestBase
             ->method('getDataUpdater')
             ->will($this->returnValue($tripodUpdate));
 
-        $g = new MongoGraph();
+        $g = new \Tripod\Mongo\MongoGraph();
         $g->add_literal_triple($subjectOne, $g->qname_to_uri("dct:title"), "Title one");
-        $tripodMock->saveChanges(new MongoGraph(), $g,"http://talisaspire.com/");
+        $tripodMock->saveChanges(new \Tripod\Mongo\MongoGraph(), $g,"http://talisaspire.com/");
     }
 
     public function testReadPreferencesOverMultipleSaves(){
@@ -567,7 +642,7 @@ class MongoTripodTest extends MongoTripodTestBase
                 array('defaultContext'=>'http://talisaspire.com/', 'readPreference'=>MongoClient::RP_SECONDARY_PREFERRED))
         );
 
-        $tripodUpdate = $this->getMock('Updates',
+        $tripodUpdate = $this->getMock('\Tripod\Mongo\Updates',
             array('addToSearchIndexQueue', 'validateGraphCardinality'), array($tripodMock));
         $tripodUpdate
             ->expects($this->any())
@@ -585,23 +660,20 @@ class MongoTripodTest extends MongoTripodTestBase
             ->will($this->returnValue($tripodUpdate));
 
         $expectedCollectionReadPreference = $tripodMock->getCollectionReadPreference();
-//        $expectedDbReadPreference = $tripodMock->db->getReadPreference();
         $this->assertEquals($expectedCollectionReadPreference['type'], MongoClient::RP_SECONDARY_PREFERRED);
-//        $this->assertEquals($expectedDbReadPreference['type'], MongoClient::RP_SECONDARY_PREFERRED);
 
         // Assert that a simple save results in read preferences being restored
-        $g = new MongoGraph();
+        $g = new \Tripod\Mongo\MongoGraph();
         $g->add_literal_triple($subjectOne, $g->qname_to_uri("dct:title"), "Title one");
-        $tripodMock->saveChanges(new MongoGraph(), $g,"http://talisaspire.com/");
+        $tripodMock->saveChanges(new \Tripod\Mongo\MongoGraph(), $g,"http://talisaspire.com/");
         $this->assertEquals($expectedCollectionReadPreference, $tripodMock->getCollectionReadPreference());
-//        $this->assertEquals($expectedDbReadPreference, $tripodMock->db->getReadPreference());
 
         // Assert a thrown exception still results in read preferences being restored
-        $g = new MongoGraph();
+        $g = new \Tripod\Mongo\MongoGraph();
         $g->add_literal_triple($subjectOne, $g->qname_to_uri("dct:title2"), "Title two");
         $exceptionThrown = false;
         try{
-            $tripodMock->saveChanges(new MongoGraph(), $g,"http://talisaspire.com/");
+            $tripodMock->saveChanges(new \Tripod\Mongo\MongoGraph(), $g,"http://talisaspire.com/");
         }
         catch(Exception $e){
             $exceptionThrown = true;
@@ -611,9 +683,9 @@ class MongoTripodTest extends MongoTripodTestBase
         $this->assertEquals($expectedCollectionReadPreference, $tripodMock->getCollectionReadPreference());
 
         // Assert that a new save after the exception still results in read preferences being restored
-        $g = new MongoGraph();
+        $g = new \Tripod\Mongo\MongoGraph();
         $g->add_literal_triple($subjectOne, $g->qname_to_uri("dct:title3"), "Title three");
-        $tripodMock->saveChanges(new MongoGraph(), $g,"http://talisaspire.com/");
+        $tripodMock->saveChanges(new \Tripod\Mongo\MongoGraph(), $g,"http://talisaspire.com/");
         $this->assertEquals($expectedCollectionReadPreference, $tripodMock->getCollectionReadPreference());
 
     }
@@ -624,12 +696,12 @@ class MongoTripodTest extends MongoTripodTestBase
 
         $this->lockDocument($subjectOne,"transaction_101");
 
-        $this->setExpectedException('Exception', "Error storing changes: Did not obtain locks on documents");
+        $this->setExpectedException('\Exception', "Error storing changes: Did not obtain locks on documents");
 
-        $g = new MongoGraph();
+        $g = new \Tripod\Mongo\MongoGraph();
         $g->add_literal_triple($subjectOne, $g->qname_to_uri("dct:title"), "Title one");
 
-        $this->tripod->saveChanges(new MongoGraph(), $g,"http://talisaspire.com/");
+        $this->tripod->saveChanges(new \Tripod\Mongo\MongoGraph(), $g,"http://talisaspire.com/");
 
     }
 
@@ -639,14 +711,14 @@ class MongoTripodTest extends MongoTripodTestBase
         $subjectTwo = 'http://example.com/resources/2';
 
         // save a graph to the store containng two completely new entities
-        $oG = new MongoGraph();
+        $oG = new \Tripod\Mongo\MongoGraph();
         $oG->add_resource_triple($subjectOne, $oG->qname_to_uri("rdf:type"), $oG->qname_to_uri("acorn:Resource"));
         $oG->add_literal_triple($subjectOne, $oG->qname_to_uri("dct:title"), "Title one");
         $oG->add_literal_triple($subjectOne, $oG->qname_to_uri("dct:title"), "Title two");
         $oG->add_resource_triple($subjectTwo, $oG->qname_to_uri("rdf:type"), $oG->qname_to_uri("acorn:Book"));
         $oG->add_literal_triple($subjectTwo, $oG->qname_to_uri("dct:title"), "Title three");
         $oG->add_literal_triple($subjectTwo, $oG->qname_to_uri("dct:title"), "Title four");
-        $this->tripod->saveChanges(new MongoGraph(), $oG,"http://talisaspire.com/");
+        $this->tripod->saveChanges(new \Tripod\Mongo\MongoGraph(), $oG,"http://talisaspire.com/");
 
         // retrieve them both, assert they are as we expect
         $g = $this->tripod->describeResources(array($subjectOne, $subjectTwo));
@@ -660,7 +732,7 @@ class MongoTripodTest extends MongoTripodTestBase
         $this->assertTrue($g->has_literal_triple($subjectTwo,  $g->qname_to_uri("dct:title"), 'Title four'));
 
         // now lets save some changes to both
-        $nG = new MongoGraph();
+        $nG = new \Tripod\Mongo\MongoGraph();
         $nG->add_graph($g);
         $nG->remove_literal_triple($subjectOne,  $g->qname_to_uri("dct:title"), 'Title one');
         $nG->add_literal_triple($subjectOne,  $g->qname_to_uri("dct:title"), 'Updated Title one');
@@ -693,17 +765,17 @@ class MongoTripodTest extends MongoTripodTestBase
         $uri = 'http://example.com/resources/1';
 
         // save a new entity, and retrieve it
-        $g = new MongoGraph();
+        $g = new \Tripod\Mongo\MongoGraph();
         $g->add_resource_triple($uri, $g->qname_to_uri("rdf:type"), $g->qname_to_uri("acorn:Resource"));
         $g->add_literal_triple($uri, $g->qname_to_uri("dct:title"), "wibble");
-        $this->tripod->saveChanges(new MongoGraph(), $g, "http://talisaspire.com/", "something new");
+        $this->tripod->saveChanges(new \Tripod\Mongo\MongoGraph(), $g, "http://talisaspire.com/", "something new");
         $uG = $this->tripod->describeResource($uri);
         $this->assertTrue($uG->has_triples_about($uri), "new entity we created was not saved");
         $this->assertTrue($uG->has_resource_triple( $uri, $g->qname_to_uri("rdf:type"), $g->qname_to_uri("acorn:Resource")), "Graph should contain resource triple we added");
         $this->assertTrue($uG->has_literal_triple( $uri, $g->qname_to_uri("dct:title"), "wibble"), "Graph should contain literal triple we added");
         $this->assertDocumentVersion(array("r"=>$uri,"c"=>"http://talisaspire.com/"), 0);
 
-        $nG = new MongoGraph();
+        $nG = new \Tripod\Mongo\MongoGraph();
         $nG->add_graph($g);
         $nG->add_literal_triple($uri, $g->qname_to_uri("dct:title"), "another title");
         $this->tripod->saveChanges($g, $nG,"http://talisaspire.com/");
@@ -713,7 +785,7 @@ class MongoTripodTest extends MongoTripodTestBase
         $this->assertTrue($uG->has_literal_triple( $uri, $g->qname_to_uri("dct:title"), "another title"), "Graph should contain literal triple we added");
         $this->assertDocumentVersion(array("r"=>$uri,"c"=>"http://talisaspire.com/"), 1);
 
-        $nG = new MongoGraph();
+        $nG = new \Tripod\Mongo\MongoGraph();
         //$nG->add_graph();
         $nG->add_literal_triple($uri, $g->qname_to_uri("dct:title"), "only a title");
         $this->tripod->saveChanges($uG, $nG,"http://talisaspire.com/");
@@ -726,13 +798,13 @@ class MongoTripodTest extends MongoTripodTestBase
         $this->assertDocumentVersion(array("r"=>$uri,"c"=>"http://talisaspire.com/"), 2);
 
         // remove it completely
-        $this->tripod->saveChanges($nG, new MongoGraph(),"http://talisaspire.com/");
+        $this->tripod->saveChanges($nG, new \Tripod\Mongo\MongoGraph(),"http://talisaspire.com/");
         $this->assertDocumentHasBeenDeleted(array("r"=>$uri,"c"=>"http://talisaspire.com/"));
     }
 
     public function testSaveChangesWithInvalidCardinality()
     {
-        $this->setExpectedException('CardinalityException', "Cardinality failed on http://foo/bar/1 for 'rdf:type' - should only have 1 value and has: http://foo/bar#Class1, http://foo/bar#Class2");
+        $this->setExpectedException('\Tripod\Exceptions\CardinalityException', "Cardinality failed on http://foo/bar/1 for 'rdf:type' - should only have 1 value and has: http://foo/bar#Class1, http://foo/bar#Class2");
 
         $config = array();
         $config['namespaces'] = array('rdf'=>'http://www.w3.org/1999/02/22-rdf-syntax-ns#');
@@ -765,10 +837,10 @@ class MongoTripodTest extends MongoTripodTestBase
         // Override the config defined in base test class as we need specific config here.
         \Tripod\Mongo\Config::setConfig($config);
 
-        $tripod = new MongoTripod('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/'));
+        $tripod = new \Tripod\Mongo\Tripod('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/'));
 
-        $oldGraph = new ExtendedGraph();
-        $newGraph = new ExtendedGraph();
+        $oldGraph = new \Tripod\ExtendedGraph();
+        $newGraph = new \Tripod\ExtendedGraph();
         $newGraph->add_resource_triple('http://foo/bar/1', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'http://foo/bar#Class1');
         $newGraph->add_resource_triple('http://foo/bar/1', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'http://foo/bar#Class2');
 
@@ -780,14 +852,14 @@ class MongoTripodTest extends MongoTripodTestBase
     {
         $uri_1 = "http://example.com/1";
         $uri_2 = "http://example.com/2";
-        $oG = new MongoGraph();
+        $oG = new \Tripod\Mongo\MongoGraph();
         $oG->add_resource_triple($uri_1, $oG->qname_to_uri("rdf:type"), $oG->qname_to_uri("acorn:Resource"));
         $oG->add_resource_triple($uri_2, $oG->qname_to_uri("rdf:type"), $oG->qname_to_uri("acorn:Resource"));
 
         // just updates, all three operations async
-        /** @var MongoTripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
+        /** @var \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
         $mockTripod = $this->getMock(
-            'Tripod',
+            '\Tripod\Mongo\Tripod',
             array(
                 'getDataUpdater',
                 'getComposite'
@@ -807,7 +879,7 @@ class MongoTripodTest extends MongoTripodTestBase
         );
 
         $mockTripodUpdates = $this->getMock(
-            'Updates',
+            '\Tripod\Mongo\Updates',
             array(
                 'storeChanges',
                 'submitJob'
@@ -824,7 +896,7 @@ class MongoTripodTest extends MongoTripodTestBase
             )
         );
 
-        $labeller = new MongoTripodLabeller();
+        $labeller = new \Tripod\Mongo\Labeller();
 
         $subjectsAndPredicatesOfChange = array(
             $labeller->uri_to_alias('http://example.com/1')=>array('rdf:type'),
@@ -845,7 +917,7 @@ class MongoTripodTest extends MongoTripodTestBase
             ->method('getComposite');
         $mockTripodUpdates->expects($this->once())
             ->method('submitJob')
-            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"DiscoverImpactedSubjects", $jobData);
+            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"\Tripod\Mongo\DiscoverImpactedSubjects", $jobData);
 
         $mockTripodUpdates->expects($this->once())
             ->method('storeChanges')
@@ -855,19 +927,19 @@ class MongoTripodTest extends MongoTripodTestBase
             ->method('getDataUpdater')
             ->will($this->returnValue($mockTripodUpdates));
 
-        $mockTripod->saveChanges(new ExtendedGraph(), $oG,"http://talisaspire.com/");
+        $mockTripod->saveChanges(new \Tripod\ExtendedGraph(), $oG,"http://talisaspire.com/");
     }
 
     public function testDiscoverImpactedSubjectsForDeletionsSyncOpsAreDoneAsyncJobSubmitted()
     {
         $uri_1 = "http://example.com/1";
         $uri_2 = "http://example.com/2";
-        $oG = new MongoGraph();
+        $oG = new \Tripod\Mongo\MongoGraph();
         $oG->add_resource_triple($uri_1, $oG->qname_to_uri("rdf:type"), $oG->qname_to_uri("acorn:Resource"));
         $oG->add_resource_triple($uri_2, $oG->qname_to_uri("rdf:type"), $oG->qname_to_uri("acorn:Resource"));
 //        // just deletes, search only
         $mockTripod = $this->getMock(
-            'Tripod',
+            '\Tripod\Mongo\Tripod',
             array('getDataUpdater','getComposite'),
             array(
                 'CBD_testing',
@@ -880,7 +952,7 @@ class MongoTripodTest extends MongoTripodTestBase
         );
 
         $mockTripodUpdates = $this->getMock(
-            'Updates',
+            '\Tripod\Mongo\Updates',
             array(
                 'storeChanges',
                 'submitJob'
@@ -898,7 +970,7 @@ class MongoTripodTest extends MongoTripodTestBase
         );
 
         $mockViews = $this->getMock(
-            'Views',
+            '\Tripod\Mongo\Views',
             array('getImpactedSubjects', 'update'),
             array(
                 'tripod_php_testing',
@@ -908,7 +980,7 @@ class MongoTripodTest extends MongoTripodTestBase
         );
 
         $mockTables = $this->getMock(
-            'Tables',
+            '\Tripod\Mongo\Tables',
             array('getImpactedSubjects', 'update'),
             array(
                 'tripod_php_testing',
@@ -917,7 +989,7 @@ class MongoTripodTest extends MongoTripodTestBase
             )
         );
 
-        $labeller = new MongoTripodLabeller();
+        $labeller = new \Tripod\Mongo\Labeller();
 
         // The predicates should be empty arrays, since these were deletes
         $subjectsAndPredicatesOfChange = array(
@@ -935,7 +1007,7 @@ class MongoTripodTest extends MongoTripodTestBase
         );
 
         $impactedViewSubjects = array(
-            new ImpactedSubject(
+            new \Tripod\Mongo\ImpactedSubject(
                 array(
                     _ID_RESOURCE=>'http://example.com/1',
                     _ID_CONTEXT=>'http://talisaspire.com',
@@ -944,7 +1016,7 @@ class MongoTripodTest extends MongoTripodTestBase
                 'tripod_php_testing',
                 'CBD_testing'
             ),
-            new ImpactedSubject(
+            new \Tripod\Mongo\ImpactedSubject(
                 array(
                     _ID_RESOURCE=>'http://example.com/2',
                     _ID_CONTEXT=>'http://talisaspire.com',
@@ -954,7 +1026,7 @@ class MongoTripodTest extends MongoTripodTestBase
                 'CBD_testing'
             ),
             // Make up random affected subject
-            new ImpactedSubject(
+            new \Tripod\Mongo\ImpactedSubject(
                 array(
                     _ID_RESOURCE=>'http://example.com/9',
                     _ID_CONTEXT=>'http://talisaspire.com',
@@ -976,7 +1048,7 @@ class MongoTripodTest extends MongoTripodTestBase
             );
 
         $impactedTableSubjects = array(
-            new ImpactedSubject(
+            new \Tripod\Mongo\ImpactedSubject(
                 array(
                     _ID_RESOURCE=>'http://example.com/1',
                     _ID_CONTEXT=>'http://talisaspire.com',
@@ -985,7 +1057,7 @@ class MongoTripodTest extends MongoTripodTestBase
                 'tripod_php_testing',
                 'CBD_testing'
             ),
-            new ImpactedSubject(
+            new \Tripod\Mongo\ImpactedSubject(
                 array(
                     _ID_RESOURCE=>'http://example.com/2',
                     _ID_CONTEXT=>'http://talisaspire.com',
@@ -1008,7 +1080,7 @@ class MongoTripodTest extends MongoTripodTestBase
 
         $mockTripodUpdates->expects($this->once())
             ->method('submitJob')
-            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"DiscoverImpactedSubjects", $jobData);
+            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"\Tripod\Mongo\DiscoverImpactedSubjects", $jobData);
 
         $mockTripodUpdates->expects($this->once())
             ->method('storeChanges')
@@ -1027,27 +1099,27 @@ class MongoTripodTest extends MongoTripodTestBase
             ->method('getDataUpdater')
             ->will($this->returnValue($mockTripodUpdates));
 
-        $mockTripod->saveChanges($oG, new ExtendedGraph(),"http://talisaspire.com/");
+        $mockTripod->saveChanges($oG, new \Tripod\ExtendedGraph(),"http://talisaspire.com/");
     }
 
     public function testDiscoverImpactedSubjectsForDefaultOperationsSetting()
     {
         $uri_1 = "http://example.com/1";
         $uri_2 = "http://example.com/2";
-        $oG = new MongoGraph();
+        $oG = new \Tripod\Mongo\MongoGraph();
         $oG->add_resource_triple($uri_1, $oG->qname_to_uri("rdf:type"), $oG->qname_to_uri("acorn:Resource"));
         $oG->add_resource_triple($uri_2, $oG->qname_to_uri("rdf:type"), $oG->qname_to_uri("acorn:Resource"));
 
         // a delete and an update
-        $nG = new MongoGraph();
+        $nG = new \Tripod\Mongo\MongoGraph();
         $nG->add_graph($oG);
         // This should
         $nG->add_literal_triple($uri_1, $nG->qname_to_uri("searchterms:title"), "wibble");
         $nG->remove_resource_triple($uri_2, $oG->qname_to_uri("rdf:type"), "http://foo/bar#Class2");
 
-        /** @var MongoTripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
+        /** @var \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
         $mockTripod = $this->getMock(
-            'Tripod',
+            '\Tripod\Mongo\Tripod',
             array(
                 'getComposite',
                 'getDataUpdater'
@@ -1060,7 +1132,7 @@ class MongoTripodTest extends MongoTripodTestBase
         );
 
         $mockTripodUpdates = $this->getMock(
-            'Updates',
+            '\Tripod\Mongo\Updates',
             array(
                 'storeChanges',
                 'submitJob'
@@ -1079,7 +1151,7 @@ class MongoTripodTest extends MongoTripodTestBase
         );
 
         $mockViews = $this->getMock(
-            'Views',
+            '\Tripod\Mongo\Views',
             array('getImpactedSubjects', 'update'),
             array(
                 'tripod_php_testing',
@@ -1089,7 +1161,7 @@ class MongoTripodTest extends MongoTripodTestBase
         );
 
         $impactedViewSubjects = array(
-            new ImpactedSubject(
+            new \Tripod\Mongo\ImpactedSubject(
                 array(
                     _ID_RESOURCE=>$uri_1,
                     _ID_CONTEXT=>'http://talisaspire.com',
@@ -1098,7 +1170,7 @@ class MongoTripodTest extends MongoTripodTestBase
                 'tripod_php_testing',
                 'CBD_testing'
             ),
-            new ImpactedSubject(
+            new \Tripod\Mongo\ImpactedSubject(
                 array(
                     _ID_RESOURCE=>$uri_2,
                     _ID_CONTEXT=>'http://talisaspire.com',
@@ -1109,7 +1181,7 @@ class MongoTripodTest extends MongoTripodTestBase
             ),
         );
 
-        $labeller = new MongoTripodLabeller();
+        $labeller = new \Tripod\Mongo\Labeller();
 
         $subjectsAndPredicatesOfChange = array(
             $labeller->uri_to_alias($uri_1)=>array('searchterms:title'),
@@ -1133,7 +1205,7 @@ class MongoTripodTest extends MongoTripodTestBase
 
         $mockTripodUpdates->expects($this->once())
             ->method('submitJob')
-            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"DiscoverImpactedSubjects", $jobData);
+            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"\Tripod\Mongo\DiscoverImpactedSubjects", $jobData);
 
         $mockTripodUpdates->expects($this->once())
             ->method('storeChanges')
@@ -1161,11 +1233,11 @@ class MongoTripodTest extends MongoTripodTestBase
     {
 //        Exception: testing:SOME_COLLECTION is not referenced within config, so cannot be written to
         $this->setExpectedException(
-            'MongoTripodConfigException',
+            '\Tripod\Exceptions\ConfigException',
             'Collection name \'SOME_COLLECTION\' not in configuration');
 
-        $tripod = new MongoTripod("SOME_COLLECTION","tripod_php_testing");
-        $tripod->saveChanges(new ExtendedGraph(), new ExtendedGraph(), 'http://talisaspire.com/');
+        $tripod = new \Tripod\Mongo\Tripod("SOME_COLLECTION","tripod_php_testing");
+        $tripod->saveChanges(new \Tripod\ExtendedGraph(), new \Tripod\ExtendedGraph(), 'http://talisaspire.com/');
     }
 
     // NAMESPACE TESTS
@@ -1177,8 +1249,8 @@ class MongoTripodTest extends MongoTripodTestBase
      */
     public function testTripodSaveChangesAddsLiteralTripleUsingEmptyOldGraphWithNamespacableIDAndContext()
     {
-        $oG = new MongoGraph();
-        $nG = new MongoGraph();
+        $oG = new \Tripod\Mongo\MongoGraph();
+        $nG = new \Tripod\Mongo\MongoGraph();
         $nG->add_graph($oG);
 
         // resource and context are namespaced in base data this time around...
@@ -1196,8 +1268,8 @@ class MongoTripodTest extends MongoTripodTestBase
      */
     public function testTripodSaveChangesAddsLiteralTripleUsingEmptyOldGraphWithNamespacedContext()
     {
-        $oG = new MongoGraph();
-        $nG = new MongoGraph();
+        $oG = new \Tripod\Mongo\MongoGraph();
+        $nG = new \Tripod\Mongo\MongoGraph();
         $nG->add_graph($oG);
 
         // resource and context are namespaced in base data this time around...
@@ -1231,26 +1303,6 @@ class MongoTripodTest extends MongoTripodTestBase
         $this->assertEquals($noNsG->to_rdfxml(),$nsContextG->to_rdfxml(),"Non ns and nsContext not equal");
         $this->assertEquals($noNsG->to_rdfxml(),$nsBothG->to_rdfxml(),"Non ns and nsBoth not equal");
     }
-
-// TODO: re-write this test now that operations are defined as part of the ModifiedSubjects that are passed to queueAsync
-//    public function testAsyncOperationsDoNotContainSearchIfNoESConfig()
-//    {
-//        $configFileName = dirname(__FILE__).'/data/config.json';
-//        $config = json_decode(file_get_contents($configFileName), true);
-//
-//        $config['search_config'] = array();
-//        Config::setConfig($config);
-//
-//        $uri_1 = "http://example.com/1";
-//        $oG = new MongoGraph();
-//        $oG->add_resource_triple($uri_1, $oG->qname_to_uri("rdf:type"), $oG->qname_to_uri("acorn:Resource"));
-//
-//        // just updates, all three operations async
-//        $mockTripod = $this->getMock('Tripod', array('queueASyncOperations','processOperations'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/',"async"=>array(OP_TABLES=>true,OP_VIEWS=>true,OP_SEARCH=>true))));
-//        $mockTripod->expects($this->once())->method('queueASyncOperations')->with(array('http://example.com/1'), array(), 'http://talisaspire.com/', array(OP_VIEWS, OP_TABLES));
-//        $mockTripod->expects($this->never())->method('processOperations');
-//        $mockTripod->saveChanges(new ExtendedGraph(), $oG,"http://talisaspire.com/");
-//    }
 
     public function testSelectSingleValueWithNamespaceContextQueryDoesntContainID()
     {
@@ -1427,7 +1479,7 @@ class MongoTripodTest extends MongoTripodTestBase
         $table = "t_nothing_to_see_here";
 
         $this->setExpectedException(
-            'MongoTripodConfigException',
+            '\Tripod\Exceptions\ConfigException',
             'Table id \'t_nothing_to_see_here\' not in configuration'
         );
         $results = $this->tripod->getDistinctTableColumnValues($table, "value.foo");
@@ -1553,8 +1605,8 @@ class MongoTripodTest extends MongoTripodTestBase
             ->will($this->throwException(new Exception('Some unexpected error occurred.')));
 
         /* @var $tripod PHPUnit_Framework_MockObject_MockObject */
-        $tripod = $this->getMock('Tripod', array('getDataUpdater'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
-        $tripodUpdate = $this->getMock('Updates', array('getAuditManualRollbacksCollection'), array($tripod));
+        $tripod = $this->getMock('\Tripod\Mongo\Tripod', array('getDataUpdater'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
+        $tripodUpdate = $this->getMock('\Tripod\Mongo\Updates', array('getAuditManualRollbacksCollection'), array($tripod));
 
         $tripodUpdate
             ->expects($this->once())
@@ -1590,8 +1642,8 @@ class MongoTripodTest extends MongoTripodTestBase
             ->with(array("_id" => $mongoDocumentId), array('$set' => array("status" => AUDIT_STATUS_ERROR, _UPDATED_TS => $mongoDate, 'error' => 'Some unexpected error occurred.')));
 
         /* @var $tripod PHPUnit_Framework_MockObject_MockObject */
-        $tripod = $this->getMock('Tripod', array('getDataUpdater'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
-        $tripodUpdate = $this->getMock('Updates',
+        $tripod = $this->getMock('\Tripod\Mongo\Tripod', array('getDataUpdater'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
+        $tripodUpdate = $this->getMock('\Tripod\Mongo\Updates',
             array('unlockAllDocuments', 'generateIdForNewMongoDocument', 'getMongoDate', 'getAuditManualRollbacksCollection'),
             array($tripod));
         
@@ -1648,9 +1700,9 @@ class MongoTripodTest extends MongoTripodTestBase
             ->method('update')
             ->with(array("_id" => $mongoDocumentId), array('$set' => array("status" => AUDIT_STATUS_COMPLETED, _UPDATED_TS => $mongoDate)));
 
-        /* @var MongoTripod PHPUnit_Framework_MockObject_MockObject */
-        $tripod = $this->getMock('Tripod', array('getDataUpdater'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
-        $tripodUpdate = $this->getMock('Updates',
+        /* @var \Tripod\Mongo\Tripod PHPUnit_Framework_MockObject_MockObject */
+        $tripod = $this->getMock('\Tripod\Mongo\Tripod', array('getDataUpdater'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
+        $tripodUpdate = $this->getMock('\Tripod\Mongo\Updates',
             array('unlockAllDocuments', 'generateIdForNewMongoDocument', 'getMongoDate', 'getAuditManualRollbacksCollection'),
             array($tripod));
         
@@ -1689,29 +1741,4 @@ class MongoTripodTest extends MongoTripodTestBase
 
 
     /** END: removeInertLocks tests */
-
-//TODO Need to discuss the switch from a db->find() to get types to looking in ExtendedGraph a bit more
-//     before enabling this test otherwise we'll have a create another resource that gets loaded into
-//     mongo to query or change the code to make the db->find() mockable.
-//    public function testSaveChangesCallsGenerateIndexWhenOneType()
-//    {
-//        $oldGraph = new ExtendedGraph();
-//        $newGraph = new ExtendedGraph();
-//
-//        $oldGraph->add_literal_triple('http://talisaspire.com/foo/1', 'http://talisaspire.com/schema#foo1', 'foo1');
-//        $oldGraph->add_resource_triple('http://talisaspire.com/foo/1', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'http://purl.org/ontology/bibo/Book');
-//
-//        $newGraph->add_literal_triple('http://talisaspire.com/foo/1', 'http://talisaspire.com/schema#foo1', 'foo1');
-//        $newGraph->add_resource_triple('http://talisaspire.com/foo/1', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'http://purl.org/ontology/bibo/Book');
-//        $newGraph->add_literal_triple('http://talisaspire.com/foo/1', 'http://talisaspire.com/schema#foo1', 'foo2');
-//
-//        // Prevent writes to Mongo but check what should be send to Elastic Search
-//        $mockTripod = $this->getMock('Tripod', array('generateSearchDocument', 'storeChanges'), array('CBD_testing','tripod_php_testing'));
-//        $mockTripod->expects($this->any())->method('storeChanges')->will($this->returnValue(true));
-//        $mockTripod->expects($this->any())->method('generateSearchDocument');
-//        //$mockTripod->expects($this->once())->method('generateSearchDocument')->with('http://purl.org/ontology/bibo/Book', 'http://talisaspire.com/foo/1');
-//
-//        $mockTripod->saveChanges($oldGraph, $newGraph);
-//    }
-
 }

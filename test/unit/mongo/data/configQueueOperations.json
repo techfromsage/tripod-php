@@ -55,7 +55,7 @@
                 }
             ],
             "search_config":{
-                "search_provider":"MongoSearchProvider",
+                "search_provider":"\\Tripod\\Mongo\\MongoSearchProvider",
                 "search_specifications":[
                     {
                         "_id":"i_search_resource",
