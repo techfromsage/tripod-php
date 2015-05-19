@@ -81,7 +81,7 @@ class IndexUtils
                     }
                     $collection->ensureIndex($indexes, array("background"=>$background));
                 }
-            }   
+            }
         }
     }
 }
