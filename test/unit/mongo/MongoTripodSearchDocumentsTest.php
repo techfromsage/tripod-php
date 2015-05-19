@@ -405,7 +405,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
 
         $subjectsAndPredicatesOfChange = array($uriAlias=>array('rdf:type', 'dct:title'));
 
-        /** @var \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
+        /** @var PHPUnit_Framework_MockObject_MockObject|\Tripod\Mongo\Tripod $mockTripod */
         $mockTripod = $this->getMock(
             '\Tripod\Mongo\Tripod',
             array(

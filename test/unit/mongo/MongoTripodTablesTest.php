@@ -4,7 +4,9 @@ require_once 'src/mongo/delegates/Tables.class.php';
 require_once 'src/mongo/Tripod.class.php';
 require_once 'src/mongo/MongoGraph.class.php';
 
-
+/**
+ * Class MongoTripodTablesTest
+ */
 class MongoTripodTablesTest extends MongoTripodTestBase
 {
     /**
@@ -270,6 +272,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
     public function testUpdateWillDeleteItem()
     {
+        /** @var \Tripod\Mongo\Tables|PHPUnit_Framework_MockObject_MockObject $mockTables */
         $mockTables = $this->getMock('\Tripod\Mongo\Tables', array('deleteTableRowsForResource','generateTableRowsForType'), $this->tablesConstParams);
         $mockTables->expects($this->once())->method('deleteTableRowsForResource')->with("http://foo","context");
         $mockTables->expects($this->never())->method('generateTableRowsForType');
@@ -279,6 +282,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
     public function testUpdateWillGenerateRows()
     {
+        /** @var \Tripod\Mongo\Tables|PHPUnit_Framework_MockObject_MockObject $mockTables */
         $mockTables = $this->getMock('\Tripod\Mongo\Tables', array('deleteRowsForResource','generateTableRowsForResource'), $this->tablesConstParams);
         $mockTables->expects($this->once())->method('generateTableRowsForResource')->with("http://foo","context");
         $mockTables->expects($this->never())->method('deleteTableRowsForResource');
@@ -844,6 +848,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             $labeller->uri_to_alias($uri)=>array("dct:title")
         );
 
+        /** @var \Tripod\Mongo\Tables|PHPUnit_Framework_MockObject_MockObject $mockTables */
         $tables = $this->getMock('\Tripod\Mongo\Tables',
             array('generateTableRows'),
             array(
@@ -1336,6 +1341,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         $this->assertEquals(1, $tableRows['head']['count']);
 
+        /** @var \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
         $mockTripod = $this->getMockBuilder('\Tripod\Mongo\Tripod')
             ->setMethods(array('getDataUpdater'))
             ->setConstructorArgs(
@@ -1353,6 +1359,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
                 )
             )->getMock();
 
+        /** @var \Tripod\Mongo\Updates|PHPUnit_Framework_MockObject_MockObject $mockUpdates */
         $mockTripodUpdates = $this->getMockBuilder('\Tripod\Mongo\Updates')
             ->setConstructorArgs(
                 array(
@@ -1456,6 +1463,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
      */
     public function testSavingMultipleNewEntitiesResultsInOneImpactedSubject()
     {
+        /** @var \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject $tripod */
         $tripod = $this->getMockBuilder('\Tripod\Mongo\Tripod')
             ->setMethods(array('getDataUpdater'))
             ->setConstructorArgs(
@@ -1473,6 +1481,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
                 )
             )->getMock();
 
+        /** @var \Tripod\Mongo\Updates|PHPUnit_Framework_MockObject_MockObject $tripodUpdates */
         $tripodUpdates = $this->getMockBuilder('\Tripod\Mongo\Updates')
             ->setMethods(array('submitJob'))
             ->setConstructorArgs(
