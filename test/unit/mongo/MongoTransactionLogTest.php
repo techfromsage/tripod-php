@@ -407,7 +407,15 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         $this->assertFalse( $g->has_triples_about('http://example.com/resources/5'), "Should not contain triples about /resources/5");
     }
 
-    // helper method
+    /**
+     * helper method
+     * @param string $id
+     * @param string $subjectOfChange
+     * @param string $startTime
+     * @param string $endTime
+     * @param int $_version
+     * @return array
+     */
     protected function buildTransactionDocument($id, $subjectOfChange, $startTime, $endTime, $_version)
     {
         $transaction_template = array(
