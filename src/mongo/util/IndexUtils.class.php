@@ -64,6 +64,10 @@ class IndexUtils
                     {
                         $indexes = array_merge($indexes, $spec['ensureIndexes']);
                     }
+                    if ($reindex)
+                    {
+                        $collection->deleteIndexes();
+                    }
                     $collection->ensureIndex($indexes, array("background"=>$background));
                 }
             }
@@ -78,6 +82,10 @@ class IndexUtils
                     if(isset($spec['ensureIndexes']))
                     {
                         $indexes = array_merge($indexes, $spec['ensureIndexes']);
+                    }
+                    if ($reindex)
+                    {
+                        $collection->deleteIndexes();
                     }
                     $collection->ensureIndex($indexes, array("background"=>$background));
                 }
