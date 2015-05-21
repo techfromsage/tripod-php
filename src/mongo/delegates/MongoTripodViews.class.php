@@ -324,8 +324,9 @@ class MongoTripodViews extends MongoTripodBase implements SplObserver
                 throw new TripodViewException('Could not find any joins in view specification - usecase better served with select()');
             }
 
-            // ensure both the ID field and the impactIndex indexes are correctly set up
+            // ensure that the ID field, view type, and the impactIndex indexes are correctly set up
             $collection->ensureIndex(array('_id.r'=>1, '_id.c'=>1,'_id.type'=>1),array('background'=>1));
+            $collection->ensureIndex(array('_id.type'=>1),array('background'=>1));
             $collection->ensureIndex(array('value.'._IMPACT_INDEX=>1),array('background'=>1));
 
             // ensure any custom view indexes

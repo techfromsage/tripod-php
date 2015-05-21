@@ -4,7 +4,9 @@
     require_once TRIPOD_DIR . 'mongo/providers/MongoSearchProvider.class.php';
     require_once TRIPOD_DIR . 'exceptions/TripodSearchException.class.php';
 
-
+/**
+ * Class MongoTripodSearchIndexer
+ */
 class MongoTripodSearchIndexer extends MongoTripodBase implements SplObserver
 {
     private $tripod = null;
@@ -18,6 +20,9 @@ class MongoTripodSearchIndexer extends MongoTripodBase implements SplObserver
      */
     private $configuredProvider = null;
 
+    /**
+     * @param MongoTripod $tripod
+     */
     public function __construct(MongoTripod $tripod)
     {
         $this->tripod = $tripod;
