@@ -3,10 +3,10 @@
 namespace Tripod;
 
 /**
- * Class ITripodSearchProvider
+ * Class ISearchProvider
  * @package Tripod
  */
-interface ITripodSearchProvider
+interface ISearchProvider
 {
     /**
      * Indexes the given document

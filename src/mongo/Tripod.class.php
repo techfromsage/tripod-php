@@ -291,7 +291,7 @@ class Tripod extends TripodBase implements \Tripod\ITripod
         if(class_exists($provider)){
             $timer = new \Tripod\Timer();
             $timer->start();
-            /** @var $searchProvider \Tripod\ITripodSearchProvider */
+            /** @var $searchProvider \Tripod\ISearchProvider */
             $searchProvider = new $provider($this);
             $results =  $searchProvider->search($q, $type, $indices, $fields, $limit, $offset);
             $timer->stop();

@@ -20,7 +20,7 @@ class SearchIndexer extends CompositeBase
     protected $stat = null;
 
     /**
-     * @var $configuredProvider \Tripod\ITripodSearchProvider
+     * @var $configuredProvider \Tripod\ISearchProvider
      */
     private $configuredProvider = null;
 
@@ -175,7 +175,7 @@ class SearchIndexer extends CompositeBase
     
 
     /**
-     * @return \Tripod\ITripodSearchProvider
+     * @return \Tripod\ISearchProvider
      */
     protected function getSearchProvider()
     {

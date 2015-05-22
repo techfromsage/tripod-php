@@ -4,14 +4,14 @@ namespace Tripod\Mongo;
 
 require_once TRIPOD_DIR.'mongo/MongoTripodConstants.php';
 require_once TRIPOD_DIR . 'mongo/delegates/SearchDocuments.class.php';
-require_once TRIPOD_DIR.'mongo/providers/ITripodSearchProvider.php';
+require_once TRIPOD_DIR . 'mongo/providers/ISearchProvider.php';
 require_once TRIPOD_DIR.'classes/Timer.class.php';
 
 /**
  * Class MongoSearchProvider
  * @package Tripod\Mongo
  */
-class MongoSearchProvider implements \Tripod\ITripodSearchProvider
+class MongoSearchProvider implements \Tripod\ISearchProvider
 {
     /**
      * @var Tripod
