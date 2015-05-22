@@ -888,13 +888,18 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             OP_TABLES,
             $this->defaultStoreName,
             $this->defaultPodName,
-            // Order of these doesn't matter - if the test fails, reverse the order and try again
             array("t_distinct","t_join_source_count_regex")
         );
 
         $impactedSubjects = $table->getImpactedSubjects($subjectsAndPredicatesOfChange, $this->defaultContext);
 
-        $this->assertEquals($expectedImpactedSubject, $impactedSubjects[0]);
+        $impactedSubject = $impactedSubjects[0];
+
+        $this->assertEquals($expectedImpactedSubject->getResourceId(), $impactedSubject->getResourceId());
+        $this->assertEquals($expectedImpactedSubject->getOperation(), $impactedSubject->getOperation());
+        $this->assertEquals($expectedImpactedSubject->getStoreName(), $impactedSubject->getStoreName());
+        $this->assertEquals($expectedImpactedSubject->getPodName(), $impactedSubject->getPodName());
+        $this->assertEquals($expectedImpactedSubject->getSpecTypes(), $impactedSubject->getSpecTypes());
 
         foreach($impactedSubjects as $subject)
         {
