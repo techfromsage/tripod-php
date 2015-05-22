@@ -78,14 +78,14 @@ require_once 'mongo/Tripods.php';
  * @param string|null $id
  * @param string|null $viewId
  * @param string $storeName
- * @param iTripodStat|null $stat
+ * @param \Tripod\ITripodStat|null $stat
  */
 function generateViews($id, $viewId, $storeName, $stat)
 {
-    $viewSpec = MongoTripodConfig::getInstance()->getViewSpecification($storeName, $viewId);
+    $viewSpec = \Tripod\Mongo\Config::getInstance()->getViewSpecification($storeName, $viewId);
     if(empty($viewSpec)) // Older version of Tripod being used?
     {
-        $viewSpec = MongoTripodConfig::getInstance()->getViewSpecification($viewId);
+        $viewSpec = \Tripod\Mongo\Config::getInstance()->getViewSpecification($viewId);
     }
     echo $viewId;
     if (array_key_exists("from",$viewSpec))
@@ -93,7 +93,7 @@ function generateViews($id, $viewId, $storeName, $stat)
         MongoCursor::$timeout = -1;
 
         print "Generating $viewId";
-        $tripod = new MongoTripod($viewSpec['from'], $storeName, array('stat'=>$stat));
+        $tripod = new \Tripod\Mongo\Tripod($viewSpec['from'], $storeName, array('stat'=>$stat));
         $views = $tripod->getTripodViews();//new Views($tripod->storeName,$tripod->collection,$tripod->defaultContext);
         if ($id)
         {
@@ -108,10 +108,10 @@ function generateViews($id, $viewId, $storeName, $stat)
     }
 }
 
-$t = new Timer();
+$t = new \Tripod\Timer();
 $t->start();
 
-MongoTripodConfig::setConfig(json_decode(file_get_contents($configLocation),true));
+\Tripod\Mongo\Config::setConfig(json_decode(file_get_contents($configLocation),true));
 
 if(isset($options['s']) || isset($options['storename']))
 {
@@ -153,7 +153,7 @@ if ($viewId)
 }
 else
 {
-    foreach(MongoTripodConfig::getInstance()->getViewSpecifications($storeName) as $viewSpec)
+    foreach(\Tripod\Mongo\Config::getInstance()->getViewSpecifications($storeName) as $viewSpec)
     {
         generateViews($id, $viewSpec['_id'], $storeName, $stat);
     }

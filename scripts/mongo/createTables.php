@@ -78,21 +78,21 @@ require_once 'mongo/Tripod.class.php';
  * @param string|null $id
  * @param string|null $tableId
  * @param string|null $storeName
- * @param iTripodStat|null $stat
+ * @param \Tripod\ITripodStat|null $stat
  */
 function generateTables($id, $tableId, $storeName, $stat = null)
 {
-    $tableSpec = TripodConfig::getInstance()->getTableSpecification($storeName, $tableId);
+    $tableSpec = \Tripod\Mongo\Config::getInstance()->getTableSpecification($storeName, $tableId);
     if(empty($tableSpec)) // Older version of Tripod being used?
     {
-        $tableSpec = TripodConfig::getInstance()->getTableSpecification($tableId);
+        $tableSpec = \Tripod\Mongo\Config::getInstance()->getTableSpecification($tableId);
     }
     if (array_key_exists("from",$tableSpec))
     {
         MongoCursor::$timeout = -1;
 
         print "Generating $tableId";
-        $tripod = new MongoTripod($tableSpec['from'], $storeName, array('stat'=>$stat));
+        $tripod = new \Tripod\Mongo\Tripod($tableSpec['from'], $storeName, array('stat'=>$stat));
         $tTables = $tripod->getTripodTables();//new Tables($tripod->storeName,$tripod->collection,$tripod->defaultContext);
         if ($id)
         {
@@ -107,10 +107,10 @@ function generateTables($id, $tableId, $storeName, $stat = null)
     }
 }
 
-$t = new Timer();
+$t = new \Tripod\Timer();
 $t->start();
 
-TripodConfig::setConfig(json_decode(file_get_contents($configLocation),true));
+\Tripod\Mongo\Config::setConfig(json_decode(file_get_contents($configLocation),true));
 
 if(isset($options['s']) || isset($options['storename']))
 {
@@ -153,7 +153,7 @@ if ($tableId)
 }
 else
 {
-    foreach(TripodConfig::getInstance()->getTableSpecifications($storeName) as $tableSpec)
+    foreach(\Tripod\Mongo\Config::getInstance()->getTableSpecifications($storeName) as $tableSpec)
     {
         generateTables($id, $tableSpec['_id'], $storeName, $stat);
     }
