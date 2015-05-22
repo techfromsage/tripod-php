@@ -81,11 +81,11 @@ class Timer
     {
         if (is_null($this->start_time))
         {
-            throw new \Exception('Timer: start method not called !');
+            throw new \Tripod\Exceptions\TimerException('Timer: start method not called !');
         }
         else if (is_null($this->end_time))
         {
-            throw new \Exception('Timer: stop method not called !');
+            throw new \Tripod\Exceptions\TimerException('Timer: stop method not called !');
         }
 
         if ($this->micro_result==null)
