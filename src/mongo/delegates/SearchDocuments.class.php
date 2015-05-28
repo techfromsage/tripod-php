@@ -13,11 +13,10 @@ class SearchDocuments extends TripodBase
      * Tripod and should inherit connections set up there
      * @param string $storeName
      * @param \MongoCollection $collection
-     * @param $defaultContext
-     * @param null $stat
-     * @internal param \MongoDB $db
+     * @param string $defaultContext
+     * @param \Tripod\ITripodStat|null $stat
      */
-    function __construct($storeName, \MongoCollection $collection, $defaultContext, $stat=null)
+    public function __construct($storeName, \MongoCollection $collection, $defaultContext, $stat=null)
     {
         $this->labeller = new Labeller();
         $this->storeName = $storeName;

@@ -65,11 +65,11 @@ class Tables extends CompositeBase
      * Tripod and should inherit connections set up there
      * @param string $storeName
      * @param \MongoCollection $collection
-     * @param $defaultContext
-     * @param $stat
+     * @param string $defaultContext
+     * @param \Tripod\ITripodStat|null $stat
      * todo: MongoCollection -> podName
      */
-    function __construct($storeName,\MongoCollection $collection,$defaultContext,$stat=null)
+    public function __construct($storeName,\MongoCollection $collection,$defaultContext,$stat=null)
     {
         $this->labeller = new Labeller();
         $this->storeName = $storeName;
@@ -82,7 +82,6 @@ class Tables extends CompositeBase
     }
 
     /**
-     * @todo Test that deleted subject works properly now that Subject->delete is removed
      * Receive update from subject
      * @param ImpactedSubject
      * @return void

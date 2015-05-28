@@ -13,7 +13,7 @@ class Updates extends TripodBase {
     /**
      * $var TransactionLog
      */
-    private $transaction_log = null;
+    private $transactionLog = null;
 
     /**
      * @var Labeller
@@ -1117,11 +1117,11 @@ class Updates extends TripodBase {
      */
     public function getTransactionLog()
     {
-        if($this->transaction_log==null)
+        if($this->transactionLog==null)
         {
-            $this->transaction_log = new TransactionLog();
+            $this->transactionLog = new TransactionLog();
         }
-        return $this->transaction_log;
+        return $this->transactionLog;
     }
 
     /**
@@ -1129,7 +1129,7 @@ class Updates extends TripodBase {
      */
     public function setTransactionLog(TransactionLog $transactionLog)
     {
-        $this->transaction_log = $transactionLog;
+        $this->transactionLog = $transactionLog;
     }
 
 

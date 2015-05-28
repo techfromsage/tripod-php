@@ -254,8 +254,6 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         );
 
         $actualView = \Tripod\Mongo\Config::getInstance()->getCollectionForView('tripod_php_testing', 'v_counts')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/works/4d101f63c10a6',"c"=>"http://talisaspire.com/","type"=>'v_counts')));
-//        var_dump($actualView); die;
-//        var_dump($expectedView);
         $this->assertEquals($expectedView,$actualView);
     }
 
