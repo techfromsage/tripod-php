@@ -1,10 +1,10 @@
 <?php
 
-namespace Tripod\Mongo;
+namespace Tripod\Mongo\Jobs;
 
 /**
  * Class ApplyOperation
- * @package Tripod\Mongo
+ * @package Tripod\Mongo\Jobs
  */
 class ApplyOperation extends JobBase {
     /**
@@ -23,7 +23,7 @@ class ApplyOperation extends JobBase {
             $this->validateArgs();
 
             // set the config to what is received
-            Config::setConfig($this->args["tripodConfig"]);
+            \Tripod\Mongo\Config::setConfig($this->args["tripodConfig"]);
 
             $subject = $this->createImpactedSubject($this->args['subject']);
 
@@ -45,11 +45,11 @@ class ApplyOperation extends JobBase {
     /**
      * For mocking
      * @param array $args
-     * @return ImpactedSubject
+     * @return \Tripod\Mongo\ImpactedSubject
      */
     protected function createImpactedSubject(array $args)
     {
-        return new ImpactedSubject(
+        return new \Tripod\Mongo\ImpactedSubject(
             $args["resourceId"],
             $args["operation"],
             $args["storeName"],

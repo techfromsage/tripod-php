@@ -32,7 +32,7 @@ require_once("tripod.inc.php");
 
 Config::setConfig($conf); // set the config, usually read in as JSON from a file
 
-$tripod = new Tripod(
+$tripod = new Driver(
   "CBD_users", // pod (read: MongoDB collection) we're working with
   "myapp" // store (read: MongoDB database)  we're working with
 );
@@ -65,7 +65,7 @@ $tripod->saveChanges(
 );
 
 // save, but background all the expensive view/table/search generation
-$tripod = new Tripod("CBD_users",  "usersdb", array(
+$tripod = new Driver("CBD_users",  "usersdb", array(
     'async' = array(OP_VIEWS,OP_TABLES,OP_SEARCH) // async opt says what to do later via a queue rather than as part of the save
   )
 );

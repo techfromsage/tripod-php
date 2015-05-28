@@ -93,7 +93,7 @@ function generateViews($id, $viewId, $storeName, $stat)
         MongoCursor::$timeout = -1;
 
         print "Generating $viewId";
-        $tripod = new \Tripod\Mongo\Tripod($viewSpec['from'], $storeName, array('stat'=>$stat));
+        $tripod = new \Tripod\Mongo\Driver($viewSpec['from'], $storeName, array('stat'=>$stat));
         $views = $tripod->getTripodViews();//new Views($tripod->storeName,$tripod->collection,$tripod->defaultContext);
         if ($id)
         {

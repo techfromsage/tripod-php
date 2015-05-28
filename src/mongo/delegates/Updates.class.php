@@ -8,7 +8,7 @@ require_once TRIPOD_DIR . 'mongo/Config.class.php';
  * Class Updates
  * @package Tripod\Mongo
  */
-class Updates extends TripodBase {
+class Updates extends DriverBase {
 
     /**
      * $var TransactionLog
@@ -33,7 +33,7 @@ class Updates extends TripodBase {
     private $originalDbReadPreference = array();
 
     /**
-     * @var Tripod
+     * @var Driver
      */
     protected $tripod;
 
@@ -59,10 +59,10 @@ class Updates extends TripodBase {
     protected $locksCollection;
 
     /**
-     * @param Tripod $tripod
+     * @param Driver $tripod
      * @param array $opts
      */
-    public function __construct(Tripod $tripod,$opts=array())
+    public function __construct(Driver $tripod,$opts=array())
     {
         $this->tripod = $tripod;
         $this->storeName = $tripod->getStoreName();
@@ -308,7 +308,7 @@ class Updates extends TripodBase {
 
             $this->debugLog(MONGO_LOCK,
                 array(
-                    'description'=>'Tripod::storeChanges - Unlocking documents, apply change-set completed',
+                    'description'=>'Driver::storeChanges - Unlocking documents, apply change-set completed',
                     'transaction_id'=>$transaction_id,
                 )
             );
@@ -361,7 +361,7 @@ class Updates extends TripodBase {
                     // Error log here
                     $this->errorLog(MONGO_ROLLBACK,
                         array(
-                            'description' => 'Tripod::rollbackTransaction - Error updating transaction',
+                            'description' => 'Driver::rollbackTransaction - Error updating transaction',
                             'exception_message' => $exception->getMessage(),
                             'transaction_id' => $transaction_id,
                             'mongoDriverError' => $this->getDatabase()->lastError()
@@ -375,7 +375,7 @@ class Updates extends TripodBase {
         {
             $this->errorLog(MONGO_ROLLBACK,
                 array(
-                    'description'=>'Tripod::rollbackTransaction - Unlocking documents',
+                    'description'=>'Driver::rollbackTransaction - Unlocking documents',
                     'exception_message' => $exception->getMessage(),
                     'transaction_id'=>$transaction_id,
                     'mongoDriverError' => $this->getDatabase()->lastError()
@@ -597,7 +597,7 @@ class Updates extends TripodBase {
                 {
                     $this->errorLog(MONGO_WRITE,
                         array(
-                            'description'=>'Tripod::storeChanges - Update failed we did not find a matching document (transaction_id - ' .$transaction_id .')',
+                            'description'=>'Driver::storeChanges - Update failed we did not find a matching document (transaction_id - ' .$transaction_id .')',
                             $result
                         )
                     );
@@ -741,7 +741,7 @@ class Updates extends TripodBase {
                 "podName" => $this->podName,
                 "contextAlias" => $contextAlias
             );
-            $this->submitJob(Config::getDiscoverQueueName(),"\Tripod\Mongo\DiscoverImpactedSubjects",$data);
+            $this->submitJob(Config::getDiscoverQueueName(),"\Tripod\Mongo\Jobs\DiscoverImpactedSubjects",$data);
         }
     }
 
@@ -804,7 +804,7 @@ class Updates extends TripodBase {
             {
                 $this->debugLog(MONGO_LOCK,
                     array(
-                        'description'=>'Tripod::lockAllDocuments - Attempting to get lock',
+                        'description'=>'Driver::lockAllDocuments - Attempting to get lock',
                         'transaction_id'=>$transaction_id,
                         'subject'=>$s,
                         'attempt' => $retry
@@ -816,7 +816,7 @@ class Updates extends TripodBase {
 
                     $this->debugLog(MONGO_LOCK,
                         array(
-                            'description'=>'Tripod::lockAllDocuments - Got the lock',
+                            'description'=>'Driver::lockAllDocuments - Got the lock',
                             'transaction_id'=>$transaction_id,
                             'subject'=>$s,
                             'retry' => $retry
@@ -838,7 +838,7 @@ class Updates extends TripodBase {
 
                 $this->debugLog(MONGO_LOCK,
                     array(
-                        'description'=>"Tripod::lockAllDocuments - Unable to lock all ". count($subjectsOfChange) ."  documents, unlocked  " . count($lockedSubjects) . " locked documents",
+                        'description'=>"Driver::lockAllDocuments - Unable to lock all ". count($subjectsOfChange) ."  documents, unlocked  " . count($lockedSubjects) . " locked documents",
                         'transaction_id'=>$transaction_id,
                         'documentsToLock' => implode(",", $subjectsOfChange),
                         'documentsLocked' => implode(",", $lockedSubjects),
@@ -904,7 +904,7 @@ class Updates extends TripodBase {
             catch(\Exception $e) { //simply send false as status as we are unable to create audit entry
                 $this->errorLog(MONGO_LOCK,
                     array(
-                        'description'=>'Tripod::removeInertLocks - failed',
+                        'description'=>'Driver::removeInertLocks - failed',
                         'transaction_id'=>$transaction_id,
                         'exception-message' => $e->getMessage()
                     )
@@ -927,7 +927,7 @@ class Updates extends TripodBase {
             }
             catch(\Exception $e) {
                 $logInfo = array(
-                    'description'=>'Tripod::removeInertLocks - failed',
+                    'description'=>'Driver::removeInertLocks - failed',
                     'transaction_id'=>$transaction_id,
                     'exception-message' => $e->getMessage()
                 );
@@ -961,7 +961,7 @@ class Updates extends TripodBase {
         if(!$res["ok"] || $res['err']!=NULL){
             $this->errorLog(MONGO_LOCK,
                 array(
-                    'description'=>'Tripod::unlockAllDocuments - Failed to unlock documents (transaction_id - ' .$transaction_id .')',
+                    'description'=>'Driver::unlockAllDocuments - Failed to unlock documents (transaction_id - ' .$transaction_id .')',
                     'mongoDriverError' => $this->getLocksDatabase()->lastError(),
                     $res
                 )
@@ -1011,7 +1011,7 @@ class Updates extends TripodBase {
             catch(\Exception $e) { //Subject is already locked or unable to lock
                 $this->debugLog(MONGO_LOCK,
                     array(
-                        'description'=>'Tripod::lockSingleDocument - failed with exception',
+                        'description'=>'Driver::lockSingleDocument - failed with exception',
                         'transaction_id'=>$transaction_id,
                         'subject'=>$s,
                         'exception-message' => $e->getMessage()
@@ -1039,7 +1039,7 @@ class Updates extends TripodBase {
                 catch(\Exception $e){
                     $this->errorLog(MONGO_LOCK,
                         array(
-                            'description'=>'Tripod::lockSingleDocument - failed when creating new document',
+                            'description'=>'Driver::lockSingleDocument - failed when creating new document',
                             'transaction_id'=>$transaction_id,
                             'subject'=>$s,
                             'exception-message' => $e->getMessage(),
@@ -1165,12 +1165,12 @@ class Updates extends TripodBase {
     }
 
     /**
-     * Creates a new Tripod instance
+     * Creates a new Driver instance
      * @param array $data
-     * @return Tripod
+     * @return Driver
      */
     protected function getTripod($data) {
-        return new Tripod(
+        return new Driver(
             $data['collection'],
             $data['database'],
             array('stat'=>$this->stat));

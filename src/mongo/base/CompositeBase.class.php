@@ -1,18 +1,18 @@
 <?php
 
-namespace Tripod\Mongo;
+namespace Tripod\Mongo\Composites;
 
 /**
  * Class CompositeBase
- * @package Tripod\Mongo
+ * @package Tripod\Mongo\Composites
  */
-abstract class CompositeBase extends TripodBase implements IComposite
+abstract class CompositeBase extends \Tripod\Mongo\DriverBase implements \Tripod\Mongo\IComposite
 {
     /**
      * Returns an array of ImpactedSubjects based on the subjects and predicates of change
      * @param array $subjectsAndPredicatesOfChange
      * @param string $contextAlias
-     * @return ImpactedSubject[]
+     * @return \Tripod\Mongo\ImpactedSubject[]
      */
     public function getImpactedSubjects(Array $subjectsAndPredicatesOfChange,$contextAlias)
     {
@@ -111,7 +111,7 @@ abstract class CompositeBase extends TripodBase implements IComposite
             foreach($candidates[$podName] as $candidate)
             {
                 $specTypes = (isset($candidate['specTypes']) ? $candidate['specTypes'] : array());
-                $impactedSubjects[] = new ImpactedSubject($candidate['id'], $this->getOperationType(), $this->getStoreName(), $podName, $specTypes);
+                $impactedSubjects[] = new \Tripod\Mongo\ImpactedSubject($candidate['id'], $this->getOperationType(), $this->getStoreName(), $podName, $specTypes);
             }
         }
         return $impactedSubjects;
@@ -165,7 +165,7 @@ abstract class CompositeBase extends TripodBase implements IComposite
         if(!empty($intersectingTypes))
         {
             // Views should always invalidate
-            if($this instanceof Views)
+            if($this instanceof \Tripod\Mongo\Views)
             {
                 return true;
             }

@@ -9,10 +9,10 @@ $TOTAL_TIME=0;
 use Monolog\Logger;
 
 /**
- * Class TripodBase
+ * Class DriverBase
  * @package Tripod\Mongo
  */
-abstract class TripodBase
+abstract class DriverBase
 {
     /**
      * @var \MongoCollection

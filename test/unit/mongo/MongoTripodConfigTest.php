@@ -1133,7 +1133,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             $this->markTestSkipped("All datasources configured for store use same configuration, nothing to test");
         }
 
-        $this->tripod = new \Tripod\Mongo\Tripod('CBD_testing', $storeName, array(OP_ASYNC=>array(OP_VIEWS=>true,OP_TABLES=>false,OP_SEARCH=>false)));
+        $this->tripod = new \Tripod\Mongo\Driver('CBD_testing', $storeName, array(OP_ASYNC=>array(OP_VIEWS=>true,OP_TABLES=>false,OP_SEARCH=>false)));
         $this->loadBaseDataViaTripod();
 
         $graph = new \Tripod\Mongo\MongoGraph();

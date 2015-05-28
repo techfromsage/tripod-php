@@ -1,7 +1,7 @@
 <?php
 require_once 'MongoTripodTestBase.php';
 require_once 'src/mongo/delegates/Tables.class.php';
-require_once 'src/mongo/Tripod.class.php';
+require_once 'src/mongo/Driver.class.php';
 require_once 'src/mongo/MongoGraph.class.php';
 
 /**
@@ -10,7 +10,7 @@ require_once 'src/mongo/MongoGraph.class.php';
 class MongoTripodTablesTest extends MongoTripodTestBase
 {
     /**
-     * @var \Tripod\Mongo\Tripod
+     * @var \Tripod\Mongo\Driver
      */
     protected $tripod = null;
     /**
@@ -19,7 +19,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
     protected $tripodTransationLog = null;
 
     /**
-     * @var \Tripod\Mongo\Tables
+     * @var \Tripod\Mongo\Composites\Tables
      */
     protected $tripodTables = null;
 
@@ -40,7 +40,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $this->tripodTransactionLog = new \Tripod\Mongo\TransactionLog();
         $this->tripodTransactionLog->purgeAllTransactions();
 
-        $this->tripod = new \Tripod\Mongo\Tripod($this->defaultPodName, $this->defaultStoreName, array("async"=>array(OP_VIEWS=>false, OP_TABLES=>false, OP_SEARCH=>false)));
+        $this->tripod = new \Tripod\Mongo\Driver($this->defaultPodName, $this->defaultStoreName, array("async"=>array(OP_VIEWS=>false, OP_TABLES=>false, OP_SEARCH=>false)));
 
         $this->getTripodCollection($this->tripod)->drop();
         $this->tripod->setTransactionLog($this->tripodTransactionLog);
@@ -49,7 +49,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         $this->tablesConstParams = array($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),'http://talisaspire.com/');
 
-        $this->tripodTables = new \Tripod\Mongo\Tables($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),null); // pass null context, should default to http://talisaspire.com
+        $this->tripodTables = new \Tripod\Mongo\Composites\Tables($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),null); // pass null context, should default to http://talisaspire.com
 
         // purge tables
         foreach(\Tripod\Mongo\Config::getInstance()->getCollectionsForTables($this->tripod->getStoreName()) as $collection)
@@ -272,8 +272,8 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
     public function testUpdateWillDeleteItem()
     {
-        /** @var \Tripod\Mongo\Tables|PHPUnit_Framework_MockObject_MockObject $mockTables */
-        $mockTables = $this->getMock('\Tripod\Mongo\Tables', array('deleteTableRowsForResource','generateTableRowsForType'), $this->tablesConstParams);
+        /** @var \Tripod\Mongo\Composites\Tables|PHPUnit_Framework_MockObject_MockObject $mockTables */
+        $mockTables = $this->getMock('\Tripod\Mongo\Composites\Tables', array('deleteTableRowsForResource','generateTableRowsForType'), $this->tablesConstParams);
         $mockTables->expects($this->once())->method('deleteTableRowsForResource')->with("http://foo","context");
         $mockTables->expects($this->never())->method('generateTableRowsForType');
 
@@ -282,8 +282,8 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
     public function testUpdateWillGenerateRows()
     {
-        /** @var \Tripod\Mongo\Tables|PHPUnit_Framework_MockObject_MockObject $mockTables */
-        $mockTables = $this->getMock('\Tripod\Mongo\Tables', array('deleteRowsForResource','generateTableRowsForResource'), $this->tablesConstParams);
+        /** @var \Tripod\Mongo\Composites\Tables|PHPUnit_Framework_MockObject_MockObject $mockTables */
+        $mockTables = $this->getMock('\Tripod\Mongo\Composites\Tables', array('deleteRowsForResource','generateTableRowsForResource'), $this->tablesConstParams);
         $mockTables->expects($this->once())->method('generateTableRowsForResource')->with("http://foo","context");
         $mockTables->expects($this->never())->method('deleteTableRowsForResource');
 
@@ -383,9 +383,9 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
     public function testGenerateTableRowsForResourcesOfTypeWithNamespace()
     {
-        /* @var \Tripod\Mongo\Tables|PHPUnit_Framework_MockObject_MockObject $mockTripodTables  */
+        /* @var \Tripod\Mongo\Composites\Tables|PHPUnit_Framework_MockObject_MockObject $mockTripodTables  */
         $mockTripodTables = $this->getMock(
-            '\Tripod\Mongo\Tables',
+            '\Tripod\Mongo\Composites\Tables',
             array('generateTableRows'),
             array($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),'http://talisaspire.com/')
         );
@@ -394,9 +394,9 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         // check where referred to as acorn:Work2 in spec...
         $mockTripodTables->generateTableRowsForType("http://talisaspire.com/schema#Work2");
 
-        /* @var \Tripod\Mongo\Tables|PHPUnit_Framework_MockObject_MockObject $mockTripodTables */
+        /* @var \Tripod\Mongo\Composites\Tables|PHPUnit_Framework_MockObject_MockObject $mockTripodTables */
         $mockTripodTables = $this->getMock(
-            '\Tripod\Mongo\Tables',
+            '\Tripod\Mongo\Composites\Tables',
             array('generateTableRows'),
             array($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),'http://talisaspire.com/')
         );
@@ -464,7 +464,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         foreach($tableSpecifications['fields'] as $field)
         {
             // If there is invalid config, an exception will be thrown
-            $tripodConfig->checkModifierFunctions($field['predicates'], \Tripod\Mongo\Tables::$predicateModifiers);
+            $tripodConfig->checkModifierFunctions($field['predicates'], \Tripod\Mongo\Composites\Tables::$predicateModifiers);
         }
 
     }
@@ -498,7 +498,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         \Tripod\Mongo\Config::setConfig($this->generateMongoTripodTestConfig());
         $tripodConfig = \Tripod\Mongo\Config::getInstance();
 
-        $tripodConfig->checkModifierFunctions($tableSpecifications['predicates'], \Tripod\Mongo\Tables::$predicateModifiers);
+        $tripodConfig->checkModifierFunctions($tableSpecifications['predicates'], \Tripod\Mongo\Composites\Tables::$predicateModifiers);
     }
 
     /**
@@ -825,9 +825,9 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         
         $uri = "http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2";
 
-        /** @var PHPUnit_Framework_MockObject_MockObject|\Tripod\Mongo\Tripod $tripod */
+        /** @var PHPUnit_Framework_MockObject_MockObject|\Tripod\Mongo\Driver $tripod */
         $tripod = $this->getMock(
-            '\Tripod\Mongo\Tripod',
+            '\Tripod\Mongo\Driver',
             array('getComposite'),
             array(
                 $this->defaultPodName,
@@ -848,8 +848,8 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             $labeller->uri_to_alias($uri)=>array("dct:title")
         );
 
-        /** @var \Tripod\Mongo\Tables|PHPUnit_Framework_MockObject_MockObject $mockTables */
-        $tables = $this->getMock('\Tripod\Mongo\Tables',
+        /** @var \Tripod\Mongo\Composites\Tables|PHPUnit_Framework_MockObject_MockObject $mockTables */
+        $tables = $this->getMock('\Tripod\Mongo\Composites\Tables',
             array('generateTableRows'),
             array(
                 $tripod->getStoreName(),
@@ -881,9 +881,9 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         // Walk through the processSyncOperations process manually for tables
 
-        /** @var \Tripod\Mongo\Tables $table */
+        /** @var \Tripod\Mongo\Composites\Tables $table */
         $table = $tripod->getComposite(OP_TABLES);
-        $this->assertInstanceOf('\Tripod\Mongo\Tables', $table);
+        $this->assertInstanceOf('\Tripod\Mongo\Composites\Tables', $table);
 
         $expectedImpactedSubject = new \Tripod\Mongo\ImpactedSubject(
             array(
@@ -949,7 +949,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         // Walk through the processSyncOperations process manually for tables
 
-        $table = new \Tripod\Mongo\Tables(
+        $table = new \Tripod\Mongo\Composites\Tables(
             $this->defaultStoreName,
             \Tripod\Mongo\Config::getInstance()->getCollectionForCBD($this->defaultStoreName, $this->defaultPodName),
             $this->defaultContext
@@ -964,9 +964,9 @@ class MongoTripodTablesTest extends MongoTripodTestBase
     public function testUpdateOfResourceInImpactIndexTriggersRegenerationTableRows()
     {
         
-        /** @var \Tripod\Mongo\Tables|PHPUnit_Framework_MockObject_MockObject $mockTables */
+        /** @var \Tripod\Mongo\Composites\Tables|PHPUnit_Framework_MockObject_MockObject $mockTables */
         $mockTables = $this->getMock(
-            '\Tripod\Mongo\Tables',
+            '\Tripod\Mongo\Composites\Tables',
             array('generateTableRows'),
             $this->tablesConstParams
         );
@@ -1048,9 +1048,9 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             )
         );
 
-        /** @var \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
+        /** @var \Tripod\Mongo\Driver|PHPUnit_Framework_MockObject_MockObject $mockTripod */
         $mockTripod = $this->getMock(
-            '\Tripod\Mongo\Tripod',
+            '\Tripod\Mongo\Driver',
             array(
                 'getDataUpdater'
             ),
@@ -1105,9 +1105,9 @@ class MongoTripodTablesTest extends MongoTripodTestBase
                 $this->defaultContext
             );
 
-        /** @var \Tripod\Mongo\Tables|PHPUnit_Framework_MockObject_MockObject $mockTables */
+        /** @var \Tripod\Mongo\Composites\Tables|PHPUnit_Framework_MockObject_MockObject $mockTables */
         $mockTables = $this->getMock(
-            '\Tripod\Mongo\Tables',
+            '\Tripod\Mongo\Composites\Tables',
             array('generateTableRowsForType'),
             array(
                 $this->defaultStoreName,
@@ -1155,7 +1155,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $labeller = new \Tripod\Mongo\Labeller();
         $uriAlias = $labeller->uri_to_alias($uri);
 
-        $tables = new \Tripod\Mongo\Tables(
+        $tables = new \Tripod\Mongo\Composites\Tables(
             $this->defaultStoreName,
             \Tripod\Mongo\Config::getInstance()->getCollectionForCBD($this->defaultStoreName, $this->defaultPodName),
             $this->defaultContext
@@ -1196,9 +1196,9 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         $subjectsAndPredicatesOfChange = array($uriAlias=>array('rdf:type', 'dct:title'));
 
-        /** @var \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
+        /** @var \Tripod\Mongo\Driver|PHPUnit_Framework_MockObject_MockObject $mockTripod */
         $mockTripod = $this->getMock(
-            '\Tripod\Mongo\Tripod',
+            '\Tripod\Mongo\Driver',
             array(
                 'getDataUpdater'
             ),
@@ -1304,7 +1304,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         );
 
         // Save the graphs and ensure that table rows are generated
-        $tripod = new \Tripod\Mongo\Tripod(
+        $tripod = new \Tripod\Mongo\Driver(
             $this->defaultPodName,
             $this->defaultStoreName,
             array(
@@ -1341,8 +1341,8 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         $this->assertEquals(1, $tableRows['head']['count']);
 
-        /** @var \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
-        $mockTripod = $this->getMockBuilder('\Tripod\Mongo\Tripod')
+        /** @var \Tripod\Mongo\Driver|PHPUnit_Framework_MockObject_MockObject $mockTripod */
+        $mockTripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
             ->setMethods(array('getDataUpdater'))
             ->setConstructorArgs(
                 array(
@@ -1402,7 +1402,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $this->assertTrue($deletedGraph->is_empty());
 
         // Manually walk through the tables operation
-        /** @var \Tripod\Mongo\Tables $tables */
+        /** @var \Tripod\Mongo\Composites\Tables $tables */
         $tables = $mockTripod->getComposite(OP_TABLES);
 
         $expectedImpactedSubjects = array(
@@ -1463,8 +1463,8 @@ class MongoTripodTablesTest extends MongoTripodTestBase
      */
     public function testSavingMultipleNewEntitiesResultsInOneImpactedSubject()
     {
-        /** @var \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject $tripod */
-        $tripod = $this->getMockBuilder('\Tripod\Mongo\Tripod')
+        /** @var \Tripod\Mongo\Driver|PHPUnit_Framework_MockObject_MockObject $tripod */
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
             ->setMethods(array('getDataUpdater'))
             ->setConstructorArgs(
                 array(
@@ -1533,7 +1533,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         );
         $tripod->saveChanges(new \Tripod\Mongo\MongoGraph(), $g);
 
-        /** @var \Tripod\Mongo\Tables $tables */
+        /** @var \Tripod\Mongo\Composites\Tables $tables */
         $tables = $tripod->getComposite(OP_TABLES);
 
         $expectedImpactedSubjects = array(

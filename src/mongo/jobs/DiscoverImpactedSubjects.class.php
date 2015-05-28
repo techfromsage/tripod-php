@@ -1,10 +1,10 @@
 <?php
 
-namespace Tripod\Mongo;
+namespace Tripod\Mongo\Jobs;
 
 /**
  * Class DiscoverImpactedSubjects
- * @package Tripod\Mongo
+ * @package Tripod\Mongo\Jobs
  */
 class DiscoverImpactedSubjects extends JobBase {
 
@@ -25,7 +25,7 @@ class DiscoverImpactedSubjects extends JobBase {
             $this->validateArgs();
 
             // set the config to what is received
-            Config::setConfig($this->args["tripodConfig"]);
+            \Tripod\Mongo\Config::setConfig($this->args["tripodConfig"]);
 
             $tripod = $this->getTripod($this->args["storeName"],$this->args["podName"]);
 
@@ -41,11 +41,11 @@ class DiscoverImpactedSubjects extends JobBase {
             }
 
             if(!empty($modifiedSubjects)){
-                /* @var $subject ImpactedSubject */
+                /* @var $subject \Tripod\Mongo\ImpactedSubject */
                 foreach ($modifiedSubjects as $subject) {
                     $resourceId = $subject->getResourceId();
-                    $this->debugLog("Adding operation {$subject->getOperation()} for subject {$resourceId[_ID_RESOURCE]} to queue ".Config::getApplyQueueName());
-                    $this->submitJob(Config::getApplyQueueName(),"\Tripod\Mongo\ApplyOperation",array(
+                    $this->debugLog("Adding operation {$subject->getOperation()} for subject {$resourceId[_ID_RESOURCE]} to queue ".\Tripod\Mongo\Config::getApplyQueueName());
+                    $this->submitJob(\Tripod\Mongo\Config::getApplyQueueName(),"\Tripod\Mongo\Jobs\ApplyOperation",array(
                         "subject"=>$subject->toArray(),
                         "tripodConfig"=>$this->args["tripodConfig"]
                     ));

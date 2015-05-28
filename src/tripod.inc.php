@@ -21,7 +21,7 @@ require_once TRIPOD_DIR . 'exceptions/ViewException.class.php';
 require_once TRIPOD_DIR.'mongo/MongoTripodConstants.php';
 require_once TRIPOD_DIR.'mongo/MongoGraph.class.php';
 require_once TRIPOD_DIR.'mongo/ImpactedSubject.class.php';
-require_once TRIPOD_DIR . 'mongo/base/TripodBase.class.php';
+require_once TRIPOD_DIR . 'mongo/base/DriverBase.class.php';
 require_once TRIPOD_DIR.'mongo/IComposite.php';
 require_once TRIPOD_DIR.'mongo/base/CompositeBase.class.php';
 require_once TRIPOD_DIR . 'mongo/delegates/TransactionLog.class.php';
@@ -31,7 +31,7 @@ require_once TRIPOD_DIR . 'mongo/delegates/Tables.class.php';
 require_once TRIPOD_DIR . 'mongo/delegates/SearchIndexer.class.php';
 require_once TRIPOD_DIR.'ITripod.php';
 require_once TRIPOD_DIR.'classes/ChangeSet.class.php';
-require_once TRIPOD_DIR . '/mongo/Tripod.class.php';
+require_once TRIPOD_DIR . '/mongo/Driver.class.php';
 
 require_once TRIPOD_DIR.'/mongo/base/JobBase.class.php';
 require_once TRIPOD_DIR . '/mongo/jobs/DiscoverImpactedSubjects.class.php';

@@ -1,6 +1,6 @@
 <?php
 require_once 'MongoTripodTestBase.php';
-require_once 'src/mongo/Tripod.class.php';
+require_once 'src/mongo/Driver.class.php';
 
 /**
  * Class MongoTripodDocumentStructureTest
@@ -8,7 +8,7 @@ require_once 'src/mongo/Tripod.class.php';
 class MongoTripodDocumentStructureTest extends MongoTripodTestBase
 {
     /**
-     * @var \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject
+     * @var \Tripod\Mongo\Driver|PHPUnit_Framework_MockObject_MockObject
      */
     protected $tripod = null;
     /**
@@ -25,7 +25,7 @@ class MongoTripodDocumentStructureTest extends MongoTripodTestBase
         $this->tripodTransactionLog->purgeAllTransactions();
 
         // Stub ouf 'addToElastic' search to prevent writes into Elastic Search happening by default.
-        $this->tripod = $this->getMock('\Tripod\Mongo\Tripod', array('addToSearchIndexQueue'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
+        $this->tripod = $this->getMock('\Tripod\Mongo\Driver', array('addToSearchIndexQueue'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
         $this->tripod->expects($this->any())->method('addToSearchIndexQueue');
 
         $this->getTripodCollection($this->tripod)->drop();
@@ -125,7 +125,7 @@ class MongoTripodDocumentStructureTest extends MongoTripodTestBase
      */
     public function testOnlyDocumentUpdatedTimestampIsAddedToDocumentThatDidntHaveTimestampsToBeginWith()
     {
-        // add the initial document, but not through Tripod!
+        // add the initial document, but not through Driver!
         $_id = array("r"=>"http://talisaspire.com/resources/testDocument2","c"=>"http://talisaspire.com/");
         $document = array(
             '_id' => $_id,

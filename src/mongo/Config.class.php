@@ -407,7 +407,7 @@ class Config
                                  * checkModifierFunctions will check if each predicate modifier is valid - it will
                                  * check recursively through the predicate
                                  */
-                                $this->checkModifierFunctions($p, Tables::$predicateModifiers);
+                                $this->checkModifierFunctions($p, \Tripod\Mongo\Composites\Tables::$predicateModifiers);
                             }
                         }
                     }
@@ -450,7 +450,7 @@ class Config
                 throw new \Tripod\Exceptions\ConfigException("Table spec can only contain 'computed_fields' at the base level");
             }
 
-            $validComputingFieldFunctions = Tables::$computedFieldFunctions;
+            $validComputingFieldFunctions = \Tripod\Mongo\Composites\Tables::$computedFieldFunctions;
             if($validationLevel == self::VALIDATE_MAX)
             {
                 $availableFields = $this->getFieldNamesInSpec($spec);
@@ -565,7 +565,7 @@ class Config
         }
 
         $this->validateSpecVariableReplacement($spec['if'][0], $availableFields);
-        if(isset($spec['if'][1]) && !in_array($spec['if'][1], Tables::$conditionalOperators))
+        if(isset($spec['if'][1]) && !in_array($spec['if'][1], \Tripod\Mongo\Composites\Tables::$conditionalOperators))
         {
             throw new \Tripod\Exceptions\ConfigException("Invalid conditional operator '" . $spec['if'][1] . "' in conditional spec");
         }
@@ -583,7 +583,7 @@ class Config
             }
             elseif(is_array($spec['then']))
             {
-                $functions = array_intersect_key(array_keys($spec['then']), Tables::$computedFieldFunctions);
+                $functions = array_intersect_key(array_keys($spec['then']), \Tripod\Mongo\Composites\Tables::$computedFieldFunctions);
                 switch(count($functions))
                 {
                     case 0;
@@ -605,7 +605,7 @@ class Config
             }
             elseif(is_array($spec['else']))
             {
-                $functions = array_intersect_key(array_keys($spec['else']), Tables::$computedFieldFunctions);
+                $functions = array_intersect_key(array_keys($spec['else']), \Tripod\Mongo\Composites\Tables::$computedFieldFunctions);
                 switch(count($functions))
                 {
                     case 0;
@@ -684,7 +684,7 @@ class Config
         }
         if(is_array($spec[0]))
         {
-            if(count(array_keys($spec[0])) === 1 && count(array_intersect(array_keys($spec[0]), Tables::$computedFieldFunctions)) ===1)
+            if(count(array_keys($spec[0])) === 1 && count(array_intersect(array_keys($spec[0]), \Tripod\Mongo\Composites\Tables::$computedFieldFunctions)) ===1)
             {
                 $function = array_keys($spec[0]);
                 $this->validateComputedFieldSpec($function[0], $spec[0], $availableFields);
@@ -700,7 +700,7 @@ class Config
         }
         if(is_array($spec[2]))
         {
-            if(count(array_keys($spec[2])) === 1 && count(array_intersect(array_keys($spec[2]), Tables::$computedFieldFunctions)) ===1)
+            if(count(array_keys($spec[2])) === 1 && count(array_intersect(array_keys($spec[2]), \Tripod\Mongo\Composites\Tables::$computedFieldFunctions)) ===1)
             {
                 $function = array_keys($spec[2]);
                 $this->validateComputedFieldSpec($function[0], $spec[2], $availableFields);
@@ -714,7 +714,7 @@ class Config
         {
             $this->validateSpecVariableReplacement($spec[2], $availableFields);
         }
-        if(!in_array($spec[1], Tables::$arithmeticOperators))
+        if(!in_array($spec[1], \Tripod\Mongo\Composites\Tables::$arithmeticOperators))
         {
             throw new \Tripod\Exceptions\ConfigException("Invalid arithmetic operator '" . $spec[1] . "' in computed arithmetic spec");
         }
@@ -1014,16 +1014,16 @@ class Config
             {
                 // Check config
                 // Valid configs can be top level modifiers and their attributes inside - you can have a top level modifier
-                //      inside a top level modifier - that's why we also check TripodTables::$predicatesModifiers direct
-                if(!array_key_exists($k, $parent) && !array_key_exists($k, Tables::$predicateModifiers))
+                // inside a top level modifier - that's why we also check \Tripod\Mongo\Composites\Tables::$predicatesModifiers direct
+                if(!array_key_exists($k, $parent) && !array_key_exists($k, \Tripod\Mongo\Composites\Tables::$predicateModifiers))
                 {
                     throw new \Tripod\Exceptions\ConfigException("Invalid modifier: '".$k."' in key '".$parentKey."'");
                 }
 
                 // If this config value is a top level modifier, use that as the parent so that we can check the attributes
-                if(array_key_exists($k, Tables::$predicateModifiers))
+                if(array_key_exists($k, \Tripod\Mongo\Composites\Tables::$predicateModifiers))
                 {
-                    $this->checkModifierFunctions($v, Tables::$predicateModifiers[$k], $k);
+                    $this->checkModifierFunctions($v, \Tripod\Mongo\Composites\Tables::$predicateModifiers[$k], $k);
                 } else
                 {
                     $this->checkModifierFunctions($v, $parent[$k], $k);
@@ -1053,6 +1053,7 @@ class Config
         {
             return self::$config;
         }
+        return null;
     }
 
     /**

@@ -13,9 +13,9 @@ class ApplyOperationTest extends MongoTripodTestBase
     {
         $this->setArgs();
         unset($this->args['tripodConfig']);
-        $job = new \Tripod\Mongo\ApplyOperation();
+        $job = new \Tripod\Mongo\Jobs\ApplyOperation();
         $job->args = $this->args;
-        $this->setExpectedException('Exception', "Argument tripodConfig was not present in supplied job args for job Tripod\Mongo\ApplyOperation");
+        $this->setExpectedException('Exception', "Argument tripodConfig was not present in supplied job args for job Tripod\Mongo\Jobs\ApplyOperation");
         $job->perform();
     }
 
@@ -23,16 +23,16 @@ class ApplyOperationTest extends MongoTripodTestBase
     {
         $this->setArgs();
         unset($this->args['subject']);
-        $job = new \Tripod\Mongo\ApplyOperation();
+        $job = new \Tripod\Mongo\Jobs\ApplyOperation();
         $job->args = $this->args;
-        $this->setExpectedException('Exception', "Argument subject was not present in supplied job args for job Tripod\Mongo\ApplyOperation");
+        $this->setExpectedException('Exception', "Argument subject was not present in supplied job args for job Tripod\Mongo\Jobs\ApplyOperation");
         $job->perform();
     }
 
     public function testApplyViewOperation()
     {
         $this->setArgs();
-        $applyOperation = $this->getMockBuilder('\Tripod\Mongo\ApplyOperation')
+        $applyOperation = $this->getMockBuilder('\Tripod\Mongo\Jobs\ApplyOperation')
             ->setMethods(array('createImpactedSubject'))
             ->getMock();
 
@@ -52,12 +52,12 @@ class ApplyOperationTest extends MongoTripodTestBase
                 )
             )->getMock();
 
-        $tripod = $this->getMockBuilder('\Tripod\Mongo\Tripod')
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
             ->setMethods(array('getComposite'))
             ->setConstructorArgs(array('CBD_testing', 'tripod_php_testing'))
             ->getMock();
 
-        $views = $this->getMockBuilder('\Tripod\Mongo\Views')
+        $views = $this->getMockBuilder('\Tripod\Mongo\Composites\Views')
             ->setMethods(array('update'))
             ->setConstructorArgs(array(
                 'tripod_php_testing',
@@ -88,7 +88,7 @@ class ApplyOperationTest extends MongoTripodTestBase
     public function testApplyTableOperation()
     {
         $this->setArgs();
-        $applyOperation = $this->getMockBuilder('\Tripod\Mongo\ApplyOperation')
+        $applyOperation = $this->getMockBuilder('\Tripod\Mongo\Jobs\ApplyOperation')
             ->setMethods(array('createImpactedSubject'))
             ->getMock();
 
@@ -121,12 +121,12 @@ class ApplyOperationTest extends MongoTripodTestBase
                 )
             )->getMock();
 
-        $tripod = $this->getMockBuilder('\Tripod\Mongo\Tripod')
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
             ->setMethods(array('getComposite'))
             ->setConstructorArgs(array('CBD_testing', 'tripod_php_testing'))
             ->getMock();
 
-        $tables = $this->getMockBuilder('\Tripod\Mongo\Tables')
+        $tables = $this->getMockBuilder('\Tripod\Mongo\Composites\Tables')
             ->setMethods(array('update'))
             ->setConstructorArgs(array(
                 'tripod_php_testing',
@@ -157,7 +157,7 @@ class ApplyOperationTest extends MongoTripodTestBase
     public function testApplySearchOperation()
     {
         $this->setArgs();
-        $applyOperation = $this->getMockBuilder('\Tripod\Mongo\ApplyOperation')
+        $applyOperation = $this->getMockBuilder('\Tripod\Mongo\Jobs\ApplyOperation')
             ->setMethods(array('createImpactedSubject'))
             ->getMock();
 
@@ -190,12 +190,12 @@ class ApplyOperationTest extends MongoTripodTestBase
                 )
             )->getMock();
 
-        $tripod = $this->getMockBuilder('\Tripod\Mongo\Tripod')
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
             ->setMethods(array('getComposite'))
             ->setConstructorArgs(array('CBD_testing', 'tripod_php_testing'))
             ->getMock();
 
-        $search = $this->getMockBuilder('\Tripod\Mongo\SearchIndexer')
+        $search = $this->getMockBuilder('\Tripod\Mongo\Composites\SearchIndexer')
             ->setMethods(array('update'))
             ->setConstructorArgs(array($tripod))
             ->getMock();

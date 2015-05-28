@@ -1,9 +1,13 @@
 <?php
 
-namespace Tripod\Mongo;
+namespace Tripod\Mongo\Composites;
 
 require_once TRIPOD_DIR . 'mongo/MongoTripodConstants.php';
-require_once TRIPOD_DIR . 'mongo/base/TripodBase.class.php';
+require_once TRIPOD_DIR . 'mongo/base/DriverBase.class.php';
+
+use Tripod\Mongo\Config;
+use Tripod\Mongo\ImpactedSubject;
+use Tripod\Mongo\Labeller;
 
 /**
  * Class Tables

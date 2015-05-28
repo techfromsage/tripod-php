@@ -132,10 +132,10 @@ class ImpactedSubject
 
     /**
      * For mocking
-     * @return Tripod
+     * @return Driver
      */
     protected function getTripod()
     {
-        return new Tripod($this->getPodName(),$this->getStoreName(),array("readPreference"=>\MongoClient::RP_PRIMARY));
+        return new Driver($this->getPodName(),$this->getStoreName(),array("readPreference"=>\MongoClient::RP_PRIMARY));
     }
 }

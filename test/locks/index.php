@@ -6,7 +6,8 @@ set_include_path(
 );
 
 require_once 'tripod.inc.php';
-require_once 'Tripod.class.phpquire_once 'Logger.php';
+require_once 'Driver.class.php';
+require_once 'Logger.php';
 
 
 $config = json_decode(file_get_contents('tripod-config.json'), true);

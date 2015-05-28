@@ -14,7 +14,7 @@ require_once TRIPOD_DIR.'classes/Timer.class.php';
 class MongoSearchProvider implements \Tripod\ISearchProvider
 {
     /**
-     * @var Tripod
+     * @var Driver
      */
     private $tripod = null;
 
@@ -36,9 +36,9 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
     protected $config;
 
     /**
-     * @param Tripod $tripod
+     * @param Driver $tripod
      */
-    public function __construct(Tripod $tripod)
+    public function __construct(Driver $tripod)
     {
         $this->tripod = $tripod;
         $this->storeName = $tripod->getStoreName();

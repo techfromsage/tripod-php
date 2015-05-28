@@ -8,7 +8,7 @@ set_include_path(
 
 require_once('tripod.inc.php');
 require_once TRIPOD_DIR . 'mongo/Config.class.php';
-require_once TRIPOD_DIR . 'mongo/base/TripodBase.class.php';
+require_once TRIPOD_DIR . 'mongo/base/DriverBase.class.php';
 
 /**
  * Mongo Config For Main DB
@@ -24,7 +24,7 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
 {
 
     /**
-     * @var \Tripod\Mongo\Tripod
+     * @var \Tripod\Mongo\Driver
      */
     protected $tripod = null;
     /**
@@ -94,7 +94,7 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         // make sure log statements don't go to stdout during tests...
         $log = new \Monolog\Logger("unittest");
         $log->pushHandler(new \Monolog\Handler\NullHandler());
-        \Tripod\Mongo\TripodBase::$logger = $log;
+        \Tripod\Mongo\DriverBase::$logger = $log;
     }
 
 
@@ -125,10 +125,10 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @param \Tripod\Mongo\Tripod $tripod
+     * @param \Tripod\Mongo\Driver $tripod
      * @return MongoCollection
      */
-    protected function getTripodCollection(\Tripod\Mongo\Tripod $tripod)
+    protected function getTripodCollection(\Tripod\Mongo\Driver $tripod)
     {
         $config = \Tripod\Mongo\Config::getInstance();
         $pods = $config->getPods($tripod->getStoreName());
@@ -157,7 +157,7 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         {
             return $this->getTripodCollection($this->tripod)->findOne(array("_id"=>$_id));
         }
-        elseif($collection instanceof \Tripod\Mongo\Tripod)
+        elseif($collection instanceof \Tripod\Mongo\Driver)
         {
             return $this->getTripodCollection($collection)->findOne(array("_id"=>$_id));
         }
@@ -235,7 +235,7 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
      * @param mixed $_id
      * @param int|null $expectedValue
      * @param bool $hasVersion
-     * @param \Tripod\Mongo\Tripod|null $tripod
+     * @param \Tripod\Mongo\Driver|null $tripod
      * @param bool $fromTransactionLog
      */
     protected function assertDocumentVersion($_id, $expectedValue=null, $hasVersion=true, $tripod=null, $fromTransactionLog=false)
@@ -311,7 +311,7 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
 
     /**
      * @param mixed $_id
-     * @param \Tripod\Mongo\Tripod|null $tripod
+     * @param \Tripod\Mongo\Driver|null $tripod
      * @param bool $fromTransactionLog
      */
     protected function assertDocumentExists($_id, $tripod=null, $fromTransactionLog=false)
@@ -323,7 +323,7 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
 
     /**
      * @param mixed $_id
-     * @param \Tripod\Mongo\Tripod|null $tripod
+     * @param \Tripod\Mongo\Driver|null $tripod
      * @param bool $useTransactionTripod
      */
     protected function assertDocumentHasBeenDeleted($_id, $tripod=null, $useTransactionTripod=false)
@@ -409,7 +409,7 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
 /**
  * Class TestTripod
  */
-class TestTripod extends \Tripod\Mongo\Tripod
+class TestTripod extends \Tripod\Mongo\Driver
 {
     /**
      * @return array

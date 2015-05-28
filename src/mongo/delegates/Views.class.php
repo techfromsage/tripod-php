@@ -1,8 +1,12 @@
 <?php
 
-namespace Tripod\Mongo;
+namespace Tripod\Mongo\Composites;
 
-require_once TRIPOD_DIR . 'mongo/base/TripodBase.class.php';
+require_once TRIPOD_DIR . 'mongo/base/DriverBase.class.php';
+
+use Tripod\Mongo\Config;
+use Tripod\Mongo\ImpactedSubject;
+use Tripod\Mongo\Labeller;
 
 /**
  * Class Views
@@ -110,7 +114,7 @@ class Views extends CompositeBase
      * Return all views, restricted by $filter conditions, for given $viewType
      * @param array $filter - an array, keyed by predicate, to filter by
      * @param $viewType
-     * @return MongoGraph
+     * @return \Tripod\Mongo\MongoGraph
      */
     public function getViews(Array $filter,$viewType)
     {
@@ -140,12 +144,12 @@ class Views extends CompositeBase
      * @param $resource
      * @param $viewType
      * @param null $context
-     * @return MongoGraph
+     * @return \Tripod\Mongo\MongoGraph
      */
     public function getViewForResource($resource,$viewType,$context=null)
     {
         if(empty($resource)){
-            return new MongoGraph();
+            return new \Tripod\Mongo\MongoGraph();
         }
 
         $resourceAlias = $this->labeller->uri_to_alias($resource);
@@ -159,7 +163,7 @@ class Views extends CompositeBase
             $viewSpec = Config::getInstance()->getViewSpecification($this->storeName, $viewType);
             if($viewSpec == null)
             {
-                return new MongoGraph();
+                return new \Tripod\Mongo\MongoGraph();
             }
 
             $fromCollection = $this->getFromCollectionForViewSpec($viewSpec);
@@ -171,7 +175,7 @@ class Views extends CompositeBase
             {
                 // if you are trying to generate a view for a document that doesnt exist in the collection
                 // then we can just return an empty graph
-                return new MongoGraph();
+                return new \Tripod\Mongo\MongoGraph();
             }
 
             // generate view then try again
@@ -186,7 +190,7 @@ class Views extends CompositeBase
      * @param array $resources
      * @param $viewType
      * @param null $context
-     * @return MongoGraph
+     * @return \Tripod\Mongo\MongoGraph
      */
     public function getViewForResources(Array $resources,$viewType,$context=null)
     {

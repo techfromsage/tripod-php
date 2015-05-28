@@ -9,9 +9,9 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
     {
         $this->setArgs();
         unset($this->args['tripodConfig']);
-        $job = new \Tripod\Mongo\DiscoverImpactedSubjects();
+        $job = new \Tripod\Mongo\Jobs\DiscoverImpactedSubjects();
         $job->args = $this->args;
-        $this->setExpectedException('Exception', "Argument tripodConfig was not present in supplied job args for job Tripod\Mongo\DiscoverImpactedSubjects");
+        $this->setExpectedException('Exception', "Argument tripodConfig was not present in supplied job args for job Tripod\Mongo\Jobs\DiscoverImpactedSubjects");
         $job->perform();
     }
 
@@ -19,9 +19,9 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
     {
         $this->setArgs();
         unset($this->args['storeName']);
-        $job = new \Tripod\Mongo\DiscoverImpactedSubjects();
+        $job = new \Tripod\Mongo\Jobs\DiscoverImpactedSubjects();
         $job->args = $this->args;
-        $this->setExpectedException('Exception', "Argument storeName was not present in supplied job args for job Tripod\Mongo\DiscoverImpactedSubjects");
+        $this->setExpectedException('Exception', "Argument storeName was not present in supplied job args for job Tripod\Mongo\Jobs\DiscoverImpactedSubjects");
         $job->perform();
     }
 
@@ -29,9 +29,9 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
     {
         $this->setArgs();
         unset($this->args['podName']);
-        $job = new \Tripod\Mongo\DiscoverImpactedSubjects();
+        $job = new \Tripod\Mongo\Jobs\DiscoverImpactedSubjects();
         $job->args = $this->args;
-        $this->setExpectedException('Exception', "Argument podName was not present in supplied job args for job Tripod\Mongo\DiscoverImpactedSubjects");
+        $this->setExpectedException('Exception', "Argument podName was not present in supplied job args for job Tripod\Mongo\Jobs\DiscoverImpactedSubjects");
         $job->perform();
     }
 
@@ -39,9 +39,9 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
     {
         $this->setArgs();
         unset($this->args['changes']);
-        $job = new \Tripod\Mongo\DiscoverImpactedSubjects();
+        $job = new \Tripod\Mongo\Jobs\DiscoverImpactedSubjects();
         $job->args = $this->args;
-        $this->setExpectedException('Exception', "Argument changes was not present in supplied job args for job Tripod\Mongo\DiscoverImpactedSubjects");
+        $this->setExpectedException('Exception', "Argument changes was not present in supplied job args for job Tripod\Mongo\Jobs\DiscoverImpactedSubjects");
         $job->perform();
     }
 
@@ -49,9 +49,9 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
     {
         $this->setArgs();
         unset($this->args['operations']);
-        $job = new \Tripod\Mongo\DiscoverImpactedSubjects();
+        $job = new \Tripod\Mongo\Jobs\DiscoverImpactedSubjects();
         $job->args = $this->args;
-        $this->setExpectedException('Exception', "Argument operations was not present in supplied job args for job Tripod\Mongo\DiscoverImpactedSubjects");
+        $this->setExpectedException('Exception', "Argument operations was not present in supplied job args for job Tripod\Mongo\Jobs\DiscoverImpactedSubjects");
         $job->perform();
     }
 
@@ -59,9 +59,9 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
     {
         $this->setArgs();
         unset($this->args['contextAlias']);
-        $job = new \Tripod\Mongo\DiscoverImpactedSubjects();
+        $job = new \Tripod\Mongo\Jobs\DiscoverImpactedSubjects();
         $job->args = $this->args;
-        $this->setExpectedException('Exception', "Argument contextAlias was not present in supplied job args for job Tripod\Mongo\DiscoverImpactedSubjects");
+        $this->setExpectedException('Exception', "Argument contextAlias was not present in supplied job args for job Tripod\Mongo\Jobs\DiscoverImpactedSubjects");
         $job->perform();
     }
 
@@ -69,12 +69,12 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
     {
         $this->setArgs();
 
-        $tripod = $this->getMockBuilder('\Tripod\Mongo\Tripod')
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
             ->setMethods(array('getComposite'))
             ->setConstructorArgs(array('CBD_testing', 'tripod_php_testing'))
             ->getMock();
 
-        $views = $this->getMockBuilder('\Tripod\Mongo\Views')
+        $views = $this->getMockBuilder('\Tripod\Mongo\Composites\Views')
             ->setMethods(array('getImpactedSubjects'))
             ->setConstructorArgs(
                 array(
@@ -84,7 +84,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
                 )
             )->getMock();
 
-        $tables = $this->getMockBuilder('\Tripod\Mongo\Tables')
+        $tables = $this->getMockBuilder('\Tripod\Mongo\Composites\Tables')
             ->setMethods(array('getImpactedSubjects'))
             ->setConstructorArgs(
                 array(
@@ -94,7 +94,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
                 )
             )->getMock();
 
-        $search = $this->getMockBuilder('\Tripod\Mongo\SearchIndexer')
+        $search = $this->getMockBuilder('\Tripod\Mongo\Composites\SearchIndexer')
             ->setMethods(array('getImpactedSubjects'))
             ->setConstructorArgs(array($tripod))
             ->getMock();
@@ -109,7 +109,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
                 )
             ));
 
-        $discoverImpactedSubjects = $this->getMockBuilder('\Tripod\Mongo\DiscoverImpactedSubjects')
+        $discoverImpactedSubjects = $this->getMockBuilder('\Tripod\Mongo\Jobs\DiscoverImpactedSubjects')
             ->setMethods(array('getTripod', 'submitJob'))
             ->getMock();
 
@@ -164,7 +164,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
             ->withConsecutive(
                 array(
                     \Tripod\Mongo\Config::getApplyQueueName(),
-                    "\Tripod\Mongo\ApplyOperation",
+                    "\Tripod\Mongo\Jobs\ApplyOperation",
                     array(
                         "subject"=>$viewSubject->toArray(),
                         "tripodConfig"=>$this->args['tripodConfig']
@@ -172,7 +172,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
                 ),
                 array(
                     \Tripod\Mongo\Config::getApplyQueueName(),
-                    "\Tripod\Mongo\ApplyOperation",
+                    "\Tripod\Mongo\Jobs\ApplyOperation",
                     array(
                         "subject"=>$tableSubject->toArray(),
                         "tripodConfig"=>$this->args['tripodConfig']

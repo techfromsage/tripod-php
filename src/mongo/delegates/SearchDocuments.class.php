@@ -6,7 +6,7 @@ namespace Tripod\Mongo;
  * Class SearchDocuments
  * @package Tripod\Mongo
  */
-class SearchDocuments extends TripodBase
+class SearchDocuments extends DriverBase
 {
     /**
      * Construct accepts actual objects rather than strings as this class is a delegate of

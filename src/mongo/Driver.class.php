@@ -7,24 +7,24 @@ namespace Tripod\Mongo;
 $TOTAL_TIME=0;
 
 /**
- * Class Tripod
- * @package Tripod\Mongo
+ * Class Driver
+ * @package Driver\Mongo
  */
-class Tripod extends TripodBase implements \Tripod\ITripod
+class Driver extends DriverBase implements \Tripod\ITripod
 {
 
     /**
-     * @var Views
+     * @var \Tripod\Mongo\Composites\Views
      */
     private $tripod_views = null;
 
     /**
-     * @var Tables
+     * @var \Tripod\Mongo\Composites\Tables
      */
     private $tripod_tables = null;
 
     /**
-     * @var SearchIndexer
+     * @var \Tripod\Mongo\Composites\SearchIndexer
      */
     private $search_indexer = null;
 
@@ -57,14 +57,14 @@ class Tripod extends TripodBase implements \Tripod\ITripod
     private $dataUpdater;
 
     /**
-     * Constructor for Tripod
+     * Constructor for Driver
      *
      * @param string $podName
      * @param string $storeName
      * @param array $opts an Array of options: <ul>
      * <li>defaultContext: (string) to use where a specific default context is not defined. Default is Null</li>
      * <li>async: (array) determines the async behaviour of views, tables and search. For each of these array keys, if set to true, generation of these elements will be done asyncronously on save. Default is array(OP_VIEWS=>false,OP_TABLES=>true,OP_SEARCH=>true)</li>
-     * <li>stat: this sets the stats object to use to record statistics around operations performed by Tripod. Default is null</li>
+     * <li>stat: this sets the stats object to use to record statistics around operations performed by Driver. Default is null</li>
      * <li>readPreference: The Read preference to set for Mongo: Default is Mongo:RP_PRIMARY_PREFERRED</li>
      * <li>retriesToGetLock: Retries to do when unable to get lock on a document, default is 20</li></ul>
      */
@@ -533,13 +533,13 @@ class Tripod extends TripodBase implements \Tripod\ITripod
     }
 
     /**
-     * @return Views
+     * @return \Tripod\Mongo\Composites\Views
      */
     public function getTripodViews()
     {
         if($this->tripod_views==null)
         {
-            $this->tripod_views = new Views(
+            $this->tripod_views = new \Tripod\Mongo\Composites\Views(
                 $this->storeName,
                 $this->collection,
                 $this->defaultContext,
@@ -550,13 +550,13 @@ class Tripod extends TripodBase implements \Tripod\ITripod
     }
 
     /**
-     * @return Tables
+     * @return \Tripod\Mongo\Composites\Tables
      */
     public function getTripodTables()
     {
         if ($this->tripod_tables==null)
         {
-            $this->tripod_tables = new Tables(
+            $this->tripod_tables = new \Tripod\Mongo\Composites\Tables(
                 $this->storeName,
                 $this->collection,
                 $this->defaultContext,
@@ -567,13 +567,13 @@ class Tripod extends TripodBase implements \Tripod\ITripod
     }
 
     /**
-     * @return SearchIndexer
+     * @return \Tripod\Mongo\Composites\SearchIndexer
      */
     public function getSearchIndexer()
     {
         if ($this->search_indexer==null)
         {
-            $this->search_indexer = new SearchIndexer($this);
+            $this->search_indexer = new \Tripod\Mongo\Composites\SearchIndexer($this);
         }
         return $this->search_indexer;
     }

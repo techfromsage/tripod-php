@@ -1,14 +1,14 @@
 <?php
 require_once 'MongoTripodTestBase.php';
-require_once 'src/mongo/Tripod.class.php';
+require_once 'src/mongo/Driver.class.php';
 
 /**
- * Class MongoTripodTest
+ * Class MongoTripodDriverTest
  */
-class MongoTripodTest extends MongoTripodTestBase
+class MongoTripodDriverTest extends MongoTripodTestBase
 {
     /**
-     * @var \Tripod\Mongo\Tripod | PHPUnit_Framework_MockObject_MockObject
+     * @var \Tripod\Mongo\Driver | PHPUnit_Framework_MockObject_MockObject
      */
     protected $tripod = null;
     /**
@@ -25,7 +25,7 @@ class MongoTripodTest extends MongoTripodTestBase
 
         // Stub ouf 'addToElastic' search to prevent writes into Elastic Search happening by default.
         $this->tripod = $this->getMock(
-            '\Tripod\Mongo\Tripod',
+            '\Tripod\Mongo\Driver',
             array('addToSearchIndexQueue'),
             array(
                 'CBD_testing',
@@ -351,7 +351,7 @@ class MongoTripodTest extends MongoTripodTestBase
         $doc = array("_id"=>$uri, "rdf:type"=>array(array('value'=>$g->qname_to_uri("acorn:Resource"), 'type'=>'uri')));
 
         $mockTripod = $this->getMock(
-            '\Tripod\Mongo\Tripod',
+            '\Tripod\Mongo\Driver',
             array('getDataUpdater'),
             array(
                 'CBD_testing',
@@ -399,7 +399,7 @@ class MongoTripodTest extends MongoTripodTestBase
         $doc = array("_id"=>$uri, "_version"=>3,"rdf:type"=>array(array('value'=>$g->qname_to_uri("acorn:Resource"), 'type'=>'uri')));
 
         $mockTripod = $this->getMock(
-            '\Tripod\Mongo\Tripod',
+            '\Tripod\Mongo\Driver',
             array('getDataUpdater'),
             array(
                 'CBD_testing',
@@ -555,9 +555,9 @@ class MongoTripodTest extends MongoTripodTestBase
 
     public function testSetReadPreferenceWhenSavingChanges(){
         $subjectOne = "http://talisaspire.com/works/checkReadPreferencesWrite";
-        /** @var $tripodMock \Tripod\Mongo\Tripod **/
+        /** @var $tripodMock \Tripod\Mongo\Driver **/
         $tripodMock = $this->getMock(
-            '\Tripod\Mongo\Tripod', 
+            '\Tripod\Mongo\Driver', 
             array('getDataUpdater'), 
             array(
                 'CBD_testing',
@@ -595,9 +595,9 @@ class MongoTripodTest extends MongoTripodTestBase
      */
     public function testReadPreferencesAreRestoredWhenErrorSavingChanges(){
         $subjectOne = "http://talisaspire.com/works/checkReadPreferencesAreRestoredOnError";
-        /** @var $tripodMock \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject **/
+        /** @var $tripodMock \Tripod\Mongo\Driver|PHPUnit_Framework_MockObject_MockObject **/
         $tripodMock = $this->getMock(
-            '\Tripod\Mongo\Tripod', 
+            '\Tripod\Mongo\Driver', 
             array('getDataUpdater'), 
             array(
                 'CBD_testing',
@@ -837,7 +837,7 @@ class MongoTripodTest extends MongoTripodTestBase
         // Override the config defined in base test class as we need specific config here.
         \Tripod\Mongo\Config::setConfig($config);
 
-        $tripod = new \Tripod\Mongo\Tripod('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/'));
+        $tripod = new \Tripod\Mongo\Driver('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/'));
 
         $oldGraph = new \Tripod\ExtendedGraph();
         $newGraph = new \Tripod\ExtendedGraph();
@@ -857,9 +857,9 @@ class MongoTripodTest extends MongoTripodTestBase
         $oG->add_resource_triple($uri_2, $oG->qname_to_uri("rdf:type"), $oG->qname_to_uri("acorn:Resource"));
 
         // just updates, all three operations async
-        /** @var \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
+        /** @var \Tripod\Mongo\Driver|PHPUnit_Framework_MockObject_MockObject $mockTripod */
         $mockTripod = $this->getMock(
-            '\Tripod\Mongo\Tripod',
+            '\Tripod\Mongo\Driver',
             array(
                 'getDataUpdater',
                 'getComposite'
@@ -917,7 +917,7 @@ class MongoTripodTest extends MongoTripodTestBase
             ->method('getComposite');
         $mockTripodUpdates->expects($this->once())
             ->method('submitJob')
-            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"\Tripod\Mongo\DiscoverImpactedSubjects", $jobData);
+            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"\Tripod\Mongo\Jobs\DiscoverImpactedSubjects", $jobData);
 
         $mockTripodUpdates->expects($this->once())
             ->method('storeChanges')
@@ -939,7 +939,7 @@ class MongoTripodTest extends MongoTripodTestBase
         $oG->add_resource_triple($uri_2, $oG->qname_to_uri("rdf:type"), $oG->qname_to_uri("acorn:Resource"));
 //        // just deletes, search only
         $mockTripod = $this->getMock(
-            '\Tripod\Mongo\Tripod',
+            '\Tripod\Mongo\Driver',
             array('getDataUpdater','getComposite'),
             array(
                 'CBD_testing',
@@ -970,7 +970,7 @@ class MongoTripodTest extends MongoTripodTestBase
         );
 
         $mockViews = $this->getMock(
-            '\Tripod\Mongo\Views',
+            '\Tripod\Mongo\Composites\Views',
             array('getImpactedSubjects', 'update'),
             array(
                 'tripod_php_testing',
@@ -980,7 +980,7 @@ class MongoTripodTest extends MongoTripodTestBase
         );
 
         $mockTables = $this->getMock(
-            '\Tripod\Mongo\Tables',
+            '\Tripod\Mongo\Composites\Tables',
             array('getImpactedSubjects', 'update'),
             array(
                 'tripod_php_testing',
@@ -1080,7 +1080,7 @@ class MongoTripodTest extends MongoTripodTestBase
 
         $mockTripodUpdates->expects($this->once())
             ->method('submitJob')
-            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"\Tripod\Mongo\DiscoverImpactedSubjects", $jobData);
+            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"\Tripod\Mongo\Jobs\DiscoverImpactedSubjects", $jobData);
 
         $mockTripodUpdates->expects($this->once())
             ->method('storeChanges')
@@ -1117,9 +1117,9 @@ class MongoTripodTest extends MongoTripodTestBase
         $nG->add_literal_triple($uri_1, $nG->qname_to_uri("searchterms:title"), "wibble");
         $nG->remove_resource_triple($uri_2, $oG->qname_to_uri("rdf:type"), "http://foo/bar#Class2");
 
-        /** @var \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
+        /** @var \Tripod\Mongo\Driver|PHPUnit_Framework_MockObject_MockObject $mockTripod */
         $mockTripod = $this->getMock(
-            '\Tripod\Mongo\Tripod',
+            '\Tripod\Mongo\Driver',
             array(
                 'getComposite',
                 'getDataUpdater'
@@ -1151,7 +1151,7 @@ class MongoTripodTest extends MongoTripodTestBase
         );
 
         $mockViews = $this->getMock(
-            '\Tripod\Mongo\Views',
+            '\Tripod\Mongo\Composites\Views',
             array('getImpactedSubjects', 'update'),
             array(
                 'tripod_php_testing',
@@ -1205,7 +1205,7 @@ class MongoTripodTest extends MongoTripodTestBase
 
         $mockTripodUpdates->expects($this->once())
             ->method('submitJob')
-            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"\Tripod\Mongo\DiscoverImpactedSubjects", $jobData);
+            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"\Tripod\Mongo\Jobs\DiscoverImpactedSubjects", $jobData);
 
         $mockTripodUpdates->expects($this->once())
             ->method('storeChanges')
@@ -1236,7 +1236,7 @@ class MongoTripodTest extends MongoTripodTestBase
             '\Tripod\Exceptions\ConfigException',
             'Collection name \'SOME_COLLECTION\' not in configuration');
 
-        $tripod = new \Tripod\Mongo\Tripod("SOME_COLLECTION","tripod_php_testing");
+        $tripod = new \Tripod\Mongo\Driver("SOME_COLLECTION","tripod_php_testing");
         $tripod->saveChanges(new \Tripod\ExtendedGraph(), new \Tripod\ExtendedGraph(), 'http://talisaspire.com/');
     }
 
@@ -1605,7 +1605,7 @@ class MongoTripodTest extends MongoTripodTestBase
             ->will($this->throwException(new Exception('Some unexpected error occurred.')));
 
         /* @var $tripod PHPUnit_Framework_MockObject_MockObject */
-        $tripod = $this->getMock('\Tripod\Mongo\Tripod', array('getDataUpdater'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
+        $tripod = $this->getMock('\Tripod\Mongo\Driver', array('getDataUpdater'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
         $tripodUpdate = $this->getMock('\Tripod\Mongo\Updates', array('getAuditManualRollbacksCollection'), array($tripod));
 
         $tripodUpdate
@@ -1642,7 +1642,7 @@ class MongoTripodTest extends MongoTripodTestBase
             ->with(array("_id" => $mongoDocumentId), array('$set' => array("status" => AUDIT_STATUS_ERROR, _UPDATED_TS => $mongoDate, 'error' => 'Some unexpected error occurred.')));
 
         /* @var $tripod PHPUnit_Framework_MockObject_MockObject */
-        $tripod = $this->getMock('\Tripod\Mongo\Tripod', array('getDataUpdater'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
+        $tripod = $this->getMock('\Tripod\Mongo\Driver', array('getDataUpdater'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
         $tripodUpdate = $this->getMock('\Tripod\Mongo\Updates',
             array('unlockAllDocuments', 'generateIdForNewMongoDocument', 'getMongoDate', 'getAuditManualRollbacksCollection'),
             array($tripod));
@@ -1700,8 +1700,8 @@ class MongoTripodTest extends MongoTripodTestBase
             ->method('update')
             ->with(array("_id" => $mongoDocumentId), array('$set' => array("status" => AUDIT_STATUS_COMPLETED, _UPDATED_TS => $mongoDate)));
 
-        /* @var \Tripod\Mongo\Tripod PHPUnit_Framework_MockObject_MockObject */
-        $tripod = $this->getMock('\Tripod\Mongo\Tripod', array('getDataUpdater'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
+        /* @var \Tripod\Mongo\Driver PHPUnit_Framework_MockObject_MockObject */
+        $tripod = $this->getMock('\Tripod\Mongo\Driver', array('getDataUpdater'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
         $tripodUpdate = $this->getMock('\Tripod\Mongo\Updates',
             array('unlockAllDocuments', 'generateIdForNewMongoDocument', 'getMongoDate', 'getAuditManualRollbacksCollection'),
             array($tripod));

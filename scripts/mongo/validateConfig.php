@@ -38,7 +38,7 @@ set_include_path(
     . PATH_SEPARATOR . $tripodBasePath.'/src/classes');
 
 require_once 'tripod.inc.php';
-require_once 'mongo/Tripod.class.php';
+require_once 'mongo/Driver.class.php';
 require_once 'mongo/Config.class.php';
 
 \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);

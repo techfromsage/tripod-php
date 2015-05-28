@@ -1,10 +1,10 @@
 <?php
 
-namespace Tripod\Mongo;
+namespace Tripod\Mongo\Jobs;
 /**
  * Todo: How to inject correct stat class... :-S
  */
-abstract class JobBase extends TripodBase
+abstract class JobBase extends \Tripod\Mongo\DriverBase
 {
     private $tripod;
 
@@ -12,11 +12,11 @@ abstract class JobBase extends TripodBase
      * For mocking
      * @param string $storeName
      * @param string $podName
-     * @return Tripod
+     * @return \Tripod\Mongo\Driver
      */
     protected function getTripod($storeName,$podName) {
         if ($this->tripod == null) {
-            $this->tripod = new Tripod(
+            $this->tripod = new \Tripod\Mongo\Driver(
                 $podName,
                 $storeName,
                 array(

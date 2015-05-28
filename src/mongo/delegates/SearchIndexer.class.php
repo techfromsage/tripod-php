@@ -1,12 +1,15 @@
 <?php
 
-namespace Tripod\Mongo;
+namespace Tripod\Mongo\Composites;
 
 require_once TRIPOD_DIR . 'mongo/MongoTripodConstants.php';
 require_once TRIPOD_DIR . 'mongo/delegates/SearchDocuments.class.php';
 require_once TRIPOD_DIR . 'mongo/providers/MongoSearchProvider.class.php';
 require_once TRIPOD_DIR . 'exceptions/SearchException.class.php';
 
+use Tripod\Mongo\Config;
+use Tripod\Mongo\ImpactedSubject;
+use Tripod\Mongo\Labeller;
 /**
  * Class SearchIndexer
  * @package Tripod\Mongo
@@ -25,10 +28,10 @@ class SearchIndexer extends CompositeBase
     private $configuredProvider = null;
 
     /**
-     * @param Tripod $tripod
+     * @param \Tripod\Mongo\Driver $tripod
      * @throws \Tripod\Exceptions\SearchException
      */
-    public function __construct(Tripod $tripod)
+    public function __construct(\Tripod\Mongo\Driver $tripod)
     {
         $this->tripod = $tripod;
         $this->storeName = $tripod->getStoreName();
@@ -185,11 +188,11 @@ class SearchIndexer extends CompositeBase
     /**
      * @param \MongoCollection $collection
      * @param string $context
-     * @return SearchDocuments
+     * @return \Tripod\Mongo\SearchDocuments
      */
     protected function getSearchDocumentGenerator(\MongoCollection $collection, $context )
     {
-        return new SearchDocuments($this->storeName, $collection, $context, $this->tripod->getStat());
+        return new \Tripod\Mongo\SearchDocuments($this->storeName, $collection, $context, $this->tripod->getStat());
     }
 
     /**

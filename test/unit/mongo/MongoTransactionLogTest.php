@@ -1,6 +1,6 @@
 <?php
 require_once 'MongoTripodTestBase.php';
-require_once 'src/mongo/Tripod.class.php';
+require_once 'src/mongo/Driver.class.php';
 require_once 'src/mongo/delegates/TransactionLog.class.php';
 require_once 'src/mongo/MongoGraph.class.php';
 
@@ -10,7 +10,7 @@ require_once 'src/mongo/MongoGraph.class.php';
 class MongoTransactionLogTest extends MongoTripodTestBase
 {
     /**
-     * @var \Tripod\Mongo\Tripod
+     * @var \Tripod\Mongo\Driver
      */
     protected $tripod
     ;
@@ -25,13 +25,13 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         //Mongo::setPoolSize(200);
 
         // Stub ouf 'addToElastic' search to prevent writes into Elastic Search happening by default.
-        /** @var \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject $tripod */
-        $this->tripod = $this->getMock('\Tripod\Mongo\Tripod', array('addToSearchIndexQueue'), array('CBD_testing','tripod_php_testing'));
+        /** @var \Tripod\Mongo\Driver|PHPUnit_Framework_MockObject_MockObject $tripod */
+        $this->tripod = $this->getMock('\Tripod\Mongo\Driver', array('addToSearchIndexQueue'), array('CBD_testing','tripod_php_testing'));
         $this->tripod->expects($this->any())->method('addToSearchIndexQueue');
 
         $this->getTripodCollection($this->tripod)->drop();
 
-        // Lock collection no longer available from Tripod, so drop it manually
+        // Lock collection no longer available from Driver, so drop it manually
         \Tripod\Mongo\Config::getInstance()->getCollectionForLocks($this->tripod->getStoreName())->drop();
 
         $this->loadBaseDataViaTripod();
@@ -467,7 +467,7 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         $g->add_resource_triple($uri, $g->qname_to_uri("rdf:type"), $g->qname_to_uri("acorn:Resource"));
         $g->add_literal_triple($uri, $g->qname_to_uri("dct:title"), "wibble");
 
-        $mTripod = $this->getMock('\Tripod\Mongo\Tripod', array('getDataUpdater'), array('CBD_testing', 'tripod_php_testing'));
+        $mTripod = $this->getMock('\Tripod\Mongo\Driver', array('getDataUpdater'), array('CBD_testing', 'tripod_php_testing'));
         $mTripodUpdate = $this->getMock('\Tripod\Mongo\Updates', array('getUniqId'), array($mTripod));
 
         $mTripodUpdate->expects($this->atLeastOnce())
@@ -497,7 +497,7 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         // STEP 2
         // update the same entity with an addition
         $mTripod = null;
-        $mTripod = $this->getMock('\Tripod\Mongo\Tripod', array('getDataUpdater'), array('CBD_testing', 'tripod_php_testing'));
+        $mTripod = $this->getMock('\Tripod\Mongo\Driver', array('getDataUpdater'), array('CBD_testing', 'tripod_php_testing'));
         $mTripodUpdate = $this->getMock('\Tripod\Mongo\Updates', array('getUniqId'), array($mTripod));
 
         $mTripodUpdate->expects($this->atLeastOnce())
@@ -543,7 +543,7 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         // STEP 3
         // update the same entity with a removal
         $mTripod = null;
-        $mTripod = $this->getMock('\Tripod\Mongo\Tripod', array('getDataUpdater'), array('CBD_testing', 'tripod_php_testing'));
+        $mTripod = $this->getMock('\Tripod\Mongo\Driver', array('getDataUpdater'), array('CBD_testing', 'tripod_php_testing'));
         $mTripodUpdate = $this->getMock('\Tripod\Mongo\Updates', array('getUniqId'), array($mTripod));
 
         $mTripodUpdate->expects($this->atLeastOnce())
@@ -592,7 +592,7 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         $g = new \Tripod\Mongo\MongoGraph();
         $g->add_resource_triple($uri, $g->qname_to_uri("rdf:type"), $g->qname_to_uri("acorn:Resource"));
         $g->add_literal_triple($uri, $g->qname_to_uri("dct:title"), "wibble");
-        $mTripod = $this->getMock('\Tripod\Mongo\Tripod', array('getDataUpdater'), array('CBD_testing', 'tripod_php_testing'));
+        $mTripod = $this->getMock('\Tripod\Mongo\Driver', array('getDataUpdater'), array('CBD_testing', 'tripod_php_testing'));
         $mTripodUpdate = $this->getMock('\Tripod\Mongo\Updates', array('getUniqId'), array($mTripod));
 
         $mTripodUpdate->expects($this->atLeastOnce())
@@ -609,7 +609,7 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         // now attempt to update the entity but throw an exception in applyChangeset
         // this should cause the save to fail, and this should be reflected in the transaction log
         $mTripod = null;
-        $mTripod = $this->getMock('\Tripod\Mongo\Tripod', array('getDataUpdater'), array('CBD_testing', 'tripod_php_testing'));
+        $mTripod = $this->getMock('\Tripod\Mongo\Driver', array('getDataUpdater'), array('CBD_testing', 'tripod_php_testing'));
         $mTripodUpdate = $this->getMock('\Tripod\Mongo\Updates', array('getUniqId', 'applyChangeSet'), array($mTripod));
 
         $mTripodUpdate->expects($this->atLeastOnce())
@@ -672,12 +672,12 @@ class MongoTransactionLogTest extends MongoTripodTestBase
     public function testTransactionsLoggedCorrectlyFromMultipleTripods()
     {
         // Create two tripods onto different collection/dbname and make them use the same transaction log
-        $tripod1 = $this->getMock('\Tripod\Mongo\Tripod', array('generateViewsAndSearchDocumentsForResources'), array('CBD_testing','tripod_php_testing'));
+        $tripod1 = $this->getMock('\Tripod\Mongo\Driver', array('generateViewsAndSearchDocumentsForResources'), array('CBD_testing','tripod_php_testing'));
         $tripod1->expects($this->any())->method('generateViewsAndSearchDocumentsForResources');
         $this->getTripodCollection($tripod1)->drop();
         $tripod1->setTransactionLog($this->tripodTransactionLog);
 
-        $tripod2 = $this->getMock('\Tripod\Mongo\Tripod', array('generateViewsAndSearchDocumentsForResources'), array('CBD_testing_2','tripod_php_testing'));
+        $tripod2 = $this->getMock('\Tripod\Mongo\Driver', array('generateViewsAndSearchDocumentsForResources'), array('CBD_testing_2','tripod_php_testing'));
         $tripod2->expects($this->any())->method('generateViewsAndSearchDocumentsForResources');
         $this->getTripodCollection($tripod2)->drop();
         $tripod2->setTransactionLog($this->tripodTransactionLog);

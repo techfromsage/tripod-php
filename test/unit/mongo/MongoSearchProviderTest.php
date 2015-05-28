@@ -1,6 +1,6 @@
 <?php
     require_once 'MongoTripodTestBase.php';
-    require_once 'src/mongo/Tripod.class.php';
+    require_once 'src/mongo/Driver.class.php';
     require_once 'src/mongo/delegates/SearchIndexer.class.php';
     require_once 'src/mongo/providers/MongoSearchProvider.class.php';
 
@@ -9,7 +9,7 @@
  */
 class MongoSearchProviderTest extends MongoTripodTestBase
 {
-    /** @var $indexer \Tripod\Mongo\SearchIndexer */
+    /** @var $indexer \Tripod\Mongo\Composites\SearchIndexer */
     private $indexer;
 
     /** @var $indexer \Tripod\Mongo\MongoSearchProvider */
@@ -22,8 +22,8 @@ class MongoSearchProviderTest extends MongoTripodTestBase
         $this->tripodTransactionLog = new \Tripod\Mongo\TransactionLog();
         $this->tripodTransactionLog->purgeAllTransactions();
 
-        $this->tripod = new \Tripod\Mongo\Tripod('CBD_testing', 'tripod_php_testing');
-        $this->indexer = new \Tripod\Mongo\SearchIndexer($this->tripod);
+        $this->tripod = new \Tripod\Mongo\Driver('CBD_testing', 'tripod_php_testing');
+        $this->indexer = new \Tripod\Mongo\Composites\SearchIndexer($this->tripod);
         $this->searchProvider = new \Tripod\Mongo\MongoSearchProvider($this->tripod);
         $this->getTripodCollection($this->tripod)->drop();
 
@@ -599,11 +599,11 @@ class MongoSearchProviderTest extends MongoTripodTestBase
     }
 
     /**
-     * @param \Tripod\Mongo\Tripod $tripod
+     * @param \Tripod\Mongo\Driver $tripod
      * @param array $specs
      * @return int
      */
-    protected function getCountForSearchSpecs(\Tripod\Mongo\Tripod $tripod, $specs = array())
+    protected function getCountForSearchSpecs(\Tripod\Mongo\Driver $tripod, $specs = array())
     {
         $count = 0;
         if(empty($specs))

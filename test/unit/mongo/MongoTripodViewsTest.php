@@ -1,14 +1,14 @@
 <?php
 
 require_once 'MongoTripodTestBase.php';
-require_once 'src/mongo/Tripod.class.php';
+require_once 'src/mongo/Driver.class.php';
 require_once 'src/mongo/delegates/Views.class.php';
 
-use \Tripod\Mongo\Views;
+use \Tripod\Mongo\Composites\Views;
 
 class MongoTripodViewsTest extends MongoTripodTestBase {
     /**
-     * @var \Tripod\Mongo\Views
+     * @var \Tripod\Mongo\Composites\Views
      */
     protected $tripodViews = null;
 
@@ -21,9 +21,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $this->tripodTransactionLog->purgeAllTransactions();
 
         // Stub ouf 'addToElastic' search to prevent writes into Elastic Search happening by default.
-        /** @var \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject $this->tripod */
+        /** @var \Tripod\Mongo\Driver|PHPUnit_Framework_MockObject_MockObject $this->tripod */
         $this->tripod = $this->getMock(
-            '\Tripod\Mongo\Tripod',
+            '\Tripod\Mongo\Driver',
             array('addToSearchIndexQueue'),
             array('CBD_testing','tripod_php_testing',
                 array(
@@ -37,7 +37,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $this->getTripodCollection($this->tripod)->drop();
         $this->tripod->setTransactionLog($this->tripodTransactionLog);
 
-        $this->tripodViews = new \Tripod\Mongo\Views(
+        $this->tripodViews = new \Tripod\Mongo\Composites\Views(
             $this->tripod->getStoreName(),
             $this->getTripodCollection($this->tripod),
             'http://talisaspire.com/'
@@ -109,7 +109,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
     public function testGenerateViewWithTTL()
     {
         $expiryDate = new MongoDate(time()+300);
-        $mockTripodViews = $this->getMock('\Tripod\Mongo\Views', array('getExpirySecFromNow'), $this->viewsConstParams);
+        $mockTripodViews = $this->getMock('\Tripod\Mongo\Composites\Views', array('getExpirySecFromNow'), $this->viewsConstParams);
         $mockTripodViews->expects($this->once())->method('getExpirySecFromNow')->with(300)->will($this->returnValue((time()+300)));
 
         $mockTripodViews->getViewForResource("http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA","v_resource_full_ttl");
@@ -186,13 +186,13 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
     public function testTTLViewIsRegeneratedOnFetch()
     {
         // make mock return expiry date in past...
-        $mockTripodViews = $this->getMock('\Tripod\Mongo\Views', array('getExpirySecFromNow'), $this->viewsConstParams);
+        $mockTripodViews = $this->getMock('\Tripod\Mongo\Composites\Views', array('getExpirySecFromNow'), $this->viewsConstParams);
         $mockTripodViews->expects($this->once())->method('getExpirySecFromNow')->with(300)->will($this->returnValue((time()-300)));
 
         $mockTripodViews->generateView("v_resource_full_ttl","http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA");
 
         // now mock out generate views and check it's called...
-        $mockTripodViews2 = $this->getMock('\Tripod\Mongo\Views', array('generateView'), $this->viewsConstParams);
+        $mockTripodViews2 = $this->getMock('\Tripod\Mongo\Composites\Views', array('generateView'), $this->viewsConstParams);
         $mockTripodViews2->expects($this->once())->method('generateView')->with('v_resource_full_ttl','http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA');
 
         $mockTripodViews2->getViewForResource('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA','v_resource_full_ttl');
@@ -202,9 +202,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
     {
         $expiryDate = new MongoDate(time()+300);
         /**
-         * @var $mockTripodViews \Tripod\Mongo\Views
+         * @var $mockTripodViews \Tripod\Mongo\Composites\Views
          */
-        $mockTripodViews = $this->getMock('\Tripod\Mongo\Views', array('getExpirySecFromNow'), $this->viewsConstParams);
+        $mockTripodViews = $this->getMock('\Tripod\Mongo\Composites\Views', array('getExpirySecFromNow'), $this->viewsConstParams);
         $mockTripodViews->expects($this->once())->method('getExpirySecFromNow')->with(300)->will($this->returnValue((time()+300)));
 
         $mockTripodViews->getViewForResource("http://talisaspire.com/works/4d101f63c10a6","v_counts");
@@ -269,8 +269,8 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
 
         // use a mock heron-in to make sure generateView is not called again for different combinations of qname/full uri
 
-        /* @var $mockTripodViews \Tripod\Mongo\Views */
-        $mockTripodViews = $this->getMock('\Tripod\Mongo\Views', array('generateView'), $this->viewsConstParams);
+        /* @var $mockTripodViews \Tripod\Mongo\Composites\Views */
+        $mockTripodViews = $this->getMock('\Tripod\Mongo\Composites\Views', array('generateView'), $this->viewsConstParams);
         $mockTripodViews->expects($this->never())->method('generateView');
 
         $g3 = $mockTripodViews->getViewForResource("http://basedata.com/b/2","v_work_see_also","http://basedata.com/b/DefaultGraph");
@@ -283,15 +283,15 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
 
     public function testGenerateViewsForResourcesOfTypeWithNamespace()
     {
-        /* @var $mockTripodViews \Tripod\Mongo\Views */
-        $mockTripodViews = $this->getMock('\Tripod\Mongo\Views', array('generateView'), $this->viewsConstParams);
+        /* @var $mockTripodViews \Tripod\Mongo\Composites\Views */
+        $mockTripodViews = $this->getMock('\Tripod\Mongo\Composites\Views', array('generateView'), $this->viewsConstParams);
         $mockTripodViews->expects($this->atLeastOnce())->method('generateView')->will($this->returnValue(array("ok"=>true)));
 
         // spec is namespaced, acorn:Work, can it resolve?
         $mockTripodViews->generateViewsForResourcesOfType("http://talisaspire.com/schema#Work");
 
-        /* @var $mockTripodViews \Tripod\Mongo\Views */
-        $mockTripodViews = $this->getMock('\Tripod\Mongo\Views', array('generateView'), $this->viewsConstParams);
+        /* @var $mockTripodViews \Tripod\Mongo\Composites\Views */
+        $mockTripodViews = $this->getMock('\Tripod\Mongo\Composites\Views', array('generateView'), $this->viewsConstParams);
         $mockTripodViews->expects($this->atLeastOnce())->method('generateView')->will($this->returnValue(array("ok"=>true)));
 
         // spec is fully qualified, http://talisaspire.com/shema#Work2, can it resolve?
@@ -348,7 +348,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
 
         /* @var $mockTripodViews|PHPUnit_Framework_MockObject_MockObject Views */
         $mockTripodViews = $this->getMock(
-            '\Tripod\Mongo\Views',
+            '\Tripod\Mongo\Composites\Views',
             array('generateView','fetchGraph', 'getConfigInstance'),
             array('tripod_php_testing',$mockColl,$context)
         );
@@ -405,9 +405,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $mockConfig->loadConfig(\Tripod\Mongo\Config::getConfig());
 
 
-        /* @var $mockTripodViews \Tripod\Mongo\Views */
+        /* @var $mockTripodViews \Tripod\Mongo\Composites\Views */
         $mockTripodViews = $this->getMock(
-            '\Tripod\Mongo\Views',
+            '\Tripod\Mongo\Composites\Views',
             array('generateView','fetchGraph','getConfigInstance'),
             array('tripod_php_testing',$mockColl,$context)
         );
@@ -451,7 +451,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $originalGraph->add_literal_triple($uri2, $labeller->qname_to_uri('dct:subject'), 'Things grouped by no specific criteria');
 
         $originalGraph->add_resource_triple($uri1, $labeller->qname_to_uri('dct:isVersionOf'), $uri2);
-        $tripod = new \Tripod\Mongo\Tripod('CBD_testing', 'tripod_php_testing', array('defaultContext'=>$context));
+        $tripod = new \Tripod\Mongo\Driver('CBD_testing', 'tripod_php_testing', array('defaultContext'=>$context));
         $tripod->saveChanges(new \Tripod\ExtendedGraph(), $originalGraph);
 
         $collections = \Tripod\Mongo\Config::getInstance()->getCollectionsForViews('tripod_php_testing', array('v_resource_full', 'v_resource_full_ttl', 'v_resource_to_single_source'));
@@ -467,9 +467,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             )
         );
 
-        /** @var \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
+        /** @var \Tripod\Mongo\Driver|PHPUnit_Framework_MockObject_MockObject $mockTripod */
         $mockTripod = $this->getMock(
-            '\Tripod\Mongo\Tripod',
+            '\Tripod\Mongo\Driver',
             array(
                 'getDataUpdater', 'getComposite'
             ),
@@ -505,7 +505,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             )
         );
 
-        $mockViews = $this->getMock('\Tripod\Mongo\Views',
+        $mockViews = $this->getMock('\Tripod\Mongo\Composites\Views',
             array('generateViewsForResourcesOfType'),
             array(
                 'tripod_php_testing',
@@ -545,9 +545,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
 
         // Walk through the processSyncOperations process manually for views
 
-        /** @var \Tripod\Mongo\Views $view */
+        /** @var \Tripod\Mongo\Composites\Views $view */
         $view = $mockTripod->getComposite(OP_VIEWS);
-        $this->assertInstanceOf('\Tripod\Mongo\Views', $view);
+        $this->assertInstanceOf('\Tripod\Mongo\Composites\Views', $view);
 
         $expectedImpactedSubjects = array(
             new \Tripod\Mongo\ImpactedSubject(
@@ -600,7 +600,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $originalGraph->add_literal_triple($uri2, $labeller->qname_to_uri('dct:subject'), 'Things grouped by no specific criteria');
 
         $originalGraph->add_resource_triple($uri1, $labeller->qname_to_uri('dct:isVersionOf'), $uri2);
-        $tripod = new \Tripod\Mongo\Tripod('CBD_testing', 'tripod_php_testing', array('defaultContext'=>$context));
+        $tripod = new \Tripod\Mongo\Driver('CBD_testing', 'tripod_php_testing', array('defaultContext'=>$context));
         $tripod->saveChanges(new \Tripod\ExtendedGraph(), $originalGraph);
 
         $collections = \Tripod\Mongo\Config::getInstance()->getCollectionsForViews('tripod_php_testing', array('v_resource_full', 'v_resource_full_ttl', 'v_resource_to_single_source'));
@@ -616,9 +616,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             )
         );
 
-        /** @var \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
+        /** @var \Tripod\Mongo\Driver|PHPUnit_Framework_MockObject_MockObject $mockTripod */
         $mockTripod = $this->getMock(
-            '\Tripod\Mongo\Tripod',
+            '\Tripod\Mongo\Driver',
             array(
                 'getDataUpdater', 'getComposite'
             ),
@@ -654,7 +654,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             )
         );
 
-        $mockViews = $this->getMock('\Tripod\Mongo\Views',
+        $mockViews = $this->getMock('\Tripod\Mongo\Composites\Views',
             array('generateView'),
             array(
                 'tripod_php_testing',
@@ -712,9 +712,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
 
         // Walk through the processSyncOperations process manually for views
 
-        /** @var \Tripod\Mongo\Views $view */
+        /** @var \Tripod\Mongo\Composites\Views $view */
         $view = $mockTripod->getComposite(OP_VIEWS);
-        $this->assertInstanceOf('\Tripod\Mongo\Views', $view);
+        $this->assertInstanceOf('\Tripod\Mongo\Composites\Views', $view);
 
         $expectedImpactedSubjects = array(
             new \Tripod\Mongo\ImpactedSubject(
@@ -768,7 +768,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $originalGraph->add_literal_triple($uri2, $labeller->qname_to_uri('dct:subject'), 'Things grouped by no specific criteria');
 
         $originalGraph->add_resource_triple($uri1, $labeller->qname_to_uri('dct:isVersionOf'), $uri2);
-        $tripod = new \Tripod\Mongo\Tripod('CBD_testing', 'tripod_php_testing', array('defaultContext'=>$context));
+        $tripod = new \Tripod\Mongo\Driver('CBD_testing', 'tripod_php_testing', array('defaultContext'=>$context));
         $tripod->saveChanges(new \Tripod\ExtendedGraph(), $originalGraph);
 
         $collections = \Tripod\Mongo\Config::getInstance()->getCollectionsForViews('tripod_php_testing', array('v_resource_full', 'v_resource_full_ttl', 'v_resource_to_single_source'));
@@ -782,9 +782,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             $labeller->uri_to_alias($uri2)=>array('dct:subject')
         );
 
-        /** @var \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
+        /** @var \Tripod\Mongo\Driver|PHPUnit_Framework_MockObject_MockObject $mockTripod */
         $mockTripod = $this->getMock(
-            '\Tripod\Mongo\Tripod',
+            '\Tripod\Mongo\Driver',
             array(
                 'getDataUpdater', 'getComposite'
             ),
@@ -820,7 +820,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             )
         );
 
-        $mockViews = $this->getMock('\Tripod\Mongo\Views',
+        $mockViews = $this->getMock('\Tripod\Mongo\Composites\Views',
             array('generateView'),
             array(
                 'tripod_php_testing',
@@ -880,9 +880,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
 
         // Walk through the processSyncOperations process manually for views
 
-        /** @var \Tripod\Mongo\Views $view */
+        /** @var \Tripod\Mongo\Composites\Views $view */
         $view = $mockTripod->getComposite(OP_VIEWS);
-        $this->assertInstanceOf('\Tripod\Mongo\Views', $view);
+        $this->assertInstanceOf('\Tripod\Mongo\Composites\Views', $view);
 
         $expectedImpactedSubjects = array(
             new \Tripod\Mongo\ImpactedSubject(
@@ -935,7 +935,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $originalGraph->add_literal_triple($uri2, $labeller->qname_to_uri('dct:subject'), 'Things grouped by no specific criteria');
 
         $originalGraph->add_resource_triple($uri1, $labeller->qname_to_uri('dct:isVersionOf'), $uri2);
-        $tripod = new \Tripod\Mongo\Tripod('CBD_testing', 'tripod_php_testing', array('defaultContext'=>$context));
+        $tripod = new \Tripod\Mongo\Driver('CBD_testing', 'tripod_php_testing', array('defaultContext'=>$context));
         $tripod->saveChanges(new \Tripod\ExtendedGraph(), $originalGraph);
 
         $collections = \Tripod\Mongo\Config::getInstance()->getCollectionsForViews('tripod_php_testing', array('v_resource_full', 'v_resource_full_ttl', 'v_resource_to_single_source'));
@@ -949,9 +949,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             $labeller->uri_to_alias($uri1)=>array('dct:title')
         );
 
-        /** @var \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
+        /** @var \Tripod\Mongo\Driver|PHPUnit_Framework_MockObject_MockObject $mockTripod */
         $mockTripod = $this->getMock(
-            '\Tripod\Mongo\Tripod',
+            '\Tripod\Mongo\Driver',
             array(
                 'getDataUpdater', 'getComposite'
             ),
@@ -987,7 +987,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             )
         );
 
-        $mockViews = $this->getMock('\Tripod\Mongo\Views',
+        $mockViews = $this->getMock('\Tripod\Mongo\Composites\Views',
             array('generateView'),
             array(
                 'tripod_php_testing',
@@ -1046,9 +1046,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
 
         // Walk through the processSyncOperations process manually for views
 
-        /** @var \Tripod\Mongo\Views $view */
+        /** @var \Tripod\Mongo\Composites\Views $view */
         $view = $mockTripod->getComposite(OP_VIEWS);
-        $this->assertInstanceOf('\Tripod\Mongo\Views', $view);
+        $this->assertInstanceOf('\Tripod\Mongo\Composites\Views', $view);
 
         $expectedImpactedSubjects = array(
             new \Tripod\Mongo\ImpactedSubject(
@@ -1106,9 +1106,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             $labeller->uri_to_alias($uri1)=>array('dct:subject')
         );
 
-        /** @var \Tripod\Mongo\Tripod|PHPUnit_Framework_MockObject_MockObject $mockTripod */
+        /** @var \Tripod\Mongo\Driver|PHPUnit_Framework_MockObject_MockObject $mockTripod */
         $mockTripod = $this->getMock(
-            '\Tripod\Mongo\Tripod',
+            '\Tripod\Mongo\Driver',
             array(
                 'getDataUpdater', 'getComposite'
             ),
@@ -1144,7 +1144,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             )
         );
 
-        $mockViews = $this->getMock('\Tripod\Mongo\Views',
+        $mockViews = $this->getMock('\Tripod\Mongo\Composites\Views',
             array('generateViewsForResourcesOfType'),
             array(
                 'tripod_php_testing',
@@ -1193,9 +1193,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
 
         $mockTripod->saveChanges(new \Tripod\ExtendedGraph(), $originalGraph);
 
-        /** @var \Tripod\Mongo\Views $view */
+        /** @var \Tripod\Mongo\Composites\Views $view */
         $view = $mockTripod->getComposite(OP_VIEWS);
-        $this->assertInstanceOf('\Tripod\Mongo\Views', $view);
+        $this->assertInstanceOf('\Tripod\Mongo\Composites\Views', $view);
 
         $impactedSubjects = $view->getImpactedSubjects($originalSubjectsAndPredicatesOfChange, $context);
 
@@ -1207,9 +1207,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $mockTripod->saveChanges($originalGraph, $newGraph);
 
 
-        /** @var \Tripod\Mongo\Views $view */
+        /** @var \Tripod\Mongo\Composites\Views $view */
         $view = $mockTripod->getComposite(OP_VIEWS);
-        $this->assertInstanceOf('\Tripod\Mongo\Views', $view);
+        $this->assertInstanceOf('\Tripod\Mongo\Composites\Views', $view);
 
         $impactedSubjects = $view->getImpactedSubjects($updatedSubjectsAndPredicatesOfChange, $context);
 
@@ -1223,7 +1223,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
      */
     public function testSavingMultipleNewEntitiesResultsInOneImpactedSubject()
     {
-        $tripod = $this->getMockBuilder('\Tripod\Mongo\Tripod')
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
             ->setMethods(array('getDataUpdater'))
             ->setConstructorArgs(
                 array(
@@ -1291,7 +1291,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         );
         $tripod->saveChanges(new \Tripod\Mongo\MongoGraph(), $g);
 
-        /** @var \Tripod\Mongo\Views $views */
+        /** @var \Tripod\Mongo\Composites\Views $views */
         $views = $tripod->getComposite(OP_VIEWS);
 
         $expectedImpactedSubjects = array(

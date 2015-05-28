@@ -7,7 +7,7 @@ set_include_path(
 
 require_once('tripod.inc.php');
 require_once TRIPOD_DIR . 'mongo/Config.class.php';
-require_once TRIPOD_DIR . 'mongo/base/TripodBase.class.php';
+require_once TRIPOD_DIR . 'mongo/base/DriverBase.class.php';
 
 /**
  * A quick performance test to see what amount of time in consumed in specific methods of Config class

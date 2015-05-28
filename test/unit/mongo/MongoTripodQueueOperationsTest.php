@@ -1,6 +1,6 @@
 <?php
 require_once 'MongoTripodTestBase.php';
-require_once 'src/mongo/Tripod.class.php';
+require_once 'src/mongo/Driver.class.php';
 
 /**
  * Class MongoTripodQueueOperationsTest
@@ -14,14 +14,14 @@ require_once 'src/mongo/Tripod.class.php';
 class MongoTripodQueueOperations extends MongoTripodTestBase
 {
     /**
-     * @var \Tripod\Mongo\Tripod
+     * @var \Tripod\Mongo\Driver
      */
     protected $tripod = null;
 
     protected function setUp()
     {
         parent::setup();
-        $this->tripod = new \Tripod\Mongo\Tripod(
+        $this->tripod = new \Tripod\Mongo\Driver(
             'CBD_testing',
             'tripod_php_testing'
         );
@@ -35,7 +35,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
     public function testSingleItemIsAddedToQueueForChangeToSingleSubject()
     {
         // create a tripod instance that will send all operations to the queue
-        $tripod = $this->getMockBuilder('\Tripod\Mongo\Tripod')
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
             ->setMethods(array('getDataUpdater', 'getComposite'))
             ->setConstructorArgs(
                 array(
@@ -80,7 +80,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
 
         $tripodUpdates->expects($this->once())
             ->method('submitJob')
-            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"\Tripod\Mongo\DiscoverImpactedSubjects",$data);
+            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"\Tripod\Mongo\Jobs\DiscoverImpactedSubjects",$data);
 
 
         $g1 = $tripod->describeResource("http://talisaspire.com/resources/doc1");
@@ -100,7 +100,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
     public function testSingleItemWithViewsOpIsAddedToQueueForChangeToSingleSubject()
     {
         // create a tripod instance that will send all operations to the queue
-        $tripod = $this->getMockBuilder('\Tripod\Mongo\Tripod')
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
             ->setMethods(array('getDataUpdater', 'getComposite'))
             ->setConstructorArgs(
                 array(
@@ -148,7 +148,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
 
         $tripodUpdates->expects($this->once())
             ->method('submitJob')
-            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"\Tripod\Mongo\DiscoverImpactedSubjects",$data);
+            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"\Tripod\Mongo\Jobs\DiscoverImpactedSubjects",$data);
 
 
         $g1 = $tripod->describeResource("http://talisaspire.com/resources/doc1");
@@ -165,7 +165,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
     public function testNoItemIsAddedToQueueForChangeToSingleSubjectWithNoAsyncOps()
     {
         // create a tripod instance that will send all operations to the queue
-        $tripod = $this->getMockBuilder('\Tripod\Mongo\Tripod')
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
             ->setMethods(array('getDataUpdater', 'getComposite'))
             ->setConstructorArgs(
                 array(
@@ -225,7 +225,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
      */
     public function testSingleJobSubmittedToQueueForChangeToSeveralSubjects()
     {
-        $tripod = $this->getMockBuilder('\Tripod\Mongo\Tripod')
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
             ->setMethods(array('getDataUpdater', 'getComposite'))
             ->setConstructorArgs(
                 array(
@@ -272,7 +272,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
 
         $tripodUpdates->expects($this->once())
             ->method('submitJob')
-            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"\Tripod\Mongo\DiscoverImpactedSubjects",$data);
+            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"\Tripod\Mongo\Jobs\DiscoverImpactedSubjects",$data);
 
         $g1 = $tripod->describeResources(array(
             "http://talisaspire.com/resources/doc1",

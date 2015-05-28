@@ -72,7 +72,7 @@ set_include_path(
 require_once 'tripod.inc.php';
 require_once 'classes/Timer.class.php';
 require_once 'mongo/Config.class.php';
-require_once 'mongo/Tripod.class.php';
+require_once 'mongo/Driver.class.php';
 
 /**
  * @param string|null $id
@@ -92,7 +92,7 @@ function generateTables($id, $tableId, $storeName, $stat = null)
         MongoCursor::$timeout = -1;
 
         print "Generating $tableId";
-        $tripod = new \Tripod\Mongo\Tripod($tableSpec['from'], $storeName, array('stat'=>$stat));
+        $tripod = new \Tripod\Mongo\Driver($tableSpec['from'], $storeName, array('stat'=>$stat));
         $tTables = $tripod->getTripodTables();//new Tables($tripod->storeName,$tripod->collection,$tripod->defaultContext);
         if ($id)
         {
