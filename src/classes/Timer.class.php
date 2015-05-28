@@ -47,7 +47,7 @@ class Timer
     /**
      * Calculate difference between start and end time of event and return in milli-seconds.
      * @throws \Exception
-     * @return number time difference in milliseconds between stat and end time of event
+     * @return number time difference in milliseconds between start and end time of event
      */
     public function result()
     {
@@ -74,7 +74,7 @@ class Timer
 
     /**
      * Calculate difference between start and end time of event and return in micro-seconds.
-     * @return number time difference in micro seconds between stat and end time of event
+     * @return number time difference in micro seconds between start and end time of event
      * @throws \Exception, if either of or both  of start or stop method are not called before this method
      */
     public function microResult()
