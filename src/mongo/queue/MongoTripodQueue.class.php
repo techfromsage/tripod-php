@@ -31,7 +31,7 @@ class MongoTripodQueue extends MongoTripodBase
      */
     public function processNext()
     {
-        $now = new MongoDate();
+        $processStart = new MongoDate();
         $queuedItem = $this->fetchNextQueuedItem();
         if($queuedItem !== NULL)
         {
@@ -57,7 +57,7 @@ class MongoTripodQueue extends MongoTripodBase
             try
             {
                 // notify observers
-                $this->debugLog("Queue processing item {$data['r']} with operations ".implode(", ",$operations));
+                $this->infoLog("Queue processing item: {$data['r']} collection: {$data['collection']} database: {$data['database']} with operations: ".implode(", ",$operations));
                 $queuedItem->notify();
                 $this->removeItem($queuedItem);
             }
@@ -66,9 +66,18 @@ class MongoTripodQueue extends MongoTripodBase
                 $this->errorLog("Error processing item in queue: ".$e->getMessage(),array("data"=>$data));
                 $this->failItem($queuedItem, $e->getMessage()."\n".$e->getTraceAsString());
             }
+
+            $processEnd = new MongoDate();
+
             // stat time taken to process item, from time it was created (queued)
-            $timeTaken = ($now->usec/1000 + $now->sec*1000) - ($createdOn->usec/1000 + $createdOn->sec*1000);
+            $timeTaken = ($processStart->usec/1000 + $processStart->sec*1000) - ($createdOn->usec/1000 + $createdOn->sec*1000);
             $this->getStat()->timer(MONGO_QUEUE_SUCCESS,$timeTaken);
+            $this->infoLog("MONGO QUEUE SUCCESS item {$data['r']} took: " . $timeTaken);
+
+            $processingTime = ($processEnd->usec/1000 + $processEnd->sec*1000) - ($processStart->usec/1000 + $processStart->sec*1000);
+            $this->getStat()->timer(MONGO_QUEUE_PROCESSING_TIME,$processingTime);
+            $this->infoLog("MONGO QUEUE PROCESSING item {$data['r']} took: " . $processingTime);
+
             return true;
         }
         return false;
