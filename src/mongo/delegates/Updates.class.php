@@ -1,16 +1,22 @@
 <?php
 
-require_once TRIPOD_DIR . 'mongo/MongoTripodConfig.class.php';
+namespace Tripod\Mongo;
 
-class MongoTripodUpdates extends MongoTripodBase {
+require_once TRIPOD_DIR . 'mongo/Config.class.php';
+
+/**
+ * Class Updates
+ * @package Tripod\Mongo
+ */
+class Updates extends DriverBase {
 
     /**
-     * $var MongoTransactionLog
+     * $var TransactionLog
      */
-    private $transaction_log = null;
+    private $transactionLog = null;
 
     /**
-     * @var MongoTripodLabeller
+     * @var Labeller
      */
     protected $labeller;
 
@@ -27,7 +33,7 @@ class MongoTripodUpdates extends MongoTripodBase {
     private $originalDbReadPreference = array();
 
     /**
-     * @var MongoTripod
+     * @var Driver
      */
     protected $tripod;
 
@@ -43,35 +49,35 @@ class MongoTripodUpdates extends MongoTripodBase {
     private $async = null;
 
     /**
-     * @var MongoDB
+     * @var \MongoDB
      */
     protected $locksDb;
 
     /**
-     * @var MongoCollection
+     * @var \MongoCollection
      */
     protected $locksCollection;
 
     /**
-     * @param MongoTripod $tripod
+     * @param Driver $tripod
      * @param array $opts
      */
-    public function __construct(MongoTripod $tripod,$opts=array())
+    public function __construct(Driver $tripod,$opts=array())
     {
         $this->tripod = $tripod;
         $this->storeName = $tripod->getStoreName();
         $this->podName = $tripod->getPodName();
         $this->stat = $tripod->getStat();
-        $this->labeller = new MongoTripodLabeller();
+        $this->labeller = new Labeller();
         $opts = array_merge(array(
                 'defaultContext'=>null,
                 OP_ASYNC=>array(OP_VIEWS=>false,OP_TABLES=>true,OP_SEARCH=>true),
                 'stat'=>null,
-                'readPreference'=>MongoClient::RP_PRIMARY_PREFERRED,
+                'readPreference'=>\MongoClient::RP_PRIMARY_PREFERRED,
                 'retriesToGetLock' => 20)
             ,$opts);
         $this->readPreference = $opts['readPreference'];
-        $this->config = $this->getMongoTripodConfigInstance();
+        $this->config = $this->getConfigInstance();
 
         // default context
         $this->defaultContext = $opts['defaultContext'];
@@ -108,16 +114,16 @@ class MongoTripodUpdates extends MongoTripodBase {
 
     /**
      * Create and apply a changeset which is the delta between $oldGraph and $newGraph
-     * @param ExtendedGraph $oldGraph
-     * @param ExtendedGraph $newGraph
+     * @param \Tripod\ExtendedGraph $oldGraph
+     * @param \Tripod\ExtendedGraph $newGraph
      * @param string|null $context
      * @param string|null $description
-     * @throws Exception
+     * @throws \Exception
      * @return bool
      */
     public function saveChanges(
-        ExtendedGraph $oldGraph,
-        ExtendedGraph $newGraph,
+        \Tripod\ExtendedGraph $oldGraph,
+        \Tripod\ExtendedGraph $newGraph,
         $context=null,
         $description=null)
     {
@@ -125,9 +131,9 @@ class MongoTripodUpdates extends MongoTripodBase {
         try{
             $contextAlias = $this->getContextAlias($context);
 
-            if (!MongoTripodConfig::getInstance()->isPodWithinStore($this->getStoreName(),$this->getPodName()))
+            if (!Config::getInstance()->isPodWithinStore($this->getStoreName(),$this->getPodName()))
             {
-                throw new TripodException("database:collection " . $this->getStoreName() . ":" . $this->getPodName(). " is not referenced within config, so cannot be written to");
+                throw new \Tripod\Exceptions\Exception("database:collection " . $this->getStoreName() . ":" . $this->getPodName(). " is not referenced within config, so cannot be written to");
             }
 
             $this->validateGraphCardinality($newGraph);
@@ -135,7 +141,7 @@ class MongoTripodUpdates extends MongoTripodBase {
             $oldIndex = $oldGraph->get_index();
             $newIndex = $newGraph->get_index();
             $args = array('before' => $oldIndex, 'after' => $newIndex, 'changeReason' => $description);
-            $cs = new ChangeSet($args);
+            $cs = new \Tripod\ChangeSet($args);
 
             if ($cs->has_changes())
             {
@@ -149,7 +155,7 @@ class MongoTripodUpdates extends MongoTripodBase {
                 $this->queueAsyncOperations($subjectsAndPredicatesOfChange,$contextAlias);
             }
         }
-        catch(Exception $e){
+        catch(\Exception $e){
             // ensure we reset the original read preference in the event of an exception
             $this->resetOriginalReadPreference();
             throw $e;
@@ -168,18 +174,18 @@ class MongoTripodUpdates extends MongoTripodBase {
     {
         // Set db preference
         $dbPref = $this->getDatabase()->getReadPreference();
-        if($dbPref['type'] !== MongoClient::RP_PRIMARY){
+        if($dbPref['type'] !== \MongoClient::RP_PRIMARY){
             $this->originalDbReadPreference = $this->db->getReadPreference();
             $tagsets = (isset($dbPref['tagsets']) ? $dbPref['tagsets'] : array());
-            $this->db->setReadPreference(MongoClient::RP_PRIMARY, $tagsets);
+            $this->db->setReadPreference(\MongoClient::RP_PRIMARY, $tagsets);
         }
 
         $collPref = $this->getCollection()->getReadPreference();
         // Set collection preference
-        if($collPref['type'] !== MongoClient::RP_PRIMARY){
+        if($collPref['type'] !== \MongoClient::RP_PRIMARY){
             $this->originalCollectionReadPreference = $this->collection->getReadPreference();
             $tagsets = (isset($collPref['tagsets']) ? $collPref['tagsets'] : array());
-            $this->collection->setReadPreference(MongoClient::RP_PRIMARY, $tagsets);
+            $this->collection->setReadPreference(\MongoClient::RP_PRIMARY, $tagsets);
         }
     }
 
@@ -213,12 +219,12 @@ class MongoTripodUpdates extends MongoTripodBase {
     /**
      * Ensure that the graph we want to persist has data with valid cardinality.
      *
-     * @param ExtendedGraph $graph
-     * @throws TripodCardinalityException
+     * @param \Tripod\ExtendedGraph $graph
+     * @throws \Tripod\Exceptions\CardinalityException
      */
-    protected function validateGraphCardinality(ExtendedGraph $graph)
+    protected function validateGraphCardinality(\Tripod\ExtendedGraph $graph)
     {
-        $config = MongoTripodConfig::getInstance();
+        $config = Config::getInstance();
         $cardinality = $config->getCardinality($this->getStoreName(), $this->getPodName());
         $namespaces = $config->getNamespaces();
         $graphSubjects = $graph->get_subjects();
@@ -234,7 +240,7 @@ class MongoTripodUpdates extends MongoTripodBase {
             if (!array_key_exists($namespace, $namespaces))
             {
                 //TODO This may be changed to a namespace exception at some point...
-                throw new TripodCardinalityException("Namespace '{$namespace}' not defined for qname: {$qname}");
+                throw new \Tripod\Exceptions\CardinalityException("Namespace '{$namespace}' not defined for qname: {$qname}");
             }
 
             // NB: The only constraint we currently support is a value of 1 to enforce one triple per subject/predicate.
@@ -251,7 +257,7 @@ class MongoTripodUpdates extends MongoTripodBase {
                         {
                             $v[] = $predicateValue['value'];
                         }
-                        throw new TripodCardinalityException("Cardinality failed on {$subjectUri} for '{$qname}' - should only have 1 value and has: ".implode(', ', $v));
+                        throw new \Tripod\Exceptions\CardinalityException("Cardinality failed on {$subjectUri} for '{$qname}' - should only have 1 value and has: ".implode(', ', $v));
                     }
                 }
             }
@@ -260,14 +266,14 @@ class MongoTripodUpdates extends MongoTripodBase {
 
 
     /**
-     * @param ChangeSet $cs Change-set to apply
+     * @param \Tripod\ChangeSet $cs Change-set to apply
      * @param string $contextAlias
-     * @throws TripodException
+     * @throws \Tripod\Exceptions\Exception
      * @return array An array of subjects and predicates that have been changed
      */
-    protected function storeChanges(ChangeSet $cs, $contextAlias)
+    protected function storeChanges(\Tripod\ChangeSet $cs, $contextAlias)
     {
-        $t = new Timer();
+        $t = new \Tripod\Timer();
         $t->start();
 
         $subjectsOfChange = $cs->get_subjects_of_change();
@@ -294,15 +300,15 @@ class MongoTripodUpdates extends MongoTripodBase {
 
             if(empty($originalCBDs)) // didn't get lock on documents
             {
-                $this->getTransactionLog()->failTransaction($transaction_id, new Exception('Did not obtain locks on documents'));
-                throw new Exception('Did not obtain locks on documents');
+                $this->getTransactionLog()->failTransaction($transaction_id, new \Exception('Did not obtain locks on documents'));
+                throw new \Exception('Did not obtain locks on documents');
             }
 
             $changes = $this->applyChangeSet($cs,$originalCBDs,$contextAlias, $transaction_id);
 
             $this->debugLog(MONGO_LOCK,
                 array(
-                    'description'=>'MongoTripod::storeChanges - Unlocking documents, apply change-set completed',
+                    'description'=>'Driver::storeChanges - Unlocking documents, apply change-set completed',
                     'transaction_id'=>$transaction_id,
                 )
             );
@@ -316,7 +322,7 @@ class MongoTripodUpdates extends MongoTripodBase {
 
             return $changes['subjectsAndPredicatesOfChange'];
         }
-        catch(Exception $e)
+        catch(\Exception $e)
         {
             $this->getStat()->increment(MONGO_ROLLBACK);
             $this->errorLog(MONGO_ROLLBACK,
@@ -330,18 +336,18 @@ class MongoTripodUpdates extends MongoTripodBase {
             );
             $this->rollbackTransaction($transaction_id, $originalCBDs, $e);
 
-            throw new TripodException('Error storing changes: '.$e->getMessage()." >>>" . $e->getTraceAsString());
+            throw new \Tripod\Exceptions\Exception('Error storing changes: '.$e->getMessage()." >>>" . $e->getTraceAsString());
         }
     }
 
     /**
      * @param string $transaction_id id of the transaction
      * @param array $originalCBDs containing the original CBDS
-     * @param Exception $exception
-     * @throws Exception
+     * @param \Exception $exception
+     * @throws \Exception
      * @return bool
      */
-    protected function rollbackTransaction($transaction_id, $originalCBDs, Exception $exception)
+    protected function rollbackTransaction($transaction_id, $originalCBDs, \Exception $exception)
     {
         // set transaction to cancelling
         $this->getTransactionLog()->cancelTransaction($transaction_id, $exception);
@@ -355,13 +361,13 @@ class MongoTripodUpdates extends MongoTripodBase {
                     // Error log here
                     $this->errorLog(MONGO_ROLLBACK,
                         array(
-                            'description' => 'MongoTripod::rollbackTransaction - Error updating transaction',
+                            'description' => 'Driver::rollbackTransaction - Error updating transaction',
                             'exception_message' => $exception->getMessage(),
                             'transaction_id' => $transaction_id,
                             'mongoDriverError' => $this->getDatabase()->lastError()
                         )
                     );
-                    throw new Exception("Failed to restore Original CBDS for transaction: {$transaction_id} stopped at ".$g[_ID_KEY]);
+                    throw new \Exception("Failed to restore Original CBDS for transaction: {$transaction_id} stopped at ".$g[_ID_KEY]);
                 }
             }
         }
@@ -369,7 +375,7 @@ class MongoTripodUpdates extends MongoTripodBase {
         {
             $this->errorLog(MONGO_ROLLBACK,
                 array(
-                    'description'=>'MongoTripod::rollbackTransaction - Unlocking documents',
+                    'description'=>'Driver::rollbackTransaction - Unlocking documents',
                     'exception_message' => $exception->getMessage(),
                     'transaction_id'=>$transaction_id,
                     'mongoDriverError' => $this->getDatabase()->lastError()
@@ -404,14 +410,14 @@ class MongoTripodUpdates extends MongoTripodBase {
 
     /**
      * Adds/updates/deletes the graph in the database
-     * @param ChangeSet $cs
+     * @param \Tripod\ChangeSet $cs
      * @param array $originalCBDs
      * @param string $contextAlias
      * @param string $transaction_id
      * @return array
-     * @throws Exception
+     * @throws \Exception
      */
-    protected function applyChangeSet(ChangeSet $cs, $originalCBDs, $contextAlias, $transaction_id)
+    protected function applyChangeSet(\Tripod\ChangeSet $cs, $originalCBDs, $contextAlias, $transaction_id)
     {
         $subjectsAndPredicatesOfChange = array();
         if (preg_match('/^CBD_/',$this->getCollection()->getName()))
@@ -475,7 +481,7 @@ class MongoTripodUpdates extends MongoTripodBase {
                     if (!$valueExists)
                     {
                         $this->errorLog("Removal value {$subjectOfChange} {$predicate} {$object[0]['value']} does not appear in target document to be updated",array("targetGraph"=>$targetGraph->to_ntriples()));
-                        throw new Exception("Removal value {$subjectOfChange} {$predicate} {$object[0]['value']} does not appear in target document to be updated");
+                        throw new \Exception("Removal value {$subjectOfChange} {$predicate} {$object[0]['value']} does not appear in target document to be updated");
                     }
                     else if ($isUri)
                     {
@@ -488,7 +494,6 @@ class MongoTripodUpdates extends MongoTripodBase {
 
                     }
 
-                    //$criteria[$targetGraph->uri_to_qname($predicate)] = array('$elemMatch'=>$object[0]);
                 }
 
                 foreach ($additions as $r)
@@ -528,7 +533,7 @@ class MongoTripodUpdates extends MongoTripodBase {
                 }
 
                 // update datestamps
-                $_updated_ts = new MongoDate();
+                $_updated_ts = new \MongoDate();
 
                 if($targetGraph->is_empty())
                 {
@@ -546,7 +551,7 @@ class MongoTripodUpdates extends MongoTripodBase {
                     $newDocument[_VERSION] = $_new_version;
                     $newDocument[_UPDATED_TS] = $_updated_ts;
                     if($_new_version == 0) {
-                        $newDocument[_CREATED_TS] = new MongoDate();
+                        $newDocument[_CREATED_TS] = new \MongoDate();
                     } else {
                         if(isset($doc[_CREATED_TS])) {
                             $newDocument[_CREATED_TS] = $doc[_CREATED_TS];
@@ -570,7 +575,7 @@ class MongoTripodUpdates extends MongoTripodBase {
 
                 try{
                     $result = $this->getDatabase()->command($command);
-                } catch (Exception $e) {
+                } catch (\Exception $e) {
 
                     $this->errorLog(MONGO_WRITE,
                         array(
@@ -579,24 +584,24 @@ class MongoTripodUpdates extends MongoTripodBase {
                             'mongoDriverError' => $this->getDatabase()->lastError()
                         )
                     );
-                    throw new Exception($e);
+                    throw new \Exception($e);
                 }
 
                 if (!$result["ok"])
                 {
                     $this->errorLog("Update failed with err.", $result);
-                    throw new Exception("Update failed with err {$result['err']}");
+                    throw new \Exception("Update failed with err {$result['err']}");
                 }
 
                 if($result['value']==null)
                 {
                     $this->errorLog(MONGO_WRITE,
                         array(
-                            'description'=>'MongoTripod::storeChanges - Update failed we did not find a matching document (transaction_id - ' .$transaction_id .')',
+                            'description'=>'Driver::storeChanges - Update failed we did not find a matching document (transaction_id - ' .$transaction_id .')',
                             $result
                         )
                     );
-                    throw new Exception("Update failed we did not find a matching document");
+                    throw new \Exception("Update failed we did not find a matching document");
                 }
             }
 
@@ -615,13 +620,13 @@ class MongoTripodUpdates extends MongoTripodBase {
                 if (!$result["ok"])
                 {
                     $this->errorLog("Delete failed with err.", $result);
-                    throw new Exception("Delete failed with err {$result['err']}");
+                    throw new \Exception("Delete failed with err {$result['err']}");
                 }
 
                 if($result['value']==null)
                 {
                     $this->errorLog("Delete failed we did not find a matching document.", $result);
-                    throw new Exception("Delete failed we did not find a matching document");
+                    throw new \Exception("Delete failed we did not find a matching document");
                 }
 
             }
@@ -633,7 +638,7 @@ class MongoTripodUpdates extends MongoTripodBase {
         }
         else
         {
-            throw new Exception("Attempted to update a non-CBD collection");
+            throw new \Exception("Attempted to update a non-CBD collection");
         }
     }
 
@@ -694,7 +699,7 @@ class MongoTripodUpdates extends MongoTripodBase {
                 foreach($opSubjects as $subject)
                 {
                     /* @var $subject ImpactedSubject */
-                    $t = new Timer();
+                    $t = new \Tripod\Timer();
                     $t->start();
 
                     $composite->update($subject);
@@ -731,12 +736,12 @@ class MongoTripodUpdates extends MongoTripodBase {
             $data = array(
                 "changes" => $subjectsAndPredicatesOfChange,
                 "operations" => $operations,
-                "tripodConfig" => MongoTripodConfig::getConfig(),
+                "tripodConfig" => Config::getConfig(),
                 "storeName" => $this->storeName,
                 "podName" => $this->podName,
                 "contextAlias" => $contextAlias
             );
-            $this->submitJob(MongoTripodConfig::getDiscoverQueueName(),"DiscoverImpactedSubjects",$data);
+            $this->submitJob(Config::getDiscoverQueueName(),"\Tripod\Mongo\Jobs\DiscoverImpactedSubjects",$data);
         }
     }
 
@@ -748,7 +753,7 @@ class MongoTripodUpdates extends MongoTripodBase {
      */
     protected function submitJob($queueName, $class, Array $data)
     {
-        Resque::enqueue($queueName, $class, $data);
+        \Resque::enqueue($queueName, $class, $data);
     }
 
     //////// LOCKS \\\\\\\\
@@ -765,8 +770,8 @@ class MongoTripodUpdates extends MongoTripodBase {
         if(!empty($fromDateTime) || !empty($tillDateTime)){
             $query[_LOCKED_FOR_TRANS_TS] = array();
 
-            if(!empty($fromDateTime)) $query[_LOCKED_FOR_TRANS_TS]['$gte'] = new MongoDate(strtotime($fromDateTime));
-            if(!empty($tillDateTime)) $query[_LOCKED_FOR_TRANS_TS]['$lte'] = new MongoDate(strtotime($tillDateTime));
+            if(!empty($fromDateTime)) $query[_LOCKED_FOR_TRANS_TS]['$gte'] = new \MongoDate(strtotime($fromDateTime));
+            if(!empty($tillDateTime)) $query[_LOCKED_FOR_TRANS_TS]['$lte'] = new \MongoDate(strtotime($tillDateTime));
         }
         $docs = $this->getLocksCollection()->find($query)->sort(array(_LOCKED_FOR_TRANS => 1));
 
@@ -787,7 +792,7 @@ class MongoTripodUpdates extends MongoTripodBase {
      * @param string $transaction_id id for this transaction
      * @param string $contextAlias
      * @return array|null returns an array of CBDs, each CBD is the version at the time at which the lock was attained
-     * @throws Exception
+     * @throws \Exception
      */
     protected function lockAllDocuments($subjectsOfChange, $transaction_id, $contextAlias)
     {
@@ -799,7 +804,7 @@ class MongoTripodUpdates extends MongoTripodBase {
             {
                 $this->debugLog(MONGO_LOCK,
                     array(
-                        'description'=>'MongoTripod::lockAllDocuments - Attempting to get lock',
+                        'description'=>'Driver::lockAllDocuments - Attempting to get lock',
                         'transaction_id'=>$transaction_id,
                         'subject'=>$s,
                         'attempt' => $retry
@@ -811,7 +816,7 @@ class MongoTripodUpdates extends MongoTripodBase {
 
                     $this->debugLog(MONGO_LOCK,
                         array(
-                            'description'=>'MongoTripod::lockAllDocuments - Got the lock',
+                            'description'=>'Driver::lockAllDocuments - Got the lock',
                             'transaction_id'=>$transaction_id,
                             'subject'=>$s,
                             'retry' => $retry
@@ -833,7 +838,7 @@ class MongoTripodUpdates extends MongoTripodBase {
 
                 $this->debugLog(MONGO_LOCK,
                     array(
-                        'description'=>"MongoTripod::lockAllDocuments - Unable to lock all ". count($subjectsOfChange) ."  documents, unlocked  " . count($lockedSubjects) . " locked documents",
+                        'description'=>"Driver::lockAllDocuments - Unable to lock all ". count($subjectsOfChange) ."  documents, unlocked  " . count($lockedSubjects) . " locked documents",
                         'transaction_id'=>$transaction_id,
                         'documentsToLock' => implode(",", $subjectsOfChange),
                         'documentsLocked' => implode(",", $lockedSubjects),
@@ -861,7 +866,7 @@ class MongoTripodUpdates extends MongoTripodBase {
      * @param string $transaction_id
      * @param string $reason
      * @return bool
-     * @throws Exception, if something goes wrong when unlocking documents, or creating audit entries.
+     * @throws \Exception, if something goes wrong when unlocking documents, or creating audit entries.
      */
     public function removeInertLocks($transaction_id, $reason)
     {
@@ -893,13 +898,13 @@ class MongoTripodUpdates extends MongoTripodBase {
                     )
                 );
                 if(!$result["ok"] || $result['err']!=NULL){
-                    throw new Exception("Failed to create audit entry with error message- " . $result['err']);
+                    throw new \Exception("Failed to create audit entry with error message- " . $result['err']);
                 }
             }
-            catch(Exception $e) { //simply send false as status as we are unable to create audit entry
+            catch(\Exception $e) { //simply send false as status as we are unable to create audit entry
                 $this->errorLog(MONGO_LOCK,
                     array(
-                        'description'=>'MongoTripod::removeInertLocks - failed',
+                        'description'=>'Driver::removeInertLocks - failed',
                         'transaction_id'=>$transaction_id,
                         'exception-message' => $e->getMessage()
                     )
@@ -917,12 +922,12 @@ class MongoTripodUpdates extends MongoTripodBase {
                 $result = $auditCollection->update(array(_ID_KEY => $auditDocumentId), array('$set' => array("status" => AUDIT_STATUS_COMPLETED, _UPDATED_TS => $this->getMongoDate())));
                 if($result['err']!=NULL )
                 {
-                    throw new Exception("Failed to update audit entry with error message- " . $result['err']);
+                    throw new \Exception("Failed to update audit entry with error message- " . $result['err']);
                 }
             }
-            catch(Exception $e) {
+            catch(\Exception $e) {
                 $logInfo = array(
-                    'description'=>'MongoTripod::removeInertLocks - failed',
+                    'description'=>'Driver::removeInertLocks - failed',
                     'transaction_id'=>$transaction_id,
                     'exception-message' => $e->getMessage()
                 );
@@ -946,7 +951,7 @@ class MongoTripodUpdates extends MongoTripodBase {
      * Unlocks documents locked by current transaction
      * @param string $transaction_id id for this transaction
      * @return bool
-     * @throws Exception is thrown if for any reason the update to mongo fails
+     * @throws \Exception is thrown if for any reason the update to mongo fails
      */
     protected function unlockAllDocuments($transaction_id)
     {
@@ -956,12 +961,12 @@ class MongoTripodUpdates extends MongoTripodBase {
         if(!$res["ok"] || $res['err']!=NULL){
             $this->errorLog(MONGO_LOCK,
                 array(
-                    'description'=>'MongoTripod::unlockAllDocuments - Failed to unlock documents (transaction_id - ' .$transaction_id .')',
+                    'description'=>'Driver::unlockAllDocuments - Failed to unlock documents (transaction_id - ' .$transaction_id .')',
                     'mongoDriverError' => $this->getLocksDatabase()->lastError(),
                     $res
                 )
             );
-            throw new Exception("Failed to unlock documents as part of transaction : ".$transaction_id);
+            throw new \Exception("Failed to unlock documents as part of transaction : ".$transaction_id);
         }
         return true;
     }
@@ -994,19 +999,19 @@ class MongoTripodUpdates extends MongoTripodBase {
                     array(
                         _ID_KEY => array(_ID_RESOURCE => $this->labeller->uri_to_alias($s), _ID_CONTEXT => $contextAlias),
                         _LOCKED_FOR_TRANS => $transaction_id,
-                        _LOCKED_FOR_TRANS_TS=>new MongoDate()
+                        _LOCKED_FOR_TRANS_TS=>new \MongoDate()
                     ),
                     array("w" => 1)
                 );
 
                 if(!$result["ok"] || $result['err']!=NULL){
-                    throw new Exception("Failed to lock document with error message- " . $result['err']);
+                    throw new \Exception("Failed to lock document with error message- " . $result['err']);
                 }
             }
-            catch(Exception $e) { //Subject is already locked or unable to lock
+            catch(\Exception $e) { //Subject is already locked or unable to lock
                 $this->debugLog(MONGO_LOCK,
                     array(
-                        'description'=>'MongoTripod::lockSingleDocument - failed with exception',
+                        'description'=>'Driver::lockSingleDocument - failed with exception',
                         'transaction_id'=>$transaction_id,
                         'subject'=>$s,
                         'exception-message' => $e->getMessage()
@@ -1027,14 +1032,14 @@ class MongoTripodUpdates extends MongoTripodBase {
                     );
 
                     if(!$result["ok"] || $result['err']!=NULL){
-                        throw new Exception("Failed to create new document with error message- " . $result['err']);
+                        throw new \Exception("Failed to create new document with error message- " . $result['err']);
                     }
                     $document  = $this->getCollection()->findOne(array(_ID_KEY => array(_ID_RESOURCE => $this->labeller->uri_to_alias($s), _ID_CONTEXT => $contextAlias)));
                 }
-                catch(Exception $e){
+                catch(\Exception $e){
                     $this->errorLog(MONGO_LOCK,
                         array(
-                            'description'=>'MongoTripod::lockSingleDocument - failed when creating new document',
+                            'description'=>'Driver::lockSingleDocument - failed when creating new document',
                             'transaction_id'=>$transaction_id,
                             'subject'=>$s,
                             'exception-message' => $e->getMessage(),
@@ -1051,7 +1056,7 @@ class MongoTripodUpdates extends MongoTripodBase {
     /// Collection methods
 
     /**
-     * @return MongoCollection
+     * @return \MongoCollection
      */
     protected function getAuditManualRollbacksCollection()
     {
@@ -1060,27 +1065,27 @@ class MongoTripodUpdates extends MongoTripodBase {
     
     /**
      * For mocking
-     * @return MongoTripodConfig
+     * @return Config
      */
-    protected function getMongoTripodConfigInstance()
+    protected function getConfigInstance()
     {
-        return MongoTripodConfig::getInstance();
+        return Config::getInstance();
     }
 
     /**
-     * @return MongoId
+     * @return \MongoId
      */
     protected function generateIdForNewMongoDocument()
     {
-        return new MongoId();
+        return new \MongoId();
     }
 
     /**
-     * @return MongoDate
+     * @return \MongoDate
      */
     protected function getMongoDate()
     {
-        return new MongoDate();
+        return new \MongoDate();
     }
 
 
@@ -1108,23 +1113,23 @@ class MongoTripodUpdates extends MongoTripodBase {
     // getters and setters for the delegates
 
     /**
-     * @return MongoTransactionLog
+     * @return TransactionLog
      */
     public function getTransactionLog()
     {
-        if($this->transaction_log==null)
+        if($this->transactionLog==null)
         {
-            $this->transaction_log = new MongoTransactionLog();
+            $this->transactionLog = new TransactionLog();
         }
-        return $this->transaction_log;
+        return $this->transactionLog;
     }
 
     /**
-     * @param MongoTransactionLog $transactionLog
+     * @param TransactionLog $transactionLog
      */
-    public function setTransactionLog(MongoTransactionLog $transactionLog)
+    public function setTransactionLog(TransactionLog $transactionLog)
     {
-        $this->transaction_log = $transactionLog;
+        $this->transactionLog = $transactionLog;
     }
 
 
@@ -1160,12 +1165,12 @@ class MongoTripodUpdates extends MongoTripodBase {
     }
 
     /**
-     * Creates a new MongoTripod instance
+     * Creates a new Driver instance
      * @param array $data
-     * @return MongoTripod
+     * @return Driver
      */
-    protected function getMongoTripod($data) {
-        return new MongoTripod(
+    protected function getTripod($data) {
+        return new Driver(
             $data['collection'],
             $data['database'],
             array('stat'=>$this->stat));
@@ -1191,11 +1196,11 @@ class MongoTripodUpdates extends MongoTripodBase {
     protected function getContextAlias($context=null)
     {
         $contextAlias = $this->labeller->uri_to_alias((empty($context)) ? $this->defaultContext : $context);
-        return (empty($contextAlias)) ? MongoTripodConfig::getInstance()->getDefaultContextAlias() : $contextAlias;
+        return (empty($contextAlias)) ? Config::getInstance()->getDefaultContextAlias() : $contextAlias;
     }
 
     /**
-     * @return MongoDB
+     * @return \MongoDB
      */
     protected function getLocksDatabase()
     {
@@ -1207,7 +1212,7 @@ class MongoTripodUpdates extends MongoTripodBase {
     }
 
     /**
-     * @return MongoCollection
+     * @return \MongoCollection
      */
     protected function getLocksCollection()
     {

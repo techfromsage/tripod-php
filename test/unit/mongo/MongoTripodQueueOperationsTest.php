@@ -1,6 +1,6 @@
 <?php
 require_once 'MongoTripodTestBase.php';
-require_once 'src/mongo/MongoTripod.class.php';
+require_once 'src/mongo/Driver.class.php';
 
 /**
  * Class MongoTripodQueueOperationsTest
@@ -10,19 +10,18 @@ require_once 'src/mongo/MongoTripod.class.php';
  * Tripod Queue, and for each of those items added to the queue the correct operations are listed; furthermore in some cases that when operations are performed
  * the results are as we would expect. For that reason this suite is more than just a series of unit tests, feels more like a set of integration tests since we
  * are testing a chained flow of events.
- * todo: refactor this whole lot due to resque
  */
 class MongoTripodQueueOperations extends MongoTripodTestBase
 {
     /**
-     * @var MongoTripod
+     * @var \Tripod\Mongo\Driver
      */
     protected $tripod = null;
 
     protected function setUp()
     {
         parent::setup();
-        $this->tripod = new MongoTripod(
+        $this->tripod = new \Tripod\Mongo\Driver(
             'CBD_testing',
             'tripod_php_testing'
         );
@@ -36,7 +35,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
     public function testSingleItemIsAddedToQueueForChangeToSingleSubject()
     {
         // create a tripod instance that will send all operations to the queue
-        $tripod = $this->getMockBuilder('MongoTripod')
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
             ->setMethods(array('getDataUpdater', 'getComposite'))
             ->setConstructorArgs(
                 array(
@@ -49,7 +48,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
                 )
             )->getMock();
 
-        $tripodUpdates = $this->getMockBuilder('MongoTripodUpdates')
+        $tripodUpdates = $this->getMockBuilder('\Tripod\Mongo\Updates')
             ->setMethods(array('processSyncOperations','submitJob'))
             ->setConstructorArgs(array(
                 $tripod,
@@ -73,7 +72,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
         $data = array(
             "changes" => $subjectsAndPredicatesOfChange,
             "operations" => array(OP_VIEWS, OP_TABLES, OP_SEARCH),
-            "tripodConfig" => MongoTripodConfig::getConfig(),
+            "tripodConfig" => \Tripod\Mongo\Config::getConfig(),
             "storeName" => 'tripod_php_testing',
             "podName" => 'CBD_testing',
             "contextAlias" => 'http://talisaspire.com/'
@@ -81,7 +80,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
 
         $tripodUpdates->expects($this->once())
             ->method('submitJob')
-            ->with(MongoTripodConfig::getDiscoverQueueName(),"DiscoverImpactedSubjects",$data);
+            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"\Tripod\Mongo\Jobs\DiscoverImpactedSubjects",$data);
 
 
         $g1 = $tripod->describeResource("http://talisaspire.com/resources/doc1");
@@ -101,7 +100,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
     public function testSingleItemWithViewsOpIsAddedToQueueForChangeToSingleSubject()
     {
         // create a tripod instance that will send all operations to the queue
-        $tripod = $this->getMockBuilder('MongoTripod')
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
             ->setMethods(array('getDataUpdater', 'getComposite'))
             ->setConstructorArgs(
                 array(
@@ -114,7 +113,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
                 )
             )->getMock();
 
-        $tripodUpdates = $this->getMockBuilder('MongoTripodUpdates')
+        $tripodUpdates = $this->getMockBuilder('\Tripod\Mongo\Updates')
             ->setMethods(array('processSyncOperations','submitJob'))
             ->setConstructorArgs(array(
                 $tripod,
@@ -141,7 +140,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
         $data = array(
             "changes" => $subjectsAndPredicatesOfChange,
             "operations" => array(OP_VIEWS),
-            "tripodConfig" => MongoTripodConfig::getConfig(),
+            "tripodConfig" => \Tripod\Mongo\Config::getConfig(),
             "storeName" => 'tripod_php_testing',
             "podName" => 'CBD_testing',
             "contextAlias" => 'http://talisaspire.com/'
@@ -149,7 +148,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
 
         $tripodUpdates->expects($this->once())
             ->method('submitJob')
-            ->with(MongoTripodConfig::getDiscoverQueueName(),"DiscoverImpactedSubjects",$data);
+            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"\Tripod\Mongo\Jobs\DiscoverImpactedSubjects",$data);
 
 
         $g1 = $tripod->describeResource("http://talisaspire.com/resources/doc1");
@@ -166,7 +165,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
     public function testNoItemIsAddedToQueueForChangeToSingleSubjectWithNoAsyncOps()
     {
         // create a tripod instance that will send all operations to the queue
-        $tripod = $this->getMockBuilder('MongoTripod')
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
             ->setMethods(array('getDataUpdater', 'getComposite'))
             ->setConstructorArgs(
                 array(
@@ -179,7 +178,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
                 )
             )->getMock();
 
-        $tripodUpdates = $this->getMockBuilder('MongoTripodUpdates')
+        $tripodUpdates = $this->getMockBuilder('\Tripod\Mongo\Updates')
             ->setMethods(array('processSyncOperations','submitJob'))
             ->setConstructorArgs(array(
                 $tripod,
@@ -226,7 +225,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
      */
     public function testSingleJobSubmittedToQueueForChangeToSeveralSubjects()
     {
-        $tripod = $this->getMockBuilder('MongoTripod')
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
             ->setMethods(array('getDataUpdater', 'getComposite'))
             ->setConstructorArgs(
                 array(
@@ -239,7 +238,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
                 )
             )->getMock();
 
-        $tripodUpdates = $this->getMockBuilder('MongoTripodUpdates')
+        $tripodUpdates = $this->getMockBuilder('\Tripod\Mongo\Updates')
             ->setMethods(array('processSyncOperations','submitJob'))
             ->setConstructorArgs(array(
                 $tripod,
@@ -265,7 +264,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
         $data = array(
             "changes" => $subjectsAndPredicatesOfChange,
             "operations" => array(OP_VIEWS, OP_TABLES, OP_SEARCH),
-            "tripodConfig" => MongoTripodConfig::getConfig(),
+            "tripodConfig" => \Tripod\Mongo\Config::getConfig(),
             "storeName" => 'tripod_php_testing',
             "podName" => 'CBD_testing',
             "contextAlias" => 'http://talisaspire.com/'
@@ -273,7 +272,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
 
         $tripodUpdates->expects($this->once())
             ->method('submitJob')
-            ->with(MongoTripodConfig::getDiscoverQueueName(),"DiscoverImpactedSubjects",$data);
+            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"\Tripod\Mongo\Jobs\DiscoverImpactedSubjects",$data);
 
         $g1 = $tripod->describeResources(array(
             "http://talisaspire.com/resources/doc1",

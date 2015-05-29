@@ -1,11 +1,11 @@
 Tripod config documentation
 ===========================
 
-Tripod config is typically defined as a JSON file or stream which is added to the MongoTripodConfig class somewhere early in your application, typically in your includes file or front controller:
+Tripod config is typically defined as a JSON file or stream which is added to the Config class somewhere early in your application, typically in your includes file or front controller:
 
 ```php
 $conf = json_decode(file_get_contents('tripod_config.json');
-MongoTripodConfig::setConfig($conf); // set the config, usually read in as JSON from a file
+Config::setConfig($conf); // set the config, usually read in as JSON from a file
 ```
 
 Namespaces

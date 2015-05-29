@@ -1,30 +1,31 @@
 <?php
 
+namespace Tripod\Mongo\Jobs;
 /**
  * Todo: How to inject correct stat class... :-S
  */
-abstract class JobBase extends MongoTripodBase
+abstract class JobBase extends \Tripod\Mongo\DriverBase
 {
-    private $mongoTripod;
+    private $tripod;
 
     /**
      * For mocking
      * @param string $storeName
      * @param string $podName
-     * @return MongoTripod
+     * @return \Tripod\Mongo\Driver
      */
-    protected function getMongoTripod($storeName,$podName) {
-        if ($this->mongoTripod == null) {
-            $this->mongoTripod = new MongoTripod(
+    protected function getTripod($storeName,$podName) {
+        if ($this->tripod == null) {
+            $this->tripod = new \Tripod\Mongo\Driver(
                 $podName,
                 $storeName,
                 array(
                     'stat'=>$this->getStat(),
-                    'readPreference'=>MongoClient::RP_PRIMARY // important: make sure we always read from the primary
+                    'readPreference'=>\MongoClient::RP_PRIMARY // important: make sure we always read from the primary
                 )
             );
         }
-        return $this->mongoTripod;
+        return $this->tripod;
     }
 
     /**
@@ -35,7 +36,7 @@ abstract class JobBase extends MongoTripodBase
 
     /**
      * Validate the arguments for this job
-     * @throws Exception
+     * @throws \Exception
      */
     protected function validateArgs()
     {
@@ -45,7 +46,7 @@ abstract class JobBase extends MongoTripodBase
             {
                 $message = "Argument $arg was not present in supplied job args for job ".get_class($this);
                 $this->errorLog($message);
-                throw new Exception($message);
+                throw new \Exception($message);
             }
         }
     }
@@ -76,7 +77,7 @@ abstract class JobBase extends MongoTripodBase
      */
     protected function submitJob($queueName, $class, Array $data)
     {
-        Resque::enqueue($queueName, $class, $data);
+        \Resque::enqueue($queueName, $class, $data);
     }
 }
 

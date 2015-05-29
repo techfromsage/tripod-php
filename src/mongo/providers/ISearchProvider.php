@@ -1,10 +1,17 @@
 <?php
-interface ITripodSearchProvider
+
+namespace Tripod;
+
+/**
+ * Class ISearchProvider
+ * @package Tripod
+ */
+interface ISearchProvider
 {
     /**
      * Indexes the given document
      * @param array $document the document to index
-     * @throws TripodSearchException if there was an error indexing the document
+     * @throws \Tripod\Exceptions\SearchException if there was an error indexing the document
      * @return mixed
      */
     public function indexDocument($document);
@@ -15,7 +22,7 @@ interface ITripodSearchProvider
      * @param string $resource
      * @param string $context
      * @param array | string | null $specId
-     * @throws TripodSearchException if there was an error removing the document
+     * @throws \Tripod\Exceptions\SearchException if there was an error removing the document
      * @return mixed
      */
     public function deleteDocument($resource, $context, $specId=array());
@@ -49,7 +56,7 @@ interface ITripodSearchProvider
      * @param int $limit  the number of results to return per page
      * @param int $offset  the offset to skip to
      * @return mixed  a structure representing the search results
-     * @throws TripodSearchException if there was an error performing the search, or if the parameters are invalid
+     * @throws \Tripod\Exceptions\SearchException if there was an error performing the search, or if the parameters are invalid
      */
     public function search($q, $type, $indices=array(), $fields=array(), $limit=10, $offset=0);
     
@@ -59,7 +66,7 @@ interface ITripodSearchProvider
      * If type id is not specified this method will throw an exception.      
      * @param string $typeId search type id
      * @return bool|array  response returned by mongo
-     * @throws TripodException if there was an error performing the operation
+     * @throws \Tripod\Exceptions\Exception if there was an error performing the operation
      */
     public function deleteSearchDocumentsByTypeId($typeId);
 }

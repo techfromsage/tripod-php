@@ -10,15 +10,15 @@ set_include_path(
 );
 
 require_once 'tripod.inc.php';
-require_once 'MongoTripod.class.php';
+require_once 'Driver.class.php';
 require_once 'Logger.php';
 
 
 $config = json_decode(file_get_contents('tripod-config.json'), true);
-MongoTripodConfig::setConfig($config);
+\Tripod\Mongo\Config::setConfig($config);
 
-$tripod = new MongoTripod('CBD_nodes', 'life', array('retriesToGetLock' => 5000));
-MongoTripod::$logger = Logger::getLogger();
+$tripod = new \Tripod\Mongo\Driver('CBD_nodes', 'life', array('retriesToGetLock' => 5000));
+\Tripod\Mongo\Driver::$logger = Logger::getLogger();
 
 $resources =array(
     "http://life.ac.uk/",
@@ -30,12 +30,12 @@ $resources =array(
 
 $g = $tripod->describeResources($resources);
 
-$oldGraph = new ExtendedGraph();
+$oldGraph = new \Tripod\ExtendedGraph();
 $oldGraph->from_graph($g);
 
 foreach($resources as $r){
     $g->add_literal_triple($r, 'http://purl.org/dc/terms/text', 'Time in micro-seconds : ' .microtime());
-    $g->add_literal_triple($r, 'http://purl.org/dc/terms/description', 'Testing concurrent multi doc update in Tripod');
+    $g->add_literal_triple($r, 'http://purl.org/dc/terms/description', 'Testing concurrent multi doc update in Driver');
 }
 
 try{

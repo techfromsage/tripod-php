@@ -7,6 +7,8 @@ set_include_path(
 
 require_once 'src/classes/Timer.class.php';
 
+use \Tripod\Timer;
+
 class TimerTest extends PHPUnit_Framework_TestCase
 {
     protected function setUp()

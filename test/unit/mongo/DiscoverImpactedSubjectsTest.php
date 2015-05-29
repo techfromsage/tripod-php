@@ -9,9 +9,9 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
     {
         $this->setArgs();
         unset($this->args['tripodConfig']);
-        $job = new DiscoverImpactedSubjects();
+        $job = new \Tripod\Mongo\Jobs\DiscoverImpactedSubjects();
         $job->args = $this->args;
-        $this->setExpectedException('Exception', "Argument tripodConfig was not present in supplied job args for job DiscoverImpactedSubjects");
+        $this->setExpectedException('Exception', "Argument tripodConfig was not present in supplied job args for job Tripod\Mongo\Jobs\DiscoverImpactedSubjects");
         $job->perform();
     }
 
@@ -19,9 +19,9 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
     {
         $this->setArgs();
         unset($this->args['storeName']);
-        $job = new DiscoverImpactedSubjects();
+        $job = new \Tripod\Mongo\Jobs\DiscoverImpactedSubjects();
         $job->args = $this->args;
-        $this->setExpectedException('Exception', "Argument storeName was not present in supplied job args for job DiscoverImpactedSubjects");
+        $this->setExpectedException('Exception', "Argument storeName was not present in supplied job args for job Tripod\Mongo\Jobs\DiscoverImpactedSubjects");
         $job->perform();
     }
 
@@ -29,9 +29,9 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
     {
         $this->setArgs();
         unset($this->args['podName']);
-        $job = new DiscoverImpactedSubjects();
+        $job = new \Tripod\Mongo\Jobs\DiscoverImpactedSubjects();
         $job->args = $this->args;
-        $this->setExpectedException('Exception', "Argument podName was not present in supplied job args for job DiscoverImpactedSubjects");
+        $this->setExpectedException('Exception', "Argument podName was not present in supplied job args for job Tripod\Mongo\Jobs\DiscoverImpactedSubjects");
         $job->perform();
     }
 
@@ -39,9 +39,9 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
     {
         $this->setArgs();
         unset($this->args['changes']);
-        $job = new DiscoverImpactedSubjects();
+        $job = new \Tripod\Mongo\Jobs\DiscoverImpactedSubjects();
         $job->args = $this->args;
-        $this->setExpectedException('Exception', "Argument changes was not present in supplied job args for job DiscoverImpactedSubjects");
+        $this->setExpectedException('Exception', "Argument changes was not present in supplied job args for job Tripod\Mongo\Jobs\DiscoverImpactedSubjects");
         $job->perform();
     }
 
@@ -49,9 +49,9 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
     {
         $this->setArgs();
         unset($this->args['operations']);
-        $job = new DiscoverImpactedSubjects();
+        $job = new \Tripod\Mongo\Jobs\DiscoverImpactedSubjects();
         $job->args = $this->args;
-        $this->setExpectedException('Exception', "Argument operations was not present in supplied job args for job DiscoverImpactedSubjects");
+        $this->setExpectedException('Exception', "Argument operations was not present in supplied job args for job Tripod\Mongo\Jobs\DiscoverImpactedSubjects");
         $job->perform();
     }
 
@@ -59,9 +59,9 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
     {
         $this->setArgs();
         unset($this->args['contextAlias']);
-        $job = new DiscoverImpactedSubjects();
+        $job = new \Tripod\Mongo\Jobs\DiscoverImpactedSubjects();
         $job->args = $this->args;
-        $this->setExpectedException('Exception', "Argument contextAlias was not present in supplied job args for job DiscoverImpactedSubjects");
+        $this->setExpectedException('Exception', "Argument contextAlias was not present in supplied job args for job Tripod\Mongo\Jobs\DiscoverImpactedSubjects");
         $job->perform();
     }
 
@@ -69,32 +69,32 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
     {
         $this->setArgs();
 
-        $tripod = $this->getMockBuilder('MongoTripod')
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
             ->setMethods(array('getComposite'))
             ->setConstructorArgs(array('CBD_testing', 'tripod_php_testing'))
             ->getMock();
 
-        $views = $this->getMockBuilder('MongoTripodViews')
+        $views = $this->getMockBuilder('\Tripod\Mongo\Composites\Views')
             ->setMethods(array('getImpactedSubjects'))
             ->setConstructorArgs(
                 array(
                     'tripod_php_testing',
-                    MongoTripodConfig::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                    \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
                     'http://talisaspire.com/'
                 )
             )->getMock();
 
-        $tables = $this->getMockBuilder('MongoTripodTables')
+        $tables = $this->getMockBuilder('\Tripod\Mongo\Composites\Tables')
             ->setMethods(array('getImpactedSubjects'))
             ->setConstructorArgs(
                 array(
                     'tripod_php_testing',
-                    MongoTripodConfig::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                    \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
                     'http://talisaspire.com/'
                 )
             )->getMock();
 
-        $search = $this->getMockBuilder('MongoTripodSearchIndexer')
+        $search = $this->getMockBuilder('\Tripod\Mongo\Composites\SearchIndexer')
             ->setMethods(array('getImpactedSubjects'))
             ->setConstructorArgs(array($tripod))
             ->getMock();
@@ -109,17 +109,17 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
                 )
             ));
 
-        $discoverImpactedSubjects = $this->getMockBuilder('DiscoverImpactedSubjects')
-            ->setMethods(array('getMongoTripod', 'submitJob'))
+        $discoverImpactedSubjects = $this->getMockBuilder('\Tripod\Mongo\Jobs\DiscoverImpactedSubjects')
+            ->setMethods(array('getTripod', 'submitJob'))
             ->getMock();
 
         $discoverImpactedSubjects->expects($this->once())
-            ->method('getMongoTripod')
+            ->method('getTripod')
             ->will($this->returnValue($tripod));
 
         $discoverImpactedSubjects->args = $this->args;
 
-        $viewSubject = new ImpactedSubject(
+        $viewSubject = new \Tripod\Mongo\ImpactedSubject(
             array(
                 _ID_RESOURCE=>'http://example.com/resources/foo',
                 _ID_CONTEXT=>$this->args['contextAlias']
@@ -136,7 +136,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
                 array($viewSubject)
             ));
 
-        $tableSubject = new ImpactedSubject(
+        $tableSubject = new \Tripod\Mongo\ImpactedSubject(
             array(
                 _ID_RESOURCE=>'http://example.com/resources/foo2',
                 _ID_CONTEXT=>$this->args['contextAlias']
@@ -163,16 +163,16 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
             ->method('submitJob')
             ->withConsecutive(
                 array(
-                    MongoTripodConfig::getApplyQueueName(),
-                    "ApplyOperation",
+                    \Tripod\Mongo\Config::getApplyQueueName(),
+                    "\Tripod\Mongo\Jobs\ApplyOperation",
                     array(
                         "subject"=>$viewSubject->toArray(),
                         "tripodConfig"=>$this->args['tripodConfig']
                     )
                 ),
                 array(
-                    MongoTripodConfig::getApplyQueueName(),
-                    "ApplyOperation",
+                    \Tripod\Mongo\Config::getApplyQueueName(),
+                    "\Tripod\Mongo\Jobs\ApplyOperation",
                     array(
                         "subject"=>$tableSubject->toArray(),
                         "tripodConfig"=>$this->args['tripodConfig']
@@ -186,7 +186,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
     protected function setArgs()
     {
         $this->args = array(
-            'tripodConfig'=>MongoTripodConfig::getConfig(),
+            'tripodConfig'=>\Tripod\Mongo\Config::getConfig(),
             'storeName'=>'tripod_php_testing',
             'podName'=>'CBD_testing',
             'changes'=>array('http://example.com/resources/foo'=>array('rdf:type','dct:title')),

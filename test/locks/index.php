@@ -6,12 +6,12 @@ set_include_path(
 );
 
 require_once 'tripod.inc.php';
-require_once 'MongoTripod.class.php';
+require_once 'Driver.class.php';
 require_once 'Logger.php';
 
 
 $config = json_decode(file_get_contents('tripod-config.json'), true);
-MongoTripodConfig::setConfig($config);
+Config::setConfig($config);
 
 $tripod = new MongoTripod('CBD_nodes', 'life', array('retriesToGetLock' => 5000));
 MongoTripod::$logger = Logger::getLogger();

@@ -1,9 +1,19 @@
 <?php
 
-require_once TRIPOD_DIR . 'mongo/MongoTripodConstants.php';
-require_once TRIPOD_DIR . 'mongo/base/MongoTripodBase.class.php';
+namespace Tripod\Mongo\Composites;
 
-class MongoTripodTables extends CompositeBase
+require_once TRIPOD_DIR . 'mongo/MongoTripodConstants.php';
+require_once TRIPOD_DIR . 'mongo/base/DriverBase.class.php';
+
+use Tripod\Mongo\Config;
+use Tripod\Mongo\ImpactedSubject;
+use Tripod\Mongo\Labeller;
+
+/**
+ * Class Tables
+ * @package Tripod\Mongo\Composites
+ */
+class Tables extends CompositeBase
 {
     /**
      * Modifier config - list of allowed functions and their attributes that can be passed through in tablespecs.json
@@ -56,27 +66,26 @@ class MongoTripodTables extends CompositeBase
 
     /**
      * Construct accepts actual objects rather than strings as this class is a delegate of
-     * MongoTripod and should inherit connections set up there
+     * Tripod and should inherit connections set up there
      * @param string $storeName
-     * @param MongoCollection $collection
-     * @param $defaultContext
-     * @param $stat
+     * @param \MongoCollection $collection
+     * @param string $defaultContext
+     * @param \Tripod\ITripodStat|null $stat
      * todo: MongoCollection -> podName
      */
-    function __construct($storeName,MongoCollection $collection,$defaultContext,$stat=null)
+    public function __construct($storeName,\MongoCollection $collection,$defaultContext,$stat=null)
     {
-        $this->labeller = new MongoTripodLabeller();
+        $this->labeller = new Labeller();
         $this->storeName = $storeName;
         $this->collection = $collection;
         $this->podName = $collection->getName();
-        $this->config = MongoTripodConfig::getInstance();
+        $this->config = Config::getInstance();
         $this->defaultContext = $this->labeller->uri_to_alias($defaultContext); // make sure default context is qnamed if applicable
         $this->stat = $stat;
-        $this->readPreference = MongoClient::RP_PRIMARY;  // todo: figure out where this should go.
+        $this->readPreference = \MongoClient::RP_PRIMARY;  // todo: figure out where this should go.
     }
 
     /**
-     * @todo Test that deleted subject works properly now that Subject->delete is removed
      * Receive update from subject
      * @param ImpactedSubject
      * @return void
@@ -111,11 +120,11 @@ class MongoTripodTables extends CompositeBase
 
         $tablePredicates = array();
 
-        foreach(MongoTripodConfig::getInstance()->getTableSpecifications($this->storeName) as $tableSpec)
+        foreach(Config::getInstance()->getTableSpecifications($this->storeName) as $tableSpec)
         {
             if(isset($tableSpec[_ID_KEY]))
             {
-                $tablePredicates[$tableSpec[_ID_KEY]] = MongoTripodConfig::getInstance()->getDefinedPredicatesInSpec($this->storeName, $tableSpec[_ID_KEY]);
+                $tablePredicates[$tableSpec[_ID_KEY]] = Config::getInstance()->getDefinedPredicatesInSpec($this->storeName, $tableSpec[_ID_KEY]);
             }
         }
 
@@ -199,6 +208,11 @@ class MongoTripodTables extends CompositeBase
         return $affectedTableRows;
     }
 
+    /**
+     * @param string $storeName
+     * @param string $tableSpecId
+     * @return array|null
+     */
     public function getSpecification($storeName, $tableSpecId)
     {
         return $this->config->getTableSpecification($storeName,$tableSpecId);
@@ -224,7 +238,7 @@ class MongoTripodTables extends CompositeBase
      */
     public function getTableRows($tableSpecId,$filter=array(),$sortBy=array(),$offset=0,$limit=10)
     {
-        $t = new Timer();
+        $t = new \Tripod\Timer();
         $t->start();
 
         $filter["_id." . _ID_TYPE] = $tableSpecId;
@@ -265,7 +279,7 @@ class MongoTripodTables extends CompositeBase
      */
     public function distinct($tableSpecId, $fieldName, array $filter=array())
     {
-        $t = new Timer();
+        $t = new \Tripod\Timer();
         $t->start();
 
         $filter['_id.'._ID_TYPE] = $tableSpecId;
@@ -329,7 +343,7 @@ class MongoTripodTables extends CompositeBase
      * @param string $tableId
      */
     public function deleteTableRowsByTableId($tableId) {
-        $tableSpec = MongoTripodConfig::getInstance()->getTableSpecification($this->storeName, $tableId);
+        $tableSpec = Config::getInstance()->getTableSpecification($this->storeName, $tableId);
         if ($tableSpec==null)
         {
             $this->debugLog("Could not find a table specification for $tableId");
@@ -400,14 +414,14 @@ class MongoTripodTables extends CompositeBase
 
         if(empty($specTypes))
         {
-            $tableSpecs = MongoTripodConfig::getInstance()->getTableSpecifications($this->storeName);
+            $tableSpecs = Config::getInstance()->getTableSpecifications($this->storeName);
         }
         else
         {
             $tableSpecs = array();
             foreach($specTypes as $specType)
             {
-                $spec = MongoTripodConfig::getInstance()->getTableSpecification($this->storeName, $specType);
+                $spec = Config::getInstance()->getTableSpecification($this->storeName, $specType);
                 if($spec)
                 {
                     $tableSpecs[$specType] = $spec;
@@ -448,10 +462,10 @@ class MongoTripodTables extends CompositeBase
      */
     public function generateTableRows($tableType,$resource=null,$context=null,$queueName=null)
     {
-        $t = new Timer();
+        $t = new \Tripod\Timer();
         $t->start();
         $this->temporaryFields = array();
-        $tableSpec = MongoTripodConfig::getInstance()->getTableSpecification($this->storeName, $tableType);
+        $tableSpec = Config::getInstance()->getTableSpecification($this->storeName, $tableType);
         $collection = $this->config->getCollectionForTable($this->storeName, $tableType);
 
         if ($tableSpec==null)
@@ -611,17 +625,17 @@ class MongoTripodTables extends CompositeBase
      * @param array $equation
      * @param array $dest
      * @return float|int|null
-     * @throws InvalidArgumentException
+     * @throws \InvalidArgumentException
      */
     protected function computeArithmeticValue(array $equation, array &$dest)
     {
         if(count($equation) < 3)
         {
-            throw new InvalidArgumentException("Equations must consist of an array with 3 values");
+            throw new \InvalidArgumentException("Equations must consist of an array with 3 values");
         }
         if(!in_array($equation[1], self::$arithmeticOperators))
         {
-            throw new InvalidArgumentException("Invalid arithmetic operator");
+            throw new \InvalidArgumentException("Invalid arithmetic operator");
         }
 
         $left = $this->rewriteVariableValue($equation[0], $dest, 'numeric');
@@ -827,13 +841,13 @@ class MongoTripodTables extends CompositeBase
      * @param string $operator The comparison operator
      * @param mixed $right The right value of the condition
      * @return bool
-     * @throws InvalidArgumentException
+     * @throws \InvalidArgumentException
      */
     protected function doConditional($left, $operator, $right)
     {
         if((!empty($operator)) && !in_array($operator, self::$conditionalOperators))
         {
-            throw new InvalidArgumentException("Invalid conditional operator");
+            throw new \InvalidArgumentException("Invalid conditional operator");
         }
         elseif(!$operator)
         {
@@ -1067,7 +1081,7 @@ class MongoTripodTables extends CompositeBase
      * @param string $modifier
      * @param string $value
      * @param array $options
-     * @throws Exception
+     * @throws \Exception
      * @return mixed
      */
     private function applyModifier($modifier, $value, $options = array())
@@ -1092,19 +1106,26 @@ class MongoTripodTables extends CompositeBase
                     if(is_array($value)) $value = implode($options['glue'], $value);
                     break;
                 case 'date':
-                    if(is_string($value)) $value = new MongoDate(strtotime($value));
+                    if(is_string($value)) $value = new \MongoDate(strtotime($value));
                     break;
                 default:
-                    throw new Exception("Could not apply modifier:".$modifier);
+                    throw new \Exception("Could not apply modifier:".$modifier);
                     break;
             }
-        } catch(Exception $e)
+        } catch(\Exception $e)
         {
             throw $e;
         }
         return $value;
     }
 
+    /**
+     * @param array $source
+     * @param array $joins
+     * @param array $dest
+     * @param string $from
+     * @param string $contextAlias
+     */
     protected function doJoins($source,$joins,&$dest,$from,$contextAlias)
     {
         $this->expandSequence($joins,$source);
@@ -1231,7 +1252,7 @@ class MongoTripodTables extends CompositeBase
      * Apply a regex to the RDF property value defined in $value
      * @param $regex
      * @param $value
-     * @throws TripodException
+     * @throws \Tripod\Exceptions\Exception
      * @return int
      */
     private function applyRegexToValue($regex, $value)
@@ -1243,7 +1264,7 @@ class MongoTripodTables extends CompositeBase
         }
         else
         {
-            throw new TripodException("Was expecting either VALUE_URI or VALUE_LITERAL when applying regex to value - possible data corruption with: ".var_export($value,true));
+            throw new \Tripod\Exceptions\Exception("Was expecting either VALUE_URI or VALUE_LITERAL when applying regex to value - possible data corruption with: ".var_export($value,true));
         }
     }
 }

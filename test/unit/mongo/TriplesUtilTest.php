@@ -1,6 +1,6 @@
 <?php
 require_once 'MongoTripodTestBase.php';
-require_once 'src/mongo/MongoTripodConfig.class.php';
+require_once 'src/mongo/Config.class.php';
 require_once 'src/mongo/util/TriplesUtil.class.php';
 
 class TriplesUtilTest extends MongoTripodTestBase
@@ -12,7 +12,7 @@ class TriplesUtilTest extends MongoTripodTestBase
 
     public function testGetTArrayAbout()
     {
-        $tu = new TriplesUtil();
+        $tu = new \Tripod\Mongo\TriplesUtil();
         $triples = array();
 
         $triples[] = "<http://serials.talisaspire.com/issn/0893-0465> <http://xmlns.com/foaf/0.1/page> <http://www.ingentaconnect.com/content/bpl/ciso> . ";

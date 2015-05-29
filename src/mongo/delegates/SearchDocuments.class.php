@@ -1,19 +1,24 @@
 <?php
 
-class MongoTripodSearchDocuments extends MongoTripodBase
+namespace Tripod\Mongo;
+
+/**
+ * Class SearchDocuments
+ * @package Tripod\Mongo
+ */
+class SearchDocuments extends DriverBase
 {
     /**
      * Construct accepts actual objects rather than strings as this class is a delegate of
-     * MongoTripod and should inherit connections set up there
+     * Tripod and should inherit connections set up there
      * @param string $storeName
-     * @param MongoCollection $collection
-     * @param $defaultContext
-     * @param null $stat
-     * @internal param \MongoDB $db
+     * @param \MongoCollection $collection
+     * @param string $defaultContext
+     * @param \Tripod\ITripodStat|null $stat
      */
-    function __construct($storeName, MongoCollection $collection, $defaultContext, $stat=null)
+    public function __construct($storeName, \MongoCollection $collection, $defaultContext, $stat=null)
     {
-        $this->labeller = new MongoTripodLabeller();
+        $this->labeller = new Labeller();
         $this->storeName = $storeName;
         $this->collection = $collection;
         $this->podName = $collection->getName();
@@ -21,15 +26,22 @@ class MongoTripodSearchDocuments extends MongoTripodBase
         $this->stat = $stat;
     }
 
+    /**
+     * @param string $specId
+     * @param string $resource
+     * @param string $context
+     * @return array|null
+     * @throws \Exception
+     */
     public function generateSearchDocumentBasedOnSpecId($specId, $resource, $context)
     {
         if (empty($resource))
         {
-            throw new Exception("Resource must be specified");
+            throw new \Exception("Resource must be specified");
         }
         if (empty($context))
         {
-            throw new Exception("Context must be specified");
+            throw new \Exception("Context must be specified");
         }
 
         $searchSpec = $this->getSearchDocumentSpecification($specId);
@@ -62,7 +74,7 @@ class MongoTripodSearchDocuments extends MongoTripodBase
                 $indexRules['condition']['_id'] = array(
                     'r'=>$this->labeller->uri_to_alias($resource),
                     'c'=>$this->labeller->uri_to_alias($context));				
-                if (MongoTripodConfig::getInstance()->getCollectionForCBD($this->storeName, $irFrom)->find($indexRules['condition'])->hasNext())
+                if (Config::getInstance()->getCollectionForCBD($this->storeName, $irFrom)->find($indexRules['condition'])->hasNext())
                 {
                     // match found, add this spec id to those that should be generated
                    $proceedWithGeneration = true;
@@ -85,7 +97,7 @@ class MongoTripodSearchDocuments extends MongoTripodBase
             'c'=>$this->labeller->uri_to_alias($context)
         );
 
-        $sourceDocument = MongoTripodConfig::getInstance()->getCollectionForCBD($this->storeName, $from)->findOne(array('_id'=>$_id));
+        $sourceDocument = Config::getInstance()->getCollectionForCBD($this->storeName, $from)->findOne(array('_id'=>$_id));
 
         if(empty($sourceDocument)){
             $this->debugLog("Source document not found for $resource, cannot proceed");
@@ -99,12 +111,12 @@ class MongoTripodSearchDocuments extends MongoTripodBase
         $_id['type'] = $specId;
         $generatedDocument['_id'] = $_id;
 
-        MongoTripodConfig::getInstance()->getCollectionForSearchDocument(
+        Config::getInstance()->getCollectionForSearchDocument(
             $this->storeName,
             $specId)
             ->ensureIndex(array('_id.type'=>1),array('background'=>1));
 
-        MongoTripodConfig::getInstance()->getCollectionForSearchDocument(
+        Config::getInstance()->getCollectionForSearchDocument(
             $this->storeName,
             $specId)
             ->ensureIndex(array('_impactIndex'=>1),array('background'=>1));
@@ -122,26 +134,33 @@ class MongoTripodSearchDocuments extends MongoTripodBase
         return $generatedDocument;
     }
 
+    /**
+     * @param array $rdfTypes
+     * @param string $resource
+     * @param string $context
+     * @return array
+     * @throws \Exception
+     */
     public function generateSearchDocumentsBasedOnRdfTypes(Array $rdfTypes, $resource, $context)
     {
         if (empty($resource))
         {
-            throw new Exception("Resource must be specified");
+            throw new \Exception("Resource must be specified");
         }
         if (empty($context))
         {
-            throw new Exception("Context must be specified");
+            throw new \Exception("Context must be specified");
         }
 
         // this is what is returned
         $generatedSearchDocuments = array();
 
-        $timer =new Timer();
+        $timer =new \Tripod\Timer();
         $timer->start();
 
         foreach($rdfTypes as $rdfType)
         {
-            $specs = MongoTripodConfig::getInstance()->getSearchDocumentSpecifications($this->storeName, $rdfType);
+            $specs = Config::getInstance()->getSearchDocumentSpecifications($this->storeName, $rdfType);
 
             if(empty($specs)) continue; // no point doing anything else if there is no spec for the type
 
@@ -155,11 +174,17 @@ class MongoTripodSearchDocuments extends MongoTripodBase
         return $generatedSearchDocuments;
     }
 
+    /**
+     * @param array $source
+     * @param array $joins
+     * @param array $target
+     * @param string $from
+     */
     protected function doJoin($source, $joins, &$target, $from)
     {
         // expand sequences before proceeding
         $this->expandSequence($joins, $source);
-        $config = MongoTripodConfig::getInstance();
+        $config = Config::getInstance();
         foreach($joins as $predicate=>$rules){
             if(isset($source[$predicate])){
                 $joinUris = array();
@@ -207,7 +232,13 @@ class MongoTripodSearchDocuments extends MongoTripodBase
         }
     }
 
-    protected function addFields($source, $fieldsOrIndices, &$target, $isIndex=false)
+    /**
+     * @param array $source
+     * @param array $fieldsOrIndices
+     * @param array $target
+     * @param bool $isIndex
+     */
+    protected function addFields(Array $source, Array $fieldsOrIndices, Array &$target, $isIndex=false)
     {
         foreach($fieldsOrIndices as $f){
 
@@ -252,12 +283,21 @@ class MongoTripodSearchDocuments extends MongoTripodBase
             }
         }
     }
-    
+
+    /**
+     * @param $specId
+     * @return array|null
+     */
     protected function getSearchDocumentSpecification($specId)
     {
-    	return MongoTripodConfig::getInstance()->getSearchDocumentSpecification($this->storeName, $specId);
+    	return Config::getInstance()->getSearchDocumentSpecification($this->storeName, $specId);
     }
 
+    /**
+     * @param array $values
+     * @param array $field
+     * @param array $target
+     */
     private function addValuesToTarget($values, $field, &$target)
     {
         $objName = null;
@@ -306,6 +346,9 @@ class MongoTripodSearchDocuments extends MongoTripodBase
         }
     }
 
+    /**
+     * @return string
+     */
     public function getSearchCollectionName()
     {
         return SEARCH_INDEX_COLLECTION;

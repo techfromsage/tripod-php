@@ -1,10 +1,16 @@
 <?php
 
+namespace Tripod\Mongo\Jobs;
+
+/**
+ * Class DiscoverImpactedSubjects
+ * @package Tripod\Mongo\Jobs
+ */
 class DiscoverImpactedSubjects extends JobBase {
 
     /**
      * Run the DiscoverImpactedSubjects job
-     * @throws Exception
+     * @throws \Exception
      */
     public function perform()
     {
@@ -13,15 +19,15 @@ class DiscoverImpactedSubjects extends JobBase {
 
             $this->debugLog("DiscoverImpactedSubjects::perform() start");
 
-            $timer = new Timer();
+            $timer = new \Tripod\Timer();
             $timer->start();
 
             $this->validateArgs();
 
             // set the config to what is received
-            MongoTripodConfig::setConfig($this->args["tripodConfig"]);
+            \Tripod\Mongo\Config::setConfig($this->args["tripodConfig"]);
 
-            $tripod = $this->getMongoTripod($this->args["storeName"],$this->args["podName"]);
+            $tripod = $this->getTripod($this->args["storeName"],$this->args["podName"]);
 
             $operations = $this->args['operations'];
             $modifiedSubjects = array();
@@ -35,11 +41,11 @@ class DiscoverImpactedSubjects extends JobBase {
             }
 
             if(!empty($modifiedSubjects)){
-                /* @var $subject ImpactedSubject */
+                /* @var $subject \Tripod\Mongo\ImpactedSubject */
                 foreach ($modifiedSubjects as $subject) {
                     $resourceId = $subject->getResourceId();
-                    $this->debugLog("Adding operation {$subject->getOperation()} for subject {$resourceId[_ID_RESOURCE]} to queue ".MongoTripodConfig::getApplyQueueName());
-                    $this->submitJob(MongoTripodConfig::getApplyQueueName(),"ApplyOperation",array(
+                    $this->debugLog("Adding operation {$subject->getOperation()} for subject {$resourceId[_ID_RESOURCE]} to queue ".\Tripod\Mongo\Config::getApplyQueueName());
+                    $this->submitJob(\Tripod\Mongo\Config::getApplyQueueName(),"\Tripod\Mongo\Jobs\ApplyOperation",array(
                         "subject"=>$subject->toArray(),
                         "tripodConfig"=>$this->args["tripodConfig"]
                     ));
@@ -52,7 +58,7 @@ class DiscoverImpactedSubjects extends JobBase {
             $this->debugLog("DiscoverImpactedSubjects::perform() done in {$timer->result()}ms");
 
         }
-        catch(Exception $e)
+        catch(\Exception $e)
         {
             $this->errorLog("Caught exception in ".get_class($this).": ".$e->getMessage());
             throw $e;

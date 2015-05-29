@@ -1,9 +1,11 @@
 <?php
+
+namespace Tripod\Mongo;
 /**
  * This class is a modified version of the ARC2_NTriplesSerializer; which I have modified to generated N-Quads as per:
  * http://sw.deri.org/2008/07/n-quads/
  */
-class MongoTripodNQuadSerializer
+class NQuadSerializer
 {
     private $raw;
     private $esc_chars;
@@ -14,6 +16,10 @@ class MongoTripodNQuadSerializer
         $this->raw = 0;
     }
 
+    /**
+     * @param string|array $v
+     * @return string
+     */
     public function getTerm($v)
     {
         if (!is_array($v)) {
@@ -46,20 +52,20 @@ class MongoTripodNQuadSerializer
             $quot = $quot . $quot . $quot;
         }
 
-//        var_dump($v['value']);echo "\n";
-
         $suffix = isset($v['lang']) && $v['lang'] ? '@' . $v['lang'] : '';
         $suffix = isset($v['datatype']) && $v['datatype'] ? '^^' . $this->getTerm($v['datatype']) : $suffix;
-        //return $quot . "object" . utf8_encode($v['value']) . $quot . $suffix;
-        //echo "\n\n${v['value']}\n\n";
 
         $escaped = $this->escape($v['value']);
-//        var_dump($escaped);echo "\n\n";
 
 
         return $quot . $escaped . $quot . $suffix;
     }
 
+    /**
+     * @param array $index
+     * @param string $context
+     * @return string
+     */
     public function getSerializedIndex($index, $context)
     {
         $r = '';
@@ -92,39 +98,33 @@ class MongoTripodNQuadSerializer
         return $r . $nl;
     }
 
-    /*  */
-
+    /**
+     * @param string $v
+     * @return string
+     */
     function escape($v)
     {
         $r = '';
         $v = (strpos(utf8_decode(str_replace('?', '', $v)), '?') === false) ? utf8_decode($v) : $v;
         if ($this->raw) {
-//            echo "Returning RAW $v \n";
             return $v;
         }
-
-//        $dump = false;
-//        if(strpos($v, 'LAW')!==FALSE){
-//            $dump=true;
-//        }
 
         for ($i = 0, $i_max = strlen($v); $i < $i_max; $i++) {
             $c = $v[$i];
             if (!isset($this->esc_chars[$c])) {
                 $this->esc_chars[$c] = $this->getEscapedChar($c, $this->getCharNo($c));
-//                if($dump){
-//                    var_dump($c);
-//                    var_dump($this->getCharNo($c));
-//                    var_dump($this->esc_chars[$c]);echo "\n\n";
-//                }
             }
             $r .= $this->esc_chars[$c];
         }
         return $r;
     }
 
-    /*  */
 
+    /**
+     * @param string $c
+     * @return int
+     */
     function getCharNo($c)
     {
         $c_utf = utf8_encode($c);
@@ -147,6 +147,11 @@ class MongoTripodNQuadSerializer
         return $r;
     }
 
+    /**
+     * @param string $c
+     * @param int $no
+     * @return string
+     */
     function getEscapedChar($c, $no)
     { /*see http://www.w3.org/TR/rdf-testcases/#ntrip_strings */
         if ($no < 9) return "\\u" . sprintf('%04X', $no); /* #x0-#x8 (0-8) */

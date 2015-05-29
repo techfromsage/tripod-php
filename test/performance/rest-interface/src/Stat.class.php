@@ -46,7 +46,7 @@ class Stat implements ITripodStat {
          * 2. a) If you get so many error emails for invalid duration, there should be time difference between servers causing this,
          *    b) Time difference on servers can be an issue with items being processed queue processor,
          *       where start time is captured on server intercepting user request, end time is captured on server running queue processor.
-         * 3. $duration will be 0 for some cases with MongoTripod::select queries where you do count or records does not exists or same query is repeated more than once in single request.
+         * 3. $duration will be 0 for some cases with Driver::select queries where you do count or records does not exists or same query is repeated more than once in single request.
          */
         if($duration < 0) {
             $this->errorLog(

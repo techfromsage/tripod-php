@@ -1,4 +1,11 @@
 <?php
+
+namespace Tripod\Mongo\Composites;
+
+/**
+ * Class IComposite
+ * @package Tripod\Mongo\Composites
+ */
 interface IComposite
 {
     /**
@@ -17,8 +24,8 @@ interface IComposite
 
     /**
      * Invalidate/regenerate the composite based on the impacted subject
-     * @param ImpactedSubject $subject
+     * @param \Tripod\Mongo\ImpactedSubject $subject
      * @return void
      */
-    public function update(ImpactedSubject $subject);
+    public function update(\Tripod\Mongo\ImpactedSubject $subject);
 }

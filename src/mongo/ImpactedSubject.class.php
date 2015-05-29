@@ -1,5 +1,6 @@
 <?php
 
+namespace Tripod\Mongo;
 /**
  * A subject that has been involved in an modification event (create/update, delete) and will therefore require
  * view, table and search doc generation
@@ -37,14 +38,14 @@ class ImpactedSubject
      * @param string $storeName
      * @param string $podName
      * @param array $specTypes
-     * @throws TripodException
-     * @throws Exception
+     * @throws \Tripod\Exceptions\Exception
+     * @throws \Exception
      */
     public function __construct(Array $resourceId, $operation, $storeName, $podName, Array $specTypes=array())
     {
         if (!is_array($resourceId) || !array_key_exists(_ID_RESOURCE,$resourceId) || !array_key_exists(_ID_CONTEXT,$resourceId))
         {
-            throw new TripodException('Parameter $resourceId needs to be of type array with ' . _ID_RESOURCE . ' and ' . _ID_CONTEXT . ' keys');
+            throw new \Tripod\Exceptions\Exception('Parameter $resourceId needs to be of type array with ' . _ID_RESOURCE . ' and ' . _ID_CONTEXT . ' keys');
         }
         else
         {
@@ -57,7 +58,7 @@ class ImpactedSubject
         }
         else
         {
-            throw new Exception("Invalid operation: $operation");
+            throw new \Tripod\Exceptions\Exception("Invalid operation: $operation");
         }
 
         $this->storeName = $storeName;
@@ -131,10 +132,10 @@ class ImpactedSubject
 
     /**
      * For mocking
-     * @return MongoTripod
+     * @return Driver
      */
     protected function getTripod()
     {
-        return new MongoTripod($this->getPodName(),$this->getStoreName(),array("readPreference"=>MongoClient::RP_PRIMARY));
+        return new Driver($this->getPodName(),$this->getStoreName(),array("readPreference"=>\MongoClient::RP_PRIMARY));
     }
 }

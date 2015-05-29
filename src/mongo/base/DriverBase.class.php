@@ -1,15 +1,21 @@
 <?php
 
+namespace Tripod\Mongo;
+
 require_once TRIPOD_DIR.'ITripodStat.php';
 
 $TOTAL_TIME=0;
 
 use Monolog\Logger;
 
-abstract class MongoTripodBase
+/**
+ * Class DriverBase
+ * @package Tripod\Mongo
+ */
+abstract class DriverBase
 {
     /**
-     * @var MongoCollection
+     * @var \MongoCollection
      */
     protected $collection;
 
@@ -29,12 +35,12 @@ abstract class MongoTripodBase
     protected $defaultContext;
 
     /**
-     * @var iTripodStat
+     * @var \Tripod\iTripodStat
      */
     protected $stat = null;
 
     /**
-     * @var MongoDB
+     * @var \MongoDB
      */
     protected $db = null;
 
@@ -44,7 +50,7 @@ abstract class MongoTripodBase
     protected $readPreference;
 
     /**
-     * @return ITripodStat
+     * @return \Tripod\ITripodStat
      */
     public function getStat()
     {
@@ -52,30 +58,38 @@ abstract class MongoTripodBase
     }
 
     /**
-     * @var MongoTripodLabeller
+     * @var Labeller
      */
     protected $labeller;
 
     /**
-     * @var MongoTripodConfig
+     * @var Config
      */
     protected $config = null;
 
+    /**
+     * @param int $secs
+     * @return int
+     */
     protected function getExpirySecFromNow($secs)
     {
         return (time()+$secs);
     }
 
+    /**
+     * @param string|null $context
+     * @return mixed
+     */
     protected function getContextAlias($context=null)
     {
         $contextAlias = $this->labeller->uri_to_alias((empty($context)) ? $this->defaultContext : $context);
-        return (empty($contextAlias)) ? MongoTripodConfig::getInstance()->getDefaultContextAlias() : $contextAlias;
+        return (empty($contextAlias)) ? Config::getInstance()->getDefaultContextAlias() : $contextAlias;
     }
 
     /**
-     * @param $query
-     * @param $type
-     * @param MongoCollection|null $collection
+     * @param array $query
+     * @param string $type
+     * @param \MongoCollection|null $collection
      * @param array $includeProperties
      * @param int $cursorSize
      * @return MongoGraph
@@ -84,7 +98,7 @@ abstract class MongoTripodBase
     {
         $graph = new MongoGraph();
 
-        $t = new Timer();
+        $t = new \Tripod\Timer();
         $t->start();
 
         if ($collection==null)
@@ -120,7 +134,7 @@ abstract class MongoTripodBase
             if ($type==MONGO_VIEW && array_key_exists(_EXPIRES,$result['value']))
             {
                 // if expires < current date, regenerate view..
-                $currentDate = new MongoDate();
+                $currentDate = new \MongoDate();
                 if ($result['value'][_EXPIRES]<$currentDate)
                 {
                     // regenerate!
@@ -157,11 +171,17 @@ abstract class MongoTripodBase
         return $graph;
     }
 
+    /**
+     * @return string
+     */
     public function getStoreName()
     {
         return $this->storeName;
     }
 
+    /**
+     * @return string
+     */
     public function getPodName()
     {
         return $this->podName;
@@ -171,39 +191,60 @@ abstract class MongoTripodBase
 
     // @codeCoverageIgnoreStart
 
-    public function timingLog($type, $params)
+    /**
+     * @param string $type
+     * @param array|null $params
+     */
+    public function timingLog($type, $params=null)
     {
-        $this->log(Psr\Log\LogLevel::INFO,$type,$params); // todo: timing log is a bit weird. Should it infact go in a different channel? Is it just debug?
+        $this->log(\Psr\Log\LogLevel::INFO,$type,$params); // todo: timing log is a bit weird. Should it infact go in a different channel? Is it just debug?
     }
 
+    /**
+     * @param string $message
+     * @param array|null $params
+     */
     public function debugLog($message, $params=null)
     {
-        $this->log(Psr\Log\LogLevel::DEBUG,$message,$params);
+        $this->log(\Psr\Log\LogLevel::DEBUG,$message,$params);
     }
 
+    /**
+     * @param string $message
+     * @param array|null $params
+     */
     public function errorLog($message, $params=null)
     {
-        $this->log(Psr\Log\LogLevel::ERROR,$message,$params);
+        $this->log(\Psr\Log\LogLevel::ERROR,$message,$params);
     }
 
+    /**
+     * @param string $message
+     * @param array|null $params
+     */
     public function warningLog($message, $params=null)
     {
-        $this->log(Psr\Log\LogLevel::WARNING,$message,$params);
+        $this->log(\Psr\Log\LogLevel::WARNING,$message,$params);
     }
 
+    /**
+     * @param string $level
+     * @param string $message
+     * @param array|null $params
+     */
     private function log($level, $message,$params)
     {
         ($params==null) ? self::getLogger()->log($level, $message) : self::getLogger()->log($level, $message, $params);
     }
 
     /**
-     * @var Psr\Log\LoggerInterface
+     * @var \Psr\Log\LoggerInterface
      */
     public static $logger;
 
     /**
      * @static
-     * @return Psr\Log\LoggerInterface;
+     * @return \Psr\Log\LoggerInterface;
      */
     public static function getLogger()
     {
@@ -219,8 +260,8 @@ abstract class MongoTripodBase
 
     /**
      * Expands an RDF sequence into proper tripod join clauses
-     * @param $joins
-     * @param $source
+     * @param array $joins
+     * @param array $source
      */
     protected function expandSequence(&$joins, $source)
     {
@@ -251,7 +292,7 @@ abstract class MongoTripodBase
      *
      * @param array $id
      * @param array &$target
-     * @throws InvalidArgumentException
+     * @throws \InvalidArgumentException
      */
     protected function addIdToImpactIndex(array $id, &$target)
     {
@@ -274,7 +315,7 @@ abstract class MongoTripodBase
             {
                 if(!isset($i[_ID_RESOURCE]))
                 {
-                    throw new InvalidArgumentException("Invalid id format");
+                    throw new \InvalidArgumentException("Invalid id format");
                 }
                 $this->addIdToImpactIndex($i, $target);
             }
@@ -283,15 +324,15 @@ abstract class MongoTripodBase
 
     /**
      * For mocking
-     * @return MongoTripodConfig
+     * @return Config
      */
-    protected function getMongoTripodConfigInstance()
+    protected function getConfigInstance()
     {
-        return MongoTripodConfig::getInstance();
+        return Config::getInstance();
     }
 
     /**
-     * @return MongoDB
+     * @return\MongoDB
      */
     protected function getDatabase()
     {
@@ -307,7 +348,7 @@ abstract class MongoTripodBase
     }
 
     /**
-     * @return MongoCollection
+     * @return \MongoCollection
      */
     protected function getCollection()
     {
@@ -321,18 +362,37 @@ abstract class MongoTripodBase
 
 }
 
-final class NoStat implements ITripodStat
+/**
+ * Class NoStat
+ * @package Tripod\Mongo
+ */
+final class NoStat implements \Tripod\ITripodStat
 {
+    /**
+     * @var self
+     */
     public static $instance = null;
+
+    /**
+     * @param string $operation
+     */
     public function increment($operation)
     {
         // do nothing
     }
+
+    /**
+     * @param string $operation
+     * @param number $duration
+     */
     public function timer($operation, $duration)
     {
         // do nothing
     }
 
+    /**
+     * @return self
+     */
     public static function getInstance()
     {
         if (self::$instance == null)

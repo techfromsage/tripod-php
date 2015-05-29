@@ -2,6 +2,9 @@
 
 require_once 'MongoTripodTestBase.php';
 
+/**
+ * Class ApplyOperationTest
+ */
 class ApplyOperationTest extends MongoTripodTestBase
 {
     protected $args = array();
@@ -10,9 +13,9 @@ class ApplyOperationTest extends MongoTripodTestBase
     {
         $this->setArgs();
         unset($this->args['tripodConfig']);
-        $job = new ApplyOperation();
+        $job = new \Tripod\Mongo\Jobs\ApplyOperation();
         $job->args = $this->args;
-        $this->setExpectedException('Exception', "Argument tripodConfig was not present in supplied job args for job ApplyOperation");
+        $this->setExpectedException('Exception', "Argument tripodConfig was not present in supplied job args for job Tripod\Mongo\Jobs\ApplyOperation");
         $job->perform();
     }
 
@@ -20,22 +23,22 @@ class ApplyOperationTest extends MongoTripodTestBase
     {
         $this->setArgs();
         unset($this->args['subject']);
-        $job = new ApplyOperation();
+        $job = new \Tripod\Mongo\Jobs\ApplyOperation();
         $job->args = $this->args;
-        $this->setExpectedException('Exception', "Argument subject was not present in supplied job args for job ApplyOperation");
+        $this->setExpectedException('Exception', "Argument subject was not present in supplied job args for job Tripod\Mongo\Jobs\ApplyOperation");
         $job->perform();
     }
 
     public function testApplyViewOperation()
     {
         $this->setArgs();
-        $applyOperation = $this->getMockBuilder('ApplyOperation')
+        $applyOperation = $this->getMockBuilder('\Tripod\Mongo\Jobs\ApplyOperation')
             ->setMethods(array('createImpactedSubject'))
             ->getMock();
 
         $applyOperation->args = $this->args;
 
-        $subject = $this->getMockBuilder('ImpactedSubject')
+        $subject = $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
             ->setMethods(array('getTripod'))
             ->setConstructorArgs(
                 array(
@@ -49,16 +52,16 @@ class ApplyOperationTest extends MongoTripodTestBase
                 )
             )->getMock();
 
-        $tripod = $this->getMockBuilder('MongoTripod')
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
             ->setMethods(array('getComposite'))
             ->setConstructorArgs(array('CBD_testing', 'tripod_php_testing'))
             ->getMock();
 
-        $views = $this->getMockBuilder('MongoTripodViews')
+        $views = $this->getMockBuilder('\Tripod\Mongo\Composites\Views')
             ->setMethods(array('update'))
             ->setConstructorArgs(array(
                 'tripod_php_testing',
-                MongoTripodConfig::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
                 'http://talisapire.com/'
             ))->getMock();
 
@@ -85,12 +88,12 @@ class ApplyOperationTest extends MongoTripodTestBase
     public function testApplyTableOperation()
     {
         $this->setArgs();
-        $applyOperation = $this->getMockBuilder('ApplyOperation')
+        $applyOperation = $this->getMockBuilder('\Tripod\Mongo\Jobs\ApplyOperation')
             ->setMethods(array('createImpactedSubject'))
             ->getMock();
 
         $this->setArgs();
-        $impactedSubject = new ImpactedSubject(
+        $impactedSubject = new \Tripod\Mongo\ImpactedSubject(
             array(
                 _ID_RESOURCE=>'http://example.com/resources/foo',
                 _ID_CONTEXT=>'http://talisaspire.com/'
@@ -104,7 +107,7 @@ class ApplyOperationTest extends MongoTripodTestBase
 
         $applyOperation->args = $this->args;
 
-        $subject = $this->getMockBuilder('ImpactedSubject')
+        $subject = $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
             ->setMethods(array('getTripod'))
             ->setConstructorArgs(
                 array(
@@ -118,16 +121,16 @@ class ApplyOperationTest extends MongoTripodTestBase
                 )
             )->getMock();
 
-        $tripod = $this->getMockBuilder('MongoTripod')
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
             ->setMethods(array('getComposite'))
             ->setConstructorArgs(array('CBD_testing', 'tripod_php_testing'))
             ->getMock();
 
-        $tables = $this->getMockBuilder('MongoTripodTables')
+        $tables = $this->getMockBuilder('\Tripod\Mongo\Composites\Tables')
             ->setMethods(array('update'))
             ->setConstructorArgs(array(
                 'tripod_php_testing',
-                MongoTripodConfig::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
                 'http://talisapire.com/'
             ))->getMock();
 
@@ -154,12 +157,12 @@ class ApplyOperationTest extends MongoTripodTestBase
     public function testApplySearchOperation()
     {
         $this->setArgs();
-        $applyOperation = $this->getMockBuilder('ApplyOperation')
+        $applyOperation = $this->getMockBuilder('\Tripod\Mongo\Jobs\ApplyOperation')
             ->setMethods(array('createImpactedSubject'))
             ->getMock();
 
         $this->setArgs();
-        $impactedSubject = new ImpactedSubject(
+        $impactedSubject = new \Tripod\Mongo\ImpactedSubject(
             array(
                 _ID_RESOURCE=>'http://example.com/resources/foo',
                 _ID_CONTEXT=>'http://talisaspire.com/'
@@ -173,7 +176,7 @@ class ApplyOperationTest extends MongoTripodTestBase
 
         $applyOperation->args = $this->args;
 
-        $subject = $this->getMockBuilder('ImpactedSubject')
+        $subject = $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
             ->setMethods(array('getTripod'))
             ->setConstructorArgs(
                 array(
@@ -187,12 +190,12 @@ class ApplyOperationTest extends MongoTripodTestBase
                 )
             )->getMock();
 
-        $tripod = $this->getMockBuilder('MongoTripod')
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
             ->setMethods(array('getComposite'))
             ->setConstructorArgs(array('CBD_testing', 'tripod_php_testing'))
             ->getMock();
 
-        $search = $this->getMockBuilder('MongoTripodSearchIndexer')
+        $search = $this->getMockBuilder('\Tripod\Mongo\Composites\SearchIndexer')
             ->setMethods(array('update'))
             ->setConstructorArgs(array($tripod))
             ->getMock();
@@ -219,7 +222,7 @@ class ApplyOperationTest extends MongoTripodTestBase
 
     protected function setArgs()
     {
-        $subject = new ImpactedSubject(
+        $subject = new \Tripod\Mongo\ImpactedSubject(
             array(
                 _ID_RESOURCE=>'http://example.com/resources/foo',
                 _ID_CONTEXT=>'http://talisaspire.com/'
@@ -230,7 +233,7 @@ class ApplyOperationTest extends MongoTripodTestBase
         );
 
         $this->args = array(
-            'tripodConfig'=>MongoTripodConfig::getConfig(),
+            'tripodConfig'=>\Tripod\Mongo\Config::getConfig(),
             'subject'=>$subject->toArray()
         );
     }

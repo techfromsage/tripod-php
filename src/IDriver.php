@@ -1,5 +1,12 @@
 <?php
-interface ITripod
+
+namespace Tripod;
+
+/**
+ * Class IDriver
+ * @package Tripod
+ */
+interface IDriver
 {
     // graph functions
 

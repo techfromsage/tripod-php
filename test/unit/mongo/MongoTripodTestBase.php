@@ -7,8 +7,8 @@ set_include_path(
   . PATH_SEPARATOR . dirname(dirname(dirname(dirname(__FILE__)))).'/src');
 
 require_once('tripod.inc.php');
-require_once TRIPOD_DIR.'mongo/MongoTripodConfig.class.php';
-require_once TRIPOD_DIR.'mongo/base/MongoTripodBase.class.php';
+require_once TRIPOD_DIR . 'mongo/Config.class.php';
+require_once TRIPOD_DIR . 'mongo/base/DriverBase.class.php';
 
 /**
  * Mongo Config For Main DB
@@ -17,15 +17,18 @@ define('MONGO_MAIN_DB', 'acorn');
 define('MONGO_MAIN_COLLECTION', 'CBD_harvest');
 define('MONGO_USER_COLLECTION', 'CBD_user');
 
+/**
+ * Class MongoTripodTestBase
+ */
 class MongoTripodTestBase extends PHPUnit_Framework_TestCase
 {
 
     /**
-     * @var MongoTripod
+     * @var \Tripod\Mongo\Driver
      */
     protected $tripod = null;
     /**
-     * @var MongoTransactionLog
+     * @var \Tripod\Mongo\TransactionLog
      */
     protected $tripodTransactionLog = null;
 
@@ -55,13 +58,16 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         $this->loadDataViaTripod('/data/searchData.json');
     }
 
+    /**
+     * @param string $filename
+     */
     private function loadDataViaTripod($filename){
         $docs = json_decode(file_get_contents(dirname(__FILE__).$filename), true);
         foreach ($docs as $d)
         {
-            $g = new MongoGraph();
+            $g = new \Tripod\Mongo\MongoGraph();
             $g->add_tripod_array($d);
-            $this->tripod->saveChanges(new ExtendedGraph(), $g,$d['_id'][_ID_CONTEXT]);
+            $this->tripod->saveChanges(new \Tripod\ExtendedGraph(), $g,$d['_id'][_ID_CONTEXT]);
         }
     }
 
@@ -79,7 +85,7 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         {
             $config['data_sources']['rs2'] = json_decode(getenv('TRIPOD_DATASOURCE_RS2_CONFIG'), true);
         }
-        MongoTripodConfig::setConfig($config);
+        \Tripod\Mongo\Config::setConfig($config);
 
         $className = get_class($this);
         $testName = $this->getName();
@@ -88,7 +94,7 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         // make sure log statements don't go to stdout during tests...
         $log = new \Monolog\Logger("unittest");
         $log->pushHandler(new \Monolog\Handler\NullHandler());
-        MongoTripodBase::$logger = $log;
+        \Tripod\Mongo\DriverBase::$logger = $log;
     }
 
 
@@ -96,7 +102,7 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
 
     protected function addDocument($doc, $toTransactionLog=false)
     {
-        $config = MongoTripodConfig::getInstance();
+        $config = \Tripod\Mongo\Config::getInstance();
         if($toTransactionLog == true)
         {
             return $this->getTlogCollection()->insert($doc, array("w"=>1));
@@ -108,16 +114,23 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         }
     }
 
+    /**
+     * @return MongoCollection
+     */
     protected function getTlogCollection()
     {
-        $config = MongoTripodConfig::getInstance();
+        $config = \Tripod\Mongo\Config::getInstance();
         $tLogConfig = $config->getTransactionLogConfig();
         return $config->getTransactionLogDatabase()->selectCollection($tLogConfig['collection']);
     }
 
-    protected function getTripodCollection(MongoTripod $tripod)
+    /**
+     * @param \Tripod\Mongo\Driver $tripod
+     * @return MongoCollection
+     */
+    protected function getTripodCollection(\Tripod\Mongo\Driver $tripod)
     {
-        $config = MongoTripodConfig::getInstance();
+        $config = \Tripod\Mongo\Config::getInstance();
         $pods = $config->getPods($tripod->getStoreName());
         $podName = $tripod->getPodName();
         $dataSource = $config->getDataSourceForPod($tripod->getStoreName(), $podName);
@@ -127,6 +140,12 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         )->selectCollection($tripod->getPodName());
     }
 
+    /**
+     * @param mixed $_id
+     * @param \MongoCollection|null $collection
+     * @param bool $fromTransactionLog
+     * @return array|null
+     */
     protected function getDocument($_id, $collection=null, $fromTransactionLog=false)
     {
         if($fromTransactionLog==true)
@@ -138,7 +157,7 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         {
             return $this->getTripodCollection($this->tripod)->findOne(array("_id"=>$_id));
         }
-        elseif($collection instanceof MongoTripod)
+        elseif($collection instanceof \Tripod\Mongo\Driver)
         {
             return $this->getTripodCollection($collection)->findOne(array("_id"=>$_id));
         }
@@ -148,7 +167,13 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         }
     }
 
-    protected function assertChangesForGivenSubject($changes, $subjectOfChange, $expectedNumberOfAdditions, $expectedNumberOfRemovals)
+    /**
+     * @param array $changes
+     * @param string $subjectOfChange
+     * @param int $expectedNumberOfAdditions
+     * @param int $expectedNumberOfRemovals
+     */
+    protected function assertChangesForGivenSubject(Array $changes, $subjectOfChange, $expectedNumberOfAdditions, $expectedNumberOfRemovals)
     {
         $changeSet = null;
 
@@ -195,17 +220,28 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         $this->assertEquals($expectedNumberOfRemovals, $actualRemovals, "Number of removals did not match expectd value");
     }
 
-    protected function assertTransactionDate($doc, $key)
+    /**
+     * @param array $doc
+     * @param string $key
+     */
+    protected function assertTransactionDate(Array $doc, $key)
     {
         $this->assertTrue(isset($doc[$key]), 'the date property: {$key} was not present in document');
         $this->assertTrue(!empty($doc[$key]->sec),'the date property: {$key} does not have a "sec" property');
         $this->assertTrue(!empty($doc[$key]->usec), 'the date property: {$key} does not have a "usec" property');
     }
 
+    /**
+     * @param mixed $_id
+     * @param int|null $expectedValue
+     * @param bool $hasVersion
+     * @param \Tripod\Mongo\Driver|null $tripod
+     * @param bool $fromTransactionLog
+     */
     protected function assertDocumentVersion($_id, $expectedValue=null, $hasVersion=true, $tripod=null, $fromTransactionLog=false)
     {
         // just make sure $_id is aliased
-        $labeller = new MongoTripodLabeller();
+        $labeller = new \Tripod\Mongo\Labeller();
         foreach ($_id as $key=>$value)
         {
             $_id[$key] = $labeller->uri_to_alias($value);
@@ -238,7 +274,7 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
     protected function assertDocumentHasProperty($_id, $property, $expectedValue=null, $tripod=null, $fromTransactionLog=false)
     {
         // just make sure $_id is aliased
-        $labeller = new MongoTripodLabeller();
+        $labeller = new \Tripod\Mongo\Labeller();
         foreach ($_id as $key=>$value)
         {
             $_id[$key] = $labeller->uri_to_alias($value);
@@ -261,7 +297,7 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
     protected function assertDocumentDoesNotHaveProperty($_id, $property, $tripod=null, $fromTransactionLog=false)
     {
         // just make sure $_id is aliased
-        $labeller = new MongoTripodLabeller();
+        $labeller = new \Tripod\Mongo\Labeller();
         foreach ($_id as $key=>$value)
         {
             $_id[$key] = $labeller->uri_to_alias($value);
@@ -273,6 +309,11 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
     }
 
 
+    /**
+     * @param mixed $_id
+     * @param \Tripod\Mongo\Driver|null $tripod
+     * @param bool $fromTransactionLog
+     */
     protected function assertDocumentExists($_id, $tripod=null, $fromTransactionLog=false)
     {
         $doc = $this->getDocument($_id, $tripod, $fromTransactionLog);
@@ -280,9 +321,13 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         $this->assertEquals($_id, $doc["_id"], "Actual Document _id :[" . print_r($doc['_id'], true) . "] did not match expected value of " . print_r($_id, true));
     }
 
+    /**
+     * @param mixed $_id
+     * @param \Tripod\Mongo\Driver|null $tripod
+     * @param bool $useTransactionTripod
+     */
     protected function assertDocumentHasBeenDeleted($_id, $tripod=null, $useTransactionTripod=false)
     {
-        //$this->assertNull($this->getDocument($_id, $useTransactionTripod), "Document with _id:[{$_id}] exists, but it should not");
         $doc = $this->getDocument($_id, $tripod, $useTransactionTripod);
         if($useTransactionTripod)
         {
@@ -300,32 +345,60 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         }
     }
 
-    protected function assertHasLiteralTriple(ExtendedGraph $graph, $s, $p, $o)
+    /**
+     * @param \Tripod\ExtendedGraph $graph
+     * @param string $s
+     * @param string $p
+     * @param string $o
+     */
+    protected function assertHasLiteralTriple(\Tripod\ExtendedGraph $graph, $s, $p, $o)
     {
         $this->assertTrue($graph->has_literal_triple($s, $p, $o), "Graph did not contain the literal triple: <{$s}> <{$p}> \"{$o}\"");
     }
 
-    protected function assertHasResourceTriple(ExtendedGraph $graph, $s, $p, $o)
+    /**
+     * @param \Tripod\ExtendedGraph $graph
+     * @param string $s
+     * @param string $p
+     * @param string $o
+     */
+    protected function assertHasResourceTriple(\Tripod\ExtendedGraph $graph, $s, $p, $o)
     {
         $this->assertTrue($graph->has_resource_triple($s, $p, $o), "Graph did not contain the resource triple: <{$s}> <{$p}> <{$o}>");
     }
 
-    protected function assertDoesNotHaveLiteralTriple(ExtendedGraph $graph, $s, $p, $o)
+    /**
+     * @param \Tripod\ExtendedGraph $graph
+     * @param string $s
+     * @param string $p
+     * @param string $o
+     */
+    protected function assertDoesNotHaveLiteralTriple(\Tripod\ExtendedGraph $graph, $s, $p, $o)
     {
         $this->assertFalse($graph->has_literal_triple($s, $p, $o), "Graph should not contain the literal triple: <{$s}> <{$p}> \"{$o}\"");
     }
 
-    protected function assertDoesNotHaveResourceTriple(ExtendedGraph $graph, $s, $p, $o)
+    /**
+     * @param \Tripod\ExtendedGraph $graph
+     * @param string $s
+     * @param string $p
+     * @param string $o
+     */
+    protected function assertDoesNotHaveResourceTriple(\Tripod\ExtendedGraph $graph, $s, $p, $o)
     {
         $this->assertFalse($graph->has_resource_triple($s, $p, $o), "Graph should not contain the resource triple: <{$s}> <{$p}> <{$o}>");
     }
 
+    /**
+     * @param string $subject
+     * @param string $transaction_id
+     */
     protected function lockDocument($subject, $transaction_id)
     {
-        $collection = MongoTripodConfig::getInstance()->getCollectionForLocks('tripod_php_testing');
-        $labeller = new MongoTripodLabeller();
+        $collection = \Tripod\Mongo\Config::getInstance()->getCollectionForLocks('tripod_php_testing');
+        $labeller = new \Tripod\Mongo\Labeller();
         $doc = array(
-            '_id' => array(_ID_RESOURCE => $labeller->uri_to_alias($subject), _ID_CONTEXT => MongoTripodConfig::getInstance()->getDefaultContextAlias()),
+            '_id' => array(_ID_RESOURCE => $labeller->uri_to_alias($subject), _ID_CONTEXT => \Tripod\Mongo\Config::getInstance()->getDefaultContextAlias()),
             _LOCKED_FOR_TRANS => $transaction_id,
             _LOCKED_FOR_TRANS_TS=>new MongoDate()
         );
@@ -333,17 +406,33 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
     }
 }
 
-class MongoTestTripod extends MongoTripod
+/**
+ * Class TestTripod
+ */
+class TestTripod extends \Tripod\Mongo\Driver
 {
+    /**
+     * @return array
+     */
     public function getCollectionReadPreference()
     {
         return $this->collection->getReadPreference();
     }
 }
 
-class MongoTripodTestConfig extends MongoTripodConfig
+/**
+ * Class TripodTestConfig
+ */
+class TripodTestConfig extends \Tripod\Mongo\Config
 {
+    /**
+     * Constructor
+     */
     public function __construct() {}
+
+    /**
+     * @param array $config
+     */
     public function loadConfig(array $config)
     {
         parent::loadConfig($config);

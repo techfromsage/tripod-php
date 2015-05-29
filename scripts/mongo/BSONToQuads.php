@@ -17,16 +17,16 @@ if ($argc!=2)
 
 array_shift($argv);
 $config = json_decode(file_get_contents($argv[0]), true);
-MongoTripodConfig::setConfig($config);
+\Tripod\Mongo\Config::setConfig($config);
 
-$tu = new TriplesUtil();
+$tu = new \Tripod\Mongo\TriplesUtil();
 
 while (($line = fgets(STDIN)) !== false) {
     $line = rtrim($line);
     $doc = json_decode($line, true);
     $context = $doc['_id']['c'];
 
-    $graph = new MongoGraph();
+    $graph = new \Tripod\Mongo\MongoGraph();
     $graph->add_tripod_array($doc);
 
     echo $graph->to_nquads($context);

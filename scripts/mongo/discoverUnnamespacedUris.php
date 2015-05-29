@@ -9,11 +9,16 @@ if ($argc!=4 && $argc!=3)
 }
 
 array_shift($argv);
-$client = new MongoClient($argv[0]);
+$client = new \MongoClient($argv[0]);
 
 /* @var $db MongoDB */
 $db = $client->selectDb($argv[1]);
 
+/**
+ * @param string $uri
+ * @param string|null $baseUri
+ * @return bool
+ */
 function isUnNamespaced($uri,$baseUri=null)
 {
     if ($baseUri==null)
