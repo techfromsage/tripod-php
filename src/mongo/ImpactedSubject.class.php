@@ -58,7 +58,7 @@ class ImpactedSubject
         }
         else
         {
-            throw new \Exception("Invalid operation: $operation");
+            throw new \Tripod\Exceptions\Exception("Invalid operation: $operation");
         }
 
         $this->storeName = $storeName;
