@@ -173,6 +173,27 @@ abstract class MongoTripodBase
             self::getLogger()->getInstance()->debug('[TRIPOD_TIMING:'.$type.']', $params);
     }
 
+    /**
+     * @param $message
+     * @param array|null $params
+     */
+    public function infoLog($message, $params=null)
+    {
+        if (self::getLogger()!=null)
+        {
+            ($params==null) ? self::getLogger()->getInstance()->information("[TRIPOD_INFO] $message") : self::getLogger()->getInstance()->info("[TRIPOD_INFO] $message", $params);
+        }
+        else
+        {
+            echo "$message\n";
+            if ($params) print_r($params);
+        }
+    }
+
+    /**
+     * @param $message
+     * @param array|null $params
+     */
     public function debugLog($message, $params=null)
     {
         if (self::getLogger()!=null)
@@ -186,6 +207,10 @@ abstract class MongoTripodBase
         }
     }
 
+    /**
+     * @param $message
+     * @param array|null $params
+     */
     public function errorLog($message, $params=null)
     {
         if (self::getLogger()!=null)
