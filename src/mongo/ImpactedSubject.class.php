@@ -132,7 +132,7 @@ class ImpactedSubject
 
     /**
      * For mocking
-     * @return Driver
+     * @return \Tripod\Mongo\Driver
      */
     protected function getTripod()
     {

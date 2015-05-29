@@ -2,11 +2,17 @@
 
 namespace Tripod\Mongo\Jobs;
 
+use \Tripod\Mongo\Config;
 /**
  * Class DiscoverImpactedSubjects
  * @package Tripod\Mongo\Jobs
  */
 class DiscoverImpactedSubjects extends JobBase {
+
+    /**
+     * @var ApplyOperation
+     */
+    protected $applyOperation;
 
     /**
      * Run the DiscoverImpactedSubjects job
@@ -43,12 +49,46 @@ class DiscoverImpactedSubjects extends JobBase {
             if(!empty($modifiedSubjects)){
                 /* @var $subject \Tripod\Mongo\ImpactedSubject */
                 foreach ($modifiedSubjects as $subject) {
-                    $resourceId = $subject->getResourceId();
-                    $this->debugLog("Adding operation {$subject->getOperation()} for subject {$resourceId[_ID_RESOURCE]} to queue ".\Tripod\Mongo\Config::getApplyQueueName());
-                    $this->submitJob(\Tripod\Mongo\Config::getApplyQueueName(),"\Tripod\Mongo\Jobs\ApplyOperation",array(
-                        "subject"=>$subject->toArray(),
-                        "tripodConfig"=>$this->args["tripodConfig"]
-                    ));
+                    if(isset($this->args['queue']) || count($subject->getSpecTypes() == 0))
+                    {
+                        $queueName = (isset($this->args['queue']) ? $this->args['queue'] : Config::getApplyQueueName());
+                        $this->addSubjectToQueue($subject, $queueName);
+                    }
+                    else
+                    {
+                        $specsGroupedByQueue = array();
+                        foreach($subject->getSpecTypes() as $specType)
+                        {
+                            $spec = null;
+                            switch($subject->getOperation())
+                            {
+                                case OP_VIEWS:
+                                    $spec = Config::getInstance()->getViewSpecification($this->args["storeName"], $specType);
+                                    break;
+                                case OP_TABLES:
+                                    $spec = Config::getInstance()->getTableSpecification($this->args["storeName"], $specType);
+                                    break;
+                                case OP_SEARCH:
+                                    $spec = Config::getInstance()->getSearchDocumentSpecification($this->args["storeName"], $specType);
+                                    break;
+                            }
+                            if(!$spec && !isset($spec['queue']))
+                            {
+                                $spec['queue'] = Config::getApplyQueueName();
+                            }
+                            if(!isset($specsGroupedByQueue[$spec['queue']]))
+                            {
+                                $specsGroupedByQueue[$spec['queue']] = array();
+                            }
+                            $specsGroupedByQueue[$spec['queue']][] = $specType;
+                        }
+
+                        foreach($specsGroupedByQueue as $queueName=>$specs)
+                        {
+                            $subject->getSpecTypes($specs);
+                            $this->addSubjectToQueue($subject, $queueName);
+                        }
+                    }
                 }
             }
 
@@ -66,6 +106,19 @@ class DiscoverImpactedSubjects extends JobBase {
     }
 
     /**
+     * @param array $data
+     * @param string|null $queueName
+     */
+    public function createJob(Array $data, $queueName=null)
+    {
+        if(!$queueName)
+        {
+            $queueName = Config::getDiscoverQueueName();
+        }
+        $this->submitJob($queueName,get_class($this),$data);
+    }
+
+    /**
      * Validate args for DiscoverImpactedSubjects
      * @return array
      */
@@ -73,4 +126,30 @@ class DiscoverImpactedSubjects extends JobBase {
     {
         return array("tripodConfig","storeName","podName","changes","operations","contextAlias");
     }
+
+    /**
+     * @param \Tripod\Mongo\ImpactedSubject $subject
+     * @param $queueName
+     */
+    protected function addSubjectToQueue(\Tripod\Mongo\ImpactedSubject $subject, $queueName)
+    {
+        $resourceId = $subject->getResourceId();
+        $this->debugLog("Adding operation {$subject->getOperation()} for subject {$resourceId[_ID_RESOURCE]} to queue ".$queueName);
+        $this->getApplyOperation()->createJob($subject, $queueName);
+    }
+
+    /**
+     * For mocking
+     * @return ApplyOperation
+     */
+    protected function getApplyOperation()
+    {
+        if(!isset($this->applyOperation))
+        {
+            $this->applyOperation = new ApplyOperation();
+        }
+        return $this->applyOperation;
+    }
+
+
 }
