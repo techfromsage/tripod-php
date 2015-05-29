@@ -39,6 +39,10 @@ class AnonymousLogger
     {
         // do nothing
     }
+    function information($message)
+    {
+        // do nothing
+    }
 }
 
 class MongoTripodTestBase extends PHPUnit_Framework_TestCase
