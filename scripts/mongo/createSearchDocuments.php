@@ -1,7 +1,7 @@
 <?php
 
 $options = getopt(
-    "c:s:q:ht:i:a",
+    "c:s:q:hd:i:a",
     array(
         "config:",
         "storename:",
@@ -16,21 +16,19 @@ $options = getopt(
     )
 );
 
-function showUsage()
+function showUsage($scriptName)
 {
     $help = <<<END
-createTables.php
-
 Usage:
 
-php createTables.php -c/--config path/to/tripod-config.json -s/--storename store-name [options]
+php $scriptName -c/--config path/to/tripod-config.json -s/--storename store-name [options]
 
 Options:
     -h --help               This help
-    -c --config             path to Config configuration (required)
-    -s --storename          Store to create tables for (required)
-    -t --spec               Only create for specified table specs
-    -i --id                 Resource ID to regenerate table rows for
+    -c --config             path to MongoTripodConfig configuration (required)
+    -s --storename          Store to create views for (required)
+    -d --spec               Only create for specified search document specs
+    -i --id                 Resource ID to regenerate search documents for
     -a --async              Generate table rows via queue
     -q --queue              Queue name to place jobs on (defaults to configured TRIPOD_APPLY_QUEUE value)
 
@@ -47,7 +45,7 @@ if(empty($options) || isset($options['h']) || isset($options['help']) ||
     (!isset($options['s']) && !isset($options['storename']))
 )
 {
-    showUsage();
+    showUsage($argv[0]);
     exit();
 }
 $configLocation = isset($options['c']) ? $options['c'] : $options['config'];
@@ -60,7 +58,7 @@ if(isset($options['tripod-dir']))
     }
     else
     {
-        showUsage();
+        showUsage($argv[0]);
         exit();
     }
 }
@@ -75,47 +73,47 @@ set_include_path(
 
 require_once 'tripod.inc.php';
 require_once 'classes/Timer.class.php';
-require_once 'mongo/Config.class.php';
-require_once 'mongo/Driver.class.php';
+require_once 'mongo/MongoTripodConfig.class.php';
+require_once 'mongo/MongoTripod.class.php';
 
 /**
  * @param string|null $id
- * @param string|null $tableId
+ * @param string|null $specId
  * @param string|null $storeName
- * @param \Tripod\ITripodStat|null $stat
+ * @param iTripodStat|null $stat
  * @param string|null $queue
  */
-function generateTables($id, $tableId, $storeName, $stat = null, $queue = null)
+function generateSearchDocuments($id, $specId, $storeName, $stat = null, $queue = null)
 {
-    $tableSpec = \Tripod\Mongo\Config::getInstance()->getTableSpecification($storeName, $tableId);
-    if(empty($tableSpec)) // Older version of Tripod being used?
+    $spec = MongoTripodConfig::getInstance()->getSearchDocumentSpecification($storeName, $specId);
+    if(empty($spec)) // Older version of Tripod being used?
     {
-        $tableSpec = \Tripod\Mongo\Config::getInstance()->getTableSpecification($tableId);
+        $spec = MongoTripodConfig::getInstance()->getSearchDocumentSpecification($specId);
     }
-    if (array_key_exists("from",$tableSpec))
+    if (array_key_exists("from",$spec))
     {
         MongoCursor::$timeout = -1;
 
-        print "Generating $tableId";
-        $tripod = new \Tripod\Mongo\Driver($tableSpec['from'], $storeName, array('stat'=>$stat));
-        $tTables = $tripod->getTripodTables();//new Tables($tripod->storeName,$tripod->collection,$tripod->defaultContext);
+        print "Generating $specId";
+        $tripod = new MongoTripod($spec['from'], $storeName, array('stat'=>$stat));
+        $search = $tripod->getSearchIndexer();
         if ($id)
         {
             print " for $id....\n";
-            $tTables->generateTableRows($tableId, $id);
+            $search->generateSearchDocuments($specId, $id, null, $queue);
         }
         else
         {
             print " for all tables....\n";
-            $tTables->generateTableRows($tableId, null, null, $queue);
+            $search->generateSearchDocuments($specId, null, null, $queue);
         }
     }
 }
 
-$t = new \Tripod\Timer();
+$t = new Timer();
 $t->start();
 
-\Tripod\Mongo\Config::setConfig(json_decode(file_get_contents($configLocation),true));
+MongoTripodConfig::setConfig(json_decode(file_get_contents($configLocation),true));
 
 if(isset($options['s']) || isset($options['storename']))
 {
@@ -126,13 +124,13 @@ else
     $storeName = null;
 }
 
-if(isset($options['t']) || isset($options['spec']))
+if(isset($options['d']) || isset($options['spec']))
 {
-    $tableId = isset($options['t']) ? $options['t'] : $options['spec'];
+    $specId = isset($options['d']) ? $options['t'] : $options['spec'];
 }
 else
 {
-    $tableId = null;
+    $specId = null;
 }
 
 if(isset($options['i']) || isset($options['id']))
@@ -153,7 +151,7 @@ if(isset($options['a']) || isset($options['async']))
     }
     else
     {
-        $queue = \Tripod\Mongo\Config::getInstance()->getApplyQueueName();
+        $queue = MongoTripodConfig::getInstance()->getApplyQueueName();
     }
 }
 
@@ -164,17 +162,17 @@ if(isset($options['stat-loader']))
     $stat = include_once $options['stat-loader'];
 }
 
-if ($tableId)
+if ($specId)
 {
-    generateTables($id, $tableId, $storeName, $stat, $queue);
+    generateSearchDocuments($id, $specId, $storeName, $stat, $queue);
 }
 else
 {
-    foreach(\Tripod\Mongo\Config::getInstance()->getTableSpecifications($storeName) as $tableSpec)
+    foreach(MongoTripodConfig::getInstance()->getSearchDocumentSpecifications($storeName) as $searchSpec)
     {
-        generateTables($id, $tableSpec['_id'], $storeName, $stat, $queue);
+        generateSearchDocuments($id, $searchSpec['_id'], $storeName, $stat, $queue);
     }
 }
 
 $t->stop();
-print "Tables created in ".$t->result()." secs\n";
+print "Search documents created in ".$t->result()." secs\n";

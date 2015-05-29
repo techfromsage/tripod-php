@@ -156,6 +156,83 @@ class SearchIndexer extends CompositeBase
             if(!empty($document)) $searchProvider->indexDocument($document);
         }
     }
+    
+    public function generateSearchDocuments($searchDocumentType, $resourceUri=null, $context=null, $queueName=null)
+    {
+        $t = new Timer();
+        $t->start();
+        // default the context
+        $contextAlias = $this->getContextAlias($context);
+        $spec = MongoTripodConfig::getInstance()->getSearchDocumentSpecification($this->getStoreName(), $searchDocumentType);
+        
+        if($resourceUri)
+        {            
+            $this->generateAndIndexSearchDocuments($resourceUri, $contextAlias, $spec['from'], $searchDocumentType);
+            return;
+        }
+
+
+        // default collection
+        $from = (isset($spec["from"])) ? $spec["from"] : $this->podName;
+
+        $types = array();
+        if (is_array($spec["type"]))
+        {
+            foreach ($spec["type"] as $type)
+            {
+                $types[] = array("rdf:type.u"=>$this->labeller->qname_to_alias($type));
+                $types[] = array("rdf:type.u"=>$this->labeller->uri_to_alias($type));
+            }
+        }
+        else
+        {
+            $types[] = array("rdf:type.u"=>$this->labeller->qname_to_alias($spec["type"]));
+            $types[] = array("rdf:type.u"=>$this->labeller->uri_to_alias($spec["type"]));
+        }
+        $filter = array('$or'=> $types);
+        if (isset($resource))
+        {
+            $filter["_id"] = array(_ID_RESOURCE=>$this->labeller->uri_to_alias($resource),_ID_CONTEXT=>$contextAlias);
+        }
+
+        $docs = $this->config->getCollectionForCBD($this->getStoreName(), $from)->find($filter);
+        foreach ($docs as $doc)
+        {
+            if($queueName && !$resourceUri)
+            {
+                $subject = new ImpactedSubject(
+                    $doc['_id'],
+                    OP_SEARCH,
+                    $this->storeName,
+                    $from,
+                    array($searchDocumentType)
+                );
+
+                $this->submitJob($queueName, 'ApplyOperation', array(
+                    "subject"=>$subject->toArray(),
+                    "tripodConfig"=>MongoTripodConfig::getConfig()
+                ));
+            }
+            else
+            {
+                $this->generateAndIndexSearchDocuments(
+                    $doc[_ID_KEY][_ID_RESOURCE],
+                    $doc[_ID_KEY][_ID_CONTEXT],
+                    $spec['from'],
+                    $searchDocumentType
+                );
+            }
+        }
+
+        $t->stop();
+        $this->timingLog(MONGO_CREATE_TABLE, array(
+            'type'=>$spec['type'],
+            'duration'=>$t->result(),
+            'filter'=>$filter,
+            'from'=>$from));
+        $this->getStat()->timer(MONGO_CREATE_SEARCH_DOC.".$searchDocumentType",$t->result());
+        
+    }
 
     /**
      * @param array $resourcesAndPredicates

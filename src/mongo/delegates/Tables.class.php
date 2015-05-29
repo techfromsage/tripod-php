@@ -457,9 +457,10 @@ class Tables extends CompositeBase
      * @param string $tableType
      * @param string|null $resource
      * @param string|null $context
+     * @param string|null $queueName Queue for background bulk generation
      * @return null //@todo: this should be a bool
      */
-    public function generateTableRows($tableType,$resource=null,$context=null)
+    public function generateTableRows($tableType,$resource=null,$context=null,$queueName=null)
     {
         $t = new \Tripod\Timer();
         $t->start();
@@ -473,8 +474,9 @@ class Tables extends CompositeBase
             return null;
         }
 
-        // ensure both the ID field and the impactIndex indexes are correctly set up
+        // ensure that the ID field, view type, and the impactIndex indexes are correctly set up
         $collection->ensureIndex(array('_id.r'=>1, '_id.c'=>1,'_id.type'=>1),array('background'=>1));
+        $collection->ensureIndex(array('_id.type'=>1),array('background'=>1));
         $collection->ensureIndex(array('value.'._IMPACT_INDEX=>1),array('background'=>1));
 
         // ensure any custom view indexes
@@ -515,30 +517,48 @@ class Tables extends CompositeBase
         $docs = $this->config->getCollectionForCBD($this->storeName, $from)->find($filter);
         foreach ($docs as $doc)
         {
-            // set up ID
-            $generatedRow = array("_id"=>array(_ID_RESOURCE=>$doc["_id"][_ID_RESOURCE],_ID_CONTEXT=>$doc["_id"][_ID_CONTEXT],_ID_TYPE=>$tableSpec['_id']));
-
-            $value = array('_id'=>$doc['_id']); // everything must go in the value object todo: this is a hang over from map reduce days, engineer out once we have stability on new PHP method for M/R
-            $this->addIdToImpactIndex($doc['_id'], $value); // need to add the doc to the impact index to be consistent with views/search etc. this is needed for discovering impacted operations
-            $this->addFields($doc,$tableSpec,$value);
-            if (isset($tableSpec['joins']))
+            if($queueName && !$resource)
             {
-                $this->doJoins($doc,$tableSpec['joins'],$value,$from,$contextAlias);
+                $subject = new ImpactedSubject(
+                    $doc['_id'],
+                    OP_TABLES,
+                    $this->storeName,
+                    $from,
+                    array($tableType)
+                );
+
+                $this->submitJob($queueName, 'ApplyOperation', array(
+                    "subject"=>$subject->toArray(),
+                    "tripodConfig"=>MongoTripodConfig::getConfig()
+                ));
             }
-            if (isset($tableSpec['counts']))
+            else
             {
-                $this->doCounts($doc,$tableSpec['counts'],$value);
+                // set up ID
+                $generatedRow = array("_id"=>array(_ID_RESOURCE=>$doc["_id"][_ID_RESOURCE],_ID_CONTEXT=>$doc["_id"][_ID_CONTEXT],_ID_TYPE=>$tableSpec['_id']));
+
+                $value = array('_id'=>$doc['_id']); // everything must go in the value object todo: this is a hang over from map reduce days, engineer out once we have stability on new PHP method for M/R
+                $this->addIdToImpactIndex($doc['_id'], $value); // need to add the doc to the impact index to be consistent with views/search etc. this is needed for discovering impacted operations
+                $this->addFields($doc,$tableSpec,$value);
+                if (isset($tableSpec['joins']))
+                {
+                    $this->doJoins($doc,$tableSpec['joins'],$value,$from,$contextAlias);
+                }
+                if (isset($tableSpec['counts']))
+                {
+                    $this->doCounts($doc,$tableSpec['counts'],$value);
+                }
+
+                if (isset($tableSpec['computed_fields']))
+                {
+                    $this->doComputedFields($tableSpec, $value);
+                }
+
+                // Remove temp fields from document
+
+                $generatedRow['value'] = array_diff_key($value, array_flip($this->temporaryFields));
+                $collection->save($generatedRow);
             }
-
-            if (isset($tableSpec['computed_fields']))
-            {
-                $this->doComputedFields($tableSpec, $value);
-            }
-
-            // Remove temp fields from document
-
-            $generatedRow['value'] = array_diff_key($value, array_flip($this->temporaryFields));
-            $collection->save($generatedRow);
         }
 
         $t->stop();

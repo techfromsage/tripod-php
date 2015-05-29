@@ -898,6 +898,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         $impactedSubjects = $table->getImpactedSubjects($subjectsAndPredicatesOfChange, $this->defaultContext);
 
+        $this->assertEquals($expectedImpactedSubject, $impactedSubjects[0]);
 
         $impactedSubject = $impactedSubjects[0];
 

@@ -20,15 +20,6 @@ class TransactionLog
     {
         $config = Config::getInstance();
         $this->config = $config->getTransactionLogConfig();
-        // connect to transaction db
-        $connStr = $config->getTransactionLogConnStr();
-        $m = null;
-        if(isset($this->config['replicaSet']) && !empty($this->config['replicaSet'])) {
-            $m = new \MongoClient($connStr, array("replicaSet"=>$this->config['replicaSet']));
-        } else {
-            $m = new \MongoClient($connStr);
-        }
-
         $this->transaction_db = $config->getTransactionLogDatabase();
         $this->transaction_collection = $this->transaction_db->selectCollection($this->config['collection']);
     }

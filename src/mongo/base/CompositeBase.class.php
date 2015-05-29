@@ -190,4 +190,14 @@ abstract class CompositeBase extends \Tripod\Mongo\DriverBase implements \Tripod
         return false;
     }
 
+    /**
+     * todo: Copied and pasted from JobBase -- how to fix this duplication?
+     * @param string $queueName
+     * @param string $class
+     * @param array $data
+     */
+    protected function submitJob($queueName, $class, Array $data)
+    {
+        Resque::enqueue($queueName, $class, $data);
+    }
 }
