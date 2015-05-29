@@ -10,7 +10,7 @@ $TOTAL_TIME=0;
  * Class Driver
  * @package Driver\Mongo
  */
-class Driver extends DriverBase implements \Tripod\ITripod
+class Driver extends DriverBase implements \Tripod\IDriver
 {
 
     /**

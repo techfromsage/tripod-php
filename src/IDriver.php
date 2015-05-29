@@ -3,10 +3,10 @@
 namespace Tripod;
 
 /**
- * Class ITripod
+ * Class IDriver
  * @package Tripod
  */
-interface ITripod
+interface IDriver
 {
     // graph functions
 
