@@ -12,7 +12,7 @@ use Tripod\Mongo\ImpactedSubject;
 use Tripod\Mongo\Labeller;
 /**
  * Class SearchIndexer
- * @package Tripod\Mongo
+ * @package Tripod\Mongo\Composites
  */
 class SearchIndexer extends CompositeBase
 {

@@ -6,7 +6,7 @@ namespace Tripod\Mongo\Composites;
  * Class CompositeBase
  * @package Tripod\Mongo\Composites
  */
-abstract class CompositeBase extends \Tripod\Mongo\DriverBase implements \Tripod\Mongo\IComposite
+abstract class CompositeBase extends \Tripod\Mongo\DriverBase implements \Tripod\Mongo\Composites\IComposite
 {
     /**
      * Returns an array of ImpactedSubjects based on the subjects and predicates of change

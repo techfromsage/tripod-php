@@ -10,7 +10,7 @@ use Tripod\Mongo\Labeller;
 
 /**
  * Class Views
- * @package Tripod\Mongo
+ * @package Tripod\Mongo\Composites
  */
 class Views extends CompositeBase
 {

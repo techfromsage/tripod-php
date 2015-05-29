@@ -11,7 +11,7 @@ use Tripod\Mongo\Labeller;
 
 /**
  * Class Tables
- * @package Tripod\Mongo
+ * @package Tripod\Mongo\Composites
  */
 class Tables extends CompositeBase
 {
