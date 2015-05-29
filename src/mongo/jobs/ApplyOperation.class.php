@@ -43,6 +43,24 @@ class ApplyOperation extends JobBase {
     }
 
     /**
+     * @param array $data
+     * @param string|null $queueName
+     */
+    public function createJob(\Tripod\Mongo\ImpactedSubject $subject, $queueName=null)
+    {
+        if(!$queueName)
+        {
+            $queueName = \Tripod\Mongo\Config::getApplyQueueName();
+        }
+        $data = array(
+            "subject"=>$subject->toArray(),
+            "tripodConfig"=>\Tripod\Mongo\Config::getConfig()
+        );
+
+        $this->submitJob($queueName,get_class($this),$data);
+    }
+
+    /**
      * For mocking
      * @param array $args
      * @return \Tripod\Mongo\ImpactedSubject

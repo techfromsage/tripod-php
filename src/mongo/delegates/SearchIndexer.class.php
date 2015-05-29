@@ -159,7 +159,7 @@ class SearchIndexer extends CompositeBase
     
     public function generateSearchDocuments($searchDocumentType, $resourceUri=null, $context=null, $queueName=null)
     {
-        $t = new Timer();
+        $t = new \Tripod\Timer();
         $t->start();
         // default the context
         $contextAlias = $this->getContextAlias($context);
@@ -208,10 +208,7 @@ class SearchIndexer extends CompositeBase
                     array($searchDocumentType)
                 );
 
-                $this->submitJob($queueName, 'ApplyOperation', array(
-                    "subject"=>$subject->toArray(),
-                    "tripodConfig"=>MongoTripodConfig::getConfig()
-                ));
+                $this->getApplyOperation()->createJob($subject, $queueName);
             }
             else
             {

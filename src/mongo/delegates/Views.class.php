@@ -444,10 +444,7 @@ class Views extends CompositeBase
                         array($viewId)
                     );
 
-                    $this->submitJob($queueName, 'ApplyOperation', array(
-                        "subject"=>$subject->toArray(),
-                        "tripodConfig"=>\Tripod\Mongo\Config::getConfig()
-                    ));
+                    $this->getApplyOperation()->createJob($subject, $queueName);
                 }
                 else
                 {

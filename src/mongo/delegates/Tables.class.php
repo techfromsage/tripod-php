@@ -87,7 +87,7 @@ class Tables extends CompositeBase
 
     /**
      * Receive update from subject
-     * @param ImpactedSubject
+     * @param \Tripod\Mongo\ImpactedSubject
      * @return void
      */
     public function update(ImpactedSubject $subject)
@@ -526,11 +526,7 @@ class Tables extends CompositeBase
                     $from,
                     array($tableType)
                 );
-
-                $this->submitJob($queueName, 'ApplyOperation', array(
-                    "subject"=>$subject->toArray(),
-                    "tripodConfig"=>MongoTripodConfig::getConfig()
-                ));
+                $this->getApplyOperation()->createJob($subject, $queueName);
             }
             else
             {
