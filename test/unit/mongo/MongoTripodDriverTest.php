@@ -882,7 +882,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
             '\Tripod\Mongo\Updates',
             array(
                 'storeChanges',
-                'submitJob'
+                'getDiscoverImpactedSubjects'
             ),
             array(
                 $mockTripod,
@@ -895,6 +895,10 @@ class MongoTripodDriverTest extends MongoTripodTestBase
                 )
             )
         );
+
+        $mockDiscoverImpactedSubjects = $this->getMockBuilder('\Tripod\Mongo\Jobs\DiscoverImpactedSubjects')
+            ->setMethods(array('createJob'))
+            ->getMock();
 
         $labeller = new \Tripod\Mongo\Labeller();
 
@@ -916,8 +920,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $mockTripod->expects($this->never())
             ->method('getComposite');
         $mockTripodUpdates->expects($this->once())
-            ->method('submitJob')
-            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"\Tripod\Mongo\Jobs\DiscoverImpactedSubjects", $jobData);
+            ->method('getDiscoverImpactedSubjects')
+            ->will($this->returnValue($mockDiscoverImpactedSubjects));
 
         $mockTripodUpdates->expects($this->once())
             ->method('storeChanges')
@@ -926,6 +930,13 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $mockTripod->expects($this->once())
             ->method('getDataUpdater')
             ->will($this->returnValue($mockTripodUpdates));
+
+        $mockDiscoverImpactedSubjects->expects($this->once())
+            ->method('createJob')
+            ->with(
+                $jobData,
+                \Tripod\Mongo\Config::getDiscoverQueueName()
+            );
 
         $mockTripod->saveChanges(new \Tripod\ExtendedGraph(), $oG,"http://talisaspire.com/");
     }
@@ -955,7 +966,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
             '\Tripod\Mongo\Updates',
             array(
                 'storeChanges',
-                'submitJob'
+                'getDiscoverImpactedSubjects'
             ),
             array(
                 $mockTripod,
@@ -988,6 +999,10 @@ class MongoTripodDriverTest extends MongoTripodTestBase
                 'http://talisaspire.com/'
             )
         );
+
+        $mockDiscoverImpactedSubjects = $this->getMockBuilder('\Tripod\Mongo\Jobs\DiscoverImpactedSubjects')
+            ->setMethods(array('createJob'))
+            ->getMock();
 
         $labeller = new \Tripod\Mongo\Labeller();
 
@@ -1079,8 +1094,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
             );
 
         $mockTripodUpdates->expects($this->once())
-            ->method('submitJob')
-            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"\Tripod\Mongo\Jobs\DiscoverImpactedSubjects", $jobData);
+            ->method('getDiscoverImpactedSubjects')
+            ->will($this->returnValue($mockDiscoverImpactedSubjects));
 
         $mockTripodUpdates->expects($this->once())
             ->method('storeChanges')
@@ -1098,6 +1113,13 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $mockTripod->expects($this->once())
             ->method('getDataUpdater')
             ->will($this->returnValue($mockTripodUpdates));
+
+        $mockDiscoverImpactedSubjects->expects($this->once())
+            ->method('createJob')
+            ->with(
+                $jobData,
+                \Tripod\Mongo\Config::getDiscoverQueueName()
+            );
 
         $mockTripod->saveChanges($oG, new \Tripod\ExtendedGraph(),"http://talisaspire.com/");
     }
@@ -1135,7 +1157,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
             '\Tripod\Mongo\Updates',
             array(
                 'storeChanges',
-                'submitJob'
+                'getDiscoverImpactedSubjects'
             ),
             array(
                 $mockTripod,
@@ -1159,6 +1181,10 @@ class MongoTripodDriverTest extends MongoTripodTestBase
                 'http://talisaspire.com/'
             )
         );
+
+        $mockDiscoverImpactedSubjects = $this->getMockBuilder('\Tripod\Mongo\Jobs\DiscoverImpactedSubjects')
+            ->setMethods(array('createJob'))
+            ->getMock();
 
         $impactedViewSubjects = array(
             new \Tripod\Mongo\ImpactedSubject(
@@ -1204,8 +1230,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
             ->will($this->returnValue($mockViews));
 
         $mockTripodUpdates->expects($this->once())
-            ->method('submitJob')
-            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"\Tripod\Mongo\Jobs\DiscoverImpactedSubjects", $jobData);
+            ->method('getDiscoverImpactedSubjects')
+            ->will($this->returnValue($mockDiscoverImpactedSubjects));
 
         $mockTripodUpdates->expects($this->once())
             ->method('storeChanges')
@@ -1224,6 +1250,13 @@ class MongoTripodDriverTest extends MongoTripodTestBase
             ->withConsecutive(
                 array($this->equalTo($impactedViewSubjects[0])),
                 array($this->equalTo($impactedViewSubjects[1]))
+            );
+
+        $mockDiscoverImpactedSubjects->expects($this->once())
+            ->method('createJob')
+            ->with(
+                $jobData,
+                \Tripod\Mongo\Config::getDiscoverQueueName()
             );
 
         $mockTripod->saveChanges($oG,$nG,"http://talisaspire.com/");

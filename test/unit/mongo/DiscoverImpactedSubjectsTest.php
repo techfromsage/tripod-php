@@ -1,7 +1,9 @@
 <?php
 
 require_once 'MongoTripodTestBase.php';
-
+/**
+ * Class DiscoverImpactedSubjectsTest
+ */
 class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
 {
     protected $args = array();
@@ -110,7 +112,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
             ));
 
         $discoverImpactedSubjects = $this->getMockBuilder('\Tripod\Mongo\Jobs\DiscoverImpactedSubjects')
-            ->setMethods(array('getTripod', 'submitJob'))
+            ->setMethods(array('getTripod', 'getApplyOperation'))
             ->getMock();
 
         $discoverImpactedSubjects->expects($this->once())
@@ -118,6 +120,10 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
             ->will($this->returnValue($tripod));
 
         $discoverImpactedSubjects->args = $this->args;
+
+        $applyOperation = $this->getMockBuilder('\Tripod\Mongo\Jobs\ApplyOperation')
+            ->setMethods(array('createJob'))
+            ->getMock();
 
         $viewSubject = new \Tripod\Mongo\ImpactedSubject(
             array(
@@ -160,28 +166,30 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
             ->will($this->returnValue(array()));
 
         $discoverImpactedSubjects->expects($this->exactly(2))
-            ->method('submitJob')
+            ->method('getApplyOperation')
+            ->will($this->returnValue($applyOperation));
+
+        $applyOperation->expects($this->exactly(2))
+            ->method('createJob')
             ->withConsecutive(
                 array(
-                    \Tripod\Mongo\Config::getApplyQueueName(),
-                    "\Tripod\Mongo\Jobs\ApplyOperation",
-                    array(
-                        "subject"=>$viewSubject->toArray(),
-                        "tripodConfig"=>$this->args['tripodConfig']
-                    )
+                    $viewSubject,
+                    \Tripod\Mongo\Config::getApplyQueueName()
                 ),
                 array(
-                    \Tripod\Mongo\Config::getApplyQueueName(),
-                    "\Tripod\Mongo\Jobs\ApplyOperation",
-                    array(
-                        "subject"=>$tableSubject->toArray(),
-                        "tripodConfig"=>$this->args['tripodConfig']
-                    )
+                    $tableSubject,
+                    \Tripod\Mongo\Config::getApplyQueueName()
                 )
             );
 
         $discoverImpactedSubjects->perform();
     }
+
+    // TODO: createJobTest
+
+    // TODO: ensureManualQueue
+
+    // TODO: queueDefinedInSpec
 
     protected function setArgs()
     {
