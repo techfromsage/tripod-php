@@ -54,7 +54,7 @@ class ExtendedGraph
             if(is_string($graph)){
                 $this->add_rdf($graph);
             } else {
-                $this->_index = $graph;
+                $this->set_index($graph);
             }
         }
 
@@ -103,7 +103,7 @@ class ExtendedGraph
 
     // todo: not clear this actually does anything
     function update_prefix_mappings() {
-        foreach ($this->_index as $s => $p_list) {
+        foreach ($this->get_index() as $s => $p_list) {
             foreach ($p_list as $p => $v_list) {
                 $prefix = $this->_labeller->uri_to_qname($p);
             }
@@ -182,10 +182,37 @@ class ExtendedGraph
 
     /**
      * Get a copy of the graph's triple index
+     * @param string $s delve into the index at $s; or return empty array
+     * @param string $p delive into the index at $s, $p; or return empty array
      * @see http://n2.talis.com/wiki/RDF_PHP_Specification
+     * @return array
      */
-    function get_index() {
-        return $this->_index;
+    function get_index($s=null,$p=null) {
+        if ($s===null)
+        {
+            return $this->_index;
+        }
+        else if ($p===null)
+        {
+            if (isset($this->_index[$s]))
+            {
+                return $this->_index[$s];
+            }
+            return array();
+        }
+        else
+        {
+            if (isset($this->_index[$s]) && isset($this->_index[$s][$p]))
+            {
+                return $this->_index[$s][$p];
+            }
+            return array();
+        }
+    }
+
+    function set_index($_i)
+    {
+        $this->_index = $_i;
     }
 
 
@@ -252,27 +279,25 @@ class ExtendedGraph
         if ( array_key_exists($s, $this->_index)) {
             if (is_array($p)) {
                 foreach($p as $p_uri) {
-                    if(array_key_exists($p_uri, $this->_index[$s]) ) {
-                        foreach ($this->_index[$s][$p_uri] as $value) {
-                            if ($value['type'] == 'literal') {
-                                if ($preferred_language == null) {
+                    foreach ($this->get_index($s,$p_uri) as $value) {
+                        if ($value['type'] == 'literal') {
+                            if ($preferred_language == null) {
+                                return $value['value'];
+                            }
+                            else {
+                                if (array_key_exists('lang', $value) && $value['lang'] == $preferred_language) {
                                     return $value['value'];
                                 }
                                 else {
-                                    if (array_key_exists('lang', $value) && $value['lang'] == $preferred_language) {
-                                        return $value['value'];
-                                    }
-                                    else {
-                                        $best_literal = $value['value'];
-                                    }
+                                    $best_literal = $value['value'];
                                 }
                             }
                         }
                     }
                 }
             }
-            else if(array_key_exists($p, $this->_index[$s]) ) {
-                foreach ($this->_index[$s][$p] as $value) {
+            else {
+                foreach ($this->get_index($s,$p) as $value) {
                     if ($value['type'] == 'literal') {
                         if ($preferred_language == null) {
                             return $value['value'];
@@ -301,16 +326,12 @@ class ExtendedGraph
      * @return string the first resource value found or the supplied default if no values were found
      */
     function get_first_resource($s, $p, $default = null) {
-        if ( array_key_exists($s, $this->_index) && array_key_exists($p, $this->_index[$s]) ) {
-            foreach ($this->_index[$s][$p] as $value) {
-                if ($value['type'] == 'uri' || $value['type'] == 'bnode' ) {
-                    return $value['value'];
-                }
+        foreach ($this->get_index($s,$p) as $value) {
+            if ($value['type'] == 'uri' || $value['type'] == 'bnode' ) {
+                return $value['value'];
             }
         }
-        else {
-            return $default;
-        }
+        return $default;
     }
 
     /**
@@ -592,16 +613,11 @@ class ExtendedGraph
      * @return boolean true if the triple exists in the graph, false otherwise
      */
     function has_resource_triple($s, $p, $o) {
-        if (array_key_exists($s, $this->_index) ) {
-            if (array_key_exists($p, $this->_index[$s]) ) {
-                foreach ($this->_index[$s][$p] as $value) {
-                    if ( ( $value['type'] == 'uri' || $value['type'] == 'bnode') && $value['value'] === $o) {
-                        return true;
-                    }
-                }
+        foreach ($this->get_index($s,$p) as $value) {
+            if ( ( $value['type'] == 'uri' || $value['type'] == 'bnode') && $value['value'] === $o) {
+                return true;
             }
         }
-
         return false;
     }
 
@@ -613,24 +629,19 @@ class ExtendedGraph
      * @return boolean true if the triple exists in the graph, false otherwise
      */
     function has_literal_triple($s, $p, $o, $lang = null, $dt = null) {
-        if (array_key_exists($s, $this->_index) ) {
-            if (array_key_exists($p, $this->_index[$s]) ) {
-                foreach ($this->_index[$s][$p] as $value) {
-                    if ( ( $value['type'] == 'literal') && $value['value'] === $o) {
+        foreach ($this->get_index($s,$p) as $value) {
+            if ( ( $value['type'] == 'literal') && $value['value'] === $o) {
 
-                        if ($lang !== null) {
-                            return (array_key_exists('lang', $value) && $value['lang'] === $lang);
-                        }
-
-                        if ($dt !== null) {
-                            return (array_key_exists('datatype', $value) && $value['datatype'] === $dt);
-                        }
-                        return true;
-                    }
+                if ($lang !== null) {
+                    return (array_key_exists('lang', $value) && $value['lang'] === $lang);
                 }
+
+                if ($dt !== null) {
+                    return (array_key_exists('datatype', $value) && $value['datatype'] === $dt);
+                }
+                return true;
             }
         }
-
         return false;
     }
 
@@ -642,13 +653,9 @@ class ExtendedGraph
      */
     function get_resource_triple_values($s, $p) {
         $values = array();
-        if (array_key_exists($s, $this->_index) ) {
-            if (array_key_exists($p, $this->_index[$s]) ) {
-                foreach ($this->_index[$s][$p] as $value) {
-                    if ( ( $value['type'] == 'uri' || $value['type'] == 'bnode')) {
-                        $values[] = $value['value'];
-                    }
-                }
+        foreach ($this->get_index($s,$p) as $value) {
+            if ( ( $value['type'] == 'uri' || $value['type'] == 'bnode')) {
+                $values[] = $value['value'];
             }
         }
         return $values;
@@ -665,17 +672,15 @@ class ExtendedGraph
         if ( array_key_exists($s, $this->_index)) {
             if (is_array($p)) {
                 foreach($p as $p_uri) {
-                    if(array_key_exists($p_uri, $this->_index[$s]) ) {
-                        foreach ($this->_index[$s][$p_uri] as $value) {
-                            if ($value['type'] == 'literal') {
-                                $values[] = $value['value'];
-                            }
+                    foreach ($this->get_index($s,$p_uri) as $value) {
+                        if ($value['type'] == 'literal') {
+                            $values[] = $value['value'];
                         }
                     }
                 }
             }
-            else if(array_key_exists($p, $this->_index[$s]) ) {
-                foreach ($this->_index[$s][$p] as $value) {
+            else {
+                foreach ($this->get_index($s,$p) as $value) {
                     if ($value['type'] == 'literal') {
                         $values[] = $value['value'];
                     }
@@ -698,10 +703,8 @@ class ExtendedGraph
         if (! is_array($p)) $p = array($p);
         if (array_key_exists($s, $this->_index) ) {
             foreach ($p as $pinst) {
-                if (array_key_exists($pinst, $this->_index[$s]) ) {
-                    foreach ($this->_index[$s][$pinst] as $value) {
-                        $values[] = $value;
-                    }
+                foreach ($this->get_index($s,$pinst) as $value) {
+                    $values[] = $value;
                 }
             }
         }
@@ -716,7 +719,7 @@ class ExtendedGraph
     function get_subject_subgraph($s) {
         $sub = new ExtendedGraph();
         if (array_key_exists($s, $this->_index) ) {
-            $sub->_index[$s] = $this->_index[$s];
+            $sub->_index[$s] = $this->get_index($s);
         }
         return $sub;
     }
@@ -787,15 +790,13 @@ class ExtendedGraph
      */
     function get_subject_properties($s, $distinct = TRUE) {
         $values = array();
-        if (array_key_exists($s, $this->_index) ) {
-            foreach ($this->_index[$s] as $prop => $prop_values ) {
-                if ($distinct) {
+        foreach ($this->get_index($s) as $prop => $prop_values ) {
+            if ($distinct) {
+                $values[] = $prop;
+            }
+            else {
+                for ($i = 0; $i < count($prop_values); $i++) {
                     $values[] = $prop;
-                }
-                else {
-                    for ($i = 0; $i < count($prop_values); $i++) {
-                        $values[] = $prop;
-                    }
                 }
             }
         }
@@ -810,10 +811,8 @@ class ExtendedGraph
      * @return boolean true if a matching triple exists in the graph, false otherwise
      */
     function subject_has_property($s, $p) {
-        if (array_key_exists($s, $this->_index) ) {
-            return (array_key_exists($p, $this->_index[$s]) );
-        }
-        return false;
+        $values = $this->get_index($s,$p);
+        return !empty($values);
     }
 
     /**
@@ -822,7 +821,8 @@ class ExtendedGraph
      * @return boolean true if the graph contains any triples with the specified subject, false otherwise
      */
     function has_triples_about($s) {
-        return array_key_exists($s, $this->_index);
+        $predicates = $this->get_index($s);
+        return !empty($predicates);
     }
 
 
@@ -1260,12 +1260,10 @@ class ExtendedGraph
      */
     public function get_resources_for_subject($s) {
         $resources = array();
-        if ( array_key_exists($s, $this->_index)) {
-            foreach ($this->_index[$s] as $p => $values) {
-                foreach ($values as $value) {
-                    if ($value['type'] == 'uri' || $value['type'] == 'bnode' ) {
-                        $resources[] = $value['value'];
-                    }
+        foreach ($this->get_index($s) as $p => $values) {
+            foreach ($values as $value) {
+                if ($value['type'] == 'uri' || $value['type'] == 'bnode' ) {
+                    $resources[] = $value['value'];
                 }
             }
         }
