@@ -11,7 +11,6 @@ class ExtendedGraph
     var $_index = array();
     var $_image_properties =  array( 'http://xmlns.com/foaf/0.1/depiction', 'http://xmlns.com/foaf/0.1/img');
     var $_property_order =  array('http://www.w3.org/2004/02/skos/core#prefLabel', RDFS_LABEL, 'http://purl.org/dc/terms/title', DC_TITLE, FOAF_NAME, 'http://www.w3.org/2004/02/skos/core#definition', RDFS_COMMENT, 'http://purl.org/dc/terms/description', DC_DESCRIPTION, 'http://purl.org/vocab/bio/0.1/olb', RDF_TYPE);
-    var $request_factory = false;
     var $parser_errors = array();
     protected $_ns = array (
         'rdf' => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
@@ -64,10 +63,6 @@ class ExtendedGraph
     function __destruct(){
         unset($this->_index);
         unset($this);
-    }
-
-    function set_request_factory($request_factory) {
-        $this->request_factory = $request_factory;
     }
 
 
@@ -1279,52 +1274,6 @@ class ExtendedGraph
             $this->add_literal_triple($t[0], $t[1], $t[2], $t[3], $t[4]);
         }
 
-    }
-
-    /**
-     * Read RDF from the supplied URIs and add to the current graph
-     * @param Any uri_list a URI, or array of URIs to fetch
-     * @param boolean include_response when TRUE include RDF about each retrieval operation
-     */
-    function read_data($uri_list, $include_response = FALSE) {
-        if (empty( $this->request_factory) ) {
-            $this->request_factory = new HttpRequestFactory();
-        }
-
-        if (! is_array($uri_list)) {
-            $uri_list= array($uri_list);
-        }
-
-        $requests = array();
-        foreach ($uri_list as $uri) {
-            $request = $this->request_factory->make( 'GET', $uri );
-            $request->set_accept('application/json, text/turtle, text/n3, text/rdf+n3, application/x-turtle, application/rdf+xml;q=0.8,application/xml;q=0.6, */*');
-            $request->execute_async();
-            $requests[] = $request;
-        }
-
-        foreach ($requests as $request) {
-            $response = $request->get_async_response();
-
-            if ($include_response) {
-                $this->add_turtle($response->to_turtle());
-            }
-            if ($response->is_success()) {
-                if (    strpos($response->headers['content-type'], 'application/rdf+xml') === 0
-                    || strpos($response->headers['content-type'], 'application/xml') === 0) {
-                    $this->add_rdfxml($response->body);
-                }
-                else if (    strpos($response->headers['content-type'], 'text/turtle') === 0
-                    || strpos($response->headers['content-type'], 'text/n3') === 0
-                    || strpos($response->headers['content-type'], 'text/rdf+n3') === 0
-                    || strpos($response->headers['content-type'], 'application/x-turtle') === 0) {
-                    $this->add_turtle($response->body);
-                }
-                else if (    strpos($response->headers['content-type'], 'application/json') === 0) {
-                    $this->add_json($response->body);
-                }
-            }
-        }
     }
 
     function get_list_values($listUri) {
