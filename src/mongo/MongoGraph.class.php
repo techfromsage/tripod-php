@@ -30,6 +30,7 @@ class MongoGraph extends ExtendedGraph {
     }
 
     /**
+     * todo: speed up
      * Adds the tripod array(s) to this graph.
      * This method is used to add individual tripod documents, or a series of tripod array documents that are embedded in a view.
      * @param $tarray
