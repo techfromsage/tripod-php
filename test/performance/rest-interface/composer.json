@@ -8,6 +8,6 @@
     "require": {
         "slim/slim": "2.*",
         "monolog/monolog": "1.2.*",
-        "talis/tripod-php" : "*"
+        "talis/tripod-php" : "dev-allow-multiple-queues"
     }
 }

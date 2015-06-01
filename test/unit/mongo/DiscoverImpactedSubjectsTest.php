@@ -573,6 +573,162 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
         $discoverImpactedSubjects->perform();
     }
 
+    public function testManuallySpecifiedQueueWillOverrideQueuesDefinedInConfig()
+    {
+        $config = \Tripod\Mongo\Config::getConfig();
+
+        // Create a bunch of specs on various queues
+        $tableSpecs = array(
+            array(
+                "_id"=>"t_resource",
+                "type"=>"acorn:Resource",
+                "from"=>"CBD_testing",
+                "ensureIndexes" => array("value.isbn"=>1),
+                "fields"=>array(
+                    array("fieldName"=>"type","predicates"=>array("rdf:type")),
+                    array("fieldName"=>"isbn","predicates"=>array("bibo:isbn13")),
+                ),
+                "joins"=>array(
+                    "dct:isVersionOf"=>array(
+                        "fields"=>array(
+                            array("fieldName"=>"isbn13","predicates"=>array("bibo:isbn13"))
+                        )
+                    )
+                )
+            ),
+            array(
+                "_id"=>"t_source_count",
+                "type"=>"acorn:Resource",
+                "from"=>"CBD_testing",
+                "to_data_source"=>"rs2",
+                "queue"=>"counts_and_other_non_essentials",
+                "fields"=>array(
+                    array("fieldName"=>"type","predicates"=>array("rdf:type"))
+                ),
+                "joins"=>array(
+                    "dct:isVersionOf"=>array(
+                        "fields"=>array(
+                            array("fieldName"=>"isbn13","predicates"=>array("bibo:isbn13"))
+                        )
+                    )
+                ),
+                "counts"=>array(
+                    array("fieldName"=>"source_count", "property"=>"dct:isVersionOf"),
+                    array("fieldName"=>"random_predicate_count", "property"=>"dct:randomPredicate")
+                )
+            ),
+            array(
+                "_id"=>"t_source_count_regex",
+                "type"=>"acorn:Resource",
+                "from"=>"CBD_testing",
+                "queue"=>"counts_and_other_non_essentials",
+                "fields"=>array(
+                    array("fieldName"=>"type","predicates"=>array("rdf:type"))
+                ),
+                "joins"=>array(
+                    "dct:isVersionOf"=>array(
+                        "fields"=>array(
+                            array("fieldName"=>"isbn13","predicates"=>array("bibo:isbn13"))
+                        )
+                    )
+                ),
+                "counts"=>array(
+                    array("fieldName"=>"source_count", "property"=>"dct:isVersionOf"),
+                    array("fieldName"=>"regex_source_count", "property"=>"dct:isVersionOf", "regex"=>"/foobar/")
+                )
+            ),
+            array(
+                "_id"=>"t_join_source_count_regex",
+                "type"=>"acorn:Resource",
+                "from"=>"CBD_testing",
+                "queue"=>"MOST_IMPORTANT_QUEUE_EVER",
+                "joins"=>array(
+                    "acorn:jacsUri"=>array(
+                        "counts"=>array(
+                            array("fieldName"=>"titles_count","property"=>"dct:title")
+                        )
+                    )
+                )
+            )
+
+        );
+
+        $config['stores']['tripod_php_testing']['table_specifications'] = $tableSpecs;
+
+        \Tripod\Mongo\Config::setConfig($config);
+
+        /** @var \Tripod\Mongo\Jobs\DiscoverImpactedSubjects|PHPUnit_Framework_MockObject_MockObject $discoverImpactedSubjects */
+        $discoverImpactedSubjects = $this->getMockBuilder('\Tripod\Mongo\Jobs\DiscoverImpactedSubjects')
+            ->setMethods(array('getTripod', 'getApplyOperation'))
+            ->getMock();
+
+        $this->setArgs();
+        $args = $this->args;
+        $args['operations'] = array(OP_TABLES);
+        $args['queue'] = 'TRIPOD_TESTING_QUEUE_' . uniqid();
+        $discoverImpactedSubjects->args = $args;
+
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
+            ->setMethods(array('getComposite'))
+            ->setConstructorArgs(array('CBD_testing', 'tripod_php_testing'))
+            ->getMock();
+
+        $tables = $this->getMockBuilder('\Tripod\Mongo\Composites\Tables')
+            ->setMethods(array('getImpactedSubjects'))
+            ->setConstructorArgs(
+                array(
+                    'tripod_php_testing',
+                    \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                    'http://talisaspire.com/'
+                )
+            )->getMock();
+
+        $applyOperation = $this->getMockBuilder('\Tripod\Mongo\Jobs\ApplyOperation')
+            ->setMethods(array('createJob'))
+            ->getMock();
+
+        $tableSubject = new \Tripod\Mongo\ImpactedSubject(
+            array(
+                _ID_RESOURCE=>'http://example.com/resources/foo2',
+                _ID_CONTEXT=>$this->args['contextAlias']
+            ),
+            OP_TABLES,
+            $this->args['storeName'],
+            $this->args['podName'],
+            array('t_resource','t_source_count','t_source_count_regex','t_join_source_count_regex')
+        );
+
+        $tables->expects($this->once())
+            ->method('getImpactedSubjects')
+            ->with($this->args['changes'], $this->args['contextAlias'])
+            ->will($this->returnValue(array($tableSubject)));
+
+        $tripod->expects($this->once())
+            ->method('getComposite')
+            ->with(OP_TABLES)
+            ->will($this->returnValue($tables));
+
+        $discoverImpactedSubjects->expects($this->once())
+            ->method('getTripod')
+            ->will($this->returnValue($tripod));
+
+        $discoverImpactedSubjects->expects($this->once())
+            ->method('getApplyOperation')
+            ->will($this->returnValue($applyOperation));
+
+        $applyOperation->expects($this->once())
+            ->method('createJob')
+            ->withConsecutive(
+                array(
+                    $tableSubject,
+                    $args['queue']
+                )
+            );
+
+
+        $discoverImpactedSubjects->perform();
+    }
+
     protected function setArgs()
     {
         $this->args = array(
