@@ -49,7 +49,7 @@ class DiscoverImpactedSubjects extends JobBase {
             if(!empty($modifiedSubjects)){
                 /* @var $subject \Tripod\Mongo\ImpactedSubject */
                 foreach ($modifiedSubjects as $subject) {
-                    if(isset($this->args['queue']) || count($subject->getSpecTypes() == 0))
+                    if(isset($this->args['queue']) || count($subject->getSpecTypes()) == 0)
                     {
                         $queueName = (isset($this->args['queue']) ? $this->args['queue'] : Config::getApplyQueueName());
                         $this->addSubjectToQueue($subject, $queueName);
@@ -72,8 +72,12 @@ class DiscoverImpactedSubjects extends JobBase {
                                     $spec = Config::getInstance()->getSearchDocumentSpecification($this->args["storeName"], $specType);
                                     break;
                             }
-                            if(!$spec && !isset($spec['queue']))
+                            if(!$spec || !isset($spec['queue']))
                             {
+                                if(!$spec)
+                                {
+                                    $spec = array();
+                                }
                                 $spec['queue'] = Config::getApplyQueueName();
                             }
                             if(!isset($specsGroupedByQueue[$spec['queue']]))
@@ -85,8 +89,15 @@ class DiscoverImpactedSubjects extends JobBase {
 
                         foreach($specsGroupedByQueue as $queueName=>$specs)
                         {
-                            $subject->getSpecTypes($specs);
-                            $this->addSubjectToQueue($subject, $queueName);
+                            $queuedSubject = new \Tripod\Mongo\ImpactedSubject(
+                                $subject->getResourceId(),
+                                $subject->getOperation(),
+                                $subject->getStoreName(),
+                                $subject->getPodName(),
+                                $specs
+                            );
+
+                            $this->addSubjectToQueue($queuedSubject, $queueName);
                         }
                     }
                 }

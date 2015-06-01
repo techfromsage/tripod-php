@@ -16,10 +16,9 @@ abstract class CompositeBase extends \Tripod\Mongo\DriverBase implements \Tripod
      * Returns an array of ImpactedSubjects based on the subjects and predicates of change
      * @param array $subjectsAndPredicatesOfChange
      * @param string $contextAlias
-     * @param string|null $queueName Custom queue name
      * @return \Tripod\Mongo\ImpactedSubject[]
      */
-    public function getImpactedSubjects(Array $subjectsAndPredicatesOfChange,$contextAlias,$queueName=null)
+    public function getImpactedSubjects(Array $subjectsAndPredicatesOfChange,$contextAlias)
     {
         $candidates = array();
         $filter = array();
