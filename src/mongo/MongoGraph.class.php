@@ -92,6 +92,24 @@ class MongoGraph extends ExtendedGraph {
     /**
      * {@inheritdoc}
      */
+    public function remove_property_values($s, $p) {
+        $s = $this->_labeller->uri_to_alias($s);
+        $p = $this->_labeller->uri_to_alias($p);
+        parent::remove_property_values($s, $p);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function remove_triples_about($s) {
+        $s = $this->_labeller->uri_to_alias($s);
+        parent::remove_triples_about($s);
+    }
+
+
+    /**
+     * {@inheritdoc}
+     */
     protected function add_triple($s, $p, $o_info)
     {
         $s = $this->_labeller->uri_to_alias($s);

@@ -407,7 +407,7 @@ class ExtendedGraph
     public function from_json($json) {
         if ($json) {
             $this->remove_all_triples();
-            $this->_index = json_decode($json, true);
+            $this->set_index(json_decode($json, true));
         }
     }
 
@@ -420,7 +420,7 @@ class ExtendedGraph
     public function add_json($json) {
         if ($json) {
             $json_index = json_decode($json, true);
-            $this->_index = $this->merge($this->_index, $json_index);
+            $this->set_index($this->merge($this->get_index(), $json_index));
         }
     }
 
@@ -515,6 +515,7 @@ class ExtendedGraph
     }
 
 
+    //todo: what to do about _index?
     private function add_arc2_triple_list(&$triples) {
         $bnode_index = array();
 
