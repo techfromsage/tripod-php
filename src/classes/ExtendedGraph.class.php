@@ -183,7 +183,8 @@ class ExtendedGraph
      * @deprecated this is deprecated
      */
     public function get_triples() {
-        return ARC2::getTriplesFromIndex($this->to_arc_index($this->get_index()));
+        $index = $this->get_index();
+        return ARC2::getTriplesFromIndex($this->to_arc_index($index));
     }
 
     /**
@@ -233,7 +234,8 @@ class ExtendedGraph
                 'ns' => $this->_labeller->get_ns(),
             )
         );
-        return $serializer->getSerializedIndex($this->to_arc_index($this->get_index()));
+        $index = $this->get_index();
+        return $serializer->getSerializedIndex($this->to_arc_index($index));
     }
 
     /**
@@ -248,7 +250,8 @@ class ExtendedGraph
                 'ns' => $this->_labeller->get_ns(),
             )
         );
-        return $serializer->getSerializedIndex($this->to_arc_index($this->get_index()));
+        $index = $this->get_index();
+        return $serializer->getSerializedIndex($this->to_arc_index($index));
     }
 
     /**
@@ -258,7 +261,8 @@ class ExtendedGraph
      */
     public function to_ntriples() {
         $serializer = ARC2::getComponent('NTriplesSerializer', array());
-        return $serializer->getSerializedIndex($this->to_arc_index($this->get_index()));
+        $index = $this->get_index();
+        return $serializer->getSerializedIndex($this->to_arc_index($index));
     }
 
 
