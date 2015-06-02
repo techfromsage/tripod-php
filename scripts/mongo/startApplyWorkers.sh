@@ -6,7 +6,7 @@ then
 	PATH_TO_RESQUE_BIN="../.."
 elif [ -f "${BASH_SOURCE%/*}/../../../../../vendor/chrisboulton/php-resque/bin/resque" ]
 then
-    PATH_TO_RESQUE_BIN="../../../.."
+    PATH_TO_RESQUE_BIN="../../../../.."
 else
 	echo "php-resque not found."
 	exit
