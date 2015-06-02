@@ -1,5 +1,6 @@
 <?php
 require 'vendor/autoload.php';
+require 'vendor/talis/tripod-php/src/tripod.inc.php';
 define('FORMAT_RDF_XML', 'rdfxml');
 define('FORMAT_NTRIPLES', 'ntriples');
 define('FORMAT_TURTLE', 'turtle');
