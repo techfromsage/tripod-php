@@ -663,7 +663,7 @@ class MongoTripodUpdates extends MongoTripodBase {
 
         // store the details of the transaction in the transaction log
         $mongoGraph = new MongoGraph();
-        $mongoGraph->_index = $cs->_index;
+        $mongoGraph->set_index($cs->get_index());
         $csDoc = $mongoGraph->to_tripod_view_array("changes",$contextAlias); // todo - this changed to tripod view array, why is "changes" the docId?
         $originalCBDs=array();
 

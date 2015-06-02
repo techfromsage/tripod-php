@@ -5,12 +5,244 @@ require_once TRIPOD_DIR.'mongo/MongoTripodConfig.class.php';
 require_once TRIPOD_DIR.'mongo/MongoTripodLabeller.class.php';
 require_once TRIPOD_DIR . 'mongo/serializers/MongoTripodNQuadSerializer.class.php';
 
+/**
+ * - set_index
+ */
 class MongoGraph extends ExtendedGraph {
 
-    function __construct()
+    /**
+     * {@inheritdoc}
+     */
+    public function __construct($graph=false)
     {
         $this->_labeller = new MongoTripodLabeller();
+        if($graph){
+            if(is_string($graph)){
+                $this->add_rdf($graph);
+            } else if ($graph instanceof ExtendedGraph) {
+                $this->set_index($graph->get_index());
+            }
+        }
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function get_index($s=null,$p=null) {
+        $sAlias = $this->_labeller->uri_to_alias($s);
+        $pAlias = $this->_labeller->uri_to_alias($p);
+
+        if ($s==null)
+        {
+            return $this->qnames_to_aliases(parent::get_index());
+        }
+        else if ($p==null)
+        {
+            $index = $this->qnames_to_aliases(array($sAlias=>parent::get_index($sAlias)));
+            return (empty($index[$s])) ? array() : $index[$s];
+        }
+        else
+        {
+            $index = $this->qnames_to_aliases(array($sAlias=>array($pAlias=>parent::get_index($sAlias,$pAlias))));
+            return (empty($index[$s][$p])) ? array() : $index[$s][$p];
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function get_subjects()
+    {
+        $subjects = array();
+        $subjectQnames = array_keys($this->_index);
+        foreach ($subjectQnames as $qname) {
+            $subjects[] = $this->_labeller->qname_to_alias($qname);
+        }
+        return $subjects;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function set_index($_i)
+    {
+        parent::set_index($this->uris_to_aliases($_i));
+    }
+
+
+    /**
+     * {@inheritdoc}
+     */
+    public function remove_resource_triple( $s, $p, $o) {
+        $s = $this->_labeller->uri_to_alias($s);
+        $p = $this->_labeller->uri_to_alias($p);
+        $o = $this->_labeller->uri_to_alias($o);
+        parent::remove_resource_triple($s,$p,$o);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function remove_literal_triple( $s, $p, $o) {
+        $s = $this->_labeller->uri_to_alias($s);
+        $p = $this->_labeller->uri_to_alias($p);
+        parent::remove_literal_triple($s, $p, $o);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function remove_property_values($s, $p) {
+        $s = $this->_labeller->uri_to_alias($s);
+        $p = $this->_labeller->uri_to_alias($p);
+        parent::remove_property_values($s, $p);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function remove_triples_about($s) {
+        $s = $this->_labeller->uri_to_alias($s);
+        parent::remove_triples_about($s);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function add_triple($s, $p, $o_info)
+    {
+        $s = $this->_labeller->uri_to_alias($s);
+        $p = $this->_labeller->uri_to_alias($p);
+        if (is_array($o_info) && array_key_exists("type",$o_info) && $o_info["type"]=="uri")
+        {
+            $o_info["value"] = $this->_labeller->uri_to_alias($o_info["value"]);
+        }
+        parent::add_triple($s, $p, $o_info);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function get_first_resource($s, $p, $default = null, $aliased=false)
+    {
+        if (!$aliased)
+        {
+            $s = $this->_labeller->uri_to_alias($s);
+            $p = $this->_labeller->uri_to_alias($p);
+        }
+        if (isset($this->_index[$s][$p]))
+        {
+            foreach ($this->_index[$s][$p] as $value) {
+                if ($value['type'] == 'uri' || $value['type'] == 'bnode' ) {
+                    return $this->_labeller->qname_to_alias($value['value']);
+                }
+            }
+        }
+        return $default;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function get_first_literal($s, $p, $default = null, $preferred_language = null, $aliased=false)
+    {
+        if (!$aliased)
+        {
+            $s = $this->_labeller->uri_to_alias($s);
+        }
+        $best_literal = $default;
+        if (is_array($p)) {
+            foreach($p as $p_uri) {
+                if (!$aliased)
+                {
+                    $p_uri = $this->_labeller->uri_to_alias($p_uri);
+                }
+                if (isset($this->_index[$s][$p_uri]))
+                {
+                    foreach ($this->_index[$s][$p_uri] as $value) {
+                        if ($value['type'] == 'literal') {
+                            if ($preferred_language == null) {
+                                return $value['value'];
+                            }
+                            else {
+                                if (array_key_exists('lang', $value) && $value['lang'] == $preferred_language) {
+                                    return $value['value'];
+                                }
+                                else {
+                                    $best_literal = $value['value'];
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            if (!$aliased)
+            {
+                $p = $this->_labeller->uri_to_alias($p);
+            }
+            if (isset($this->_index[$s][$p]))
+            {
+                foreach ($this->_index[$s][$p] as $value) {
+                    if ($value['type'] == 'literal') {
+                        if ($preferred_language == null) {
+                            return $value['value'];
+                        }
+                        else {
+                            if (array_key_exists('lang', $value) && $value['lang'] == $preferred_language) {
+                                return $value['value'];
+                            }
+                            else {
+                                $best_literal = $value['value'];
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return $best_literal;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function get_sequence_values($sequenceUri)
+    {
+        $sequenceUriAlias = $this->_labeller->uri_to_alias($sequenceUri);
+        $triples = $this->_index;
+        $properties = array();
+
+        if (isset($triples[$sequenceUriAlias]))
+        {
+            foreach ($triples[$sequenceUriAlias] as $property => $objects)
+            {
+                if (strpos($property, self::rdf.'_') !== false)
+                {
+                    $key = substr($property, strpos($property, '_') + 1  );
+                    $value = $this->get_first_resource($sequenceUri, $property,true);
+
+                    if (empty($value))
+                    {
+                        $value = $this->get_first_literal($sequenceUri, $property, null,true);
+                    }
+
+                    $properties[$key] = $value;
+                }
+            }
+
+            ksort($properties, SORT_NUMERIC);
+        }
+
+        $values = array();
+
+        foreach($properties as $key=>$value)
+        {
+            $values[] = $value;
+        }
+
+        return $values;
+    }
+
 
     /**
      * Given a context this method serializes the current graph to nquads of the form
@@ -19,14 +251,14 @@ class MongoGraph extends ExtendedGraph {
      * @return string the nquad serialization of the graph
      * @throws InvalidArgumentException if you do not specify a context
      */
-    function to_nquads($context)
+    public function to_nquads($context)
     {
         if(empty($context)) {
             throw new InvalidArgumentException("You must specify the context when serializing to nquads");
         }
 
         $serializer = new MongoTripodNQuadSerializer();
-        return $serializer->getSerializedIndex($this->_index, $this->_labeller->qname_to_alias($context));
+        return $serializer->getSerializedIndex($this->get_index(), $this->_labeller->qname_to_alias($context));
     }
 
     /**
@@ -35,7 +267,7 @@ class MongoGraph extends ExtendedGraph {
      * @param $tarray
      * @throws TripodException
      */
-    function add_tripod_array($tarray)
+    public function add_tripod_array($tarray)
     {
         if (!is_array($tarray))
         {
@@ -62,7 +294,7 @@ class MongoGraph extends ExtendedGraph {
      * @param $context
      * @return array
      */
-    function to_tripod_array($docId,$context)
+    public function to_tripod_array($docId,$context)
     {
         $docId = $this->_labeller->qname_to_alias($docId);
         $contextAlias = $this->_labeller->uri_to_alias($context);
@@ -89,7 +321,7 @@ class MongoGraph extends ExtendedGraph {
      * @param $context
      * @return array
      */
-    function to_tripod_view_array($docId,$context)
+    public function to_tripod_view_array($docId,$context)
     {
         $subjects = $this->get_subjects();
         $contextAlias = $this->_labeller->uri_to_alias($context);
@@ -116,12 +348,11 @@ class MongoGraph extends ExtendedGraph {
         {
             if($key[0] != '_')
             {
-                $predicate = $this->qname_to_uri($key);
-                $predObjects[$predicate] = $this->toGraphValueObject($value);
+                $predObjects[$key] = $this->toGraphValueObject($value);
             }
         }
-        $_i[$this->_labeller->qname_to_alias($tarray["_id"][_ID_RESOURCE])] = $predObjects;
-        $this->add_json(json_encode($_i));
+        $_i[$tarray["_id"][_ID_RESOURCE]] = $predObjects;
+        $this->_index = $this->merge($this->_index, $_i);
     }
 
     /**
@@ -145,7 +376,7 @@ class MongoGraph extends ExtendedGraph {
             // single value literal
             $simpleGraphValueObject[] = array(
                 'type'=>'uri',
-                'value'=>$this->_labeller->qname_to_alias($mongoValueObject[VALUE_URI]));
+                'value'=>$mongoValueObject[VALUE_URI]);
         }
         else
         {
@@ -155,7 +386,7 @@ class MongoGraph extends ExtendedGraph {
                 {
                     $simpleGraphValueObject[] = array(
                         'type'=>($type==VALUE_LITERAL) ? 'literal' : 'uri',
-                        'value'=>($type==VALUE_URI) ? $this->_labeller->qname_to_alias($value) : $value);
+                        'value'=>$value);
                 }
             }
         }
@@ -171,13 +402,22 @@ class MongoGraph extends ExtendedGraph {
     {
         $valueTypeProp = ($simpleGraphValueObject['type']=="literal") ? VALUE_LITERAL : VALUE_URI;
         return array(
-            $valueTypeProp=>
-            ($simpleGraphValueObject['type']=="literal") ? $simpleGraphValueObject['value'] : $this->_labeller->uri_to_alias($simpleGraphValueObject['value']));
+            $valueTypeProp=> $simpleGraphValueObject['value']);
     }
 
+    /**
+     * Take a graph's index and convert it to a tarray
+     * @param null $graph
+     * @param $contextAlias
+     * @return array|null
+     */
     private function index_to_tarray($graph=null,$contextAlias)
     {
-        if ($graph==null) $graph = $this;
+        if ($graph==null) {
+            $graph = $this;
+        } else {
+            $graph = new MongoGraph($graph); // make sure it's a mongo graph
+        }
         $_i = $graph->_index;
 
         foreach ($_i as $resource=>$predObjects)
@@ -185,12 +425,11 @@ class MongoGraph extends ExtendedGraph {
             $doc = array();
             $id = array();
 
-            $id[_ID_RESOURCE] = $this->_labeller->uri_to_alias($resource);
+            $id[_ID_RESOURCE] = $resource;
             $id[_ID_CONTEXT] = $contextAlias;
             $doc["_id"] = $id;
-            foreach ($predObjects as $predicate=>$objects)
+            foreach ($predObjects as $pQName=>$objects)
             {
-                $pQName = $this->uri_to_qname($predicate);
                 if (count($objects)==1)
                 {
                     $doc[$pQName] = $this->toMongoTripodValueObject($objects[0]);
@@ -209,5 +448,89 @@ class MongoGraph extends ExtendedGraph {
         }
 
         return null;
+    }
+
+    /**
+     * Move through the triple index and convert qnames to uris where they
+     * @param array $index
+     * @return array
+     */
+    private function qnames_to_aliases(array $index)
+    {
+        if (empty($index))
+        {
+            return array();
+        }
+
+        $result = array();
+        foreach ($index as $subject=>$predicateObjects)
+        {
+            $subject = $this->_labeller->qname_to_alias($subject);
+            if (is_array($predicateObjects))
+            {
+                foreach ($predicateObjects as $predicate=>$objects)
+                {
+                    $predicate = $this->_labeller->qname_to_alias($predicate);
+                    if (is_array($objects))
+                    {
+                        foreach($objects as $object)
+                        {
+                            // this is a value object
+                            if ($object['type']==='uri')
+                            {
+                                $object['value'] = $this->_labeller->qname_to_alias($object['value']);
+                            }
+                            if (!isset($result[$subject]))
+                            {
+                                $result[$subject] = array();
+                            }
+                            if (!isset($result[$subject][$predicate]))
+                            {
+                                $result[$subject][$predicate] = array();
+                            }
+                            $result[$subject][$predicate][] = $object;
+                        }
+                    }
+                }
+            }
+        }
+        return $result;
+    }
+
+    private function uris_to_aliases(array $index)
+    {
+        $result = array();
+        foreach ($index as $subject=>$predicateObjects)
+        {
+            $subject = $this->_labeller->uri_to_alias($subject);
+            if (is_array($predicateObjects))
+            {
+                foreach ($predicateObjects as $predicate=>$objects)
+                {
+                    $predicate = $this->_labeller->uri_to_alias($predicate);
+                    if (is_array($objects))
+                    {
+                        foreach($objects as $object)
+                        {
+                            // this is a value object
+                            if ($object['type']==='uri')
+                            {
+                                $object['value'] = $this->_labeller->uri_to_alias($object['value']);
+                            }
+                            if (!isset($result[$subject]))
+                            {
+                                $result[$subject] = array();
+                            }
+                            if (!isset($result[$subject][$predicate]))
+                            {
+                                $result[$subject][$predicate] = array();
+                            }
+                            $result[$subject][$predicate][] = $object;
+                        }
+                    }
+                }
+            }
+        }
+        return $result;
     }
 }
