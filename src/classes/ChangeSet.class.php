@@ -45,7 +45,6 @@ class ChangeSet extends ExtendedGraph {
      */
     var $a;
     var $subjectIndex = array();
-    var $_index = array();
 
     function __construct($a = '') {
         $this->a = $a;
@@ -177,20 +176,7 @@ class ChangeSet extends ExtendedGraph {
             }
         }
 
-
-        // foreach($this->_index as $uri => $props){
-        //  if(
-        //      !isset($props[$CSNS.'removal'])
-        //      AND
-        //      !isset($props[$CSNS.'addition'])
-        //      ){
-        //        unset($this->_index[$uri]);
-        //    }
-        //
-        // }
-
-        $this->_index = ExtendedGraph::merge($this->_index, $reifiedAdditions, $reifiedRemovals);
-
+        $this->set_index(ExtendedGraph::merge($this->get_index(), $reifiedAdditions, $reifiedRemovals));
     }
 
     /**
@@ -201,17 +187,17 @@ class ChangeSet extends ExtendedGraph {
     function addT($s, $p, $o, $o_type='bnode'){
         if(is_array($o) AND isset($o[0]['type'])){
             foreach($o as $obj){
-                $this->addT($s, $p, $obj );
+                $this->add_triple($s, $p, $obj );
             }
         }else {
             $obj = !is_array($o)? array('value' => $o, 'type'=> $o_type) : $o ;
-            $this->_index[$s][$p][]=$obj;
+            $this->add_triple($s, $p, $obj);
         }
     }
 
     function toRDFXML(){
         $ser = ARC2::getRDFXMLSerializer();
-        return $ser->getSerializedIndex($this->_index);
+        return $ser->getSerializedIndex($this->get_index());
     }
 
     function to_rdfxml(){
@@ -219,7 +205,7 @@ class ChangeSet extends ExtendedGraph {
     }
 
     function has_changes(){
-        foreach($this->_index as $uri => $properties){
+        foreach($this->get_index() as $uri => $properties){
             if(
                 isset($properties['http://purl.org/vocab/changeset/schema#addition'])
                 OR

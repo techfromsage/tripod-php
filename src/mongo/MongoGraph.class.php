@@ -26,7 +26,7 @@ class MongoGraph extends ExtendedGraph {
         }
 
         $serializer = new MongoTripodNQuadSerializer();
-        return $serializer->getSerializedIndex($this->_index, $this->_labeller->qname_to_alias($context));
+        return $serializer->getSerializedIndex($this->get_index(), $this->_labeller->qname_to_alias($context));
     }
 
     /**
@@ -179,7 +179,7 @@ class MongoGraph extends ExtendedGraph {
     private function index_to_tarray($graph=null,$contextAlias)
     {
         if ($graph==null) $graph = $this;
-        $_i = $graph->_index;
+        $_i = $graph->get_index();
 
         foreach ($_i as $resource=>$predObjects)
         {

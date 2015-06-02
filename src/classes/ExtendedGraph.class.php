@@ -3,15 +3,24 @@
 require_once(ARC_DIR.'ARC2.php');
 /**
  * This class is based on SimpleGraph, part of Moriaty: https://code.google.com/p/moriarty/
+ *
+ * Functionality has been altered to make $_index truely private and enable a different internal representation by
+ * overriding:
+ *
+ * - get_index
+ * - set_index
+ * - add_triple
+ * - remove_resource_triple
+ * - remove_literal_triple
+ * - get_subjects
+ *
  * @see https://code.google.com/p/moriarty/source/browse/trunk/labeller.class.php
  */
 class ExtendedGraph
 {
     /* FROM SimpleGraph */
-    var $_index = array();
-    var $_image_properties =  array( 'http://xmlns.com/foaf/0.1/depiction', 'http://xmlns.com/foaf/0.1/img');
-    var $_property_order =  array('http://www.w3.org/2004/02/skos/core#prefLabel', RDFS_LABEL, 'http://purl.org/dc/terms/title', DC_TITLE, FOAF_NAME, 'http://www.w3.org/2004/02/skos/core#definition', RDFS_COMMENT, 'http://purl.org/dc/terms/description', DC_DESCRIPTION, 'http://purl.org/vocab/bio/0.1/olb', RDF_TYPE);
-    var $parser_errors = array();
+    private $_index = array();
+    public $parser_errors = array();
     protected $_ns = array (
         'rdf' => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
         'rdfs' => 'http://www.w3.org/2000/01/rdf-schema#',
@@ -271,30 +280,10 @@ class ExtendedGraph
      * @return string the first literal value found or the supplied default if no values were found
      */
     public function get_first_literal($s, $p, $default = null, $preferred_language = null) {
-
         $best_literal = $default;
-        if ( array_key_exists($s, $this->_index)) {
-            if (is_array($p)) {
-                foreach($p as $p_uri) {
-                    foreach ($this->get_index($s,$p_uri) as $value) {
-                        if ($value['type'] == 'literal') {
-                            if ($preferred_language == null) {
-                                return $value['value'];
-                            }
-                            else {
-                                if (array_key_exists('lang', $value) && $value['lang'] == $preferred_language) {
-                                    return $value['value'];
-                                }
-                                else {
-                                    $best_literal = $value['value'];
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            else {
-                foreach ($this->get_index($s,$p) as $value) {
+        if (is_array($p)) {
+            foreach($p as $p_uri) {
+                foreach ($this->get_index($s,$p_uri) as $value) {
                     if ($value['type'] == 'literal') {
                         if ($preferred_language == null) {
                             return $value['value'];
@@ -306,6 +295,22 @@ class ExtendedGraph
                             else {
                                 $best_literal = $value['value'];
                             }
+                        }
+                    }
+                }
+            }
+        } else {
+            foreach ($this->get_index($s,$p) as $value) {
+                if ($value['type'] == 'literal') {
+                    if ($preferred_language == null) {
+                        return $value['value'];
+                    }
+                    else {
+                        if (array_key_exists('lang', $value) && $value['lang'] == $preferred_language) {
+                            return $value['value'];
+                        }
+                        else {
+                            $best_literal = $value['value'];
                         }
                     }
                 }
@@ -666,21 +671,19 @@ class ExtendedGraph
      */
     public function get_literal_triple_values($s, $p) {
         $values = array();
-        if ( array_key_exists($s, $this->_index)) {
-            if (is_array($p)) {
-                foreach($p as $p_uri) {
-                    foreach ($this->get_index($s,$p_uri) as $value) {
-                        if ($value['type'] == 'literal') {
-                            $values[] = $value['value'];
-                        }
-                    }
-                }
-            }
-            else {
-                foreach ($this->get_index($s,$p) as $value) {
+        if (is_array($p)) {
+            foreach($p as $p_uri) {
+                foreach ($this->get_index($s,$p_uri) as $value) {
                     if ($value['type'] == 'literal') {
                         $values[] = $value['value'];
                     }
+                }
+            }
+        }
+        else {
+            foreach ($this->get_index($s,$p) as $value) {
+                if ($value['type'] == 'literal') {
+                    $values[] = $value['value'];
                 }
             }
         }
@@ -698,11 +701,9 @@ class ExtendedGraph
     public function get_subject_property_values($s, $p) {
         $values = array();
         if (! is_array($p)) $p = array($p);
-        if (array_key_exists($s, $this->_index) ) {
-            foreach ($p as $pinst) {
-                foreach ($this->get_index($s,$pinst) as $value) {
-                    $values[] = $value;
-                }
+        foreach ($p as $pinst) {
+            foreach ($this->get_index($s,$pinst) as $value) {
+                $values[] = $value;
             }
         }
         return $values;
@@ -715,8 +716,9 @@ class ExtendedGraph
      */
     public function get_subject_subgraph($s) {
         $sub = new ExtendedGraph();
-        if (array_key_exists($s, $this->_index) ) {
-            $sub->_index[$s] = $this->get_index($s);
+        $po = $this->get_index($s);
+        if (!empty($po)) {
+            $sub->set_index(array($s=>$po));
         }
         return $sub;
     }
@@ -917,7 +919,7 @@ class ExtendedGraph
     public function diff(){
         $indices = func_get_args();
         if(count($indices)==1){
-            array_unshift($indices, $this->_index);
+            array_unshift($indices, $this->get_index());
         }
         $base = array_shift($indices);
         if (count($base) === 0) return array();
@@ -970,7 +972,7 @@ class ExtendedGraph
         $old_bnodeids = array();
         $indices = func_get_args();
         if(count($indices)==1){
-            array_unshift($indices, $this->_index);
+            array_unshift($indices, $this->get_index());
         }
 
         $current = array_shift($indices);
@@ -1042,7 +1044,7 @@ class ExtendedGraph
         $remove_list_literals = array();
         $add_list_resources = array();
         $add_list_literals = array();
-        foreach ($this->_index as $s => $p_list) {
+        foreach ($this->get_index() as $s => $p_list) {
             if ($s == $look_for) {
                 foreach ($p_list as $p => $o_list) {
                     if ($p == $look_for) {
@@ -1159,7 +1161,7 @@ class ExtendedGraph
     const rdf_seq = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#Seq';
 
     /**
-     * Up to the application to decide what constitures the label properties for a given app
+     * Up to the application to decide what constitutes the label properties for a given app
      * @var array
      */
     private static $labelProperties;
@@ -1196,7 +1198,7 @@ class ExtendedGraph
                 }
             }
         }
-        $this->_index = $index;
+        $this->set_index($index);
     }
 
     /**
@@ -1525,7 +1527,7 @@ class ExtendedGraph
      */
     public function get_label_for_uri($uri)
     {
-        if(!isset($this->_index[$uri])){
+        if(!in_array($uri,$this->get_subjects())){
             return '';
         }
         if (!isset(self::$labelProperties))
@@ -1533,11 +1535,11 @@ class ExtendedGraph
             throw new TripodException('Please initialise ExtendedGraph::$labelProperties');
         }
         foreach(self::$labelProperties as $p){
-            if(isset($this->_index[$uri][$p])){
-                return $this->_index[$uri][$p][0]['value'];
+            $values =  $this->get_index($uri,$p);
+            if(!empty($values)){
+                return $values[0]['value'];
             }
         }
-
         return '';
     }
 

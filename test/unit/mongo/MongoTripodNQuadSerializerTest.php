@@ -20,7 +20,7 @@ class MongoTripodNQuadSerializerTest extends MongoTripodTestBase
 <http://example.com/1> <http://purl.org/dc/terms/source> <http://www.google.com> <http://talisaspire.com/> .\n";
 
         $serializer = new MongoTripodNQuadSerializer();
-        $actual = $serializer->getSerializedIndex($g->_index, MongoTripodConfig::getInstance()->getDefaultContextAlias());
+        $actual = $serializer->getSerializedIndex($g->get_index(), MongoTripodConfig::getInstance()->getDefaultContextAlias());
 
         $this->assertEquals($expected, $actual);
     }
@@ -134,7 +134,7 @@ class MongoTripodNQuadSerializerTest extends MongoTripodTestBase
 ";
         
         $serializer = new MongoTripodNQuadSerializer();
-        $actual = $serializer->getSerializedIndex($g->_index, MongoTripodConfig::getInstance()->getDefaultContextAlias());
+        $actual = $serializer->getSerializedIndex($g->get_index(), MongoTripodConfig::getInstance()->getDefaultContextAlias());
 
         $this->assertEquals($expected, $actual);
     }
