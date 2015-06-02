@@ -768,17 +768,15 @@ class ExtendedGraph
     private function get_subjects_where($p, $o, $type)
     {
         $subjects = array();
-        foreach ($this->_index as $subject => $properties)
+        $candidates = $this->get_subjects();
+        foreach ($candidates as $candidate)
         {
-            if (array_key_exists($p, $properties))
+            foreach ($this->get_index($candidate,$p) as $object)
             {
-                foreach ($properties[$p] as $object)
+                if ($object['type'] == $type && $object['value'] == $o)
                 {
-                    if ($object['type'] == $type && $object['value'] == $o)
-                    {
-                        $subjects[] = $subject;
-                        break;
-                    }
+                    $subjects[] = $candidate;
+                    break;
                 }
             }
         }
