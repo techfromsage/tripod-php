@@ -106,7 +106,6 @@ class MongoGraph extends ExtendedGraph {
         parent::remove_triples_about($s);
     }
 
-
     /**
      * {@inheritdoc}
      */
@@ -120,6 +119,130 @@ class MongoGraph extends ExtendedGraph {
         }
         parent::add_triple($s, $p, $o_info);
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function get_first_resource($s, $p, $default = null, $aliased=false)
+    {
+        if (!$aliased)
+        {
+            $s = $this->_labeller->uri_to_alias($s);
+            $p = $this->_labeller->uri_to_alias($p);
+        }
+        if (isset($this->_index[$s][$p]))
+        {
+            foreach ($this->_index[$s][$p] as $value) {
+                if ($value['type'] == 'uri' || $value['type'] == 'bnode' ) {
+                    return $this->_labeller->qname_to_alias($value['value']);
+                }
+            }
+        }
+        return $default;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function get_first_literal($s, $p, $default = null, $preferred_language = null, $aliased=false)
+    {
+        if (!$aliased)
+        {
+            $s = $this->_labeller->uri_to_alias($s);
+        }
+        $best_literal = $default;
+        if (is_array($p)) {
+            foreach($p as $p_uri) {
+                if (!$aliased)
+                {
+                    $p_uri = $this->_labeller->uri_to_alias($p_uri);
+                }
+                if (isset($this->_index[$s][$p_uri]))
+                {
+                    foreach ($this->_index[$s][$p_uri] as $value) {
+                        if ($value['type'] == 'literal') {
+                            if ($preferred_language == null) {
+                                return $value['value'];
+                            }
+                            else {
+                                if (array_key_exists('lang', $value) && $value['lang'] == $preferred_language) {
+                                    return $value['value'];
+                                }
+                                else {
+                                    $best_literal = $value['value'];
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            if (!$aliased)
+            {
+                $p = $this->_labeller->uri_to_alias($p);
+            }
+            if (isset($this->_index[$s][$p]))
+            {
+                foreach ($this->_index[$s][$p] as $value) {
+                    if ($value['type'] == 'literal') {
+                        if ($preferred_language == null) {
+                            return $value['value'];
+                        }
+                        else {
+                            if (array_key_exists('lang', $value) && $value['lang'] == $preferred_language) {
+                                return $value['value'];
+                            }
+                            else {
+                                $best_literal = $value['value'];
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return $best_literal;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function get_sequence_values($sequenceUri)
+    {
+        $sequenceUriAlias = $this->_labeller->uri_to_alias($sequenceUri);
+        $triples = $this->_index;
+        $properties = array();
+
+        if (isset($triples[$sequenceUriAlias]))
+        {
+            foreach ($triples[$sequenceUriAlias] as $property => $objects)
+            {
+                if (strpos($property, self::rdf.'_') !== false)
+                {
+                    $key = substr($property, strpos($property, '_') + 1  );
+                    $value = $this->get_first_resource($sequenceUri, $property,true);
+
+                    if (empty($value))
+                    {
+                        $value = $this->get_first_literal($sequenceUri, $property, null,true);
+                    }
+
+                    $properties[$key] = $value;
+                }
+            }
+
+            ksort($properties, SORT_NUMERIC);
+        }
+
+        $values = array();
+
+        foreach($properties as $key=>$value)
+        {
+            $values[] = $value;
+        }
+
+        return $values;
+    }
+
 
     /**
      * Given a context this method serializes the current graph to nquads of the form
