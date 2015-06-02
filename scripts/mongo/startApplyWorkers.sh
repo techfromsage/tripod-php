@@ -4,7 +4,7 @@ echo "Use startWorkers.sh in development only. Suggest an upstart script for pro
 if [ -f "${BASH_SOURCE%/*}/../../vendor/chrisboulton/php-resque/bin/resque" ]
 then
 	PATH_TO_RESQUE_BIN="../.."
-elif [ -f "${BASH_SOURCE%/*}/../../../../vendor/chrisboulton/php-resque/bin/resque" ]
+elif [ -f "${BASH_SOURCE%/*}/../../../../../vendor/chrisboulton/php-resque/bin/resque" ]
 then
     PATH_TO_RESQUE_BIN="../../../.."
 else
