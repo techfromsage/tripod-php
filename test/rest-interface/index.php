@@ -1,7 +1,5 @@
 <?php
 require 'vendor/autoload.php';
-define('ARC_DIR', dirname(__FILE__) . '/vendor/semsol/arc2/');
-require_once dirname(__FILE__) . '/vendor/talis/tripod-php/src/tripod.inc.php';
 define('FORMAT_RDF_XML', 'rdfxml');
 define('FORMAT_NTRIPLES', 'ntriples');
 define('FORMAT_TURTLE', 'turtle');
@@ -36,13 +34,9 @@ $app->group('/1', function() use ($app) {
             do
             {
                 $viewSpec = \Tripod\Mongo\Config::getInstance()->getViewSpecification($storeName, $viewSpecId);
-                if(!$viewSpec)
-                {
-                    $viewSpec = \Tripod\Mongo\Config::getInstance()->getViewSpecification($viewSpecId);
-                }
                 $podName = isset($viewSpec['from']) ? $viewSpec['from'] : null;
                 $tripodOptions['stat'] = getStat($app);
-                $tripod = new MongoTripod($podName, $storeName, $tripodOptions);
+                $tripod = new \Tripod\Mongo\Driver($podName, $storeName, $tripodOptions);
                 $contentType = $app->request()->getMediaType();
                 switch($contentType)
                 {
@@ -82,7 +76,7 @@ $app->group('/1', function() use ($app) {
                     $i = 0;
                     do
                     {
-                        $tripod = new MongoTripod($podName, $storeName, $tripodOptions);
+                        $tripod = new \Tripod\Mongo\Driver($podName, $storeName, $tripodOptions);
 
                         switch($contentType)
                         {
@@ -116,18 +110,18 @@ $app->group('/1', function() use ($app) {
 
                 $app->delete('/:encodedFqUri', function($storeName, $podName, $encodedFqUri) use ($app) {
                     $tripodOptions['stat'] = getStat($app);
-                    $tripod = new MongoTripod($podName, $storeName, $tripodOptions);
+                    $tripod = new \Tripod\Mongo\Driver($podName, $storeName, $tripodOptions);
                     $oldGraph = $tripod->describeResource(base64_decode($encodedFqUri));
-                    $tripod->saveChanges($oldGraph, new ExtendedGraph());
+                    $tripod->saveChanges($oldGraph, new \Tripod\ExtendedGraph());
                 });
 
                 $app->post('/', function($storeName, $podName) use ($app) {
                     $tripodOptions['stat'] = getStat($app);
-                    $tripod = new MongoTripod($podName, $storeName, $tripodOptions);
+                    $tripod = new \Tripod\Mongo\Driver($podName, $storeName, $tripodOptions);
                     $rawGraphData = $app->request()->getBody();
-                    $graph = new MongoGraph();
+                    $graph = new \Tripod\Mongo\MongoGraph();
                     $graph->add_rdf($rawGraphData);
-                    $tripod->saveChanges(new ExtendedGraph(), $graph);
+                    $tripod->saveChanges(new \Tripod\ExtendedGraph(), $graph);
                 });
             });
 
@@ -136,13 +130,13 @@ $app->group('/1', function() use ($app) {
                   \Tripod\Mongo\Config::setConfig(json_decode(file_get_contents('./config/tripod-config-'.$storeName .'.json'), true));
                     $app->response()->setStatus(500);
                     $tripodOptions['stat'] = getStat($app);
-                    $tripod = new MongoTripod($podName, $storeName, $tripodOptions);
+                    $tripod = new \Tripod\Mongo\Driver($podName, $storeName, $tripodOptions);
                     $rawChangeData = $app->request()->post('data');
                     if($rawChangeData)
                     {
                         $changeData = json_decode($rawChangeData, true);
-                        $from = new MongoGraph();
-                        $to = new MongoGraph();
+                        $from = new \Tripod\Mongo\MongoGraph();
+                        $to = new \Tripod\Mongo\MongoGraph();
                         if(isset($changeData['originalCBDs']))
                         {
                             foreach($changeData['originalCBDs'] as $change)
@@ -205,11 +199,11 @@ function getContentType($format)
 }
 
 /**
- * @param ExtendedGraph $graph
+ * @param \Tripod\ExtendedGraph $graph
  * @param string $format
  * @return string
  */
-function getFormattedGraph(ExtendedGraph $graph, $format)
+function getFormattedGraph(\Tripod\ExtendedGraph $graph, $format)
 {
     switch($format)
     {
