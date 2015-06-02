@@ -112,11 +112,11 @@ class ExtendedGraph
 
     // todo: not clear this actually does anything
     public function update_prefix_mappings() {
-        foreach ($this->get_index() as $s => $p_list) {
-            foreach ($p_list as $p => $v_list) {
-                $prefix = $this->_labeller->uri_to_qname($p);
-            }
-        }
+//        foreach ($this->get_index() as $s => $p_list) {
+//            foreach ($p_list as $p => $v_list) {
+//                $prefix = $this->_labeller->uri_to_qname($p);
+//            }
+//        }
     }
 
     /**
@@ -715,6 +715,7 @@ class ExtendedGraph
     }
 
     /**
+     * todo: more performance, this is slow in MongoGraph
      * Fetch a subgraph where all triples have given subject
      * @param string s the subject to search for
      * @return ExtendedGraph triples with the supplied subject
@@ -823,8 +824,7 @@ class ExtendedGraph
      * @return boolean true if the graph contains any triples with the specified subject, false otherwise
      */
     public function has_triples_about($s) {
-        $predicates = $this->get_index($s);
-        return !empty($predicates);
+        return in_array($s,$this->get_subjects());
     }
 
 
