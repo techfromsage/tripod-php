@@ -220,6 +220,72 @@ class ApplyOperationTest extends MongoTripodTestBase
         $applyOperation->perform();
     }
 
+    public function testCreateJobDefaultQueue()
+    {
+        $impactedSubject = new \Tripod\Mongo\ImpactedSubject(
+            array(_ID_RESOURCE=>"http://example.com/1",_ID_CONTEXT=>"http://talisaspire.com/"),
+            OP_TABLES,
+            'tripod_php_testing',
+            'CBD_testing',
+            array('t_resource','t_resource_count')
+        );
+
+        $jobData = array(
+            'subject'=>$impactedSubject->toArray(),
+            'tripodConfig'=>\Tripod\Mongo\Config::getConfig(),
+        );
+
+        /** @var \Tripod\Mongo\Jobs\ApplyOperation|PHPUnit_Framework_MockObject_MockObject $applyOperation */
+        $applyOperation = $this->getMockBuilder('\Tripod\Mongo\Jobs\ApplyOperation')
+            ->setMethods(array('submitJob'))
+            ->setMockClassName('MockApplyOperation')
+            ->getMock();
+
+        $applyOperation->expects($this->once())
+            ->method('submitJob')
+            ->with(
+                \Tripod\Mongo\Config::getApplyQueueName(),
+                'MockApplyOperation',
+                $jobData
+            );
+
+        $applyOperation->createJob($impactedSubject);
+    }
+
+    public function testCreateJobSpecifyQueue()
+    {
+        $impactedSubject = new \Tripod\Mongo\ImpactedSubject(
+            array(_ID_RESOURCE=>"http://example.com/1",_ID_CONTEXT=>"http://talisaspire.com/"),
+            OP_VIEWS,
+            'tripod_php_testing',
+            'CBD_testing',
+            array()
+        );
+
+        $jobData = array(
+            'subject'=>$impactedSubject->toArray(),
+            'tripodConfig'=>\Tripod\Mongo\Config::getConfig(),
+        );
+
+        /** @var \Tripod\Mongo\Jobs\ApplyOperation|PHPUnit_Framework_MockObject_MockObject $applyOperation */
+        $applyOperation = $this->getMockBuilder('\Tripod\Mongo\Jobs\ApplyOperation')
+            ->setMethods(array('submitJob'))
+            ->setMockClassName('MockApplyOperation')
+            ->getMock();
+
+        $queueName = 'TRIPOD_TESTING_QUEUE_' . uniqid();
+
+        $applyOperation->expects($this->once())
+            ->method('submitJob')
+            ->with(
+                $queueName,
+                'MockApplyOperation',
+                $jobData
+            );
+
+        $applyOperation->createJob($impactedSubject, $queueName);
+    }
+
     protected function setArgs()
     {
         $subject = new \Tripod\Mongo\ImpactedSubject(
