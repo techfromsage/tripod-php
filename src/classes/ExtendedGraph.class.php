@@ -154,7 +154,7 @@ class ExtendedGraph
         return $this->_add_triple($s, $p, $o_info);
     }
 
-    private function _add_triple($s, $p, $o_info) {
+    protected function _add_triple($s, $p, $o_info) {
         if (!isset($this->_index[$s])) {
             $this->_index[$s] = array();
             $this->_index[$s][$p] = array( $o_info );
