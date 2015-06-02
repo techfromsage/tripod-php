@@ -1,6 +1,6 @@
 <?php
 
-require "../../src/tripod.inc.php";
+require dirname(__FILE__) . "/../../src/tripod.inc.php";
 // the global is necessary for Resque worker to send statements to
 $logger = new \Monolog\Logger("TRIPOD-WORKER");
 $logger->pushHandler(new \Monolog\Handler\StreamHandler('php://stderr', Psr\Log\LogLevel::WARNING)); // resque too chatty on NOTICE & INFO. YMMV
