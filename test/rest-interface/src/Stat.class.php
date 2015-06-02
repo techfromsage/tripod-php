@@ -6,7 +6,7 @@ define('TRIPOD_PERFORMANCE_TEST','TRIPOD_PERFORMANCE_TEST');
 /**
  * Based on StatD class by Michael Grace http://geek.michaelgrace.org/2011/09/installing-statsd-on-ubuntu-server-10-04/
  */
-class Stat implements ITripodStat {
+class Stat implements \Tripod\ITripodStat {
 
     /**
      * @var string
