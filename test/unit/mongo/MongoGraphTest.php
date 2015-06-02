@@ -87,7 +87,7 @@ class MongoGraphTest extends MongoTripodTestBase
             "bibo:isbn13"=>array("l"=>"9211234567890")
         );
 
-        $expected = new MongoGraph();
+        $expected = new ExtendedGraph();
         $expected->add_literal_triple("http://talisaspire.com/works/4d101f63c10a6-2", $expected->qname_to_uri("bibo:isbn13"),"9211234567890");
         $expected->add_resource_triple("http://talisaspire.com/works/4d101f63c10a6-2", $expected->qname_to_uri("dct:subject"),"http://talisaspire.com/disciplines/physics");
         $expected->add_resource_triple("http://talisaspire.com/works/4d101f63c10a6-2", $expected->qname_to_uri("rdf:type"),"http://purl.org/ontology/bibo/Book");
@@ -96,7 +96,9 @@ class MongoGraphTest extends MongoTripodTestBase
         $g = new MongoGraph();
         $g->add_tripod_array($doc);
 
-        $this->assertEquals($expected, $g);
+        $actual = new ExtendedGraph($g);
+
+        $this->assertEquals($expected, $actual);
     }
 
     public function testAddTripodArrayWhenAddingViews()

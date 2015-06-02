@@ -19,7 +19,7 @@ require_once(ARC_DIR.'ARC2.php');
 class ExtendedGraph
 {
     /* FROM SimpleGraph */
-    private $_index = array();
+    protected $_index = array();
     public $parser_errors = array();
     protected $_ns = array (
         'rdf' => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
@@ -62,8 +62,8 @@ class ExtendedGraph
         if($graph){
             if(is_string($graph)){
                 $this->add_rdf($graph);
-            } else {
-                $this->set_index($graph);
+            } else if ($graph instanceof ExtendedGraph) {
+                $this->set_index($graph->get_index());
             }
         }
 
@@ -195,26 +195,26 @@ class ExtendedGraph
      * @return array
      */
     public function get_index($s=null,$p=null) {
+        $candidate = null;
         if ($s===null)
         {
-            return $this->_index;
+            $candidate = $this->_index;
         }
         else if ($p===null)
         {
             if (isset($this->_index[$s]))
             {
-                return $this->_index[$s];
+                $candidate =  $this->_index[$s];
             }
-            return array();
         }
         else
         {
             if (isset($this->_index[$s]) && isset($this->_index[$s][$p]))
             {
-                return $this->_index[$s][$p];
+                $candidate =  $this->_index[$s][$p];
             }
-            return array();
         }
+        return (!is_array($candidate)) ? array() : $candidate;
     }
 
     public function set_index($_i)
