@@ -44,7 +44,7 @@ class MongoTripodConfigTest extends PHPUnit_Framework_TestCase
         $testName = $this->getName();
         echo "\nTest: {$className}->{$testName}\n";
         
-        $this->config = json_decode(file_get_contents(dirname(__FILE__) . '/rest-interface/config/tripod-config.json'), true);
+        $this->config = json_decode(file_get_contents(dirname(__FILE__) . '/../unit/mongo/data/config.json'), true);
     }
 
     /**

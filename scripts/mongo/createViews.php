@@ -68,15 +68,9 @@ else
 {
     $tripodBasePath = dirname(dirname(dirname(__FILE__)));
 }
-set_include_path(
-    get_include_path()
-    . PATH_SEPARATOR . $tripodBasePath.'/src'
-    . PATH_SEPARATOR . $tripodBasePath.'/src/classes');
 
-require_once 'tripod.inc.php';
-require_once 'classes/Timer.class.php';
-require_once 'mongo/TripodConfigs.php';
-require_once 'mongo/Tripods.php';
+require_once $tripodBasePath . '/vendor/autoload.php';
+require_once $tripodBasePath . '/src/tripod.inc.php';
 
 /**
  * @param string|null $id

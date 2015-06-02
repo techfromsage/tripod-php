@@ -4,13 +4,6 @@
 
 if(!defined('TRIPOD_DIR')) define('TRIPOD_DIR', dirname(__FILE__) . '/' );
 
-require_once TRIPOD_DIR.'../vendor/autoload.php';
-
-// use latest brought in via composer
-if(!defined('ARC_DIR')) define('ARC_DIR', TRIPOD_DIR. '../vendor/semsol/arc2/' );
-
-//require_once ARC_DIR.'ARC2.php';
-
 require_once TRIPOD_DIR.'classes/Timer.class.php';
 require_once TRIPOD_DIR . 'exceptions/Exception.class.php';
 require_once TRIPOD_DIR . 'exceptions/SearchException.class.php';
