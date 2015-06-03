@@ -140,7 +140,7 @@ class DiscoverImpactedSubjects extends JobBase {
 
     /**
      * @param \Tripod\Mongo\ImpactedSubject $subject
-     * @param $queueName
+     * @param string $queueName
      */
     protected function addSubjectToQueue(\Tripod\Mongo\ImpactedSubject $subject, $queueName)
     {
