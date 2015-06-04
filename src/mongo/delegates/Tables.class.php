@@ -526,7 +526,7 @@ class Tables extends CompositeBase
                     $from,
                     array($tableType)
                 );
-                $this->getApplyOperation()->createJob($subject, $queueName);
+                $this->getApplyOperation()->createJob(array($subject), $queueName);
             }
             else
             {

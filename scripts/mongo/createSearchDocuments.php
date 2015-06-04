@@ -81,10 +81,6 @@ require_once $tripodBasePath . '/src/tripod.inc.php';
 function generateSearchDocuments($id, $specId, $storeName, $stat = null, $queue = null)
 {
     $spec = \Tripod\Mongo\Config::getInstance()->getSearchDocumentSpecification($storeName, $specId);
-    if(empty($spec)) // Older version of Tripod being used?
-    {
-        $spec = \Tripod\Mongo\Config::getInstance()->getSearchDocumentSpecification($specId);
-    }
     if (array_key_exists("from",$spec))
     {
         MongoCursor::$timeout = -1;
