@@ -165,7 +165,7 @@ abstract class CompositeBase extends \Tripod\Mongo\DriverBase implements \Tripod
         if(!empty($intersectingTypes))
         {
             // Views should always invalidate
-            if($this instanceof \Tripod\Mongo\Views)
+            if($this instanceof \Tripod\Mongo\Composites\Views)
             {
                 return true;
             }

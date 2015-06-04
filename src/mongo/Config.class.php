@@ -1666,6 +1666,94 @@ class Config
         return $fields;
     }
 
+
+    /**
+     * For a given 'level' in a composite specification (views, table rows, search documents), return the relevant
+     * Mongo document fields needed to generate the composite document
+     * 
+     * @param array $spec
+     * @return array
+     */
+    public function getFieldsDefinedInSpecBlock(Array $spec)
+    {
+        $fields = array();
+        if(isset($spec['fields']))
+        {
+            foreach($spec['fields'] as $field)
+            {
+                if(isset($field['predicates']) && is_array($field['predicates']))
+                {
+                    $fields = array_merge($fields, $this->getFieldsFromPredicateProperty($field['predicates']));
+                }
+            }
+        }
+
+        if(isset($spec['counts']))
+        {
+            foreach($spec['counts'] as $count)
+            {
+                if(isset($count['property']))
+                {
+                    $fields[$count['property']] = 1;
+                }
+            }
+        }
+
+        // Views define fields via 'include'
+        if(isset($spec['include']))
+        {
+            foreach($spec['include'] as $field)
+            {
+                $fields[$field] = 1;
+            }
+        }
+
+        // Search documents have a property called 'indices'
+        if(isset($spec['indices']))
+        {
+            foreach($spec['indices'] as $index)
+            {
+                if(isset($index['predicates']) && is_array($index['predicates']))
+                {
+                    foreach($index['predicates'] as $field)
+                    {
+                        $fields[$field] = 1;
+                    }
+                }
+            }
+        }
+
+        // Get the keys for joins
+        if(isset($spec['joins']))
+        {
+            foreach(array_keys($spec['joins']) as $property)
+            {
+                $fields[$property] = 1;
+            }
+        }
+        return $fields;
+    }
+
+    protected function getFieldsFromPredicateProperty(Array $predicateSpec, $predicates = array())
+    {
+        foreach($predicateSpec as $predicate)
+        {
+            if(is_string($predicate))
+            {
+                $predicates[$predicate] = 1;
+            }
+            elseif(is_array($predicate) && array_key_exists('predicates', $predicate))
+            {
+                $predicates = array_merge($predicates, $this->getFieldsFromPredicateProperty($predicate['predicates'], $predicates));
+            }
+            else
+            {
+                $predicates = array_merge($predicates, $this->getFieldsFromPredicateProperty($predicate, $predicates));
+            }
+        }
+        return $predicates;
+    }
+
     /**
      * Returns an array of defined namespaces
      * @return array

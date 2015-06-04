@@ -97,7 +97,8 @@ class SearchDocuments extends DriverBase
             'c'=>$this->labeller->uri_to_alias($context)
         );
 
-        $sourceDocument = Config::getInstance()->getCollectionForCBD($this->storeName, $from)->findOne(array('_id'=>$_id));
+        $fields = $this->getConfigInstance()->getFieldsDefinedInSpecBlock($searchSpec);
+        $sourceDocument = Config::getInstance()->getCollectionForCBD($this->storeName, $from)->findOne(array('_id'=>$_id), $fields);
 
         if(empty($sourceDocument)){
             $this->debugLog("Source document not found for $resource, cannot proceed");
@@ -206,7 +207,9 @@ class SearchDocuments extends DriverBase
                     : $config->getCollectionForCBD($this->storeName, $from)
                 );
 
-                $cursor = $collection->find(array('_id'=>array('$in'=>$joinUris)));
+                $fields = $this->getConfigInstance()->getFieldsDefinedInSpecBlock($rules);
+
+                $cursor = $collection->find(array('_id'=>array('$in'=>$joinUris)), $fields);
                 // add to impact index
                 $this->addIdToImpactIndex($joinUris, $target);
                 foreach($cursor as $linkMatch)

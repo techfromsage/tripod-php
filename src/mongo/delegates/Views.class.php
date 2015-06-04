@@ -431,7 +431,8 @@ class Views extends CompositeBase
                 $filter["_id"] = array(_ID_RESOURCE=>$resourceAlias,_ID_CONTEXT=>$contextAlias);
             }
 
-            $docs = $this->config->getCollectionForCBD($this->storeName, $from)->find($filter);
+            $fields = $this->getConfigInstance()->getFieldsDefinedInSpecBlock($viewSpec);
+            $docs = $this->config->getCollectionForCBD($this->storeName, $from)->find($filter, $fields);
             foreach ($docs as $doc)
             {
                 if($queueName && !$resource)
@@ -542,7 +543,8 @@ class Views extends CompositeBase
                     ? $this->config->getCollectionForCBD($this->storeName, $ruleset['from'])
                     : $this->config->getCollectionForCBD($this->storeName, $from)
                 );
-                $cursor = $collection->find(array('_id'=>array('$in'=>$joinUris)));
+                $fields = $this->getConfigInstance()->getFieldsDefinedInSpecBlock($ruleset);
+                $cursor = $collection->find(array('_id'=>array('$in'=>$joinUris)), $fields);
                 foreach($cursor as $linkMatch) {
                     // if there is a condition, check it...
                     if (isset($ruleset['condition']))

@@ -514,7 +514,8 @@ class Tables extends CompositeBase
             $filter["_id"] = array(_ID_RESOURCE=>$this->labeller->uri_to_alias($resource),_ID_CONTEXT=>$contextAlias);
         }
 
-        $docs = $this->config->getCollectionForCBD($this->storeName, $from)->find($filter);
+        $fields = $this->getConfigInstance()->getFieldsDefinedInSpecBlock($tableSpec);
+        $docs = $this->config->getCollectionForCBD($this->storeName, $from)->find($filter, $fields);
         foreach ($docs as $doc)
         {
             if($queueName && !$resource)
@@ -1163,7 +1164,9 @@ class Tables extends CompositeBase
                     ? $this->config->getCollectionForCBD($this->storeName, $ruleset['from'])
                     : $this->config->getCollectionForCBD($this->storeName, $from)
                 );
-                $cursor = $collection->find(array('_id'=>array('$in'=>$joinUris)));
+
+                $fields = $this->getConfigInstance()->getFieldsDefinedInSpecBlock($ruleset);
+                $cursor = $collection->find(array('_id'=>array('$in'=>$joinUris)), $fields);
 
                 $this->addIdToImpactIndex($joinUris, $dest);
                 foreach($cursor as $linkMatch) {
