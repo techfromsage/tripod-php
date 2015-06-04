@@ -142,7 +142,7 @@ if(isset($options['a']) || isset($options['async']))
     }
     else
     {
-        $queue = MongoTripodConfig::getInstance()->getApplyQueueName();
+        $queue = \Tripod\Mongo\Config::getInstance()->getApplyQueueName();
     }
 }
 
