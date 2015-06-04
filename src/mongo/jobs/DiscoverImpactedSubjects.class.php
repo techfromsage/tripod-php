@@ -49,57 +49,7 @@ class DiscoverImpactedSubjects extends JobBase {
             if(!empty($modifiedSubjects)){
                 /* @var $subject \Tripod\Mongo\ImpactedSubject */
                 foreach ($modifiedSubjects as $subject) {
-                    if(isset($this->args['queue']) || count($subject->getSpecTypes()) == 0)
-                    {
-                        $queueName = (isset($this->args['queue']) ? $this->args['queue'] : Config::getApplyQueueName());
-                        $this->addSubjectToQueue($subject, $queueName);
-                    }
-                    else
-                    {
-                        $specsGroupedByQueue = array();
-                        foreach($subject->getSpecTypes() as $specType)
-                        {
-                            $spec = null;
-                            switch($subject->getOperation())
-                            {
-                                case OP_VIEWS:
-                                    $spec = Config::getInstance()->getViewSpecification($this->args["storeName"], $specType);
-                                    break;
-                                case OP_TABLES:
-                                    $spec = Config::getInstance()->getTableSpecification($this->args["storeName"], $specType);
-                                    break;
-                                case OP_SEARCH:
-                                    $spec = Config::getInstance()->getSearchDocumentSpecification($this->args["storeName"], $specType);
-                                    break;
-                            }
-                            if(!$spec || !isset($spec['queue']))
-                            {
-                                if(!$spec)
-                                {
-                                    $spec = array();
-                                }
-                                $spec['queue'] = Config::getApplyQueueName();
-                            }
-                            if(!isset($specsGroupedByQueue[$spec['queue']]))
-                            {
-                                $specsGroupedByQueue[$spec['queue']] = array();
-                            }
-                            $specsGroupedByQueue[$spec['queue']][] = $specType;
-                        }
-
-                        foreach($specsGroupedByQueue as $queueName=>$specs)
-                        {
-                            $queuedSubject = new \Tripod\Mongo\ImpactedSubject(
-                                $subject->getResourceId(),
-                                $subject->getOperation(),
-                                $subject->getStoreName(),
-                                $subject->getPodName(),
-                                $specs
-                            );
-
-                            $this->addSubjectToQueue($queuedSubject, $queueName);
-                        }
-                    }
+                    $subject->update();
                 }
             }
 
