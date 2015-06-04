@@ -15,6 +15,11 @@ class DiscoverImpactedSubjects extends JobBase {
     protected $applyOperation;
 
     /**
+     * @var array
+     */
+    protected $subjectsGroupedByQueue = array();
+
+    /**
      * Run the DiscoverImpactedSubjects job
      * @throws \Exception
      */
@@ -101,6 +106,14 @@ class DiscoverImpactedSubjects extends JobBase {
                         }
                     }
                 }
+                if(!empty($this->subjectsGroupedByQueue))
+                {
+                    foreach($this->subjectsGroupedByQueue as $queueName=>$subjects)
+                    {
+                        $this->getApplyOperation()->createJob($subjects, $queueName);
+                    }
+                    $this->subjectsGroupedByQueue = array();
+                }
             }
 
             // stat time taken to process item, from time it was created (queued)
@@ -144,9 +157,11 @@ class DiscoverImpactedSubjects extends JobBase {
      */
     protected function addSubjectToQueue(\Tripod\Mongo\ImpactedSubject $subject, $queueName)
     {
-        $resourceId = $subject->getResourceId();
-        $this->debugLog("Adding operation {$subject->getOperation()} for subject {$resourceId[_ID_RESOURCE]} to queue ".$queueName);
-        $this->getApplyOperation()->createJob($subject, $queueName);
+        if(!array_key_exists($queueName, $this->subjectsGroupedByQueue))
+        {
+            $this->subjectsGroupedByQueue[$queueName] = array();
+        }
+        $this->subjectsGroupedByQueue[$queueName][] = $subject;
     }
 
     /**
