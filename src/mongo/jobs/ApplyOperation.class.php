@@ -56,13 +56,8 @@ class ApplyOperation extends JobBase {
             $queueName = \Tripod\Mongo\Config::getApplyQueueName();
         }
 
-        $subjectArray = array();
-        foreach($subjects as $subject)
-        {
-            $subjectArray[] = $subject->toArray();
-        }
         $data = array(
-            "subjects"=>$subjectArray,
+            "subjects"=>array_map(function(\Tripod\Mongo\ImpactedSubject $subject) { return $subject->toArray(); }, $subjects),
             "tripodConfig"=>\Tripod\Mongo\Config::getConfig()
         );
 
