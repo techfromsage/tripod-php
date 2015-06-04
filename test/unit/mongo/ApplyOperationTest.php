@@ -22,10 +22,10 @@ class ApplyOperationTest extends MongoTripodTestBase
     public function testMandatoryArgSubject()
     {
         $this->setArgs();
-        unset($this->args['subject']);
+        unset($this->args['subjects']);
         $job = new \Tripod\Mongo\Jobs\ApplyOperation();
         $job->args = $this->args;
-        $this->setExpectedException('Exception', "Argument subject was not present in supplied job args for job Tripod\Mongo\Jobs\ApplyOperation");
+        $this->setExpectedException('Exception', "Argument subjects was not present in supplied job args for job Tripod\Mongo\Jobs\ApplyOperation");
         $job->perform();
     }
 
@@ -231,7 +231,7 @@ class ApplyOperationTest extends MongoTripodTestBase
         );
 
         $jobData = array(
-            'subject'=>$impactedSubject->toArray(),
+            'subjects'=>array($impactedSubject->toArray()),
             'tripodConfig'=>\Tripod\Mongo\Config::getConfig(),
         );
 
@@ -249,7 +249,7 @@ class ApplyOperationTest extends MongoTripodTestBase
                 $jobData
             );
 
-        $applyOperation->createJob($impactedSubject);
+        $applyOperation->createJob(array($impactedSubject));
     }
 
     public function testCreateJobSpecifyQueue()
@@ -263,7 +263,7 @@ class ApplyOperationTest extends MongoTripodTestBase
         );
 
         $jobData = array(
-            'subject'=>$impactedSubject->toArray(),
+            'subjects'=>array($impactedSubject->toArray()),
             'tripodConfig'=>\Tripod\Mongo\Config::getConfig(),
         );
 
@@ -283,7 +283,7 @@ class ApplyOperationTest extends MongoTripodTestBase
                 $jobData
             );
 
-        $applyOperation->createJob($impactedSubject, $queueName);
+        $applyOperation->createJob(array($impactedSubject), $queueName);
     }
 
     protected function setArgs()
@@ -300,7 +300,7 @@ class ApplyOperationTest extends MongoTripodTestBase
 
         $this->args = array(
             'tripodConfig'=>\Tripod\Mongo\Config::getConfig(),
-            'subject'=>$subject->toArray()
+            'subjects'=>array($subject->toArray())
         );
     }
 }

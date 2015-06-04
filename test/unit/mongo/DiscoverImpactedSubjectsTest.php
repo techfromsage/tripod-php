@@ -173,11 +173,11 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
             ->method('createJob')
             ->withConsecutive(
                 array(
-                    $viewSubject,
+                    array($viewSubject),
                     \Tripod\Mongo\Config::getApplyQueueName()
                 ),
                 array(
-                    $tableSubject,
+                   array($tableSubject),
                     \Tripod\Mongo\Config::getApplyQueueName()
                 )
             );
@@ -365,11 +365,11 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
             ->method('createJob')
             ->withConsecutive(
                 array(
-                    $viewSubject,
+                    array($viewSubject),
                     $args['queue']
                 ),
                 array(
-                    $tableSubject,
+                    array($tableSubject),
                     $args['queue']
                 )
             );
@@ -556,15 +556,15 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
             ->method('createJob')
             ->withConsecutive(
                 array(
-                    $queuedTable1,
+                    array($queuedTable1),
                     \Tripod\Mongo\Config::getApplyQueueName()
                 ),
                 array(
-                    $queuedTable2,
+                    array($queuedTable2),
                     "counts_and_other_non_essentials"
                 ),
                 array(
-                    $queuedTable3,
+                    array($queuedTable3),
                     "MOST_IMPORTANT_QUEUE_EVER"
                 )
             );
@@ -720,7 +720,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
             ->method('createJob')
             ->withConsecutive(
                 array(
-                    $tableSubject,
+                    array($tableSubject),
                     $args['queue']
                 )
             );

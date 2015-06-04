@@ -41,7 +41,6 @@ class DiscoverImpactedSubjects extends JobBase {
             $tripod = $this->getTripod($this->args["storeName"],$this->args["podName"]);
 
             $operations = $this->args['operations'];
-            $modifiedSubjects = array();
 
             $subjectsAndPredicatesOfChange = $this->args['changes'];
 
@@ -49,7 +48,7 @@ class DiscoverImpactedSubjects extends JobBase {
             {
                 /** @var \Tripod\Mongo\Composites\IComposite $composite */
                 $composite = $tripod->getComposite($op);
-                $modifiedSubjects = array_merge($modifiedSubjects,$composite->getImpactedSubjects($subjectsAndPredicatesOfChange,$this->args['contextAlias']));
+                $modifiedSubjects = $composite->getImpactedSubjects($subjectsAndPredicatesOfChange,$this->args['contextAlias']);
                 if(!empty($modifiedSubjects)){
                     /* @var $subject \Tripod\Mongo\ImpactedSubject */
                     foreach ($modifiedSubjects as $subject) {
