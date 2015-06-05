@@ -7,6 +7,8 @@ namespace Tripod\Mongo\Jobs;
  * @package Tripod\Mongo\Jobs
  */
 class ApplyOperation extends JobBase {
+
+    const SUBJECTS_KEY = 'subjects';
     /**
      * Run the ApplyOperation job
      * @throws \Exception
@@ -23,9 +25,9 @@ class ApplyOperation extends JobBase {
             $this->validateArgs();
 
             // set the config to what is received
-            \Tripod\Mongo\Config::setConfig($this->args["tripodConfig"]);
+            \Tripod\Mongo\Config::setConfig($this->args[self::TRIPOD_CONFIG_KEY]);
 
-            foreach($this->args['subjects'] as $subject)
+            foreach($this->args[self::SUBJECTS_KEY] as $subject)
             {
                 $impactedSubject = $this->createImpactedSubject($subject);
                 $impactedSubject->update();
@@ -57,8 +59,8 @@ class ApplyOperation extends JobBase {
         }
 
         $data = array(
-            "subjects"=>array_map(function(\Tripod\Mongo\ImpactedSubject $subject) { return $subject->toArray(); }, $subjects),
-            "tripodConfig"=>\Tripod\Mongo\Config::getConfig()
+            self::SUBJECTS_KEY=>array_map(function(\Tripod\Mongo\ImpactedSubject $subject) { return $subject->toArray(); }, $subjects),
+            self::TRIPOD_CONFIG_KEY=>\Tripod\Mongo\Config::getConfig()
         );
 
         $this->submitJob($queueName,get_class($this),$data);
@@ -86,6 +88,6 @@ class ApplyOperation extends JobBase {
      */
     protected function getMandatoryArgs()
     {
-        return array("tripodConfig","subjects");
+        return array(self::TRIPOD_CONFIG_KEY,self::SUBJECTS_KEY);
     }
 }

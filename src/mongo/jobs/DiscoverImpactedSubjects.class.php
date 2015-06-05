@@ -9,6 +9,12 @@ use \Tripod\Mongo\Config;
  */
 class DiscoverImpactedSubjects extends JobBase {
 
+    const STORE_NAME_KEY = 'storeName';
+    const POD_NAME_KEY = 'podName';
+    const OPERATIONS_KEY = 'operations';
+    const CHANGES_KEY = 'changes';
+    const CONTEXT_ALIAS_KEY = 'contextAlias';
+
     /**
      * @var ApplyOperation
      */
@@ -36,25 +42,25 @@ class DiscoverImpactedSubjects extends JobBase {
             $this->validateArgs();
 
             // set the config to what is received
-            \Tripod\Mongo\Config::setConfig($this->args["tripodConfig"]);
+            \Tripod\Mongo\Config::setConfig($this->args[self::TRIPOD_CONFIG_KEY]);
 
-            $tripod = $this->getTripod($this->args["storeName"],$this->args["podName"]);
+            $tripod = $this->getTripod($this->args[self::STORE_NAME_KEY],$this->args[self::POD_NAME_KEY]);
 
-            $operations = $this->args['operations'];
+            $operations = $this->args[self::OPERATIONS_KEY];
 
-            $subjectsAndPredicatesOfChange = $this->args['changes'];
+            $subjectsAndPredicatesOfChange = $this->args[self::CHANGES_KEY];
 
             foreach($operations as $op)
             {
                 /** @var \Tripod\Mongo\Composites\IComposite $composite */
                 $composite = $tripod->getComposite($op);
-                $modifiedSubjects = $composite->getImpactedSubjects($subjectsAndPredicatesOfChange,$this->args['contextAlias']);
+                $modifiedSubjects = $composite->getImpactedSubjects($subjectsAndPredicatesOfChange,$this->args[self::CONTEXT_ALIAS_KEY]);
                 if(!empty($modifiedSubjects)){
                     /* @var $subject \Tripod\Mongo\ImpactedSubject */
                     foreach ($modifiedSubjects as $subject) {
-                        if(isset($this->args['queue']) || count($subject->getSpecTypes()) == 0)
+                        if(isset($this->args[self::QUEUE_KEY]) || count($subject->getSpecTypes()) == 0)
                         {
-                            $queueName = (isset($this->args['queue']) ? $this->args['queue'] : Config::getApplyQueueName());
+                            $queueName = (isset($this->args[self::QUEUE_KEY]) ? $this->args[self::QUEUE_KEY] : Config::getApplyQueueName());
                             $this->addSubjectToQueue($subject, $queueName);
                         }
                         else
@@ -66,13 +72,13 @@ class DiscoverImpactedSubjects extends JobBase {
                                 switch($subject->getOperation())
                                 {
                                     case OP_VIEWS:
-                                        $spec = Config::getInstance()->getViewSpecification($this->args["storeName"], $specType);
+                                        $spec = Config::getInstance()->getViewSpecification($this->args[self::STORE_NAME_KEY], $specType);
                                         break;
                                     case OP_TABLES:
-                                        $spec = Config::getInstance()->getTableSpecification($this->args["storeName"], $specType);
+                                        $spec = Config::getInstance()->getTableSpecification($this->args[self::STORE_NAME_KEY], $specType);
                                         break;
                                     case OP_SEARCH:
-                                        $spec = Config::getInstance()->getSearchDocumentSpecification($this->args["storeName"], $specType);
+                                        $spec = Config::getInstance()->getSearchDocumentSpecification($this->args[self::STORE_NAME_KEY], $specType);
                                         break;
                                 }
                                 if(!$spec || !isset($spec['queue']))
@@ -147,7 +153,14 @@ class DiscoverImpactedSubjects extends JobBase {
      */
     protected function getMandatoryArgs()
     {
-        return array("tripodConfig","storeName","podName","changes","operations","contextAlias");
+        return array(
+            self::TRIPOD_CONFIG_KEY,
+            self::STORE_NAME_KEY,
+            self::POD_NAME_KEY,
+            self::CHANGES_KEY,
+            self::OPERATIONS_KEY,
+            self::CONTEXT_ALIAS_KEY
+        );
     }
 
     /**
