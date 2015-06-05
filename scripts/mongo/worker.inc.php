@@ -1,5 +1,5 @@
 <?php
-
+include_once dirname(__FILE__) . '/common.inc.php';
 require dirname(__FILE__) . "/../../src/tripod.inc.php";
 // the global is necessary for Resque worker to send statements to
 $logger = new \Monolog\Logger("TRIPOD-WORKER");
