@@ -91,7 +91,7 @@ class Config
      *
      * @var array
      */
-    protected $specPredicates;
+    protected $specPredicates = array("_stores"=>array());
 
     /**
      * @var array
@@ -788,25 +788,19 @@ class Config
      */
     protected function getDefinedPredicatesInSpecs($storename)
     {
-        $predicates = array();
-        $specs = array_merge($this->getTableSpecifications($storename), $this->getSearchDocumentSpecifications($storename));
-        foreach($specs as $spec)
+        if(!isset($this->specPredicates["_stores"][$storename]))
         {
-            if(!isset($spec[_ID_KEY]))
-            {
-                continue;
-            }
-            if(isset($this->specPredicates[$spec[_ID_KEY]]))
-            {
-                $predicates[$spec[_ID_KEY]] = $this->specPredicates[$spec[_ID_KEY]];
-            }
-            else
-            {
-                $predicates[$spec[_ID_KEY]] = array_unique($this->getDefinedPredicatesInSpecBlock($spec, true));
-            }
-        }
 
-        return $predicates;
+            $this->specPredicates["_stores"][$storename] = array();
+
+            $specs = array_merge($this->getTableSpecifications($storename), $this->getSearchDocumentSpecifications($storename));
+            foreach($specs as $spec)
+            {
+                $this->specPredicates["_stores"][$storename][$spec[_ID_KEY]] = array_unique($this->getDefinedPredicatesInSpecBlock($spec, true));
+            }
+
+        }
+        return $this->specPredicates["_stores"][$storename];
     }
 
     /**
@@ -815,7 +809,7 @@ class Config
      * @param bool $recursive
      * @return array
      */
-    public function getDefinedPredicatesInSpecBlock(array $block, $recursive=false)
+    protected function getDefinedPredicatesInSpecBlock(array $block, $recursive=false)
     {
         $specBlockKey = crc32(json_encode($block));
         if(isset($this->specPredicates[$specBlockKey]))
@@ -1048,13 +1042,13 @@ class Config
      */
     public function getDefinedPredicatesInSpec($storename, $specId)
     {
-        if(!isset($this->specPredicates[$storename]))
+        if(!isset($this->specPredicates["_stores"][$storename]))
         {
-            $this->specPredicates[$storename] = $this->getDefinedPredicatesInSpecs($storename);
+            $this->getDefinedPredicatesInSpecs($storename);
         }
-        if(isset($this->specPredicates[$storename][$specId]))
+        if(isset($this->specPredicates["_stores"][$storename][$specId]))
         {
-            return $this->specPredicates[$storename][$specId];
+            return $this->specPredicates["_stores"][$storename][$specId];
         }
         return array();
     }
