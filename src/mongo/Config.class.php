@@ -94,6 +94,11 @@ class Config
     protected $specPredicates;
 
     /**
+     * @var array
+     */
+    private $mongoFieldsForSpecBlock = array();
+
+    /**
      * A simple map between collection names and the database name they belong to
      * @var array
      */
@@ -791,7 +796,14 @@ class Config
             {
                 continue;
             }
-            $predicates[$spec[_ID_KEY]] = array_unique($this->getDefinedPredicatesInSpecBlock($spec));
+            if(isset($this->specPredicates[$spec[_ID_KEY]]))
+            {
+                $predicates[$spec[_ID_KEY]] = $this->specPredicates[$spec[_ID_KEY]];
+            }
+            else
+            {
+                $predicates[$spec[_ID_KEY]] = array_unique($this->getDefinedPredicatesInSpecBlock($spec, true));
+            }
         }
 
         return $predicates;
@@ -800,96 +812,120 @@ class Config
     /**
      * Recursively crawls a configuration document array (or part of one) and returns any associated predicates/properties
      * @param array $block
+     * @param bool $recursive
      * @return array
      */
-    protected function getDefinedPredicatesInSpecBlock(array $block)
+    public function getDefinedPredicatesInSpecBlock(array $block, $recursive=false)
     {
-        $predicates = array();
-        // If the spec has a "type" property, include rdf:type
-        if(isset($block['type']))
+        $specBlockKey = crc32(json_encode($block));
+        if(isset($this->specPredicates[$specBlockKey]))
         {
-            $predicates[] = $this->getLabeller()->uri_to_alias(RDF_TYPE);
+            $predicates = $this->specPredicates[$specBlockKey];
         }
-        if(isset($block['filter']))
+        else
         {
-            foreach($block['filter'] as $filter)
+            $predicates = array();
+            // If the spec has a "type" property, include rdf:type
+            if(isset($block['type']))
             {
-                if(isset($filter['condition']))
+                $predicates[] = $this->getLabeller()->uri_to_alias(RDF_TYPE);
+            }
+            if(isset($block['filter']))
+            {
+                foreach($block['filter'] as $filter)
                 {
-                    $predicates = array_merge($predicates, $this->getPredicatesFromFilterCondition($filter['condition']));
+                    if(isset($filter['condition']))
+                    {
+                        $predicates = array_merge($predicates, $this->getPredicatesFromFilterCondition($filter['condition']));
+                    }
                 }
             }
-        }
-        // Get the predicates out of the defined fields
-        if(isset($block['fields']))
-        {
-            foreach($block['fields'] as $field)
+            // Get the predicates out of the defined fields
+            if(isset($block['fields']))
             {
-                if(isset($field['predicates']))
+                foreach($block['fields'] as $field)
                 {
-                    foreach($field['predicates'] as $p)
+                    if(isset($field['predicates']))
                     {
-                        if(!empty($p))
+                        foreach($field['predicates'] as $p)
                         {
-                            // The actual predicate strings may be buried in predicate function blocks
-                            $predicates = array_merge($predicates, $this->getPredicateAliasesFromPredicateProperty($p));
+                            if(!empty($p))
+                            {
+                                // The actual predicate strings may be buried in predicate function blocks
+                                $predicates = array_merge($predicates, $this->getPredicateAliasesFromPredicateProperty($p));
+                            }
                         }
                     }
                 }
             }
-        }
 
-        // Loop through the joins and pass the objects back to this method
-        if(isset($block['joins']))
-        {
-            foreach($block['joins'] as $predicate=>$join)
+            // Loop through the counts blocks
+            if(isset($block['counts']))
             {
-                // Joins are keyed on the predicate, so save that
-                $predicates[] = $this->getLabeller()->uri_to_alias($predicate);
-                $predicates = array_merge($predicates, $this->getDefinedPredicatesInSpecBlock($join));
-            }
-        }
-
-        // Loop through the counts blocks
-        if(isset($block['counts']))
-        {
-            foreach($block['counts'] as $property)
-            {
-                // counts use the redundant property 'property', which behaves exactly like a predicate and needs to be deprecated
-                if(isset($property['property']))
+                foreach($block['counts'] as $property)
                 {
-                    $predicates[] = $this->getLabeller()->uri_to_alias($property['property']);
-                }
-
-                // This is here so we can easily deprecate 'property' in favor of 'predicates'
-                if(isset($property['predicates']))
-                {
-                    foreach($property['predicates'] as $p)
+                    // counts use the redundant property 'property', which behaves exactly like a predicate and needs to be deprecated
+                    if(isset($property['property']))
                     {
-                        if(!empty($p))
+                        $predicates[] = $this->getLabeller()->uri_to_alias($property['property']);
+                    }
+
+                    // This is here so we can easily deprecate 'property' in favor of 'predicates'
+                    if(isset($property['predicates']))
+                    {
+                        foreach($property['predicates'] as $p)
                         {
-                            // The actual predicate strings may be buried in predicate function blocks
-                            $predicates = array_merge($predicates, $this->getPredicateAliasesFromPredicateProperty($p));
+                            if(!empty($p))
+                            {
+                                // The actual predicate strings may be buried in predicate function blocks
+                                $predicates = array_merge($predicates, $this->getPredicateAliasesFromPredicateProperty($p));
+                            }
                         }
                     }
                 }
             }
-        }
 
-        // Loop through the indices: these should be more or less identical to 'fields'
-        if(isset($block['indices']))
-        {
-            foreach($block['indices'] as $index)
+            // Loop through the indices: these should be more or less identical to 'fields'
+            if(isset($block['indices']))
             {
-                if(isset($index['predicates']))
+                foreach($block['indices'] as $index)
                 {
-                    foreach($index['predicates'] as $p)
+                    if(isset($index['predicates']))
                     {
-                        if(!empty($p))
+                        foreach($index['predicates'] as $p)
                         {
-                            $predicates = array_merge($predicates, $this->getPredicateAliasesFromPredicateProperty($p));
+                            if(!empty($p))
+                            {
+                                $predicates = array_merge($predicates, $this->getPredicateAliasesFromPredicateProperty($p));
+                            }
                         }
                     }
+                }
+            }
+
+            // Views have 'include' rather than 'fields'
+            if(isset($block['include']))
+            {
+                $predicates = array_merge($predicates, $block['include']);
+            }
+
+            if(isset($block['joins']))
+            {
+                $predicates = array_merge($predicates, array_keys($block['joins']));
+            }
+
+            $this->specPredicates[$specBlockKey] = $predicates;
+        }
+        if($recursive)
+        {
+            // Loop through the joins and pass the objects back to this method
+            if(isset($block['joins']))
+            {
+                foreach($block['joins'] as $predicate=>$join)
+                {
+                    // Joins are keyed on the predicate, so save that
+                    $predicates[] = $this->getLabeller()->uri_to_alias($predicate);
+                    $predicates = array_merge($predicates, $this->getDefinedPredicatesInSpecBlock($join));
                 }
             }
         }
@@ -980,6 +1016,25 @@ class Config
             }
         }
         return $predicates;
+    }
+
+    /**
+     * Returns a mongo field list of defined values in the specification appropriate for the query
+     * @param array $specBlock
+     * @return array
+     */
+    public function getMongoFieldsForSpecBlock(Array $specBlock)
+    {
+        $specBlockKey = crc32(json_encode($specBlock));
+        if(!isset($this->mongoFieldsForSpecBlock[$specBlockKey]))
+        {
+            $this->mongoFieldsForSpecBlock[$specBlockKey] = array_reduce(
+                $this->getDefinedPredicatesInSpecBlock($specBlock),
+                function($result, $key) { $result[$key] = 1; return $result; },
+                array()
+            );
+        }
+        return  $this->mongoFieldsForSpecBlock[$specBlockKey];
     }
 
 
@@ -1664,94 +1719,6 @@ class Config
             }
         }
         return $fields;
-    }
-
-
-    /**
-     * For a given 'level' in a composite specification (views, table rows, search documents), return the relevant
-     * Mongo document fields needed to generate the composite document
-     * 
-     * @param array $spec
-     * @return array
-     */
-    public function getFieldsDefinedInSpecBlock(Array $spec)
-    {
-        $fields = array();
-        if(isset($spec['fields']))
-        {
-            foreach($spec['fields'] as $field)
-            {
-                if(isset($field['predicates']) && is_array($field['predicates']))
-                {
-                    $fields = array_merge($fields, $this->getFieldsFromPredicateProperty($field['predicates']));
-                }
-            }
-        }
-
-        if(isset($spec['counts']))
-        {
-            foreach($spec['counts'] as $count)
-            {
-                if(isset($count['property']))
-                {
-                    $fields[$count['property']] = 1;
-                }
-            }
-        }
-
-        // Views define fields via 'include'
-        if(isset($spec['include']))
-        {
-            foreach($spec['include'] as $field)
-            {
-                $fields[$field] = 1;
-            }
-        }
-
-        // Search documents have a property called 'indices'
-        if(isset($spec['indices']))
-        {
-            foreach($spec['indices'] as $index)
-            {
-                if(isset($index['predicates']) && is_array($index['predicates']))
-                {
-                    foreach($index['predicates'] as $field)
-                    {
-                        $fields[$field] = 1;
-                    }
-                }
-            }
-        }
-
-        // Get the keys for joins
-        if(isset($spec['joins']))
-        {
-            foreach(array_keys($spec['joins']) as $property)
-            {
-                $fields[$property] = 1;
-            }
-        }
-        return $fields;
-    }
-
-    protected function getFieldsFromPredicateProperty(Array $predicateSpec, $predicates = array())
-    {
-        foreach($predicateSpec as $predicate)
-        {
-            if(is_string($predicate))
-            {
-                $predicates[$predicate] = 1;
-            }
-            elseif(is_array($predicate) && array_key_exists('predicates', $predicate))
-            {
-                $predicates = array_merge($predicates, $this->getFieldsFromPredicateProperty($predicate['predicates'], $predicates));
-            }
-            else
-            {
-                $predicates = array_merge($predicates, $this->getFieldsFromPredicateProperty($predicate, $predicates));
-            }
-        }
-        return $predicates;
     }
 
     /**

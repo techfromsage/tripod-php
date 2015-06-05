@@ -97,7 +97,8 @@ class SearchDocuments extends DriverBase
             'c'=>$this->labeller->uri_to_alias($context)
         );
 
-        $fields = $this->getConfigInstance()->getFieldsDefinedInSpecBlock($searchSpec);
+        $fields = $this->getConfigInstance()->getMongoFieldsForSpecBlock($searchSpec);
+
         $sourceDocument = Config::getInstance()->getCollectionForCBD($this->storeName, $from)->findOne(array('_id'=>$_id), $fields);
 
         if(empty($sourceDocument)){
@@ -207,7 +208,7 @@ class SearchDocuments extends DriverBase
                     : $config->getCollectionForCBD($this->storeName, $from)
                 );
 
-                $fields = $this->getConfigInstance()->getFieldsDefinedInSpecBlock($rules);
+                $fields = $this->getConfigInstance()->getMongoFieldsForSpecBlock($rules);
 
                 $cursor = $collection->find(array('_id'=>array('$in'=>$joinUris)), $fields);
                 // add to impact index

@@ -514,7 +514,8 @@ class Tables extends CompositeBase
             $filter["_id"] = array(_ID_RESOURCE=>$this->labeller->uri_to_alias($resource),_ID_CONTEXT=>$contextAlias);
         }
 
-        $fields = $this->getConfigInstance()->getFieldsDefinedInSpecBlock($tableSpec);
+        $fields = $this->getConfigInstance()->getMongoFieldsForSpecBlock($tableSpec);
+
         $docs = $this->config->getCollectionForCBD($this->storeName, $from)->find($filter, $fields);
         foreach ($docs as $doc)
         {
@@ -530,7 +531,7 @@ class Tables extends CompositeBase
 
                 $this->submitJob($queueName, 'ApplyOperation', array(
                     "subject"=>$subject->toArray(),
-                    "tripodConfig"=>MongoTripodConfig::getConfig()
+                    "tripodConfig"=>\Tripod\Mongo\Config::getConfig()
                 ));
             }
             else
@@ -1165,7 +1166,8 @@ class Tables extends CompositeBase
                     : $this->config->getCollectionForCBD($this->storeName, $from)
                 );
 
-                $fields = $this->getConfigInstance()->getFieldsDefinedInSpecBlock($ruleset);
+                $fields = $this->getConfigInstance()->getMongoFieldsForSpecBlock($ruleset);
+
                 $cursor = $collection->find(array('_id'=>array('$in'=>$joinUris)), $fields);
 
                 $this->addIdToImpactIndex($joinUris, $dest);

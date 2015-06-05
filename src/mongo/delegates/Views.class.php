@@ -431,7 +431,8 @@ class Views extends CompositeBase
                 $filter["_id"] = array(_ID_RESOURCE=>$resourceAlias,_ID_CONTEXT=>$contextAlias);
             }
 
-            $fields = $this->getConfigInstance()->getFieldsDefinedInSpecBlock($viewSpec);
+            $fields = $this->getConfigInstance()->getMongoFieldsForSpecBlock($viewSpec);
+
             $docs = $this->config->getCollectionForCBD($this->storeName, $from)->find($filter, $fields);
             foreach ($docs as $doc)
             {
@@ -543,7 +544,8 @@ class Views extends CompositeBase
                     ? $this->config->getCollectionForCBD($this->storeName, $ruleset['from'])
                     : $this->config->getCollectionForCBD($this->storeName, $from)
                 );
-                $fields = $this->getConfigInstance()->getFieldsDefinedInSpecBlock($ruleset);
+                $fields = $this->getConfigInstance()->getMongoFieldsForSpecBlock($ruleset);
+
                 $cursor = $collection->find(array('_id'=>array('$in'=>$joinUris)), $fields);
                 foreach($cursor as $linkMatch) {
                     // if there is a condition, check it...
@@ -556,7 +558,6 @@ class Views extends CompositeBase
                         if ($buildImpactIndex && !isset($dest[_IMPACT_INDEX])) $dest[_IMPACT_INDEX] = array();
 
                         // add linkMatch if there isn't already a graph for it in the dest obj
-//                        $addItemToImpactIndex = true;
                         if ($buildImpactIndex)
                         {
                             $dest[_IMPACT_INDEX][] = $linkMatch['_id'];
