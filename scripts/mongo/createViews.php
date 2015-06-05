@@ -81,11 +81,6 @@ require_once $tripodBasePath . '/src/tripod.inc.php';
 function generateViews($id, $viewId, $storeName, $stat, $queue)
 {
     $viewSpec = \Tripod\Mongo\Config::getInstance()->getViewSpecification($storeName, $viewId);
-    if(empty($viewSpec)) // Older version of Tripod being used?
-    {
-        $viewSpec = \Tripod\Mongo\Config::getInstance()->getViewSpecification($viewId);
-    }
-    echo $viewId;
     if (array_key_exists("from",$viewSpec))
     {
         MongoCursor::$timeout = -1;
@@ -147,7 +142,7 @@ if(isset($options['a']) || isset($options['async']))
     }
     else
     {
-        $queue = MongoTripodConfig::getInstance()->getApplyQueueName();
+        $queue = \Tripod\Mongo\Config::getInstance()->getApplyQueueName();
     }
 }
 

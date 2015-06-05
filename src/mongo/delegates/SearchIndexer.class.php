@@ -214,7 +214,7 @@ class SearchIndexer extends CompositeBase
                     array($searchDocumentType)
                 );
 
-                $this->getApplyOperation()->createJob($subject, $queueName);
+                $this->getApplyOperation()->createJob(array($subject), $queueName);
             }
             else
             {

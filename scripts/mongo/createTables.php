@@ -82,10 +82,6 @@ require_once $tripodBasePath . '/src/tripod.inc.php';
 function generateTables($id, $tableId, $storeName, $stat = null, $queue = null)
 {
     $tableSpec = \Tripod\Mongo\Config::getInstance()->getTableSpecification($storeName, $tableId);
-    if(empty($tableSpec)) // Older version of Tripod being used?
-    {
-        $tableSpec = \Tripod\Mongo\Config::getInstance()->getTableSpecification($tableId);
-    }
     if (array_key_exists("from",$tableSpec))
     {
         MongoCursor::$timeout = -1;

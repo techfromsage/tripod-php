@@ -25,9 +25,12 @@ class ApplyOperation extends JobBase {
             // set the config to what is received
             \Tripod\Mongo\Config::setConfig($this->args["tripodConfig"]);
 
-            $subject = $this->createImpactedSubject($this->args['subject']);
+            foreach($this->args['subjects'] as $subject)
+            {
+                $impactedSubject = $this->createImpactedSubject($subject);
+                $impactedSubject->update();
+            }
 
-            $subject->update();
 
             $timer->stop();
             // stat time taken to process item, from time it was created (queued)
@@ -43,17 +46,18 @@ class ApplyOperation extends JobBase {
     }
 
     /**
-     * @param \Tripod\Mongo\ImpactedSubject $subject
+     * @param \Tripod\Mongo\ImpactedSubject[] $subjects
      * @param string|null $queueName
      */
-    public function createJob(\Tripod\Mongo\ImpactedSubject $subject, $queueName=null)
+    public function createJob(Array $subjects, $queueName=null)
     {
         if(!$queueName)
         {
             $queueName = \Tripod\Mongo\Config::getApplyQueueName();
         }
+
         $data = array(
-            "subject"=>$subject->toArray(),
+            "subjects"=>array_map(function(\Tripod\Mongo\ImpactedSubject $subject) { return $subject->toArray(); }, $subjects),
             "tripodConfig"=>\Tripod\Mongo\Config::getConfig()
         );
 
@@ -82,6 +86,6 @@ class ApplyOperation extends JobBase {
      */
     protected function getMandatoryArgs()
     {
-        return array("tripodConfig","subject");
+        return array("tripodConfig","subjects");
     }
 }
