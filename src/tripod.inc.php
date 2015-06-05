@@ -30,7 +30,7 @@ require_once TRIPOD_DIR.'/mongo/base/JobBase.class.php';
 require_once TRIPOD_DIR . '/mongo/jobs/DiscoverImpactedSubjects.class.php';
 require_once TRIPOD_DIR.'/mongo/jobs/ApplyOperation.class.php';
 
-Resque::setBackend(\Tripod\Mongo\Config::getResqueServer());
+\Resque::setBackend(\Tripod\Mongo\Config::getResqueServer());
 
 define('RDF_TYPE', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
 define('RDF_SUBJECT', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#subject');
