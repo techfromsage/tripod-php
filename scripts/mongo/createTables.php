@@ -68,15 +68,9 @@ else
 {
     $tripodBasePath = dirname(dirname(dirname(__FILE__)));
 }
-set_include_path(
-    get_include_path()
-    . PATH_SEPARATOR . $tripodBasePath.'/src'
-    . PATH_SEPARATOR . $tripodBasePath.'/src/classes');
 
-require_once 'tripod.inc.php';
-require_once 'classes/Timer.class.php';
-require_once 'mongo/Config.class.php';
-require_once 'mongo/Driver.class.php';
+require_once $tripodBasePath . '/vendor/autoload.php';
+require_once $tripodBasePath . '/src/tripod.inc.php';
 
 /**
  * @param string|null $id
@@ -88,10 +82,6 @@ require_once 'mongo/Driver.class.php';
 function generateTables($id, $tableId, $storeName, $stat = null, $queue = null)
 {
     $tableSpec = \Tripod\Mongo\Config::getInstance()->getTableSpecification($storeName, $tableId);
-    if(empty($tableSpec)) // Older version of Tripod being used?
-    {
-        $tableSpec = \Tripod\Mongo\Config::getInstance()->getTableSpecification($tableId);
-    }
     if (array_key_exists("from",$tableSpec))
     {
         MongoCursor::$timeout = -1;

@@ -59,6 +59,16 @@ class Updates extends DriverBase {
     protected $locksCollection;
 
     /**
+     * @var string
+     */
+    private $queueName;
+
+    /**
+     * @var \Tripod\Mongo\Jobs\DiscoverImpactedSubjects
+     */
+    protected $discoverImpactedSubjects;
+
+    /**
      * @param Driver $tripod
      * @param array $opts
      */
@@ -104,6 +114,13 @@ class Updates extends DriverBase {
         // if there is no es configured then remove OP_SEARCH from async (no point putting these onto the queue) TRI-19
         if($this->config->getSearchDocumentSpecifications($this->storeName) == null) {
             unset($async[OP_SEARCH]);
+        }
+
+        // If a custom queue name was specified, store it
+        if(array_key_exists('queue', $async))
+        {
+            $this->queueName = $async['queue'];
+            unset($async['queue']);
         }
 
         $this->async = $async;
@@ -741,19 +758,32 @@ class Updates extends DriverBase {
                 "podName" => $this->podName,
                 "contextAlias" => $contextAlias
             );
-            $this->submitJob(Config::getDiscoverQueueName(),"\Tripod\Mongo\Jobs\DiscoverImpactedSubjects",$data);
+
+            if(isset($this->queueName))
+            {
+                $data['queue'] = $this->queueName;
+                $queueName = $this->queueName;
+            }
+            else
+            {
+                $queueName =  Config::getDiscoverQueueName();
+            }
+
+            $this->getDiscoverImpactedSubjects()->createJob($data, $queueName);
         }
     }
 
     /**
-     * @todo Should this abstracted to another class so queue backends can be swapped (e.g. 0mq, RabbitMQ, SQS, etc.)?
-     * @param string $queueName
-     * @param string $class
-     * @param array $data
+     * For mocking
+     * @return Jobs\DiscoverImpactedSubjects
      */
-    protected function submitJob($queueName, $class, Array $data)
+    protected function getDiscoverImpactedSubjects()
     {
-        \Resque::enqueue($queueName, $class, $data);
+        if(!isset($this->discoverImpactedSubjects))
+        {
+            $this->discoverImpactedSubjects = new \Tripod\Mongo\Jobs\DiscoverImpactedSubjects();
+        }
+        return $this->discoverImpactedSubjects;
     }
 
     //////// LOCKS \\\\\\\\

@@ -49,7 +49,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
             )->getMock();
 
         $tripodUpdates = $this->getMockBuilder('\Tripod\Mongo\Updates')
-            ->setMethods(array('processSyncOperations','submitJob'))
+            ->setMethods(array('processSyncOperations','getDiscoverImpactedSubjects'))
             ->setConstructorArgs(array(
                 $tripod,
                 array(
@@ -57,6 +57,10 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
                     OP_ASYNC=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)
                 )
             ))->getMock();
+
+        $discoverImpactedSubjects = $this->getMockBuilder('\Tripod\Mongo\Jobs\DiscoverImpactedSubjects')
+            ->setMethods(array('createJob'))
+            ->getMock();
 
         $tripod->expects($this->once())
             ->method('getDataUpdater')
@@ -79,9 +83,15 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
         );
 
         $tripodUpdates->expects($this->once())
-            ->method('submitJob')
-            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"\Tripod\Mongo\Jobs\DiscoverImpactedSubjects",$data);
+            ->method('getDiscoverImpactedSubjects')
+            ->will($this->returnValue($discoverImpactedSubjects));
 
+        $discoverImpactedSubjects->expects($this->once())
+            ->method('createJob')
+            ->with(
+                $data,
+                \Tripod\Mongo\Config::getDiscoverQueueName()
+            );
 
         $g1 = $tripod->describeResource("http://talisaspire.com/resources/doc1");
         $g2 = $tripod->describeResource("http://talisaspire.com/resources/doc1");
@@ -114,7 +124,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
             )->getMock();
 
         $tripodUpdates = $this->getMockBuilder('\Tripod\Mongo\Updates')
-            ->setMethods(array('processSyncOperations','submitJob'))
+            ->setMethods(array('processSyncOperations','getDiscoverImpactedSubjects'))
             ->setConstructorArgs(array(
                 $tripod,
                 array(
@@ -122,6 +132,10 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
                     OP_ASYNC=>array(OP_VIEWS=>true, OP_TABLES=>false, OP_SEARCH=>false)
                 )
             ))->getMock();
+
+        $discoverImpactedSubjects = $this->getMockBuilder('\Tripod\Mongo\Jobs\DiscoverImpactedSubjects')
+            ->setMethods(array('createJob'))
+            ->getMock();
 
         $tripod->expects($this->once())
             ->method('getDataUpdater')
@@ -147,9 +161,15 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
         );
 
         $tripodUpdates->expects($this->once())
-            ->method('submitJob')
-            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"\Tripod\Mongo\Jobs\DiscoverImpactedSubjects",$data);
+            ->method('getDiscoverImpactedSubjects')
+            ->will($this->returnValue($discoverImpactedSubjects));
 
+        $discoverImpactedSubjects->expects($this->once())
+            ->method('createJob')
+            ->with(
+                $data,
+                \Tripod\Mongo\Config::getDiscoverQueueName()
+            );
 
         $g1 = $tripod->describeResource("http://talisaspire.com/resources/doc1");
         $g2 = $tripod->describeResource("http://talisaspire.com/resources/doc1");
@@ -179,7 +199,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
             )->getMock();
 
         $tripodUpdates = $this->getMockBuilder('\Tripod\Mongo\Updates')
-            ->setMethods(array('processSyncOperations','submitJob'))
+            ->setMethods(array('processSyncOperations','getDiscoverImpactedSubjects'))
             ->setConstructorArgs(array(
                 $tripod,
                 array(
@@ -202,10 +222,8 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
                 $subjectsAndPredicatesOfChange, 'http://talisaspire.com/'
             );
 
-
         $tripodUpdates->expects($this->never())
-            ->method('submitJob');
-
+            ->method('getDiscoverImpactedSubjects');
 
         $g1 = $tripod->describeResource("http://talisaspire.com/resources/doc1");
         $g2 = $tripod->describeResource("http://talisaspire.com/resources/doc1");
@@ -239,7 +257,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
             )->getMock();
 
         $tripodUpdates = $this->getMockBuilder('\Tripod\Mongo\Updates')
-            ->setMethods(array('processSyncOperations','submitJob'))
+            ->setMethods(array('processSyncOperations','getDiscoverImpactedSubjects'))
             ->setConstructorArgs(array(
                 $tripod,
                 array(
@@ -247,6 +265,11 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
                     OP_ASYNC=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)
                 )
             ))->getMock();
+
+        $discoverImpactedSubjects = $this->getMockBuilder('\Tripod\Mongo\Jobs\DiscoverImpactedSubjects')
+            ->setMethods(array('createJob'))
+            ->getMock();
+
 
         $tripod->expects($this->once())
             ->method('getDataUpdater')
@@ -271,8 +294,15 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
         );
 
         $tripodUpdates->expects($this->once())
-            ->method('submitJob')
-            ->with(\Tripod\Mongo\Config::getDiscoverQueueName(),"\Tripod\Mongo\Jobs\DiscoverImpactedSubjects",$data);
+            ->method('getDiscoverImpactedSubjects')
+            ->will($this->returnValue($discoverImpactedSubjects));
+
+        $discoverImpactedSubjects->expects($this->once())
+            ->method('createJob')
+            ->with(
+                $data,
+                \Tripod\Mongo\Config::getDiscoverQueueName()
+            );
 
         $g1 = $tripod->describeResources(array(
             "http://talisaspire.com/resources/doc1",

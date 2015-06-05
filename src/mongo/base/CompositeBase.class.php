@@ -9,6 +9,10 @@ namespace Tripod\Mongo\Composites;
 abstract class CompositeBase extends \Tripod\Mongo\DriverBase implements \Tripod\Mongo\Composites\IComposite
 {
     /**
+     * @var \Tripod\Mongo\Jobs\ApplyOperation
+     */
+    protected $applyOperation;
+    /**
      * Returns an array of ImpactedSubjects based on the subjects and predicates of change
      * @param array $subjectsAndPredicatesOfChange
      * @param string $contextAlias
@@ -165,7 +169,7 @@ abstract class CompositeBase extends \Tripod\Mongo\DriverBase implements \Tripod
         if(!empty($intersectingTypes))
         {
             // Views should always invalidate
-            if($this instanceof \Tripod\Mongo\Views)
+            if($this instanceof \Tripod\Mongo\Composites\Views)
             {
                 return true;
             }
@@ -191,13 +195,16 @@ abstract class CompositeBase extends \Tripod\Mongo\DriverBase implements \Tripod
     }
 
     /**
-     * todo: Copied and pasted from JobBase -- how to fix this duplication?
-     * @param string $queueName
-     * @param string $class
-     * @param array $data
+     * For mocking
+     * 
+     * @return \Tripod\Mongo\Jobs\ApplyOperation
      */
-    protected function submitJob($queueName, $class, Array $data)
+    protected function getApplyOperation()
     {
-        Resque::enqueue($queueName, $class, $data);
+        if(!isset($this->applyOperation))
+        {
+            $this->applyOperation = new \Tripod\Mongo\Jobs\ApplyOperation();
+        }
+        return $this->applyOperation;
     }
 }

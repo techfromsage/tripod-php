@@ -66,36 +66,27 @@ else
 {
     $tripodBasePath = dirname(dirname(dirname(__FILE__)));
 }
-set_include_path(
-    get_include_path()
-    . PATH_SEPARATOR . $tripodBasePath.'/src'
-    . PATH_SEPARATOR . $tripodBasePath.'/src/classes');
 
-require_once 'tripod.inc.php';
-require_once 'classes/Timer.class.php';
-require_once 'mongo/MongoTripodConfig.class.php';
-require_once 'mongo/MongoTripod.class.php';
+require_once $tripodBasePath . '/vendor/autoload.php';
+require_once $tripodBasePath . '/src/tripod.inc.php';
+
 
 /**
  * @param string|null $id
  * @param string|null $specId
  * @param string|null $storeName
- * @param iTripodStat|null $stat
+ * @param \Tripod\iTripodStat|null $stat
  * @param string|null $queue
  */
 function generateSearchDocuments($id, $specId, $storeName, $stat = null, $queue = null)
 {
-    $spec = MongoTripodConfig::getInstance()->getSearchDocumentSpecification($storeName, $specId);
-    if(empty($spec)) // Older version of Tripod being used?
-    {
-        $spec = MongoTripodConfig::getInstance()->getSearchDocumentSpecification($specId);
-    }
+    $spec = \Tripod\Mongo\Config::getInstance()->getSearchDocumentSpecification($storeName, $specId);
     if (array_key_exists("from",$spec))
     {
         MongoCursor::$timeout = -1;
 
         print "Generating $specId";
-        $tripod = new MongoTripod($spec['from'], $storeName, array('stat'=>$stat));
+        $tripod = new \Tripod\Mongo\Driver($spec['from'], $storeName, array('stat'=>$stat));
         $search = $tripod->getSearchIndexer();
         if ($id)
         {
@@ -110,10 +101,10 @@ function generateSearchDocuments($id, $specId, $storeName, $stat = null, $queue 
     }
 }
 
-$t = new Timer();
+$t = new \Tripod\Timer();
 $t->start();
 
-MongoTripodConfig::setConfig(json_decode(file_get_contents($configLocation),true));
+\Tripod\Mongo\Config::setConfig(json_decode(file_get_contents($configLocation),true));
 
 if(isset($options['s']) || isset($options['storename']))
 {
@@ -151,7 +142,7 @@ if(isset($options['a']) || isset($options['async']))
     }
     else
     {
-        $queue = MongoTripodConfig::getInstance()->getApplyQueueName();
+        $queue = \Tripod\Mongo\Config::getInstance()->getApplyQueueName();
     }
 }
 
@@ -168,7 +159,7 @@ if ($specId)
 }
 else
 {
-    foreach(MongoTripodConfig::getInstance()->getSearchDocumentSpecifications($storeName) as $searchSpec)
+    foreach(\Tripod\Mongo\Config::getInstance()->getSearchDocumentSpecifications($storeName) as $searchSpec)
     {
         generateSearchDocuments($id, $searchSpec['_id'], $storeName, $stat, $queue);
     }

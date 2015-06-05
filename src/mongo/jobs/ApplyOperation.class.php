@@ -7,6 +7,8 @@ namespace Tripod\Mongo\Jobs;
  * @package Tripod\Mongo\Jobs
  */
 class ApplyOperation extends JobBase {
+
+    const SUBJECTS_KEY = 'subjects';
     /**
      * Run the ApplyOperation job
      * @throws \Exception
@@ -23,11 +25,14 @@ class ApplyOperation extends JobBase {
             $this->validateArgs();
 
             // set the config to what is received
-            \Tripod\Mongo\Config::setConfig($this->args["tripodConfig"]);
+            \Tripod\Mongo\Config::setConfig($this->args[self::TRIPOD_CONFIG_KEY]);
 
-            $subject = $this->createImpactedSubject($this->args['subject']);
+            foreach($this->args[self::SUBJECTS_KEY] as $subject)
+            {
+                $impactedSubject = $this->createImpactedSubject($subject);
+                $impactedSubject->update();
+            }
 
-            $subject->update();
 
             $timer->stop();
             // stat time taken to process item, from time it was created (queued)
@@ -40,6 +45,25 @@ class ApplyOperation extends JobBase {
             $this->errorLog("Caught exception in ".get_class($this).": ".$e->getMessage());
             throw $e;
         }
+    }
+
+    /**
+     * @param \Tripod\Mongo\ImpactedSubject[] $subjects
+     * @param string|null $queueName
+     */
+    public function createJob(Array $subjects, $queueName=null)
+    {
+        if(!$queueName)
+        {
+            $queueName = \Tripod\Mongo\Config::getApplyQueueName();
+        }
+
+        $data = array(
+            self::SUBJECTS_KEY=>array_map(function(\Tripod\Mongo\ImpactedSubject $subject) { return $subject->toArray(); }, $subjects),
+            self::TRIPOD_CONFIG_KEY=>\Tripod\Mongo\Config::getConfig()
+        );
+
+        $this->submitJob($queueName,get_class($this),$data);
     }
 
     /**
@@ -64,6 +88,6 @@ class ApplyOperation extends JobBase {
      */
     protected function getMandatoryArgs()
     {
-        return array("tripodConfig","subject");
+        return array(self::TRIPOD_CONFIG_KEY,self::SUBJECTS_KEY);
     }
 }

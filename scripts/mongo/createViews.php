@@ -68,15 +68,9 @@ else
 {
     $tripodBasePath = dirname(dirname(dirname(__FILE__)));
 }
-set_include_path(
-    get_include_path()
-    . PATH_SEPARATOR . $tripodBasePath.'/src'
-    . PATH_SEPARATOR . $tripodBasePath.'/src/classes');
 
-require_once 'tripod.inc.php';
-require_once 'classes/Timer.class.php';
-require_once 'mongo/TripodConfigs.php';
-require_once 'mongo/Tripods.php';
+require_once $tripodBasePath . '/vendor/autoload.php';
+require_once $tripodBasePath . '/src/tripod.inc.php';
 
 /**
  * @param string|null $id
@@ -87,11 +81,6 @@ require_once 'mongo/Tripods.php';
 function generateViews($id, $viewId, $storeName, $stat, $queue)
 {
     $viewSpec = \Tripod\Mongo\Config::getInstance()->getViewSpecification($storeName, $viewId);
-    if(empty($viewSpec)) // Older version of Tripod being used?
-    {
-        $viewSpec = \Tripod\Mongo\Config::getInstance()->getViewSpecification($viewId);
-    }
-    echo $viewId;
     if (array_key_exists("from",$viewSpec))
     {
         MongoCursor::$timeout = -1;
@@ -153,7 +142,7 @@ if(isset($options['a']) || isset($options['async']))
     }
     else
     {
-        $queue = MongoTripodConfig::getInstance()->getApplyQueueName();
+        $queue = \Tripod\Mongo\Config::getInstance()->getApplyQueueName();
     }
 }
 
