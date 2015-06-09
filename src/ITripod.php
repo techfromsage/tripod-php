@@ -12,8 +12,8 @@ interface ITripod
      * @return mixed
      */
     public function describe($query);
-    public function describeResource($resource,$context=null);
-    public function describeResources(Array $resources,$context=null);
+    public function describeResource($resource,$context=null, array $filter = null);
+    public function describeResources(Array $resources,$context=null, array $filter = null);
 
     public function getViewForResource($resource,$viewType);
     public function getViewForResources(Array $resources,$viewType);

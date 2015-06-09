@@ -138,14 +138,14 @@ class MongoTripod extends MongoTripodBase implements ITripod
      * @param $context
      * @return MongoGraph
      */
-    public function describeResource($resource,$context=null)
+    public function describeResource($resource,$context=null, array $filter = null)
     {
         $resource = $this->labeller->uri_to_alias($resource);
         $query = array(
             "_id" => array(
                 _ID_RESOURCE=>$resource,
                 _ID_CONTEXT=>$this->getContextAlias($context)));
-        return $this->fetchGraph($query,MONGO_DESCRIBE);
+        return $this->fetchGraph($query,MONGO_DESCRIBE, null, $filter);
     }
 
     /**
@@ -154,7 +154,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
      * @param null $context
      * @return MongoGraph
      */
-    public function describeResources(Array $resources,$context=null)
+    public function describeResources(Array $resources,$context=null, array $filter = null)
     {
         $ids = array();
         foreach ($resources as $resource)
@@ -165,7 +165,7 @@ class MongoTripod extends MongoTripodBase implements ITripod
                 _ID_CONTEXT=>$this->getContextAlias($context));
         }
         $query = array("_id" => array('$in' => $ids));
-        return $this->fetchGraph($query,MONGO_MULTIDESCRIBE);
+        return $this->fetchGraph($query,MONGO_MULTIDESCRIBE, null, $filter);
     }
 
     public function getViewForResource($resource, $viewType)
