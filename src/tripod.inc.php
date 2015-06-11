@@ -30,6 +30,11 @@ require_once TRIPOD_DIR.'/mongo/base/JobBase.class.php';
 require_once TRIPOD_DIR . '/mongo/jobs/DiscoverImpactedSubjects.class.php';
 require_once TRIPOD_DIR.'/mongo/jobs/ApplyOperation.class.php';
 
+require_once TRIPOD_DIR . '/mongo/util/IndexUtils.class.php';
+require_once TRIPOD_DIR . '/mongo/util/TriplesUtil.class.php';
+
+require_once TRIPOD_DIR . '/mongo/serializers/NQuadSerializer.class.php';
+
 \Resque::setBackend(\Tripod\Mongo\Config::getResqueServer());
 
 define('RDF_TYPE', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
