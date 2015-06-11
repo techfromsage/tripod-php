@@ -59,7 +59,7 @@ class IndexUtils
                 $collection = Config::getInstance()->getCollectionForView($storeName, $viewId);
                 if($collection)
                 {
-                    $indexes = array("_id.type"=>1);
+                    $indexes = array(array("_id.type"=>1));
                     if(isset($spec['ensureIndexes']))
                     {
                         $indexes = array_merge($indexes, $spec['ensureIndexes']);
@@ -68,7 +68,10 @@ class IndexUtils
                     {
                         $collection->deleteIndexes();
                     }
-                    $collection->ensureIndex($indexes, array("background"=>$background));
+                    foreach($indexes as $index)
+                    {
+                        $collection->ensureIndex($index, array("background"=>$background));
+                    }
                 }
             }
 
@@ -78,7 +81,7 @@ class IndexUtils
                 $collection = Config::getInstance()->getCollectionForTable($storeName, $tableId);
                 if($collection)
                 {
-                    $indexes = array("_id.type"=>1);
+                    $indexes = array(array("_id.type"=>1));
                     if(isset($spec['ensureIndexes']))
                     {
                         $indexes = array_merge($indexes, $spec['ensureIndexes']);
@@ -87,7 +90,10 @@ class IndexUtils
                     {
                         $collection->deleteIndexes();
                     }
-                    $collection->ensureIndex($indexes, array("background"=>$background));
+                    foreach($indexes as $index)
+                    {
+                        $collection->ensureIndex($index, array("background"=>$background));
+                    }
                 }
             }
         }
