@@ -707,9 +707,9 @@ class Updates extends DriverBase {
      */
     protected function processSyncOperations(Array $subjectsAndPredicatesOfChange, $contextAlias)
     {
-        $syncModifiedSubjects = array();
         foreach($this->getSyncOperations() as $op)
         {
+            /** @var \Tripod\Mongo\Composites\IComposite $composite */
             $composite = $this->tripod->getComposite($op);
             $opSubjects = $composite->getImpactedSubjects($subjectsAndPredicatesOfChange,$contextAlias);
             if (!empty($opSubjects)) {
@@ -719,7 +719,9 @@ class Updates extends DriverBase {
                     $t = new \Tripod\Timer();
                     $t->start();
 
-                    $composite->update($subject);
+                    // Call update on the subject, rather than the composite directly, in case the change was to
+                    // another pod
+                    $subject->update($subject);
 
                     $t->stop();
 
@@ -732,7 +734,6 @@ class Updates extends DriverBase {
                     $this->getStat()->timer(MONGO_ON_THE_FLY_MR,$t->result());
                 }
             }
-            $syncModifiedSubjects = array_merge($syncModifiedSubjects,$opSubjects);
         }
 
     }
