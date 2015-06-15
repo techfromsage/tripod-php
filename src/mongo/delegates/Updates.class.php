@@ -117,10 +117,10 @@ class Updates extends DriverBase {
         }
 
         // If a custom queue name was specified, store it
-        if(array_key_exists('queue', $async))
+        if(array_key_exists(OP_QUEUE, $async))
         {
-            $this->queueName = $async['queue'];
-            unset($async['queue']);
+            $this->queueName = $async[OP_QUEUE];
+            unset($async[OP_QUEUE]);
         }
 
         $this->async = $async;
@@ -761,7 +761,7 @@ class Updates extends DriverBase {
 
             if(isset($this->queueName))
             {
-                $data['queue'] = $this->queueName;
+                $data[OP_QUEUE] = $this->queueName;
                 $queueName = $this->queueName;
             }
             else

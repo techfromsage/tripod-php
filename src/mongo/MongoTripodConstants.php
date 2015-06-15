@@ -35,6 +35,7 @@ define('OP_TABLES','generate_table_rows');
 define('OP_SEARCH','generate_search_index_docs');
 define('OP_SYNC', 'sync');
 define('OP_ASYNC', 'async');
+define('OP_QUEUE', 'queue');
 
 // query types, used mainly for logging
 define('MONGO_SELECT','MONGO_SELECT');
