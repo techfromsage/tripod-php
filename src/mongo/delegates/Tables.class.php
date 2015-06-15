@@ -392,7 +392,7 @@ class Tables extends CompositeBase
                     foreach ($rt["rdf:type"] as $type)
                     {
                         // Defensive check in case there is bad data for rdf:type
-                        if(array_key_exists('u', $type['rdf:type']))
+                        if(array_key_exists('u', $type))
                         {
                             $this->generateTableRowsForType($type['u'],$id[_ID_RESOURCE],$id[_ID_CONTEXT], $specTypes);
                         }
