@@ -1,5 +1,5 @@
 <?php
-
+include_once dirname(__FILE__) . '/common.inc.php';
 $options = getopt(
     "c:s:q:hd:i:a",
     array(
@@ -81,10 +81,6 @@ require_once $tripodBasePath . '/src/tripod.inc.php';
 function generateSearchDocuments($id, $specId, $storeName, $stat = null, $queue = null)
 {
     $spec = \Tripod\Mongo\Config::getInstance()->getSearchDocumentSpecification($storeName, $specId);
-    if(empty($spec)) // Older version of Tripod being used?
-    {
-        $spec = \Tripod\Mongo\Config::getInstance()->getSearchDocumentSpecification($specId);
-    }
     if (array_key_exists("from",$spec))
     {
         MongoCursor::$timeout = -1;
@@ -146,7 +142,7 @@ if(isset($options['a']) || isset($options['async']))
     }
     else
     {
-        $queue = MongoTripodConfig::getInstance()->getApplyQueueName();
+        $queue = \Tripod\Mongo\Config::getInstance()->getApplyQueueName();
     }
 }
 

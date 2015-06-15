@@ -195,8 +195,8 @@ abstract class CompositeBase extends \Tripod\Mongo\DriverBase implements \Tripod
     }
 
     /**
-     * Submit an ApplyOperation job to the queue
-     *
+     * For mocking
+     * 
      * @return \Tripod\Mongo\Jobs\ApplyOperation
      */
     protected function getApplyOperation()

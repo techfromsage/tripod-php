@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # development only.
-echo "Use startWorkers.sh in development only. Suggest an upstart script for production."
+echo "Use startDiscoverWorkers.sh in development only. Suggest an upstart script for production."
 if [ -f "${BASH_SOURCE%/*}/../../vendor/chrisboulton/php-resque/bin/resque" ]
 then
 	PATH_TO_RESQUE_BIN="../.."

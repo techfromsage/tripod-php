@@ -7,6 +7,8 @@ namespace Tripod\Mongo\Jobs;
 abstract class JobBase extends \Tripod\Mongo\DriverBase
 {
     private $tripod;
+    const TRIPOD_CONFIG_KEY = 'tripodConfig';
+    const QUEUE_KEY = 'queue';
 
     /**
      * For mocking

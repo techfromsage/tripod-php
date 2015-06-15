@@ -142,22 +142,34 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
                 array($viewSubject)
             ));
 
-        $tableSubject = new \Tripod\Mongo\ImpactedSubject(
-            array(
-                _ID_RESOURCE=>'http://example.com/resources/foo2',
-                _ID_CONTEXT=>$this->args['contextAlias']
+        $tableSubjects = array(
+            new \Tripod\Mongo\ImpactedSubject(
+                array(
+                    _ID_RESOURCE=>'http://example.com/resources/foo2',
+                    _ID_CONTEXT=>$this->args['contextAlias']
+                ),
+                OP_TABLES,
+                $this->args['storeName'],
+                $this->args['podName'],
+                array('t_foo_bar')
             ),
-            OP_TABLES,
-            $this->args['storeName'],
-            $this->args['podName'],
-            array('t_foo_bar')
+            new \Tripod\Mongo\ImpactedSubject(
+                array(
+                    _ID_RESOURCE=>'http://example.com/resources/foo3',
+                    _ID_CONTEXT=>$this->args['contextAlias']
+                ),
+                OP_TABLES,
+                $this->args['storeName'],
+                $this->args['podName'],
+                array()
+            )
         );
 
         $tables->expects($this->once())
             ->method('getImpactedSubjects')
             ->with($this->args['changes'], $this->args['contextAlias'])
             ->will($this->returnValue(
-                array($tableSubject)
+                $tableSubjects
             ));
 
         $search->expects($this->once())
@@ -173,11 +185,11 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
             ->method('createJob')
             ->withConsecutive(
                 array(
-                    $viewSubject,
+                    array($viewSubject),
                     \Tripod\Mongo\Config::getApplyQueueName()
                 ),
                 array(
-                    $tableSubject,
+                   $tableSubjects,
                     \Tripod\Mongo\Config::getApplyQueueName()
                 )
             );
@@ -365,11 +377,11 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
             ->method('createJob')
             ->withConsecutive(
                 array(
-                    $viewSubject,
+                    array($viewSubject),
                     $args['queue']
                 ),
                 array(
-                    $tableSubject,
+                    array($tableSubject),
                     $args['queue']
                 )
             );
@@ -490,7 +502,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
             ->setMethods(array('createJob'))
             ->getMock();
 
-        $tableSubject = new \Tripod\Mongo\ImpactedSubject(
+        $tableSubject1 = new \Tripod\Mongo\ImpactedSubject(
             array(
                 _ID_RESOURCE=>'http://example.com/resources/foo2',
                 _ID_CONTEXT=>$this->args['contextAlias']
@@ -501,43 +513,81 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
             array('t_resource','t_source_count','t_source_count_regex','t_join_source_count_regex')
         );
 
-        $queuedTable1 = new \Tripod\Mongo\ImpactedSubject(
+        $tableSubject2 = new \Tripod\Mongo\ImpactedSubject(
             array(
-                _ID_RESOURCE=>'http://example.com/resources/foo2',
+                _ID_RESOURCE=>'http://example.com/resources/foo3',
                 _ID_CONTEXT=>$this->args['contextAlias']
             ),
             OP_TABLES,
             $this->args['storeName'],
             $this->args['podName'],
-            array('t_resource')
+            array('t_resource','t_source_count')
         );
 
-        $queuedTable2 = new \Tripod\Mongo\ImpactedSubject(
-            array(
-                _ID_RESOURCE=>'http://example.com/resources/foo2',
-                _ID_CONTEXT=>$this->args['contextAlias']
+
+        $queuedTable1 = array(
+            new \Tripod\Mongo\ImpactedSubject(
+                array(
+                    _ID_RESOURCE=>'http://example.com/resources/foo2',
+                    _ID_CONTEXT=>$this->args['contextAlias']
+                ),
+                OP_TABLES,
+                $this->args['storeName'],
+                $this->args['podName'],
+                array('t_resource')
             ),
-            OP_TABLES,
-            $this->args['storeName'],
-            $this->args['podName'],
-            array('t_source_count','t_source_count_regex')
+            new \Tripod\Mongo\ImpactedSubject(
+                array(
+                    _ID_RESOURCE=>'http://example.com/resources/foo3',
+                    _ID_CONTEXT=>$this->args['contextAlias']
+                ),
+                OP_TABLES,
+                $this->args['storeName'],
+                $this->args['podName'],
+                array('t_resource')
+            ),
         );
 
-        $queuedTable3 = new \Tripod\Mongo\ImpactedSubject(
-            array(
-                _ID_RESOURCE=>'http://example.com/resources/foo2',
-                _ID_CONTEXT=>$this->args['contextAlias']
+        $queuedTable2 = array(
+            new \Tripod\Mongo\ImpactedSubject(
+                array(
+                    _ID_RESOURCE=>'http://example.com/resources/foo2',
+                    _ID_CONTEXT=>$this->args['contextAlias']
+                ),
+                OP_TABLES,
+                $this->args['storeName'],
+                $this->args['podName'],
+                array('t_source_count','t_source_count_regex')
             ),
-            OP_TABLES,
-            $this->args['storeName'],
-            $this->args['podName'],
-            array('t_join_source_count_regex')
+            new \Tripod\Mongo\ImpactedSubject(
+                array(
+                    _ID_RESOURCE=>'http://example.com/resources/foo3',
+                    _ID_CONTEXT=>$this->args['contextAlias']
+                ),
+                OP_TABLES,
+                $this->args['storeName'],
+                $this->args['podName'],
+                array('t_source_count')
+            ),
+        );
+
+        $queuedTable3 = array(
+            new \Tripod\Mongo\ImpactedSubject(
+                array(
+                    _ID_RESOURCE=>'http://example.com/resources/foo2',
+                    _ID_CONTEXT=>$this->args['contextAlias']
+                ),
+                OP_TABLES,
+                $this->args['storeName'],
+                $this->args['podName'],
+                array('t_join_source_count_regex')
+            )
         );
 
         $tables->expects($this->once())
             ->method('getImpactedSubjects')
             ->with($this->args['changes'], $this->args['contextAlias'])
-            ->will($this->returnValue(array($tableSubject)));
+            ->will($this->returnValue(array($tableSubject1, $tableSubject2)));
 
         $tripod->expects($this->once())
             ->method('getComposite')
@@ -568,7 +618,6 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
                     "MOST_IMPORTANT_QUEUE_EVER"
                 )
             );
-
 
         $discoverImpactedSubjects->perform();
     }
@@ -687,21 +736,33 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
             ->setMethods(array('createJob'))
             ->getMock();
 
-        $tableSubject = new \Tripod\Mongo\ImpactedSubject(
-            array(
-                _ID_RESOURCE=>'http://example.com/resources/foo2',
-                _ID_CONTEXT=>$this->args['contextAlias']
+        $tableSubjects = array(
+            new \Tripod\Mongo\ImpactedSubject(
+                array(
+                    _ID_RESOURCE=>'http://example.com/resources/foo2',
+                    _ID_CONTEXT=>$this->args['contextAlias']
+                ),
+                OP_TABLES,
+                $this->args['storeName'],
+                $this->args['podName'],
+                array('t_resource','t_source_count','t_source_count_regex','t_join_source_count_regex')
             ),
-            OP_TABLES,
-            $this->args['storeName'],
-            $this->args['podName'],
-            array('t_resource','t_source_count','t_source_count_regex','t_join_source_count_regex')
+            new \Tripod\Mongo\ImpactedSubject(
+                array(
+                    _ID_RESOURCE=>'http://example.com/resources/foo3',
+                    _ID_CONTEXT=>$this->args['contextAlias']
+                ),
+                OP_TABLES,
+                $this->args['storeName'],
+                $this->args['podName'],
+                array('t_distinct')
+            )
         );
 
         $tables->expects($this->once())
             ->method('getImpactedSubjects')
             ->with($this->args['changes'], $this->args['contextAlias'])
-            ->will($this->returnValue(array($tableSubject)));
+            ->will($this->returnValue($tableSubjects));
 
         $tripod->expects($this->once())
             ->method('getComposite')
@@ -720,7 +781,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
             ->method('createJob')
             ->withConsecutive(
                 array(
-                    $tableSubject,
+                    $tableSubjects,
                     $args['queue']
                 )
             );

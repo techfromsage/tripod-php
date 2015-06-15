@@ -9,6 +9,12 @@ use \Tripod\Mongo\Config;
  */
 class DiscoverImpactedSubjects extends JobBase {
 
+    const STORE_NAME_KEY = 'storeName';
+    const POD_NAME_KEY = 'podName';
+    const OPERATIONS_KEY = 'operations';
+    const CHANGES_KEY = 'changes';
+    const CONTEXT_ALIAS_KEY = 'contextAlias';
+
     /**
      * @var ApplyOperation
      */
@@ -31,17 +37,18 @@ class DiscoverImpactedSubjects extends JobBase {
             $this->validateArgs();
 
             // set the config to what is received
-            \Tripod\Mongo\Config::setConfig($this->args["tripodConfig"]);
+            \Tripod\Mongo\Config::setConfig($this->args[self::TRIPOD_CONFIG_KEY]);
 
-            $tripod = $this->getTripod($this->args["storeName"],$this->args["podName"]);
+            $tripod = $this->getTripod($this->args[self::STORE_NAME_KEY],$this->args[self::POD_NAME_KEY]);
 
-            $operations = $this->args['operations'];
+            $operations = $this->args[self::OPERATIONS_KEY];
             $modifiedSubjects = array();
 
-            $subjectsAndPredicatesOfChange = $this->args['changes'];
+            $subjectsAndPredicatesOfChange = $this->args[self::CHANGES_KEY];
 
             foreach($operations as $op)
             {
+                /** @var \Tripod\Mongo\Composites\IComposite $composite */
                 $composite = $tripod->getComposite($op);
                 $modifiedSubjects = array_merge($modifiedSubjects,$composite->getImpactedSubjects($subjectsAndPredicatesOfChange,$this->args['contextAlias']));
             }
@@ -85,7 +92,14 @@ class DiscoverImpactedSubjects extends JobBase {
      */
     protected function getMandatoryArgs()
     {
-        return array("tripodConfig","storeName","podName","changes","operations","contextAlias");
+        return array(
+            self::TRIPOD_CONFIG_KEY,
+            self::STORE_NAME_KEY,
+            self::POD_NAME_KEY,
+            self::CHANGES_KEY,
+            self::OPERATIONS_KEY,
+            self::CONTEXT_ALIAS_KEY
+        );
     }
 
     /**
@@ -94,9 +108,11 @@ class DiscoverImpactedSubjects extends JobBase {
      */
     protected function addSubjectToQueue(\Tripod\Mongo\ImpactedSubject $subject, $queueName)
     {
-        $resourceId = $subject->getResourceId();
-        $this->debugLog("Adding operation {$subject->getOperation()} for subject {$resourceId[_ID_RESOURCE]} to queue ".$queueName);
-        $this->getApplyOperation()->createJob($subject, $queueName);
+        if(!array_key_exists($queueName, $this->subjectsGroupedByQueue))
+        {
+            $this->subjectsGroupedByQueue[$queueName] = array();
+        }
+        $this->subjectsGroupedByQueue[$queueName][] = $subject;
     }
 
     /**

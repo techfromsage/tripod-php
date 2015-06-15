@@ -444,7 +444,7 @@ class Views extends CompositeBase
                         array($viewId)
                     );
 
-                    $this->getApplyOperation()->createJob($subject, $queueName);
+                    $this->getApplyOperation()->createJob(array($subject), $queueName);
                 }
                 else
                 {
