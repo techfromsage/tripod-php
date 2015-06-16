@@ -71,7 +71,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             ->will($this->returnValue($tripodUpdate));
 
         $searchIndexer = $this->getMock('\Tripod\Mongo\Composites\SearchIndexer',
-            array('getSearchProvider'),
+            array('getSearchProvider', 'getImpactedSubjects'),
             array($tripod)
         );
 
@@ -94,6 +94,63 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
         $searchIndexer->expects($this->atLeastOnce())
             ->method('getSearchProvider')
             ->will($this->returnValue($searchProvider));
+
+        $impactedSubjects = array(
+            $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
+                ->setConstructorArgs(
+                    array(
+                        array(
+                            _ID_RESOURCE=>'http://talisaspire.com/resources/doc1',
+                            _ID_CONTEXT=>'http://talisaspire.com/',
+                        ),
+                        OP_SEARCH,
+                        'tripod_php_testing',
+                        'CBD_testing',
+                        array('i_search_resource')
+                    )
+                )
+                ->setMethods(array('getTripod'))
+                ->getMock(),
+            $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
+                ->setConstructorArgs(
+                    array(
+                        array(
+                            _ID_RESOURCE=>'http://talisaspire.com/resources/doc2',
+                            _ID_CONTEXT=>'http://talisaspire.com/',
+                        ),
+                        OP_SEARCH,
+                        'tripod_php_testing',
+                        'CBD_testing',
+                        array('i_search_resource')
+                    )
+                )
+                ->setMethods(array('getTripod'))
+                ->getMock(),
+            $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
+                ->setConstructorArgs(
+                    array(
+                        array(
+                            _ID_RESOURCE=>'http://talisaspire.com/resources/doc3',
+                            _ID_CONTEXT=>'http://talisaspire.com/',
+                        ),
+                        OP_SEARCH,
+                        'tripod_php_testing',
+                        'CBD_testing',
+                        array('i_search_resource')
+                    )
+                )
+                ->setMethods(array('getTripod'))
+                ->getMock()
+        );
+
+        $impactedSubjects[0]->expects($this->once())->method('getTripod')->will($this->returnValue($tripod));
+        $impactedSubjects[1]->expects($this->once())->method('getTripod')->will($this->returnValue($tripod));
+        $impactedSubjects[2]->expects($this->once())->method('getTripod')->will($this->returnValue($tripod));
+
+        $searchIndexer->expects($this->once())
+            ->method('getImpactedSubjects')
+            ->with($subjectsAndPredicatesOfChange, 'http://talisaspire.com/')
+            ->will($this->returnValue($impactedSubjects));
 
 
         $tripod->expects($this->atLeastOnce())
@@ -125,7 +182,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
         );
 
         $searchIndexer = $this->getMock('\Tripod\Mongo\Composites\SearchIndexer',
-            array('getSearchProvider'),
+            array('getSearchProvider', 'getImpactedSubjects'),
             array($tripod)
         );
 
@@ -148,6 +205,25 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
         $searchIndexer->expects($this->atLeastOnce())
             ->method('getSearchProvider')
             ->will($this->returnValue($searchProvider));
+
+        $impactedSubject = $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
+            ->setConstructorArgs(
+                array(
+                    array(
+                        _ID_RESOURCE=>'http://talisaspire.com/lists/1234',
+                        _ID_CONTEXT=>'http://talisaspire.com/',
+                    ),
+                    OP_SEARCH,
+                    'tripod_php_testing',
+                    'CBD_testing'
+                )
+            )
+            ->setMethods(array('getTripod'))
+            ->getMock();
+
+        $impactedSubject->expects($this->once())->method('getTripod')->will($this->returnValue($tripod));
+
+        $searchIndexer->expects($this->once())->method('getImpactedSubjects')->will($this->returnValue(array($impactedSubject)));
 
 
         $tripod->expects($this->atLeastOnce())
@@ -186,7 +262,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
         );
 
         $searchIndexer = $this->getMock('\Tripod\Mongo\Composites\SearchIndexer',
-            array('getSearchProvider'),
+            array('getSearchProvider', 'getImpactedSubjects'),
             array($tripod)
         );
 
@@ -194,6 +270,24 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             array('deleteDocument','indexDocument'),
             array($tripod)
         );
+
+        $impactedSubject = $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
+            ->setConstructorArgs(
+                array(
+                    array(
+                        _ID_RESOURCE=>'http://talisaspire.com/lists/1234',
+                        _ID_CONTEXT=>'http://talisaspire.com/',
+                    ),
+                    OP_SEARCH,
+                    'tripod_php_testing',
+                    'CBD_testing',
+                    array('i_search_list')
+                )
+            )
+            ->setMethods(array('getTripod'))
+            ->getMock();
+
+        $impactedSubject->expects($this->once())->method('getTripod')->will($this->returnValue($tripod));
 
         $searchProvider->expects($this->exactly(1))
             ->method('deleteDocument')
@@ -210,6 +304,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             ->method('getSearchProvider')
             ->will($this->returnValue($searchProvider));
 
+        $searchIndexer->expects($this->once())->method('getImpactedSubjects')->will($this->returnValue(array($impactedSubject)));
 
         $tripod->expects($this->atLeastOnce())
             ->method('getSearchIndexer')

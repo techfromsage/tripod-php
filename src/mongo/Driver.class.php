@@ -611,7 +611,7 @@ class Driver extends DriverBase implements \Tripod\IDriver
     /**
      * Returns the composite that can perform the supported operation
      * @param $operation string must be either OP_VIEWS, OP_TABLES or OP_SEARCH
-     * @return IComposite
+     * @return \Tripod\Mongo\Composites\IComposite
      * @throws \Tripod\Exceptions\Exception when an unsupported operation is requested
      */
     public function getComposite($operation)
