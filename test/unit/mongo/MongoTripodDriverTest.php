@@ -1022,76 +1022,95 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         );
 
         $impactedViewSubjects = array(
-            new \Tripod\Mongo\ImpactedSubject(
-                array(
-                    _ID_RESOURCE=>'http://example.com/1',
-                    _ID_CONTEXT=>'http://talisaspire.com',
-                ),
-                OP_VIEWS,
-                'tripod_php_testing',
-                'CBD_testing'
-            ),
-            new \Tripod\Mongo\ImpactedSubject(
-                array(
-                    _ID_RESOURCE=>'http://example.com/2',
-                    _ID_CONTEXT=>'http://talisaspire.com',
-                ),
-                OP_VIEWS,
-                'tripod_php_testing',
-                'CBD_testing'
-            ),
-            // Make up random affected subject
-            new \Tripod\Mongo\ImpactedSubject(
-                array(
-                    _ID_RESOURCE=>'http://example.com/9',
-                    _ID_CONTEXT=>'http://talisaspire.com',
-                ),
-                OP_VIEWS,
-                'tripod_php_testing',
-                'CBD_testing'
-            ),
+            $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
+                ->setConstructorArgs(
+                    array(
+                        array(
+                            _ID_RESOURCE=>'http://example.com/1',
+                            _ID_CONTEXT=>'http://talisaspire.com',
+                        ),
+                        OP_VIEWS,
+                        'tripod_php_testing',
+                        'CBD_testing'
+                    )
+                )
+                ->setMethods(array('update'))
+                ->getMock(),
+            $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
+                ->setConstructorArgs(
+                    array(
+                        array(
+                            _ID_RESOURCE=>'http://example.com/2',
+                            _ID_CONTEXT=>'http://talisaspire.com',
+                        ),
+                        OP_VIEWS,
+                        'tripod_php_testing',
+                        'CBD_testing'
+                    )
+                )
+                ->setMethods(array('update'))
+                ->getMock(),
+            $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
+                ->setConstructorArgs(
+                    array(
+                        array(
+                            _ID_RESOURCE=>'http://example.com/9',
+                            _ID_CONTEXT=>'http://talisaspire.com',
+                        ),
+                        OP_VIEWS,
+                        'tripod_php_testing',
+                        'CBD_testing'
+                    )
+                )
+                ->setMethods(array('update'))
+                ->getMock()
         );
         $mockViews->expects($this->once())
             ->method('getImpactedSubjects')
             ->will($this->returnValue($impactedViewSubjects));
-        $mockViews->expects($this->exactly(3))
-            ->method('update')
-            ->withConsecutive(
-                array($this->equalTo($impactedViewSubjects[0])),
-                array($this->equalTo($impactedViewSubjects[1])),
-                array($this->equalTo($impactedViewSubjects[2]))
-            );
+
+        $impactedViewSubjects[0]->expects($this->once())->method('update');
+        $impactedViewSubjects[1]->expects($this->once())->method('update');
+        $impactedViewSubjects[2]->expects($this->once())->method('update');
+
 
         $impactedTableSubjects = array(
-            new \Tripod\Mongo\ImpactedSubject(
-                array(
-                    _ID_RESOURCE=>'http://example.com/1',
-                    _ID_CONTEXT=>'http://talisaspire.com',
-                ),
-                OP_TABLES,
-                'tripod_php_testing',
-                'CBD_testing'
-            ),
-            new \Tripod\Mongo\ImpactedSubject(
-                array(
-                    _ID_RESOURCE=>'http://example.com/2',
-                    _ID_CONTEXT=>'http://talisaspire.com',
-                ),
-                OP_TABLES,
-                'tripod_php_testing',
-                'CBD_testing'
-            ),
+            $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
+                ->setConstructorArgs(
+                    array(
+                        array(
+                            _ID_RESOURCE=>'http://example.com/1',
+                            _ID_CONTEXT=>'http://talisaspire.com',
+                        ),
+                        OP_TABLES,
+                        'tripod_php_testing',
+                        'CBD_testing'
+                    )
+                )
+                ->setMethods(array('update'))
+                ->getMock(),
+            $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
+                ->setConstructorArgs(
+                    array(
+                        array(
+                            _ID_RESOURCE=>'http://example.com/2',
+                            _ID_CONTEXT=>'http://talisaspire.com',
+                        ),
+                        OP_TABLES,
+                        'tripod_php_testing',
+                        'CBD_testing'
+                    )
+                )
+                ->setMethods(array('update'))
+                ->getMock()
         );
+
         $mockTables->expects($this->once())
             ->method('getImpactedSubjects')
             ->will($this->returnValue($impactedTableSubjects));
 
-        $mockTables->expects($this->exactly(2))
-            ->method('update')
-            ->withConsecutive(
-                array($this->equalTo($impactedTableSubjects[0])),
-                array($this->equalTo($impactedTableSubjects[1]))
-            );
+        $impactedTableSubjects[0]->expects($this->once())->method('update');
+        $impactedTableSubjects[1]->expects($this->once())->method('update');
 
         $mockTripodUpdates->expects($this->once())
             ->method('getDiscoverImpactedSubjects')
@@ -1187,24 +1206,34 @@ class MongoTripodDriverTest extends MongoTripodTestBase
             ->getMock();
 
         $impactedViewSubjects = array(
-            new \Tripod\Mongo\ImpactedSubject(
-                array(
-                    _ID_RESOURCE=>$uri_1,
-                    _ID_CONTEXT=>'http://talisaspire.com',
-                ),
-                OP_VIEWS,
-                'tripod_php_testing',
-                'CBD_testing'
-            ),
-            new \Tripod\Mongo\ImpactedSubject(
-                array(
-                    _ID_RESOURCE=>$uri_2,
-                    _ID_CONTEXT=>'http://talisaspire.com',
-                ),
-                OP_VIEWS,
-                'tripod_php_testing',
-                'CBD_testing'
-            ),
+            $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
+                ->setConstructorArgs(
+                    array(
+                        array(
+                            _ID_RESOURCE=>$uri_1,
+                            _ID_CONTEXT=>'http://talisaspire.com',
+                        ),
+                        OP_VIEWS,
+                        'tripod_php_testing',
+                        'CBD_testing'
+                    )
+                )
+                ->setMethods(array('update'))
+                ->getMock(),
+            $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
+                ->setConstructorArgs(
+                    array(
+                        array(
+                            _ID_RESOURCE=>$uri_2,
+                            _ID_CONTEXT=>'http://talisaspire.com',
+                        ),
+                        OP_VIEWS,
+                        'tripod_php_testing',
+                        'CBD_testing'
+                    )
+                )
+                ->setMethods(array('update'))
+                ->getMock()
         );
 
         $labeller = new \Tripod\Mongo\Labeller();
@@ -1245,12 +1274,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
             ->method('getImpactedSubjects')
             ->will($this->returnValue($impactedViewSubjects));
 
-        $mockViews->expects($this->exactly(2))
-            ->method('update')
-            ->withConsecutive(
-                array($this->equalTo($impactedViewSubjects[0])),
-                array($this->equalTo($impactedViewSubjects[1]))
-            );
+        $impactedViewSubjects[0]->expects($this->once())->method('update');
+        $impactedViewSubjects[1]->expects($this->once())->method('update');
 
         $mockDiscoverImpactedSubjects->expects($this->once())
             ->method('createJob')
@@ -1328,24 +1353,34 @@ class MongoTripodDriverTest extends MongoTripodTestBase
             ->getMock();
 
         $impactedViewSubjects = array(
-            new \Tripod\Mongo\ImpactedSubject(
-                array(
-                    _ID_RESOURCE=>$uri_1,
-                    _ID_CONTEXT=>'http://talisaspire.com',
-                ),
-                OP_VIEWS,
-                'tripod_php_testing',
-                'CBD_testing'
-            ),
-            new \Tripod\Mongo\ImpactedSubject(
-                array(
-                    _ID_RESOURCE=>$uri_2,
-                    _ID_CONTEXT=>'http://talisaspire.com',
-                ),
-                OP_VIEWS,
-                'tripod_php_testing',
-                'CBD_testing'
-            ),
+            $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
+                ->setConstructorArgs(
+                    array(
+                        array(
+                            _ID_RESOURCE=>$uri_1,
+                            _ID_CONTEXT=>'http://talisaspire.com',
+                        ),
+                        OP_VIEWS,
+                        'tripod_php_testing',
+                        'CBD_testing'
+                    )
+                )
+                ->setMethods(array('update'))
+                ->getMock(),
+            $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
+                ->setConstructorArgs(
+                    array(
+                        array(
+                            _ID_RESOURCE=>$uri_2,
+                            _ID_CONTEXT=>'http://talisaspire.com',
+                        ),
+                        OP_VIEWS,
+                        'tripod_php_testing',
+                        'CBD_testing'
+                    )
+                )
+                ->setMethods(array('update'))
+                ->getMock()
         );
 
         $labeller = new \Tripod\Mongo\Labeller();
@@ -1387,12 +1422,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
             ->method('getImpactedSubjects')
             ->will($this->returnValue($impactedViewSubjects));
 
-        $mockViews->expects($this->exactly(2))
-            ->method('update')
-            ->withConsecutive(
-                array($this->equalTo($impactedViewSubjects[0])),
-                array($this->equalTo($impactedViewSubjects[1]))
-            );
+        $impactedViewSubjects[0]->expects($this->once())->method('update');
+        $impactedViewSubjects[1]->expects($this->once())->method('update');
 
         $mockDiscoverImpactedSubjects->expects($this->once())
             ->method('createJob')
