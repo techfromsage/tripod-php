@@ -1073,6 +1073,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $impactedViewSubjects[1]->expects($this->once())->method('update');
         $impactedViewSubjects[2]->expects($this->once())->method('update');
 
+        // This shouldn't be called because ImpactedSubject->update has been mocked and isn't doing anything
+        $mockViews->expects($this->never())->method('update');
 
         $impactedTableSubjects = array(
             $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
@@ -1111,6 +1113,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
         $impactedTableSubjects[0]->expects($this->once())->method('update');
         $impactedTableSubjects[1]->expects($this->once())->method('update');
+
+        $mockTables->expects($this->never())->method('update');
 
         $mockTripodUpdates->expects($this->once())
             ->method('getDiscoverImpactedSubjects')
@@ -1277,6 +1281,9 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $impactedViewSubjects[0]->expects($this->once())->method('update');
         $impactedViewSubjects[1]->expects($this->once())->method('update');
 
+        // This shouldn't be called because ImpactedSubject->update has been mocked and isn't doing anything
+        $mockViews->expects($this->never())->method('update');
+
         $mockDiscoverImpactedSubjects->expects($this->once())
             ->method('createJob')
             ->with(
@@ -1421,6 +1428,9 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $mockViews->expects($this->once())
             ->method('getImpactedSubjects')
             ->will($this->returnValue($impactedViewSubjects));
+
+        // This shouldn't be called because ImpactedSubject->update has been mocked and isn't doing anything
+        $mockViews->expects($this->never())->method('update');
 
         $impactedViewSubjects[0]->expects($this->once())->method('update');
         $impactedViewSubjects[1]->expects($this->once())->method('update');
