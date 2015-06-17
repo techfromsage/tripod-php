@@ -11,17 +11,13 @@ require_once(TRIPOD_DIR . "mongo/Config.class.php");
 class IndexUtils
 {
     /**
-     * Ensures the index for the given $storeName. As a consequence, sets the global
-     * MongoCursor timeout to -1 for this thread, so use with caution from anything
-     * other than a setup script
+     * Ensures the index for the given $storeName.
      * @param bool $reindex - force a reindex of existing data
      * @param null $storeName - database name to ensure indexes for
      * @param bool $background - index in the background (default) or lock DB whilst indexing
      */
     public function ensureIndexes($reindex=false,$storeName=null,$background=true)
     {
-        //MongoCursor::$timeout = -1; // set this otherwise you'll see timeout errors for large indexes
-
         $config = Config::getInstance();
         $dbs = ($storeName==null) ? $config->getDbs() : array($storeName);
         foreach ($dbs as $storeName)
@@ -44,11 +40,26 @@ class IndexUtils
                     if (is_numeric($indexName))
                     {
                         // no name
-                        $config->getCollectionForCBD($storeName, $collectionName)->ensureIndex($fields,array("background"=>$background));
+                        $config->getCollectionForCBD($storeName, $collectionName)
+                            ->ensureIndex(
+                                $fields,
+                                array(
+                                    "background"=>$background,
+                                    "socketTimeoutMS"=>Config::getInstance()->getMongoCursorTimeout()
+                                )
+                            );
                     }
                     else
                     {
-                        $config->getCollectionForCBD($storeName, $collectionName)->ensureIndex($fields,array('name'=>$indexName,"background"=>$background));
+                        $config->getCollectionForCBD($storeName, $collectionName)
+                            ->ensureIndex(
+                                $fields,
+                                array(
+                                    'name'=>$indexName,
+                                    "background"=>$background,
+                                    "socketTimeoutMS"=>Config::getInstance()->getMongoCursorTimeout()
+                                )
+                            );
                     }
                 }
             }
@@ -70,7 +81,13 @@ class IndexUtils
                     }
                     foreach($indexes as $index)
                     {
-                        $collection->ensureIndex($index, array("background"=>$background));
+                        $collection->ensureIndex(
+                            $index,
+                            array(
+                                "background"=>$background,
+                                "socketTimeoutMS"=>Config::getInstance()->getMongoCursorTimeout()
+                            )
+                        );
                     }
                 }
             }
@@ -92,7 +109,13 @@ class IndexUtils
                     }
                     foreach($indexes as $index)
                     {
-                        $collection->ensureIndex($index, array("background"=>$background));
+                        $collection->ensureIndex(
+                            $index,
+                            array(
+                                "background"=>$background,
+                                "socketTimeoutMS"=>Config::getInstance()->getMongoCursorTimeout()
+                            )
+                        );
                     }
                 }
             }

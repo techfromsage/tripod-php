@@ -123,7 +123,7 @@ class SearchIndexer extends CompositeBase
         ));
 
         $resourceAndType = $mongoCollection->find($query,array("_id"=>1,"rdf:type"=>1));
-
+        $resourceAndType->timeout($this->config->getMongoCursorTimeout());
         foreach ($resourceAndType as $rt)
         {
             if (array_key_exists("rdf:type",$rt))
@@ -202,6 +202,7 @@ class SearchIndexer extends CompositeBase
         }
 
         $docs = $this->config->getCollectionForCBD($this->getStoreName(), $from)->find($filter);
+        $docs->timeout($this->config->getMongoCursorTimeout());
         foreach ($docs as $doc)
         {
             if($queueName && !$resourceUri)

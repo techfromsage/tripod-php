@@ -83,7 +83,7 @@ function generateTables($id, $tableId, $storeName, $stat = null, $queue = null)
     $tableSpec = \Tripod\Mongo\Config::getInstance()->getTableSpecification($storeName, $tableId);
     if (array_key_exists("from",$tableSpec))
     {
-        MongoCursor::$timeout = -1;
+        \Tripod\Mongo\Config::getInstance()->setMongoCursorTimeout(-1);
 
         print "Generating $tableId";
         $tripod = new \Tripod\Mongo\Driver($tableSpec['from'], $storeName, array('stat'=>$stat));

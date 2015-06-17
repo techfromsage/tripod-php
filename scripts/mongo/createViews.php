@@ -82,7 +82,7 @@ function generateViews($id, $viewId, $storeName, $stat, $queue)
     $viewSpec = \Tripod\Mongo\Config::getInstance()->getViewSpecification($storeName, $viewId);
     if (array_key_exists("from",$viewSpec))
     {
-        MongoCursor::$timeout = -1;
+        \Tripod\Mongo\Config::getInstance()->setMongoCursorTimeout(-1);
 
         print "Generating $viewId";
         $tripod = new \Tripod\Mongo\Driver($viewSpec['from'], $storeName, array('stat'=>$stat));

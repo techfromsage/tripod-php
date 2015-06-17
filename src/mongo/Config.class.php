@@ -134,9 +134,30 @@ class Config
     protected $connections = array();
 
     /**
+     * @var int
+     */
+    protected $mongoCursorTimeout = 30000;
+
+    /**
      * Config should not be instantiated directly: use Config::getInstance()
      */
     private function __construct() {}
+
+    /**
+     * @return int
+     */
+    public function getMongoCursorTimeout()
+    {
+        return $this->mongoCursorTimeout;
+    }
+
+    /**
+     * @param int $mongoCursorTimeout
+     */
+    public function setMongoCursorTimeout($mongoCursorTimeout)
+    {
+        $this->mongoCursorTimeout = $mongoCursorTimeout;
+    }
 
     /**
      * Used to load the config from self::config when new instance is generated

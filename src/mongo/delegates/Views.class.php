@@ -397,16 +397,50 @@ class Views extends CompositeBase
             }
 
             // ensure that the ID field, view type, and the impactIndex indexes are correctly set up
-            $collection->ensureIndex(array('_id.r'=>1, '_id.c'=>1,'_id.type'=>1),array('background'=>1));
-            $collection->ensureIndex(array('_id.type'=>1),array('background'=>1));
-            $collection->ensureIndex(array('value.'._IMPACT_INDEX=>1),array('background'=>1));
+            $collection->ensureIndex(
+                array(
+                    '_id.r'=>1,
+                    '_id.c'=>1,
+                    '_id.type'=>1
+                ),
+                array(
+                    'background'=>1,
+                    "socketTimeoutMS"=>\Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout()
+                )
+            );
+
+            $collection->ensureIndex(
+                array(
+                    '_id.type'=>1
+                ),
+                array(
+                    'background'=>1,
+                    "socketTimeoutMS"=>\Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout()
+                )
+            );
+
+            $collection->ensureIndex(
+                array(
+                    'value.'._IMPACT_INDEX=>1
+                ),
+                array(
+                    'background'=>1,
+                    "socketTimeoutMS"=>\Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout()
+                )
+            );
 
             // ensure any custom view indexes
             if (isset($viewSpec['ensureIndexes']))
             {
                 foreach ($viewSpec['ensureIndexes'] as $ensureIndex)
                 {
-                    $collection->ensureIndex($ensureIndex,array('background'=>1));
+                    $collection->ensureIndex(
+                        $ensureIndex,
+                        array(
+                            'background'=>1,
+                            "socketTimeoutMS"=>\Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout()
+                        )
+                    );
                 }
             }
 
@@ -432,6 +466,8 @@ class Views extends CompositeBase
             }
 
             $docs = $this->config->getCollectionForCBD($this->storeName, $from)->find($filter);
+            $docs->timeout(\Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout());
+
             foreach ($docs as $doc)
             {
                 if($queueName && !$resource)
@@ -540,6 +576,8 @@ class Views extends CompositeBase
                     : $this->config->getCollectionForCBD($this->storeName, $from)
                 );
                 $cursor = $collection->find(array('_id'=>array('$in'=>$joinUris)));
+                $cursor->timeout(\Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout());
+
                 foreach($cursor as $linkMatch) {
                     // if there is a condition, check it...
                     if (isset($ruleset['condition']))

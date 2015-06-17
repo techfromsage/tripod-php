@@ -22,6 +22,8 @@ array_shift($argv);
 $storeName = (isset($argv[1])) ? $argv[1] : null;
 $forceReindex = (isset($argv[2])&&($argv[2]=="true")) ? true : false;
 
+\Tripod\Mongo\Config::getInstance()->setMongoCursorTimeout(-1);
+
 $ei = new \Tripod\Mongo\IndexUtils();
 
 $t = new \Tripod\Timer();

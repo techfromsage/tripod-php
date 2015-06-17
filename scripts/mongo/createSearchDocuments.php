@@ -82,7 +82,7 @@ function generateSearchDocuments($id, $specId, $storeName, $stat = null, $queue 
     $spec = \Tripod\Mongo\Config::getInstance()->getSearchDocumentSpecification($storeName, $specId);
     if (array_key_exists("from",$spec))
     {
-        MongoCursor::$timeout = -1;
+        \Tripod\Mongo\Config::getInstance()->setMongoCursorTimeout(-1);
 
         print "Generating $specId";
         $tripod = new \Tripod\Mongo\Driver($spec['from'], $storeName, array('stat'=>$stat));

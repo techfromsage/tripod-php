@@ -114,12 +114,24 @@ class SearchDocuments extends DriverBase
         Config::getInstance()->getCollectionForSearchDocument(
             $this->storeName,
             $specId)
-            ->ensureIndex(array('_id.type'=>1),array('background'=>1));
+            ->ensureIndex(
+                array('_id.type'=>1),
+                array(
+                    'background'=>1,
+                    "socketTimeoutMS"=>\Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout()
+                )
+            );
 
         Config::getInstance()->getCollectionForSearchDocument(
             $this->storeName,
             $specId)
-            ->ensureIndex(array('_impactIndex'=>1),array('background'=>1));
+            ->ensureIndex(
+                array('_impactIndex'=>1),
+                array(
+                    'background'=>1,
+                    "socketTimeoutMS"=>\Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout()
+                )
+            );
 
         if(isset($searchSpec['fields'])){  	
             $this->addFields($sourceDocument, $searchSpec['fields'], $generatedDocument);
@@ -207,6 +219,8 @@ class SearchDocuments extends DriverBase
                 );
 
                 $cursor = $collection->find(array('_id'=>array('$in'=>$joinUris)));
+                $cursor->timeout(\Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout());
+
                 // add to impact index
                 $this->addIdToImpactIndex($joinUris, $target);
                 foreach($cursor as $linkMatch)
