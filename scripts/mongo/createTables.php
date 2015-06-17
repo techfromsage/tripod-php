@@ -69,7 +69,6 @@ else
     $tripodBasePath = dirname(dirname(dirname(__FILE__)));
 }
 
-require_once $tripodBasePath . '/vendor/autoload.php';
 require_once $tripodBasePath . '/src/tripod.inc.php';
 
 /**
