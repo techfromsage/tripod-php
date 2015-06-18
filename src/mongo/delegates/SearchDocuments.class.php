@@ -102,6 +102,8 @@ class SearchDocuments extends DriverBase
             return null;
         }
 
+        $this->debugLog("Processing {$specId}");
+
         // build the document
         $generatedDocument = array();
         $this->addIdToImpactIndex($_id, $generatedDocument);

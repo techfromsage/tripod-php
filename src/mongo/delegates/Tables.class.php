@@ -103,7 +103,7 @@ class Tables extends CompositeBase
      * Returns an array of the rdf types that will trigger the table specification
      * @return array
      */
-    public function getTypesInSpecification()
+    public function getTypesInSpecifications()
     {
         return $this->config->getTypesInTableSpecifications($this->storeName, $this->getPodName());
     }
@@ -1283,6 +1283,52 @@ class Tables extends CompositeBase
             if (!isset($dest[$fieldName])) $dest[$fieldName] = 0;
             $dest[$fieldName] += $count;
         }
+    }
+
+    /**
+     * Test if the a particular type appears in the array of types associated with a particular spec and that the changeset
+     * includes rdf:type (or is empty, meaning addition or deletion vs. update)
+     * @param string $rdfType
+     * @param array $validTypes
+     * @param array $subjectPredicates
+     * @return bool
+     */
+    protected function checkIfTypeShouldTriggerOperation($rdfType, array $validTypes, Array $subjectPredicates)
+    {
+        // We don't know if this is an alias or a fqURI, nor what is in the valid types, necessarily
+        $types = array($rdfType);
+        try
+        {
+            $types[] = $this->labeller->qname_to_uri($rdfType);
+        }
+        catch(\Tripod\Exceptions\LabellerException $e) {}
+        try
+        {
+            $types[] = $this->labeller->uri_to_alias($rdfType);
+        }
+        catch(\Tripod\Exceptions\LabellerException $e) {}
+
+        $intersectingTypes = array_unique(array_intersect($types, $validTypes));
+        if(!empty($intersectingTypes))
+        {
+            // Table rows only need to be invalidated if their rdf:type property has changed
+            // This means we're either adding or deleting a graph
+            if(empty($subjectPredicates))
+            {
+                return true;
+            }
+            // Check for alias in changed predicates
+            elseif(in_array('rdf:type', $subjectPredicates))
+            {
+                return true;
+            }
+            // Check for fully qualified URI in changed predicates
+            elseif(in_array(RDF_TYPE, $subjectPredicates))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

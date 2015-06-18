@@ -32,7 +32,7 @@ abstract class CompositeBase extends \Tripod\Mongo\DriverBase implements \Tripod
         $query = array(_ID_KEY=>array('$in'=>$filter));
         $docs = $this->getCollection()->find($query, array(_ID_KEY=>true, 'rdf:type'=>true));
 
-        $types = $this->getTypesInSpecification();
+        $types = $this->getTypesInSpecifications();
 
         if($docs->count() !== 0 ) {
             foreach($docs as $doc)
@@ -125,7 +125,7 @@ abstract class CompositeBase extends \Tripod\Mongo\DriverBase implements \Tripod
      * Returns an array of the rdf types that will trigger the specification
      * @return array
      */
-    public abstract function getTypesInSpecification();
+    public abstract function getTypesInSpecifications();
 
     /**
      * @param array $resourcesAndPredicates
@@ -150,49 +150,7 @@ abstract class CompositeBase extends \Tripod\Mongo\DriverBase implements \Tripod
      * @param array $subjectPredicates
      * @return bool
      */
-    protected function checkIfTypeShouldTriggerOperation($rdfType, array $validTypes, Array $subjectPredicates)
-    {
-        // We don't know if this is an alias or a fqURI, nor what is in the valid types, necessarily
-        $types = array($rdfType);
-        try
-        {
-            $types[] = $this->labeller->qname_to_uri($rdfType);
-        }
-        catch(\Tripod\Exceptions\LabellerException $e) {}
-        try
-        {
-            $types[] = $this->labeller->uri_to_alias($rdfType);
-        }
-        catch(\Tripod\Exceptions\LabellerException $e) {}
-
-        $intersectingTypes = array_unique(array_intersect($types, $validTypes));
-        if(!empty($intersectingTypes))
-        {
-            // Views should always invalidate
-            if($this instanceof \Tripod\Mongo\Composites\Views)
-            {
-                return true;
-            }
-
-            // Table rows and Search documents only need to be invalidated if their rdf:type property has changed
-            // This means we're either adding or deleting a graph
-            if(empty($subjectPredicates))
-            {
-                return true;
-            }
-            // Check for alias in changed predicates
-            elseif(in_array('rdf:type', $subjectPredicates))
-            {
-                return true;
-            }
-            // Check for fully qualified URI in changed predicates
-            elseif(in_array(RDF_TYPE, $subjectPredicates))
-            {
-                return true;
-            }
-        }
-        return false;
-    }
+    abstract protected function checkIfTypeShouldTriggerOperation($rdfType, array $validTypes, Array $subjectPredicates);
 
     /**
      * For mocking
