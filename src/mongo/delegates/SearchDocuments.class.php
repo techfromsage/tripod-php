@@ -59,8 +59,6 @@ class SearchDocuments extends DriverBase
             $from = $this->podName;
         }
 
-        $specId = $searchSpec['_id'];
-
         // work out whether or not to index at all
         $proceedWithGeneration = false;
 
@@ -88,7 +86,7 @@ class SearchDocuments extends DriverBase
         }
 
         if($proceedWithGeneration == false){
-            $this->debugLog("Unable to proceed with generating search document for $resource, does not satisfy rules");
+            $this->debugLog("Unable to proceed with generating $specId search document for $resource, does not satisfy rules");
             return null;
         }
 
@@ -100,7 +98,7 @@ class SearchDocuments extends DriverBase
         $sourceDocument = Config::getInstance()->getCollectionForCBD($this->storeName, $from)->findOne(array('_id'=>$_id));
 
         if(empty($sourceDocument)){
-            $this->debugLog("Source document not found for $resource, cannot proceed");
+            $this->debugLog("Source document not found for $resource, cannot proceed generating $specId search document");
             return null;
         }
 
