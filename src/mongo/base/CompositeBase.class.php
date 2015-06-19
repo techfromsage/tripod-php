@@ -150,7 +150,25 @@ abstract class CompositeBase extends \Tripod\Mongo\DriverBase implements \Tripod
      * @param array $subjectPredicates
      * @return bool
      */
-    abstract protected function checkIfTypeShouldTriggerOperation($rdfType, array $validTypes, Array $subjectPredicates);
+    protected function checkIfTypeShouldTriggerOperation($rdfType, array $validTypes, Array $subjectPredicates)
+    {
+        // We don't know if this is an alias or a fqURI, nor what is in the valid types, necessarily
+        $types = array($rdfType);
+        try
+        {
+            $types[] = $this->labeller->qname_to_uri($rdfType);
+        }
+        catch(\Tripod\Exceptions\LabellerException $e) {}
+        try
+        {
+            $types[] = $this->labeller->uri_to_alias($rdfType);
+        }
+        catch(\Tripod\Exceptions\LabellerException $e) {}
+
+        $intersectingTypes = array_unique(array_intersect($types, $validTypes));
+        // If views have a matching type *at all*, the operation is triggered
+        return (!empty($intersectingTypes));
+    }
 
     /**
      * For mocking

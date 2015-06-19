@@ -762,32 +762,4 @@ class Views extends CompositeBase
         return $this->getConfigInstance()->getCollectionForView($this->storeName, $viewSpecId);
     }
 
-    /**
-     * Test if the a particular type appears in the array of types associated with a particular spec and that the changeset
-     * includes rdf:type (or is empty, meaning addition or deletion vs. update)
-     * @param string $rdfType
-     * @param array $validTypes
-     * @param array $subjectPredicates
-     * @return bool
-     */
-    protected function checkIfTypeShouldTriggerOperation($rdfType, array $validTypes, Array $subjectPredicates)
-    {
-        // We don't know if this is an alias or a fqURI, nor what is in the valid types, necessarily
-        $types = array($rdfType);
-        try
-        {
-            $types[] = $this->labeller->qname_to_uri($rdfType);
-        }
-        catch(\Tripod\Exceptions\LabellerException $e) {}
-        try
-        {
-            $types[] = $this->labeller->uri_to_alias($rdfType);
-        }
-        catch(\Tripod\Exceptions\LabellerException $e) {}
-
-        $intersectingTypes = array_unique(array_intersect($types, $validTypes));
-        // If views have a matching type *at all*, the operation is triggered
-        return (!empty($intersectingTypes));
-    }
-
 }

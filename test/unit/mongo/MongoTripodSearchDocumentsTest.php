@@ -160,7 +160,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
         }
     }
 
-    public function testSearchDocsNotGeneratedWhenUndefinedPredicateChanges()
+    public function testSearchDocsShouldRegenerateWhenUndefinedPredicateChangesButFilterExistsInSpec()
     {
         $uri = "http://talisaspire.com/resources/doc1";
 
@@ -172,7 +172,16 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
         $this->tripod->getSearchIndexer()->generateAndIndexSearchDocuments($uri, $this->defaultContext, $this->defaultPodName);
         $impactedSubjects = $this->tripod->getSearchIndexer()->getImpactedSubjects($subjectsAndPredicatesOfChange, $this->defaultContext);
 
-        $this->assertEmpty($impactedSubjects);
+        $this->assertCount(1, $impactedSubjects);
+        $this->assertEquals(
+            array(
+                _ID_RESOURCE=>$uri,
+                _ID_CONTEXT=>"http://talisaspire.com/"
+            ),
+            $impactedSubjects[0]->getResourceId()
+        );
+
+        $this->assertEmpty($impactedSubjects[0]->getSpecTypes());
     }
 
     public function testUpdateOfResourceInImpactIndexTriggersRegenerationOfSearchDocs()
@@ -360,37 +369,6 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
             $searchIndexer->update($subject);
         }
 
-    }
-
-    public function testUpdateToResourceWithMatchingRdfTypeShouldOnlyRegenerateIfRdfTypeIsPartOfUpdate()
-    {
-        $uri = "http://talisaspire.com/resources/doc3";
-        $labeller = new Tripod\Mongo\Labeller();
-        $uriAlias = $labeller->uri_to_alias($uri);
-
-        $searchIndexer = new \Tripod\Mongo\Composites\SearchIndexer($this->tripod);
-
-        $subjectsAndPredicatesOfChange = array($uriAlias =>array('dct:subject'));
-
-        $this->assertEmpty($searchIndexer->getImpactedSubjects($subjectsAndPredicatesOfChange, $this->defaultContext));
-
-        $subjectsAndPredicatesOfChange = array($uriAlias =>array('dct:subject', 'rdf:type'));
-
-        $expectedImpactedSubjects = array(
-            new \Tripod\Mongo\ImpactedSubject(
-                array(
-                    _ID_RESOURCE=>$uriAlias,
-                    _ID_CONTEXT=>$this->defaultContext
-                ),
-                OP_SEARCH,
-                $this->defaultStoreName,
-                $this->defaultPodName,
-                array()
-            )
-        );
-
-        $impactedSubjects = $searchIndexer->getImpactedSubjects($subjectsAndPredicatesOfChange, $this->defaultContext);
-        $this->assertEquals($expectedImpactedSubjects, $impactedSubjects);
     }
 
     public function testNewResourceThatDoesNotMatchAnythingCreatesNoImpactedSubjects()
