@@ -1,11 +1,7 @@
 <?php
 require_once dirname(__FILE__) . '/common.inc.php';
-set_include_path(
-  get_include_path()
-  . PATH_SEPARATOR . dirname(dirname(dirname(__FILE__))).'/src');
 
-require_once 'tripod.inc.php';
-require_once 'mongo/util/TriplesUtil.class.php';
+require_once dirname(dirname(dirname(__FILE__))).'/src/tripod.inc.php';
 
 if ($argc!=2)
 {

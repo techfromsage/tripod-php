@@ -31,15 +31,7 @@ if(empty($options) || isset($options['h']) || isset($options['help']) || (!isset
 }
 $configLocation = isset($options['c']) ? $options['c'] : $options['config'];
 
-$tripodBasePath = dirname(dirname(dirname(__FILE__)));
-set_include_path(
-    get_include_path()
-    . PATH_SEPARATOR . $tripodBasePath.'/src'
-    . PATH_SEPARATOR . $tripodBasePath.'/src/classes');
-
-require_once 'tripod.inc.php';
-require_once 'mongo/Driver.class.php';
-require_once 'mongo/Config.class.php';
+require_once dirname(dirname(dirname(__FILE__))).'/src/tripod.inc.php';
 
 \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
 
