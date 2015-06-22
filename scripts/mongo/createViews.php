@@ -55,6 +55,7 @@ require_once dirname(dirname(dirname(__FILE__))) . '/src/tripod.inc.php';
  * @param string|null $viewId
  * @param string $storeName
  * @param \Tripod\ITripodStat|null $stat
+ * @param string $queue
  */
 function generateViews($id, $viewId, $storeName, $stat, $queue)
 {
@@ -65,7 +66,7 @@ function generateViews($id, $viewId, $storeName, $stat, $queue)
 
         print "Generating $viewId";
         $tripod = new \Tripod\Mongo\Driver($viewSpec['from'], $storeName, array('stat'=>$stat));
-        $views = $tripod->getTripodViews();//new Views($tripod->storeName,$tripod->collection,$tripod->defaultContext);
+        $views = $tripod->getTripodViews();
         if ($id)
         {
             print " for $id....\n";

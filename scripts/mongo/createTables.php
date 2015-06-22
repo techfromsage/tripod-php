@@ -66,7 +66,7 @@ function generateTables($id, $tableId, $storeName, $stat = null, $queue = null)
 
         print "Generating $tableId";
         $tripod = new \Tripod\Mongo\Driver($tableSpec['from'], $storeName, array('stat'=>$stat));
-        $tTables = $tripod->getTripodTables();//new Tables($tripod->storeName,$tripod->collection,$tripod->defaultContext);
+        $tTables = $tripod->getTripodTables();
         if ($id)
         {
             print " for $id....\n";
