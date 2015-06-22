@@ -222,8 +222,8 @@ class Driver extends DriverBase implements \Tripod\IDriver
      * Create and apply a changeset which is the delta between $oldGraph and $newGraph
      * @param \Tripod\ExtendedGraph $oldGraph
      * @param \Tripod\ExtendedGraph $newGraph
-     * @param $context
-     * @param null $description
+     * @param string $context
+     * @param string|null $description
      * @return bool
      * @throws \Tripod\Exceptions\Exception
      */
@@ -238,8 +238,8 @@ class Driver extends DriverBase implements \Tripod\IDriver
 
     /**
      * Get locked documents for a date range or all documents if no date range is given
-     * @param $fromDateTime String
-     * @param $tillDateTime String
+     * @param string $fromDateTime
+     * @param string $tillDateTime
      * @return array
      */
     public function getLockedDocuments($fromDateTime = null , $tillDateTime = null)
@@ -249,8 +249,8 @@ class Driver extends DriverBase implements \Tripod\IDriver
 
     /**
      * Remove locks that are there forever, creates a audit entry to keep track who and why removed these locks.
-     * @param $transaction_id
-     * @param $reason
+     * @param string $transaction_id
+     * @param string $reason
      * @return bool
      * @throws \Exception, if something goes wrong when unlocking documents, or creating audit entries.
      */
