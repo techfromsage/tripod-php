@@ -129,7 +129,7 @@ $stat = null;
 
 if(isset($options['stat-loader']))
 {
-    $stat = include_once $options['stat-loader'];
+    $stat = require_once $options['stat-loader'];
 }
 
 if ($tableId)
