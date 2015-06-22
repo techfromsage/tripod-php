@@ -1,5 +1,5 @@
 <?php
-include_once dirname(__FILE__) . '/common.inc.php';
+require_once dirname(__FILE__) . '/common.inc.php';
 set_include_path(
     get_include_path()
         . PATH_SEPARATOR . dirname(dirname(dirname(__FILE__))).'/src'

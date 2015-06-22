@@ -1,5 +1,5 @@
 <?php
-include_once dirname(__FILE__) . '/common.inc.php';
+require_once dirname(__FILE__) . '/common.inc.php';
 $options = getopt(
     "c:s:q:hv:i:a",
     array(
