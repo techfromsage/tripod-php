@@ -30,7 +30,7 @@ Quickstart
 ```php
 require_once("tripod.inc.php");
 
-Config::setConfig($conf); // set the config, usually read in as JSON from a file
+\Tripod\Mongo\Config::setConfig($conf); // set the config, usually read in as JSON from a file
 
 $tripod = new Driver(
   "CBD_users", // pod (read: MongoDB collection) we're working with
@@ -57,20 +57,20 @@ $graph = $tripod->getViewForResource("http://example.com/users","v_users");
 $allUsers = $graph->get_subjects_of_type("http://xmlns.com/foaf/0.1/Person");
 
 // save
-$newGraph = new ExtendedGraph();
+$newGraph = new \Tripod\ExtendedGraph();
 $newGraph->add_literal_value("http://example.com/user/2","http://xmlns.com/foaf/0.1/name","John Smith");
 $tripod->saveChanges(
-  new ExtendedGraph(), // the before state, here there was no before (new data)
+  new \Tripod\ExtendedGraph(), // the before state, here there was no before (new data)
   $newGraph // the desired after state
 );
 
 // save, but background all the expensive view/table/search generation
-$tripod = new Driver("CBD_users",  "usersdb", array(
+$tripod = new \Tripod\Mongo\Driver("CBD_users",  "usersdb", array(
     'async' = array(OP_VIEWS,OP_TABLES,OP_SEARCH) // async opt says what to do later via a queue rather than as part of the save
   )
 );
 $tripod->saveChanges(
-  new ExtendedGraph(), // the before state, here there was no before (new data)
+  new \Tripod\ExtendedGraph(), // the before state, here there was no before (new data)
   $newGraph // the desired after state
 );
 
@@ -222,11 +222,6 @@ Before you can do anything with tripod you need to initialise the config via the
         "database" : "testing",
         "collection" : "transaction_log",
         "data_source" : "cluster2"
-    },
-    "queue" : {
-        "database" : "testing",
-        "collection" : "q_queue",
-        "data_source" : "cluster1"
     }
 }
 
