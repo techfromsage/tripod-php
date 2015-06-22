@@ -251,7 +251,6 @@ abstract class DriverBase
         if (self::$logger == null)
         {
             $log = new \Monolog\Logger('TRIPOD');
-//            $log->pushHandler(); todo: which handler to push by default?
             self::$logger = $log;
         }
         return self::$logger;
