@@ -5,8 +5,6 @@ $options = getopt(
     array(
         "config:",
         "storename:",
-        "tripod-dir:",
-        "arc-dir:",
         "spec:",
         "id:",
         "help",
@@ -35,8 +33,6 @@ Options:
     -q --queue              Queue name to place jobs on (defaults to configured TRIPOD_APPLY_QUEUE value)
 
     --stat-loader           Path to script to initialize a Stat object.  Note, it *must* return an iTripodStat object!
-    --tripod-dir            Path to tripod directory base
-    --arc-dir               Path to ARC2 (required with --tripod-dir)
 
 END;
     echo $help;
@@ -51,25 +47,8 @@ if(empty($options) || isset($options['h']) || isset($options['help']) ||
     exit();
 }
 $configLocation = isset($options['c']) ? $options['c'] : $options['config'];
-if(isset($options['tripod-dir']))
-{
-    if(isset($options['arc-dir']))
-    {
-        $tripodBasePath = $options['tripod-dir'];
-        define('ARC_DIR', $options['arc-dir']);
-    }
-    else
-    {
-        showUsage();
-        exit();
-    }
-}
-else
-{
-    $tripodBasePath = dirname(dirname(dirname(__FILE__)));
-}
 
-require_once $tripodBasePath . '/src/tripod.inc.php';
+require_once dirname(dirname(dirname(__FILE__))) . '/src/tripod.inc.php';
 
 /**
  * @param string|null $id
