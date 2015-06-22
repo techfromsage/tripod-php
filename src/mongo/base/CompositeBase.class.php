@@ -137,10 +137,10 @@ abstract class CompositeBase extends \Tripod\Mongo\DriverBase implements \Tripod
     /**
      * Returns the specification config
      * @param string $storeName
-     * @param string $composite_id The specification id
+     * @param string $specId The specification id
      * @return array|null
      */
-    public abstract function getSpecification($storeName, $composite_id);
+    public abstract function getSpecification($storeName, $specId);
 
     /**
      * Test if the a particular type appears in the array of types associated with a particular spec and that the changeset
