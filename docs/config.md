@@ -5,7 +5,7 @@ Tripod config is typically defined as a JSON file or stream which is added to th
 
 ```php
 $conf = json_decode(file_get_contents('tripod_config.json');
-Config::setConfig($conf); // set the config, usually read in as JSON from a file
+\Tripod\Mongo\Config::setConfig($conf); // set the config, usually read in as JSON from a file
 ```
 
 Namespaces
