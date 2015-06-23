@@ -1286,14 +1286,14 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $transactionMongo = new MongoClient($transactionConnInfo['connection'], $options);
         $transactionDbInfo = $transactionMongo->listDBs();
         foreach($transactionDbInfo['databases'] as $db){
-            $this->assertNotEquals($db['name'], $newConfig['transaction_log']['database'], $newConfig['queue']['database']);
+            $this->assertNotEquals($db['name'], $newConfig['transaction_log']['database']);
         }
         $tqueuesConnInfo = $newConfig['data_sources'][$newConfig['transaction_log']['data_source']];
         $options = isset($tqueuesConnInfo['replicaSet']) && !empty($tqueuesConnInfo['replicaSet']) ? array('replicaSet' => $tqueuesConnInfo['replicaSet']): array();
         $queuesMongo = new MongoClient($tqueuesConnInfo['connection'], $options);
         $queuesDbInfo = $queuesMongo->listDBs();
         foreach($queuesDbInfo['databases'] as $db){
-            $this->assertNotEquals($db['name'], $newConfig['transaction_log']['database'], $newConfig['queue']['database']);
+            $this->assertNotEquals($db['name'], $newConfig['transaction_log']['database']);
         }
 
         // Start adding some data
