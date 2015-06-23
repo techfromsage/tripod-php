@@ -848,7 +848,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
     }
 
 
-    public function testDiscoverImpactedSubjectsAreDoneAllOperationsSync()
+    public function testDiscoverImpactedSubjectsAreDoneAllOperationsASync()
     {
         $uri_1 = "http://example.com/1";
         $uri_2 = "http://example.com/2";
@@ -1158,7 +1158,6 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         // a delete and an update
         $nG = new \Tripod\Mongo\MongoGraph();
         $nG->add_graph($oG);
-        // This should
         $nG->add_literal_triple($uri_1, $nG->qname_to_uri("searchterms:title"), "wibble");
         $nG->remove_resource_triple($uri_2, $oG->qname_to_uri("rdf:type"), "http://foo/bar#Class2");
 
@@ -1305,7 +1304,6 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         // a delete and an update
         $nG = new \Tripod\Mongo\MongoGraph();
         $nG->add_graph($oG);
-        // This should
         $nG->add_literal_triple($uri_1, $nG->qname_to_uri("searchterms:title"), "wibble");
         $nG->remove_resource_triple($uri_2, $oG->qname_to_uri("rdf:type"), "http://foo/bar#Class2");
 

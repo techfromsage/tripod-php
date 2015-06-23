@@ -8,6 +8,6 @@
     "minimum-stability": "dev",
     "require": {
         "slim/slim": "2.*",
-        "talis/tripod-php" : "dev-allow-multiple-queues"
+        "talis/tripod-php" : "*"
     }
 }

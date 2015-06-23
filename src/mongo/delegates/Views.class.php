@@ -74,6 +74,12 @@ class Views extends CompositeBase
     {
         $resources = array_keys($resourcesAndPredicates);
 
+        // This should never happen, but in the event that we have been passed an empty array or something
+        if(empty($resources))
+        {
+            return array();
+        }
+
         $contextAlias = $this->getContextAlias($contextAlias); // belt and braces
 
         // build a filter - will be used for impactIndex detection and finding direct views to re-gen
