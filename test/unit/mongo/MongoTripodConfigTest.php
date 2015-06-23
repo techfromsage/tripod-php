@@ -1264,6 +1264,71 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         }
     }
 
+    public function testTransactionLogIsWrittenToCorrectDBAndCollection()
+    {
+        $storeName = 'tripod_php_testing';
+        $newConfig = \Tripod\Mongo\Config::getConfig();
+        $newConfig['transaction_log']['database'] = 'tripod_php_testing_transaction_log';
+        $newConfig['transaction_log']['collection'] = 'transaction_log';
+
+        \Tripod\Mongo\Config::setConfig($newConfig);
+
+        $config = \Tripod\Mongo\Config::getInstance();
+
+        // Clear out any old data
+        $tlogDB = $config->getTransactionLogDatabase();
+        $tlogDB->drop();
+
+
+        // Make sure the dbs do not exist
+        $transactionConnInfo = $newConfig['data_sources'][$newConfig['transaction_log']['data_source']];
+        $options = isset($transactionConnInfo['replicaSet']) && !empty($transactionConnInfo['replicaSet']) ? array('replicaSet' => $transactionConnInfo['replicaSet']): array();
+        $transactionMongo = new MongoClient($transactionConnInfo['connection'], $options);
+        $transactionDbInfo = $transactionMongo->listDBs();
+        foreach($transactionDbInfo['databases'] as $db){
+            $this->assertNotEquals($db['name'], $newConfig['transaction_log']['database'], $newConfig['queue']['database']);
+        }
+        $tqueuesConnInfo = $newConfig['data_sources'][$newConfig['transaction_log']['data_source']];
+        $options = isset($tqueuesConnInfo['replicaSet']) && !empty($tqueuesConnInfo['replicaSet']) ? array('replicaSet' => $tqueuesConnInfo['replicaSet']): array();
+        $queuesMongo = new MongoClient($tqueuesConnInfo['connection'], $options);
+        $queuesDbInfo = $queuesMongo->listDBs();
+        foreach($queuesDbInfo['databases'] as $db){
+            $this->assertNotEquals($db['name'], $newConfig['transaction_log']['database'], $newConfig['queue']['database']);
+        }
+
+        // Start adding some data
+        $this->tripod = new \Tripod\Mongo\Driver('CBD_testing', $storeName, array(OP_ASYNC=>array(OP_VIEWS=>true,OP_TABLES=>false,OP_SEARCH=>false)));
+        $this->loadBaseDataViaTripod();
+
+        $graph = new \Tripod\Mongo\MongoGraph();
+        $subject = 'http://example.com/' . uniqid();
+        $labeller = new \Tripod\Mongo\Labeller();
+        $graph->add_resource_triple($subject, RDF_TYPE, $labeller->qname_to_uri('foaf:Person'));
+        $graph->add_literal_triple($subject, FOAF_NAME, "Anne Example");
+        $this->tripod->saveChanges(new \Tripod\ExtendedGraph(), $graph);
+
+        $newGraph = $this->tripod->describeResource($subject);
+        $newGraph->add_literal_triple($subject, $labeller->qname_to_uri('foaf:email'), 'anne@example.com');
+        $this->tripod->saveChanges($graph, $newGraph);
+
+        // Make sure the dbs do now exist
+        $transactionDbInfo = $transactionMongo->listDBs();
+        $transactionDbExists = false;
+        foreach($transactionDbInfo['databases'] as $db){
+            if($db['name'] === $newConfig['transaction_log']['database']){
+                $transactionDbExists = true;
+            }
+        }
+        $this->assertTrue($transactionDbExists);
+
+        // Make sure the data in the dbs look right
+        $transactionColletion = $transactionMongo->selectCollection($newConfig['transaction_log']['database'], $newConfig['transaction_log']['collection']);
+        $transactionCount = $transactionColletion->count();
+        $transactionExampleDocument = $transactionColletion->findOne();
+        $this->assertEquals(18, $transactionCount);
+        $this->assertContains('transaction_', $transactionExampleDocument["_id"]);
+    }
+
     public function testComputedFieldSpecValidationInvalidFunction()
     {
         $newConfig = \Tripod\Mongo\Config::getConfig();

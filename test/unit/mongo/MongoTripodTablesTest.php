@@ -1551,4 +1551,75 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $impactedSubjects = $tables->getImpactedSubjects($subjectsAndPredicatesOfChange, 'http://talisaspire.com/');
         $this->assertEquals($expectedImpactedSubjects, $impactedSubjects);
     }
+
+    public function testRemoveTableSpecDoesNotAffectInvalidation()
+    {
+        foreach(\Tripod\Mongo\Config::getInstance()->getTableSpecifications($this->tripod->getStoreName()) as $specId=>$spec)
+        {
+            $this->generateTableRows($specId);
+        }
+
+
+        $context = 'http://talisaspire.com/';
+        $uri = "http://talisaspire.com/works/4d101f63c10a6";
+
+        $collection = \Tripod\Mongo\Config::getInstance()->getCollectionForTable('tripod_php_testing', 't_resource');
+        $this->assertGreaterThan(0, $collection->count(array('_id.type'=>'t_resource', 'value._impactIndex'=>array(_ID_RESOURCE=>$uri, _ID_CONTEXT=>$context))));
+        $config = \Tripod\Mongo\Config::getConfig();
+        unset($config['stores']['tripod_php_testing']['table_specifications'][0]);
+        \Tripod\Mongo\Config::setConfig($config);
+
+
+        /** @var PHPUnit_Framework_MockObject_MockObject|\Tripod\Mongo\Driver $mockTripod */
+        $mockTripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
+            ->setMethods(array('getComposite'))
+            ->setConstructorArgs(
+                array(
+                    'CBD_testing',
+                    'tripod_php_testing',
+                    array(
+                        'defaultContext'=>$context,
+                        OP_ASYNC=>array(
+                            OP_VIEWS=>true,
+                            OP_TABLES=>false,
+                            OP_SEARCH=>true
+                        )
+                    )
+                )
+            )
+            ->getMock();
+
+        $mockTables = $this->getMockBuilder('\Tripod\Mongo\Composites\Tables')
+            ->setMethods(array('update'))
+            ->setConstructorArgs(
+                array(
+                    'tripod_php_testing',
+                    \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                    $context
+                )
+            )
+            ->getMock();
+
+        $labeller = new \Tripod\Mongo\Labeller();
+
+
+        $mockTripod->expects($this->once())
+            ->method('getComposite')
+            ->with(OP_TABLES)
+            ->will($this->returnValue($mockTables));
+
+        $mockTables->expects($this->never())
+            ->method('update');
+
+
+        $originalGraph = $mockTripod->describeResource($uri);
+        $updatedGraph = $originalGraph->get_subject_subgraph($uri);
+        $updatedGraph->add_literal_triple($uri, $labeller->qname_to_uri('dct:description'), 'Physics textbook');
+
+        $mockTripod->saveChanges($originalGraph, $updatedGraph);
+
+        // The table row should still be there, even if the tablespec no longer exists
+        $this->assertGreaterThan(0, $collection->count(array('_id.type'=>'t_resource', 'value._impactIndex'=>array(_ID_RESOURCE=>$uri, _ID_CONTEXT=>$context))));
+
+    }
 }

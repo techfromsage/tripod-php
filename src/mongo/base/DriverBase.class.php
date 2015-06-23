@@ -204,6 +204,20 @@ abstract class DriverBase
      * @param string $message
      * @param array|null $params
      */
+    /**
+     * @param $message
+     * @param array|null $params
+     */
+    public function infoLog($message, $params=null)
+    {
+        $this->log(\Psr\Log\LogLevel::INFO,$message,$params);
+
+    }
+
+    /**
+     * @param $message
+     * @param array|null $params
+     */
     public function debugLog($message, $params=null)
     {
         $this->log(\Psr\Log\LogLevel::DEBUG,$message,$params);
