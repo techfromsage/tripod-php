@@ -41,20 +41,43 @@ Example:
 }
 ```
 
-Databases
+Data sources
+------------
+
+Defines and names the data connections for Tripod.
+
+Example:
+```javascript
+{
+    "data_sources" : {
+        "rs1" : {
+            "type" : "mongo",
+            "connection": "mongodb:\/\/localhost",
+            "replicaSet": ""
+        },
+        "rs2" : {
+            "type" : "mongo",
+            "connection": "mongodb:\/\/example.com:27017",
+            "replicaSet": "repset1"
+        }
+    }
+}
+```
+
+Stores
 -------
 
-Defines the databases and names the collections Tripod can work with. Also includes the ability to define indexes and OWL-like cardinality rules on predicates within each collection. Each database also defines a connection string telling Tripod how to connect.
+Defines the Tripod stores (for Mongo Tripod, these would be databases) and names the pods (e.g. MongoDB collections) Tripod can work with. Also includes the ability to define indexes and OWL-like cardinality rules on predicates within each collection. Each store must declare a data_source.
 
 Example:
 
-This example defines one database with two `CBD_` collections along with associated indexes and cardinality rules.
+This example defines one store with two `CBD_` pods along with associated indexes and cardinality rules.
 
 ```javascript
 {
-  "databases" : {
+  "stores" : {
     "my_app_db" : {
-      "collections" : {
+      "pods" : {
         "CBD_orders" : {
           "cardinality" : {
             "dct:created" : 1
@@ -79,7 +102,7 @@ This example defines one database with two `CBD_` collections along with associa
           }
         }
       },
-      "connStr" : "mongodb://localhost"
+      "data_source" : "mongoCluster1"
     }
   }
 }
@@ -92,18 +115,23 @@ View specifications define the shape of the materialised views that Mongo manage
 
 The convention for view spec identifiers is to prefix them with `v_`.
 
-Specs are defined as an array at the top level of the config document:
+Specs are defined as an array in the store level of the config document:
 
 ```javascript
 {
-  "view_specifications": [
-    {
-      "_id": "v_spec_1"
-    },
-    {
-      "_id": "v_spec_2"
+    "stores": {
+        "some_store": {
+            "pods" : {},
+            "view_specifications": [
+                {
+                    "_id": "v_spec_1"
+                },
+                {
+                    "_id": "v_spec_2"
+                }
+            ]
+        }
     }
-  ]
 }
 ```
 
@@ -118,18 +146,24 @@ Table specifications define the shape of the tabular data that Mongo manages. Fo
 
 The convention for table spec identifiers is to prefix them with `t_`.
 
-Specs are defined as an array at the top level of the config document:
+Specs are defined as an array in the store level of the config document:
 
 ```javascript
 {
-  "table_specifications": [
-    {
-      "_id": "t_spec_1"
-    },
-    {
-      "_id": "t_spec_2"
+    "stores": {
+        "some_store": {
+            "pods" : {},
+            "view_specifications" : [],
+            "table_specifications": [
+                {
+                    "_id": "t_spec_1"
+                },
+                {
+                    "_id": "t_spec_2"
+                }
+            ]
+        }
     }
-  ]
 }
 ```
 
@@ -143,7 +177,7 @@ Search config
 
 Previous versions of Tripod integrated with ElasticSearch to provide indexing and full-text search. This was removed early on whilst Tripod was still closed source within Talis, as the complexity was not required. However some primitive regex-style searching is still provided.  For a full explanation of views, [read the primer](primers/search.md).
 
-The search config is defined at the top level and consists of two parts - the `search_provider` and `search_specifications`.
+The search config is defined in the store level and consists of two parts - the `search_provider` and `search_specifications`.
 
 The provider was intended to allow pluggable implementations of search services (ElasticSearch, straight Lucene, Solr perhaps) but today the only option is `MongoSearchProvider`.
 
@@ -153,17 +187,25 @@ The convention for search spec identifiers is to prefix them with `i_`.
 
 ```javascript
 {
-  "search_config": {
-    "search_provider" : "MongoSearchProvider",
-    "search_specifications" :   [
-      {
-        "_id": "i_spec_1"
-      },
-      {
-        "_id": "i_spec_2"
-      }
-    ]
-  }
+{
+    "stores": {
+        "some_store": {
+            "pods" : {},
+            "view_specifications" : [],
+            "table_specifications": [],
+            "search_config": {
+                "search_provider" : "MongoSearchProvider",
+                "search_specifications" :   [
+                    {
+                        "_id": "i_spec_1"
+                    },
+                    {
+                        "_id": "i_spec_2"
+                    }
+                ]
+            }
+        }
+    }
 }
 ```
 
@@ -313,7 +355,7 @@ This is very useful if you have specific volatile views and the freshest data is
 
 `ttl` cannot be used within table specifications, because tablerows are often operated on in paged sets. It would be impossible to tell if table rows on further counts should still exist without paging through the whole set first.
 
-### indicies
+### indices
 
 ### ensureIndexes
 
