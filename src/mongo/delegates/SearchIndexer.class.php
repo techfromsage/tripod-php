@@ -51,7 +51,7 @@ class SearchIndexer extends CompositeBase
 
     /**
      * Receive update from subject
-     * @param ImpactedSubject
+     * @param ImpactedSubject $subject
      * @return void
      */
     public function update(ImpactedSubject $subject)
@@ -112,10 +112,8 @@ class SearchIndexer extends CompositeBase
         //1. remove all search documents for this resource
         $searchProvider->deleteDocument($resourceUri, $context, $specType); // null means delete all documents for this resource
 
-        //2. find all impacted documents and regenerate them
+        //2. regenerate search documents for this resource
         $documentsToIndex   = array();
-
-        //3. regenerate search documents for this resource
         // first work out what its type is
         $query = array("_id"=>array(
             'r'=>$this->labeller->uri_to_alias($resourceUri),
