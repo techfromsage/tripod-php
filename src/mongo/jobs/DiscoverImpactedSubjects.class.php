@@ -144,6 +144,10 @@ class DiscoverImpactedSubjects extends JobBase {
         {
             $queueName = Config::getDiscoverQueueName();
         }
+        elseif(strpos($queueName, \Tripod\Mongo\Config::getDiscoverQueueName()) === false)
+        {
+            $queueName = \Tripod\Mongo\Config::getDiscoverQueueName() . '::' . $queueName;
+        }
         $this->submitJob($queueName,get_class($this),$data);
     }
 

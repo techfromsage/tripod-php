@@ -250,7 +250,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
             'contextAlias'=>'http://talisaspire.com/'
         );
 
-        $queueName = 'TRIPOD_TESTING_QUEUE_' . uniqid();
+        $queueName = \Tripod\Mongo\Config::getDiscoverQueueName() . '::TRIPOD_TESTING_QUEUE_' . uniqid();
 
         /** @var \Tripod\Mongo\Jobs\DiscoverImpactedSubjects|PHPUnit_Framework_MockObject_MockObject $discoverImpactedSubjects */
         $discoverImpactedSubjects = $this->getMockBuilder('\Tripod\Mongo\Jobs\DiscoverImpactedSubjects')

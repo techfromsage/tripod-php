@@ -273,7 +273,7 @@ class ApplyOperationTest extends MongoTripodTestBase
             ->setMockClassName('MockApplyOperation')
             ->getMock();
 
-        $queueName = 'TRIPOD_TESTING_QUEUE_' . uniqid();
+        $queueName = \Tripod\Mongo\Config::getApplyQueueName() . '::TRIPOD_TESTING_QUEUE_' . uniqid();
 
         $applyOperation->expects($this->once())
             ->method('submitJob')
