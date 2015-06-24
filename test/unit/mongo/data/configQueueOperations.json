@@ -55,7 +55,7 @@
                 }
             ],
             "search_config":{
-                "search_provider":"MongoSearchProvider",
+                "search_provider":"\\Tripod\\Mongo\\MongoSearchProvider",
                 "search_specifications":[
                     {
                         "_id":"i_search_resource",
@@ -212,11 +212,5 @@
         "database" : "tripod_php_testing_queue_ops",
         "collection" : "transaction_log",
         "data_source" : "rs1"
-    },
-    "queue" : {
-        "database" : "tripod_php_testing_queue_ops",
-        "collection" : "q_queue",
-        "data_source" : "rs1"
     }
-
 }

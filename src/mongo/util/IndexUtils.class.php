@@ -1,27 +1,28 @@
 <?php
-require_once(TRIPOD_DIR."mongo/MongoTripodConfig.class.php");
+
+namespace Tripod\Mongo;
+
+require_once(TRIPOD_DIR . "mongo/Config.class.php");
 
 /**
  * Class IndexUtils
+ * @package Tripod\Mongo
  */
 class IndexUtils
 {
     /**
-     * Ensures the index for the given $storeName. As a consequence, sets the global
-     * MongoCursor timeout to -1 for this thread, so use with caution from anything
-     * other than a setup script
+     * Ensures the index for the given $storeName.
      * @param bool $reindex - force a reindex of existing data
      * @param null $storeName - database name to ensure indexes for
      * @param bool $background - index in the background (default) or lock DB whilst indexing
      */
     public function ensureIndexes($reindex=false,$storeName=null,$background=true)
     {
-        //MongoCursor::$timeout = -1; // set this otherwise you'll see timeout errors for large indexes
-        $config = MongoTripodConfig::getInstance();
+        $config = Config::getInstance();
         $dbs = ($storeName==null) ? $config->getDbs() : array($storeName);
         foreach ($dbs as $storeName)
         {
-            $collections = MongoTripodConfig::getInstance()->getIndexesGroupedByCollection($storeName);
+            $collections = Config::getInstance()->getIndexesGroupedByCollection($storeName);
             foreach ($collections as $collectionName=>$indexes)
             {
                 // Don't do this for composites, which could be anywhere
@@ -39,11 +40,26 @@ class IndexUtils
                     if (is_numeric($indexName))
                     {
                         // no name
-                        $config->getCollectionForCBD($storeName, $collectionName)->ensureIndex($fields,array("background"=>$background));
+                        $config->getCollectionForCBD($storeName, $collectionName)
+                            ->ensureIndex(
+                                $fields,
+                                array(
+                                    "background"=>$background,
+                                    "socketTimeoutMS"=>Config::getInstance()->getMongoCursorTimeout()
+                                )
+                            );
                     }
                     else
                     {
-                        $config->getCollectionForCBD($storeName, $collectionName)->ensureIndex($fields,array('name'=>$indexName,"background"=>$background));
+                        $config->getCollectionForCBD($storeName, $collectionName)
+                            ->ensureIndex(
+                                $fields,
+                                array(
+                                    'name'=>$indexName,
+                                    "background"=>$background,
+                                    "socketTimeoutMS"=>Config::getInstance()->getMongoCursorTimeout()
+                                )
+                            );
                     }
                 }
             }
@@ -51,10 +67,10 @@ class IndexUtils
             // Index views
             foreach($config->getViewSpecifications($storeName) as $viewId=>$spec)
             {
-                $collection = MongoTripodConfig::getInstance()->getCollectionForView($storeName, $viewId);
+                $collection = Config::getInstance()->getCollectionForView($storeName, $viewId);
                 if($collection)
                 {
-                    $indexes = array("_id.type"=>1);
+                    $indexes = array(array("_id.type"=>1));
                     if(isset($spec['ensureIndexes']))
                     {
                         $indexes = array_merge($indexes, $spec['ensureIndexes']);
@@ -63,17 +79,26 @@ class IndexUtils
                     {
                         $collection->deleteIndexes();
                     }
-                    $collection->ensureIndex($indexes, array("background"=>$background));
+                    foreach($indexes as $index)
+                    {
+                        $collection->ensureIndex(
+                            $index,
+                            array(
+                                "background"=>$background,
+                                "socketTimeoutMS"=>Config::getInstance()->getMongoCursorTimeout()
+                            )
+                        );
+                    }
                 }
             }
 
             // Index table rows
             foreach($config->getTableSpecifications($storeName) as $tableId=>$spec)
             {
-                $collection = MongoTripodConfig::getInstance()->getCollectionForTable($storeName, $tableId);
+                $collection = Config::getInstance()->getCollectionForTable($storeName, $tableId);
                 if($collection)
                 {
-                    $indexes = array("_id.type"=>1);
+                    $indexes = array(array("_id.type"=>1));
                     if(isset($spec['ensureIndexes']))
                     {
                         $indexes = array_merge($indexes, $spec['ensureIndexes']);
@@ -82,7 +107,16 @@ class IndexUtils
                     {
                         $collection->deleteIndexes();
                     }
-                    $collection->ensureIndex($indexes, array("background"=>$background));
+                    foreach($indexes as $index)
+                    {
+                        $collection->ensureIndex(
+                            $index,
+                            array(
+                                "background"=>$background,
+                                "socketTimeoutMS"=>Config::getInstance()->getMongoCursorTimeout()
+                            )
+                        );
+                    }
                 }
             }
         }

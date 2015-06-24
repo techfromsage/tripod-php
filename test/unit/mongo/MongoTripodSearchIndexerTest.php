@@ -1,18 +1,19 @@
 <?php
 require_once 'MongoTripodTestBase.php';
-require_once 'src/mongo/MongoTripod.class.php';
+require_once 'src/mongo/Driver.class.php';
 require_once 'src/mongo/MongoGraph.class.php';
 
-
+/**
+ * Class MongoTripodSearchIndexerTest
+ */
 class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
 
     protected function setUp()
     {
         parent::setUp();
-        $queue = new MongoTripodQueue();
-        $queue->purgeQueue();
-        $this->tripod = new MongoTripod("CBD_testing", "tripod_php_testing", array("async"=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>false)));
-        foreach(MongoTripodConfig::getInstance()->getCollectionsForSearch($this->tripod->getStoreName()) as $collection)
+
+        $this->tripod = new \Tripod\Mongo\Driver("CBD_testing", "tripod_php_testing", array("async"=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>false)));
+        foreach(\Tripod\Mongo\Config::getInstance()->getCollectionsForSearch($this->tripod->getStoreName()) as $collection)
         {
             $collection->drop();
         }
@@ -24,7 +25,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
     {
         // First make a change that affects a search document
         $tripod = $this->getMock(
-            'MongoTripod',
+            '\Tripod\Mongo\Driver',
             array('getSearchIndexer', 'getDataUpdater'),
             array(
                 'CBD_testing',
@@ -41,7 +42,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
         );
 
         $tripodUpdate = $this->getMock(
-            'MongoTripodUpdates',
+            '\Tripod\Mongo\Updates',
             array('storeChanges'),
             array(
                 $tripod,
@@ -55,20 +56,26 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
                 )
             )
         );
+
+        $labeller = new \Tripod\Mongo\Labeller();
+        $subjectsAndPredicatesOfChange = array(
+            $labeller->uri_to_alias("http://talisaspire.com/authors/1")=>array("foaf:name")
+        );
+
         $tripodUpdate->expects($this->atLeastOnce())
             ->method('storeChanges')
-            ->will($this->returnValue(array('deletedSubjects'=>array())));
+            ->will($this->returnValue($subjectsAndPredicatesOfChange));
 
         $tripod->expects($this->atLeastOnce())
             ->method('getDataUpdater')
             ->will($this->returnValue($tripodUpdate));
 
-        $searchIndexer = $this->getMock('MongoTripodSearchIndexer',
-            array('getSearchProvider'),
+        $searchIndexer = $this->getMock('\Tripod\Mongo\Composites\SearchIndexer',
+            array('getSearchProvider', 'getImpactedSubjects'),
             array($tripod)
         );
 
-        $searchProvider = $this->getMock('MongoSearchProvider',
+        $searchProvider = $this->getMock('\Tripod\Mongo\MongoSearchProvider',
             array('deleteDocument','indexDocument'),
             array($tripod)
         );
@@ -88,6 +95,63 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             ->method('getSearchProvider')
             ->will($this->returnValue($searchProvider));
 
+        $impactedSubjects = array(
+            $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
+                ->setConstructorArgs(
+                    array(
+                        array(
+                            _ID_RESOURCE=>'http://talisaspire.com/resources/doc1',
+                            _ID_CONTEXT=>'http://talisaspire.com/',
+                        ),
+                        OP_SEARCH,
+                        'tripod_php_testing',
+                        'CBD_testing',
+                        array('i_search_resource')
+                    )
+                )
+                ->setMethods(array('getTripod'))
+                ->getMock(),
+            $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
+                ->setConstructorArgs(
+                    array(
+                        array(
+                            _ID_RESOURCE=>'http://talisaspire.com/resources/doc2',
+                            _ID_CONTEXT=>'http://talisaspire.com/',
+                        ),
+                        OP_SEARCH,
+                        'tripod_php_testing',
+                        'CBD_testing',
+                        array('i_search_resource')
+                    )
+                )
+                ->setMethods(array('getTripod'))
+                ->getMock(),
+            $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
+                ->setConstructorArgs(
+                    array(
+                        array(
+                            _ID_RESOURCE=>'http://talisaspire.com/resources/doc3',
+                            _ID_CONTEXT=>'http://talisaspire.com/',
+                        ),
+                        OP_SEARCH,
+                        'tripod_php_testing',
+                        'CBD_testing',
+                        array('i_search_resource')
+                    )
+                )
+                ->setMethods(array('getTripod'))
+                ->getMock()
+        );
+
+        $impactedSubjects[0]->expects($this->once())->method('getTripod')->will($this->returnValue($tripod));
+        $impactedSubjects[1]->expects($this->once())->method('getTripod')->will($this->returnValue($tripod));
+        $impactedSubjects[2]->expects($this->once())->method('getTripod')->will($this->returnValue($tripod));
+
+        $searchIndexer->expects($this->once())
+            ->method('getImpactedSubjects')
+            ->with($subjectsAndPredicatesOfChange, 'http://talisaspire.com/')
+            ->will($this->returnValue($impactedSubjects));
+
 
         $tripod->expects($this->atLeastOnce())
             ->method('getSearchIndexer')
@@ -96,11 +160,12 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
         $g1 = $tripod->describeResource("http://talisaspire.com/authors/1");
         $g2 = $tripod->describeResource("http://talisaspire.com/authors/1");
         $g2->add_literal_triple("http://talisaspire.com/authors/1", $g2->qname_to_uri("foaf:name"),"Bill Shakespeare" );
+
         $tripod->saveChanges($g1, $g2);
 
         // Now make a change that affects a different search document - Create new document
         $tripod = $this->getMock(
-            'MongoTripod',
+            '\Tripod\Mongo\Driver',
             array('getSearchIndexer'),
             array(
                 'CBD_testing',
@@ -116,12 +181,12 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             )
         );
 
-        $searchIndexer = $this->getMock('MongoTripodSearchIndexer',
-            array('getSearchProvider'),
+        $searchIndexer = $this->getMock('\Tripod\Mongo\Composites\SearchIndexer',
+            array('getSearchProvider', 'getImpactedSubjects'),
             array($tripod)
         );
 
-        $searchProvider = $this->getMock('MongoSearchProvider',
+        $searchProvider = $this->getMock('\Tripod\Mongo\MongoSearchProvider',
             array('deleteDocument','indexDocument'),
             array($tripod)
         );
@@ -131,7 +196,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             ->with(
                 $this->equalTo("http://talisaspire.com/lists/1234"),
                 'http://talisaspire.com/',
-                $this->isNull())
+                $this->isEmpty())
         ;
 
         $searchProvider->expects($this->exactly(1))
@@ -141,16 +206,35 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             ->method('getSearchProvider')
             ->will($this->returnValue($searchProvider));
 
+        $impactedSubject = $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
+            ->setConstructorArgs(
+                array(
+                    array(
+                        _ID_RESOURCE=>'http://talisaspire.com/lists/1234',
+                        _ID_CONTEXT=>'http://talisaspire.com/',
+                    ),
+                    OP_SEARCH,
+                    'tripod_php_testing',
+                    'CBD_testing'
+                )
+            )
+            ->setMethods(array('getTripod'))
+            ->getMock();
+
+        $impactedSubject->expects($this->once())->method('getTripod')->will($this->returnValue($tripod));
+
+        $searchIndexer->expects($this->once())->method('getImpactedSubjects')->will($this->returnValue(array($impactedSubject)));
+
 
         $tripod->expects($this->atLeastOnce())
             ->method('getSearchIndexer')
             ->will($this->returnValue($searchIndexer));
 
-        $list = new ExtendedGraph();
+        $list = new \Tripod\ExtendedGraph();
         $list->add_resource_triple("http://talisaspire.com/lists/1234", RDF_TYPE, "http://purl.org/vocab/resourcelist/schema#List");
         $list->add_literal_triple("http://talisaspire.com/lists/1234", "http://rdfs.org/sioc/spec/name", "Testing list");
 
-        $tripod->saveChanges(new ExtendedGraph(), $list);
+        $tripod->saveChanges(new \Tripod\ExtendedGraph(), $list);
 
         // Regen our search docs for real since this step was overridden in the stub
         $this->tripod->getSearchIndexer()->generateAndIndexSearchDocuments(
@@ -161,7 +245,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
 
         // Now make a change to the last document
         $tripod = $this->getMock(
-            'MongoTripod',
+            '\Tripod\Mongo\Driver',
             array('getSearchIndexer'),
             array(
                 'CBD_testing',
@@ -177,15 +261,33 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             )
         );
 
-        $searchIndexer = $this->getMock('MongoTripodSearchIndexer',
-            array('getSearchProvider'),
+        $searchIndexer = $this->getMock('\Tripod\Mongo\Composites\SearchIndexer',
+            array('getSearchProvider', 'getImpactedSubjects'),
             array($tripod)
         );
 
-        $searchProvider = $this->getMock('MongoSearchProvider',
+        $searchProvider = $this->getMock('\Tripod\Mongo\MongoSearchProvider',
             array('deleteDocument','indexDocument'),
             array($tripod)
         );
+
+        $impactedSubject = $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
+            ->setConstructorArgs(
+                array(
+                    array(
+                        _ID_RESOURCE=>'http://talisaspire.com/lists/1234',
+                        _ID_CONTEXT=>'http://talisaspire.com/',
+                    ),
+                    OP_SEARCH,
+                    'tripod_php_testing',
+                    'CBD_testing',
+                    array('i_search_list')
+                )
+            )
+            ->setMethods(array('getTripod'))
+            ->getMock();
+
+        $impactedSubject->expects($this->once())->method('getTripod')->will($this->returnValue($tripod));
 
         $searchProvider->expects($this->exactly(1))
             ->method('deleteDocument')
@@ -202,6 +304,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             ->method('getSearchProvider')
             ->will($this->returnValue($searchProvider));
 
+        $searchIndexer->expects($this->once())->method('getImpactedSubjects')->will($this->returnValue(array($impactedSubject)));
 
         $tripod->expects($this->atLeastOnce())
             ->method('getSearchIndexer')
@@ -228,7 +331,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
 
         // Now make a change that shouldn't affect any search docs
         $tripod = $this->getMock(
-            'MongoTripod',
+            '\Tripod\Mongo\Driver',
             array('getSearchIndexer', 'getDataUpdater'),
             array(
                 'CBD_testing',
@@ -245,7 +348,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
         );
 
         $tripodUpdate = $this->getMock(
-            'MongoTripodUpdates',
+            '\Tripod\Mongo\Updates',
             array('storeChanges'),
             array(
                 $tripod,
@@ -267,12 +370,12 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             ->method('getDataUpdater')
             ->will($this->returnValue($tripodUpdate));
 
-        $searchIndexer = $this->getMock('MongoTripodSearchIndexer',
+        $searchIndexer = $this->getMock('\Tripod\Mongo\Composites\SearchIndexer',
             array('getSearchProvider', 'update'),
             array($tripod)
         );
 
-        $searchProvider = $this->getMock('MongoSearchProvider',
+        $searchProvider = $this->getMock('\Tripod\Mongo\MongoSearchProvider',
             array('deleteDocument','indexDocument'),
             array($tripod)
         );
@@ -300,6 +403,100 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
         $g2 = $tripod->describeResource("http://talisaspire.com/authors/1");
         $g2->add_literal_triple("http://talisaspire.com/authors/1", $g2->qname_to_uri("foaf:dob"),"1564-04-26" );
         $tripod->saveChanges($g1, $g2);
+    }
+
+    /**
+     * Save several new resources in a single operation. Only one of the resources has a type that is applicable based on specifications,
+     * therefore only one ImpactedSubject should be created
+     */
+    public function testSavingMultipleNewEntitiesResultsInOneImpactedSubject()
+    {
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
+            ->setMethods(array('getDataUpdater'))
+            ->setConstructorArgs(
+                array(
+                    'CBD_testing',
+                    'tripod_php_testing',
+                    array(
+                        'defaultContext'=>'http://talisaspire.com/',
+                        OP_ASYNC=>array(
+                            OP_VIEWS=>true,
+                            OP_TABLES=>true,
+                            OP_SEARCH=>true
+                        )
+                    )
+                )
+            )->getMock();
+
+        $tripodUpdates = $this->getMockBuilder('\Tripod\Mongo\Updates')
+            ->setMethods(array('submitJob'))
+            ->setConstructorArgs(
+                array(
+                    $tripod,
+                    array(
+                        'defaultContext'=>'http://talisaspire.com/',
+                        OP_ASYNC=>array(
+                            OP_VIEWS=>true,
+                            OP_TABLES=>true,
+                            OP_SEARCH=>true
+                        )
+                    )
+                )
+            )->getMock();
+
+        $tripod->expects($this->once())
+            ->method('getDataUpdater')
+            ->will($this->returnValue($tripodUpdates));
+
+        // first lets add a book, which should trigger a search doc, view and table gen for a single item
+        $g = new \Tripod\Mongo\MongoGraph();
+        $newSubjectUri1 = "http://talisaspire.com/resources/newdoc1";
+        $newSubjectUri2 = "http://talisaspire.com/resources/newdoc2";
+        $newSubjectUri3 = "http://talisaspire.com/resources/newdoc3";
+
+        $g->add_resource_triple($newSubjectUri1, $g->qname_to_uri("rdf:type"),    $g->qname_to_uri("bibo:Article")); // there are no specs that are applicable for this type alone
+        $g->add_resource_triple($newSubjectUri1, $g->qname_to_uri("dct:creator"), "http://talisaspire.com/authors/1");
+        $g->add_literal_triple($newSubjectUri1,  $g->qname_to_uri("dct:title"),   "This is a new resource");
+        $g->add_literal_triple($newSubjectUri1,  $g->qname_to_uri("dct:subject"), "history");
+        $g->add_literal_triple($newSubjectUri1,  $g->qname_to_uri("dct:subject"), "philosophy");
+
+        $g->add_resource_triple($newSubjectUri2, $g->qname_to_uri("rdf:type"),    $g->qname_to_uri("bibo:Book")); // this is the only resource that should be queued
+        $g->add_resource_triple($newSubjectUri2, $g->qname_to_uri("rdf:type"),    $g->qname_to_uri("acorn:Resource"));
+        $g->add_resource_triple($newSubjectUri2, $g->qname_to_uri("dct:creator"), "http://talisaspire.com/authors/1");
+        $g->add_literal_triple($newSubjectUri2,  $g->qname_to_uri("dct:title"),   "This is another new resource");
+        $g->add_literal_triple($newSubjectUri2,  $g->qname_to_uri("dct:subject"), "maths");
+        $g->add_literal_triple($newSubjectUri2,  $g->qname_to_uri("dct:subject"), "science");
+
+        $g->add_resource_triple($newSubjectUri3, $g->qname_to_uri("rdf:type"),    $g->qname_to_uri("bibo:Journal")); // there are no specs that are applicable for this type alone
+        $g->add_resource_triple($newSubjectUri3, $g->qname_to_uri("dct:creator"), "http://talisaspire.com/authors/1");
+        $g->add_literal_triple($newSubjectUri3,  $g->qname_to_uri("dct:title"),   "This is yet another new resource");
+        $g->add_literal_triple($newSubjectUri3,  $g->qname_to_uri("dct:subject"), "art");
+        $g->add_literal_triple($newSubjectUri3,  $g->qname_to_uri("dct:subject"), "design");
+        $subjectsAndPredicatesOfChange = array(
+            $newSubjectUri1=>array('rdf:type','dct:creator','dct:title','dct:subject'),
+            $newSubjectUri2=>array('rdf:type','dct:creator','dct:title','dct:subject'),
+            $newSubjectUri3=>array('rdf:type','dct:creator','dct:title','dct:subject')
+        );
+        $tripod->saveChanges(new \Tripod\Mongo\MongoGraph(), $g);
+
+        /** @var \Tripod\Mongo\Tables $tables */
+        $search = $tripod->getComposite(OP_SEARCH);
+
+        $expectedImpactedSubjects = array(
+            new \Tripod\Mongo\ImpactedSubject(
+                array(
+                    _ID_RESOURCE=>$newSubjectUri2,
+                    _ID_CONTEXT=>'http://talisaspire.com/'
+                ),
+                OP_SEARCH,
+                'tripod_php_testing',
+                'CBD_testing',
+                array()
+            )
+        );
+
+        $impactedSubjects = $search->getImpactedSubjects($subjectsAndPredicatesOfChange, 'http://talisaspire.com/');
+        $this->assertEquals($expectedImpactedSubjects, $impactedSubjects);
     }
 
 }

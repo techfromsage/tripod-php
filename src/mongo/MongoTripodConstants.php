@@ -9,11 +9,11 @@ define('AUDIT_MANUAL_ROLLBACKS_COLLECTION','audit_manual_rollbacks');
 
 // search
 define('SEARCH_INDEX_COLLECTION', 'search');
-define("SEARCH_PROVIDER_MONGO", 'MongoSearchProvider');
+define("SEARCH_PROVIDER_MONGO", '\Tripod\Mongo\MongoSearchProvider');
 define("SEARCH_PROVIDER_ELASTIC_SEARCH", 'es');
 
 
-// MongoTripod document properties
+// Tripod document properties
 define('_ID_KEY', '_id');
 define('_ID_RESOURCE','r');
 define('_ID_CONTEXT','c');
@@ -29,12 +29,13 @@ define('VALUE_LITERAL','l');
 define('_UPDATED_TS', '_uts');
 define('_CREATED_TS', '_cts');
 
-// operations that MongoTripod performs
+// operations that Tripod performs
 define('OP_VIEWS','generate_views');
 define('OP_TABLES','generate_table_rows');
 define('OP_SEARCH','generate_search_index_docs');
 define('OP_SYNC', 'sync');
 define('OP_ASYNC', 'async');
+define('OP_QUEUE', 'queue');
 
 // query types, used mainly for logging
 define('MONGO_SELECT','MONGO_SELECT');
@@ -64,10 +65,10 @@ define('MONGO_ROLLBACK','MONGO_ROLLBACK');
 define('MONGO_LOCK','MONGO_LOCK');
 define('MONGO_ADD_TO_QUEUE','MONGO_ADD_TO_QUEUE');
 define('MONGO_QUEUE_FAIL','MONGO_QUEUE_FAIL');
-define('MONGO_QUEUE_SUCCESS','MONGO_QUEUE_SUCCESS');
+define('MONGO_QUEUE_DISCOVER_SUCCESS','MONGO_QUEUE_DISCOVER_SUCCESS');
+define('MONGO_QUEUE_APPLY_OPERATION_SUCCESS','MONGO_QUEUE_APPLY_OPERATION_SUCCESS');
 define('MONGO_CREATE_SEARCH_DOC','MONGO_CREATE_SEARCH_DOC');
 define('MONGO_CONNECTION_ERROR','MONGO_CONNECTION_ERROR');
-define('MONGO_QUEUE_PROCESSING_TIME','MONGO_QUEUE_PROCESSING_TIME');
 
 //Audit types, statuses
 define('AUDIT_TYPE_REMOVE_INERT_LOCKS', 'REMOVE_INERT_LOCKS');
@@ -77,3 +78,9 @@ define('AUDIT_STATUS_ERROR', 'ERROR');
 
 // Mongo constants
 define('DEFAULT_MONGO_CONNECT_TIMEOUT_MS', 20000);
+
+// queue constants
+define("MONGO_TRIPOD_RESQUE_SERVER","MONGO_TRIPOD_RESQUE_SERVER");
+define("TRIPOD_DISCOVER_QUEUE","TRIPOD_DISCOVER_QUEUE");
+define("TRIPOD_APPLY_QUEUE","TRIPOD_APPLY_QUEUE");
+

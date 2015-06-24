@@ -1,5 +1,7 @@
 <?php
 
+namespace Tripod;
+
 /**
  * Represents a changeset. Can be used to create a changeset based on the difference between two bounded descriptions. The descriptions must share the same subject URI.
  * Adapted from Moriarty's changeset
@@ -41,19 +43,21 @@ class ChangeSet extends ExtendedGraph {
      *   <li><em>o_lang</em> => the language of the literal if any</li>
      *   <li><em>o_datatype</em> => the data type URI of the literal if any</li>
      * </ul>
-     * @param array args an associative array of parameters to use when constructing the changeset
+     * @param array $a args an associative array of parameters to use when constructing the changeset
      */
     var $a;
     var $subjectIndex = array();
     var $_index = array();
 
-    function __construct($a = '') {
+    public function __construct($a = '') {
+        parent::__construct();
         $this->a = $a;
         /* parse the before and after graphs if necessary*/
         foreach(array('before','after', 'before_rdfxml', 'after_rdfxml') as $rdf){
             if(!empty($a[$rdf]) ){
                 if(is_string($a[$rdf]) ){
-                    $parser = ARC2::getRDFParser();
+                    /** @var \ARC2_RDFParser $parser */
+                    $parser = \ARC2::getRDFParser();
                     $parser->parse(false, $a[$rdf]);
                     $a[$rdf] = $parser->getSimpleIndex(0);
                 } else if(
@@ -61,9 +65,12 @@ class ChangeSet extends ExtendedGraph {
                     isset($a[$rdf][0]) AND
                     isset($a[$rdf][0]['s'])
                 ) { //triples array
-                    $ser = ARC2::getTurtleSerializer();
+                    /** @var \ARC2_RDFSerializer $ser */
+                    $ser = \ARC2::getTurtleSerializer();
+                    /** @var string $turtle */
                     $turtle = $ser->getSerializedTriples($a[$rdf]);
-                    $parser = ARC2::getTurtleParser();
+                    /** @var \ARC2_RDFParser $parser */
+                    $parser = \ARC2::getTurtleParser();
                     $parser->parse(false, $turtle);
                     $a[$rdf] = $parser->getSimpleIndex(0);
 
@@ -76,11 +83,7 @@ class ChangeSet extends ExtendedGraph {
         $this->__init();
     }
 
-    function ChangeSet ($a = '') {
-        $this->__construct($a);
-    }
-
-    function __init() {
+    protected function __init() {
         $csIndex = array();
         $CSNS = 'http://purl.org/vocab/changeset/schema#';
 
@@ -96,7 +99,6 @@ class ChangeSet extends ExtendedGraph {
         } else {
             $removals = ExtendedGraph::diff($this->before, $this->after);
         }
-        // $removals = !empty($this->after)? ExtendedGraph::diff($this->before, $this->after) : $this->before;
 
         //remove etag triples
         foreach(array('removals' => $removals, 'additions'=> $additions) as $name => $graph){
@@ -111,13 +113,8 @@ class ChangeSet extends ExtendedGraph {
             }
         }
 
-//    print_r(array_keys($additions));
-//    print_r(array_keys($removals));
-//    print_r(array_merge(array_keys($additions), array_keys($removals)));
-
         // Get an array of all the subject uris
         $subjectIndex = !empty($this->a['subjectOfChange'])? array($this->a['subjectOfChange']) : array_unique(array_merge(array_keys($additions), array_keys($removals)));
-//    print_r($subjectIndex);
 
         // Get the metadata for all the changesets
         $date  = (!empty($this->a['createdDate']))? $this->a['createdDate'] : date(DATE_ATOM);
@@ -177,28 +174,20 @@ class ChangeSet extends ExtendedGraph {
             }
         }
 
-
-        // foreach($this->_index as $uri => $props){
-        //  if(
-        //      !isset($props[$CSNS.'removal'])
-        //      AND
-        //      !isset($props[$CSNS.'addition'])
-        //      ){
-        //        unset($this->_index[$uri]);
-        //    }
-        //
-        // }
-
         $this->_index = ExtendedGraph::merge($this->_index, $reifiedAdditions, $reifiedRemovals);
 
     }
 
     /**
      * adds a triple to the internal simpleIndex holding all the changesets and statements
+     * @param string $s Subject uri
+     * @param string $p Predicate URI
+     * @param string $o Object URI or literal value
+     * @param string $o_type
      * @return void
      * @author Keith
-     **/
-    function addT($s, $p, $o, $o_type='bnode'){
+     */
+    public function addT($s, $p, $o, $o_type='bnode'){
         if(is_array($o) AND isset($o[0]['type'])){
             foreach($o as $obj){
                 $this->addT($s, $p, $obj );
@@ -209,16 +198,26 @@ class ChangeSet extends ExtendedGraph {
         }
     }
 
-    function toRDFXML(){
-        $ser = ARC2::getRDFXMLSerializer();
+    /**
+     * @return string
+     */
+    public function toRDFXML(){
+        /** @var \ARC2_RDFSerializer $ser */
+        $ser = \ARC2::getRDFXMLSerializer();
         return $ser->getSerializedIndex($this->_index);
     }
 
-    function to_rdfxml(){
+    /**
+     * @return string
+     */
+    public function to_rdfxml(){
         return $this->toRDFXML();
     }
 
-    function has_changes(){
+    /**
+     * @return bool
+     */
+    public function has_changes(){
         foreach($this->_index as $uri => $properties){
             if(
                 isset($properties['http://purl.org/vocab/changeset/schema#addition'])
@@ -231,5 +230,19 @@ class ChangeSet extends ExtendedGraph {
         return false;
     }
 
+    /**
+     * Returns a unique array of the subjects of change in this changeset
+     * @return array
+     */
+    public function get_subjects_of_change() {
+        $subjects = array();
+        /** @noinspection PhpParamsInspection */
+        $changes = $this->get_subjects_of_type($this->qname_to_uri("cs:ChangeSet"));
+        foreach ($changes as $change)
+        {
+            $subjects[] = $this->get_first_resource($change,$this->qname_to_uri("cs:subjectOfChange"));
+        }
+        return array_unique($subjects);
+    }
 }
 ?>

@@ -11,7 +11,10 @@ Features
 * High performance single-ms query response time on reasonable hardware with datasets >100M triples
 * Does not support SPARQL queries, instead SPARQL-like ```DESCRIBE/SELECT``` style operations are provided in two flavours
   * Ad-hoc queries where graph traversal is not required
-  * Fixed-specification materialised views (```DESCRIBE```) or tables (```SELECT```) where graph traversal is required
+  * Via Composites, which are fixed-specification materialised documents, supporting graph traversal. Presently there are three types of composite:
+    * Views (```DESCRIBE```) - these are multi-subject graphs retrievable in one self-contained document
+    * Tables (```SELECT```) - tabular datasets
+    * Search - also tabular, more suitable for search use cases
 * Trade speed with consistency on writes - views and tables can be updated immediately or in the background for eventual consistency
 * Define indexes on predicates to speed up queries
 * Page tabular data with counts multi-value cells (hurrah!)
@@ -27,9 +30,9 @@ Quickstart
 ```php
 require_once("tripod.inc.php");
 
-MongoTripodConfig::setConfig($conf); // set the config, usually read in as JSON from a file
+\Tripod\Mongo\Config::setConfig($conf); // set the config, usually read in as JSON from a file
 
-$tripod = new MongoTripod(
+$tripod = new Driver(
   "CBD_users", // pod (read: MongoDB collection) we're working with
   "myapp" // store (read: MongoDB database)  we're working with
 );
@@ -54,20 +57,20 @@ $graph = $tripod->getViewForResource("http://example.com/users","v_users");
 $allUsers = $graph->get_subjects_of_type("http://xmlns.com/foaf/0.1/Person");
 
 // save
-$newGraph = new ExtendedGraph();
+$newGraph = new \Tripod\ExtendedGraph();
 $newGraph->add_literal_value("http://example.com/user/2","http://xmlns.com/foaf/0.1/name","John Smith");
 $tripod->saveChanges(
-  new ExtendedGraph(), // the before state, here there was no before (new data)
+  new \Tripod\ExtendedGraph(), // the before state, here there was no before (new data)
   $newGraph // the desired after state
 );
 
 // save, but background all the expensive view/table/search generation
-$tripod = new MongoTripod("CBD_users",  "usersdb", array(
-    'async' = array(OP_VIEWS,OP_TABLES,OP_SEARCH) // async opt says what to do later via a queue rather than as part of the save
+$tripod = new \Tripod\Mongo\Driver("CBD_users",  "usersdb", array(
+    'async' = array(OP_VIEWS=>true,OP_TABLES=>true,OP_SEARCH=>true) // async opt says what to do later via a queue rather than as part of the save
   )
 );
 $tripod->saveChanges(
-  new ExtendedGraph(), // the before state, here there was no before (new data)
+  new \Tripod\ExtendedGraph(), // the before state, here there was no before (new data)
   $newGraph // the desired after state
 );
 
@@ -76,9 +79,11 @@ $tripod->saveChanges(
 Requirements
 ----
 
-PHP =>5.2, although not for long, future releases are soon to be >5.3.0
+PHP >= 5.3.x
 
 Mongo 2.x and up, although at least 2.2 is recommended to take advantage of database level locking, especially in the case of shared datasets.
+
+MongoPHP driver version 1.3.4 and up
 
 
 What does the config look like?
@@ -86,7 +91,7 @@ What does the config look like?
 
 [Read the full docs](/docs/config.md)
 
-Before you can do anything with tripod you need to initialise the config via the ```MongoTripodConfig::setConfig()``` method. This takes an associative array which can generally be decoded from a JSON string. Here's an example:
+Before you can do anything with tripod you need to initialise the config via the ```Config::setConfig()``` method. This takes an associative array which can generally be decoded from a JSON string. Here's an example:
 
 ```javascript
 {
@@ -122,106 +127,101 @@ Before you can do anything with tripod you need to initialise the config via the
                         }
                     }
                 }
-            }
-        },
-        "view_specifications" : [
-            {
-                "_id": "v_users",
-                "from":"CBD_users",
-                "type": "exampleapp:AllUsers",
-                "include": ["rdf:type"],
-                "joins": {
-                    "exampleapp:hasUser": {
-                        "include": ["foaf:name","rdf:type"]
-                        "joins": {
-                            "foaf:knows" : {
-                            "include": ["foaf:name","rdf:type"]
-                            }
-                        }
-                    }
-                }
-            }
-        ],
-        "table_specifications" : [
-            {
-                "_id": "t_users",
-                "type":"foaf:Person",
-                "from":"CBD_user",
-                "to_data_source" : "cluster2",
-                "ensureIndexes":[
-                    {
-                        "value.name": 1
-                    }
-                ],
-                "fields": [
-                    {
-                        "fieldName": "type",
-                        "predicates": ["rdf:type"]
-                    },
-                    {
-                        "fieldName": "name",
-                        "predicates": ["foaf:name"]
-                    },
-                    {
-                        "fieldName": "knows",
-                        "predicates": ["foaf:knows"]
-                    }
-                ],
-                "joins" : {
-                    "foaf:knows" : {
-                        "fields": [
-                            {
-                                "fieldName":"knows_name",
-                                "predicates":["foaf:name"]
-                            }
-                        ]
-                    }
-                }
-            }
-        ],
-        "search_config":{
-            "search_provider":"MongoSearchProvider",
-            "search_specifications":[
+            },
+            "view_specifications" : [
                 {
-                    "_id":"i_users",
-                    "type":["foaf:Person"],
-                    "from":"CBD_user",
-                    "to_data_source" : "cluster2",
-                    "filter":[
-                        {
-                            "condition":{
-                                "foaf:name.l":{
-                                    "$exists":true
+                    "_id": "v_users",
+                    "from":"CBD_users",
+                    "type": "exampleapp:AllUsers",
+                    "include": ["rdf:type"],
+                    "joins": {
+                        "exampleapp:hasUser": {
+                            "include": ["foaf:name","rdf:type"]
+                            "joins": {
+                                "foaf:knows" : {
+                                "include": ["foaf:name","rdf:type"]
                                 }
                             }
                         }
+                    }
+                }
+            ],
+            "table_specifications" : [
+                {
+                    "_id": "t_users",
+                    "type":"foaf:Person",
+                    "from":"CBD_user",
+                    "to_data_source" : "cluster2",
+                    "ensureIndexes":[
+                        {
+                            "value.name": 1
+                        }
                     ],
-                    "indices":[
+                    "fields": [
+                        {
+                            "fieldName": "type",
+                            "predicates": ["rdf:type"]
+                        },
                         {
                             "fieldName": "name",
-                            "predicates": ["foaf:name", "foaf:firstName","foaf:surname"]
+                            "predicates": ["foaf:name"]
+                        },
+                        {
+                            "fieldName": "knows",
+                            "predicates": ["foaf:knows"]
                         }
                     ],
-                    "fields":[
-                        {
-                            "fieldName":"result.name",
-                            "predicates":["foaf:name"],
-                            "limit" : 1
+                    "joins" : {
+                        "foaf:knows" : {
+                            "fields": [
+                                {
+                                    "fieldName":"knows_name",
+                                    "predicates":["foaf:name"]
+                                }
+                            ]
                         }
-                    ]
+                    }
                 }
-            ]
-        },
+            ],
+            "search_config":{
+                "search_provider":"MongoSearchProvider",
+                "search_specifications":[
+                    {
+                        "_id":"i_users",
+                        "type":["foaf:Person"],
+                        "from":"CBD_user",
+                        "to_data_source" : "cluster2",
+                        "filter":[
+                            {
+                                "condition":{
+                                    "foaf:name.l":{
+                                        "$exists":true
+                                    }
+                                }
+                            }
+                        ],
+                        "indices":[
+                            {
+                                "fieldName": "name",
+                                "predicates": ["foaf:name", "foaf:firstName","foaf:surname"]
+                            }
+                        ],
+                        "fields":[
+                            {
+                                "fieldName":"result.name",
+                                "predicates":["foaf:name"],
+                                "limit" : 1
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
     },
     "transaction_log" : {
         "database" : "testing",
         "collection" : "transaction_log",
         "data_source" : "cluster2"
-    },
-    "queue" : {
-        "database" : "testing",
-        "collection" : "q_queue",
-        "data_source" : "cluster1"
     }
 }
 
@@ -316,7 +316,7 @@ Coming soon (aka a loose roadmap)
 
 * More docs
 * ~~Node version - probably read-only subset in the first instance~~ It's [here](https://github.com/talis/tripod-node).
-* Improvements to the background queue, currently this is a long running php script working from a queue of updates held in mongo. Only ever intended for the PoC but it's still here 2 years later!
+* ~~Improvements to the background queue, currently this is a long running php script working from a queue of updates held in mongo. Only ever intended for the PoC but it's still here 2 years later!~~
 * An alternative persistence technology for the tlog. Memory mapped databases are not good for datasets with rapid turnover as the data files grow even if the data set is pruned. Implement a more specialist append-only database or even a RDBMS for the tlog persistence. Being worked on: [issue](https://github.com/talis/tripod-php/issues/7), [branch](https://github.com/talis/tripod-php/tree/pgsql-tlog) and [PR](https://github.com/talis/tripod-php/pull/6)
 * PHP >5.3.0 only. We still have some legacy servers on PHP 5.2 which is the only reason we continue support.
 * Performance improvements for ```ExtendedGraph```. The internal structure of this object is a relic from the days of Talis' own proprietary triple store and how it used to return data. We bootstrap onto that using the ```MongoGraph``` object to marshal data in and out. This relies heavily on regex and we know that from our own data gathered in the field this is a single point of optimisation that would cut CPU cycles and memory usage. On the bright side it's nice to have such targeted, low hanging fruit to pick.

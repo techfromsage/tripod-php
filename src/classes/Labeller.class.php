@@ -1,13 +1,21 @@
 <?php
 
+namespace Tripod;
+
 /**
  * Utility class for labelling properties
  * Based on Moriarty's Labeller
  * @see https://code.google.com/p/moriarty/source/browse/trunk/labeller.class.php
  */
 class Labeller {
+    /**
+     * @var array
+     */
     protected $_label_properties = array();
 
+    /**
+     * @var array
+     */
     protected $_ns = array (
         'rdf' => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
         'rdfs' => 'http://www.w3.org/2000/01/rdf-schema#',
@@ -51,6 +59,10 @@ class Labeller {
         'gn' => 'http://www.geonames.org/ontology#',
         'cyc' => 'http://sw.opencyc.org/2009/04/07/concept/en/',
     );
+
+    /**
+     * @var array
+     */
     var $_labels = array(
         'http://www.w3.org/1999/02/22-rdf-syntax-ns#_1' => array('first', 'first', 'is first member of'),
         'http://www.w3.org/1999/02/22-rdf-syntax-ns#_2' => array('second', 'second', 'is second member of'),
@@ -135,7 +147,6 @@ class Labeller {
         'http://purl.org/dc/terms/language' => array('language','languages','is language of'),
         'http://purl.org/dc/terms/medium' => array('medium','media','is medium of'),
         'http://purl.org/dc/terms/modified' => array('date modified','dates modified','is date modified of'),
-        'http://purl.org/dc/terms/replaces' => array('replaces','replaces','replaced by'),
         'http://purl.org/dc/terms/references' => array('references','references','is referenced by'),
         'http://purl.org/dc/terms/replaces' => array('replaces','replaces','is replaced by'),
         'http://purl.org/dc/terms/requires' => array('requires','requires','is required by'),
@@ -233,8 +244,6 @@ class Labeller {
 
         'http://www.ordnancesurvey.co.uk/ontology/AdministrativeGeography/v2.0/AdministrativeGeography.rdf#borders' => array('borders', 'borders', 'borders'),
         'http://www.ordnancesurvey.co.uk/ontology/AdministrativeGeography/v2.0/AdministrativeGeography.rdf#hasCensusCode' => array('census code'),
-//      'http://www.ordnancesurvey.co.uk/ontology/AdministrativeGeography/v2.0/AdministrativeGeography.rdf#hasArea' => array('area'),
-//      'http://www.ordnancesurvey.co.uk/ontology/AdministrativeGeography/v2.0/AdministrativeGeography.rdf#hasName' => array('name'),
         'http://www.ordnancesurvey.co.uk/ontology/AdministrativeGeography/v2.0/AdministrativeGeography.rdf#hasOfficialName' => array('official name'),
         'http://www.ordnancesurvey.co.uk/ontology/AdministrativeGeography/v2.0/AdministrativeGeography.rdf#hasOfficialWelshName' => array('official welsh name'),
         'http://www.ordnancesurvey.co.uk/ontology/AdministrativeGeography/v2.0/AdministrativeGeography.rdf#hasVernacularName' => array('vernacular name'),
@@ -282,19 +291,19 @@ class Labeller {
 
     /**
      * Map a portion of a URI to a short prefix for use when serialising the graph
-     * @param string prefix the namespace prefix to associate with the URI
-     * @param string uri the URI to associate with the prefix
+     * @param string $prefix the namespace prefix to associate with the URI
+     * @param string $uri the URI to associate with the prefix
      */
-    function set_namespace_mapping($prefix, $uri) {
+    public function set_namespace_mapping($prefix, $uri) {
         $this->_ns[$prefix] = $uri;
     }
 
     /**
      * Convert a QName to a URI using registered namespace prefixes
-     * @param string qname the QName to convert
+     * @param string $qname the QName to convert
      * @return string the URI corresponding to the QName if a suitable prefix exists, null otherwise
      */
-    function qname_to_uri($qname) {
+    public function qname_to_uri($qname) {
         if (preg_match("~^(.+):(.+)$~", $qname, $m)) {
             if ( isset($this->_ns[$m[1]])) {
                 return $this->_ns[$m[1]] . $m[2];
@@ -306,10 +315,10 @@ class Labeller {
 
     /**
      * Convert a URI to a QName using registered namespace prefixes
-     * @param string uri the URI to convert
+     * @param string $uri the URI to convert
      * @return string the QName corresponding to the URI if a suitable prefix exists, null otherwise
      */
-    function uri_to_qname($uri) {
+    public function uri_to_qname($uri) {
         if (preg_match('~^(.*[\/\#])([a-z0-9\-\_\:]+)$~i', $uri, $m)) {
             $ns = $m[1];
             $localname = $m[2];
@@ -321,7 +330,11 @@ class Labeller {
         return null;
     }
 
-    function get_prefix($ns) {
+    /**
+     * @param string $ns
+     * @return string
+     */
+    public function get_prefix($ns) {
         $prefix = array_search($ns, $this->_ns);
         if ( $prefix != null && $prefix !== FALSE) {
             return $prefix;
@@ -346,18 +359,30 @@ class Labeller {
 
 
         }
-        return $prefix;
     }
 
-    function add_labelling_property($p)  {
+    /**
+     * @param string $p
+     */
+    public function add_labelling_property($p)  {
         $this->_label_properties[] = $p;
     }
 
-    function get_ns() {
+    /**
+     * @return array
+     */
+    public function get_ns() {
         return $this->_ns;
     }
 
-    function get_label($uri, $g = null, $capitalize = false, $use_qnames = FALSE) {
+    /**
+     * @param string $uri
+     * @param ExtendedGraph|null $g
+     * @param bool $capitalize
+     * @param bool $use_qnames
+     * @return string
+     */
+    public function get_label($uri, $g = null, $capitalize = false, $use_qnames = FALSE) {
         if ($g) {
             $label = $g->get_first_literal($uri,'http://www.w3.org/2004/02/skos/core#prefLabel', '', 'en');
             if ( strlen($label) != 0) return $label;
@@ -443,8 +468,14 @@ class Labeller {
         return $uri;
     }
 
-
-    function get_plural_label($uri, $g = null, $capitalize = false, $use_qnames = FALSE) {
+    /**
+     * @param string $uri
+     * @param ExtendedGraph|null $g
+     * @param bool $capitalize
+     * @param bool $use_qnames
+     * @return string
+     */
+    public function get_plural_label($uri, $g = null, $capitalize = false, $use_qnames = FALSE) {
         if ($g) {
             $label = $g->get_first_literal($uri,'http://purl.org/net/vocab/2004/03/label#plural', '', 'en');
             if ( strlen($label) != 0) return $label;
@@ -478,7 +509,14 @@ class Labeller {
         }
     }
 
-    function get_inverse_label($uri, $g = null, $capitalize = false, $use_qnames = FALSE) {
+    /**
+     * @param string $uri
+     * @param ExtendedGraph|null $g
+     * @param bool $capitalize
+     * @param bool $use_qnames
+     * @return string
+     */
+    public function get_inverse_label($uri, $g = null, $capitalize = false, $use_qnames = FALSE) {
         if ($g) {
             $label = $g->get_first_literal($uri,'http://purl.org/net/vocab/2004/03/label#inverseSingular', '', 'en');
             if ( strlen($label) != 0) return $label;
@@ -509,8 +547,10 @@ class Labeller {
 
     }
 
-
-    function label_graph(&$graph) {
+    /**
+     * @param ExtendedGraph $graph
+     */
+    public function label_graph(ExtendedGraph &$graph) {
         $labelled_properties = array();
         $index = $graph->get_index();
         foreach ($index as $s => $p_list) {

@@ -7,7 +7,9 @@ set_include_path(
 
 require_once('tripod.inc.php');
 require_once 'src/classes/ExtendedGraph.class.php';
-require_once 'src/exceptions/TripodException.class.php';
+require_once 'src/exceptions/Exception.class.php';
+
+use \Tripod\ExtendedGraph;
 
 class ExtendedGraphTest extends PHPUnit_Framework_TestCase
 {
@@ -342,7 +344,7 @@ class ExtendedGraphTest extends PHPUnit_Framework_TestCase
 
     public function testGetLabelForUriLabelPropsNotInitialised(){
     	ExtendedGraph::initProperties(array('labelProperties' => null));
-        $this->setExpectedException('TripodException','Please initialise ExtendedGraph::$labelProperties');
+        $this->setExpectedException('Exception','Please initialise ExtendedGraph::$labelProperties');
         $graph = new ExtendedGraph();
 
         $label = "Wuthering Heights";

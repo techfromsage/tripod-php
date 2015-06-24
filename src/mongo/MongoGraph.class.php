@@ -1,15 +1,24 @@
 <?php
+
+namespace Tripod\Mongo;
+
 require_once TRIPOD_DIR.'classes/ExtendedGraph.class.php';
 require_once TRIPOD_DIR.'mongo/MongoTripodConstants.php';
-require_once TRIPOD_DIR.'mongo/MongoTripodConfig.class.php';
-require_once TRIPOD_DIR.'mongo/MongoTripodLabeller.class.php';
-require_once TRIPOD_DIR . 'mongo/serializers/MongoTripodNQuadSerializer.class.php';
+require_once TRIPOD_DIR . 'mongo/Config.class.php';
+require_once TRIPOD_DIR . 'mongo/Labeller.class.php';
+require_once TRIPOD_DIR . 'mongo/serializers/NQuadSerializer.class.php';
 
-class MongoGraph extends ExtendedGraph {
-
+/**
+ * Class MongoGraph
+ * @package Tripod\Mongo
+ */
+class MongoGraph extends \Tripod\ExtendedGraph {
+    /**
+     * Constructor
+     */
     function __construct()
     {
-        $this->_labeller = new MongoTripodLabeller();
+        $this->_labeller = new Labeller();
     }
 
     /**
@@ -17,15 +26,15 @@ class MongoGraph extends ExtendedGraph {
      *  <s> <p> <o> <context> .
      * @param string $context the context for the graph your are serializing
      * @return string the nquad serialization of the graph
-     * @throws InvalidArgumentException if you do not specify a context
+     * @throws \InvalidArgumentException if you do not specify a context
      */
     function to_nquads($context)
     {
         if(empty($context)) {
-            throw new InvalidArgumentException("You must specify the context when serializing to nquads");
+            throw new \InvalidArgumentException("You must specify the context when serializing to nquads");
         }
 
-        $serializer = new MongoTripodNQuadSerializer();
+        $serializer = new NQuadSerializer();
         return $serializer->getSerializedIndex($this->_index, $this->_labeller->qname_to_alias($context));
     }
 
@@ -33,13 +42,13 @@ class MongoGraph extends ExtendedGraph {
      * Adds the tripod array(s) to this graph.
      * This method is used to add individual tripod documents, or a series of tripod array documents that are embedded in a view.
      * @param $tarray
-     * @throws TripodException
+     * @throws \Tripod\Exceptions\Exception
      */
     function add_tripod_array($tarray)
     {
         if (!is_array($tarray))
         {
-            throw new TripodException("Value passed to add_tripod_array is not of type array");
+            throw new \Tripod\Exceptions\Exception("Value passed to add_tripod_array is not of type array");
         }
         // need to convert from tripod storage format to rdf/json as php array format
         if (isset($tarray["value"][_GRAPHS]))
@@ -107,7 +116,10 @@ class MongoGraph extends ExtendedGraph {
         }
         return $doc;
     }
-    
+
+    /**
+     * @param array $tarray
+     */
     private function add_tarray_to_index($tarray)
     {
         $_i = array();
@@ -125,8 +137,8 @@ class MongoGraph extends ExtendedGraph {
     }
 
     /**
-     * Convert from MongoTripod value object format (comapct) to ExtendedGraph format (verbose)
-     * @param $mongoValueObject
+     * Convert from Tripod value object format (comapct) to ExtendedGraph format (verbose)
+     * @param array $mongoValueObject
      * @return array
      */
     private function toGraphValueObject($mongoValueObject)
@@ -163,8 +175,8 @@ class MongoGraph extends ExtendedGraph {
     }
 
     /**
-     * Convert from ExtendedGraph value object format (verbose) to MongoTripod format (compact)
-     * @param $simpleGraphValueObject
+     * Convert from ExtendedGraph value object format (verbose) to Tripod format (compact)
+     * @param array $simpleGraphValueObject
      * @return array
      */
     private function toMongoTripodValueObject($simpleGraphValueObject)
@@ -175,6 +187,11 @@ class MongoGraph extends ExtendedGraph {
             ($simpleGraphValueObject['type']=="literal") ? $simpleGraphValueObject['value'] : $this->_labeller->uri_to_alias($simpleGraphValueObject['value']));
     }
 
+    /**
+     * @param \Tripod\ExtendedGraph|null $graph
+     * @param string $contextAlias
+     * @return array|null
+     */
     private function index_to_tarray($graph=null,$contextAlias)
     {
         if ($graph==null) $graph = $this;

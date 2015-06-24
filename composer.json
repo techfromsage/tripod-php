@@ -18,7 +18,9 @@
         }
     ],
     "require": {
-        "semsol/arc2": "v2.2.4"
+        "semsol/arc2": "v2.2.4",
+        "chrisboulton/php-resque": "dev-master#98fde571db008a8b48e73022599d1d1c07d4a7b5",
+        "monolog/monolog" : "1.13.1"
     },
     "require-dev": {
         "phpunit/phpunit": "4.1.*"
