@@ -117,8 +117,7 @@ class SearchDocuments extends DriverBase
             ->ensureIndex(
                 array('_id.type'=>1),
                 array(
-                    'background'=>1,
-                    "socketTimeoutMS"=>\Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout()
+                    'background'=>1
                 )
             );
 
@@ -128,8 +127,7 @@ class SearchDocuments extends DriverBase
             ->ensureIndex(
                 array('_impactIndex'=>1),
                 array(
-                    'background'=>1,
-                    "socketTimeoutMS"=>\Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout()
+                    'background'=>1
                 )
             );
 
