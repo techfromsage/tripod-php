@@ -486,8 +486,7 @@ class Tables extends CompositeBase
                 '_id.type'=>1
             ),
             array(
-                'background'=>1,
-                "socketTimeoutMS"=>\Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout()
+                'background'=>1
             )
         );
 
@@ -496,8 +495,7 @@ class Tables extends CompositeBase
                 '_id.type'=>1
             ),
             array(
-                'background'=>1,
-                "socketTimeoutMS"=>\Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout()
+                'background'=>1
             )
         );
 
@@ -506,8 +504,7 @@ class Tables extends CompositeBase
                 'value.'._IMPACT_INDEX=>1
             ),
             array(
-                'background'=>1,
-                "socketTimeoutMS"=>\Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout()
+                'background'=>1
             )
         );
 
@@ -519,8 +516,7 @@ class Tables extends CompositeBase
                 $collection->ensureIndex(
                     $ensureIndex,
                     array(
-                        'background'=>1,
-                        "socketTimeoutMS"=>\Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout()
+                        'background'=>1
                     )
                 );
             }
