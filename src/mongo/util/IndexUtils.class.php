@@ -44,8 +44,7 @@ class IndexUtils
                             ->ensureIndex(
                                 $fields,
                                 array(
-                                    "background"=>$background,
-                                    "socketTimeoutMS"=>Config::getInstance()->getMongoCursorTimeout()
+                                    "background"=>$background
                                 )
                             );
                     }
@@ -56,8 +55,7 @@ class IndexUtils
                                 $fields,
                                 array(
                                     'name'=>$indexName,
-                                    "background"=>$background,
-                                    "socketTimeoutMS"=>Config::getInstance()->getMongoCursorTimeout()
+                                    "background"=>$background
                                 )
                             );
                     }
@@ -84,8 +82,7 @@ class IndexUtils
                         $collection->ensureIndex(
                             $index,
                             array(
-                                "background"=>$background,
-                                "socketTimeoutMS"=>Config::getInstance()->getMongoCursorTimeout()
+                                "background"=>$background
                             )
                         );
                     }
@@ -112,8 +109,7 @@ class IndexUtils
                         $collection->ensureIndex(
                             $index,
                             array(
-                                "background"=>$background,
-                                "socketTimeoutMS"=>Config::getInstance()->getMongoCursorTimeout()
+                                "background"=>$background
                             )
                         );
                     }
