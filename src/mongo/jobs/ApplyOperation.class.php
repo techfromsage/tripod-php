@@ -51,7 +51,7 @@ class ApplyOperation extends JobBase {
      * @param \Tripod\Mongo\ImpactedSubject[] $subjects
      * @param string|null $queueName
      */
-    public function createJob(Array $subjects, $queueName=null)
+    public function createJob(Array $subjects, $queueName=null,$otherData=array())
     {
         if(!$queueName)
         {
@@ -67,7 +67,7 @@ class ApplyOperation extends JobBase {
             self::TRIPOD_CONFIG_KEY=>\Tripod\Mongo\Config::getConfig()
         );
 
-        $this->submitJob($queueName,get_class($this),$data);
+        $this->submitJob($queueName,get_class($this),array_merge($otherData,$data));
     }
 
     /**

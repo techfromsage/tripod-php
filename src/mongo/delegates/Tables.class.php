@@ -562,7 +562,7 @@ class Tables extends CompositeBase
                     $from,
                     array($tableType)
                 );
-                $this->getApplyOperation()->createJob(array($subject), $queueName);
+                $this->getApplyOperation()->createJob(array($subject), $queueName);  // todo: how to pass statsD?
             }
             else
             {

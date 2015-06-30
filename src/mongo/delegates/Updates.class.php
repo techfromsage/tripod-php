@@ -125,8 +125,13 @@ class Updates extends DriverBase {
 
         $this->async = $async;
 
-        // is a custom stat tracker passed in?
-        if ($opts['stat']!=null) $this->stat = $opts['stat'];
+        if (isset($opts['statsDHost']) && isset($opts['statsDPort']))
+        {
+            // use with built-in StatsD stat object
+            $this->statsDHost = $opts['statsDHost'];
+            $this->statsDPort = $opts['statsDPort'];
+            $this->statsDPrefix = $opts['statsDPrefix'];
+        }
     }
 
     /**
@@ -757,8 +762,22 @@ class Updates extends DriverBase {
                 "tripodConfig" => Config::getConfig(),
                 "storeName" => $this->storeName,
                 "podName" => $this->podName,
-                "contextAlias" => $contextAlias
+                "contextAlias" => $contextAlias,
+                "statsDHost" => $this->tripod->getStatsDHost(),
+                "statsDPort" => $this->tripod->getStatsDPort(),
+                "statsDPrefix" => $this->tripod->getStatsDPrefix()
             );
+
+            $statsDConf = array();
+            $keys = array("statsDHost","statsDPrefix","statsDPort");
+            foreach ($keys as $key)
+            {
+                if (isset($this->args[$key]) && $this->args[$key]!=null)
+                {
+                    $statsDConf[$key] = $this->args[$key];
+                }
+            }
+
 
             if(isset($this->queueName))
             {

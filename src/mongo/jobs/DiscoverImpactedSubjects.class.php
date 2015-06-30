@@ -44,7 +44,16 @@ class DiscoverImpactedSubjects extends JobBase {
             // set the config to what is received
             \Tripod\Mongo\Config::setConfig($this->args[self::TRIPOD_CONFIG_KEY]);
 
-            $tripod = $this->getTripod($this->args[self::STORE_NAME_KEY],$this->args[self::POD_NAME_KEY]);
+            $statsDConf = array();
+            $keys = array("statsDHost","statsDPrefix","statsDPort");
+            foreach ($keys as $key)
+            {
+                if (isset($this->args[$key]) && $this->args[$key]!=null)
+                {
+                    $statsDConf[$key] = $this->args[$key];
+                }
+            }
+            $tripod = $this->getTripod($this->args[self::STORE_NAME_KEY],$this->args[self::POD_NAME_KEY],$statsDConf);
 
             $operations = $this->args[self::OPERATIONS_KEY];
 
@@ -114,7 +123,7 @@ class DiscoverImpactedSubjects extends JobBase {
                     {
                         foreach($this->subjectsGroupedByQueue as $queueName=>$subjects)
                         {
-                            $this->getApplyOperation()->createJob($subjects, $queueName);
+                            $this->getApplyOperation()->createJob($subjects, $queueName, $statsDConf);
                         }
                         $this->subjectsGroupedByQueue = array();
                     }

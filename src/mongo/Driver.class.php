@@ -28,19 +28,6 @@ class Driver extends DriverBase implements \Tripod\IDriver
      */
     private $search_indexer = null;
 
-
-    /**
-     * @var array The original read preference gets stored here
-     *            when changing for a write.
-     */
-    private $originalCollectionReadPreference = array();
-
-    /**
-     * @var array The original read preference gets stored here
-     *            when changing for a write.
-     */
-    private $originalDbReadPreference = array();
-
     /**
      * @var array
      */
@@ -73,7 +60,6 @@ class Driver extends DriverBase implements \Tripod\IDriver
         $opts = array_merge(array(
                 'defaultContext'=>null,
                 OP_ASYNC=>array(OP_VIEWS=>false,OP_TABLES=>true,OP_SEARCH=>true),
-                'stat'=>null,
                 'readPreference'=>\MongoClient::RP_PRIMARY_PREFERRED,
                 'retriesToGetLock' => 20)
             ,$opts);
@@ -118,16 +104,9 @@ class Driver extends DriverBase implements \Tripod\IDriver
         if (isset($opts['statsDHost']) && isset($opts['statsDPort']))
         {
             // use with built-in StatsD stat object
-            $prefix = "tripod.group_by_db.".$this->podName;
-            if (isset($opts["statsDPrefix"])) {
-                $prefix = "{$opts["statsDPrefix"]}.$prefix";
-            }
-            $this->stat = new \Tripod\StatsD($opts['statsDHost'],$opts['statsDPort'],$prefix);
-        }
-        else if ($opts['stat']!=null)
-        {
-            // use custom stats tracker
-            $this->stat = $opts['stat'];
+            $this->statsDHost = $opts['statsDHost'];
+            $this->statsDPort = $opts['statsDPort'];
+            $this->statsDPrefix = $opts['statsDPrefix'];
         }
     }
 
@@ -668,6 +647,19 @@ class Driver extends DriverBase implements \Tripod\IDriver
                 'readPreference'=>$readPreference['type'],
                 'retriesToGetLock' => $this->retriesToGetLock
             );
+
+            if ($this->getStatsDHost()!=null)
+            {
+                $opts['statsDHost'] = $this->getStatsDHost();
+            }
+            if ($this->getStatsDPort()!=null)
+            {
+                $opts['statsDPort'] = $this->getStatsDPort();
+            }
+            if ($this->getStatsDPrefix()!=null)
+            {
+                $opts['statsDPrefix'] = $this->getStatsDPrefix();
+            }
 
             $this->dataUpdater = new Updates($this, $opts);
         }

@@ -482,7 +482,7 @@ class Views extends CompositeBase
                         array($viewId)
                     );
 
-                    $this->getApplyOperation()->createJob(array($subject), $queueName);
+                    $this->getApplyOperation()->createJob(array($subject), $queueName); // todo: how to pass statsD?
                 }
                 else
                 {

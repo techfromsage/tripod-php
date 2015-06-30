@@ -213,7 +213,7 @@ class SearchIndexer extends CompositeBase
                     array($searchDocumentType)
                 );
 
-                $this->getApplyOperation()->createJob(array($subject), $queueName);
+                $this->getApplyOperation()->createJob(array($subject), $queueName);  // todo: how to pass statsD?
             }
             else
             {

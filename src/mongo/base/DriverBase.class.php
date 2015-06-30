@@ -39,6 +39,12 @@ abstract class DriverBase
      */
     protected $stat = null;
 
+    protected $statsDHost;
+
+    protected $statsDPrefix;
+
+    protected $statsDPort;
+
     /**
      * @var \MongoDB
      */
@@ -54,7 +60,23 @@ abstract class DriverBase
      */
     public function getStat()
     {
-        return ($this->stat==null) ? NoStat::getInstance() : $this->stat;
+        if ($this->stat==null)
+        {
+            if ($this->statsDHost == null || $this->statsDPort == null)
+            {
+                $this->stat = NoStat::getInstance();
+            }
+            else
+            {
+                $prefix = "tripod.group_by_db.".$this->podName;
+                if (!empty($this->statsDPrefix))
+                {
+                    $prefix = "{$this->statsDPrefix}.$prefix";
+                }
+                $this->stat = new \Tripod\StatsD($this->statsDHost,$this->statsDPort,$prefix);
+            }
+        }
+        return $this->stat;
     }
 
     /**
@@ -186,6 +208,31 @@ abstract class DriverBase
     {
         return $this->podName;
     }
+
+    /**
+     * @return string
+     */
+    public function getStatsDHost()
+    {
+        return $this->statsDHost;
+    }
+
+    /**
+     * @return string
+     */
+    public function getStatsDPort()
+    {
+        return $this->statsDPort;
+    }
+
+    /**
+     * @return string
+     */
+    public function getStatsDPrefix()
+    {
+        return $this->statsDPrefix;
+    }
+
 
     ///////// LOGGING METHODS BELOW ////////
 

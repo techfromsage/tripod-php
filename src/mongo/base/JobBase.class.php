@@ -16,15 +16,16 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
      * @param string $podName
      * @return \Tripod\Mongo\Driver
      */
-    protected function getTripod($storeName,$podName) {
+    protected function getTripod($storeName,$podName,$opts=array()) {
+        $opts = array_merge($opts,array(
+            'stat'=>$this->getStat(),
+            'readPreference'=>\MongoClient::RP_PRIMARY // important: make sure we always read from the primary
+        ));
         if ($this->tripod == null) {
             $this->tripod = new \Tripod\Mongo\Driver(
                 $podName,
                 $storeName,
-                array(
-                    'stat'=>$this->getStat(),
-                    'readPreference'=>\MongoClient::RP_PRIMARY // important: make sure we always read from the primary
-                )
+                $opts
             );
         }
         return $this->tripod;
