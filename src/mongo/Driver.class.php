@@ -108,14 +108,27 @@ class Driver extends DriverBase implements \Tripod\IDriver
         }
 
         // if there is no es configured then remove OP_SEARCH from async (no point putting these onto the queue) TRI-19
-        if($this->config->getSearchDocumentSpecifications($this->storeName) == null) {
+        if($this->config->getSearchDocumentSpecifications($this->storeName) == null)
+        {
             unset($async[OP_SEARCH]);
         }
 
         $this->async = $async;
 
-        // is a custom stat tracker passed in?
-        if ($opts['stat']!=null) $this->stat = $opts['stat'];
+        if (isset($opts['statsDHost']) && isset($opts['statsDPort']))
+        {
+            // use with built-in StatsD stat object
+            $prefix = "tripod.group_by_db.".$this->podName;
+            if (isset($opts["statsDPrefix"])) {
+                $prefix = "{$opts["statsDPrefix"]}.$prefix";
+            }
+            $this->stat = new \Tripod\StatsD($opts['statsDHost'],$opts['statsDPort'],$prefix);
+        }
+        else if ($opts['stat']!=null)
+        {
+            // use custom stats tracker
+            $this->stat = $opts['stat'];
+        }
     }
 
     /**
