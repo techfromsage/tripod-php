@@ -453,6 +453,8 @@ class Updates extends DriverBase {
 
             foreach ($changes as $change)
             {
+                $changes = array();
+
                 $subjectOfChange = $cs->get_first_resource($change,$this->labeller->qname_to_uri("cs:subjectOfChange"));
                 if(!array_key_exists($subjectOfChange, $subjectsAndPredicatesOfChange))
                 {
@@ -467,10 +469,10 @@ class Updates extends DriverBase {
 
                 $doc = $this->getDocumentForUpdate($subjectOfChange, $contextAlias, $originalCBDs);
 
-                $targetGraph = new MongoGraph();
-                $targetGraph->add_tripod_array($doc);
+//                $targetGraph = new MongoGraph();
+//                $targetGraph->add_tripod_array($doc);
 
-                if(!$targetGraph->has_triples_about($subjectOfChange))
+                if(empty($doc))
                 {
                     $upsert = true;
                 }
@@ -490,27 +492,35 @@ class Updates extends DriverBase {
 
                     $object = $cs->get_subject_property_values($r["value"],$this->labeller->qname_to_uri("rdf:object"));
 
-                    $isUri = ($object[0]['type']=="uri");
+                    $valueType = (($object[0]['type']=="uri")) ? VALUE_URI : VALUE_LITERAL;
 
-                    // is $predicate in $docs already?
-                    $valueExists = ($isUri) ? $targetGraph->has_resource_triple($subjectOfChange,$predicate,$object[0]["value"]) : $targetGraph->has_literal_triple($subjectOfChange,$predicate,$object[0]["value"]);
+                    $nsPredicate = $this->labeller->uri_to_qname($predicate);
+                    $predicateExists = isset($doc[$nsPredicate]);
+                    $hasMultiValues = ($predicateExists) ? is_array($doc[$nsPredicate]) && !(isset($doc[$nsPredicate][0][$valueType])) : false;
+
+                    $valueExists = false;
+                    if ($hasMultiValues)
+                    {
+                        $valueExists = in_array(array($valueType=>$object[0]["value"]),$doc[$nsPredicate]);
+                    }
+                    else if ($predicateExists)
+                    {
+                        $valueExists = array($valueType=>$object[0]["value"]) == $doc[$nsPredicate];
+                    }
 
                     if (!$valueExists)
                     {
-                        $this->errorLog("Removal value {$subjectOfChange} {$predicate} {$object[0]['value']} does not appear in target document to be updated",array("targetGraph"=>$targetGraph->to_ntriples()));
+                        $this->errorLog("Removal value {$subjectOfChange} {$predicate} {$object[0]['value']} does not appear in target document to be updated",array("doc"=>$doc));
                         throw new \Exception("Removal value {$subjectOfChange} {$predicate} {$object[0]['value']} does not appear in target document to be updated");
                     }
-                    else if ($isUri)
+                    else if ($hasMultiValues)
                     {
-                        $targetGraph->remove_resource_triple($subjectOfChange,$predicate,$object[0]["value"]);
-
+                        $changes[] = array('$pull',array($nsPredicate => array($valueType=>$object[0]["value"])));
                     }
                     else
                     {
-                        $targetGraph->remove_literal_triple($subjectOfChange,$predicate,$object[0]["value"]);
-
+                        $changes[] = array('$unset',array($nsPredicate => ""));
                     }
-
                 }
 
                 foreach ($additions as $r)
@@ -524,15 +534,19 @@ class Updates extends DriverBase {
 
                     $object = $cs->get_subject_property_values($r["value"],$this->labeller->qname_to_uri("rdf:object"));
 
-                    $isUri = ($object[0]['type']=="uri");
+                    $valueType = (($object[0]['type']=="uri")) ? VALUE_URI : VALUE_LITERAL;
 
-                    if ($isUri)
+                    $nsPredicate = $this->labeller->uri_to_qname($predicate);
+                    $predicateExists = isset($doc[$nsPredicate]);
+                    $hasMultiValues = ($predicateExists) ? is_array($doc[$nsPredicate]) && !(isset($doc[$nsPredicate][0][$valueType])) : false;
+
+                    if (!$predicateExists)
                     {
-                        $targetGraph->add_resource_triple($subjectOfChange,$predicate,$object[0]["value"]);
+                        $changes[] = array('$addToSet'=>array($nsPredicate=>array($valueType=>$object[0]["value"]))); // todo: if a single value this will create an array of 1 value object and not just one value object...
                     }
                     else
                     {
-                        $targetGraph->add_literal_triple($subjectOfChange,$predicate,$object[0]["value"]);
+                        $changes[] = array('$set'=>array($nsPredicate=>array($valueType=>$object[0]["value"])));
                     }
                 }
 
@@ -541,42 +555,15 @@ class Updates extends DriverBase {
                 // currently the only criteria is the doc id
                 //var_dump($targetGraph->to_tripod_array($subjectOfChange));
 
-                $_new_version = 0;
-                if(isset($doc[_VERSION]))
-                {
-                    $_version = (int)$doc[_VERSION];
-                    $criteria[_VERSION] = $_version;
-                    $_new_version = $_version + 1;
-                }
+                $updatedAt = new \MongoDate();
+
+                $changes[] = array('$inc'=>array(_VERSION=>"1"));
 
                 // update datestamps
-                $_updated_ts = new \MongoDate();
+                $changes[] = array('$setOnInsert'=>array(_CREATED_TS=>$updatedAt));
+                $changes[] = array('$set'=>array(_UPDATED_TS=>$updatedAt));
 
-                if($targetGraph->is_empty())
-                {
-                    $newDocument = array(_ID_KEY=>array(_ID_RESOURCE=>$this->labeller->uri_to_alias($subjectOfChange),_ID_CONTEXT=>$contextAlias), _VERSION=>$_new_version, _UPDATED_TS=>$_updated_ts);
-                    if(isset($doc[_CREATED_TS])) { // make sure when doc is deleted and it had a created date, we preserve it.
-                        $newDocument[_CREATED_TS] = $doc[_CREATED_TS];
-                    }
-
-                    array_push($newCBDs, $newDocument);
-                    $deletes[] = array("criteria"=>$criteria, 'change'=>$newDocument);
-                }
-                else
-                {
-                    $newDocument = $targetGraph->to_tripod_array($subjectOfChange,$contextAlias);
-                    $newDocument[_VERSION] = $_new_version;
-                    $newDocument[_UPDATED_TS] = $_updated_ts;
-                    if($_new_version == 0) {
-                        $newDocument[_CREATED_TS] = new \MongoDate();
-                    } else {
-                        if(isset($doc[_CREATED_TS])) {
-                            $newDocument[_CREATED_TS] = $doc[_CREATED_TS];
-                        }
-                    }
-                    array_push($newCBDs, $newDocument);
-                    $updates[] = array("criteria"=>$criteria,"change"=>$newDocument);
-                }
+                $updates[] = array("criteria"=>$criteria,"changes"=>$changes);
             }
 
             // apply each update
@@ -585,13 +572,14 @@ class Updates extends DriverBase {
                 $command = array(
                     "findAndModify" => $this->getCollection()->getName(),
                     "query" => $update['criteria'],
-                    "update" => $update['change'],
+                    "update" => $update['changes'],
                     "upsert" => $upsert,
                     "new"=>true
                 );
 
                 try{
                     $result = $this->getDatabase()->command($command);
+                    array_push($newCBDs, $this->getCollection()->findOne($update['criteria']));
                 } catch (\Exception $e) {
 
                     $this->errorLog(MONGO_WRITE,
@@ -622,6 +610,7 @@ class Updates extends DriverBase {
                 }
             }
 
+            // todo: work out what happens with these
             foreach($deletes as $delete)
             {
                 $command = array(
