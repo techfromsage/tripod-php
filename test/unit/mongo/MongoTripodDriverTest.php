@@ -91,9 +91,10 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $this->assertEquals($expectedResult,$actualResult);
     }
 
-    public function testDescribe()
+    public function testGraph()
     {
-        $expectedResult =
+        $expectedResult = new \Tripod\ExtendedGraph();
+        $expectedResult->add_turtle(
             "<http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://purl.org/dc/terms/isVersionOf> <http://talisaspire.com/works/4d101f63c10a6> .
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://purl.org/dc/terms/source> <http://life.ac.uk/resources/BFBC6A06-A8B0-DED8-53AA-8E80DB44CC53> .
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://purl.org/dc/terms/source> <http://life.ac.uk/resources/836E7CAD-63D2-63A0-B1CB-AA6A7E54A5C9> .
@@ -121,14 +122,18 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://purl.org/ontology/bibo/Book> .
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://talisaspire.com/schema#Resource> .
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://www.w3.org/2002/07/owl#sameAs> <http://talisaspire.com/isbn/9780393929690> .
-";
-        $actualResult = $this->tripod->describe(array("bibo:isbn13.".VALUE_LITERAL=>"9780393929690"));
-        $this->assertEquals($expectedResult,$actualResult->to_ntriples());
+");
+        $actualResult = $this->tripod->graph(array("bibo:isbn13.".VALUE_LITERAL=>"9780393929690"));
+
+        $cs = new \Tripod\ChangeSet(array('before' => $expectedResult->get_index(), 'after' => $actualResult->get_index(), 'changeReason' => "testing!"));
+
+        $this->assertFalse($cs->has_changes());
     }
 
     public function testDescribeResource()
     {
-        $expectedResult =
+        $expectedResult = new \Tripod\ExtendedGraph();
+        $expectedResult->add_turtle(
             "<http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://purl.org/dc/terms/isVersionOf> <http://talisaspire.com/works/4d101f63c10a6> .
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://purl.org/dc/terms/source> <http://life.ac.uk/resources/BFBC6A06-A8B0-DED8-53AA-8E80DB44CC53> .
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://purl.org/dc/terms/source> <http://life.ac.uk/resources/836E7CAD-63D2-63A0-B1CB-AA6A7E54A5C9> .
@@ -156,14 +161,18 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://purl.org/ontology/bibo/Book> .
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://talisaspire.com/schema#Resource> .
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://www.w3.org/2002/07/owl#sameAs> <http://talisaspire.com/isbn/9780393929690> .
-";
+");
         $actualResult = $this->tripod->describeResource('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA');
-        $this->assertEquals($expectedResult,$actualResult->to_ntriples());
+
+        $cs = new \Tripod\ChangeSet(array('before' => $expectedResult->get_index(), 'after' => $actualResult->get_index(), 'changeReason' => "testing!"));
+
+        $this->assertFalse($cs->has_changes());
     }
 
     public function testDescribeResources()
     {
-        $expectedResult =
+        $expectedResult = new \Tripod\ExtendedGraph();
+        $expectedResult->add_turtle(
             "<http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://purl.org/dc/terms/isVersionOf> <http://talisaspire.com/works/4d101f63c10a6> .
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://purl.org/dc/terms/source> <http://life.ac.uk/resources/BFBC6A06-A8B0-DED8-53AA-8E80DB44CC53> .
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://purl.org/dc/terms/source> <http://life.ac.uk/resources/836E7CAD-63D2-63A0-B1CB-AA6A7E54A5C9> .
@@ -198,9 +207,12 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 <http://talisaspire.com/works/4d101f63c10a6> <http://talisaspire.com/schema#seeAlso> <http://talisaspire.com/works/4d101f63c10a6-2> .
 <http://talisaspire.com/works/4d101f63c10a6> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://purl.org/ontology/bibo/Book> .
 <http://talisaspire.com/works/4d101f63c10a6> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://talisaspire.com/schema#Work> .
-";
+");
         $actualResult = $this->tripod->describeResources(array('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA','http://talisaspire.com/works/4d101f63c10a6'));
-        $this->assertEquals($expectedResult,$actualResult->to_ntriples());
+
+        $cs = new \Tripod\ChangeSet(array('before' => $expectedResult->get_index(), 'after' => $actualResult->get_index(), 'changeReason' => "testing!"));
+
+        $this->assertFalse($cs->has_changes());
     }
 
     public function testGetCount()
@@ -1501,9 +1513,14 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $nsContextG = $this->tripod->describeResource('http://basedata.com/b/1',"baseData:DefaultGraph");
         $nsBothG = $this->tripod->describeResource('baseData:1',"baseData:DefaultGraph");
 
-        $this->assertEquals($noNsG->to_rdfxml(),$nsResourceG->to_rdfxml(),"Non ns and nsResource not equal");
-        $this->assertEquals($noNsG->to_rdfxml(),$nsContextG->to_rdfxml(),"Non ns and nsContext not equal");
-        $this->assertEquals($noNsG->to_rdfxml(),$nsBothG->to_rdfxml(),"Non ns and nsBoth not equal");
+        $nsResourceCs = new \Tripod\ChangeSet(array('before' => $noNsG->get_index(), 'after' => $nsResourceG->get_index(), 'changeReason' => "testing!"));
+        $this->assertFalse($nsResourceCs->has_changes(),"Non ns and nsResource not equal");
+
+        $nsContextCS = new \Tripod\ChangeSet(array('before' => $noNsG->get_index(), 'after' => $nsContextG->get_index(), 'changeReason' => "testing!"));
+        $this->assertFalse($nsContextCS->has_changes(),"Non ns and nsContext not equal");
+
+        $nsBothCS = new \Tripod\ChangeSet(array('before' => $noNsG->get_index(), 'after' => $nsBothG->get_index(), 'changeReason' => "testing!"));
+        $this->assertFalse($nsBothCS->has_changes(),"Non ns and nsBoth not equal");
     }
 
     public function testDescribeResourcesWithNamespace()
@@ -1513,9 +1530,14 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $nsContextG = $this->tripod->describeResources(array('http://basedata.com/b/1'),"baseData:DefaultGraph");
         $nsBothG = $this->tripod->describeResources(array('baseData:1'),"baseData:DefaultGraph");
 
-        $this->assertEquals($noNsG->to_rdfxml(),$nsResourceG->to_rdfxml(),"Non ns and nsResource not equal");
-        $this->assertEquals($noNsG->to_rdfxml(),$nsContextG->to_rdfxml(),"Non ns and nsContext not equal");
-        $this->assertEquals($noNsG->to_rdfxml(),$nsBothG->to_rdfxml(),"Non ns and nsBoth not equal");
+        $nsResourceCs = new \Tripod\ChangeSet(array('before' => $noNsG->get_index(), 'after' => $nsResourceG->get_index(), 'changeReason' => "testing!"));
+        $this->assertFalse($nsResourceCs->has_changes(),"Non ns and nsResource not equal");
+
+        $nsContextCS = new \Tripod\ChangeSet(array('before' => $noNsG->get_index(), 'after' => $nsContextG->get_index(), 'changeReason' => "testing!"));
+        $this->assertFalse($nsContextCS->has_changes(),"Non ns and nsContext not equal");
+
+        $nsBothCS = new \Tripod\ChangeSet(array('before' => $noNsG->get_index(), 'after' => $nsBothG->get_index(), 'changeReason' => "testing!"));
+        $this->assertFalse($nsBothCS->has_changes(),"Non ns and nsBoth not equal");
     }
 
     public function testSelectSingleValueWithNamespaceContextQueryDoesntContainID()

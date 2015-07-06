@@ -453,13 +453,12 @@ class Updates extends DriverBase {
 
             foreach ($changes as $change)
             {
-                $changes = array();
-
                 $subjectOfChange = $cs->get_first_resource($change,$this->labeller->qname_to_uri("cs:subjectOfChange"));
                 if(!array_key_exists($subjectOfChange, $subjectsAndPredicatesOfChange))
                 {
                     $subjectsAndPredicatesOfChange[$subjectOfChange] = array();
                 }
+
                 $criteria = array(
                     _ID_KEY=>array(_ID_RESOURCE=>$this->labeller->uri_to_alias($subjectOfChange),_ID_CONTEXT=>$contextAlias)
                 );
@@ -480,73 +479,87 @@ class Updates extends DriverBase {
                 // add the old vals to critera
                 $removals = $cs->get_subject_property_values($change,$this->labeller->qname_to_uri("cs:removal"));
                 $additions = $cs->get_subject_property_values($change,$this->labeller->qname_to_uri("cs:addition"));
+                $changesGroupedByNsPredicate = $this->getAdditionsRemovalsGroupedByNsPredicate($cs,$additions,$removals);
 
-                foreach ($removals as $r)
+
+                $mongoUpdateOperations = array();
+                foreach ($changesGroupedByNsPredicate as $nsPredicate => $additionsRemovals)
                 {
-                    $predicate = $cs->get_first_resource($r["value"],$this->labeller->qname_to_uri("rdf:predicate"));
+                    $predicateExists = isset($doc[$nsPredicate]);
 
+                    $predicate = $this->labeller->qname_to_uri($nsPredicate);
                     if(!in_array($predicate, $subjectsAndPredicatesOfChange[$subjectOfChange]))
                     {
                         $subjectsAndPredicatesOfChange[$subjectOfChange][] = $predicate;
                     }
 
-                    $object = $cs->get_subject_property_values($r["value"],$this->labeller->qname_to_uri("rdf:object"));
-
-                    $valueType = (($object[0]['type']=="uri")) ? VALUE_URI : VALUE_LITERAL;
-
-                    $nsPredicate = $this->labeller->uri_to_qname($predicate);
-                    $predicateExists = isset($doc[$nsPredicate]);
-                    $hasMultiValues = ($predicateExists) ? is_array($doc[$nsPredicate]) && !(isset($doc[$nsPredicate][0][$valueType])) : false;
-
-                    $valueExists = false;
-                    if ($hasMultiValues)
+                    // set to existing object if exists
+                    $valueObject = ($predicateExists) ? $doc[$nsPredicate] : array();
+                    if (isset($valueObject[VALUE_URI]) || isset($valueObject[VALUE_LITERAL]))
                     {
-                        $valueExists = in_array(array($valueType=>$object[0]["value"]),$doc[$nsPredicate]);
-                    }
-                    else if ($predicateExists)
-                    {
-                        $valueExists = array($valueType=>$object[0]["value"]) == $doc[$nsPredicate];
+                        // this is a single value object, convert to array of values for now
+                        $valueObject = array($valueObject);
                     }
 
-                    if (!$valueExists)
+                    if (isset($additionsRemovals["additions"]))
                     {
-                        $this->errorLog("Removal value {$subjectOfChange} {$predicate} {$object[0]['value']} does not appear in target document to be updated",array("doc"=>$doc));
-                        throw new \Exception("Removal value {$subjectOfChange} {$predicate} {$object[0]['value']} does not appear in target document to be updated");
+                        foreach ($additionsRemovals["additions"] as $addition)
+                        {
+                            $valueObject[] = $addition;
+                        }
                     }
-                    else if ($hasMultiValues)
+
+                    // remove
+                    if (isset($additionsRemovals["removals"]))
                     {
-                        $changes[] = array('$pull',array($nsPredicate => array($valueType=>$object[0]["value"])));
+                        $elemsToRemove = array();
+                        foreach ($additionsRemovals["removals"] as $removal)
+                        {
+                            foreach($removal as $valueType => $v) { // should only have one k/v
+                                $found = false;
+                                for ($i=0; $i<count($valueObject);$i++) {
+                                    if (isset($valueObject[$i]) && $valueObject[$i][$valueType] == $v)
+                                    {
+                                        // remove $vo
+                                        $elemsToRemove[] = $i;
+                                        $found = true;
+                                        break;
+                                    }
+                                }
+                                if (!$found) {
+                                    $this->errorLog("Removal value {$subjectOfChange} {$predicate} {$v} does not appear in target document to be updated",array("doc"=>$doc));
+                                    throw new \Exception("Removal value {$subjectOfChange} {$predicate} {$v} does not appear in target document to be updated");
+                                }
+                            }
+                        }
+                        if (count($elemsToRemove)>0)
+                        {
+                            foreach($elemsToRemove as $elem)
+                            {
+                                unset($valueObject[$elem]);
+                            }
+                            $valueObject = array_values($valueObject); // renumbers array after unsets
+                        }
+                    }
+
+                    if (count($valueObject)>0)
+                    {
+                        // unique value object
+                        $valueObject = array_map("unserialize", array_unique(array_map("serialize", $valueObject)));
+
+                        if (count($valueObject)==1)
+                        {
+                            $valueObject = $valueObject[0]; // un-array if only one value
+                        }
+                        $this->addOperatorToChange($mongoUpdateOperations,'$set',array($nsPredicate=>$valueObject));
                     }
                     else
                     {
-                        $changes[] = array('$unset',array($nsPredicate => ""));
-                    }
-                }
-
-                foreach ($additions as $r)
-                {
-                    $predicate = $cs->get_first_resource($r["value"],$this->labeller->qname_to_uri("rdf:predicate"));
-
-                    if(!in_array($predicate, $subjectsAndPredicatesOfChange[$subjectOfChange]))
-                    {
-                        $subjectsAndPredicatesOfChange[$subjectOfChange][] = $predicate;
-                    }
-
-                    $object = $cs->get_subject_property_values($r["value"],$this->labeller->qname_to_uri("rdf:object"));
-
-                    $valueType = (($object[0]['type']=="uri")) ? VALUE_URI : VALUE_LITERAL;
-
-                    $nsPredicate = $this->labeller->uri_to_qname($predicate);
-                    $predicateExists = isset($doc[$nsPredicate]);
-                    $hasMultiValues = ($predicateExists) ? is_array($doc[$nsPredicate]) && !(isset($doc[$nsPredicate][0][$valueType])) : false;
-
-                    if (!$predicateExists)
-                    {
-                        $changes[] = array('$addToSet'=>array($nsPredicate=>array($valueType=>$object[0]["value"]))); // todo: if a single value this will create an array of 1 value object and not just one value object...
-                    }
-                    else
-                    {
-                        $changes[] = array('$set'=>array($nsPredicate=>array($valueType=>$object[0]["value"])));
+                        // remove all existing values, if existed in the first place
+                        if ($predicateExists)
+                        {
+                            $this->addOperatorToChange($mongoUpdateOperations,'$unset',array($nsPredicate=>1));
+                        }
                     }
                 }
 
@@ -557,13 +570,20 @@ class Updates extends DriverBase {
 
                 $updatedAt = new \MongoDate();
 
-                $changes[] = array('$inc'=>array(_VERSION=>"1"));
+                if (!isset($doc[_VERSION]))
+                {
+                    // new doc
+                    $this->addOperatorToChange($mongoUpdateOperations,'$set',array(_VERSION=>0));
+                    $this->addOperatorToChange($mongoUpdateOperations,'$set',array(_CREATED_TS=>$updatedAt));
+                }
+                else
+                {
+                    $this->addOperatorToChange($mongoUpdateOperations,'$inc',array(_VERSION=>1));
+                }
 
-                // update datestamps
-                $changes[] = array('$setOnInsert'=>array(_CREATED_TS=>$updatedAt));
-                $changes[] = array('$set'=>array(_UPDATED_TS=>$updatedAt));
+                $this->addOperatorToChange($mongoUpdateOperations,'$set',array(_UPDATED_TS=>$updatedAt));
 
-                $updates[] = array("criteria"=>$criteria,"changes"=>$changes);
+                $updates[] = array("criteria"=>$criteria,"changes"=>$mongoUpdateOperations);
             }
 
             // apply each update
@@ -595,7 +615,7 @@ class Updates extends DriverBase {
                 if (!$result["ok"])
                 {
                     $this->errorLog("Update failed with err.", $result);
-                    throw new \Exception("Update failed with err {$result['err']}");
+                    throw new \Exception("Update failed with err {$result['errmsg']}");
                 }
 
                 if($result['value']==null)
@@ -645,6 +665,75 @@ class Updates extends DriverBase {
         else
         {
             throw new \Exception("Attempted to update a non-CBD collection");
+        }
+    }
+
+    private function getAdditionsRemovalsGroupedByNsPredicate($cs,$additions,$removals)
+    {
+        $additionsGroupedByNsPredicate = $this->getChangesGroupedByNsPredicate($cs,$additions);
+        $removalsGroupedByNsPredicate = $this->getChangesGroupedByNsPredicate($cs,$removals);
+
+        $mergedResult = array();
+        foreach($additionsGroupedByNsPredicate as $predicate => $values)
+        {
+            if (!isset($mergedResult[$predicate]))
+            {
+                $mergedResult[$predicate] = array();
+            }
+            $mergedResult[$predicate]["additions"] = $values;
+        }
+        foreach($removalsGroupedByNsPredicate as $predicate => $values)
+        {
+            if (!isset($mergedResult[$predicate]))
+            {
+                $mergedResult[$predicate] = array();
+            }
+            $mergedResult[$predicate]["removals"] = $values;
+        }
+        return $mergedResult;
+    }
+
+    private function getChangesGroupedByNsPredicate(\Tripod\ChangeSet $cs, $changes)
+    {
+        $changesGroupedByNsPredicate = array();
+        foreach ($changes as $c)
+        {
+            $predicate = $cs->get_first_resource($c["value"],$this->labeller->qname_to_uri("rdf:predicate"));
+            $nsPredicate = $this->labeller->uri_to_qname($predicate);
+
+            if(!array_key_exists($nsPredicate, $changesGroupedByNsPredicate))
+            {
+                $changesGroupedByNsPredicate[$nsPredicate] = array();
+            }
+
+            $object = $cs->get_subject_property_values($c["value"],$this->labeller->qname_to_uri("rdf:object"));
+            if (count($object)!=1)
+            {
+                $this->getLogger()->error("Expecting object array with exactly 1 element",$object);
+                throw new \Tripod\Exceptions\Exception("Object of removal malformed");
+            }
+
+            $valueType = (($object[0]['type']=="uri")) ? VALUE_URI : VALUE_LITERAL;
+            $value = ($valueType===VALUE_URI) ? $this->labeller->uri_to_alias($object[0]["value"]) : $object[0]["value"];
+
+            $changesGroupedByNsPredicate[$nsPredicate][] = array($valueType=>$value);
+        }
+        return $changesGroupedByNsPredicate;
+    }
+
+    private function addOperatorToChange(&$changes,$operator,$kvp)
+    {
+        if (!isset($changes[$operator]) || !is_array($changes[$operator]))
+        {
+            $changes[$operator] = array();
+        }
+        foreach($kvp as $key=>$value)
+        {
+            if (isset($changes[$operator][$key]))
+            {
+                $value = array_merge($value,$changes[$operator][$key]);
+            }
+            $changes[$operator][$key] = $value;
         }
     }
 
