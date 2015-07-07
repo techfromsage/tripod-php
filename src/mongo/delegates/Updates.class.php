@@ -575,7 +575,7 @@ class Updates extends DriverBase {
 
                 $this->addOperatorToChange($mongoUpdateOperations,MONGO_OPERATION_SET,array(_UPDATED_TS=>$updatedAt));
 
-                $updates[] = array("criteria"=>$criteria,"changes"=>$mongoUpdateOperations);
+                $updates[] = array("criteria"=>$criteria,"changes"=>$mongoUpdateOperations,"upsert"=>$upsert);
             }
 
             // apply each update
@@ -583,7 +583,7 @@ class Updates extends DriverBase {
             {
                 try
                 {
-                    $newDoc = $this->getCollection()->findAndModify($update['criteria'],$update['changes'],null,array("upsert"=>true,"new"=>true));
+                    $newDoc = $this->getCollection()->findAndModify($update['criteria'],$update['changes'],null,array("upsert"=>$update['upsert'],"new"=>true));
                     array_push($newCBDs, $newDoc);
                 }
                 catch (\Exception $e)
