@@ -20,7 +20,7 @@ define('MONGO_USER_COLLECTION', 'CBD_user');
 /**
  * Class MongoTripodTestBase
  */
-class MongoTripodTestBase extends PHPUnit_Framework_TestCase
+abstract class MongoTripodTestBase extends PHPUnit_Framework_TestCase
 {
 
     /**
