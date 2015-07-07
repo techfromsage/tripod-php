@@ -52,7 +52,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $this->viewsConstParams = array($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),'http://talisaspire.com/');
 
         // load base data
-        $this->loadBaseDataViaTripod();
+        $this->loadResourceDataViaTripod();
     }
 
     /**

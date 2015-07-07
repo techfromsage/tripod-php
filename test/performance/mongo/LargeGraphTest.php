@@ -1,37 +1,24 @@
 <?php
 set_include_path(
     get_include_path()
-    . PATH_SEPARATOR . dirname(dirname(dirname(__FILE__)))
-    . PATH_SEPARATOR . dirname(dirname(dirname(__FILE__))).'/lib'
-    . PATH_SEPARATOR . dirname(dirname(dirname(__FILE__))).'/src');
+        . PATH_SEPARATOR . dirname(dirname(dirname(dirname(__FILE__))))
+        . PATH_SEPARATOR . dirname(dirname(dirname(dirname(__FILE__)))).'/lib'
+        . PATH_SEPARATOR . dirname(dirname(dirname(dirname(__FILE__)))).'/src');
 
+require_once dirname(__FILE__).'/../../unit/mongo/MongoTripodTestBase.php';
 require_once('tripod.inc.php');
-require_once TRIPOD_DIR . 'mongo/Config.class.php';
-require_once TRIPOD_DIR . 'mongo/base/DriverBase.class.php';
 
 /**
  * A quick performance test to see what amount of time in consumed in specific methods of Config class
  *
  * Class MongoTripodConfigTest
  */
-class MongoTripodConfigTest extends PHPUnit_Framework_TestCase
+class LargeGraphTest extends MongoTripodTestBase
 {
     /**
      * time in ms (milli-seconds) anything below which is acceptable.
      */
-    const BENCHMARK_OBJECT_CREATE_TIME = 6000;
-
-    /**
-     * Number of iterations should to be ran to test
-     */
-    const BENCHMARK_OBJECT_CREATE_ITERATIONS = 1000;
-
-    /**
-     * Holds tripod config
-     * @var array
-     */
-    private $config = array();
-
+    const BENCHMARK_SAVE_TIME = 1000;
 
     /**
      * Do some setup before each test start
@@ -43,17 +30,22 @@ class MongoTripodConfigTest extends PHPUnit_Framework_TestCase
         $className = get_class($this);
         $testName = $this->getName();
         echo "\nTest: {$className}->{$testName}\n";
-        
-        $this->config = json_decode(file_get_contents(dirname(__FILE__) . '/../unit/mongo/data/config.json'), true);
+
+        $this->tripod = new \Tripod\Mongo\Driver('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/'));
     }
 
-    /**
-     * Post test completion actions.
-     */
-    protected function tearDown()
+    protected function loadLargeGraphData()
     {
-        $this->config = array();
-        parent::tearDown();
+        $docs = json_decode(file_get_contents(dirname(__FILE__).'/data/largeGraph.json'), true);
+        foreach ($docs as $d) {
+            $this->addDocument($d);
+        }
+    }
+
+
+    protected function getConfigLocation()
+    {
+        return dirname(__FILE__).'/../../unit/mongo/data/config.json';
     }
 
     /**
@@ -62,21 +54,24 @@ class MongoTripodConfigTest extends PHPUnit_Framework_TestCase
      *
      * Create some instances of Config to see what amount of time is taken in creating instance and processing in constructor.
      */
-    public function testCreateMongoTripodConfigObject()
+    public function testUpdateSingleTripleOfLargeGraph()
     {
+        $this->loadLargeGraphData();
+        $uri = "http://largegraph/1";
+
+
         $testStartTime = microtime();
 
-        //Let's try to create 1000 objects to see how much time they take.
-        for($i =0; $i < self::BENCHMARK_OBJECT_CREATE_ITERATIONS; $i++) {
-            \Tripod\Mongo\Config::setConfig($this->config);
-            $instance = \Tripod\Mongo\Config::getInstance();
-        }
+        $graph = new \Tripod\ExtendedGraph();
+        $graph->add_literal_triple($uri,"http://rdfs.org/sioc/spec/name","new name");
+        $this->tripod->saveChanges(new \Tripod\ExtendedGraph(),$graph);
 
         $testEndTime = microtime();
+
         $this->assertLessThan(
-            self::BENCHMARK_OBJECT_CREATE_TIME,
+            self::BENCHMARK_SAVE_TIME,
             $this->getTimeDifference($testStartTime, $testEndTime),
-            "It should always take less than " . self::BENCHMARK_OBJECT_CREATE_TIME . "ms to create " . self::BENCHMARK_OBJECT_CREATE_ITERATIONS . " objects of Config class"
+            "It should always take less than " . self::BENCHMARK_SAVE_TIME . "ms to save a triple to a large graph"
         );
     }
 

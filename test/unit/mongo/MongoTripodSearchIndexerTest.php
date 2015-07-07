@@ -17,7 +17,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
         {
             $collection->drop();
         }
-        $this->loadBaseDataViaTripod();
+        $this->loadResourceDataViaTripod();
         $this->loadBaseSearchDataViaTripod();
     }
 

@@ -43,7 +43,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
         $this->tripod->setTransactionLog($this->tripodTransactionLog);
 
-        $this->loadBaseDataViaTripod();
+        $this->loadResourceDataViaTripod();
     }
 
     public function testSelectMultiValue()

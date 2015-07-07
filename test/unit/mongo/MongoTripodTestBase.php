@@ -40,7 +40,7 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
     }
 
 
-    protected function loadBaseData()
+    protected function loadResourceData()
     {
         $docs = json_decode(file_get_contents(dirname(__FILE__).'/data/resources.json'), true);
         foreach ($docs as $d) {
@@ -48,7 +48,7 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         }
     }
 
-    protected function loadBaseDataViaTripod()
+    protected function loadResourceDataViaTripod()
     {
         $this->loadDataViaTripod('/data/resources.json');
     }
@@ -71,12 +71,16 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         }
     }
 
+    protected function getConfigLocation()
+    {
+        return dirname(__FILE__).'/data/config.json';
+    }
+
     protected function setUp()
     {
         date_default_timezone_set('Europe/London');
-        $configFileName = dirname(__FILE__).'/data/config.json';
 
-        $config = json_decode(file_get_contents($configFileName), true);
+        $config = json_decode(file_get_contents($this->getConfigLocation()), true);
         if(getenv('TRIPOD_DATASOURCE_RS1_CONFIG'))
         {
             $config['data_sources']['rs1'] = json_decode(getenv('TRIPOD_DATASOURCE_RS1_CONFIG'), true);

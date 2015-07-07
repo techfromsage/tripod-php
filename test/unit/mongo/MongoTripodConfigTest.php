@@ -1134,7 +1134,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         }
 
         $this->tripod = new \Tripod\Mongo\Driver('CBD_testing', $storeName, array(OP_ASYNC=>array(OP_VIEWS=>true,OP_TABLES=>false,OP_SEARCH=>false)));
-        $this->loadBaseDataViaTripod();
+        $this->loadResourceDataViaTripod();
 
         $graph = new \Tripod\Mongo\MongoGraph();
         $subject = 'http://example.com/' . uniqid();
@@ -1298,7 +1298,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
 
         // Start adding some data
         $this->tripod = new \Tripod\Mongo\Driver('CBD_testing', $storeName, array(OP_ASYNC=>array(OP_VIEWS=>true,OP_TABLES=>false,OP_SEARCH=>false)));
-        $this->loadBaseDataViaTripod();
+        $this->loadResourceDataViaTripod();
 
         $graph = new \Tripod\Mongo\MongoGraph();
         $subject = 'http://example.com/' . uniqid();

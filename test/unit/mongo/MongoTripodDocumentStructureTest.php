@@ -31,7 +31,7 @@ class MongoTripodDocumentStructureTest extends MongoTripodTestBase
         $this->getTripodCollection($this->tripod)->drop();
         $this->tripod->setTransactionLog($this->tripodTransactionLog);
 
-        $this->loadBaseDataViaTripod();
+        $this->loadResourceDataViaTripod();
     }
 
     public function testDocumentContainsDefaultProperties()

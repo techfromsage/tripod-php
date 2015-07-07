@@ -11,6 +11,7 @@
     <property name="output.dir" location="output" />
     <property name="codecoverage.dir" location="${output.dir}/codecoverage" />
     <property name="unit.test.dir" location="${test.dir}/unit" />
+    <property name="perf.test.dir" location="${test.dir}/performance" />
     <property name="test" value="**" />
 
     <!-- targets -->
@@ -62,7 +63,7 @@
     </target>
 
     <target name="perftest" depends="init" description="Runs the performance test suite">
-        <exec dir="${test.dir}/performance" executable="${vendor.dir}/bin/phpunit" failonerror="true">
+        <exec dir="${perf.test.dir}" executable="${vendor.dir}/bin/phpunit" failonerror="true">
             <arg line="--filter ${test} --log-junit ${output.dir}/performanceTest-report.xml" />
         </exec>
     </target>
