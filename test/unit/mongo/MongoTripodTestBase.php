@@ -131,7 +131,6 @@ class MongoTripodTestBase extends PHPUnit_Framework_TestCase
     protected function getTripodCollection(\Tripod\Mongo\Driver $tripod)
     {
         $config = \Tripod\Mongo\Config::getInstance();
-        $pods = $config->getPods($tripod->getStoreName());
         $podName = $tripod->getPodName();
         $dataSource = $config->getDataSourceForPod($tripod->getStoreName(), $podName);
         return $config->getDatabase(
