@@ -445,15 +445,12 @@ class Updates extends DriverBase {
 
             // gather together all the updates (we'll apply them later)....
             $updates = array();
-            $deletes = array();
-
-            $upsert = false;
 
             $newCBDs = array();
 
-            foreach ($changes as $change)
+            foreach ($changes as $changeUri)
             {
-                $subjectOfChange = $cs->get_first_resource($change,$this->labeller->qname_to_uri("cs:subjectOfChange"));
+                $subjectOfChange = $cs->get_first_resource($changeUri,$this->labeller->qname_to_uri("cs:subjectOfChange"));
                 if(!array_key_exists($subjectOfChange, $subjectsAndPredicatesOfChange))
                 {
                     $subjectsAndPredicatesOfChange[$subjectOfChange] = array();
@@ -464,22 +461,17 @@ class Updates extends DriverBase {
                 );
 
                 // read before write, and to find array indexes and get document in memory
-                //$targetGraph = new MongoGraph();
 
                 $doc = $this->getDocumentForUpdate($subjectOfChange, $contextAlias, $originalCBDs);
 
-//                $targetGraph = new MongoGraph();
-//                $targetGraph->add_tripod_array($doc);
-
+                $upsert = false;
                 if(empty($doc))
                 {
                     $upsert = true;
                 }
 
                 // add the old vals to critera
-                $removals = $cs->get_subject_property_values($change,$this->labeller->qname_to_uri("cs:removal"));
-                $additions = $cs->get_subject_property_values($change,$this->labeller->qname_to_uri("cs:addition"));
-                $changesGroupedByNsPredicate = $this->getAdditionsRemovalsGroupedByNsPredicate($cs,$additions,$removals);
+                $changesGroupedByNsPredicate = $this->getAdditionsRemovalsGroupedByNsPredicate($cs,$changeUri);
 
 
                 $mongoUpdateOperations = array();
@@ -551,14 +543,14 @@ class Updates extends DriverBase {
                         {
                             $valueObject = $valueObject[0]; // un-array if only one value
                         }
-                        $this->addOperatorToChange($mongoUpdateOperations,'$set',array($nsPredicate=>$valueObject));
+                        $this->addOperatorToChange($mongoUpdateOperations,MONGO_OPERATION_SET,array($nsPredicate=>$valueObject));
                     }
                     else
                     {
                         // remove all existing values, if existed in the first place
                         if ($predicateExists)
                         {
-                            $this->addOperatorToChange($mongoUpdateOperations,'$unset',array($nsPredicate=>1));
+                            $this->addOperatorToChange($mongoUpdateOperations,MONGO_OPERATION_UNSET,array($nsPredicate=>1));
                         }
                     }
                 }
@@ -573,15 +565,15 @@ class Updates extends DriverBase {
                 if (!isset($doc[_VERSION]))
                 {
                     // new doc
-                    $this->addOperatorToChange($mongoUpdateOperations,'$set',array(_VERSION=>0));
-                    $this->addOperatorToChange($mongoUpdateOperations,'$set',array(_CREATED_TS=>$updatedAt));
+                    $this->addOperatorToChange($mongoUpdateOperations,MONGO_OPERATION_SET,array(_VERSION=>0));
+                    $this->addOperatorToChange($mongoUpdateOperations,MONGO_OPERATION_SET,array(_CREATED_TS=>$updatedAt));
                 }
                 else
                 {
-                    $this->addOperatorToChange($mongoUpdateOperations,'$inc',array(_VERSION=>1));
+                    $this->addOperatorToChange($mongoUpdateOperations,MONGO_OPERATION_INC,array(_VERSION=>1));
                 }
 
-                $this->addOperatorToChange($mongoUpdateOperations,'$set',array(_UPDATED_TS=>$updatedAt));
+                $this->addOperatorToChange($mongoUpdateOperations,MONGO_OPERATION_SET,array(_UPDATED_TS=>$updatedAt));
 
                 $updates[] = array("criteria"=>$criteria,"changes"=>$mongoUpdateOperations);
             }
@@ -589,72 +581,22 @@ class Updates extends DriverBase {
             // apply each update
             foreach ($updates as $update)
             {
-                $command = array(
-                    "findAndModify" => $this->getCollection()->getName(),
-                    "query" => $update['criteria'],
-                    "update" => $update['changes'],
-                    "upsert" => $upsert,
-                    "new"=>true
-                );
-
-                try{
-                    $result = $this->getDatabase()->command($command);
-                    array_push($newCBDs, $this->getCollection()->findOne($update['criteria']));
-                } catch (\Exception $e) {
-
+                try
+                {
+                    $newDoc = $this->getCollection()->findAndModify($update['criteria'],$update['changes'],null,array("upsert"=>true,"new"=>true));
+                    array_push($newCBDs, $newDoc);
+                }
+                catch (\Exception $e)
+                {
                     $this->errorLog(MONGO_WRITE,
                         array(
-                            'description'=>'Error with Mongo DB command:' . $e->getMessage(),
+                            'description'=>'Error with Mongo DB findAndModify:' . $e->getMessage(),
                             'transaction_id'=>$transaction_id,
                             'mongoDriverError' => $this->getDatabase()->lastError()
                         )
                     );
                     throw new \Exception($e);
                 }
-
-                if (!$result["ok"])
-                {
-                    $this->errorLog("Update failed with err.", $result);
-                    throw new \Exception("Update failed with err {$result['errmsg']}");
-                }
-
-                if($result['value']==null)
-                {
-                    $this->errorLog(MONGO_WRITE,
-                        array(
-                            'description'=>'Driver::storeChanges - Update failed we did not find a matching document (transaction_id - ' .$transaction_id .')',
-                            $result
-                        )
-                    );
-                    throw new \Exception("Update failed we did not find a matching document");
-                }
-            }
-
-            // todo: work out what happens with these
-            foreach($deletes as $delete)
-            {
-                $command = array(
-                    "findAndModify" => $this->getCollection()->getName(),
-                    "query" => $delete['criteria'],
-                    "update" => $delete['change'],
-                    "upsert" => false,
-                    "new"=>false
-                );
-
-                $result = $this->getDatabase()->command($command);
-
-                if (!$result["ok"])
-                {
-                    $this->errorLog("Delete failed with err.", $result);
-                    throw new \Exception("Delete failed with err {$result['err']}");
-                }
-
-                if($result['value']==null)
-                {
-                    $this->errorLog("Delete failed we did not find a matching document.", $result);
-                    throw new \Exception("Delete failed we did not find a matching document");
-                }
-
             }
 
             return array(
@@ -668,10 +610,16 @@ class Updates extends DriverBase {
         }
     }
 
-    private function getAdditionsRemovalsGroupedByNsPredicate($cs,$additions,$removals)
+    /**
+     * Helper function to group the changes for $changeUri by namespaced predicate, then by additions and removals
+     * @param \Tripod\ChangeSet $cs
+     * @param $changeUri
+     * @return array
+     */
+    private function getAdditionsRemovalsGroupedByNsPredicate(\Tripod\ChangeSet $cs, $changeUri)
     {
-        $additionsGroupedByNsPredicate = $this->getChangesGroupedByNsPredicate($cs,$additions);
-        $removalsGroupedByNsPredicate = $this->getChangesGroupedByNsPredicate($cs,$removals);
+        $additionsGroupedByNsPredicate = $this->getChangesGroupedByNsPredicate($cs,$changeUri,$this->labeller->qname_to_uri("cs:addition"));
+        $removalsGroupedByNsPredicate = $this->getChangesGroupedByNsPredicate($cs,$changeUri,$this->labeller->qname_to_uri("cs:removal"));
 
         $mergedResult = array();
         foreach($additionsGroupedByNsPredicate as $predicate => $values)
@@ -693,8 +641,17 @@ class Updates extends DriverBase {
         return $mergedResult;
     }
 
-    private function getChangesGroupedByNsPredicate(\Tripod\ChangeSet $cs, $changes)
+    /**
+     * Helper method to group changes for $changeUri of a given type by namespaced predicate
+     * @param \Tripod\ChangeSet $cs
+     * @param array $changes
+     * @return array
+     * @throws \Tripod\Exceptions\Exception
+     */
+    private function getChangesGroupedByNsPredicate(\Tripod\ChangeSet $cs, $changeUri, $changePredicate)
     {
+        $changes = $cs->get_subject_property_values($changeUri,$changePredicate);
+
         $changesGroupedByNsPredicate = array();
         foreach ($changes as $c)
         {
@@ -721,6 +678,12 @@ class Updates extends DriverBase {
         return $changesGroupedByNsPredicate;
     }
 
+    /**
+     * Helper method to add operator to a set of existing changes ready to be sent to Mongo
+     * @param $changes
+     * @param $operator
+     * @param $kvp
+     */
     private function addOperatorToChange(&$changes,$operator,$kvp)
     {
         if (!isset($changes[$operator]) || !is_array($changes[$operator]))
@@ -879,8 +842,8 @@ class Updates extends DriverBase {
         if(!empty($fromDateTime) || !empty($tillDateTime)){
             $query[_LOCKED_FOR_TRANS_TS] = array();
 
-            if(!empty($fromDateTime)) $query[_LOCKED_FOR_TRANS_TS]['$gte'] = new \MongoDate(strtotime($fromDateTime));
-            if(!empty($tillDateTime)) $query[_LOCKED_FOR_TRANS_TS]['$lte'] = new \MongoDate(strtotime($tillDateTime));
+            if(!empty($fromDateTime)) $query[_LOCKED_FOR_TRANS_TS][MONGO_OPERATION_GTE] = new \MongoDate(strtotime($fromDateTime));
+            if(!empty($tillDateTime)) $query[_LOCKED_FOR_TRANS_TS][MONGO_OPERATION_LTE] = new \MongoDate(strtotime($tillDateTime));
         }
         $docs = $this->getLocksCollection()->find($query)->sort(array(_LOCKED_FOR_TRANS => 1));
 
@@ -1028,7 +991,7 @@ class Updates extends DriverBase {
                 $this->unlockAllDocuments($transaction_id);
 
                 //3. Update audit entry to say it was completed
-                $result = $auditCollection->update(array(_ID_KEY => $auditDocumentId), array('$set' => array("status" => AUDIT_STATUS_COMPLETED, _UPDATED_TS => $this->getMongoDate())));
+                $result = $auditCollection->update(array(_ID_KEY => $auditDocumentId), array(MONGO_OPERATION_SET => array("status" => AUDIT_STATUS_COMPLETED, _UPDATED_TS => $this->getMongoDate())));
                 if($result['err']!=NULL )
                 {
                     throw new \Exception("Failed to update audit entry with error message- " . $result['err']);
@@ -1042,7 +1005,7 @@ class Updates extends DriverBase {
                 );
 
                 //4. Update audit entry to say it was failed with error
-                $result = $auditCollection->update(array(_ID_KEY => $auditDocumentId), array('$set' => array("status" => AUDIT_STATUS_ERROR, _UPDATED_TS => $this->getMongoDate(), 'error' => $e->getMessage())));
+                $result = $auditCollection->update(array(_ID_KEY => $auditDocumentId), array(MONGO_OPERATION_SET => array("status" => AUDIT_STATUS_ERROR, _UPDATED_TS => $this->getMongoDate(), 'error' => $e->getMessage())));
 
                 if($result['err']!=NULL )
                 {
