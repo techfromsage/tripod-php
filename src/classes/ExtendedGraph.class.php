@@ -592,7 +592,8 @@ class ExtendedGraph
             /** @var \ARC2_TurtleParser $parser */
             $parser = \ARC2::getTurtleParser();
             $parser->parse($base, $turtle );
-            $this->_add_arc2_triple_list($parser->getTriples());
+            $triples = $parser->getTriples();
+            $this->_add_arc2_triple_list($triples);
             unset($parser);
         }
     }
