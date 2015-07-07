@@ -37,6 +37,13 @@ define('OP_SYNC', 'sync');
 define('OP_ASYNC', 'async');
 define('OP_QUEUE', 'queue');
 
+// operands provided by mongo
+define("MONGO_OPERATION_SET",'$set');
+define("MONGO_OPERATION_INC",'$inc');
+define("MONGO_OPERATION_UNSET",'$unset');
+define("MONGO_OPERATION_GTE",'$gte');
+define("MONGO_OPERATION_LTE",'$lte');
+
 // query types, used mainly for logging
 define('MONGO_SELECT','MONGO_SELECT');
 define('MONGO_DESCRIBE','MONGO_DESCRIBE');
