@@ -165,6 +165,20 @@
                             }
                         }
                     }
+                },
+                {
+                    "_id": "v_doc_with_seqeunce",
+                    "type": ["baseData:DocWithSequence"],
+                    "from": "CBD_testing",
+                    "joins": {
+                        "dct:creator" : {},
+                        "baseData:hasSequence": {
+                            "joins":{
+                                "followSequence":{
+                                }
+                            }
+                        }
+                    }
                 }
             ],
             "search_config": {
