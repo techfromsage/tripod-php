@@ -896,13 +896,18 @@ class Updates extends DriverBase {
                 }
             }
 
-            if(count($subjectsOfChange) == count($lockedSubjects)){ //if all subjects of change locked, we are good.
+            if(count($subjectsOfChange) == count($lockedSubjects))
+            {
+                //if all subjects of change locked, we are good.
                 return $originalCBDs;
-            }else{
-
-                if(count($lockedSubjects)) //If any subject was locked, unlock it
+            }
+            else
+            {
+                // If any subject was locked, unlock it
+                if(count($lockedSubjects))
+                {
                     $this->unlockAllDocuments($transaction_id);
-
+                }
                 $this->debugLog(MONGO_LOCK,
                     array(
                         'description'=>"Driver::lockAllDocuments - Unable to lock all ". count($subjectsOfChange) ."  documents, unlocked  " . count($lockedSubjects) . " locked documents",
