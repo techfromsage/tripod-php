@@ -69,7 +69,7 @@ class MongoTripodComputedFieldsTest extends MongoTripodTestBase
         \Tripod\Mongo\Config::setConfig($newConfig);
         \Tripod\Mongo\Config::getInstance();
         $this->tripod = new \Tripod\Mongo\Driver('CBD_testing', 'tripod_php_testing');
-        $this->loadBaseDataViaTripod();
+        $this->loadResourceDataViaTripod();
         $this->tripod->generateTableRows('t_conditional_creators');
         $collection = \Tripod\Mongo\Config::getInstance()->getCollectionForTable('tripod_php_testing', 't_conditional_creators');
 
@@ -136,7 +136,7 @@ class MongoTripodComputedFieldsTest extends MongoTripodTestBase
         \Tripod\Mongo\Config::setConfig($newConfig);
         \Tripod\Mongo\Config::getInstance();
         $this->tripod = new \Tripod\Mongo\Driver('CBD_testing', 'tripod_php_testing');
-        $this->loadBaseDataViaTripod();
+        $this->loadResourceDataViaTripod();
         $this->tripod->generateTableRows('t_conditional_creators');
         $collection = \Tripod\Mongo\Config::getInstance()->getCollectionForTable('tripod_php_testing', 't_conditional_creators');
 
@@ -221,7 +221,7 @@ class MongoTripodComputedFieldsTest extends MongoTripodTestBase
         \Tripod\Mongo\Config::setConfig($newConfig);
         \Tripod\Mongo\Config::getInstance();
         $this->tripod = new \Tripod\Mongo\Driver('CBD_testing', 'tripod_php_testing');
-        $this->loadBaseDataViaTripod();
+        $this->loadResourceDataViaTripod();
         $this->tripod->generateTableRows('t_replace_type');
         $collection = \Tripod\Mongo\Config::getInstance()->getCollectionForTable('tripod_php_testing', 't_replace_type');
 
@@ -313,7 +313,7 @@ class MongoTripodComputedFieldsTest extends MongoTripodTestBase
         \Tripod\Mongo\Config::setConfig($newConfig);
         \Tripod\Mongo\Config::getInstance();
         $this->tripod = new \Tripod\Mongo\Driver('CBD_testing', 'tripod_php_testing');
-        $this->loadBaseDataViaTripod();
+        $this->loadResourceDataViaTripod();
         $this->tripod->generateTableRows('t_creator_count');
         $collection = \Tripod\Mongo\Config::getInstance()->getCollectionForTable('tripod_php_testing', 't_creator_count');
 
@@ -382,7 +382,7 @@ class MongoTripodComputedFieldsTest extends MongoTripodTestBase
         \Tripod\Mongo\Config::setConfig($newConfig);
         \Tripod\Mongo\Config::getInstance();
         $this->tripod = new \Tripod\Mongo\Driver('CBD_testing', 'tripod_php_testing');
-        $this->loadBaseDataViaTripod();
+        $this->loadResourceDataViaTripod();
         $this->tripod->generateTableRows('t_conditional_with_nested_arithmetic');
         $collection = \Tripod\Mongo\Config::getInstance()->getCollectionForTable('tripod_php_testing', 't_conditional_with_nested_arithmetic');
         $tableDoc = $collection->findOne(array('_id.type'=>'t_conditional_with_nested_arithmetic'));
@@ -430,7 +430,7 @@ class MongoTripodComputedFieldsTest extends MongoTripodTestBase
         \Tripod\Mongo\Config::setConfig($newConfig);
         \Tripod\Mongo\Config::getInstance();
         $this->tripod = new \Tripod\Mongo\Driver('CBD_testing', 'tripod_php_testing');
-        $this->loadBaseDataViaTripod();
+        $this->loadResourceDataViaTripod();
         $this->tripod->generateTableRows('t_arithmetic_with_nested_conditional');
         $collection = \Tripod\Mongo\Config::getInstance()->getCollectionForTable('tripod_php_testing', 't_arithmetic_with_nested_conditional');
         $tableDoc = $collection->findOne(array('_id.type'=>'t_arithmetic_with_nested_conditional'));

@@ -34,7 +34,7 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         // Lock collection no longer available from Driver, so drop it manually
         \Tripod\Mongo\Config::getInstance()->getCollectionForLocks($this->tripod->getStoreName())->drop();
 
-        $this->loadBaseDataViaTripod();
+        $this->loadResourceDataViaTripod();
 
         $this->tripodTransactionLog = new \Tripod\Mongo\TransactionLog();
         $this->tripodTransactionLog->purgeAllTransactions();
@@ -173,7 +173,7 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         $this->getTripodCollection($this->tripod)->drop();
 
         // re-add the base data, verify document exists in the store
-        $this->loadBaseData();
+        $this->loadResourceData();
         $this->assertDocumentExists(array("r"=>$uri,"c"=>"http://talisaspire.com/"));
 
         // replay the transaction

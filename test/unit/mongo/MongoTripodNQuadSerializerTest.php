@@ -134,6 +134,10 @@ class MongoTripodNQuadSerializerTest extends MongoTripodTestBase
 <http://basedata.com/b/bar1234> <http://purl.org/dc/terms/contributor> <http://schemas.talis.com/2005/user/schema#10101> <http://talisaspire.com/> .
 <http://basedata.com/b/bar1234> <http://purl.org/dc/terms/contributor> <http://schemas.talis.com/2005/user/schema#10102> <http://talisaspire.com/> .
 <http://basedata.com/b/bar1234> <http://purl.org/dc/terms/title> \"Another document title\" <http://talisaspire.com/> .
+<http://basedata.com/b/docWithEmptySeq123> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://basedata.com/b/DocWithSequence> <http://talisaspire.com/> .
+<http://basedata.com/b/docWithEmptySeq123> <http://basedata.com/b/hasSequence> <http://basedata.com/b/sequence123> <http://talisaspire.com/> .
+<http://basedata.com/b/docWithEmptySeq123> <http://purl.org/dc/terms/creator> <http://schemas.talis.com/2005/user/schema#xyz> <http://talisaspire.com/> .
+<http://basedata.com/b/docWithEmptySeq123> <http://purl.org/dc/terms/title> \"Doc with sequence\" <http://talisaspire.com/> .
 ";
         
         $serializer = new NQuadSerializer();
