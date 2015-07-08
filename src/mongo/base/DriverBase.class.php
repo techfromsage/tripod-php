@@ -307,30 +307,33 @@ abstract class DriverBase
      * @param array &$target
      * @throws \InvalidArgumentException
      */
-    protected function addIdToImpactIndex(array $id, &$target)
+    protected function addIdToImpactIndex(array $id, &$target, $buildImpactIndex=true)
     {
-        if(isset($id[_ID_RESOURCE]))
+        if ($buildImpactIndex)
         {
-            // Ensure that our id is curie'd
-            $id[_ID_RESOURCE] = $this->labeller->uri_to_alias($id[_ID_RESOURCE]);
-            if (!isset($target[_IMPACT_INDEX]))
+            if(isset($id[_ID_RESOURCE]))
             {
-                $target[_IMPACT_INDEX] = array();
-            }
-            if(!in_array($id, $target[_IMPACT_INDEX]))
-            {
-                $target[_IMPACT_INDEX][] = $id;
-            }
-        }
-        else // Assume this is an array of ids
-        {
-            foreach($id as $i)
-            {
-                if(!isset($i[_ID_RESOURCE]))
+                // Ensure that our id is curie'd
+                $id[_ID_RESOURCE] = $this->labeller->uri_to_alias($id[_ID_RESOURCE]);
+                if (!isset($target[_IMPACT_INDEX]))
                 {
-                    throw new \InvalidArgumentException("Invalid id format");
+                    $target[_IMPACT_INDEX] = array();
                 }
-                $this->addIdToImpactIndex($i, $target);
+                if(!in_array($id, $target[_IMPACT_INDEX]))
+                {
+                    $target[_IMPACT_INDEX][] = $id;
+                }
+            }
+            else // Assume this is an array of ids
+            {
+                foreach($id as $i)
+                {
+                    if(!isset($i[_ID_RESOURCE]))
+                    {
+                        throw new \InvalidArgumentException("Invalid id format");
+                    }
+                    $this->addIdToImpactIndex($i, $target);
+                }
             }
         }
     }

@@ -969,7 +969,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
     public function testGetAllTypesInSpecifications()
     {
         $types = $this->tripodConfig->getAllTypesInSpecifications("tripod_php_testing");
-        $this->assertEquals(9, count($types), "There should be 9 types based on the configured view, table and search specifications in config.json");
+        $this->assertEquals(10, count($types), "There should be 10 types based on the configured view, table and search specifications in config.json");
         $expectedValues = array(
             "acorn:Resource",
             "acorn:Work",
@@ -979,7 +979,8 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             "resourcelist:List",
             "spec:User",
             "bibo:Document",
-            "baseData:Wibble"
+            "baseData:Wibble",
+            "baseData:DocWithSequence"
         );
 
         foreach($expectedValues as $expected){
@@ -1325,7 +1326,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $transactionColletion = $transactionMongo->selectCollection($newConfig['transaction_log']['database'], $newConfig['transaction_log']['collection']);
         $transactionCount = $transactionColletion->count();
         $transactionExampleDocument = $transactionColletion->findOne();
-        $this->assertEquals(18, $transactionCount);
+        $this->assertEquals(19, $transactionCount);
         $this->assertContains('transaction_', $transactionExampleDocument["_id"]);
     }
 
