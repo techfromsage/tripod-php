@@ -52,7 +52,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $this->viewsConstParams = array($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),'http://talisaspire.com/');
 
         // load base data
-        $this->loadBaseDataViaTripod();
+        $this->loadResourceDataViaTripod();
     }
 
     /**
@@ -1309,6 +1309,54 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
 
         $impactedSubjects = $views->getImpactedSubjects($subjectsAndPredicatesOfChange, 'http://talisaspire.com/');
         $this->assertEquals($expectedImpactedSubjects, $impactedSubjects);
+    }
+
+    public function testSavingToAPreviouslyEmptySeqeunceUpdatesView()
+    {
+        // create a tripod with views sync
+        $tripod = new \Tripod\Mongo\Driver("CBD_testing","tripod_php_testing",array(
+            "defaultContext"=>"http://talisaspire.com/",
+            "async"=>array(OP_VIEWS=>false)
+        ));
+
+        // should be no triples with "http://basedata.com/b/sequence123" as subject in existing view
+        $view = $tripod->getViewForResource("http://basedata.com/b/docWithEmptySeq123","v_doc_with_seqeunce");
+        $this->assertTrue($view->has_triples_about("http://basedata.com/b/docWithEmptySeq123"));
+        $this->assertFalse($view->has_triples_about("http://basedata.com/b/sequence123"));
+
+        $newGraph = new \Tripod\ExtendedGraph();
+        $newGraph->add_resource_to_sequence("http://basedata.com/b/sequence123","http://basedata.com/b/sequenceItem123");
+
+        $tripod->saveChanges(new \Tripod\ExtendedGraph(),$newGraph);
+
+        // should be triples with "http://basedata.com/b/sequence123" as subject in new view
+        $view = $this->tripod->getViewForResource("http://basedata.com/b/docWithEmptySeq123","v_doc_with_seqeunce");
+        $this->assertTrue($view->has_triples_about("http://basedata.com/b/docWithEmptySeq123"));
+        $this->assertTrue($view->has_triples_about("http://basedata.com/b/sequence123"));
+    }
+
+    public function testSavingToAPreviouslyEmptyJoinUpdatesView()
+    {
+        // create a tripod with views sync
+        $tripod = new \Tripod\Mongo\Driver("CBD_testing","tripod_php_testing",array(
+            "defaultContext"=>"http://talisaspire.com/",
+            "async"=>array(OP_VIEWS=>false)
+        ));
+
+        // should be no triples with "http://basedata.com/b/sequence123" as subject in existing view
+        $view = $tripod->getViewForResource("http://basedata.com/b/docWithEmptySeq123","v_doc_with_seqeunce");
+        $this->assertTrue($view->has_triples_about("http://basedata.com/b/docWithEmptySeq123"));
+        $this->assertFalse($view->has_triples_about("http://schemas.talis.com/2005/user/schema#xyz"));
+
+        $newGraph = new \Tripod\ExtendedGraph();
+        $newGraph->add_literal_triple("http://schemas.talis.com/2005/user/schema#xyz","http://rdfs.org/sioc/spec/name","Some name");
+
+        $tripod->saveChanges(new \Tripod\ExtendedGraph(),$newGraph);
+
+        // should be triples with "http://basedata.com/b/sequence123" as subject in new view
+        $view = $tripod->getViewForResource("http://basedata.com/b/docWithEmptySeq123","v_doc_with_seqeunce");
+        $this->assertTrue($view->has_triples_about("http://basedata.com/b/docWithEmptySeq123"));
+        $this->assertTrue($view->has_triples_about("http://schemas.talis.com/2005/user/schema#xyz"));
     }
 
     /**

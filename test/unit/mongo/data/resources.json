@@ -493,5 +493,27 @@
         "dct:title" : {
             "l" : "Another document title"
         }
+    },
+    {
+        "_id":
+        {
+            "r":"baseData:docWithEmptySeq123",
+            "c":"http://talisaspire.com/"
+        },
+        "rdf:type":
+                [
+                    {
+                        "u":"baseData:DocWithSequence"
+                    }
+                ],
+        "baseData:hasSequence" : {
+            "u":"baseData:sequence123"
+        },
+        "dct:creator" : {
+            "u":"user:xyz"
+        },
+        "dct:title" : {
+            "l" : "Doc with sequence"
+        }
     }
 ]

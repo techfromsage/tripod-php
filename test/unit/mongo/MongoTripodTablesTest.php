@@ -45,7 +45,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $this->getTripodCollection($this->tripod)->drop();
         $this->tripod->setTransactionLog($this->tripodTransactionLog);
 
-        $this->loadBaseDataViaTripod();
+        $this->loadResourceDataViaTripod();
 
         $this->tablesConstParams = array($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),'http://talisaspire.com/');
 

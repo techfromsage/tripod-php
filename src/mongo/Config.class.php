@@ -2057,7 +2057,17 @@ class Config
      */
     public static function getResqueServer()
     {
-        return self::getenv(MONGO_TRIPOD_RESQUE_SERVER,"localhost:6379");
+        $resqueServer = self::getenv(RESQUE_SERVER,'');
+        if (empty($resqueServer))
+        {
+            $resqueServer = self::getenv(MONGO_TRIPOD_RESQUE_SERVER,'');
+            self::getLogger()->addNotice("Use of MONGO_TRIPOD_RESQUE_SERVER is deprecated - use RESQUE_SERVER instead");
+        }
+        if (empty($resqueServer))
+        {
+            $resqueServer = "localhost:6379";
+        }
+        return $resqueServer;
     }
 
     /**
@@ -2078,5 +2088,24 @@ class Config
             return $default;
         }
         throw new \Tripod\Exceptions\ConfigException("Missing value for environmental variable $env");
+    }
+
+    /**
+     * @var \Psr\Log\LoggerInterface
+     */
+    protected static $logger;
+
+    /**
+     * @static
+     * @return \Psr\Log\LoggerInterface;
+     */
+    public static function getLogger()
+    {
+        if (self::$logger == null)
+        {
+            $log = new \Monolog\Logger('TRIPOD');
+            self::$logger = $log;
+        }
+        return self::$logger;
     }
 }
