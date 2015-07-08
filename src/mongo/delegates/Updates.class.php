@@ -27,9 +27,9 @@ class Updates extends DriverBase {
     private $originalCollectionReadPreference = array();
 
     /**
-    * @var array The original read preference gets stored here
-    * when changing for a write.
-    */
+     * @var array The original read preference gets stored here
+     * when changing for a write.
+     */
     private $originalDbReadPreference = array();
 
     /**
@@ -437,7 +437,7 @@ class Updates extends DriverBase {
     protected function applyChangeSet(\Tripod\ChangeSet $cs, $originalCBDs, $contextAlias, $transaction_id)
     {
         $subjectsAndPredicatesOfChange = array();
-        if (preg_match('/^CBD_/',$this->getCollection()->getName()))
+        if (in_array($this->getCollection()->getName(), $this->getConfigInstance()->getPods($this->getStoreName())))
         {
             // how many subjects of change?
             /** @noinspection PhpParamsInspection */
@@ -507,21 +507,16 @@ class Updates extends DriverBase {
                         $elemsToRemove = array();
                         foreach ($additionsRemovals["removals"] as $removal)
                         {
-                            foreach($removal as $valueType => $v) { // should only have one k/v
-                                $found = false;
-                                for ($i=0; $i<count($valueObject);$i++) {
-                                    if (isset($valueObject[$i]) && $valueObject[$i][$valueType] == $v)
-                                    {
-                                        // remove $vo
-                                        $elemsToRemove[] = $i;
-                                        $found = true;
-                                        break;
-                                    }
-                                }
-                                if (!$found) {
-                                    $this->errorLog("Removal value {$subjectOfChange} {$predicate} {$v} does not appear in target document to be updated",array("doc"=>$doc));
-                                    throw new \Exception("Removal value {$subjectOfChange} {$predicate} {$v} does not appear in target document to be updated");
-                                }
+                            $valueIndex = array_search($removal, $valueObject);
+                            if($valueIndex === false)
+                            {
+                                $v = array_pop(array_values($removal));
+                                $this->errorLog("Removal value {$subjectOfChange} {$predicate} {$v} does not appear in target document to be updated",array("doc"=>$doc));
+                                throw new \Exception("Removal value {$subjectOfChange} {$predicate} {$v} does not appear in target document to be updated");
+                            }
+                            else
+                            {
+                                $elemsToRemove[] = $valueIndex;
                             }
                         }
                         if (count($elemsToRemove)>0)
@@ -906,7 +901,7 @@ class Updates extends DriverBase {
             }else{
 
                 if(count($lockedSubjects)) //If any subject was locked, unlock it
-                $this->unlockAllDocuments($transaction_id);
+                    $this->unlockAllDocuments($transaction_id);
 
                 $this->debugLog(MONGO_LOCK,
                     array(
@@ -1056,15 +1051,15 @@ class Updates extends DriverBase {
     {
         $countEntriesInLocksCollection = $this->getLocksCollection()
             ->count(
-                array(
-                    _ID_KEY => array(
-                        _ID_RESOURCE => $this->labeller->uri_to_alias($s),
-                        _ID_CONTEXT => $contextAlias)
-                )
-            );
+            array(
+                _ID_KEY => array(
+                    _ID_RESOURCE => $this->labeller->uri_to_alias($s),
+                    _ID_CONTEXT => $contextAlias)
+            )
+        );
 
         if($countEntriesInLocksCollection > 0) //Subject is already locked
-        return false;
+            return false;
         else{
             try{ //Add a entry to locks collection for this subject, will throws exception if an entry already there
                 $result = $this->getLocksCollection()->insert(
@@ -1123,8 +1118,8 @@ class Updates extends DriverBase {
             }
             return $document;
         }
-    }  
-    
+    }
+
     /// Collection methods
 
     /**
@@ -1134,7 +1129,7 @@ class Updates extends DriverBase {
     {
         return $this->config->getCollectionForManualRollbackAudit($this->storeName);
     }
-    
+
     /**
      * For mocking
      * @return Config
