@@ -27,7 +27,7 @@ Tripod divides composite regeneration into two jobs: DiscoverImpactedSubjects (w
 
 Queues are configured via environment variables, although defaults will be set if no environment variables are found.
 
-` MONGO_TRIPOD_RESQUE_SERVER `
+` RESQUE_SERVER `
     defines the Redis backend for Resque (default: localhost:6379)
 
 ` APP_ENV `
