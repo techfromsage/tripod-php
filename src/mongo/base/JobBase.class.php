@@ -1,6 +1,9 @@
 <?php
 
 namespace Tripod\Mongo\Jobs;
+use Tripod\Exceptions\AsyncJobException;
+use Tripod\Exceptions\Exception;
+
 /**
  * Todo: How to inject correct stat class... :-S
  */
@@ -76,10 +79,15 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
      * @param string $queueName
      * @param string $class
      * @param array $data
+     * @throws AsyncJobException
      */
     protected function submitJob($queueName, $class, Array $data)
     {
-        \Resque::enqueue($queueName, $class, $data);
+        $id = \Resque::enqueue($queueName, $class, $data, true);
+        $status = new \Resque_Job_Status($id);
+        if($status->get() === false){
+            throw new AsyncJobException("Resque Job - $id - was not successfully created");
+        }
     }
 }
 
