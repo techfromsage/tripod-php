@@ -2061,10 +2061,14 @@ class Config
         if (empty($resqueServer))
         {
             $resqueServer = self::getenv(MONGO_TRIPOD_RESQUE_SERVER,'');
-            self::getLogger()->addNotice("Use of MONGO_TRIPOD_RESQUE_SERVER is deprecated - use RESQUE_SERVER instead");
+            if (!empty($resqueServer))
+            {
+                self::getLogger()->addNotice("Use of MONGO_TRIPOD_RESQUE_SERVER is deprecated - use RESQUE_SERVER instead");
+            }
         }
         if (empty($resqueServer))
         {
+            self::getLogger()->addWarning("RESQUE_SERVER is missing from environment - using localhost:6379 instead");
             $resqueServer = "localhost:6379";
         }
         return $resqueServer;

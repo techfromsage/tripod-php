@@ -11,6 +11,7 @@ require_once TRIPOD_DIR . 'exceptions/CardinalityException.class.php';
 require_once TRIPOD_DIR . 'exceptions/ConfigException.class.php';
 require_once TRIPOD_DIR . 'exceptions/LabellerException.class.php';
 require_once TRIPOD_DIR . 'exceptions/ViewException.class.php';
+require_once TRIPOD_DIR . 'exceptions/JobException.class.php';
 require_once TRIPOD_DIR.'mongo/MongoTripodConstants.php';
 require_once TRIPOD_DIR.'mongo/MongoGraph.class.php';
 require_once TRIPOD_DIR.'mongo/ImpactedSubject.class.php';

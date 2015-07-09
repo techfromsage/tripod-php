@@ -252,6 +252,78 @@ class ApplyOperationTest extends MongoTripodTestBase
         $applyOperation->createJob(array($impactedSubject));
     }
 
+    public function testCreateJobUnreachableRedis()
+    {
+        $impactedSubject = new \Tripod\Mongo\ImpactedSubject(
+            array(_ID_RESOURCE=>"http://example.com/1",_ID_CONTEXT=>"http://talisaspire.com/"),
+            OP_TABLES,
+            'tripod_php_testing',
+            'CBD_testing',
+            array('t_resource','t_resource_count')
+        );
+
+        /** @var \Tripod\Mongo\Jobs\ApplyOperation|PHPUnit_Framework_MockObject_MockObject $applyOperation */
+        $applyOperation = $this->getMockBuilder('\Tripod\Mongo\Jobs\ApplyOperation')
+            ->setMethods(array('warningLog','enqueue'))
+            ->getMock();
+
+        $e = new Exception("Connection to Redis failed after 1 failures.Last Error : (0) php_network_getaddresses: getaddrinfo failed: nodename nor servname provided, or not known");
+        $applyOperation->expects($this->any())->method("enqueue")->will($this->throwException($e));
+
+        // expect 5 retries. Catch this with call to warning log
+        $applyOperation->expects($this->exactly(5))->method("warningLog");
+
+        $exceptionThrown = false;
+        try
+        {
+            $applyOperation->createJob(array($impactedSubject));
+        }
+        catch (\Tripod\Exceptions\JobException $e)
+        {
+            $this->assertEquals('Exception queuing job  - Connection to Redis failed after 1 failures.Last Error : (0) php_network_getaddresses: getaddrinfo failed: nodename nor servname provided, or not known',$e->getMessage());
+            $exceptionThrown = true;
+        }
+        if (!$exceptionThrown) {
+            $this->fail("Did not throw JobException");
+        }
+    }
+
+    public function testCreateJobStatusFalse()
+    {
+        $impactedSubject = new \Tripod\Mongo\ImpactedSubject(
+            array(_ID_RESOURCE=>"http://example.com/1",_ID_CONTEXT=>"http://talisaspire.com/"),
+            OP_TABLES,
+            'tripod_php_testing',
+            'CBD_testing',
+            array('t_resource','t_resource_count')
+        );
+
+        /** @var \Tripod\Mongo\Jobs\ApplyOperation|PHPUnit_Framework_MockObject_MockObject $applyOperation */
+        $applyOperation = $this->getMockBuilder('\Tripod\Mongo\Jobs\ApplyOperation')
+            ->setMethods(array('enqueue','getJobStatus','warningLog'))
+            ->getMock();
+
+        $applyOperation->expects($this->any())->method("enqueue")->will($this->returnValue("sometoken"));
+        $applyOperation->expects($this->any())->method("getJobStatus")->will($this->returnValue(false));
+
+        // expect 5 retries. Catch this with call to warning log
+        $applyOperation->expects($this->exactly(5))->method("warningLog");
+
+        $exceptionThrown = false;
+        try
+        {
+            $applyOperation->createJob(array($impactedSubject));
+        }
+        catch (\Tripod\Exceptions\JobException $e)
+        {
+            $this->assertEquals('Exception queuing job  - Could not retrieve status for queued job - job sometoken failed to tripod::apply',$e->getMessage());
+            $exceptionThrown = true;
+        }
+        if (!$exceptionThrown) {
+            $this->fail("Did not throw JobException");
+        }
+    }
+
     public function testCreateJobSpecifyQueue()
     {
         $impactedSubject = new \Tripod\Mongo\ImpactedSubject(
