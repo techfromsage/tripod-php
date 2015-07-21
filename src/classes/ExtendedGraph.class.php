@@ -171,22 +171,38 @@ class ExtendedGraph
      * @return bool
      */
     private function _add_triple($s, $p, Array $o_info) {
-        if (!isset($this->_index[$s])) {
-            $this->_index[$s] = array();
-            $this->_index[$s][$p] = array( $o_info );
-            return true;
-        }
-        elseif (!isset($this->_index[$s][$p])) {
-            $this->_index[$s][$p] = array( $o_info);
-            return true;
-        }
-        else {
-            if ( ! in_array( $o_info, $this->_index[$s][$p] ) ) {
-                $this->_index[$s][$p][] = $o_info;
+        if($this->isValueValid($o_info['value'])) {
+            if (!isset($this->_index[$s])) {
+                $this->_index[$s] = array();
+                $this->_index[$s][$p] = array($o_info);
                 return true;
+            } elseif (!isset($this->_index[$s][$p])) {
+                $this->_index[$s][$p] = array($o_info);
+                return true;
+            } else {
+                if (!in_array($o_info, $this->_index[$s][$p])) {
+                    $this->_index[$s][$p][] = $o_info;
+                    return true;
+                }
             }
         }
         return false;
+    }
+
+
+    /**
+     * Check if a triple value is valid.
+     *
+     * Currently null values are not valid,
+     * although this may expand to include any non-strings
+     *
+     * @return bool
+     */
+    protected function isValueValid($value){
+        if($value === null){
+            return false;
+        }
+        return true;
     }
 
     /**
