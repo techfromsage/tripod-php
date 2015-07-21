@@ -199,7 +199,7 @@ class ExtendedGraph
      * @return bool
      */
     protected function isValueValid($value){
-        if($value === null){
+        if(!is_string($value) && !is_int($value) && !is_array($value) && !is_float($value) && !is_bool($value)){
             return false;
         }
         return true;
