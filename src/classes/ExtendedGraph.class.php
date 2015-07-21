@@ -193,13 +193,10 @@ class ExtendedGraph
     /**
      * Check if a triple value is valid.
      *
-     * Currently null values are not valid,
-     * although this may expand to include any non-strings
-     *
      * @return bool
      */
     protected function isValidTripleValue($value){
-        if(!is_string($value) && !is_int($value) && !is_array($value) && !is_float($value) && !is_bool($value)){
+        if(!is_scalar($value) && !is_array($value)){
             return false;
         }
         return true;
