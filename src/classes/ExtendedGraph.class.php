@@ -171,7 +171,7 @@ class ExtendedGraph
      * @return bool
      */
     private function _add_triple($s, $p, Array $o_info) {
-        if($this->isValueValid($o_info['value'])) {
+        if($this->isValidTripleValue($o_info['value'])) {
             if (!isset($this->_index[$s])) {
                 $this->_index[$s] = array();
                 $this->_index[$s][$p] = array($o_info);
@@ -198,7 +198,7 @@ class ExtendedGraph
      *
      * @return bool
      */
-    protected function isValueValid($value){
+    protected function isValidTripleValue($value){
         if(!is_string($value) && !is_int($value) && !is_array($value) && !is_float($value) && !is_bool($value)){
             return false;
         }

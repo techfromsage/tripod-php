@@ -153,7 +153,7 @@ class MongoGraph extends \Tripod\ExtendedGraph {
         if (array_key_exists(VALUE_LITERAL,$mongoValueObject))
         {
             // only allow valid values
-            if($this->isValueValid($mongoValueObject[VALUE_LITERAL])){
+            if($this->isValidTripleValue($mongoValueObject[VALUE_LITERAL])){
                 // single value literal
                 $simpleGraphValueObject[] = array(
                     'type'=>'literal',
@@ -163,7 +163,7 @@ class MongoGraph extends \Tripod\ExtendedGraph {
         else if (array_key_exists(VALUE_URI,$mongoValueObject))
         {
             // only allow valid values
-            if($this->isValueValid($mongoValueObject[VALUE_URI])) {
+            if($this->isValidTripleValue($mongoValueObject[VALUE_URI])) {
                 // single value uri
                 $simpleGraphValueObject[] = array(
                     'type' => 'uri',
@@ -178,7 +178,7 @@ class MongoGraph extends \Tripod\ExtendedGraph {
                 foreach ($kvp as $type=>$value)
                 {
                     // Only add valid values
-                    if(!$this->isValueValid($value)){
+                    if(!$this->isValidTripleValue($value)){
                         continue;
                     }
                     $simpleGraphValueObject[] = array(
