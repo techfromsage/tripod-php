@@ -23,6 +23,37 @@ class ExtendedGraphTest extends PHPUnit_Framework_TestCase
         echo "\nTest: {$className}->{$testName}\n";
     }
 
+    public function testAddNullToLiteralResultsInNoTriple()
+    {
+        $graph = new ExtendedGraph();
+        $graph->add_literal_triple('http://some/subject/1', 'http://some/predicate', null);
+
+        $result = $graph->subject_has_property('http://some/subject/1', 'http://some/predicate');
+        $this->assertFalse($result);
+    }
+
+    public function testAddNullToResourceResultsInNoTriple()
+    {
+        $graph = new ExtendedGraph();
+        $graph->add_resource_triple('http://some/subject/1', 'http://some/predicate', null);
+
+        $result = $graph->subject_has_property('http://some/subject/1', 'http://some/predicate');
+        $this->assertFalse($result);
+    }
+
+    public function testAddGraphWithNullValueDoesNotAddNullTriple()
+    {
+        $graph = new ExtendedGraph();
+        $graph->add_resource_triple('http://some/subject/1', 'http://some/predicate', null);
+        $graph->add_resource_triple('http://some/subject/1', 'http://some/other/predicate', 'triple');
+
+        $nullTriple = $graph->subject_has_property('http://some/subject/1', 'http://some/predicate');
+        $stringTriple = $graph->subject_has_property('http://some/subject/1', 'http://some/other/predicate');
+
+        $this->assertFalse($nullTriple);
+        $this->assertTrue($stringTriple);
+    }
+
     public function testRemoveProperties()
     {
         $graph = new ExtendedGraph();
