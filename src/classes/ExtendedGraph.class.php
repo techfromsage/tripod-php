@@ -141,7 +141,7 @@ class ExtendedGraph
      * @return boolean true if the triple was new, false if it already existed in the graph
      */
     public function add_resource_triple($s, $p, $o) {
-        if($this->isValidResourceValue($o)) {
+        if($this->isValidTripleValue($s) && $this->isValidTripleValue($p) && $this->isValidTripleValue($o)) {
             return $this->_add_triple($s, $p, array('type' => strpos($o, '_:') === 0 ? 'bnode' : 'uri', 'value' => $o));
         }
         return false;
@@ -157,7 +157,7 @@ class ExtendedGraph
      * @return boolean true if the triple was new, false if it already existed in the graph
      */
     public function add_literal_triple($s, $p, $o, $lang = null, $dt = null) {
-        if($this->isValidLiteralValue($o)) {
+        if($this->isValidTripleValue($s) && $this->isValidTripleValue($p) && $this->isValidLiteralValue($o)) {
             $o_info = array('type' => 'literal', 'value' => $o);
             if ($lang != null) {
                 $o_info['lang'] = $lang;
@@ -177,17 +177,22 @@ class ExtendedGraph
      * @return bool
      */
     private function _add_triple($s, $p, Array $o_info) {
-        if (!isset($this->_index[$s])) {
-            $this->_index[$s] = array();
-            $this->_index[$s][$p] = array($o_info);
-            return true;
-        } elseif (!isset($this->_index[$s][$p])) {
-            $this->_index[$s][$p] = array($o_info);
-            return true;
-        } else {
-            if (!in_array($o_info, $this->_index[$s][$p])) {
-                $this->_index[$s][$p][] = $o_info;
+        // The value $o should already have been validated by this point
+        // It's validation differs depending on whether it is a literal or resource
+        // So just check the subject and predicate here...
+        if($this->isValidTripleValue($s) && $this->isValidTripleValue($p)) {
+            if (!isset($this->_index[$s])) {
+                $this->_index[$s] = array();
+                $this->_index[$s][$p] = array($o_info);
                 return true;
+            } elseif (!isset($this->_index[$s][$p])) {
+                $this->_index[$s][$p] = array($o_info);
+                return true;
+            } else {
+                if (!in_array($o_info, $this->_index[$s][$p])) {
+                    $this->_index[$s][$p][] = $o_info;
+                    return true;
+                }
             }
         }
         return false;
@@ -215,7 +220,7 @@ class ExtendedGraph
      *
      * @return bool
      */
-    protected function isValidResourceValue($value){
+    protected function isValidTripleValue($value){
         if(!is_string($value)){
             return false;
         }

@@ -128,11 +128,20 @@ class MongoGraph extends \Tripod\ExtendedGraph {
         {
             if($key[0] != '_')
             {
-                $predicate = $this->qname_to_uri($key);
-                $graphValueObject = $this->toGraphValueObject($value);
-                // Only add if valid values have been found
-                if($graphValueObject !== false) {
-                    $predObjects[$predicate] = $graphValueObject;
+                // Make sure the predicate is valid
+                if($this->isValidTripleValue($key)){
+                    $predicate = $this->qname_to_uri($key);
+                    $graphValueObject = $this->toGraphValueObject($value);
+                    // Only add if valid values have been found
+                    if ($graphValueObject !== false) {
+                        $predObjects[$predicate] = $graphValueObject;
+                    }
+                }
+            }
+            else if($key == "_id"){
+                // If the subject is not valid then return
+                if(!isset($value['r']) || !$this->isValidTripleValue($value['r'])){
+                    return;
                 }
             }
         }
@@ -163,7 +172,7 @@ class MongoGraph extends \Tripod\ExtendedGraph {
         else if (array_key_exists(VALUE_URI,$mongoValueObject))
         {
             // only allow valid values
-            if($this->isValidResourceValue($mongoValueObject[VALUE_URI])) {
+            if($this->isValidTripleValue($mongoValueObject[VALUE_URI])) {
                 // single value uri
                 $simpleGraphValueObject[] = array(
                     'type' => 'uri',
@@ -185,7 +194,7 @@ class MongoGraph extends \Tripod\ExtendedGraph {
                         $valueTypeLabel = 'literal';
                     }
                     else{
-                        if(!$this->isValidResourceValue($value)){
+                        if(!$this->isValidTripleValue($value)){
                             continue;
                         }
                         $valueTypeLabel = 'uri';

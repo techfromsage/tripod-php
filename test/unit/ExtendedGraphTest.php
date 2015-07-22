@@ -64,6 +64,56 @@ class ExtendedGraphTest extends PHPUnit_Framework_TestCase
         );
     }
 
+    /**
+     * @dataProvider addInvalidSubjectToLiteralResultsInNoTriple_Provider
+     */
+    public function testAddInvalidSubjectToLiteralResultsInNoTriple($value)
+    {
+        $graph = new ExtendedGraph();
+
+        $addResult = $graph->add_resource_triple($value, 'http://some/predicate', 'http://someplace.com');
+        $this->assertFalse($addResult, 'The triple should not have been added for this value');
+
+        $graph->get_triple_count();
+        $this->assertEquals(0, $graph->get_triple_count(), 'The triple should not have been added for this value');
+    }
+    public function addInvalidSubjectToLiteralResultsInNoTriple_Provider(){
+        return array(
+            array(1),
+            array(1.2),
+            array(true),
+            array(array()),
+            array(null),
+            array(new stdClass()),
+            array(function(){})
+        );
+    }
+
+    /**
+     * @dataProvider addInvalidSubjectToLiteralResultsInNoTriple_Provider
+     */
+    public function testAddInvalidPredicateToLiteralResultsInNoTriple($value)
+    {
+        $graph = new ExtendedGraph();
+
+        $addResult = $graph->add_resource_triple('http://some/subject/1', $value, 'http://someplace.com');
+        $this->assertFalse($addResult, 'The triple should not have been added for this value');
+
+        $graph->get_triple_count();
+        $this->assertEquals(0, $graph->get_triple_count(), 'The triple should not have been added for this value');
+    }
+    public function addInvalidPredicateToLiteralResultsInNoTriple_Provider(){
+        return array(
+            array(1),
+            array(1.2),
+            array(true),
+            array(array()),
+            array(null),
+            array(new stdClass()),
+            array(function(){})
+        );
+    }
+
     public function testAddValidValueToResourceResultsInTriple()
     {
         $value = 'A String';
@@ -90,6 +140,56 @@ class ExtendedGraphTest extends PHPUnit_Framework_TestCase
         $this->assertFalse($hasPropertyResult, 'The triple should not have been added for this value');
     }
     public function addInvalidValueToResourceResultsInNoTriple_Provider(){
+        return array(
+            array(1),
+            array(1.2),
+            array(true),
+            array(array()),
+            array(null),
+            array(new stdClass()),
+            array(function(){})
+        );
+    }
+
+    /**
+     * @dataProvider addInvalidSubjectToResourceResultsInNoTriple_Provider
+     */
+    public function testAddInvalidSubjectToResourceResultsInNoTriple($value)
+    {
+        $graph = new ExtendedGraph();
+
+        $addResult = $graph->add_resource_triple($value, 'http://some/predicate', 'http://someplace.com');
+        $this->assertFalse($addResult, 'The triple should not have been added for this value');
+
+        $graph->get_triple_count();
+        $this->assertEquals(0, $graph->get_triple_count(), 'The triple should not have been added for this value');
+    }
+    public function addInvalidSubjectToResourceResultsInNoTriple_Provider(){
+        return array(
+            array(1),
+            array(1.2),
+            array(true),
+            array(array()),
+            array(null),
+            array(new stdClass()),
+            array(function(){})
+        );
+    }
+
+    /**
+     * @dataProvider addInvalidSubjectToLiteralResultsInNoTriple_Provider
+     */
+    public function testAddInvalidPredicateToResourceResultsInNoTriple($value)
+    {
+        $graph = new ExtendedGraph();
+
+        $addResult = $graph->add_resource_triple('http://some/subject/1', $value, 'http://someplace.com');
+        $this->assertFalse($addResult, 'The triple should not have been added for this value');
+
+        $graph->get_triple_count();
+        $this->assertEquals(0, $graph->get_triple_count(), 'The triple should not have been added for this value');
+    }
+    public function addInvalidPredicateToResourceResultsInNoTriple_Provider(){
         return array(
             array(1),
             array(1.2),
