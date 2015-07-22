@@ -174,6 +174,7 @@ class ExtendedGraph
      * @param string $s
      * @param string $p
      * @param array $o_info
+     * @throws Exceptions\Exception
      * @return bool
      */
     private function _add_triple($s, $p, Array $o_info) {
@@ -186,19 +187,19 @@ class ExtendedGraph
         if(!$this->isValidResourceValue($p)){
             throw new \Tripod\Exceptions\Exception("The predicate is invalid");
         }
-            if (!isset($this->_index[$s])) {
-                $this->_index[$s] = array();
-                $this->_index[$s][$p] = array($o_info);
+        if (!isset($this->_index[$s])) {
+            $this->_index[$s] = array();
+            $this->_index[$s][$p] = array($o_info);
+            return true;
+        } elseif (!isset($this->_index[$s][$p])) {
+            $this->_index[$s][$p] = array($o_info);
+            return true;
+        } else {
+            if (!in_array($o_info, $this->_index[$s][$p])) {
+                $this->_index[$s][$p][] = $o_info;
                 return true;
-            } elseif (!isset($this->_index[$s][$p])) {
-                $this->_index[$s][$p] = array($o_info);
-                return true;
-            } else {
-                if (!in_array($o_info, $this->_index[$s][$p])) {
-                    $this->_index[$s][$p][] = $o_info;
-                    return true;
-                }
             }
+        }
         return false;
     }
 
