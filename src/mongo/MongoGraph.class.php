@@ -153,7 +153,7 @@ class MongoGraph extends \Tripod\ExtendedGraph {
         if (array_key_exists(VALUE_LITERAL,$mongoValueObject))
         {
             // only allow valid values
-            if($this->isValidTripleValue($mongoValueObject[VALUE_LITERAL])){
+            if($this->isValidLiteralValue($mongoValueObject[VALUE_LITERAL])){
                 // single value literal
                 $simpleGraphValueObject[] = array(
                     'type'=>'literal',
@@ -163,7 +163,7 @@ class MongoGraph extends \Tripod\ExtendedGraph {
         else if (array_key_exists(VALUE_URI,$mongoValueObject))
         {
             // only allow valid values
-            if($this->isValidTripleValue($mongoValueObject[VALUE_URI])) {
+            if($this->isValidResourceValue($mongoValueObject[VALUE_URI])) {
                 // single value uri
                 $simpleGraphValueObject[] = array(
                     'type' => 'uri',
@@ -177,12 +177,21 @@ class MongoGraph extends \Tripod\ExtendedGraph {
             {
                 foreach ($kvp as $type=>$value)
                 {
-                    // Only add valid values
-                    if(!$this->isValidTripleValue($value)){
-                        continue;
+                    // Make sure the value is valid
+                    if($type==VALUE_LITERAL){
+                        if(!$this->isValidLiteralValue($value)){
+                            continue;
+                        }
+                        $valueTypeLabel = 'literal';
+                    }
+                    else{
+                        if(!$this->isValidResourceValue($value)){
+                            continue;
+                        }
+                        $valueTypeLabel = 'uri';
                     }
                     $simpleGraphValueObject[] = array(
-                        'type'=>($type==VALUE_LITERAL) ? 'literal' : 'uri',
+                        'type'=>$valueTypeLabel,
                         'value'=>($type==VALUE_URI) ? $this->_labeller->qname_to_alias($value) : $value);
                 }
             }

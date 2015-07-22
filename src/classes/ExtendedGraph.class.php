@@ -141,7 +141,10 @@ class ExtendedGraph
      * @return boolean true if the triple was new, false if it already existed in the graph
      */
     public function add_resource_triple($s, $p, $o) {
-        return $this->_add_triple($s, $p, array('type' => strpos($o, '_:' ) === 0 ? 'bnode' : 'uri', 'value' => $o));
+        if($this->isValidResourceValue($o)) {
+            return $this->_add_triple($s, $p, array('type' => strpos($o, '_:') === 0 ? 'bnode' : 'uri', 'value' => $o));
+        }
+        return false;
     }
 
     /**
@@ -154,14 +157,17 @@ class ExtendedGraph
      * @return boolean true if the triple was new, false if it already existed in the graph
      */
     public function add_literal_triple($s, $p, $o, $lang = null, $dt = null) {
-        $o_info = array('type' => 'literal', 'value' => $o);
-        if ( $lang != null ) {
-            $o_info['lang'] = $lang;
+        if($this->isValidLiteralValue($o)) {
+            $o_info = array('type' => 'literal', 'value' => $o);
+            if ($lang != null) {
+                $o_info['lang'] = $lang;
+            }
+            if ($dt != null) {
+                $o_info['datatype'] = $dt;
+            }
+            return $this->_add_triple($s, $p, $o_info);
         }
-        if ( $dt != null ) {
-            $o_info['datatype'] = $dt;
-        }
-        return $this->_add_triple($s, $p, $o_info);
+        return false;
     }
 
     /**
@@ -171,19 +177,17 @@ class ExtendedGraph
      * @return bool
      */
     private function _add_triple($s, $p, Array $o_info) {
-        if($this->isValidTripleValue($o_info['value'])) {
-            if (!isset($this->_index[$s])) {
-                $this->_index[$s] = array();
-                $this->_index[$s][$p] = array($o_info);
+        if (!isset($this->_index[$s])) {
+            $this->_index[$s] = array();
+            $this->_index[$s][$p] = array($o_info);
+            return true;
+        } elseif (!isset($this->_index[$s][$p])) {
+            $this->_index[$s][$p] = array($o_info);
+            return true;
+        } else {
+            if (!in_array($o_info, $this->_index[$s][$p])) {
+                $this->_index[$s][$p][] = $o_info;
                 return true;
-            } elseif (!isset($this->_index[$s][$p])) {
-                $this->_index[$s][$p] = array($o_info);
-                return true;
-            } else {
-                if (!in_array($o_info, $this->_index[$s][$p])) {
-                    $this->_index[$s][$p][] = $o_info;
-                    return true;
-                }
             }
         }
         return false;
@@ -193,10 +197,26 @@ class ExtendedGraph
     /**
      * Check if a triple value is valid.
      *
+     * Ideally a valid literal value should be a string
+     * but accepting scalars so we can handle legacy data
+     * which was not type-checked.
+     *
      * @return bool
      */
-    protected function isValidTripleValue($value){
-        if(!is_scalar($value) && !is_array($value)){
+    protected function isValidLiteralValue($value){
+        if(!is_scalar($value)){
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Check if a triple value is valid.
+     *
+     * @return bool
+     */
+    protected function isValidResourceValue($value){
+        if(!is_string($value)){
             return false;
         }
         return true;
