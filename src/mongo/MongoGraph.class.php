@@ -144,7 +144,7 @@ class MongoGraph extends \Tripod\ExtendedGraph {
      * Convert from Tripod value object format (comapct) to ExtendedGraph format (verbose)
      *
      * @param array $mongoValueObject
-     * @return array| false an array of values or false if the value is not valid
+     * @return array|bool an array of values or false if the value is not valid
      */
     private function toGraphValueObject($mongoValueObject)
     {
