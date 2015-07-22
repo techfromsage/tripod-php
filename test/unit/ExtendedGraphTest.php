@@ -29,10 +29,11 @@ class ExtendedGraphTest extends PHPUnit_Framework_TestCase
     public function testAddInvalidValueToLiteralResultsInNoTriple($value)
     {
         $graph = new ExtendedGraph();
-        $graph->add_literal_triple('http://some/subject/1', 'http://some/predicate', $value);
+        $addResult = $graph->add_literal_triple('http://some/subject/1', 'http://some/predicate', $value);
+        $this->assertFalse($addResult, 'The triple should not have been added for this value');
 
-        $result = $graph->subject_has_property('http://some/subject/1', 'http://some/predicate');
-        $this->assertFalse($result);
+        $hasPropertyResult = $graph->subject_has_property('http://some/subject/1', 'http://some/predicate');
+        $this->assertFalse($hasPropertyResult, 'The triple should not have been added for this value');
     }
     public function addInvalidValueToLiteralResultsInNoTriple_Provider(){
         return array(
@@ -48,36 +49,19 @@ class ExtendedGraphTest extends PHPUnit_Framework_TestCase
     public function testAddInvalidValueToResourceResultsInNoTriple($value)
     {
         $graph = new ExtendedGraph();
-        $graph->add_resource_triple('http://some/subject/1', 'http://some/predicate', $value);
 
-        $result = $graph->subject_has_property('http://some/subject/1', 'http://some/predicate');
-        $this->assertFalse($result);
+        $addResult = $graph->add_resource_triple('http://some/subject/1', 'http://some/predicate', $value);
+        $this->assertFalse($addResult, 'The triple should not have been added for this value');
+
+        $hasPropertyResult = $graph->subject_has_property('http://some/subject/1', 'http://some/predicate');
+        $this->assertFalse($hasPropertyResult, 'The triple should not have been added for this value');
     }
     public function addInvalidValueToResourceResultsInNoTriple_Provider(){
         return array(
-            array(null),
-            array(new stdClass()),
-            array(function(){})
-        );
-    }
-
-    /**
-     * @dataProvider addGraphWithInvalidValueDoesNotAddNullTriple_Provider
-     */
-    public function testAddGraphWithInvalidValueDoesNotAddNullTriple($value)
-    {
-        $graph = new ExtendedGraph();
-        $graph->add_resource_triple('http://some/subject/1', 'http://some/predicate', $value);
-        $graph->add_resource_triple('http://some/subject/1', 'http://some/other/predicate', 'triple');
-
-        $nullTriple = $graph->subject_has_property('http://some/subject/1', 'http://some/predicate');
-        $stringTriple = $graph->subject_has_property('http://some/subject/1', 'http://some/other/predicate');
-
-        $this->assertFalse($nullTriple);
-        $this->assertTrue($stringTriple);
-    }
-    public function addGraphWithInvalidValueDoesNotAddNullTriple_Provider(){
-        return array(
+            array(1),
+            array(1.2),
+            array(true),
+            array(array()),
             array(null),
             array(new stdClass()),
             array(function(){})
