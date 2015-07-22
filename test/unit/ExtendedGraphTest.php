@@ -24,6 +24,27 @@ class ExtendedGraphTest extends PHPUnit_Framework_TestCase
     }
 
     /**
+     * @dataProvider addValidValueToLiteralResultsInTriple_Provider
+     */
+    public function testAddValidValueToLiteralResultsInTriple($value)
+    {
+        $graph = new ExtendedGraph();
+        $addResult = $graph->add_literal_triple('http://some/subject/1', 'http://some/predicate', $value);
+        $this->assertTrue($addResult, 'The triple should have been added for this value');
+
+        $hasPropertyResult = $graph->subject_has_property('http://some/subject/1', 'http://some/predicate');
+        $this->assertTrue($hasPropertyResult, 'The triple should have been added for this value');
+    }
+    public function addValidValueToLiteralResultsInTriple_Provider(){
+        return array(
+            array('String'),
+            array(1),
+            array(1.2),
+            array(true)
+        );
+    }
+
+    /**
      * @dataProvider addInvalidValueToLiteralResultsInNoTriple_Provider
      */
     public function testAddInvalidValueToLiteralResultsInNoTriple($value)
@@ -42,6 +63,18 @@ class ExtendedGraphTest extends PHPUnit_Framework_TestCase
             array(function(){})
         );
     }
+
+    public function testAddValidValueToResourceResultsInTriple()
+    {
+        $value = 'A String';
+        $graph = new ExtendedGraph();
+        $addResult = $graph->add_resource_triple('http://some/subject/1', 'http://some/predicate', $value);
+        $this->assertTrue($addResult, 'The triple should have been added for this value');
+
+        $hasPropertyResult = $graph->subject_has_property('http://some/subject/1', 'http://some/predicate');
+        $this->assertTrue($hasPropertyResult, 'The triple should have been added for this value');
+    }
+
 
     /**
      * @dataProvider addInvalidValueToResourceResultsInNoTriple_Provider

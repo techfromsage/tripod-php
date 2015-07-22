@@ -103,6 +103,42 @@ class MongoGraphTest extends MongoTripodTestBase
     }
 
     /**
+     * @dataProvider addTripodArrayContainingValidLiteralValues_Provider
+     */
+    public function testAddTripodArrayContainingValidLiteralValues($value)
+    {
+        $doc = array(
+            "_id"=>array("r"=>"http://talisaspire.com/works/4d101f63c10a6-2", "c"=>"http://talisaspire.com/works/4d101f63c10a6-2"),
+            "_version"=>0,
+            "rdf:type"=>array(
+                array("l"=>$value),
+                array("l"=>"a Value"),
+            ),
+            "bibo:isbn13"=>array("l"=>"9211234567890"),
+            "bibo:isbn10"=>array("l"=>$value)
+        );
+
+        $expected = new \Tripod\Mongo\MongoGraph();
+        $expected->add_literal_triple("http://talisaspire.com/works/4d101f63c10a6-2", $expected->qname_to_uri("bibo:isbn13"),"9211234567890");
+        $expected->add_literal_triple("http://talisaspire.com/works/4d101f63c10a6-2", $expected->qname_to_uri("bibo:isbn10"),$value);
+        $expected->add_literal_triple("http://talisaspire.com/works/4d101f63c10a6-2", $expected->qname_to_uri("rdf:type"),$value);
+        $expected->add_literal_triple("http://talisaspire.com/works/4d101f63c10a6-2", $expected->qname_to_uri("rdf:type"),"a Value");
+
+        $g = new \Tripod\Mongo\MongoGraph();
+        $g->add_tripod_array($doc);
+
+        $this->assertEquals($expected, $g);
+    }
+    public function addTripodArrayContainingValidLiteralValues_Provider(){
+        return array(
+            array('A String'),
+            array(1),
+            array(1.2),
+            array(true)
+        );
+    }
+
+    /**
      * @dataProvider addTripodArrayContainingInvalidLiteralValues_Provider
      */
     public function testAddTripodArrayContainingInvalidLiteralValues($value)
@@ -133,6 +169,33 @@ class MongoGraphTest extends MongoTripodTestBase
             array(new stdClass()),
             array(function(){})
         );
+    }
+
+
+    public function testAddTripodArrayContainingValidResourceValues()
+    {
+        $value = 'A String';
+        $doc = array(
+            "_id"=>array("r"=>"http://talisaspire.com/works/4d101f63c10a6-2", "c"=>"http://talisaspire.com/works/4d101f63c10a6-2"),
+            "_version"=>0,
+            "dct:subject"=>array("u"=>"http://talisaspire.com/disciplines/physics"),
+            "dct:publisher"=>array("u"=>$value),
+            "rdf:type"=>array(
+                array("u"=>$value),
+                array("u"=>"http://talisaspire.com/schema#Work")
+            ),
+        );
+
+        $expected = new \Tripod\Mongo\MongoGraph();
+        $expected->add_resource_triple("http://talisaspire.com/works/4d101f63c10a6-2", $expected->qname_to_uri("dct:subject"),"http://talisaspire.com/disciplines/physics");
+        $expected->add_resource_triple("http://talisaspire.com/works/4d101f63c10a6-2", $expected->qname_to_uri("dct:publisher"),$value);
+        $expected->add_resource_triple("http://talisaspire.com/works/4d101f63c10a6-2", $expected->qname_to_uri("rdf:type"),$value);
+        $expected->add_resource_triple("http://talisaspire.com/works/4d101f63c10a6-2", $expected->qname_to_uri("rdf:type"),"http://talisaspire.com/schema#Work");
+
+        $g = new \Tripod\Mongo\MongoGraph();
+        $g->add_tripod_array($doc);
+
+        $this->assertEquals($expected, $g);
     }
 
     /**
