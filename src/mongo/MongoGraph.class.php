@@ -119,6 +119,7 @@ class MongoGraph extends \Tripod\ExtendedGraph {
 
     /**
      * @param array $tarray
+     * @throws \Tripod\Exceptions\Exception
      */
     private function add_tarray_to_index($tarray)
     {
@@ -128,22 +129,16 @@ class MongoGraph extends \Tripod\ExtendedGraph {
         {
             if($key[0] != '_')
             {
-                // Make sure the predicate is valid
-                if($this->isValidTripleValue($key)){
-                    $predicate = $this->qname_to_uri($key);
-                    $graphValueObject = $this->toGraphValueObject($value);
-                    // Only add if valid values have been found
-                    if ($graphValueObject !== false) {
-                        $predObjects[$predicate] = $graphValueObject;
-                    }
+                $predicate = $this->qname_to_uri($key);
+                $graphValueObject = $this->toGraphValueObject($value);
+                // Only add if valid values have been found
+                if (!empty($graphValueObject)) {
+                    $predObjects[$predicate] = $graphValueObject;
                 }
             }
             else if($key == "_id"){
-                // If the subject is not valid then return
-                if(!isset($value['r']) || !$this->isValidTripleValue($value['r'])){
-                    return;
-                }
-                if($value['r'] === ""){
+                // If the subject is invalid then throw an exception
+                if(!isset($value['r']) || !$this->isValidResourceValue($value['r'])){
                     throw new \Tripod\Exceptions\Exception("The subject cannot be an empty string");
                 }
             }
@@ -156,7 +151,7 @@ class MongoGraph extends \Tripod\ExtendedGraph {
      * Convert from Tripod value object format (comapct) to ExtendedGraph format (verbose)
      *
      * @param array $mongoValueObject
-     * @return array|bool an array of values or false if the value is not valid
+     * @return array
      */
     private function toGraphValueObject($mongoValueObject)
     {
@@ -175,7 +170,7 @@ class MongoGraph extends \Tripod\ExtendedGraph {
         else if (array_key_exists(VALUE_URI,$mongoValueObject))
         {
             // only allow valid values
-            if($this->isValidTripleValue($mongoValueObject[VALUE_URI])) {
+            if($this->isValidResourceValue($mongoValueObject[VALUE_URI])) {
                 // single value uri
                 $simpleGraphValueObject[] = array(
                     'type' => 'uri',
@@ -197,7 +192,7 @@ class MongoGraph extends \Tripod\ExtendedGraph {
                         $valueTypeLabel = 'literal';
                     }
                     else{
-                        if(!$this->isValidTripleValue($value)){
+                        if(!$this->isValidResourceValue($value)){
                             continue;
                         }
                         $valueTypeLabel = 'uri';
@@ -207,10 +202,6 @@ class MongoGraph extends \Tripod\ExtendedGraph {
                         'value'=>($type==VALUE_URI) ? $this->_labeller->qname_to_alias($value) : $value);
                 }
             }
-        }
-        // If we don't have any values, then respond with false
-        if(empty($simpleGraphValueObject)){
-            return false;
         }
         // Otherwise we have found valid values
         return $simpleGraphValueObject;

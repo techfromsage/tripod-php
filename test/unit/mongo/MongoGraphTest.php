@@ -176,6 +176,7 @@ class MongoGraphTest extends MongoTripodTestBase
      */
     public function testAddTripodArrayContainingInvalidPredicates($value)
     {
+        $this->setExpectedException('\Tripod\Exceptions\LabellerException');
         $doc = array(
             "_id"=>array("r"=>"http://talisaspire.com/works/4d101f63c10a6-2", "c"=>"http://talisaspire.com/works/4d101f63c10a6-2"),
             "_version"=>0,
@@ -192,8 +193,6 @@ class MongoGraphTest extends MongoTripodTestBase
 
         $g = new \Tripod\Mongo\MongoGraph();
         $g->add_tripod_array($doc);
-
-        $this->assertEquals($expected, $g);
     }
     public function addTripodArrayContainingInvalidPredicates_Provider(){
         return array(
@@ -204,10 +203,38 @@ class MongoGraphTest extends MongoTripodTestBase
     }
 
     /**
+     *
+     * We are expecting the labeller
+     *
+     */
+    public function testAddTripodArrayContainingEmptyPredicate()
+    {
+        // An Uninitialized string offset should occur if an empty predicate is passed.
+        $this->setExpectedException("PHPUnit_Framework_Error");
+        $doc = array(
+            "_id"=>array("r"=>"http://talisaspire.com/works/4d101f63c10a6-2", "c"=>"http://talisaspire.com/works/4d101f63c10a6-2"),
+            "_version"=>0,
+            "rdf:type"=>array(
+                array("l"=>"a Value"),
+            ),
+            "bibo:isbn13"=>array("l"=>"9211234567890"),
+            ""=>array("l"=>"9211234567890")
+        );
+
+        $expected = new \Tripod\Mongo\MongoGraph();
+        $expected->add_literal_triple("http://talisaspire.com/works/4d101f63c10a6-2", $expected->qname_to_uri("bibo:isbn13"),"9211234567890");
+        $expected->add_literal_triple("http://talisaspire.com/works/4d101f63c10a6-2", $expected->qname_to_uri("rdf:type"),"a Value");
+
+        $g = new \Tripod\Mongo\MongoGraph();
+        $g->add_tripod_array($doc);
+    }
+
+    /**
      * @dataProvider addTripodArrayContainingInvalidSubject_Provider
      */
     public function testAddTripodArrayContainingInvalidSubject($value)
     {
+        $this->setExpectedException('\Tripod\Exceptions\Exception');
         $doc = array(
             "_id"=>array("r"=>$value, "c"=>"http://talisaspire.com/works/4d101f63c10a6-2"),
             "_version"=>0,
@@ -219,32 +246,15 @@ class MongoGraphTest extends MongoTripodTestBase
 
         $g = new \Tripod\Mongo\MongoGraph();
         $g->add_tripod_array($doc);
-        $this->assertEquals(0, $g->get_triple_count());
     }
     public function addTripodArrayContainingInvalidSubject_Provider(){
         return array(
+            array(""),
             array(1),
             array(1.2),
             array(true),
         );
     }
-
-    public function testAddTripodArrayContainingEmptySubject()
-    {
-        $this->setExpectedException('\Tripod\Exceptions\Exception');
-        $doc = array(
-            "_id"=>array("r"=>"", "c"=>"http://talisaspire.com/works/4d101f63c10a6-2"),
-            "_version"=>0,
-            "rdf:type"=>array(
-                array("l"=>"a Value"),
-            ),
-            "bibo:isbn13"=>array("l"=>"9211234567890"),
-        );
-
-        $g = new \Tripod\Mongo\MongoGraph();
-        $g->add_tripod_array($doc);
-    }
-
 
     public function testAddTripodArrayContainingValidResourceValues()
     {

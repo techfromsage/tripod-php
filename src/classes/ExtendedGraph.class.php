@@ -141,7 +141,7 @@ class ExtendedGraph
      * @return boolean true if the triple was new, false if it already existed in the graph
      */
     public function add_resource_triple($s, $p, $o) {
-        if($this->isValidTripleValue($s) && $this->isValidTripleValue($p) && $this->isValidTripleValue($o)) {
+        if($this->isValidResourceValue($o)) {
             return $this->_add_triple($s, $p, array('type' => strpos($o, '_:') === 0 ? 'bnode' : 'uri', 'value' => $o));
         }
         return false;
@@ -157,7 +157,7 @@ class ExtendedGraph
      * @return boolean true if the triple was new, false if it already existed in the graph
      */
     public function add_literal_triple($s, $p, $o, $lang = null, $dt = null) {
-        if($this->isValidTripleValue($s) && $this->isValidTripleValue($p) && $this->isValidLiteralValue($o)) {
+        if($this->isValidLiteralValue($o)) {
             $o_info = array('type' => 'literal', 'value' => $o);
             if ($lang != null) {
                 $o_info['lang'] = $lang;
@@ -177,14 +177,15 @@ class ExtendedGraph
      * @return bool
      */
     private function _add_triple($s, $p, Array $o_info) {
-        // Make sure the subject is not an empty string
-        if($s === ""){
-            throw new \Tripod\Exceptions\Exception("The subject cannot be an empty string");
-        }
         // The value $o should already have been validated by this point
         // It's validation differs depending on whether it is a literal or resource
         // So just check the subject and predicate here...
-        if($this->isValidTripleValue($s) && $this->isValidTripleValue($p)) {
+        if(!$this->isValidResourceValue($s)){
+            throw new \Tripod\Exceptions\Exception("The subject is invalid");
+        }
+        if(!$this->isValidResourceValue($p)){
+            throw new \Tripod\Exceptions\Exception("The predicate is invalid");
+        }
             if (!isset($this->_index[$s])) {
                 $this->_index[$s] = array();
                 $this->_index[$s][$p] = array($o_info);
@@ -198,7 +199,6 @@ class ExtendedGraph
                     return true;
                 }
             }
-        }
         return false;
     }
 
@@ -210,6 +210,7 @@ class ExtendedGraph
      * but accepting scalars so we can handle legacy data
      * which was not type-checked.
      *
+     * @param string $value
      * @return bool
      */
     protected function isValidLiteralValue($value){
@@ -222,10 +223,11 @@ class ExtendedGraph
     /**
      * Check if a triple value is valid.
      *
+     * @param string $value
      * @return bool
      */
-    protected function isValidTripleValue($value){
-        if(!is_string($value)){
+    protected function isValidResourceValue($value){
+        if(!is_string($value) || empty($value)){
             return false;
         }
         return true;

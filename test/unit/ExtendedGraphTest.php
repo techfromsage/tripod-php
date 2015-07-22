@@ -67,18 +67,16 @@ class ExtendedGraphTest extends PHPUnit_Framework_TestCase
     /**
      * @dataProvider addInvalidSubjectToLiteralResultsInNoTriple_Provider
      */
-    public function testAddInvalidSubjectToLiteralResultsInNoTriple($value)
+    public function testAddInvalidSubjectToLiteralThrowsException($value)
     {
+        $this->setExpectedException('\Tripod\Exceptions\Exception');
+
         $graph = new ExtendedGraph();
-
-        $addResult = $graph->add_resource_triple($value, 'http://some/predicate', 'http://someplace.com');
-        $this->assertFalse($addResult, 'The triple should not have been added for this value');
-
-        $graph->get_triple_count();
-        $this->assertEquals(0, $graph->get_triple_count(), 'The triple should not have been added for this value');
+        $graph->add_resource_triple($value, 'http://some/predicate', 'http://someplace.com');
     }
     public function addInvalidSubjectToLiteralResultsInNoTriple_Provider(){
         return array(
+            array(""),
             array(1),
             array(1.2),
             array(true),
@@ -89,28 +87,19 @@ class ExtendedGraphTest extends PHPUnit_Framework_TestCase
         );
     }
 
-    public function testAddEmptySubjectToLiteralThrowsException()
-    {
-        $this->setExpectedException('\Tripod\Exceptions\Exception');
-        $graph = new ExtendedGraph();
-        $graph->add_literal_triple("", 'http://some/predicate', 'http://someplace.com');
-    }
-
     /**
      * @dataProvider addInvalidSubjectToLiteralResultsInNoTriple_Provider
      */
-    public function testAddInvalidPredicateToLiteralResultsInNoTriple($value)
+    public function testAddInvalidPredicateToLiteralThrowsException($value)
     {
+        $this->setExpectedException('\Tripod\Exceptions\Exception');
+
         $graph = new ExtendedGraph();
-
-        $addResult = $graph->add_resource_triple('http://some/subject/1', $value, 'http://someplace.com');
-        $this->assertFalse($addResult, 'The triple should not have been added for this value');
-
-        $graph->get_triple_count();
-        $this->assertEquals(0, $graph->get_triple_count(), 'The triple should not have been added for this value');
+        $graph->add_resource_triple('http://some/subject/1', $value, 'http://someplace.com');
     }
     public function addInvalidPredicateToLiteralResultsInNoTriple_Provider(){
         return array(
+            array(""),
             array(1),
             array(1.2),
             array(true),
@@ -161,18 +150,16 @@ class ExtendedGraphTest extends PHPUnit_Framework_TestCase
     /**
      * @dataProvider addInvalidSubjectToResourceResultsInNoTriple_Provider
      */
-    public function testAddInvalidSubjectToResourceResultsInNoTriple($value)
+    public function testAddInvalidSubjectToResourceThrowsException($value)
     {
+        $this->setExpectedException('\Tripod\Exceptions\Exception');
+
         $graph = new ExtendedGraph();
-
-        $addResult = $graph->add_resource_triple($value, 'http://some/predicate', 'http://someplace.com');
-        $this->assertFalse($addResult, 'The triple should not have been added for this value');
-
-        $graph->get_triple_count();
-        $this->assertEquals(0, $graph->get_triple_count(), 'The triple should not have been added for this value');
+        $graph->add_resource_triple($value, 'http://some/predicate', 'http://someplace.com');
     }
     public function addInvalidSubjectToResourceResultsInNoTriple_Provider(){
         return array(
+            array(""),
             array(1),
             array(1.2),
             array(true),
@@ -183,28 +170,19 @@ class ExtendedGraphTest extends PHPUnit_Framework_TestCase
         );
     }
 
-    public function testAddEmptySubjectToResourceThrowsException()
-    {
-        $this->setExpectedException('\Tripod\Exceptions\Exception');
-        $graph = new ExtendedGraph();
-        $graph->add_resource_triple("", 'http://some/predicate', 'http://someplace.com');
-    }
-
     /**
      * @dataProvider addInvalidSubjectToLiteralResultsInNoTriple_Provider
      */
-    public function testAddInvalidPredicateToResourceResultsInNoTriple($value)
+    public function testAddInvalidPredicateToResourceThrowsException($value)
     {
+        $this->setExpectedException('\Tripod\Exceptions\Exception');
+
         $graph = new ExtendedGraph();
-
-        $addResult = $graph->add_resource_triple('http://some/subject/1', $value, 'http://someplace.com');
-        $this->assertFalse($addResult, 'The triple should not have been added for this value');
-
-        $graph->get_triple_count();
-        $this->assertEquals(0, $graph->get_triple_count(), 'The triple should not have been added for this value');
+        $graph->add_resource_triple('http://some/subject/1', $value, 'http://someplace.com');
     }
     public function addInvalidPredicateToResourceResultsInNoTriple_Provider(){
         return array(
+            array(""),
             array(1),
             array(1.2),
             array(true),
