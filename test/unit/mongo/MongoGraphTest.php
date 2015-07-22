@@ -229,6 +229,22 @@ class MongoGraphTest extends MongoTripodTestBase
         );
     }
 
+    public function testAddTripodArrayContainingEmptySubject()
+    {
+        $this->setExpectedException('\Tripod\Exceptions\Exception');
+        $doc = array(
+            "_id"=>array("r"=>"", "c"=>"http://talisaspire.com/works/4d101f63c10a6-2"),
+            "_version"=>0,
+            "rdf:type"=>array(
+                array("l"=>"a Value"),
+            ),
+            "bibo:isbn13"=>array("l"=>"9211234567890"),
+        );
+
+        $g = new \Tripod\Mongo\MongoGraph();
+        $g->add_tripod_array($doc);
+    }
+
 
     public function testAddTripodArrayContainingValidResourceValues()
     {

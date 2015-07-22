@@ -143,6 +143,9 @@ class MongoGraph extends \Tripod\ExtendedGraph {
                 if(!isset($value['r']) || !$this->isValidTripleValue($value['r'])){
                     return;
                 }
+                if($value['r'] === ""){
+                    throw new \Tripod\Exceptions\Exception("The subject cannot be an empty string");
+                }
             }
         }
         $_i[$this->_labeller->qname_to_alias($tarray["_id"][_ID_RESOURCE])] = $predObjects;

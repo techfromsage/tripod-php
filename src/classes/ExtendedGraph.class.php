@@ -177,6 +177,10 @@ class ExtendedGraph
      * @return bool
      */
     private function _add_triple($s, $p, Array $o_info) {
+        // Make sure the subject is not an empty string
+        if($s === ""){
+            throw new \Tripod\Exceptions\Exception("The subject cannot be an empty string");
+        }
         // The value $o should already have been validated by this point
         // It's validation differs depending on whether it is a literal or resource
         // So just check the subject and predicate here...

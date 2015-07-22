@@ -89,6 +89,13 @@ class ExtendedGraphTest extends PHPUnit_Framework_TestCase
         );
     }
 
+    public function testAddEmptySubjectToLiteralThrowsException()
+    {
+        $this->setExpectedException('\Tripod\Exceptions\Exception');
+        $graph = new ExtendedGraph();
+        $graph->add_literal_triple("", 'http://some/predicate', 'http://someplace.com');
+    }
+
     /**
      * @dataProvider addInvalidSubjectToLiteralResultsInNoTriple_Provider
      */
@@ -174,6 +181,13 @@ class ExtendedGraphTest extends PHPUnit_Framework_TestCase
             array(new stdClass()),
             array(function(){})
         );
+    }
+
+    public function testAddEmptySubjectToResourceThrowsException()
+    {
+        $this->setExpectedException('\Tripod\Exceptions\Exception');
+        $graph = new ExtendedGraph();
+        $graph->add_resource_triple("", 'http://some/predicate', 'http://someplace.com');
     }
 
     /**
