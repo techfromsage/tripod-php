@@ -138,7 +138,7 @@ class MongoGraph extends \Tripod\ExtendedGraph {
             }
             else if($key == "_id"){
                 // If the subject is invalid then throw an exception
-                if(!isset($value['r']) || !$this->isValidResourceValue($value['r'])){
+                if(!isset($value['r']) || !$this->isValidResource($value['r'])){
                     throw new \Tripod\Exceptions\Exception("The subject cannot be an empty string");
                 }
             }
@@ -160,7 +160,7 @@ class MongoGraph extends \Tripod\ExtendedGraph {
         if (array_key_exists(VALUE_LITERAL,$mongoValueObject))
         {
             // only allow valid values
-            if($this->isValidLiteralValue($mongoValueObject[VALUE_LITERAL])){
+            if($this->isValidLiteral($mongoValueObject[VALUE_LITERAL])){
                 // single value literal
                 $simpleGraphValueObject[] = array(
                     'type'=>'literal',
@@ -170,7 +170,7 @@ class MongoGraph extends \Tripod\ExtendedGraph {
         else if (array_key_exists(VALUE_URI,$mongoValueObject))
         {
             // only allow valid values
-            if($this->isValidResourceValue($mongoValueObject[VALUE_URI])) {
+            if($this->isValidResource($mongoValueObject[VALUE_URI])) {
                 // single value uri
                 $simpleGraphValueObject[] = array(
                     'type' => 'uri',
@@ -186,13 +186,13 @@ class MongoGraph extends \Tripod\ExtendedGraph {
                 {
                     // Make sure the value is valid
                     if($type==VALUE_LITERAL){
-                        if(!$this->isValidLiteralValue($value)){
+                        if(!$this->isValidLiteral($value)){
                             continue;
                         }
                         $valueTypeLabel = 'literal';
                     }
                     else{
-                        if(!$this->isValidResourceValue($value)){
+                        if(!$this->isValidResource($value)){
                             continue;
                         }
                         $valueTypeLabel = 'uri';

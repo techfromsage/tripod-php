@@ -141,7 +141,7 @@ class ExtendedGraph
      * @return boolean true if the triple was new, false if it already existed in the graph
      */
     public function add_resource_triple($s, $p, $o) {
-        if($this->isValidResourceValue($o)) {
+        if($this->isValidResource($o)) {
             return $this->_add_triple($s, $p, array('type' => strpos($o, '_:') === 0 ? 'bnode' : 'uri', 'value' => $o));
         }
         return false;
@@ -157,7 +157,7 @@ class ExtendedGraph
      * @return boolean true if the triple was new, false if it already existed in the graph
      */
     public function add_literal_triple($s, $p, $o, $lang = null, $dt = null) {
-        if($this->isValidLiteralValue($o)) {
+        if($this->isValidLiteral($o)) {
             $o_info = array('type' => 'literal', 'value' => $o);
             if ($lang != null) {
                 $o_info['lang'] = $lang;
@@ -181,10 +181,10 @@ class ExtendedGraph
         // The value $o should already have been validated by this point
         // It's validation differs depending on whether it is a literal or resource
         // So just check the subject and predicate here...
-        if(!$this->isValidResourceValue($s)){
+        if(!$this->isValidResource($s)){
             throw new \Tripod\Exceptions\Exception("The subject is invalid");
         }
-        if(!$this->isValidResourceValue($p)){
+        if(!$this->isValidResource($p)){
             throw new \Tripod\Exceptions\Exception("The predicate is invalid");
         }
         if (!isset($this->_index[$s])) {
@@ -214,7 +214,7 @@ class ExtendedGraph
      * @param string $value
      * @return bool
      */
-    protected function isValidLiteralValue($value){
+    protected function isValidLiteral($value){
         if(!is_scalar($value)){
             return false;
         }
@@ -227,7 +227,7 @@ class ExtendedGraph
      * @param string $value
      * @return bool
      */
-    protected function isValidResourceValue($value){
+    protected function isValidResource($value){
         if(!is_string($value) || empty($value)){
             return false;
         }
