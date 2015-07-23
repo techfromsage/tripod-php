@@ -617,7 +617,7 @@ class Tables extends CompositeBase
         {
             $collection->save($generatedRow);
         } catch (\Exception $e) {
-            // We only trunacte and retry the save if the \MongoCursorException contains this text.
+            // We only truncate and retry the save if the \Exception contains this text.
             if (strpos($e->getMessage(),"Btree::insert: key too large to index") !== FALSE)
             {
                 $this->truncateFields($collection, $generatedRow);
