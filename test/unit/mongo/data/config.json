@@ -360,6 +360,43 @@
                     }
                 },
                 {
+                    "_id": "t_truncation",
+                    "type": "acorn:ResourceForTruncating",
+                    "from": "CBD_testing",
+                    "ensureIndexes": [
+                        {
+                            "value.isbn": 1
+                        },
+                        {
+                            "value.title": 1
+                        }
+                    ],
+                    "fields": [
+                        {
+                            "fieldName": "type",
+                            "predicates": ["rdf:type"]
+                        },
+                        {
+                            "fieldName": "isbn",
+                            "predicates": ["bibo:isbn13"]
+                        },
+                        {
+                            "fieldName": "title",
+                            "predicates": ["searchterms:title"]
+                        }
+                    ],
+                    "joins": {
+                        "dct:isVersionOf": {
+                            "fields": [
+                                {
+                                    "fieldName": "isbn13",
+                                    "predicates": ["bibo:isbn13"]
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
                     "_id": "t_source_count",
                     "type": "acorn:Resource",
                     "from": "CBD_testing",

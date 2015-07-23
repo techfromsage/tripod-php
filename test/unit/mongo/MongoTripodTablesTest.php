@@ -641,6 +641,31 @@ class MongoTripodTablesTest extends MongoTripodTestBase
     }
 
     /**
+     * Test table rows are tuncated if they are too large to index
+     * @access public
+     * @return void
+     */
+    public function testGenerateTableRowsTruncatesFieldsTooLargeToIndex()
+    {
+        $fullTitle = "Mahommah Gardo Baquaqua. Biography of Mahommah G. Baquaqua, a Native of Zoogoo, in the Interior of Africa. (A Convert to Christianity,) With a Description of That Part of the World; Including the Manners and Customs of the Inhabitants, Their Religious Notions, Form of Government, Laws, Appearance of the Country, Buildings, Agriculture, Manufactures, Shepherds and Herdsmen, Domestic Animals, Marriage Ceremonials, Funeral Services, Styles of Dress, Trade and Commerce, Modes of Warfare, System of Slavery, &amp;c., &amp;c. Mahommah&#039;s Early Life, His Education, His Capture and Slavery in Western Africa and Brazil, His Escape to the United States, from Thence to Hayti, (the City of Port Au Prince,) His Reception by the Baptist Missionary There, The Rev. W. L. Judd; His Conversion to Christianity, Baptism, and Return to This Country, His Views, Objects and Aim. Written and Revised from His Own Words, by Samuel Moore, Esq., Late Publisher of the &quot;North of England Shipping Gazette,&quot; Author of Several Popular Works, and Editor of Sundry Reform Papers.";
+        $truncatedTitle = substr($fullTitle,0,1011); // 1011 = 1024 - index name "value_title_1"
+        $fullTitleLength = strlen($fullTitle);
+        $truncatedTitleLength = strLen($truncatedTitle);
+
+        $rows = $this->generateTableRows("t_truncation");
+
+        // When using Mongo 2.4 and below, the string will not have been truncated.
+        // Due to stricter index key enforcement in Mongo 2.6 and above, the string will have been truncated.
+        // Allow the test to pass for either version of Mongo
+        $actualLength = strlen($rows['results'][0]['title']);
+        $this->assertTrue($actualLength === $fullTitleLength || $actualLength === $truncatedTitleLength, "Title is an unexpected length");
+
+        // Assert that the title starts with the truncated title.
+        // This will be the case for both Mongo 2.4 and Mongo 2.6
+        $this->assertTrue(strpos($rows['results'][0]['title'], $truncatedTitle) === 0, "Unexpected title");
+    }
+
+    /**
      * Test that link modifier is derived from the joined resource id, rather than base
      * @access public
      * @return void
@@ -733,14 +758,14 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $table = 't_distinct';
         $this->generateTableRows($table);
         $rows = $this->tripodTables->getTableRows($table, array(), array(), 0, 0);
-        $this->assertEquals(7, $rows['head']['count']);
+        $this->assertEquals(8, $rows['head']['count']);
         $results = $this->tripodTables->distinct($table, "value.title");
 
         $this->assertArrayHasKey('head', $results);
         $this->assertArrayHasKey('count', $results['head']);
-        $this->assertEquals(3, $results['head']['count']);
+        $this->assertEquals(4, $results['head']['count']);
         $this->assertArrayHasKey('results', $results);
-        $this->assertEquals(3, count($results['results']));
+        $this->assertEquals(4, count($results['results']));
         $this->assertContains('Physics 3rd Edition: Physics for Engineers and Scientists', $results['results']);
         $this->assertContains('A document title', $results['results']);
         $this->assertContains('Another document title', $results['results']);
@@ -759,9 +784,9 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $results = $this->tripodTables->distinct($table, "value.type");
         $this->assertArrayHasKey('head', $results);
         $this->assertArrayHasKey('count', $results['head']);
-        $this->assertEquals(4, $results['head']['count']);
+        $this->assertEquals(5, $results['head']['count']);
         $this->assertArrayHasKey('results', $results);
-        $this->assertEquals(4, count($results['results']));
+        $this->assertEquals(5, count($results['results']));
         $this->assertContains('acorn:Resource', $results['results']);
         $this->assertContains('acorn:Work', $results['results']);
         $this->assertContains('bibo:Book', $results['results']);
