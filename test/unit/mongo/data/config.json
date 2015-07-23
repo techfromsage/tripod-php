@@ -336,9 +336,6 @@
                     "ensureIndexes": [
                         {
                             "value.isbn": 1
-                        },
-                        {
-                            "value.title": 1
                         }
                     ],
                     "fields": [

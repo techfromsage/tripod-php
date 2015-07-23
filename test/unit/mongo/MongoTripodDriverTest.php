@@ -218,7 +218,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
     public function testGetCount()
     {
         $count = $this->tripod->getCount(array("rdf:type.".VALUE_URI=>"bibo:Book"));
-        $this->assertEquals(5,$count);
+        $this->assertEquals(6,$count);
     }
 
     public function testTripodSaveChangesRemovesLiteralTriple()
@@ -1670,14 +1670,14 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $table = 't_distinct';
         $this->tripod->generateTableRows($table);
         $rows = $this->tripod->getTableRows($table, array(), array(), 0, 0);
-        $this->assertEquals(7, $rows['head']['count']);
+        $this->assertEquals(8, $rows['head']['count']);
         $results = $this->tripod->getDistinctTableColumnValues($table, "value.title");
 
         $this->assertArrayHasKey('head', $results);
         $this->assertArrayHasKey('count', $results['head']);
-        $this->assertEquals(3, $results['head']['count']);
+        $this->assertEquals(4, $results['head']['count']);
         $this->assertArrayHasKey('results', $results);
-        $this->assertEquals(3, count($results['results']));
+        $this->assertEquals(4, count($results['results']));
         $this->assertContains('Physics 3rd Edition: Physics for Engineers and Scientists', $results['results']);
         $this->assertContains('A document title', $results['results']);
         $this->assertContains('Another document title', $results['results']);
@@ -1696,9 +1696,9 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $results = $this->tripod->getDistinctTableColumnValues($table, "value.type");
         $this->assertArrayHasKey('head', $results);
         $this->assertArrayHasKey('count', $results['head']);
-        $this->assertEquals(4, $results['head']['count']);
+        $this->assertEquals(5, $results['head']['count']);
         $this->assertArrayHasKey('results', $results);
-        $this->assertEquals(4, count($results['results']));
+        $this->assertEquals(5, count($results['results']));
         $this->assertContains('acorn:Resource', $results['results']);
         $this->assertContains('acorn:Work', $results['results']);
         $this->assertContains('bibo:Book', $results['results']);
