@@ -589,7 +589,7 @@ class Tables extends CompositeBase
                 // Remove temp fields from document
 
                 $generatedRow['value'] = array_diff_key($value, array_flip($this->temporaryFields));
-                $collection->save($generatedRow);
+                $this->truncatingSave($collection, $generatedRow);
             }
         }
 
@@ -600,6 +600,100 @@ class Tables extends CompositeBase
             'filter'=>$filter,
             'from'=>$from));
         $this->getStat()->timer(MONGO_CREATE_TABLE.".$tableType",$t->result());
+    }
+
+    /**
+     * Save the generated rows to the given collection.
+     *
+     * If an exception in thrown because a field is too large to index, the field is
+     * truncated and the save is retried.
+     *
+     * @param \MongoCollection $collection
+     * @param array $generatedRow The rows to save.
+     */
+    protected function truncatingSave(\MongoCollection $collection, array $generatedRow)
+    {
+        try
+        {
+            $collection->save($generatedRow);
+        } catch (\Exception $e) {
+            // We only trunacte and retry the save if the \MongoCursorException contains this text.
+            if (strpos($e->getMessage(),"Btree::insert: key too large to index") !== FALSE)
+            {
+                $this->truncateFields($collection, $generatedRow);
+                $collection->save($generatedRow);
+            }
+            else
+            {
+                throw $e;
+            }
+        }
+    }
+
+    /**
+     * Truncate any indexed fields in the generated rows which are too large to index
+     *
+     * @param \MongoCollection $collection
+     * @param array $generatedRow - Pass by reference so that the contents is truncated
+     */
+    protected function truncateFields(\MongoCollection $collection, array &$generatedRow)
+    {
+        // Find the name of any indexed fields
+        $indexedFields = array();
+        $indexesGroupedByCollection = $this->config->getIndexesGroupedByCollection($this->storeName);
+        if (isset($indexesGroupedByCollection) && isset($indexesGroupedByCollection[$collection->getName()]))
+        {
+            $indexes = $indexesGroupedByCollection[$collection->getName()];
+            if (isset($indexes))
+            {
+                foreach($indexes as $repset)
+                {
+                    foreach ($repset as $index)
+                    {
+                        foreach ($index as $indexedFieldname => $v)
+                        {
+                            if (strpos($indexedFieldname, "value.") === 0)
+                            {
+                                $indexedFields[] = substr($indexedFieldname, strlen('value.'));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (count($indexedFields) > 0 && isset($generatedRow['value']) && is_array($generatedRow['value']))
+        {
+            // Iterate over generated rows BY REFERENCE (&) - we are going to modify the contents of $field
+            foreach($generatedRow as &$field)
+            {
+                foreach($indexedFields as $indexedFieldname)
+                {
+                    // The key will have the index name in the following format added to it.
+                    // Adjust the max key size allowed to take it into account.
+                    $maxKeySize = 1024 - strlen("value_".$indexedFieldname."_1");
+
+                    if (array_key_exists($indexedFieldname, $field))
+                    {
+                        // It's important that we count the number of bytes
+                        // in the field - not just the number of characters.
+                        // UTF-8 characters can be between 1 and 4 bytes.
+                        //
+                        // From the strlen documentation:
+                        //     Attention with utf8:
+                        //     $foo = "bär";
+                        //     strlen($foo) will return 4 and not 3 as expected..
+                        //
+                        // So strlen does count the bytes - not the characters.
+
+                        if (is_string($field[$indexedFieldname]) && strlen($field[$indexedFieldname]) > $maxKeySize)
+                        {
+                            $field[$indexedFieldname] = substr($field[$indexedFieldname],0, $maxKeySize);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**

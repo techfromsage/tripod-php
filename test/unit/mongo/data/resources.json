@@ -247,6 +247,117 @@
     },
     {
         "_id": {
+            "r":"http://talisaspire.com/resources/indexKeyTooLarge",
+            "c":"http://talisaspire.com/"
+        },
+        "_version": 0,
+        "dct:isVersionOf":
+        {
+            "u":"http://talisaspire.com/works/4d101f63c10a6"
+        },
+        "dct:source":[
+            {
+                "u":"http://life.ac.uk/resources/836E7CAD-63D2-63A0-B1CB-AA6A7E54A5C9"
+            },
+            {
+                "u":"http://life.ac.uk/resources/BFBC6A06-A8B0-DED8-53AA-8E80DB44CC53"
+            }
+        ],
+        "dct:subject":
+        {
+            "u":"http://talisaspire.com/disciplines/physics"
+        },
+        "bibo:isbn13":
+        {
+            "l":"1234567890123"
+        },
+        "acorn:bookmarkReferences":
+        {
+            "u":"http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA/bookmarks"
+        },
+        "acorn:foo":
+        {
+            "l":"wibble"
+        },
+        "acorn:jacsUri":[
+            {
+                "u":"http://jacs3.dataincubator.org/f300"
+            },
+            {
+                "u":"http://jacs3.dataincubator.org/f340"
+            }
+        ],
+        "acorn:listReferences":
+        {
+            "u":"http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA/lists"
+        },
+        "acorn:openLibraryUri":
+        {
+            "u":"http://openlibrary.org/books/OL10157958M"
+        },
+        "acorn:preferredMetadata":
+        {
+            "u":"http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA/metadata"
+        },
+        "searchterms:author":
+        {
+            "l":"Ohanian"
+        },
+        "searchterms:discipline":
+        {
+            "l":"physics"
+        },
+        "searchterms:isbn":
+        {
+            "l":"1234567890"
+        },
+        "searchterms:openLibrarySubject":[
+            {
+                "l":"Engineering: general"
+            },
+            {
+                "l":"PHYSICS"
+            },
+            {
+                "l":"Science"
+            }
+        ],
+        "searchterms:title":[
+
+            {
+                "l":"Mahommah Gardo Baquaqua. Biography of Mahommah G. Baquaqua, a Native of Zoogoo, in the Interior of Africa. (A Convert to Christianity,) With a Description of That Part of the World; Including the Manners and Customs of the Inhabitants, Their Religious Notions, Form of Government, Laws, Appearance of the Country, Buildings, Agriculture, Manufactures, Shepherds and Herdsmen, Domestic Animals, Marriage Ceremonials, Funeral Services, Styles of Dress, Trade and Commerce, Modes of Warfare, System of Slavery, &amp;c., &amp;c. Mahommah&#039;s Early Life, His Education, His Capture and Slavery in Western Africa and Brazil, His Escape to the United States, from Thence to Hayti, (the City of Port Au Prince,) His Reception by the Baptist Missionary There, The Rev. W. L. Judd; His Conversion to Christianity, Baptism, and Return to This Country, His Views, Objects and Aim. Written and Revised from His Own Words, by Samuel Moore, Esq., Late Publisher of the &quot;North of England Shipping Gazette,&quot; Author of Several Popular Works, and Editor of Sundry Reform Papers."
+            }
+        ],
+        "searchterms:topic":[
+            {
+                "l":"engineering: general"
+            },
+            {
+                "l":"physics"
+            },
+            {
+                "l":"science"
+            }
+        ],
+        "searchterms:usedAt":
+        {
+            "l":"0071"
+        },
+        "rdf:type":[
+            {
+                "u":"http://purl.org/ontology/bibo/Book"
+            },
+            {
+                "u":"http://talisaspire.com/schema#ResourceForTruncating"
+            }
+        ],
+        "owl:sameAs":
+        {
+            "u":"http://talisaspire.com/isbn/9780393929690"
+        }
+    },
+    {
+        "_id": {
             "r" : "http://jacs3.dataincubator.org/f300",
             "c":"http://talisaspire.com/"
         },
