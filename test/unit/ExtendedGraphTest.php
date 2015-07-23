@@ -23,6 +23,176 @@ class ExtendedGraphTest extends PHPUnit_Framework_TestCase
         echo "\nTest: {$className}->{$testName}\n";
     }
 
+    /**
+     * @dataProvider addValidValueToLiteralResultsInTriple_Provider
+     */
+    public function testAddValidValueToLiteralResultsInTriple($value)
+    {
+        $graph = new ExtendedGraph();
+        $addResult = $graph->add_literal_triple('http://some/subject/1', 'http://some/predicate', $value);
+        $this->assertTrue($addResult, 'The triple should have been added for this value');
+
+        $hasPropertyResult = $graph->subject_has_property('http://some/subject/1', 'http://some/predicate');
+        $this->assertTrue($hasPropertyResult, 'The triple should have been added for this value');
+    }
+    public function addValidValueToLiteralResultsInTriple_Provider(){
+        return array(
+            array('String'),
+            array(1),
+            array(1.2),
+            array(true)
+        );
+    }
+
+    /**
+     * @dataProvider addInvalidValueToLiteralResultsInNoTriple_Provider
+     */
+    public function testAddInvalidValueToLiteralResultsInNoTriple($value)
+    {
+        $graph = new ExtendedGraph();
+        $addResult = $graph->add_literal_triple('http://some/subject/1', 'http://some/predicate', $value);
+        $this->assertFalse($addResult, 'The triple should not have been added for this value');
+
+        $hasPropertyResult = $graph->subject_has_property('http://some/subject/1', 'http://some/predicate');
+        $this->assertFalse($hasPropertyResult, 'The triple should not have been added for this value');
+    }
+    public function addInvalidValueToLiteralResultsInNoTriple_Provider(){
+        return array(
+            array(null),
+            array(new stdClass()),
+            array(function(){})
+        );
+    }
+
+    /**
+     * @dataProvider addInvalidSubjectToLiteralResultsInNoTriple_Provider
+     */
+    public function testAddInvalidSubjectToLiteralThrowsException($value)
+    {
+        $this->setExpectedException('\Tripod\Exceptions\Exception');
+
+        $graph = new ExtendedGraph();
+        $graph->add_resource_triple($value, 'http://some/predicate', 'http://someplace.com');
+    }
+    public function addInvalidSubjectToLiteralResultsInNoTriple_Provider(){
+        return array(
+            array(""),
+            array(1),
+            array(1.2),
+            array(true),
+            array(array()),
+            array(null),
+            array(new stdClass()),
+            array(function(){})
+        );
+    }
+
+    /**
+     * @dataProvider addInvalidSubjectToLiteralResultsInNoTriple_Provider
+     */
+    public function testAddInvalidPredicateToLiteralThrowsException($value)
+    {
+        $this->setExpectedException('\Tripod\Exceptions\Exception');
+
+        $graph = new ExtendedGraph();
+        $graph->add_resource_triple('http://some/subject/1', $value, 'http://someplace.com');
+    }
+    public function addInvalidPredicateToLiteralResultsInNoTriple_Provider(){
+        return array(
+            array(""),
+            array(1),
+            array(1.2),
+            array(true),
+            array(array()),
+            array(null),
+            array(new stdClass()),
+            array(function(){})
+        );
+    }
+
+    public function testAddValidValueToResourceResultsInTriple()
+    {
+        $value = 'A String';
+        $graph = new ExtendedGraph();
+        $addResult = $graph->add_resource_triple('http://some/subject/1', 'http://some/predicate', $value);
+        $this->assertTrue($addResult, 'The triple should have been added for this value');
+
+        $hasPropertyResult = $graph->subject_has_property('http://some/subject/1', 'http://some/predicate');
+        $this->assertTrue($hasPropertyResult, 'The triple should have been added for this value');
+    }
+
+
+    /**
+     * @dataProvider addInvalidValueToResourceResultsInNoTriple_Provider
+     */
+    public function testAddInvalidValueToResourceResultsInNoTriple($value)
+    {
+        $graph = new ExtendedGraph();
+
+        $addResult = $graph->add_resource_triple('http://some/subject/1', 'http://some/predicate', $value);
+        $this->assertFalse($addResult, 'The triple should not have been added for this value');
+
+        $hasPropertyResult = $graph->subject_has_property('http://some/subject/1', 'http://some/predicate');
+        $this->assertFalse($hasPropertyResult, 'The triple should not have been added for this value');
+    }
+    public function addInvalidValueToResourceResultsInNoTriple_Provider(){
+        return array(
+            array(1),
+            array(1.2),
+            array(true),
+            array(array()),
+            array(null),
+            array(new stdClass()),
+            array(function(){})
+        );
+    }
+
+    /**
+     * @dataProvider addInvalidSubjectToResourceResultsInNoTriple_Provider
+     */
+    public function testAddInvalidSubjectToResourceThrowsException($value)
+    {
+        $this->setExpectedException('\Tripod\Exceptions\Exception');
+
+        $graph = new ExtendedGraph();
+        $graph->add_resource_triple($value, 'http://some/predicate', 'http://someplace.com');
+    }
+    public function addInvalidSubjectToResourceResultsInNoTriple_Provider(){
+        return array(
+            array(""),
+            array(1),
+            array(1.2),
+            array(true),
+            array(array()),
+            array(null),
+            array(new stdClass()),
+            array(function(){})
+        );
+    }
+
+    /**
+     * @dataProvider addInvalidSubjectToLiteralResultsInNoTriple_Provider
+     */
+    public function testAddInvalidPredicateToResourceThrowsException($value)
+    {
+        $this->setExpectedException('\Tripod\Exceptions\Exception');
+
+        $graph = new ExtendedGraph();
+        $graph->add_resource_triple('http://some/subject/1', $value, 'http://someplace.com');
+    }
+    public function addInvalidPredicateToResourceResultsInNoTriple_Provider(){
+        return array(
+            array(""),
+            array(1),
+            array(1.2),
+            array(true),
+            array(array()),
+            array(null),
+            array(new stdClass()),
+            array(function(){})
+        );
+    }
+
     public function testRemoveProperties()
     {
         $graph = new ExtendedGraph();
