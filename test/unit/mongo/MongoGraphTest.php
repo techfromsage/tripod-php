@@ -209,8 +209,8 @@ class MongoGraphTest extends MongoTripodTestBase
      */
     public function testAddTripodArrayContainingEmptyPredicate()
     {
-        // An Uninitialized string offset should occur if an empty predicate is passed.
-        $this->setExpectedException("PHPUnit_Framework_Error");
+        // We don't really care what kind of Exception gets thrown, just that this can't be done
+        $this->setExpectedException('\Exception');
         $doc = array(
             "_id"=>array("r"=>"http://talisaspire.com/works/4d101f63c10a6-2", "c"=>"http://talisaspire.com/works/4d101f63c10a6-2"),
             "_version"=>0,
