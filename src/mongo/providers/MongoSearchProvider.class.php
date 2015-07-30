@@ -345,7 +345,13 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
     	}
     	    	
     	return $this->config->getCollectionForSearchDocument($this->storeName, $typeId)
-            ->remove(array("_id.type" => $typeId));
+            ->remove(
+                array("_id.type" => $typeId),
+                array(
+                    'fsync'=>true,
+                    'socketTimeoutMS'=>$this->config->getMongoCursorTimeout()
+                )
+            );
     }
 
     /**
