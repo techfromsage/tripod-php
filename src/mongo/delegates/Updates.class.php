@@ -1214,7 +1214,15 @@ class Updates extends DriverBase {
         $this->transactionLog = $transactionLog;
     }
 
-
+    /**
+     * Register save changes event hooks
+     * @param IEventHook $hook
+     */
+    public function registerSaveChangesEventHook(IEventHook $hook)
+    {
+        $this->saveChangesHooks[] = $hook;
+    }
+    
     /**
      * Saves a transaction
      * @param array $transaction
@@ -1304,11 +1312,6 @@ class Updates extends DriverBase {
         }
         return $this->locksCollection;
 
-    }
-
-    protected function registerSaveChangesEventHook(IEventHook $hook)
-    {
-        $this->saveChangesHooks[] = $hook;
     }
 
     /**
