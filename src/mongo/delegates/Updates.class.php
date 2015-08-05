@@ -153,6 +153,7 @@ class Updates extends DriverBase {
     {
         $this->applyPreHooks($this->saveChangesHooks,array("oldGraph"=>$oldGraph,"newGraph"=>$newGraph,"context"=>$context));
         $this->setReadPreferenceToPrimary();
+        $subjectsAndPredicatesOfChange = array();
         try{
             $contextAlias = $this->getContextAlias($context);
 
@@ -188,7 +189,7 @@ class Updates extends DriverBase {
 
         $this->resetOriginalReadPreference();
 
-        $this->applyPostHooks($this->saveChangesHooks,array("oldGraph"=>$oldGraph,"newGraph"=>$newGraph,"context"=>$context));
+        $this->applyPostHooks($this->saveChangesHooks,array("subjectsAndPredicatesOfChange"=>$subjectsAndPredicatesOfChange));
         return true;
     }
 
