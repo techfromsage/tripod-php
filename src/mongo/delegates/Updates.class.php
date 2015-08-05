@@ -2,6 +2,8 @@
 
 namespace Tripod\Mongo;
 
+use Tripod\IEventHook;
+
 require_once TRIPOD_DIR . 'mongo/Config.class.php';
 
 /**
@@ -67,6 +69,11 @@ class Updates extends DriverBase {
      * @var \Tripod\Mongo\Jobs\DiscoverImpactedSubjects
      */
     protected $discoverImpactedSubjects;
+
+    /**
+     * @var array
+     */
+    private $saveChangesHooks = array();
 
     /**
      * @param Driver $tripod
@@ -144,6 +151,7 @@ class Updates extends DriverBase {
         $context=null,
         $description=null)
     {
+        $this->applyPreHooks($this->saveChangesHooks,array("oldGraph"=>$oldGraph,"newGraph"=>$newGraph,"context"=>$context));
         $this->setReadPreferenceToPrimary();
         try{
             $contextAlias = $this->getContextAlias($context);
@@ -180,6 +188,7 @@ class Updates extends DriverBase {
 
         $this->resetOriginalReadPreference();
 
+        $this->applyPostHooks($this->saveChangesHooks,array("oldGraph"=>$oldGraph,"newGraph"=>$newGraph,"context"=>$context));
         return true;
     }
 
@@ -1294,6 +1303,11 @@ class Updates extends DriverBase {
         }
         return $this->locksCollection;
 
+    }
+
+    protected function registerSaveChangesEventHook(IEventHook $hook)
+    {
+        $this->saveChangesHooks[] = $hook;
     }
 
     /**
