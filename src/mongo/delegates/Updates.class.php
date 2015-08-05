@@ -1222,7 +1222,7 @@ class Updates extends DriverBase {
     {
         $this->saveChangesHooks[] = $hook;
     }
-    
+
     /**
      * Saves a transaction
      * @param array $transaction

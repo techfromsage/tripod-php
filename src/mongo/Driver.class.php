@@ -612,6 +612,7 @@ class Driver extends DriverBase implements \Tripod\IDriver
         switch ($eventType) {
             case IEventHook::EVENT_SAVE_CHANGES:
                 $this->getDataUpdater()->registerSaveChangesEventHook($hook);
+                break;
             default:
                 throw new Exception("Unrecognised type $eventType whilst registering event hook");
         }
