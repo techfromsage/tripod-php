@@ -1,7 +1,7 @@
 ![tripod-php](logo.png)
 ==========
 
-![Build status](https://travis-ci.org/talis/tripod-php.svg)
+[![Build status](https://travis-ci.org/talis/tripod-php.svg)](https://travis-ci.org/talis/tripod-php)
 
 Object Graph Mapper for managing [RDF](http://www.w3.org/TR/rdf-primer/) data stored in [MongoDB](http://www.mongodb.org/). See also [tripod-node](https://github.com/talis/tripod-node).
 
