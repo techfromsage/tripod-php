@@ -7,6 +7,8 @@ require_once TRIPOD_DIR.'ITripodStat.php';
 $TOTAL_TIME=0;
 
 use Monolog\Logger;
+use Tripod\Exceptions\Exception;
+use Tripod\IEventHook;
 
 /**
  * Class DriverBase
@@ -374,6 +376,33 @@ abstract class DriverBase
         }
 
         return $this->collection;
+    }
+
+    protected function applyPreHooks($hooks,$args=array())
+    {
+        $this->applyHooks("pre",$hooks,$args);
+    }
+
+    protected function applyPostHooks($hooks,$args=array())
+    {
+        $this->applyHooks("post",$hooks,$args);
+    }
+
+    private function applyHooks($fn,$hooks,$args=array())
+    {
+        foreach ($hooks as $hook)
+        {
+            try
+            {
+                /* @var $hook IEventHook */
+                $hook->$fn($args);
+            }
+            catch (\Exception $e)
+            {
+                // don't let rabbid hooks stop tripod
+                $this->getLogger()->error("Hook ".get_class($hook)." threw exception {$e->getMessage()}, continuing");
+            }
+        }
     }
 
 }
