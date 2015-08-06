@@ -153,7 +153,6 @@ class Updates extends DriverBase {
     {
         $this->applyPreHooks($this->saveChangesHooks,array("oldGraph"=>$oldGraph,"newGraph"=>$newGraph,"context"=>$context));
         $this->setReadPreferenceToPrimary();
-        $subjectsAndPredicatesOfChange = array();
         try{
             $contextAlias = $this->getContextAlias($context);
 
@@ -169,6 +168,7 @@ class Updates extends DriverBase {
             $args = array('before' => $oldIndex, 'after' => $newIndex, 'changeReason' => $description);
             $cs = new \Tripod\ChangeSet($args);
 
+            $subjectsAndPredicatesOfChange = array();
             if ($cs->has_changes())
             {
                 // store the actual CBDs
@@ -180,6 +180,12 @@ class Updates extends DriverBase {
                 // Schedule calculation of any async activity
                 $this->queueAsyncOperations($subjectsAndPredicatesOfChange,$contextAlias);
             }
+
+            $this->applyPostHooks($this->saveChangesHooks,array(
+                "pod"=>$this->getPodName(),
+                "changeSet"=>$cs,
+                "subjectsAndPredicatesOfChange"=>$subjectsAndPredicatesOfChange
+            ));
         }
         catch(\Exception $e){
             // ensure we reset the original read preference in the event of an exception
@@ -189,7 +195,6 @@ class Updates extends DriverBase {
 
         $this->resetOriginalReadPreference();
 
-        $this->applyPostHooks($this->saveChangesHooks,array("subjectsAndPredicatesOfChange"=>$subjectsAndPredicatesOfChange));
         return true;
     }
 
@@ -1066,12 +1071,12 @@ class Updates extends DriverBase {
     {
         $countEntriesInLocksCollection = $this->getLocksCollection()
             ->count(
-            array(
-                _ID_KEY => array(
-                    _ID_RESOURCE => $this->labeller->uri_to_alias($s),
-                    _ID_CONTEXT => $contextAlias)
-            )
-        );
+                array(
+                    _ID_KEY => array(
+                        _ID_RESOURCE => $this->labeller->uri_to_alias($s),
+                        _ID_CONTEXT => $contextAlias)
+                )
+            );
 
         if($countEntriesInLocksCollection > 0) //Subject is already locked
             return false;
