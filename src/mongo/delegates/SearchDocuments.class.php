@@ -330,7 +330,7 @@ class SearchDocuments extends DriverBase
         
 		if(count($values) > 0){						
 	        for ($i=0; $i<$limit; $i++) {	        	
-	            $v = utf8_encode($values[$i]); //todo: added by CJC
+	            $v = $values[$i];
 	            if (empty($objName)) {
 	                if (!isset($target[$name])) {
 	                    $target[$name] = $v;
