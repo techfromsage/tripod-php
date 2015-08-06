@@ -345,6 +345,32 @@
     },
     {
         "_id": {
+            "r":"http://talisaspire.com/resources/doc13",
+            "c":"http://talisaspire.com/"
+        },
+        "_version": 0,
+        "dct:title": {
+            "l": "Droit du contentieux administratif"
+        },
+        "rdf:type": [
+            {
+                "u": "http://purl.org/ontology/bibo/Book"
+            },
+            {
+                "u": "http://talisaspire.com/schema#Resource"
+            }
+        ],
+        "dct:creator":{
+            "u": "http://talisaspire.com/authors/4"
+        },
+        "dct:subject":[
+            {
+                "l": "legal"
+            }
+        ]
+    },
+    {
+        "_id": {
             "r":"http://talisaspire.com/authors/1",
             "c":"http://talisaspire.com/"
         },
@@ -377,6 +403,19 @@
         "_version": 0,
         "foaf:name": {
             "l": "Jack Shephard"
+        },
+        "rdf:type": {
+                "u": "http://xmlns.com/foaf/0.1/Person"
+        }
+    },
+    {
+        "_id": {
+            "r":"http://talisaspire.com/authors/4",
+            "c":"http://talisaspire.com/"
+        },
+        "_version": 0,
+        "foaf:name": {
+            "l": "René Chapus"
         },
         "rdf:type": {
                 "u": "http://xmlns.com/foaf/0.1/Person"

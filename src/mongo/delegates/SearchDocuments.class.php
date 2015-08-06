@@ -262,15 +262,15 @@ class SearchDocuments extends DriverBase
 
                     if(isset($source[$p])){
                         if(isset($source[$p]['u'])){
-                            $values[] = ($isIndex) ? strtolower(trim($source[$p]['u'])) : trim($source[$p]['u']);
+                            $values[] = ($isIndex) ? mb_strtolower(trim($source[$p]['u']), 'UTF-8') : trim($source[$p]['u']);
                         } else if (isset($source[$p]['l'])){
-                            $values[] = ($isIndex) ? strtolower(trim($source[$p]['l'])) : trim($source[$p]['l']);
+                            $values[] = ($isIndex) ? mb_strtolower(trim($source[$p]['l']), 'UTF-8') : trim($source[$p]['l']);
                         } else {
                             foreach($source[$p] as $v){
                                 if(isset($v['u'])){
-                                    $values[] = ($isIndex) ? strtolower(trim($v['u'])) : trim($v['u']);
+                                    $values[] = ($isIndex) ? mb_strtolower(trim($v['u']), 'UTF-8') : trim($v['u']);
                                 } else {
-                                    $values[] = ($isIndex) ? strtolower(trim($v['l'])) : trim($v['l']);
+                                    $values[] = ($isIndex) ? mb_strtolower(trim($v['l']), 'UTF-8') : trim($v['l']);
                                 }
                             }
                         }
