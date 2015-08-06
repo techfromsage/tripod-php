@@ -81,6 +81,15 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
     }
 
 
+    public function testGenerateSearchDocumentPreservesDiacritics()
+    {
+        $searchDocuments = $this->getSearchDocuments($this->tripod);
+        $generatedDocuments = $searchDocuments->generateSearchDocumentBasedOnSpecId('i_search_resource', 'http://talisaspire.com/resources/doc13', 'http://talisaspire.com/');
+        $this->assertEquals('René Chapus', $generatedDocuments['result']['author']);
+        $this->assertContains('rené chapus', $generatedDocuments['search_terms']);
+        $this->assertEquals('http://talisaspire.com/resources/doc13', $generatedDocuments['_id']['r']);
+    }
+
     public function testGenerateSearchDocumentBasedOnSpecIdWithFieldNamePredicatesHavingNoValueInCollection()
     {
         $searchSpecs = json_decode('{"_id":"i_search_resource","type":["bibo:Book"],"from":"CBD_testing","filter":[{"condition":{"dct:title.l":{"$exists":true}}}],"indices":[{"fieldName":"search_terms","predicates":["dct:title","dct:subject"]},{"fieldName":"other_terms","predicates":["rdf:type"]}],"fields":[{"fieldName":"result.title","predicates":["dct:title"],"limit":1},{"fieldName":"result.link","value":"link"},{"fieldName":"rdftype","predicates":["rdf:type"],"limit":1}],"joins":{"dct:creator":{"indices":[{"fieldName":"search_terms","predicates":["foaf:name"]}],"fields":[{"fieldName":"result.author","predicates":["foaf:name"],"limit":1}, {"fieldName":"result.role","predicates":["siocAccess:Role"], "limit":1}] } }}', true);
