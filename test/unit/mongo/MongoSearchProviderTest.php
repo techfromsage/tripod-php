@@ -453,17 +453,16 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
     public function testSearchMultipleIndices()
     {
-        $results = $this->searchProvider->search("bibo:Book", "i_search_resource", array("search_terms","other_terms"), array("result","rdftype"), 4, 0);
+        $results = $this->searchProvider->search("bibo:Book", "i_search_resource", array("search_terms","other_terms"), array("result","rdftype"), 3, 0);
         $this->assertEquals(13, $results['head']['count']);
-        $this->assertEquals(4, $results['head']['limit']);
-        $this->assertEquals(4, count($results['results']));
+        $this->assertEquals(3, $results['head']['limit']);
+        $this->assertEquals(3, count($results['results']));
         $this->assertEquals(0, $results['head']['offset']);
         $this->assertEquals("bibo:Book",$results['head']["query"]);
         $this->assertEquals(array("bibo:book"), $results['head']["query_terms_used"]);
         $this->assertArrayHasKey("duration", $results['head']);
 
         $expectedResults = array(
-            array("result"=>array("title"=>"Droit du contentieux administratif" , "link"=>"http://talisaspire.com/resources/doc13" , "author"=>"René Chapus"), "rdftype"=>"bibo:Book"),
             array("result"=>array("title"=>"Physics for Engineers and Scientists" , "link"=>"http://talisaspire.com/resources/doc1" , "author"=>"Sayid Jarrah"), "rdftype"=>"bibo:Book"),
             array("result"=>array("title"=>"Astrophysics for Beginners" , "link"=>"http://talisaspire.com/resources/doc2" , "author"=>"Sayid Jarrah"), "rdftype"=>"bibo:Book"),
             array("result"=>array("title"=>"Fundementals of Heat and Mass Transfers" , "link"=>"http://talisaspire.com/resources/doc3" , "author"=>"Sayid Jarrah"), "rdftype"=>"bibo:Book")
