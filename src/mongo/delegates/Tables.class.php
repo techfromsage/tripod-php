@@ -351,7 +351,13 @@ class Tables extends CompositeBase
         }
 
         $this->config->getCollectionForTable($this->storeName, $tableId)
-            ->remove(array("_id.type"=>$tableId), array('fsync'=>true));
+            ->remove(
+                array("_id.type"=>$tableId),
+                array(
+                    'fsync'=>true,
+                    'socketTimeoutMS'=>$this->getConfigInstance()->getMongoCursorTimeout()
+                )
+            );
     }
 
     /**

@@ -368,7 +368,13 @@ class Views extends CompositeBase
         }
 
         $this->config->getCollectionForView($this->storeName, $viewId)
-            ->remove(array("_id.type"=>$viewId), array('fsync'=>true));
+            ->remove(
+                array("_id.type"=>$viewId),
+                array(
+                    'fsync'=>true,
+                    'socketTimeoutMS'=>$this->getConfigInstance()->getMongoCursorTimeout()
+                )
+            );
     }
 
     /**
