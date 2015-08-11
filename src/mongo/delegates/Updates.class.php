@@ -151,7 +151,12 @@ class Updates extends DriverBase {
         $context=null,
         $description=null)
     {
-        $this->applyPreHooks($this->saveChangesHooks,array("oldGraph"=>$oldGraph,"newGraph"=>$newGraph,"context"=>$context));
+        $this->applyPreHooks($this->saveChangesHooks,array(
+            "pod"=>$this->getPodName(),
+            "oldGraph"=>$oldGraph,
+            "newGraph"=>$newGraph,
+            "context"=>$context
+        ));
         $this->setReadPreferenceToPrimary();
         try{
             $contextAlias = $this->getContextAlias($context);
@@ -183,8 +188,11 @@ class Updates extends DriverBase {
 
             $this->applyPostHooks($this->saveChangesHooks,array(
                 "pod"=>$this->getPodName(),
+                "oldGraph"=>$oldGraph,
+                "newGraph"=>$newGraph,
+                "context"=>$context,
                 "changeSet"=>$cs,
-                "subjectsAndPredicatesOfChange"=>$subjectsAndPredicatesOfChange
+                "subjectsAndPredicatesOfChange"=>$subjectsAndPredicatesOfChange,
             ));
         }
         catch(\Exception $e){
