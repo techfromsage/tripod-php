@@ -26,7 +26,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         // Stub ouf 'addToElastic' search to prevent writes into Elastic Search happening by default.
         $this->tripod = $this->getMock(
             '\Tripod\Mongo\Driver',
-            array('addToSearchIndexQueue'),
+            array('validateGraphCardinality'),
             array(
                 'CBD_testing',
                 'tripod_php_testing',
@@ -1975,6 +1975,82 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $this->assertEquals(0, count($docs));
     }
 
-
     /** END: removeInertLocks tests */
+
+    /** START: saveChangesHooks tests */
+    public function testRegisteredHooksAreCalled()
+    {
+        $mockHookA = $this->getMock("TestSaveChangesHookA", array('pre', 'post'), array(), '', false);
+        $mockHookB = $this->getMock("TestSaveChangesHookB", array('pre', 'post'), array(), '', false);
+
+        $mockHookA->expects($this->once())->method("pre");
+        $mockHookA->expects($this->once())->method("post");
+        $mockHookB->expects($this->once())->method("pre");
+        $mockHookB->expects($this->once())->method("post");
+
+        $this->tripod->registerHook(\Tripod\IEventHook::EVENT_SAVE_CHANGES,$mockHookA);
+        $this->tripod->registerHook(\Tripod\IEventHook::EVENT_SAVE_CHANGES,$mockHookB);
+
+        $this->tripod->saveChanges(new \Tripod\ExtendedGraph(),new \Tripod\ExtendedGraph());
+    }
+
+    public function testRegisteredPostHooksAreNotCalledOnException()
+    {
+        $this->setExpectedException('\Tripod\Exceptions\Exception','Could not validate');
+
+        /* @var $tripodUpdate \Tripod\Mongo\Updates|PHPUnit_Framework_MockObject_MockObject */
+        $tripodUpdate = $this->getMock(
+            '\Tripod\Mongo\Updates',
+            array('validateGraphCardinality'),
+            array($this->tripod)
+        );
+
+        /* @var $mockHookA \Tripod\IEventHook|PHPUnit_Framework_MockObject_MockObject*/
+        $mockHookA = $this->getMock("TestSaveChangesHookA", array('pre', 'post'), array(), '', false);
+        /* @var $mockHookB \Tripod\IEventHook|PHPUnit_Framework_MockObject_MockObject*/
+        $mockHookB = $this->getMock("TestSaveChangesHookB", array('pre', 'post'), array(), '', false);
+
+        $mockHookA->expects($this->once())->method("pre");
+        $mockHookA->expects($this->never())->method("post");
+        $mockHookB->expects($this->once())->method("pre");
+        $mockHookB->expects($this->never())->method("post");
+
+        $tripodUpdate->registerSaveChangesEventHook($mockHookA);
+        $tripodUpdate->registerSaveChangesEventHook($mockHookB);
+
+        $tripodUpdate->expects($this->once())->method('validateGraphCardinality')->willThrowException(new \Tripod\Exceptions\Exception("Could not validate"));
+        $tripodUpdate->saveChanges(new \Tripod\ExtendedGraph(),new \Tripod\ExtendedGraph());
+    }
+
+    /** END: saveChangesHooks tests */
+
+}
+class TestSaveChangesHookA implements \Tripod\IEventHook
+{
+    /**
+     * This method gets called just before the event happens. The arguments passed depend on the event in question, see
+     * the documentation for that event type for details
+     * @param $args array of arguments
+     */
+    public function pre(array $args)
+    {
+        // do nothing
+    }
+
+    /**
+     * This method gets called after the event has successfully completed. The arguments passed depend on the event in
+     * question, see the documentation for that event type for details
+     * If the event throws an exception or fatal error, this method will not be called.
+     * @param $args array of arguments
+     */
+    public function post(array $args)
+    {
+        // do nothing
+    }
+
+}
+
+class TestSaveChangesHookB extends TestSaveChangesHookA
+{
+    // empty
 }
