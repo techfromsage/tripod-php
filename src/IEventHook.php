@@ -39,4 +39,11 @@ interface IEventHook
      * @param $args array of arguments
      */
     public function post(array $args);
+
+    /**
+     * This method gets called if the event failed for any reason. The arguments passed should be the same as IEventHook::pre
+     * @param array $args
+     * @return mixed
+     */
+    public function failure(array $args);
 }

@@ -198,6 +198,12 @@ class Updates extends DriverBase {
         catch(\Exception $e){
             // ensure we reset the original read preference in the event of an exception
             $this->resetOriginalReadPreference();
+            $this->applyFailureHooks($this->saveChangesHooks,array(
+                "pod"=>$this->getPodName(),
+                "oldGraph"=>$oldGraph,
+                "newGraph"=>$newGraph,
+                "context"=>$context
+            ));
             throw $e;
         }
 
