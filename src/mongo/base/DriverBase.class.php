@@ -388,6 +388,11 @@ abstract class DriverBase
         $this->applyHooks("post",$hooks,$args);
     }
 
+    protected function applyFailureHooks($hooks,$args=array())
+    {
+        $this->applyHooks("failure",$hooks,$args);
+    }
+
     private function applyHooks($fn,$hooks,$args=array())
     {
         foreach ($hooks as $hook)

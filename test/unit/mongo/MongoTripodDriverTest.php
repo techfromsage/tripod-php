@@ -1985,8 +1985,10 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
         $mockHookA->expects($this->once())->method("pre");
         $mockHookA->expects($this->once())->method("post");
+        $mockHookA->expects($this->never())->method("failure");
         $mockHookB->expects($this->once())->method("pre");
         $mockHookB->expects($this->once())->method("post");
+        $mockHookB->expects($this->never())->method("failure");
 
         $this->tripod->registerHook(\Tripod\IEventHook::EVENT_SAVE_CHANGES,$mockHookA);
         $this->tripod->registerHook(\Tripod\IEventHook::EVENT_SAVE_CHANGES,$mockHookB);
@@ -2006,14 +2008,16 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         );
 
         /* @var $mockHookA \Tripod\IEventHook|PHPUnit_Framework_MockObject_MockObject*/
-        $mockHookA = $this->getMock("TestSaveChangesHookA", array('pre', 'post'), array(), '', false);
+        $mockHookA = $this->getMock("TestSaveChangesHookA", array('pre', 'post', 'failure'), array(), '', false);
         /* @var $mockHookB \Tripod\IEventHook|PHPUnit_Framework_MockObject_MockObject*/
-        $mockHookB = $this->getMock("TestSaveChangesHookB", array('pre', 'post'), array(), '', false);
+        $mockHookB = $this->getMock("TestSaveChangesHookB", array('pre', 'post', 'failure'), array(), '', false);
 
         $mockHookA->expects($this->once())->method("pre");
         $mockHookA->expects($this->never())->method("post");
+        $mockHookA->expects($this->once())->method("failure");
         $mockHookB->expects($this->once())->method("pre");
         $mockHookB->expects($this->never())->method("post");
+        $mockHookB->expects($this->once())->method("failure");
 
         $tripodUpdate->registerSaveChangesEventHook($mockHookA);
         $tripodUpdate->registerSaveChangesEventHook($mockHookB);
@@ -2048,6 +2052,15 @@ class TestSaveChangesHookA implements \Tripod\IEventHook
         // do nothing
     }
 
+    /**
+     * This method gets called if the event failed for any reason. The arguments passed should be the same as IEventHook::pre
+     * @param array $args
+     * @return mixed
+     */
+    public function failure(array $args)
+    {
+        // do nothing
+    }
 }
 
 class TestSaveChangesHookB extends TestSaveChangesHookA
