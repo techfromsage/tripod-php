@@ -106,7 +106,7 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
                     {
                         return;
                     }
-                    $query[_ID_KEY . '.' . _ID_TYPE] = array('$in'=>$specId);
+                    $query[_ID_KEY . '.' . _ID_TYPE] = array('$in'=>array_values($specId));
                     $searchTypes = $specId;
                 }
             }
