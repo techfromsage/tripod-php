@@ -252,6 +252,8 @@ class Tables extends CompositeBase
         $rows = array();
         foreach ($results as $doc)
         {
+//            $log = new \Monolog\Logger("TEST");
+//            $log->error("Doc",$doc);
             if (array_key_exists(_IMPACT_INDEX,$doc['value'])) unset($doc['value'][_IMPACT_INDEX]); // remove impact index from client
             $rows[] = $doc['value'];
         }
@@ -509,16 +511,19 @@ class Tables extends CompositeBase
         );
 
         // ensure any custom view indexes
-        if (isset($tableSpec['ensureIndexes']))
+        foreach (Config::getInstance()->getTableSpecifications($this->storeName) as $tSpec)
         {
-            foreach ($tableSpec['ensureIndexes'] as $ensureIndex)
+            if (isset($tSpec['ensureIndexes']))
             {
-                $collection->ensureIndex(
-                    $ensureIndex,
-                    array(
-                        'background'=>1
-                    )
-                );
+                foreach ($tSpec['ensureIndexes'] as $ensureIndex)
+                {
+                    $collection->ensureIndex(
+                        $ensureIndex,
+                        array(
+                            'background'=>1
+                        )
+                    );
+                }
             }
         }
 

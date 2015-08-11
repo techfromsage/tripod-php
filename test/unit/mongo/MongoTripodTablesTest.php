@@ -178,7 +178,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $this->assertEquals(count($t2['results']),2);
         foreach ($t2['results'] as $r)
         {
-            if ($r['_id']['r'] = $subject) {
+            if ($r['_id']['r'] == $subject) {
                 $result = $r;
             }
         }
@@ -224,7 +224,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $this->assertEquals(count($t2['results']),2);
         foreach ($t2['results'] as $r)
         {
-            if ($r['_id']['r'] = $subject) {
+            if ($r['_id']['r'] == $subject) {
                 $result = $r;
             }
         }
