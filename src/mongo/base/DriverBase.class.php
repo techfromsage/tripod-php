@@ -404,7 +404,7 @@ abstract class DriverBase
             }
             catch (\Exception $e)
             {
-                // don't let rabbid hooks stop tripod
+                // don't let rabid hooks stop tripod
                 $this->getLogger()->error("Hook ".get_class($hook)." threw exception {$e->getMessage()}, continuing");
             }
         }
