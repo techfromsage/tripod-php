@@ -17,6 +17,13 @@ use Tripod\IEventHook;
 abstract class DriverBase
 {
     /**
+     * constants for the supported hook functions that can be applied
+     */
+    const HOOK_FN_PRE = "pre";
+    const HOOK_FN_POST = "post";
+    const HOOK_FN_FAILURE = "failure";
+
+    /**
      * @var \MongoCollection
      */
     protected $collection;
@@ -378,23 +385,16 @@ abstract class DriverBase
         return $this->collection;
     }
 
-    protected function applyPreHooks($hooks,$args=array())
+    protected function applyHooks($fn,$hooks,$args=array())
     {
-        $this->applyHooks("pre",$hooks,$args);
-    }
-
-    protected function applyPostHooks($hooks,$args=array())
-    {
-        $this->applyHooks("post",$hooks,$args);
-    }
-
-    protected function applyFailureHooks($hooks,$args=array())
-    {
-        $this->applyHooks("failure",$hooks,$args);
-    }
-
-    private function applyHooks($fn,$hooks,$args=array())
-    {
+        switch ($fn) {
+            case $this::HOOK_FN_PRE:
+            case $this::HOOK_FN_POST:
+            case $this::HOOK_FN_FAILURE:
+                break;
+            default:
+                throw new Exception("Invalid hook function $fn requested");
+        }
         foreach ($hooks as $hook)
         {
             try

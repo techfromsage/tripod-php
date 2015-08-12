@@ -151,7 +151,7 @@ class Updates extends DriverBase {
         $context=null,
         $description=null)
     {
-        $this->applyPreHooks($this->saveChangesHooks,array(
+        $this->applyHooks($this::HOOK_FN_PRE,$this->saveChangesHooks,array(
             "pod"=>$this->getPodName(),
             "oldGraph"=>$oldGraph,
             "newGraph"=>$newGraph,
@@ -186,7 +186,7 @@ class Updates extends DriverBase {
                 $this->queueAsyncOperations($subjectsAndPredicatesOfChange,$contextAlias);
             }
 
-            $this->applyPostHooks($this->saveChangesHooks,array(
+            $this->applyHooks($this::HOOK_FN_POST,$this->saveChangesHooks,array(
                 "pod"=>$this->getPodName(),
                 "oldGraph"=>$oldGraph,
                 "newGraph"=>$newGraph,
@@ -198,7 +198,7 @@ class Updates extends DriverBase {
         catch(\Exception $e){
             // ensure we reset the original read preference in the event of an exception
             $this->resetOriginalReadPreference();
-            $this->applyFailureHooks($this->saveChangesHooks,array(
+            $this->applyHooks($this::HOOK_FN_FAILURE,$this->saveChangesHooks,array(
                 "pod"=>$this->getPodName(),
                 "oldGraph"=>$oldGraph,
                 "newGraph"=>$newGraph,
