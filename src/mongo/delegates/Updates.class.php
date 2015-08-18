@@ -2,6 +2,7 @@
 
 namespace Tripod\Mongo;
 
+use Tripod\Exceptions\Exception;
 use Tripod\IEventHook;
 
 require_once TRIPOD_DIR . 'mongo/Config.class.php';
@@ -174,10 +175,16 @@ class Updates extends DriverBase {
             $cs = new \Tripod\ChangeSet($args);
 
             $subjectsAndPredicatesOfChange = array();
+            $transaction_id = null;
             if ($cs->has_changes())
             {
                 // store the actual CBDs
-                $subjectsAndPredicatesOfChange = $this->storeChanges($cs, $contextAlias);
+                $result = $this->storeChanges($cs, $contextAlias);
+                if (!isset($result['subjectsAndPredicatesOfChange'])|| !isset($result['transaction_id'])) {
+                    $this->errorLog("Result of storeChanges malformed, should have transaction_id and subjectsAndPredicatesOfChange array keys",array("result"=>$result));
+                    throw new Exception("Result of storeChanges malformed, should have transaction_id and subjectsAndPredicatesOfChange array keys");
+                }
+                extract($result); // will unpack into $subjectsAndPredicatesOfChange
 
                 // Process any syncronous operations
                 $this->processSyncOperations($subjectsAndPredicatesOfChange,$contextAlias);
@@ -193,6 +200,7 @@ class Updates extends DriverBase {
                 "context"=>$context,
                 "changeSet"=>$cs,
                 "subjectsAndPredicatesOfChange"=>$subjectsAndPredicatesOfChange,
+                "transaction_id"=>$transaction_id
             ));
         }
         catch(\Exception $e){
@@ -366,7 +374,7 @@ class Updates extends DriverBase {
             $this->timingLog(MONGO_WRITE, array('duration'=>$t->result(), 'subjectsOfChange'=>implode(", ",$subjectsOfChange)));
             $this->getStat()->timer(MONGO_WRITE.".{$this->getPodName()}",$t->result());
 
-            return $changes['subjectsAndPredicatesOfChange'];
+            return $changes;
         }
         catch(\Exception $e)
         {
@@ -625,7 +633,8 @@ class Updates extends DriverBase {
 
             return array(
                 'newCBDs'=>$newCBDs,
-                'subjectsAndPredicatesOfChange'=>$this->subjectsAndPredicatesOfChangeUrisToAliases($subjectsAndPredicatesOfChange)
+                'subjectsAndPredicatesOfChange'=>$this->subjectsAndPredicatesOfChangeUrisToAliases($subjectsAndPredicatesOfChange),
+                'transaction_id'=>$transaction_id
             );
         }
         else
