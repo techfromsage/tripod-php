@@ -937,7 +937,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
         $mockTripodUpdates->expects($this->once())
             ->method('storeChanges')
-            ->will($this->returnValue($subjectsAndPredicatesOfChange));
+            ->will($this->returnValue(array("subjectsAndPredicatesOfChange"=>$subjectsAndPredicatesOfChange,"transaction_id"=>"t1234")));
 
         $mockTripod->expects($this->once())
             ->method('getDataUpdater')
@@ -1134,7 +1134,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
         $mockTripodUpdates->expects($this->once())
             ->method('storeChanges')
-            ->will($this->returnValue($subjectsAndPredicatesOfChange));
+            ->will($this->returnValue(array("subjectsAndPredicatesOfChange"=>$subjectsAndPredicatesOfChange,"transaction_id"=>"t1234")));
 
         $mockTripod->expects($this->exactly(2))
             ->method('getComposite')
@@ -1279,7 +1279,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
         $mockTripodUpdates->expects($this->once())
             ->method('storeChanges')
-            ->will($this->returnValue($subjectsAndPredicatesOfChange));
+            ->will($this->returnValue(array("subjectsAndPredicatesOfChange"=>$subjectsAndPredicatesOfChange,"transaction_id"=>"t1234")));
 
         $mockTripod->expects($this->once())
             ->method('getDataUpdater')
@@ -1429,7 +1429,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
         $mockTripodUpdates->expects($this->once())
             ->method('storeChanges')
-            ->will($this->returnValue($subjectsAndPredicatesOfChange));
+            ->will($this->returnValue(array("subjectsAndPredicatesOfChange"=>$subjectsAndPredicatesOfChange,"transaction_id"=>"t1234")));
 
         $mockTripod->expects($this->once())
             ->method('getDataUpdater')
@@ -2024,6 +2024,24 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
         $tripodUpdate->expects($this->once())->method('validateGraphCardinality')->willThrowException(new \Tripod\Exceptions\Exception("Could not validate"));
         $tripodUpdate->saveChanges(new \Tripod\ExtendedGraph(),new \Tripod\ExtendedGraph());
+    }
+
+    public function testMisbehavingHookDoesNotPreventSaveOrInterfereWithOtherHooks()
+    {
+        $mockHookA = $this->getMock("TestSaveChangesHookA", array('pre', 'post'), array(), '', false);
+        $mockHookB = $this->getMock("TestSaveChangesHookB", array('pre', 'post'), array(), '', false);
+
+        $mockHookA->expects($this->once())->method("pre")->will($this->throwException(new Exception("Misbehaving hook")));
+        $mockHookA->expects($this->once())->method("post")->will($this->throwException(new Exception("Misbehaving hook")));
+        $mockHookA->expects($this->never())->method("failure");
+        $mockHookB->expects($this->once())->method("pre");
+        $mockHookB->expects($this->once())->method("post");
+        $mockHookB->expects($this->never())->method("failure");
+
+        $this->tripod->registerHook(\Tripod\IEventHook::EVENT_SAVE_CHANGES,$mockHookA);
+        $this->tripod->registerHook(\Tripod\IEventHook::EVENT_SAVE_CHANGES,$mockHookB);
+
+        $this->tripod->saveChanges(new \Tripod\ExtendedGraph(),new \Tripod\ExtendedGraph());
     }
 
     /** END: saveChangesHooks tests */
