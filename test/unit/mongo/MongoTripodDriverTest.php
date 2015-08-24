@@ -2085,3 +2085,4 @@ class TestSaveChangesHookB extends TestSaveChangesHookA
 {
     // empty
 }
+/** END: saveChangesHooks tests */
