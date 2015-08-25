@@ -38,7 +38,7 @@ interface IEventHook
      * If the event throws an exception or fatal error, this method will not be called.
      * @param $args array of arguments
      */
-    public function post(array $args);
+    public function success(array $args);
 
     /**
      * This method gets called if the event failed for any reason. The arguments passed should be the same as IEventHook::pre

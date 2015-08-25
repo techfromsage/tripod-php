@@ -193,7 +193,7 @@ class Updates extends DriverBase {
                 $this->queueAsyncOperations($subjectsAndPredicatesOfChange,$contextAlias);
             }
 
-            $this->applyHooks($this::HOOK_FN_POST,$this->saveChangesHooks,array(
+            $this->applyHooks($this::HOOK_FN_SUCCESS,$this->saveChangesHooks,array(
                 "pod"=>$this->getPodName(),
                 "oldGraph"=>$oldGraph,
                 "newGraph"=>$newGraph,

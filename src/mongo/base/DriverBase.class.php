@@ -20,7 +20,7 @@ abstract class DriverBase
      * constants for the supported hook functions that can be applied
      */
     const HOOK_FN_PRE = "pre";
-    const HOOK_FN_POST = "post";
+    const HOOK_FN_SUCCESS = "success";
     const HOOK_FN_FAILURE = "failure";
 
     /**
@@ -389,7 +389,7 @@ abstract class DriverBase
     {
         switch ($fn) {
             case $this::HOOK_FN_PRE:
-            case $this::HOOK_FN_POST:
+            case $this::HOOK_FN_SUCCESS:
             case $this::HOOK_FN_FAILURE:
                 break;
             default:

@@ -1980,14 +1980,14 @@ class MongoTripodDriverTest extends MongoTripodTestBase
     /** START: saveChangesHooks tests */
     public function testRegisteredHooksAreCalled()
     {
-        $mockHookA = $this->getMock("TestSaveChangesHookA", array('pre', 'post'), array(), '', false);
-        $mockHookB = $this->getMock("TestSaveChangesHookB", array('pre', 'post'), array(), '', false);
+        $mockHookA = $this->getMock("TestSaveChangesHookA", array('pre', 'success'), array(), '', false);
+        $mockHookB = $this->getMock("TestSaveChangesHookB", array('pre', 'success'), array(), '', false);
 
         $mockHookA->expects($this->once())->method("pre");
-        $mockHookA->expects($this->once())->method("post");
+        $mockHookA->expects($this->once())->method("success");
         $mockHookA->expects($this->never())->method("failure");
         $mockHookB->expects($this->once())->method("pre");
-        $mockHookB->expects($this->once())->method("post");
+        $mockHookB->expects($this->once())->method("success");
         $mockHookB->expects($this->never())->method("failure");
 
         $this->tripod->registerHook(\Tripod\IEventHook::EVENT_SAVE_CHANGES,$mockHookA);
@@ -1996,7 +1996,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $this->tripod->saveChanges(new \Tripod\ExtendedGraph(),new \Tripod\ExtendedGraph());
     }
 
-    public function testRegisteredPostHooksAreNotCalledOnException()
+    public function testRegisteredSuccessHooksAreNotCalledOnException()
     {
         $this->setExpectedException('\Tripod\Exceptions\Exception','Could not validate');
 
@@ -2008,15 +2008,15 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         );
 
         /* @var $mockHookA \Tripod\IEventHook|PHPUnit_Framework_MockObject_MockObject*/
-        $mockHookA = $this->getMock("TestSaveChangesHookA", array('pre', 'post', 'failure'), array(), '', false);
+        $mockHookA = $this->getMock("TestSaveChangesHookA", array('pre', 'success', 'failure'), array(), '', false);
         /* @var $mockHookB \Tripod\IEventHook|PHPUnit_Framework_MockObject_MockObject*/
-        $mockHookB = $this->getMock("TestSaveChangesHookB", array('pre', 'post', 'failure'), array(), '', false);
+        $mockHookB = $this->getMock("TestSaveChangesHookB", array('pre', 'success', 'failure'), array(), '', false);
 
         $mockHookA->expects($this->once())->method("pre");
-        $mockHookA->expects($this->never())->method("post");
+        $mockHookA->expects($this->never())->method("success");
         $mockHookA->expects($this->once())->method("failure");
         $mockHookB->expects($this->once())->method("pre");
-        $mockHookB->expects($this->never())->method("post");
+        $mockHookB->expects($this->never())->method("success");
         $mockHookB->expects($this->once())->method("failure");
 
         $tripodUpdate->registerSaveChangesEventHook($mockHookA);
@@ -2028,14 +2028,14 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
     public function testMisbehavingHookDoesNotPreventSaveOrInterfereWithOtherHooks()
     {
-        $mockHookA = $this->getMock("TestSaveChangesHookA", array('pre', 'post'), array(), '', false);
-        $mockHookB = $this->getMock("TestSaveChangesHookB", array('pre', 'post'), array(), '', false);
+        $mockHookA = $this->getMock("TestSaveChangesHookA", array('pre', 'success'), array(), '', false);
+        $mockHookB = $this->getMock("TestSaveChangesHookB", array('pre', 'success'), array(), '', false);
 
         $mockHookA->expects($this->once())->method("pre")->will($this->throwException(new Exception("Misbehaving hook")));
-        $mockHookA->expects($this->once())->method("post")->will($this->throwException(new Exception("Misbehaving hook")));
+        $mockHookA->expects($this->once())->method("success")->will($this->throwException(new Exception("Misbehaving hook")));
         $mockHookA->expects($this->never())->method("failure");
         $mockHookB->expects($this->once())->method("pre");
-        $mockHookB->expects($this->once())->method("post");
+        $mockHookB->expects($this->once())->method("success");
         $mockHookB->expects($this->never())->method("failure");
 
         $this->tripod->registerHook(\Tripod\IEventHook::EVENT_SAVE_CHANGES,$mockHookA);
@@ -2065,7 +2065,7 @@ class TestSaveChangesHookA implements \Tripod\IEventHook
      * If the event throws an exception or fatal error, this method will not be called.
      * @param $args array of arguments
      */
-    public function post(array $args)
+    public function success(array $args)
     {
         // do nothing
     }

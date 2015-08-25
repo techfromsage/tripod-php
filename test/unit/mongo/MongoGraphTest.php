@@ -210,7 +210,7 @@ class MongoGraphTest extends MongoTripodTestBase
     public function testAddTripodArrayContainingEmptyPredicate()
     {
         // Should not be able to label ''
-        $this->setExpectedException('\Tripod\Exceptions\LabellerException');
+        $this->setExpectedException('\Tripod\Exceptions\Exception','The predicate cannot be an empty string');
         $doc = array(
             "_id"=>array("r"=>"http://talisaspire.com/works/4d101f63c10a6-2", "c"=>"http://talisaspire.com/works/4d101f63c10a6-2"),
             "_version"=>0,
