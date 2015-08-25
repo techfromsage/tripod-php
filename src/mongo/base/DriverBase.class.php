@@ -7,6 +7,8 @@ require_once TRIPOD_DIR.'ITripodStat.php';
 $TOTAL_TIME=0;
 
 use Monolog\Logger;
+use Tripod\Exceptions\Exception;
+use Tripod\IEventHook;
 
 /**
  * Class DriverBase
@@ -14,6 +16,13 @@ use Monolog\Logger;
  */
 abstract class DriverBase
 {
+    /**
+     * constants for the supported hook functions that can be applied
+     */
+    const HOOK_FN_PRE = "pre";
+    const HOOK_FN_SUCCESS = "success";
+    const HOOK_FN_FAILURE = "failure";
+
     /**
      * @var \MongoCollection
      */
@@ -374,6 +383,31 @@ abstract class DriverBase
         }
 
         return $this->collection;
+    }
+
+    protected function applyHooks($fn,$hooks,$args=array())
+    {
+        switch ($fn) {
+            case $this::HOOK_FN_PRE:
+            case $this::HOOK_FN_SUCCESS:
+            case $this::HOOK_FN_FAILURE:
+                break;
+            default:
+                throw new Exception("Invalid hook function $fn requested");
+        }
+        foreach ($hooks as $hook)
+        {
+            try
+            {
+                /* @var $hook IEventHook */
+                $hook->$fn($args);
+            }
+            catch (\Exception $e)
+            {
+                // don't let rabid hooks stop tripod
+                $this->getLogger()->error("Hook ".get_class($hook)." threw exception {$e->getMessage()}, continuing");
+            }
+        }
     }
 
 }

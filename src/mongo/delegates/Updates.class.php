@@ -2,6 +2,9 @@
 
 namespace Tripod\Mongo;
 
+use Tripod\Exceptions\Exception;
+use Tripod\IEventHook;
+
 require_once TRIPOD_DIR . 'mongo/Config.class.php';
 
 /**
@@ -67,6 +70,11 @@ class Updates extends DriverBase {
      * @var \Tripod\Mongo\Jobs\DiscoverImpactedSubjects
      */
     protected $discoverImpactedSubjects;
+
+    /**
+     * @var array
+     */
+    private $saveChangesHooks = array();
 
     /**
      * @param Driver $tripod
@@ -144,6 +152,12 @@ class Updates extends DriverBase {
         $context=null,
         $description=null)
     {
+        $this->applyHooks($this::HOOK_FN_PRE,$this->saveChangesHooks,array(
+            "pod"=>$this->getPodName(),
+            "oldGraph"=>$oldGraph,
+            "newGraph"=>$newGraph,
+            "context"=>$context
+        ));
         $this->setReadPreferenceToPrimary();
         try{
             $contextAlias = $this->getContextAlias($context);
@@ -160,10 +174,17 @@ class Updates extends DriverBase {
             $args = array('before' => $oldIndex, 'after' => $newIndex, 'changeReason' => $description);
             $cs = new \Tripod\ChangeSet($args);
 
+            $subjectsAndPredicatesOfChange = array();
+            $transaction_id = null;
             if ($cs->has_changes())
             {
                 // store the actual CBDs
-                $subjectsAndPredicatesOfChange = $this->storeChanges($cs, $contextAlias);
+                $result = $this->storeChanges($cs, $contextAlias);
+                if (!isset($result['subjectsAndPredicatesOfChange'])|| !isset($result['transaction_id'])) {
+                    $this->errorLog("Result of storeChanges malformed, should have transaction_id and subjectsAndPredicatesOfChange array keys",array("result"=>$result));
+                    throw new Exception("Result of storeChanges malformed, should have transaction_id and subjectsAndPredicatesOfChange array keys");
+                }
+                extract($result); // will unpack into $subjectsAndPredicatesOfChange
 
                 // Process any syncronous operations
                 $this->processSyncOperations($subjectsAndPredicatesOfChange,$contextAlias);
@@ -171,10 +192,26 @@ class Updates extends DriverBase {
                 // Schedule calculation of any async activity
                 $this->queueAsyncOperations($subjectsAndPredicatesOfChange,$contextAlias);
             }
+
+            $this->applyHooks($this::HOOK_FN_SUCCESS,$this->saveChangesHooks,array(
+                "pod"=>$this->getPodName(),
+                "oldGraph"=>$oldGraph,
+                "newGraph"=>$newGraph,
+                "context"=>$context,
+                "changeSet"=>$cs,
+                "subjectsAndPredicatesOfChange"=>$subjectsAndPredicatesOfChange,
+                "transaction_id"=>$transaction_id
+            ));
         }
         catch(\Exception $e){
             // ensure we reset the original read preference in the event of an exception
             $this->resetOriginalReadPreference();
+            $this->applyHooks($this::HOOK_FN_FAILURE,$this->saveChangesHooks,array(
+                "pod"=>$this->getPodName(),
+                "oldGraph"=>$oldGraph,
+                "newGraph"=>$newGraph,
+                "context"=>$context
+            ));
             throw $e;
         }
 
@@ -337,7 +374,7 @@ class Updates extends DriverBase {
             $this->timingLog(MONGO_WRITE, array('duration'=>$t->result(), 'subjectsOfChange'=>implode(", ",$subjectsOfChange)));
             $this->getStat()->timer(MONGO_WRITE.".{$this->getPodName()}",$t->result());
 
-            return $changes['subjectsAndPredicatesOfChange'];
+            return $changes;
         }
         catch(\Exception $e)
         {
@@ -596,7 +633,8 @@ class Updates extends DriverBase {
 
             return array(
                 'newCBDs'=>$newCBDs,
-                'subjectsAndPredicatesOfChange'=>$this->subjectsAndPredicatesOfChangeUrisToAliases($subjectsAndPredicatesOfChange)
+                'subjectsAndPredicatesOfChange'=>$this->subjectsAndPredicatesOfChangeUrisToAliases($subjectsAndPredicatesOfChange),
+                'transaction_id'=>$transaction_id
             );
         }
         else
@@ -1056,12 +1094,12 @@ class Updates extends DriverBase {
     {
         $countEntriesInLocksCollection = $this->getLocksCollection()
             ->count(
-            array(
-                _ID_KEY => array(
-                    _ID_RESOURCE => $this->labeller->uri_to_alias($s),
-                    _ID_CONTEXT => $contextAlias)
-            )
-        );
+                array(
+                    _ID_KEY => array(
+                        _ID_RESOURCE => $this->labeller->uri_to_alias($s),
+                        _ID_CONTEXT => $contextAlias)
+                )
+            );
 
         if($countEntriesInLocksCollection > 0) //Subject is already locked
             return false;
@@ -1204,6 +1242,14 @@ class Updates extends DriverBase {
         $this->transactionLog = $transactionLog;
     }
 
+    /**
+     * Register save changes event hooks
+     * @param IEventHook $hook
+     */
+    public function registerSaveChangesEventHook(IEventHook $hook)
+    {
+        $this->saveChangesHooks[] = $hook;
+    }
 
     /**
      * Saves a transaction

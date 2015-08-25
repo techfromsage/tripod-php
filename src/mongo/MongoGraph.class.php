@@ -127,18 +127,25 @@ class MongoGraph extends \Tripod\ExtendedGraph {
         $predObjects = array();
         foreach ($tarray as $key=>$value)
         {
-            if($key[0] != '_')
+            if (empty($key))
+            {
+                throw new \Tripod\Exceptions\Exception("The predicate cannot be an empty string");
+            }
+            else if($key[0] != '_')
             {
                 $predicate = $this->qname_to_uri($key);
                 $graphValueObject = $this->toGraphValueObject($value);
                 // Only add if valid values have been found
-                if (!empty($graphValueObject)) {
+                if (!empty($graphValueObject))
+                {
                     $predObjects[$predicate] = $graphValueObject;
                 }
             }
-            else if($key == "_id"){
+            else if($key == "_id")
+            {
                 // If the subject is invalid then throw an exception
-                if(!isset($value['r']) || !$this->isValidResource($value['r'])){
+                if(!isset($value['r']) || !$this->isValidResource($value['r']))
+                {
                     throw new \Tripod\Exceptions\Exception("The subject cannot be an empty string");
                 }
             }
