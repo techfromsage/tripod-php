@@ -695,6 +695,33 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $this->assertEquals("http://talisaspire.com/works/4d101f63c10a6", $rows['results'][0]['workLink']);
     }
 
+
+    /**
+     * Test to ensure only indexes on rs2 get ensured when table row generation happens
+     */
+    public function testJoinLinkGenerationOnlyFiresEnsureIndexesForOwnDataSource()
+    {
+        /* @var $mockTables \Tripod\Mongo\Composites\Tables|PHPUnit_Framework_MockObject_MockObject*/
+        $mockTables = $this->getMock('\Tripod\Mongo\Composites\Tables',array("ensureIndex"),array($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),null));
+
+        $mockTables->expects($this->once())->method("ensureIndex"); // should only ever get called once
+
+        $mockTables->generateTableRows("t_join_link","http://somesubject");
+    }
+
+    /**
+     * Test to ensure only indexes on rs2 get ensured when table row generation happens
+     */
+    public function testResourceGenerationOnlyFiresEnsureIndexesForOwnDataSource()
+    {
+        /* @var $mockTables \Tripod\Mongo\Composites\Tables|PHPUnit_Framework_MockObject_MockObject*/
+        $mockTables = $this->getMock('\Tripod\Mongo\Composites\Tables',array("ensureIndex"),array($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),null));
+
+        $mockTables->expects($this->exactly(3))->method("ensureIndex"); // should only ever get called twice
+
+        $mockTables->generateTableRows("t_resource","http://somesubject");
+    }
+
     /**
      * Test to ensure that impact index contains joined ids for resources that do not yet exist in the database (i.e.
      * allow open world model)
