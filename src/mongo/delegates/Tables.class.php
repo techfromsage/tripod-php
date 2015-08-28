@@ -513,15 +513,13 @@ class Tables extends CompositeBase
         // ensure any custom view indexes
         foreach (Config::getInstance()->getTableSpecifications($this->storeName) as $tSpec)
         {
-            if (isset($tSpec['ensureIndexes']))
+            if (isset($tSpec['ensureIndexes']) && $tSpec['to_data_source'] == $tableSpec['to_data_source']) // only ensure table_rows indexes for the data source that matches the table spec we're generating
             {
                 foreach ($tSpec['ensureIndexes'] as $ensureIndex)
                 {
-                    $collection->ensureIndex(
-                        $ensureIndex,
-                        array(
-                            'background'=>1
-                        )
+                    $this->ensureIndex(
+                        $collection,
+                        $ensureIndex
                     );
                 }
             }
@@ -1426,6 +1424,21 @@ class Tables extends CompositeBase
         return false;
     }
 
+    /**
+     * Ensure $indexToEnsure on the given mongo $collection
+     * @param array $collection
+     * @param \MongoCollection $indexToEnsure
+     */
+    protected function ensureIndex(\MongoCollection $collection,array $indexToEnsure)
+    {
+        $collection->ensureIndex(
+            $indexToEnsure,
+            array(
+                'background'=>1
+            )
+        );
+
+    }
     /**
      * Apply a regex to the RDF property value defined in $value
      * @param $regex

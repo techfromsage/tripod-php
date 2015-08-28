@@ -614,6 +614,11 @@
                     "type": "bibo:Document",
                     "from": "CBD_testing",
                     "to_data_source": "rs2",
+                    "ensureIndexes" : [
+                        {
+                            "value.bookLink": 1
+                        }
+                    ],
                     "fields": [
                         {
                             "fieldName": "bookLink",
