@@ -26,7 +26,7 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
             'tripod_php_testing'
         );
         $this->getTripodCollection($this->tripod)->drop();
-        $this->loadBaseDataViaTripod();
+        $this->loadResourceDataViaTripod();
     }
 
     /**

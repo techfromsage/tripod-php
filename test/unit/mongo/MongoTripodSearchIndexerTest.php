@@ -17,7 +17,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
         {
             $collection->drop();
         }
-        $this->loadBaseDataViaTripod();
+        $this->loadResourceDataViaTripod();
         $this->loadBaseSearchDataViaTripod();
     }
 
@@ -64,7 +64,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
 
         $tripodUpdate->expects($this->atLeastOnce())
             ->method('storeChanges')
-            ->will($this->returnValue($subjectsAndPredicatesOfChange));
+            ->will($this->returnValue(array("subjectsAndPredicatesOfChange"=>$subjectsAndPredicatesOfChange,"transaction_id"=>"t1234")));
 
         $tripod->expects($this->atLeastOnce())
             ->method('getDataUpdater')
@@ -364,7 +364,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
         );
         $tripodUpdate->expects($this->atLeastOnce())
             ->method('storeChanges')
-            ->will($this->returnValue(array('deletedSubjects'=>array())));
+            ->will($this->returnValue(array('deletedSubjects'=>array(),"subjectsAndPredicatesOfChange"=>array(),"transaction_id"=>'t1234')));
 
         $tripod->expects($this->atLeastOnce())
             ->method('getDataUpdater')

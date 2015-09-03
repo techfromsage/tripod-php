@@ -119,6 +119,7 @@ class MongoGraph extends \Tripod\ExtendedGraph {
 
     /**
      * @param array $tarray
+     * @throws \Tripod\Exceptions\Exception
      */
     private function add_tarray_to_index($tarray)
     {
@@ -126,10 +127,27 @@ class MongoGraph extends \Tripod\ExtendedGraph {
         $predObjects = array();
         foreach ($tarray as $key=>$value)
         {
-            if($key[0] != '_')
+            if (empty($key))
+            {
+                throw new \Tripod\Exceptions\Exception("The predicate cannot be an empty string");
+            }
+            else if($key[0] != '_')
             {
                 $predicate = $this->qname_to_uri($key);
-                $predObjects[$predicate] = $this->toGraphValueObject($value);
+                $graphValueObject = $this->toGraphValueObject($value);
+                // Only add if valid values have been found
+                if (!empty($graphValueObject))
+                {
+                    $predObjects[$predicate] = $graphValueObject;
+                }
+            }
+            else if($key == "_id")
+            {
+                // If the subject is invalid then throw an exception
+                if(!isset($value['r']) || !$this->isValidResource($value['r']))
+                {
+                    throw new \Tripod\Exceptions\Exception("The subject cannot be an empty string");
+                }
             }
         }
         $_i[$this->_labeller->qname_to_alias($tarray["_id"][_ID_RESOURCE])] = $predObjects;
@@ -138,39 +156,61 @@ class MongoGraph extends \Tripod\ExtendedGraph {
 
     /**
      * Convert from Tripod value object format (comapct) to ExtendedGraph format (verbose)
+     *
      * @param array $mongoValueObject
      * @return array
      */
     private function toGraphValueObject($mongoValueObject)
     {
-        $simpleGraphValueObject = null;
+        $simpleGraphValueObject = array();
 
         if (array_key_exists(VALUE_LITERAL,$mongoValueObject))
         {
-            // single value literal
-            $simpleGraphValueObject[] = array(
-                'type'=>'literal',
-                'value'=>$mongoValueObject[VALUE_LITERAL]);
+            // only allow valid values
+            if($this->isValidLiteral($mongoValueObject[VALUE_LITERAL])){
+                // single value literal
+                $simpleGraphValueObject[] = array(
+                    'type'=>'literal',
+                    'value'=>$mongoValueObject[VALUE_LITERAL]);
+            }
         }
         else if (array_key_exists(VALUE_URI,$mongoValueObject))
         {
-            // single value literal
-            $simpleGraphValueObject[] = array(
-                'type'=>'uri',
-                'value'=>$this->_labeller->qname_to_alias($mongoValueObject[VALUE_URI]));
+            // only allow valid values
+            if($this->isValidResource($mongoValueObject[VALUE_URI])) {
+                // single value uri
+                $simpleGraphValueObject[] = array(
+                    'type' => 'uri',
+                    'value' => $this->_labeller->qname_to_alias($mongoValueObject[VALUE_URI]));
+            }
         }
         else
         {
+            // If we have an array of values
             foreach ($mongoValueObject as $kvp)
             {
                 foreach ($kvp as $type=>$value)
                 {
+                    // Make sure the value is valid
+                    if($type==VALUE_LITERAL){
+                        if(!$this->isValidLiteral($value)){
+                            continue;
+                        }
+                        $valueTypeLabel = 'literal';
+                    }
+                    else{
+                        if(!$this->isValidResource($value)){
+                            continue;
+                        }
+                        $valueTypeLabel = 'uri';
+                    }
                     $simpleGraphValueObject[] = array(
-                        'type'=>($type==VALUE_LITERAL) ? 'literal' : 'uri',
+                        'type'=>$valueTypeLabel,
                         'value'=>($type==VALUE_URI) ? $this->_labeller->qname_to_alias($value) : $value);
                 }
             }
         }
+        // Otherwise we have found valid values
         return $simpleGraphValueObject;
     }
 

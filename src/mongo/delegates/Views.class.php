@@ -580,6 +580,7 @@ class Views extends CompositeBase
                 $cursor = $collection->find(array('_id'=>array('$in'=>$joinUris)));
                 $cursor->timeout(\Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout());
 
+                $this->addIdToImpactIndex($joinUris, $dest, $buildImpactIndex);
                 foreach($cursor as $linkMatch) {
                     // if there is a condition, check it...
                     if (isset($ruleset['condition']))
@@ -588,15 +589,6 @@ class Views extends CompositeBase
                     }
                     if (!(isset($ruleset['condition']) && $collection->count($ruleset['condition'])==0))
                     {
-                        if ($buildImpactIndex && !isset($dest[_IMPACT_INDEX])) $dest[_IMPACT_INDEX] = array();
-
-                        // add linkMatch if there isn't already a graph for it in the dest obj
-//                        $addItemToImpactIndex = true;
-                        if ($buildImpactIndex)
-                        {
-                            $dest[_IMPACT_INDEX][] = $linkMatch['_id'];
-                        }
-
                         // make sure any sequences are expanded before extracting properties
                         if (isset($ruleset['joins'])) $this->expandSequence($ruleset['joins'],$linkMatch);
 

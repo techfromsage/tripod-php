@@ -4,6 +4,9 @@ namespace Tripod\Mongo;
 
 /** @noinspection PhpIncludeInspection */
 
+use Tripod\Exceptions\Exception;
+use Tripod\IEventHook;
+
 $TOTAL_TIME=0;
 
 /**
@@ -589,6 +592,24 @@ class Driver extends DriverBase implements \Tripod\IDriver
     {
         return $this->getDataUpdater()->replayTransactionLog($fromDate, $toDate);
     }
+
+    /**
+     * Register an event hook, which
+     * @param $eventType
+     * @param IEventHook $
+     * @return mixed
+     */
+    public function registerHook($eventType, IEventHook $hook)
+    {
+        switch ($eventType) {
+            case IEventHook::EVENT_SAVE_CHANGES:
+                $this->getDataUpdater()->registerSaveChangesEventHook($hook);
+                break;
+            default:
+                throw new Exception("Unrecognised type $eventType whilst registering event hook");
+        }
+    }
+
 
     /**
      * For mocking

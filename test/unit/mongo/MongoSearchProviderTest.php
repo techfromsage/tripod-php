@@ -58,7 +58,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
         // assert that there are only 12 based on the data we loaded into tripod
         $actualSearchDocumentCount = $this->getCountForSearchSpecs($this->tripod);
 
-        $this->assertEquals(12, $actualSearchDocumentCount, "Should have generated 12 search documents based on searchData.json");
+        $this->assertEquals(13, $actualSearchDocumentCount, "Should have generated 13 search documents based on searchData.json");
 
         // define the expected search documents, this is what each of them should look like
         $expectedSearchDocs = array(
@@ -194,7 +194,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
         $actualSearchDocumentCount = $this->getCountForSearchSpecs($this->tripod);
 
-        $this->assertEquals(11, $actualSearchDocumentCount, "Should only be 11 search documents now that one of them has had its type changed with no corresponding search doc spec");
+        $this->assertEquals(12, $actualSearchDocumentCount, "Should only be 12 search documents now that one of them has had its type changed with no corresponding search doc spec");
 
 
         foreach(\Tripod\Mongo\Config::getInstance()->getCollectionsForSearch('tripod_php_testing') as $collection)
@@ -225,7 +225,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
         $actualSearchDocumentCount = $this->getCountForSearchSpecs($this->tripod);
 
-        $this->assertEquals(12, $actualSearchDocumentCount, "Should only be 12 search documents");
+        $this->assertEquals(13, $actualSearchDocumentCount, "Should only be 13 search documents");
 
         $result = array();
         foreach(\Tripod\Mongo\Config::getInstance()->getCollectionsForSearch('tripod_php_testing') as $collection)
@@ -260,7 +260,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
         $actualSearchDocumentCount = $this->getCountForSearchSpecs($this->tripod);
 
-        $this->assertEquals(13, $actualSearchDocumentCount, "Should only be 13 search documents");
+        $this->assertEquals(14, $actualSearchDocumentCount, "Should only be 14 search documents");
 
         $results = array();
         // We don't know where exactly these might have stored
@@ -307,7 +307,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
         $actualSearchDocumentCount = $this->getCountForSearchSpecs($this->tripod);
 
-        $this->assertEquals(12, $actualSearchDocumentCount, "Should only be 12 search documents");
+        $this->assertEquals(13, $actualSearchDocumentCount, "Should only be 13 search documents");
 
         $results = array();
         // We don't know where exactly these might have stored
@@ -393,10 +393,10 @@ class MongoSearchProviderTest extends MongoTripodTestBase
     public function testSearchSingleIndex()
     {
         // simple search
-        $results = $this->searchProvider->search("john locke poetry", "i_search_resource", array("search_terms"), array("result"), 3, 0);
+        $results = $this->searchProvider->search("john locke poetry", "i_search_resource", array("search_terms"), array("result"), 4, 0);
         $this->assertEquals(6, $results['head']['count']);
-        $this->assertEquals(3, $results['head']['limit']);
-        $this->assertEquals(3, count($results['results']));
+        $this->assertEquals(4, $results['head']['limit']);
+        $this->assertEquals(4, count($results['results']));
         $this->assertEquals(0, $results['head']['offset']);
         $this->assertEquals("john locke poetry",$results['head']["query"]);
         $this->assertEquals(array("john","locke","poetry"), $results['head']["query_terms_used"]);
@@ -406,6 +406,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
             array("title"=>"Paradise Lost" , "link"=>"http://talisaspire.com/resources/doc4" , "author"=>"John Locke"),
             array("title"=>"The Divine Comedy" , "link"=>"http://talisaspire.com/resources/doc5" , "author"=>"John Locke"),
             array("title"=>"A Light in the Attic" , "link"=>"http://talisaspire.com/resources/doc6" , "author"=>"John Locke"),
+            array("title"=>"Revolting Rhymes" , "link"=>"http://talisaspire.com/resources/doc7" , "author"=>"John Locke"),
         );
 
         $this->assertEquals($expectedResults, $results['results']);
@@ -453,7 +454,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
     public function testSearchMultipleIndices()
     {
         $results = $this->searchProvider->search("bibo:Book", "i_search_resource", array("search_terms","other_terms"), array("result","rdftype"), 3, 0);
-        $this->assertEquals(12, $results['head']['count']);
+        $this->assertEquals(13, $results['head']['count']);
         $this->assertEquals(3, $results['head']['limit']);
         $this->assertEquals(3, count($results['results']));
         $this->assertEquals(0, $results['head']['offset']);
@@ -498,7 +499,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
         $this->assertEquals($expectedResults, $results['results']);
 
     }
-    
+
     public function testDeleteSearchDocumentsByTypeIdThrowsExceptionForInvalidType()
     {
     	$mockSearchProvider = $this->getMock("\Tripod\Mongo\MongoSearchProvider", array('getSearchDocumentSpecification'), array($this->tripod));
@@ -506,17 +507,17 @@ class MongoSearchProviderTest extends MongoTripodTestBase
     						->method('getSearchDocumentSpecification')
     						->with('i_some_type')
     						->will($this->returnValue(null));
-    	
+
     	$this->setExpectedException("Exception","Could not find a search specification for i_some_type");
     	$mockSearchProvider->deleteSearchDocumentsByTypeId('i_some_type');
     }
-    
+
     public function testDeleteSearchDocumentsByTypeIdDeletesNothingWhenNoMatchFound()
     {
     	// first, assert that there are only 12 based on the data we loaded into tripod
         $actualSearchDocumentCount = $this->getCountForSearchSpecs($this->tripod);
 
-    	$this->assertEquals(12, $actualSearchDocumentCount, "Should have generated 12 search documents based on searchData.json");
+    	$this->assertEquals(13, $actualSearchDocumentCount, "Should have generated 12 search documents based on searchData.json");
 
         /** @var \Tripod\Mongo\MongoSearchProvider|PHPUnit_Framework_MockObject_MockObject $mockSearchProvider */
     	$mockSearchProvider = $this->getMock("\Tripod\Mongo\MongoSearchProvider", array('getSearchDocumentSpecification'), array($this->tripod));
@@ -532,66 +533,66 @@ class MongoSearchProviderTest extends MongoTripodTestBase
         {
             $this->assertEquals("Search document id 'i_some_type' not in configuration for store 'tripod_php_testing'", $e->getMessage());
         }
-    	
-    	//search document count should remain same, because we expect that there was nothing to delete 
+
+    	//search document count should remain same, because we expect that there was nothing to delete
         $newSearchDocumentCount = $this->getCountForSearchSpecs($this->tripod);
 
-    	$this->assertEquals(12, $newSearchDocumentCount, "Should have generated 12 search documents, because there was no match to remove");
+    	$this->assertEquals(13, $newSearchDocumentCount, "Should have generated 12 search documents, because there was no match to remove");
     }
-    
+
     public function testDeleteSearchDocumentsByTypeIdDeleteAllMatchingDocuments()
     {
     	// first, assert that there are only 12 based on the data we loaded into tripod
         $actualSearchDocumentCount = $this->getCountForSearchSpecs($this->tripod);
 
-    	$this->assertEquals(12, $actualSearchDocumentCount, "Should have generated 12 search documents based on searchData.json");
-    	 
+    	$this->assertEquals(13, $actualSearchDocumentCount, "Should have generated 12 search documents based on searchData.json");
+
     	$mockSearchProvider = $this->getMock("\Tripod\Mongo\MongoSearchProvider", array('getSearchDocumentSpecification'), array($this->tripod));
     	$mockSearchProvider->expects($this->once())
     					->method('getSearchDocumentSpecification')
 				    	->with('i_search_resource')
 				    	->will($this->returnValue(array('i_search_resource' => array())));
-    
+
     	$mockSearchProvider->deleteSearchDocumentsByTypeId('i_search_resource');
-    	 
+
     	//search document count should be 0, because we expect that everything should be deleted
         $newSearchDocumentCount = $this->getCountForSearchSpecs($this->tripod);
 
     	$this->assertEquals(0, $newSearchDocumentCount, "Should have 0 search documents after removing all matching documents");
     }
-    
+
     public function testDeleteSearchDocumentsByTypeIdDoNotDeleteNonMatchingDocuments()
     {
     	// first, assert that there are only 12 based on the data we loaded into tripod
         $actualSearchDocumentCount = $this->getCountForSearchSpecs($this->tripod);
 
-    	$this->assertEquals(12, $actualSearchDocumentCount, "Should have generated 12 search documents based on searchData.json");
+    	$this->assertEquals(13, $actualSearchDocumentCount, "Should have generated 13 search documents based on searchData.json");
 
     	$id = array('_id.r'=>'http://talisaspire.com/resources/doc1');
-    	
+
     	$newData = array(
     			"rdf:type"=>array(array("u"=>"resourcelist:List"),array("u"=>"bibo:Book")),
     			"spec:name"=>array("l"=>"my list title"),
     			"resourcelist:description"=>array("l"=>"foo bar baz"),
     	);
     	$this->getTripodCollection($this->tripod)->update($id, array('$set'=> $newData));
-    	
+
     	// reindex
     	$this->indexer->generateAndIndexSearchDocuments('http://talisaspire.com/resources/doc1', 'http://talisaspire.com/', $this->tripod->getPodName());
-    	 
+
     	//assert that there are now 13 documents after adding new document to collection
         $updatedSearchDocumentCount = $this->getCountForSearchSpecs($this->tripod);
 
-    	$this->assertEquals(13, $updatedSearchDocumentCount, "Should have generated 13 search documents after adding a new document to collection");
-    
+    	$this->assertEquals(14, $updatedSearchDocumentCount, "Should have generated 14 search documents after adding a new document to collection");
+
     	$mockSearchProvider = $this->getMock("\Tripod\Mongo\MongoSearchProvider", array('getSearchDocumentSpecification'), array($this->tripod));
     	$mockSearchProvider->expects($this->once())
 				    	->method('getSearchDocumentSpecification')
 				    	->with('i_search_resource')
 				    	->will($this->returnValue(array('i_search_resource' => array())));
-    
+
     	$mockSearchProvider->deleteSearchDocumentsByTypeId('i_search_resource');
-    
+
     	//search document count should be 1, since there is one document not matching the type id provided for delete
         $newSearchDocumentCount = $this->getCountForSearchSpecs($this->tripod);
 

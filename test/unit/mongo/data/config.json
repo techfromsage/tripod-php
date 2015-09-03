@@ -165,6 +165,20 @@
                             }
                         }
                     }
+                },
+                {
+                    "_id": "v_doc_with_seqeunce",
+                    "type": ["baseData:DocWithSequence"],
+                    "from": "CBD_testing",
+                    "joins": {
+                        "dct:creator" : {},
+                        "baseData:hasSequence": {
+                            "joins":{
+                                "followSequence":{
+                                }
+                            }
+                        }
+                    }
                 }
             ],
             "search_config": {
@@ -332,6 +346,43 @@
                         {
                             "fieldName": "isbn",
                             "predicates": ["bibo:isbn13"]
+                        }
+                    ],
+                    "joins": {
+                        "dct:isVersionOf": {
+                            "fields": [
+                                {
+                                    "fieldName": "isbn13",
+                                    "predicates": ["bibo:isbn13"]
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "_id": "t_truncation",
+                    "type": "acorn:ResourceForTruncating",
+                    "from": "CBD_testing",
+                    "ensureIndexes": [
+                        {
+                            "value.isbn": 1
+                        },
+                        {
+                            "value.title": 1
+                        }
+                    ],
+                    "fields": [
+                        {
+                            "fieldName": "type",
+                            "predicates": ["rdf:type"]
+                        },
+                        {
+                            "fieldName": "isbn",
+                            "predicates": ["bibo:isbn13"]
+                        },
+                        {
+                            "fieldName": "title",
+                            "predicates": ["searchterms:title"]
                         }
                     ],
                     "joins": {
@@ -563,6 +614,11 @@
                     "type": "bibo:Document",
                     "from": "CBD_testing",
                     "to_data_source": "rs2",
+                    "ensureIndexes" : [
+                        {
+                            "value.bookLink": 1
+                        }
+                    ],
                     "fields": [
                         {
                             "fieldName": "bookLink",

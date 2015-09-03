@@ -1,6 +1,9 @@
 <?php
 
 namespace Tripod\Mongo\Jobs;
+use Tripod\Exceptions\Exception;
+use Tripod\Exceptions\JobException;
+
 /**
  * Todo: How to inject correct stat class... :-S
  */
@@ -77,10 +80,64 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
      * @param string $queueName
      * @param string $class
      * @param array $data
+     * @param int $retryAttempts if queue fails, retry x times before throwing an exception
+     * @return a tracking token for the submitted job
+     * @throws JobException if there is a problem queuing the job
      */
-    protected function submitJob($queueName, $class, Array $data)
+    protected function submitJob($queueName, $class, Array $data, $retryAttempts=5)
     {
-        \Resque::enqueue($queueName, $class, $data);
+        // @see https://github.com/chrisboulton/php-resque/issues/228, when this PR is merged we can stop tracking the status in this way
+        try
+        {
+            $token = $this->enqueue($queueName, $class, $data);
+            if(!$this->getJobStatus($token))
+            {
+                $this->errorLog("Could not retrieve status for queued $class job - job $token failed to $queueName");
+                throw new \Exception("Could not retrieve status for queued job - job $token failed to $queueName");
+            }
+            else
+            {
+                $this->debugLog("Queued $class job with $token to $queueName");
+                return $token;
+            }
+        }
+        catch (\Exception $e)
+        {
+            if ($retryAttempts>0)
+            {
+                sleep(1); // back off for 1 sec
+                $this->warningLog("Exception queuing $class job - {$e->getMessage()}, retrying $retryAttempts times");
+                return $this->submitJob($queueName,$class,$data,--$retryAttempts);
+            }
+            else
+            {
+                $this->errorLog("Exception queuing $class job - {$e->getMessage()}");
+                throw new JobException("Exception queuing job  - {$e->getMessage()}",$e->getCode(),$e);
+            }
+        }
+    }
+
+    /**
+     * Actually enqueues the job with Resque. Returns a tracking token. For mocking.
+     * @param $queueName
+     * @param $class
+     * @param $data
+     * @param bool|false $tracking
+     * @return string
+     */
+    protected function enqueue($queueName, $class, $data)
+    {
+        return \Resque::enqueue($queueName, $class, $data, true);
+    }
+
+    /**
+     * Given a token, return the job status. For mocking
+     * @param $token
+     */
+    protected function getJobStatus($token)
+    {
+        $status = new \Resque_Job_Status($token);
+        return $status->get();
     }
 }
 

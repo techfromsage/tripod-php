@@ -28,7 +28,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         // Stub ouf 'addToElastic' search to prevent writes into Elastic Search happening by default.
         $this->tripod = $this->getMock(
             '\Tripod\Mongo\Driver',
-            array('addToSearchIndexQueue'),
+            array('validateGraphCardinality'),
             array(
                 'CBD_testing',
                 'tripod_php_testing',
@@ -45,7 +45,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
         $this->tripod->setTransactionLog($this->tripodTransactionLog);
 
-        $this->loadBaseDataViaTripod();
+        $this->loadResourceDataViaTripod();
     }
 
     public function testSelectMultiValue()
@@ -93,9 +93,10 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $this->assertEquals($expectedResult,$actualResult);
     }
 
-    public function testDescribe()
+    public function testGraph()
     {
-        $expectedResult =
+        $expectedResult = new \Tripod\ExtendedGraph();
+        $expectedResult->add_turtle(
             "<http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://purl.org/dc/terms/isVersionOf> <http://talisaspire.com/works/4d101f63c10a6> .
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://purl.org/dc/terms/source> <http://life.ac.uk/resources/BFBC6A06-A8B0-DED8-53AA-8E80DB44CC53> .
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://purl.org/dc/terms/source> <http://life.ac.uk/resources/836E7CAD-63D2-63A0-B1CB-AA6A7E54A5C9> .
@@ -123,14 +124,18 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://purl.org/ontology/bibo/Book> .
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://talisaspire.com/schema#Resource> .
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://www.w3.org/2002/07/owl#sameAs> <http://talisaspire.com/isbn/9780393929690> .
-";
-        $actualResult = $this->tripod->describe(array("bibo:isbn13.".VALUE_LITERAL=>"9780393929690"));
-        $this->assertEquals($expectedResult,$actualResult->to_ntriples());
+");
+        $actualResult = $this->tripod->graph(array("bibo:isbn13.".VALUE_LITERAL=>"9780393929690"));
+
+        $cs = new \Tripod\ChangeSet(array('before' => $expectedResult->get_index(), 'after' => $actualResult->get_index(), 'changeReason' => "testing!"));
+
+        $this->assertFalse($cs->has_changes());
     }
 
     public function testDescribeResource()
     {
-        $expectedResult =
+        $expectedResult = new \Tripod\ExtendedGraph();
+        $expectedResult->add_turtle(
             "<http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://purl.org/dc/terms/isVersionOf> <http://talisaspire.com/works/4d101f63c10a6> .
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://purl.org/dc/terms/source> <http://life.ac.uk/resources/BFBC6A06-A8B0-DED8-53AA-8E80DB44CC53> .
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://purl.org/dc/terms/source> <http://life.ac.uk/resources/836E7CAD-63D2-63A0-B1CB-AA6A7E54A5C9> .
@@ -158,14 +163,18 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://purl.org/ontology/bibo/Book> .
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://talisaspire.com/schema#Resource> .
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://www.w3.org/2002/07/owl#sameAs> <http://talisaspire.com/isbn/9780393929690> .
-";
+");
         $actualResult = $this->tripod->describeResource('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA');
-        $this->assertEquals($expectedResult,$actualResult->to_ntriples());
+
+        $cs = new \Tripod\ChangeSet(array('before' => $expectedResult->get_index(), 'after' => $actualResult->get_index(), 'changeReason' => "testing!"));
+
+        $this->assertFalse($cs->has_changes());
     }
 
     public function testDescribeResources()
     {
-        $expectedResult =
+        $expectedResult = new \Tripod\ExtendedGraph();
+        $expectedResult->add_turtle(
             "<http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://purl.org/dc/terms/isVersionOf> <http://talisaspire.com/works/4d101f63c10a6> .
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://purl.org/dc/terms/source> <http://life.ac.uk/resources/BFBC6A06-A8B0-DED8-53AA-8E80DB44CC53> .
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://purl.org/dc/terms/source> <http://life.ac.uk/resources/836E7CAD-63D2-63A0-B1CB-AA6A7E54A5C9> .
@@ -200,15 +209,18 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 <http://talisaspire.com/works/4d101f63c10a6> <http://talisaspire.com/schema#seeAlso> <http://talisaspire.com/works/4d101f63c10a6-2> .
 <http://talisaspire.com/works/4d101f63c10a6> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://purl.org/ontology/bibo/Book> .
 <http://talisaspire.com/works/4d101f63c10a6> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://talisaspire.com/schema#Work> .
-";
+");
         $actualResult = $this->tripod->describeResources(array('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA','http://talisaspire.com/works/4d101f63c10a6'));
-        $this->assertEquals($expectedResult,$actualResult->to_ntriples());
+
+        $cs = new \Tripod\ChangeSet(array('before' => $expectedResult->get_index(), 'after' => $actualResult->get_index(), 'changeReason' => "testing!"));
+
+        $this->assertFalse($cs->has_changes());
     }
 
     public function testGetCount()
     {
         $count = $this->tripod->getCount(array("rdf:type.".VALUE_URI=>"bibo:Book"));
-        $this->assertEquals(5,$count);
+        $this->assertEquals(6,$count);
     }
 
     public function testTripodSaveChangesRemovesLiteralTriple()
@@ -927,7 +939,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
         $mockTripodUpdates->expects($this->once())
             ->method('storeChanges')
-            ->will($this->returnValue($subjectsAndPredicatesOfChange));
+            ->will($this->returnValue(array("subjectsAndPredicatesOfChange"=>$subjectsAndPredicatesOfChange,"transaction_id"=>"t1234")));
 
         $mockTripod->expects($this->once())
             ->method('getDataUpdater')
@@ -1124,7 +1136,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
         $mockTripodUpdates->expects($this->once())
             ->method('storeChanges')
-            ->will($this->returnValue($subjectsAndPredicatesOfChange));
+            ->will($this->returnValue(array("subjectsAndPredicatesOfChange"=>$subjectsAndPredicatesOfChange,"transaction_id"=>"t1234")));
 
         $mockTripod->expects($this->exactly(2))
             ->method('getComposite')
@@ -1269,7 +1281,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
         $mockTripodUpdates->expects($this->once())
             ->method('storeChanges')
-            ->will($this->returnValue($subjectsAndPredicatesOfChange));
+            ->will($this->returnValue(array("subjectsAndPredicatesOfChange"=>$subjectsAndPredicatesOfChange,"transaction_id"=>"t1234")));
 
         $mockTripod->expects($this->once())
             ->method('getDataUpdater')
@@ -1419,7 +1431,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
         $mockTripodUpdates->expects($this->once())
             ->method('storeChanges')
-            ->will($this->returnValue($subjectsAndPredicatesOfChange));
+            ->will($this->returnValue(array("subjectsAndPredicatesOfChange"=>$subjectsAndPredicatesOfChange,"transaction_id"=>"t1234")));
 
         $mockTripod->expects($this->once())
             ->method('getDataUpdater')
@@ -1503,9 +1515,14 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $nsContextG = $this->tripod->describeResource('http://basedata.com/b/1',"baseData:DefaultGraph");
         $nsBothG = $this->tripod->describeResource('baseData:1',"baseData:DefaultGraph");
 
-        $this->assertEquals($noNsG->to_rdfxml(),$nsResourceG->to_rdfxml(),"Non ns and nsResource not equal");
-        $this->assertEquals($noNsG->to_rdfxml(),$nsContextG->to_rdfxml(),"Non ns and nsContext not equal");
-        $this->assertEquals($noNsG->to_rdfxml(),$nsBothG->to_rdfxml(),"Non ns and nsBoth not equal");
+        $nsResourceCs = new \Tripod\ChangeSet(array('before' => $noNsG->get_index(), 'after' => $nsResourceG->get_index(), 'changeReason' => "testing!"));
+        $this->assertFalse($nsResourceCs->has_changes(),"Non ns and nsResource not equal");
+
+        $nsContextCS = new \Tripod\ChangeSet(array('before' => $noNsG->get_index(), 'after' => $nsContextG->get_index(), 'changeReason' => "testing!"));
+        $this->assertFalse($nsContextCS->has_changes(),"Non ns and nsContext not equal");
+
+        $nsBothCS = new \Tripod\ChangeSet(array('before' => $noNsG->get_index(), 'after' => $nsBothG->get_index(), 'changeReason' => "testing!"));
+        $this->assertFalse($nsBothCS->has_changes(),"Non ns and nsBoth not equal");
     }
 
     public function testDescribeResourcesWithNamespace()
@@ -1515,9 +1532,14 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $nsContextG = $this->tripod->describeResources(array('http://basedata.com/b/1'),"baseData:DefaultGraph");
         $nsBothG = $this->tripod->describeResources(array('baseData:1'),"baseData:DefaultGraph");
 
-        $this->assertEquals($noNsG->to_rdfxml(),$nsResourceG->to_rdfxml(),"Non ns and nsResource not equal");
-        $this->assertEquals($noNsG->to_rdfxml(),$nsContextG->to_rdfxml(),"Non ns and nsContext not equal");
-        $this->assertEquals($noNsG->to_rdfxml(),$nsBothG->to_rdfxml(),"Non ns and nsBoth not equal");
+        $nsResourceCs = new \Tripod\ChangeSet(array('before' => $noNsG->get_index(), 'after' => $nsResourceG->get_index(), 'changeReason' => "testing!"));
+        $this->assertFalse($nsResourceCs->has_changes(),"Non ns and nsResource not equal");
+
+        $nsContextCS = new \Tripod\ChangeSet(array('before' => $noNsG->get_index(), 'after' => $nsContextG->get_index(), 'changeReason' => "testing!"));
+        $this->assertFalse($nsContextCS->has_changes(),"Non ns and nsContext not equal");
+
+        $nsBothCS = new \Tripod\ChangeSet(array('before' => $noNsG->get_index(), 'after' => $nsBothG->get_index(), 'changeReason' => "testing!"));
+        $this->assertFalse($nsBothCS->has_changes(),"Non ns and nsBoth not equal");
     }
 
     public function testSelectSingleValueWithNamespaceContextQueryDoesntContainID()
@@ -1650,14 +1672,14 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $table = 't_distinct';
         $this->tripod->generateTableRows($table);
         $rows = $this->tripod->getTableRows($table, array(), array(), 0, 0);
-        $this->assertEquals(7, $rows['head']['count']);
+        $this->assertEquals(8, $rows['head']['count']);
         $results = $this->tripod->getDistinctTableColumnValues($table, "value.title");
 
         $this->assertArrayHasKey('head', $results);
         $this->assertArrayHasKey('count', $results['head']);
-        $this->assertEquals(3, $results['head']['count']);
+        $this->assertEquals(4, $results['head']['count']);
         $this->assertArrayHasKey('results', $results);
-        $this->assertEquals(3, count($results['results']));
+        $this->assertEquals(4, count($results['results']));
         $this->assertContains('Physics 3rd Edition: Physics for Engineers and Scientists', $results['results']);
         $this->assertContains('A document title', $results['results']);
         $this->assertContains('Another document title', $results['results']);
@@ -1676,9 +1698,9 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $results = $this->tripod->getDistinctTableColumnValues($table, "value.type");
         $this->assertArrayHasKey('head', $results);
         $this->assertArrayHasKey('count', $results['head']);
-        $this->assertEquals(4, $results['head']['count']);
+        $this->assertEquals(5, $results['head']['count']);
         $this->assertArrayHasKey('results', $results);
-        $this->assertEquals(4, count($results['results']));
+        $this->assertEquals(5, count($results['results']));
         $this->assertContains('acorn:Resource', $results['results']);
         $this->assertContains('acorn:Work', $results['results']);
         $this->assertContains('bibo:Book', $results['results']);
@@ -1971,6 +1993,114 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $mockTripod->getETag("http://foo");
     }
 
-
     /** END: removeInertLocks tests */
+
+    /** START: saveChangesHooks tests */
+    public function testRegisteredHooksAreCalled()
+    {
+        $mockHookA = $this->getMock("TestSaveChangesHookA", array('pre', 'success'), array(), '', false);
+        $mockHookB = $this->getMock("TestSaveChangesHookB", array('pre', 'success'), array(), '', false);
+
+        $mockHookA->expects($this->once())->method("pre");
+        $mockHookA->expects($this->once())->method("success");
+        $mockHookA->expects($this->never())->method("failure");
+        $mockHookB->expects($this->once())->method("pre");
+        $mockHookB->expects($this->once())->method("success");
+        $mockHookB->expects($this->never())->method("failure");
+
+        $this->tripod->registerHook(\Tripod\IEventHook::EVENT_SAVE_CHANGES,$mockHookA);
+        $this->tripod->registerHook(\Tripod\IEventHook::EVENT_SAVE_CHANGES,$mockHookB);
+
+        $this->tripod->saveChanges(new \Tripod\ExtendedGraph(),new \Tripod\ExtendedGraph());
+    }
+
+    public function testRegisteredSuccessHooksAreNotCalledOnException()
+    {
+        $this->setExpectedException('\Tripod\Exceptions\Exception','Could not validate');
+
+        /* @var $tripodUpdate \Tripod\Mongo\Updates|PHPUnit_Framework_MockObject_MockObject */
+        $tripodUpdate = $this->getMock(
+            '\Tripod\Mongo\Updates',
+            array('validateGraphCardinality'),
+            array($this->tripod)
+        );
+
+        /* @var $mockHookA \Tripod\IEventHook|PHPUnit_Framework_MockObject_MockObject*/
+        $mockHookA = $this->getMock("TestSaveChangesHookA", array('pre', 'success', 'failure'), array(), '', false);
+        /* @var $mockHookB \Tripod\IEventHook|PHPUnit_Framework_MockObject_MockObject*/
+        $mockHookB = $this->getMock("TestSaveChangesHookB", array('pre', 'success', 'failure'), array(), '', false);
+
+        $mockHookA->expects($this->once())->method("pre");
+        $mockHookA->expects($this->never())->method("success");
+        $mockHookA->expects($this->once())->method("failure");
+        $mockHookB->expects($this->once())->method("pre");
+        $mockHookB->expects($this->never())->method("success");
+        $mockHookB->expects($this->once())->method("failure");
+
+        $tripodUpdate->registerSaveChangesEventHook($mockHookA);
+        $tripodUpdate->registerSaveChangesEventHook($mockHookB);
+
+        $tripodUpdate->expects($this->once())->method('validateGraphCardinality')->willThrowException(new \Tripod\Exceptions\Exception("Could not validate"));
+        $tripodUpdate->saveChanges(new \Tripod\ExtendedGraph(),new \Tripod\ExtendedGraph());
+    }
+
+    public function testMisbehavingHookDoesNotPreventSaveOrInterfereWithOtherHooks()
+    {
+        $mockHookA = $this->getMock("TestSaveChangesHookA", array('pre', 'success'), array(), '', false);
+        $mockHookB = $this->getMock("TestSaveChangesHookB", array('pre', 'success'), array(), '', false);
+
+        $mockHookA->expects($this->once())->method("pre")->will($this->throwException(new Exception("Misbehaving hook")));
+        $mockHookA->expects($this->once())->method("success")->will($this->throwException(new Exception("Misbehaving hook")));
+        $mockHookA->expects($this->never())->method("failure");
+        $mockHookB->expects($this->once())->method("pre");
+        $mockHookB->expects($this->once())->method("success");
+        $mockHookB->expects($this->never())->method("failure");
+
+        $this->tripod->registerHook(\Tripod\IEventHook::EVENT_SAVE_CHANGES,$mockHookA);
+        $this->tripod->registerHook(\Tripod\IEventHook::EVENT_SAVE_CHANGES,$mockHookB);
+
+        $this->tripod->saveChanges(new \Tripod\ExtendedGraph(),new \Tripod\ExtendedGraph());
+    }
+
+    /** END: saveChangesHooks tests */
+
 }
+class TestSaveChangesHookA implements \Tripod\IEventHook
+{
+    /**
+     * This method gets called just before the event happens. The arguments passed depend on the event in question, see
+     * the documentation for that event type for details
+     * @param $args array of arguments
+     */
+    public function pre(array $args)
+    {
+        // do nothing
+    }
+
+    /**
+     * This method gets called after the event has successfully completed. The arguments passed depend on the event in
+     * question, see the documentation for that event type for details
+     * If the event throws an exception or fatal error, this method will not be called.
+     * @param $args array of arguments
+     */
+    public function success(array $args)
+    {
+        // do nothing
+    }
+
+    /**
+     * This method gets called if the event failed for any reason. The arguments passed should be the same as IEventHook::pre
+     * @param array $args
+     * @return mixed
+     */
+    public function failure(array $args)
+    {
+        // do nothing
+    }
+}
+
+class TestSaveChangesHookB extends TestSaveChangesHookA
+{
+    // empty
+}
+/** END: saveChangesHooks tests */

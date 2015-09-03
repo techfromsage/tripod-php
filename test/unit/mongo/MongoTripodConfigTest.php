@@ -969,9 +969,10 @@ class MongoTripodConfigTest extends MongoTripodTestBase
     public function testGetAllTypesInSpecifications()
     {
         $types = $this->tripodConfig->getAllTypesInSpecifications("tripod_php_testing");
-        $this->assertEquals(9, count($types), "There should be 9 types based on the configured view, table and search specifications in config.json");
+        $this->assertEquals(11, count($types), "There should be 11 types based on the configured view, table and search specifications in config.json");
         $expectedValues = array(
             "acorn:Resource",
+            "acorn:ResourceForTruncating",
             "acorn:Work",
             "http://talisaspire.com/schema#Work2",
             "acorn:Work2",
@@ -979,7 +980,8 @@ class MongoTripodConfigTest extends MongoTripodTestBase
             "resourcelist:List",
             "spec:User",
             "bibo:Document",
-            "baseData:Wibble"
+            "baseData:Wibble",
+            "baseData:DocWithSequence"
         );
 
         foreach($expectedValues as $expected){
@@ -1134,7 +1136,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         }
 
         $this->tripod = new \Tripod\Mongo\Driver('CBD_testing', $storeName, array(OP_ASYNC=>array(OP_VIEWS=>true,OP_TABLES=>false,OP_SEARCH=>false)));
-        $this->loadBaseDataViaTripod();
+        $this->loadResourceDataViaTripod();
 
         $graph = new \Tripod\Mongo\MongoGraph();
         $subject = 'http://example.com/' . uniqid();
@@ -1298,7 +1300,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
 
         // Start adding some data
         $this->tripod = new \Tripod\Mongo\Driver('CBD_testing', $storeName, array(OP_ASYNC=>array(OP_VIEWS=>true,OP_TABLES=>false,OP_SEARCH=>false)));
-        $this->loadBaseDataViaTripod();
+        $this->loadResourceDataViaTripod();
 
         $graph = new \Tripod\Mongo\MongoGraph();
         $subject = 'http://example.com/' . uniqid();
@@ -1325,7 +1327,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $transactionColletion = $transactionMongo->selectCollection($newConfig['transaction_log']['database'], $newConfig['transaction_log']['collection']);
         $transactionCount = $transactionColletion->count();
         $transactionExampleDocument = $transactionColletion->findOne();
-        $this->assertEquals(18, $transactionCount);
+        $this->assertEquals(20, $transactionCount);
         $this->assertContains('transaction_', $transactionExampleDocument["_id"]);
     }
 

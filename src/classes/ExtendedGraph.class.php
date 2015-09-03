@@ -141,7 +141,10 @@ class ExtendedGraph
      * @return boolean true if the triple was new, false if it already existed in the graph
      */
     public function add_resource_triple($s, $p, $o) {
-        return $this->_add_triple($s, $p, array('type' => strpos($o, '_:' ) === 0 ? 'bnode' : 'uri', 'value' => $o));
+        if($this->isValidResource($o)) {
+            return $this->_add_triple($s, $p, array('type' => strpos($o, '_:') === 0 ? 'bnode' : 'uri', 'value' => $o));
+        }
+        return false;
     }
 
     /**
@@ -154,39 +157,81 @@ class ExtendedGraph
      * @return boolean true if the triple was new, false if it already existed in the graph
      */
     public function add_literal_triple($s, $p, $o, $lang = null, $dt = null) {
-        $o_info = array('type' => 'literal', 'value' => $o);
-        if ( $lang != null ) {
-            $o_info['lang'] = $lang;
+        if($this->isValidLiteral($o)) {
+            $o_info = array('type' => 'literal', 'value' => $o);
+            if ($lang != null) {
+                $o_info['lang'] = $lang;
+            }
+            if ($dt != null) {
+                $o_info['datatype'] = $dt;
+            }
+            return $this->_add_triple($s, $p, $o_info);
         }
-        if ( $dt != null ) {
-            $o_info['datatype'] = $dt;
-        }
-        return $this->_add_triple($s, $p, $o_info);
+        return false;
     }
 
     /**
      * @param string $s
      * @param string $p
      * @param array $o_info
+     * @throws Exceptions\Exception
      * @return bool
      */
     private function _add_triple($s, $p, Array $o_info) {
+        // The value $o should already have been validated by this point
+        // It's validation differs depending on whether it is a literal or resource
+        // So just check the subject and predicate here...
+        if(!$this->isValidResource($s)){
+            throw new \Tripod\Exceptions\Exception("The subject is invalid");
+        }
+        if(!$this->isValidResource($p)){
+            throw new \Tripod\Exceptions\Exception("The predicate is invalid");
+        }
         if (!isset($this->_index[$s])) {
             $this->_index[$s] = array();
-            $this->_index[$s][$p] = array( $o_info );
+            $this->_index[$s][$p] = array($o_info);
             return true;
-        }
-        elseif (!isset($this->_index[$s][$p])) {
-            $this->_index[$s][$p] = array( $o_info);
+        } elseif (!isset($this->_index[$s][$p])) {
+            $this->_index[$s][$p] = array($o_info);
             return true;
-        }
-        else {
-            if ( ! in_array( $o_info, $this->_index[$s][$p] ) ) {
+        } else {
+            if (!in_array($o_info, $this->_index[$s][$p])) {
                 $this->_index[$s][$p][] = $o_info;
                 return true;
             }
         }
         return false;
+    }
+
+
+    /**
+     * Check if a triple value is valid.
+     *
+     * Ideally a valid literal value should be a string
+     * but accepting scalars so we can handle legacy data
+     * which was not type-checked.
+     *
+     * @param string $value
+     * @return bool
+     */
+    protected function isValidLiteral($value){
+        if(!is_scalar($value)){
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Check if a triple value is valid.
+     *
+     * @param string $value
+     * @return bool
+     */
+    protected function isValidResource($value){
+        if(!is_string($value) || empty($value)){
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -592,7 +637,8 @@ class ExtendedGraph
             /** @var \ARC2_TurtleParser $parser */
             $parser = \ARC2::getTurtleParser();
             $parser->parse($base, $turtle );
-            $this->_add_arc2_triple_list($parser->getTriples());
+            $triples = $parser->getTriples();
+            $this->_add_arc2_triple_list($triples);
             unset($parser);
         }
     }

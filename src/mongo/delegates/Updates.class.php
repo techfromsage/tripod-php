@@ -2,6 +2,9 @@
 
 namespace Tripod\Mongo;
 
+use Tripod\Exceptions\Exception;
+use Tripod\IEventHook;
+
 require_once TRIPOD_DIR . 'mongo/Config.class.php';
 
 /**
@@ -27,9 +30,9 @@ class Updates extends DriverBase {
     private $originalCollectionReadPreference = array();
 
     /**
-    * @var array The original read preference gets stored here
-    * when changing for a write.
-    */
+     * @var array The original read preference gets stored here
+     * when changing for a write.
+     */
     private $originalDbReadPreference = array();
 
     /**
@@ -67,6 +70,11 @@ class Updates extends DriverBase {
      * @var \Tripod\Mongo\Jobs\DiscoverImpactedSubjects
      */
     protected $discoverImpactedSubjects;
+
+    /**
+     * @var array
+     */
+    private $saveChangesHooks = array();
 
     /**
      * @param Driver $tripod
@@ -149,6 +157,12 @@ class Updates extends DriverBase {
         $context=null,
         $description=null)
     {
+        $this->applyHooks($this::HOOK_FN_PRE,$this->saveChangesHooks,array(
+            "pod"=>$this->getPodName(),
+            "oldGraph"=>$oldGraph,
+            "newGraph"=>$newGraph,
+            "context"=>$context
+        ));
         $this->setReadPreferenceToPrimary();
         try{
             $contextAlias = $this->getContextAlias($context);
@@ -165,10 +179,17 @@ class Updates extends DriverBase {
             $args = array('before' => $oldIndex, 'after' => $newIndex, 'changeReason' => $description);
             $cs = new \Tripod\ChangeSet($args);
 
+            $subjectsAndPredicatesOfChange = array();
+            $transaction_id = null;
             if ($cs->has_changes())
             {
                 // store the actual CBDs
-                $subjectsAndPredicatesOfChange = $this->storeChanges($cs, $contextAlias);
+                $result = $this->storeChanges($cs, $contextAlias);
+                if (!isset($result['subjectsAndPredicatesOfChange'])|| !isset($result['transaction_id'])) {
+                    $this->errorLog("Result of storeChanges malformed, should have transaction_id and subjectsAndPredicatesOfChange array keys",array("result"=>$result));
+                    throw new Exception("Result of storeChanges malformed, should have transaction_id and subjectsAndPredicatesOfChange array keys");
+                }
+                extract($result); // will unpack into $subjectsAndPredicatesOfChange
 
                 // Process any syncronous operations
                 $this->processSyncOperations($subjectsAndPredicatesOfChange,$contextAlias);
@@ -176,10 +197,26 @@ class Updates extends DriverBase {
                 // Schedule calculation of any async activity
                 $this->queueAsyncOperations($subjectsAndPredicatesOfChange,$contextAlias);
             }
+
+            $this->applyHooks($this::HOOK_FN_SUCCESS,$this->saveChangesHooks,array(
+                "pod"=>$this->getPodName(),
+                "oldGraph"=>$oldGraph,
+                "newGraph"=>$newGraph,
+                "context"=>$context,
+                "changeSet"=>$cs,
+                "subjectsAndPredicatesOfChange"=>$subjectsAndPredicatesOfChange,
+                "transaction_id"=>$transaction_id
+            ));
         }
         catch(\Exception $e){
             // ensure we reset the original read preference in the event of an exception
             $this->resetOriginalReadPreference();
+            $this->applyHooks($this::HOOK_FN_FAILURE,$this->saveChangesHooks,array(
+                "pod"=>$this->getPodName(),
+                "oldGraph"=>$oldGraph,
+                "newGraph"=>$newGraph,
+                "context"=>$context
+            ));
             throw $e;
         }
 
@@ -342,7 +379,7 @@ class Updates extends DriverBase {
             $this->timingLog(MONGO_WRITE, array('duration'=>$t->result(), 'subjectsOfChange'=>implode(", ",$subjectsOfChange)));
             $this->getStat()->timer(MONGO_WRITE.".{$this->getPodName()}",$t->result());
 
-            return $changes['subjectsAndPredicatesOfChange'];
+            return $changes;
         }
         catch(\Exception $e)
         {
@@ -442,7 +479,7 @@ class Updates extends DriverBase {
     protected function applyChangeSet(\Tripod\ChangeSet $cs, $originalCBDs, $contextAlias, $transaction_id)
     {
         $subjectsAndPredicatesOfChange = array();
-        if (preg_match('/^CBD_/',$this->getCollection()->getName()))
+        if (in_array($this->getCollection()->getName(), $this->getConfigInstance()->getPods($this->getStoreName())))
         {
             // how many subjects of change?
             /** @noinspection PhpParamsInspection */
@@ -450,94 +487,108 @@ class Updates extends DriverBase {
 
             // gather together all the updates (we'll apply them later)....
             $updates = array();
-            $deletes = array();
-
-            $upsert = false;
 
             $newCBDs = array();
 
-            foreach ($changes as $change)
+            foreach ($changes as $changeUri)
             {
-                $subjectOfChange = $cs->get_first_resource($change,$this->labeller->qname_to_uri("cs:subjectOfChange"));
+                $subjectOfChange = $cs->get_first_resource($changeUri,$this->labeller->qname_to_uri("cs:subjectOfChange"));
                 if(!array_key_exists($subjectOfChange, $subjectsAndPredicatesOfChange))
                 {
                     $subjectsAndPredicatesOfChange[$subjectOfChange] = array();
                 }
+
                 $criteria = array(
                     _ID_KEY=>array(_ID_RESOURCE=>$this->labeller->uri_to_alias($subjectOfChange),_ID_CONTEXT=>$contextAlias)
                 );
 
                 // read before write, and to find array indexes and get document in memory
-                //$targetGraph = new MongoGraph();
 
                 $doc = $this->getDocumentForUpdate($subjectOfChange, $contextAlias, $originalCBDs);
 
-                $targetGraph = new MongoGraph();
-                $targetGraph->add_tripod_array($doc);
-
-                if(!$targetGraph->has_triples_about($subjectOfChange))
+                $upsert = false;
+                if(empty($doc))
                 {
                     $upsert = true;
                 }
 
                 // add the old vals to critera
-                $removals = $cs->get_subject_property_values($change,$this->labeller->qname_to_uri("cs:removal"));
-                $additions = $cs->get_subject_property_values($change,$this->labeller->qname_to_uri("cs:addition"));
+                $changesGroupedByNsPredicate = $this->getAdditionsRemovalsGroupedByNsPredicate($cs,$changeUri);
 
-                foreach ($removals as $r)
+
+                $mongoUpdateOperations = array();
+                foreach ($changesGroupedByNsPredicate as $nsPredicate => $additionsRemovals)
                 {
-                    $predicate = $cs->get_first_resource($r["value"],$this->labeller->qname_to_uri("rdf:predicate"));
+                    $predicateExists = isset($doc[$nsPredicate]);
 
+                    $predicate = $this->labeller->qname_to_uri($nsPredicate);
                     if(!in_array($predicate, $subjectsAndPredicatesOfChange[$subjectOfChange]))
                     {
                         $subjectsAndPredicatesOfChange[$subjectOfChange][] = $predicate;
                     }
 
-                    $object = $cs->get_subject_property_values($r["value"],$this->labeller->qname_to_uri("rdf:object"));
-
-                    $isUri = ($object[0]['type']=="uri");
-
-                    // is $predicate in $docs already?
-                    $valueExists = ($isUri) ? $targetGraph->has_resource_triple($subjectOfChange,$predicate,$object[0]["value"]) : $targetGraph->has_literal_triple($subjectOfChange,$predicate,$object[0]["value"]);
-
-                    if (!$valueExists)
+                    // set to existing object if exists
+                    $valueObject = ($predicateExists) ? $doc[$nsPredicate] : array();
+                    if (isset($valueObject[VALUE_URI]) || isset($valueObject[VALUE_LITERAL]))
                     {
-                        $this->errorLog("Removal value {$subjectOfChange} {$predicate} {$object[0]['value']} does not appear in target document to be updated",array("targetGraph"=>$targetGraph->to_ntriples()));
-                        throw new \Exception("Removal value {$subjectOfChange} {$predicate} {$object[0]['value']} does not appear in target document to be updated");
+                        // this is a single value object, convert to array of values for now
+                        $valueObject = array($valueObject);
                     }
-                    else if ($isUri)
-                    {
-                        $targetGraph->remove_resource_triple($subjectOfChange,$predicate,$object[0]["value"]);
 
+                    if (isset($additionsRemovals["additions"]))
+                    {
+                        foreach ($additionsRemovals["additions"] as $addition)
+                        {
+                            $valueObject[] = $addition;
+                        }
+                    }
+
+                    // remove
+                    if (isset($additionsRemovals["removals"]))
+                    {
+                        $elemsToRemove = array();
+                        foreach ($additionsRemovals["removals"] as $removal)
+                        {
+                            $valueIndex = array_search($removal, $valueObject);
+                            if($valueIndex === false)
+                            {
+                                $v = array_pop(array_values($removal));
+                                $this->errorLog("Removal value {$subjectOfChange} {$predicate} {$v} does not appear in target document to be updated",array("doc"=>$doc));
+                                throw new \Exception("Removal value {$subjectOfChange} {$predicate} {$v} does not appear in target document to be updated");
+                            }
+                            else
+                            {
+                                $elemsToRemove[] = $valueIndex;
+                            }
+                        }
+                        if (count($elemsToRemove)>0)
+                        {
+                            foreach($elemsToRemove as $elem)
+                            {
+                                unset($valueObject[$elem]);
+                            }
+                            $valueObject = array_values($valueObject); // renumbers array after unsets
+                        }
+                    }
+
+                    if (count($valueObject)>0)
+                    {
+                        // unique value object
+                        $valueObject = array_map("unserialize", array_unique(array_map("serialize", $valueObject)));
+
+                        if (count($valueObject)==1)
+                        {
+                            $valueObject = $valueObject[0]; // un-array if only one value
+                        }
+                        $this->addOperatorToChange($mongoUpdateOperations,MONGO_OPERATION_SET,array($nsPredicate=>$valueObject));
                     }
                     else
                     {
-                        $targetGraph->remove_literal_triple($subjectOfChange,$predicate,$object[0]["value"]);
-
-                    }
-
-                }
-
-                foreach ($additions as $r)
-                {
-                    $predicate = $cs->get_first_resource($r["value"],$this->labeller->qname_to_uri("rdf:predicate"));
-
-                    if(!in_array($predicate, $subjectsAndPredicatesOfChange[$subjectOfChange]))
-                    {
-                        $subjectsAndPredicatesOfChange[$subjectOfChange][] = $predicate;
-                    }
-
-                    $object = $cs->get_subject_property_values($r["value"],$this->labeller->qname_to_uri("rdf:object"));
-
-                    $isUri = ($object[0]['type']=="uri");
-
-                    if ($isUri)
-                    {
-                        $targetGraph->add_resource_triple($subjectOfChange,$predicate,$object[0]["value"]);
-                    }
-                    else
-                    {
-                        $targetGraph->add_literal_triple($subjectOfChange,$predicate,$object[0]["value"]);
+                        // remove all existing values, if existed in the first place
+                        if ($predicateExists)
+                        {
+                            $this->addOperatorToChange($mongoUpdateOperations,MONGO_OPERATION_UNSET,array($nsPredicate=>1));
+                        }
                     }
                 }
 
@@ -546,121 +597,144 @@ class Updates extends DriverBase {
                 // currently the only criteria is the doc id
                 //var_dump($targetGraph->to_tripod_array($subjectOfChange));
 
-                $_new_version = 0;
-                if(isset($doc[_VERSION]))
+                $updatedAt = new \MongoDate();
+
+                if (!isset($doc[_VERSION]))
                 {
-                    $_version = (int)$doc[_VERSION];
-                    $criteria[_VERSION] = $_version;
-                    $_new_version = $_version + 1;
-                }
-
-                // update datestamps
-                $_updated_ts = new \MongoDate();
-
-                if($targetGraph->is_empty())
-                {
-                    $newDocument = array(_ID_KEY=>array(_ID_RESOURCE=>$this->labeller->uri_to_alias($subjectOfChange),_ID_CONTEXT=>$contextAlias), _VERSION=>$_new_version, _UPDATED_TS=>$_updated_ts);
-                    if(isset($doc[_CREATED_TS])) { // make sure when doc is deleted and it had a created date, we preserve it.
-                        $newDocument[_CREATED_TS] = $doc[_CREATED_TS];
-                    }
-
-                    array_push($newCBDs, $newDocument);
-                    $deletes[] = array("criteria"=>$criteria, 'change'=>$newDocument);
+                    // new doc
+                    $this->addOperatorToChange($mongoUpdateOperations,MONGO_OPERATION_SET,array(_VERSION=>0));
+                    $this->addOperatorToChange($mongoUpdateOperations,MONGO_OPERATION_SET,array(_CREATED_TS=>$updatedAt));
                 }
                 else
                 {
-                    $newDocument = $targetGraph->to_tripod_array($subjectOfChange,$contextAlias);
-                    $newDocument[_VERSION] = $_new_version;
-                    $newDocument[_UPDATED_TS] = $_updated_ts;
-                    if($_new_version == 0) {
-                        $newDocument[_CREATED_TS] = new \MongoDate();
-                    } else {
-                        if(isset($doc[_CREATED_TS])) {
-                            $newDocument[_CREATED_TS] = $doc[_CREATED_TS];
-                        }
-                    }
-                    array_push($newCBDs, $newDocument);
-                    $updates[] = array("criteria"=>$criteria,"change"=>$newDocument);
+                    $this->addOperatorToChange($mongoUpdateOperations,MONGO_OPERATION_INC,array(_VERSION=>1));
                 }
+
+                $this->addOperatorToChange($mongoUpdateOperations,MONGO_OPERATION_SET,array(_UPDATED_TS=>$updatedAt));
+
+                $updates[] = array("criteria"=>$criteria,"changes"=>$mongoUpdateOperations,"upsert"=>$upsert);
             }
 
             // apply each update
             foreach ($updates as $update)
             {
-                $command = array(
-                    "findAndModify" => $this->getCollection()->getName(),
-                    "query" => $update['criteria'],
-                    "update" => $update['change'],
-                    "upsert" => $upsert,
-                    "new"=>true
-                );
-
-                try{
-                    $result = $this->getDatabase()->command($command);
-                } catch (\Exception $e) {
-
+                try
+                {
+                    $newDoc = $this->getCollection()->findAndModify($update['criteria'],$update['changes'],null,array("upsert"=>$update['upsert'],"new"=>true));
+                    array_push($newCBDs, $newDoc);
+                }
+                catch (\Exception $e)
+                {
                     $this->errorLog(MONGO_WRITE,
                         array(
-                            'description'=>'Error with Mongo DB command:' . $e->getMessage(),
+                            'description'=>'Error with Mongo DB findAndModify:' . $e->getMessage(),
                             'transaction_id'=>$transaction_id,
                             'mongoDriverError' => $this->getDatabase()->lastError()
                         )
                     );
                     throw new \Exception($e);
                 }
-
-                if (!$result["ok"])
-                {
-                    $this->errorLog("Update failed with err.", $result);
-                    throw new \Exception("Update failed with err {$result['err']}");
-                }
-
-                if($result['value']==null)
-                {
-                    $this->errorLog(MONGO_WRITE,
-                        array(
-                            'description'=>'Driver::storeChanges - Update failed we did not find a matching document (transaction_id - ' .$transaction_id .')',
-                            $result
-                        )
-                    );
-                    throw new \Exception("Update failed we did not find a matching document");
-                }
-            }
-
-            foreach($deletes as $delete)
-            {
-                $command = array(
-                    "findAndModify" => $this->getCollection()->getName(),
-                    "query" => $delete['criteria'],
-                    "update" => $delete['change'],
-                    "upsert" => false,
-                    "new"=>false
-                );
-
-                $result = $this->getDatabase()->command($command);
-
-                if (!$result["ok"])
-                {
-                    $this->errorLog("Delete failed with err.", $result);
-                    throw new \Exception("Delete failed with err {$result['err']}");
-                }
-
-                if($result['value']==null)
-                {
-                    $this->errorLog("Delete failed we did not find a matching document.", $result);
-                    throw new \Exception("Delete failed we did not find a matching document");
-                }
-
             }
 
             return array(
                 'newCBDs'=>$newCBDs,
-                'subjectsAndPredicatesOfChange'=>$this->subjectsAndPredicatesOfChangeUrisToAliases($subjectsAndPredicatesOfChange)
+                'subjectsAndPredicatesOfChange'=>$this->subjectsAndPredicatesOfChangeUrisToAliases($subjectsAndPredicatesOfChange),
+                'transaction_id'=>$transaction_id
             );
         }
         else
         {
             throw new \Exception("Attempted to update a non-CBD collection");
+        }
+    }
+
+    /**
+     * Helper function to group the changes for $changeUri by namespaced predicate, then by additions and removals
+     * @param \Tripod\ChangeSet $cs
+     * @param $changeUri
+     * @return array
+     */
+    private function getAdditionsRemovalsGroupedByNsPredicate(\Tripod\ChangeSet $cs, $changeUri)
+    {
+        $additionsGroupedByNsPredicate = $this->getChangesGroupedByNsPredicate($cs,$changeUri,$this->labeller->qname_to_uri("cs:addition"));
+        $removalsGroupedByNsPredicate = $this->getChangesGroupedByNsPredicate($cs,$changeUri,$this->labeller->qname_to_uri("cs:removal"));
+
+        $mergedResult = array();
+        foreach($additionsGroupedByNsPredicate as $predicate => $values)
+        {
+            if (!isset($mergedResult[$predicate]))
+            {
+                $mergedResult[$predicate] = array();
+            }
+            $mergedResult[$predicate]["additions"] = $values;
+        }
+        foreach($removalsGroupedByNsPredicate as $predicate => $values)
+        {
+            if (!isset($mergedResult[$predicate]))
+            {
+                $mergedResult[$predicate] = array();
+            }
+            $mergedResult[$predicate]["removals"] = $values;
+        }
+        return $mergedResult;
+    }
+
+    /**
+     * Helper method to group changes for $changeUri of a given type by namespaced predicate
+     * @param \Tripod\ChangeSet $cs
+     * @param array $changes
+     * @return array
+     * @throws \Tripod\Exceptions\Exception
+     */
+    private function getChangesGroupedByNsPredicate(\Tripod\ChangeSet $cs, $changeUri, $changePredicate)
+    {
+        $changes = $cs->get_subject_property_values($changeUri,$changePredicate);
+
+        $changesGroupedByNsPredicate = array();
+        foreach ($changes as $c)
+        {
+            $predicate = $cs->get_first_resource($c["value"],$this->labeller->qname_to_uri("rdf:predicate"));
+            $nsPredicate = $this->labeller->uri_to_qname($predicate);
+
+            if(!array_key_exists($nsPredicate, $changesGroupedByNsPredicate))
+            {
+                $changesGroupedByNsPredicate[$nsPredicate] = array();
+            }
+
+            $object = $cs->get_subject_property_values($c["value"],$this->labeller->qname_to_uri("rdf:object"));
+            if (count($object)!=1)
+            {
+                $this->getLogger()->error("Expecting object array with exactly 1 element",$object);
+                throw new \Tripod\Exceptions\Exception("Object of removal malformed");
+            }
+
+            $valueType = (($object[0]['type']=="uri")) ? VALUE_URI : VALUE_LITERAL;
+            $value = ($valueType===VALUE_URI) ? $this->labeller->uri_to_alias($object[0]["value"]) : $object[0]["value"];
+
+            $changesGroupedByNsPredicate[$nsPredicate][] = array($valueType=>$value);
+        }
+        return $changesGroupedByNsPredicate;
+    }
+
+    /**
+     * Helper method to add operator to a set of existing changes ready to be sent to Mongo
+     * @param $changes
+     * @param $operator
+     * @param $kvp
+     */
+    private function addOperatorToChange(&$changes,$operator,$kvp)
+    {
+        if (!isset($changes[$operator]) || !is_array($changes[$operator]))
+        {
+            $changes[$operator] = array();
+        }
+        foreach($kvp as $key=>$value)
+        {
+            if (isset($changes[$operator][$key]))
+            {
+                $value = array_merge($value,$changes[$operator][$key]);
+            }
+            $changes[$operator][$key] = $value;
         }
     }
 
@@ -820,8 +894,8 @@ class Updates extends DriverBase {
         if(!empty($fromDateTime) || !empty($tillDateTime)){
             $query[_LOCKED_FOR_TRANS_TS] = array();
 
-            if(!empty($fromDateTime)) $query[_LOCKED_FOR_TRANS_TS]['$gte'] = new \MongoDate(strtotime($fromDateTime));
-            if(!empty($tillDateTime)) $query[_LOCKED_FOR_TRANS_TS]['$lte'] = new \MongoDate(strtotime($tillDateTime));
+            if(!empty($fromDateTime)) $query[_LOCKED_FOR_TRANS_TS][MONGO_OPERATION_GTE] = new \MongoDate(strtotime($fromDateTime));
+            if(!empty($tillDateTime)) $query[_LOCKED_FOR_TRANS_TS][MONGO_OPERATION_LTE] = new \MongoDate(strtotime($tillDateTime));
         }
         $docs = $this->getLocksCollection()->find($query)->sort(array(_LOCKED_FOR_TRANS => 1));
 
@@ -879,13 +953,18 @@ class Updates extends DriverBase {
                 }
             }
 
-            if(count($subjectsOfChange) == count($lockedSubjects)){ //if all subjects of change locked, we are good.
+            if(count($subjectsOfChange) == count($lockedSubjects))
+            {
+                //if all subjects of change locked, we are good.
                 return $originalCBDs;
-            }else{
-
-                if(count($lockedSubjects)) //If any subject was locked, unlock it
-                $this->unlockAllDocuments($transaction_id);
-
+            }
+            else
+            {
+                // If any subject was locked, unlock it
+                if(count($lockedSubjects))
+                {
+                    $this->unlockAllDocuments($transaction_id);
+                }
                 $this->debugLog(MONGO_LOCK,
                     array(
                         'description'=>"Driver::lockAllDocuments - Unable to lock all ". count($subjectsOfChange) ."  documents, unlocked  " . count($lockedSubjects) . " locked documents",
@@ -969,7 +1048,7 @@ class Updates extends DriverBase {
                 $this->unlockAllDocuments($transaction_id);
 
                 //3. Update audit entry to say it was completed
-                $result = $auditCollection->update(array(_ID_KEY => $auditDocumentId), array('$set' => array("status" => AUDIT_STATUS_COMPLETED, _UPDATED_TS => $this->getMongoDate())));
+                $result = $auditCollection->update(array(_ID_KEY => $auditDocumentId), array(MONGO_OPERATION_SET => array("status" => AUDIT_STATUS_COMPLETED, _UPDATED_TS => $this->getMongoDate())));
                 if($result['err']!=NULL )
                 {
                     throw new \Exception("Failed to update audit entry with error message- " . $result['err']);
@@ -983,7 +1062,7 @@ class Updates extends DriverBase {
                 );
 
                 //4. Update audit entry to say it was failed with error
-                $result = $auditCollection->update(array(_ID_KEY => $auditDocumentId), array('$set' => array("status" => AUDIT_STATUS_ERROR, _UPDATED_TS => $this->getMongoDate(), 'error' => $e->getMessage())));
+                $result = $auditCollection->update(array(_ID_KEY => $auditDocumentId), array(MONGO_OPERATION_SET => array("status" => AUDIT_STATUS_ERROR, _UPDATED_TS => $this->getMongoDate(), 'error' => $e->getMessage())));
 
                 if($result['err']!=NULL )
                 {
@@ -1042,7 +1121,7 @@ class Updates extends DriverBase {
             );
 
         if($countEntriesInLocksCollection > 0) //Subject is already locked
-        return false;
+            return false;
         else{
             try{ //Add a entry to locks collection for this subject, will throws exception if an entry already there
                 $result = $this->getLocksCollection()->insert(
@@ -1101,8 +1180,8 @@ class Updates extends DriverBase {
             }
             return $document;
         }
-    }  
-    
+    }
+
     /// Collection methods
 
     /**
@@ -1112,7 +1191,7 @@ class Updates extends DriverBase {
     {
         return $this->config->getCollectionForManualRollbackAudit($this->storeName);
     }
-    
+
     /**
      * For mocking
      * @return Config
@@ -1182,6 +1261,14 @@ class Updates extends DriverBase {
         $this->transactionLog = $transactionLog;
     }
 
+    /**
+     * Register save changes event hooks
+     * @param IEventHook $hook
+     */
+    public function registerSaveChangesEventHook(IEventHook $hook)
+    {
+        $this->saveChangesHooks[] = $hook;
+    }
 
     /**
      * Saves a transaction
