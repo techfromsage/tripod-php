@@ -63,6 +63,7 @@ class Driver extends DriverBase implements \Tripod\IDriver
         $opts = array_merge(array(
                 'defaultContext'=>null,
                 OP_ASYNC=>array(OP_VIEWS=>false,OP_TABLES=>true,OP_SEARCH=>true),
+                'statsConfig'=>array(),
                 'readPreference'=>\MongoClient::RP_PRIMARY_PREFERRED,
                 'retriesToGetLock' => 20)
             ,$opts);
@@ -104,13 +105,7 @@ class Driver extends DriverBase implements \Tripod\IDriver
 
         $this->async = $async;
 
-        if (isset($opts['statsDHost']) && isset($opts['statsDPort']))
-        {
-            // use with built-in StatsD stat object
-            $this->statsDHost = $opts['statsDHost'];
-            $this->statsDPort = $opts['statsDPort'];
-            $this->statsDPrefix = $opts['statsDPrefix'];
-        }
+        $this->statsConfig = $opts['statsConfig'];
     }
 
     /**
@@ -666,21 +661,9 @@ class Driver extends DriverBase implements \Tripod\IDriver
                 OP_ASYNC=>$this->async,
                 'stat'=>$this->stat,
                 'readPreference'=>$readPreference['type'],
-                'retriesToGetLock' => $this->retriesToGetLock
+                'retriesToGetLock' => $this->retriesToGetLock,
+                'statsConfig'=>$this->statsConfig
             );
-
-            if ($this->getStatsDHost()!=null)
-            {
-                $opts['statsDHost'] = $this->getStatsDHost();
-            }
-            if ($this->getStatsDPort()!=null)
-            {
-                $opts['statsDPort'] = $this->getStatsDPort();
-            }
-            if ($this->getStatsDPrefix()!=null)
-            {
-                $opts['statsDPrefix'] = $this->getStatsDPrefix();
-            }
 
             $this->dataUpdater = new Updates($this, $opts);
         }

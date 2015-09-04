@@ -133,12 +133,9 @@ class Updates extends DriverBase {
 
         $this->async = $async;
 
-        if (isset($opts['statsDHost']) && isset($opts['statsDPort']))
+        if (isset($opts['statsConfig']))
         {
-            // use with built-in StatsD stat object
-            $this->statsDHost = $opts['statsDHost'];
-            $this->statsDPort = $opts['statsDPort'];
-            $this->statsDPrefix = $opts['statsDPrefix'];
+            $this->statsConfig = $opts['statsConfig'];
         }
     }
 
@@ -837,20 +834,8 @@ class Updates extends DriverBase {
                 "storeName" => $this->storeName,
                 "podName" => $this->podName,
                 "contextAlias" => $contextAlias,
-                "statsDHost" => $this->tripod->getStatsDHost(),
-                "statsDPort" => $this->tripod->getStatsDPort(),
-                "statsDPrefix" => $this->tripod->getStatsDPrefix()
+                "statsConfig"=>$this->statsConfig
             );
-
-            $statsDConf = array();
-            $keys = array("statsDHost","statsDPrefix","statsDPort");
-            foreach ($keys as $key)
-            {
-                if (isset($this->args[$key]) && $this->args[$key]!=null)
-                {
-                    $statsDConf[$key] = $this->args[$key];
-                }
-            }
 
 
             if(isset($this->queueName))

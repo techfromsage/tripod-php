@@ -50,6 +50,7 @@ class ApplyOperation extends JobBase {
     /**
      * @param \Tripod\Mongo\ImpactedSubject[] $subjects
      * @param string|null $queueName
+     * @param array $otherData
      */
     public function createJob(Array $subjects, $queueName=null,$otherData=array())
     {

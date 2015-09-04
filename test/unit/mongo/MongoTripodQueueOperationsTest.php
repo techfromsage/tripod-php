@@ -79,7 +79,8 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
             "tripodConfig" => \Tripod\Mongo\Config::getConfig(),
             "storeName" => 'tripod_php_testing',
             "podName" => 'CBD_testing',
-            "contextAlias" => 'http://talisaspire.com/'
+            "contextAlias" => 'http://talisaspire.com/',
+            "statsConfig" => array()
         );
 
         $tripodUpdates->expects($this->once())
@@ -157,7 +158,8 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
             "tripodConfig" => \Tripod\Mongo\Config::getConfig(),
             "storeName" => 'tripod_php_testing',
             "podName" => 'CBD_testing',
-            "contextAlias" => 'http://talisaspire.com/'
+            "contextAlias" => 'http://talisaspire.com/',
+            "statsConfig" => array()
         );
 
         $tripodUpdates->expects($this->once())
@@ -290,7 +292,8 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
             "tripodConfig" => \Tripod\Mongo\Config::getConfig(),
             "storeName" => 'tripod_php_testing',
             "podName" => 'CBD_testing',
-            "contextAlias" => 'http://talisaspire.com/'
+            "contextAlias" => 'http://talisaspire.com/',
+            "statsConfig" => array()
         );
 
         $tripodUpdates->expects($this->once())

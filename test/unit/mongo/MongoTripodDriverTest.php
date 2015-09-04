@@ -927,7 +927,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
             'tripodConfig'=>\Tripod\Mongo\Config::getConfig(),
             'storeName'=>'tripod_php_testing',
             'podName'=>'CBD_testing',
-            'contextAlias'=>'http://talisaspire.com/'
+            'contextAlias'=>'http://talisaspire.com/',
+            'statsConfig'=>array()
         );
 
         // getComposite() should only be called if there are synchronous operations
@@ -1032,7 +1033,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
             'tripodConfig'=>\Tripod\Mongo\Config::getConfig(),
             'storeName'=>'tripod_php_testing',
             'podName'=>'CBD_testing',
-            'contextAlias'=>'http://talisaspire.com/'
+            'contextAlias'=>'http://talisaspire.com/',
+            'statsConfig'=>array()
         );
 
         $impactedViewSubjects = array(
@@ -1266,7 +1268,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
             'tripodConfig'=>\Tripod\Mongo\Config::getConfig(),
             'storeName'=>'tripod_php_testing',
             'podName'=>'CBD_testing',
-            'contextAlias'=>'http://talisaspire.com/'
+            'contextAlias'=>'http://talisaspire.com/',
+            'statsConfig'=>array()
         );
 
         // getComposite() should only be called if there are synchronous operations
@@ -1416,7 +1419,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
             'storeName'=>'tripod_php_testing',
             'podName'=>'CBD_testing',
             'contextAlias'=>'http://talisaspire.com/',
-            'queue'=>$queueName
+            'queue'=>$queueName,
+            'statsConfig'=>array()
         );
 
         // getComposite() should only be called if there are synchronous operations

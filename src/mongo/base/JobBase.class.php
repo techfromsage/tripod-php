@@ -139,5 +139,18 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
         $status = new \Resque_Job_Status($token);
         return $status->get();
     }
+
+    /**
+     * @return \Tripod\ITripodStat
+     */
+    public function getStat()
+    {
+        if(!isset($this->statsConfig) && isset($this->args['statsConfig']))
+        {
+
+            $this->statsConfig = $this->args['statsConfig'];
+        }
+        return parent::getStat();
+    }
 }
 

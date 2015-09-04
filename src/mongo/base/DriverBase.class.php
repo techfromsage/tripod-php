@@ -48,11 +48,8 @@ abstract class DriverBase
      */
     protected $stat = null;
 
-    protected $statsDHost;
-
-    protected $statsDPrefix;
-
-    protected $statsDPort;
+    /** @var array  */
+    protected $statsConfig = array();
 
     /**
      * @var \MongoDB
@@ -71,23 +68,29 @@ abstract class DriverBase
     {
         if ($this->stat==null)
         {
-            if ($this->statsDHost == null || $this->statsDPort == null)
-            {
-                $this->stat = NoStat::getInstance();
-            }
-            else
+            $stat = \Tripod\TripodStatFactory::create($this->statsConfig);
+
+            if($stat instanceof \Tripod\StatsD)
             {
                 $prefix = "tripod.group_by_db.".$this->podName;
-                if (!empty($this->statsDPrefix))
+                if (!is_null($stat->getPrefix()))
                 {
-                    $prefix = "{$this->statsDPrefix}.$prefix";
+                    $prefix = "{$stat->getPrefix()}.$prefix";
                 }
-                $this->stat = new \Tripod\StatsD($this->statsDHost,$this->statsDPort,$prefix);
+                $stat->setPrefix($prefix);
             }
+            $this->stat = $stat;
         }
         return $this->stat;
     }
 
+    /**
+     * @param \Tripod\ITripodStat $stat
+     */
+    public function setStat(\Tripod\ITripodStat $stat)
+    {
+        $this->stat = $stat;
+    }
     /**
      * @var Labeller
      */
@@ -216,30 +219,6 @@ abstract class DriverBase
     public function getPodName()
     {
         return $this->podName;
-    }
-
-    /**
-     * @return string
-     */
-    public function getStatsDHost()
-    {
-        return $this->statsDHost;
-    }
-
-    /**
-     * @return string
-     */
-    public function getStatsDPort()
-    {
-        return $this->statsDPort;
-    }
-
-    /**
-     * @return string
-     */
-    public function getStatsDPrefix()
-    {
-        return $this->statsDPrefix;
     }
 
 

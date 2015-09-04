@@ -8,8 +8,11 @@ namespace Tripod;
  */
 class StatsD implements ITripodStat
 {
+    /** @var string  */
     private $host;
+    /** @var int|string  */
     private $port;
+    /** @var string  */
     private $prefix;
 
     /**
@@ -124,6 +127,54 @@ class StatsD implements ITripodStat
         $port = (isset($config['port']) ? $config['port'] : null);
         $prefix = (isset($config['prefix']) ? $config['prefix'] : '');
         return new self($host, $port, $prefix);
+    }
+
+    /**
+     * @return string
+     */
+    public function getPrefix()
+    {
+        return $this->prefix;
+    }
+
+    /**
+     * @param string $prefix
+     */
+    public function setPrefix($prefix)
+    {
+        $this->prefix = $prefix;
+    }
+
+    /**
+     * @return int|string
+     */
+    public function getPort()
+    {
+        return $this->port;
+    }
+
+    /**
+     * @param int|string $port
+     */
+    public function setPort($port)
+    {
+        $this->port = $port;
+    }
+
+    /**
+     * @return string
+     */
+    public function getHost()
+    {
+        return $this->host;
+    }
+
+    /**
+     * @param string $host
+     */
+    public function setHost($host)
+    {
+        $this->host = $host;
     }
 
 }
