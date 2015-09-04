@@ -6,6 +6,7 @@ if(!defined('TRIPOD_DIR')) define('TRIPOD_DIR', dirname(__FILE__) . '/' );
 
 require_once TRIPOD_DIR.'classes/Timer.class.php';
 require_once TRIPOD_DIR.'ITripodStat.php';
+require_once TRIPOD_DIR . 'TripodStatFactory.class.php';
 require_once TRIPOD_DIR.'classes/StatsD.class.php';
 require_once TRIPOD_DIR . 'exceptions/Exception.class.php';
 require_once TRIPOD_DIR . 'exceptions/SearchException.class.php';
