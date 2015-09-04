@@ -10,8 +10,14 @@ class StatsD implements ITripodStat
 {
     private $host;
     private $port;
+    private $prefix;
 
-    function __construct($host, $port, $prefix='')
+    /**
+     * @param string $host
+     * @param string|int $port
+     * @param string $prefix
+     */
+    public function __construct($host, $port, $prefix='')
     {
         $this->host = $host;
         $this->port = $port;
@@ -40,6 +46,21 @@ class StatsD implements ITripodStat
         $key = (empty($this->prefix)) ? $operation : "{$this->prefix}.$operation";
         $this->send(
             array($key=>array("1|c","$duration|ms"))
+        );
+    }
+
+    /**
+     * @return array
+     */
+    public function getConfig()
+    {
+        return array(
+            'class'=>get_class($this),
+            'config'=>array(
+                'host'=>$this->host,
+                'port'=>$this->port,
+                'prefix'=>$this->prefix
+            )
         );
     }
 
@@ -88,5 +109,21 @@ class StatsD implements ITripodStat
         }
     }
 
+    /**
+     * @param array $config
+     * @return StatsD
+     */
+    public static function createFromConfig(array $config)
+    {
+        if(isset($config['config']))
+        {
+            $config = $config['config'];
+        }
+
+        $host = (isset($config['host']) ? $config['host'] : null);
+        $port = (isset($config['port']) ? $config['port'] : null);
+        $prefix = (isset($config['prefix']) ? $config['prefix'] : '');
+        return new self($host, $port, $prefix);
+    }
 
 }

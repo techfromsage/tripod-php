@@ -20,4 +20,14 @@ interface ITripodStat
      * @return mixed
      */
     public function timer($operation,$duration);
+
+    /**
+     * @return array
+     */
+    public function getConfig();
+
+    /**
+     * @return ITripodStat
+     */
+    public static function createFromConfig(array $config);
 }

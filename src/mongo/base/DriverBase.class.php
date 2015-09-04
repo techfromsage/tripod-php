@@ -472,6 +472,7 @@ final class NoStat implements \Tripod\ITripodStat
 
     /**
      * @param string $operation
+     * @return void
      */
     public function increment($operation)
     {
@@ -481,10 +482,19 @@ final class NoStat implements \Tripod\ITripodStat
     /**
      * @param string $operation
      * @param number $duration
+     * @return void
      */
     public function timer($operation, $duration)
     {
         // do nothing
+    }
+
+    /**
+     * @return array
+     */
+    public function getConfig()
+    {
+        return array();
     }
 
     /**
@@ -497,6 +507,15 @@ final class NoStat implements \Tripod\ITripodStat
             self::$instance = new NoStat();
         }
         return self::$instance;
+    }
+
+    /**
+     * @param array $config
+     * @return NoStat
+     */
+    public static function createFromConfig(array $config = array())
+    {
+        return self::getInstance();
     }
 }
 
