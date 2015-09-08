@@ -119,6 +119,10 @@ class Driver extends DriverBase implements \Tripod\IDriver
 
         // is a custom stat tracker passed in?
         if ($opts['stat']!=null) $this->stat = $opts['stat'];
+
+        // Set the read preference if passed in
+        if ($opts['readPreference']) $this->readPreference = $opts['readPreference'];
+
     }
 
     /**
@@ -546,7 +550,8 @@ class Driver extends DriverBase implements \Tripod\IDriver
                 $this->storeName,
                 $this->collection,
                 $this->defaultContext,
-                $this->stat
+                $this->stat,
+                $this->readPreference
             );
         }
         return $this->tripod_views;
@@ -563,7 +568,8 @@ class Driver extends DriverBase implements \Tripod\IDriver
                 $this->storeName,
                 $this->collection,
                 $this->defaultContext,
-                $this->stat
+                $this->stat,
+                $this->readPreference
             );
         }
         return $this->tripod_tables;
@@ -576,7 +582,7 @@ class Driver extends DriverBase implements \Tripod\IDriver
     {
         if ($this->search_indexer==null)
         {
-            $this->search_indexer = new \Tripod\Mongo\Composites\SearchIndexer($this);
+            $this->search_indexer = new \Tripod\Mongo\Composites\SearchIndexer($this, $this->readPreference);
         }
         return $this->search_indexer;
     }
