@@ -33,15 +33,20 @@ class ImpactedSubject
     private $podName;
 
     /**
+     * @var \Tripod\ITripodStat|null
+     */
+    private $stat;
+
+    /**
      * @param array $resourceId
      * @param string $operation
      * @param string $storeName
      * @param string $podName
      * @param array $specTypes
+     * @param \Tripod\ITripodStat|null $stat
      * @throws \Tripod\Exceptions\Exception
-     * @throws \Exception
      */
-    public function __construct(Array $resourceId, $operation, $storeName, $podName, Array $specTypes=array())
+    public function __construct(Array $resourceId, $operation, $storeName, $podName, Array $specTypes=array(), \Tripod\ITripodStat $stat = null)
     {
         if (!is_array($resourceId) || !array_key_exists(_ID_RESOURCE,$resourceId) || !array_key_exists(_ID_CONTEXT,$resourceId))
         {
@@ -64,6 +69,11 @@ class ImpactedSubject
         $this->storeName = $storeName;
         $this->podName = $podName;
         $this->specTypes = $specTypes;
+
+        if($stat)
+        {
+            $this->stat = $stat;
+        }
     }
 
     /**
@@ -127,6 +137,10 @@ class ImpactedSubject
     public function update()
     {
         $tripod = $this->getTripod();
+        if(isset($this->stat))
+        {
+            $tripod->setStat($this->stat);
+        }
         $tripod->getComposite($this->operation)->update($this);
     }
 

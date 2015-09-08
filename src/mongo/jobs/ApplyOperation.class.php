@@ -24,6 +24,12 @@ class ApplyOperation extends JobBase {
 
             $this->validateArgs();
 
+            $statsConfig = array();
+            if(isset($this->args['statsConfig']))
+            {
+                $statsConfig['statsConfig'] = $this->args['statsConfig'];
+            }
+
             // set the config to what is received
             \Tripod\Mongo\Config::setConfig($this->args[self::TRIPOD_CONFIG_KEY]);
 
