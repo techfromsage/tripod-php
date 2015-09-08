@@ -48,6 +48,7 @@ class ApplyOperation extends JobBase {
         }
         catch (\Exception $e)
         {
+            $this->getStat()->increment(MONGO_QUEUE_APPLY_OPERATION_FAIL);
             $this->errorLog("Caught exception in ".get_class($this).": ".$e->getMessage());
             throw $e;
         }

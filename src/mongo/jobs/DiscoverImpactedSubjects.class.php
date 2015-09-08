@@ -134,6 +134,7 @@ class DiscoverImpactedSubjects extends JobBase {
         }
         catch(\Exception $e)
         {
+            $this->getStat()->increment(MONGO_QUEUE_DISCOVER_FAIL);
             $this->errorLog("Caught exception in ".get_class($this).": ".$e->getMessage());
             throw $e;
         }
