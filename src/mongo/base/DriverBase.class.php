@@ -469,6 +469,17 @@ final class NoStat implements \Tripod\ITripodStat
     }
 
     /**
+     * @param string $function
+     * @param string $operation
+     * @param mixed $value
+     * @return void
+     */
+    public function custom($function, $operation, $value)
+    {
+        // do nothing
+    }
+
+    /**
      * @return array
      */
     public function getConfig()

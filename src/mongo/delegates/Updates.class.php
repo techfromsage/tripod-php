@@ -375,6 +375,7 @@ class Updates extends DriverBase {
             $t->stop();
             $this->timingLog(MONGO_WRITE, array('duration'=>$t->result(), 'subjectsOfChange'=>implode(", ",$subjectsOfChange)));
             $this->getStat()->timer(MONGO_WRITE.".{$this->getPodName()}",$t->result());
+            $this->getStat()->increment(MONGO_WRITE.".{$this->getPodName()}");
 
             return $changes;
         }

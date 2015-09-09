@@ -22,6 +22,8 @@ class ApplyOperation extends JobBase {
             $timer = new \Tripod\Timer();
             $timer->start();
 
+            $this->getStat()->increment(MONGO_QUEUE_APPLY_OPERATION_JOB);
+
             $this->validateArgs();
 
             $statsConfig = array();
@@ -33,15 +35,26 @@ class ApplyOperation extends JobBase {
             // set the config to what is received
             \Tripod\Mongo\Config::setConfig($this->args[self::TRIPOD_CONFIG_KEY]);
 
+            $this->getStat()->custom(STAT_TYPE_COUNT, MONGO_QUEUE_APPLY_OPERATION_JOB . '.' . STAT_TYPE_COUNT, count($this->args[self::SUBJECTS_KEY]));
+
             foreach($this->args[self::SUBJECTS_KEY] as $subject)
             {
+                $this->getStat()->increment(MONGO_QUEUE_APPLY_OPERATION_SUBJECT);
+                $this->getStat()->increment(MONGO_QUEUE_APPLY_OPERATION.'.'.$subject['operation']);
+                $opTimer = new \Tripod\Timer();
+                $opTimer->start();
+
                 $impactedSubject = $this->createImpactedSubject($subject);
                 $impactedSubject->update();
+
+                $opTimer->stop();
+                // stat time taken to perform operation for the given subject
+                $this->getStat()->timer(MONGO_QUEUE_APPLY_OPERATION.'.'.$subject['operation'], $opTimer->result());
             }
 
 
             $timer->stop();
-            // stat time taken to process item, from time it was created (queued)
+            // stat time taken to process job, from time it was picked up
             $this->getStat()->timer(MONGO_QUEUE_APPLY_OPERATION_SUCCESS,$timer->result());
 
             $this->debugLog("ApplyOperation::perform() done in {$timer->result()}ms");

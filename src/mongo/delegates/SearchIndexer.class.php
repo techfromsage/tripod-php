@@ -212,8 +212,18 @@ class SearchIndexer extends CompositeBase
                     $from,
                     array($searchDocumentType)
                 );
+                $jobOptions = array();
 
-                $this->getApplyOperation()->createJob(array($subject), $queueName);  // todo: how to pass statsD?
+                if(isset($this->stat))
+                {
+                    $jobOptions['statsConfig'] = $this->getStat()->getConfig();
+                }
+                elseif(!empty($this->statsConfig))
+                {
+                    $jobOptions['statsConfig'] = $this->statsConfig;
+                }
+
+                $this->getApplyOperation()->createJob(array($subject), $queueName, $jobOptions);
             }
             else
             {
@@ -233,6 +243,7 @@ class SearchIndexer extends CompositeBase
             'filter'=>$filter,
             'from'=>$from));
         $this->getStat()->timer(MONGO_CREATE_SEARCH_DOC.".$searchDocumentType",$t->result());
+        $this->getStat()->increment(MONGO_CREATE_SEARCH_DOC.".$searchDocumentType");
         
     }
 

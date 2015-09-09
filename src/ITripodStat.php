@@ -22,6 +22,16 @@ interface ITripodStat
     public function timer($operation,$duration);
 
     /**
+     * A custom metric defined by the Stat class
+     *
+     * @param string $function The internal function name to use to record the stat
+     * @param string $operation
+     * @param mixed $value
+     * @return mixed
+     */
+    public function custom($function, $operation, $value);
+
+    /**
      * @return array
      */
     public function getConfig();

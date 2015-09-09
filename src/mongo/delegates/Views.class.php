@@ -166,6 +166,7 @@ class Views extends CompositeBase
         $graph = $this->fetchGraph($query,MONGO_VIEW,$viewCollection);
         if ($graph->is_empty())
         {
+            $this->getStat()->increment(MONGO_VIEW_CACHE_MISS.".$viewType");
             $viewSpec = Config::getInstance()->getViewSpecification($this->storeName, $viewType);
             if($viewSpec == null)
             {
@@ -482,7 +483,17 @@ class Views extends CompositeBase
                         array($viewId)
                     );
 
-                    $this->getApplyOperation()->createJob(array($subject), $queueName); // todo: how to pass statsD?
+                    $jobOptions = array();
+                    if(isset($this->stat))
+                    {
+                        $jobOptions['statsConfig'] = $this->getStat()->getConfig();
+                    }
+                    elseif(!empty($this->statsConfig))
+                    {
+                        $jobOptions['statsConfig'] = $this->statsConfig;
+                    }
+
+                    $this->getApplyOperation()->createJob(array($subject), $queueName, $jobOptions);
                 }
                 else
                 {
@@ -521,6 +532,7 @@ class Views extends CompositeBase
                 'filter'=>$filter,
                 'from'=>$from));
             $this->getStat()->timer(MONGO_CREATE_VIEW.".$viewId",$t->result());
+            $this->getStat()->increment(MONGO_CREATE_VIEW.".$viewId");
         }
     }
 

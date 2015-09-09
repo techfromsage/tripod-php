@@ -36,6 +36,8 @@ class DiscoverImpactedSubjects extends JobBase {
 
             $this->debugLog("DiscoverImpactedSubjects::perform() start");
 
+            $this->getStat()->increment(MONGO_QUEUE_DISCOVER_JOB);
+
             $timer = new \Tripod\Timer();
             $timer->start();
 
@@ -55,6 +57,7 @@ class DiscoverImpactedSubjects extends JobBase {
 
             $subjectsAndPredicatesOfChange = $this->args[self::CHANGES_KEY];
 
+            $subjectCount = 0;
             foreach($operations as $op)
             {
                 /** @var \Tripod\Mongo\Composites\IComposite $composite */
@@ -63,6 +66,10 @@ class DiscoverImpactedSubjects extends JobBase {
                 if(!empty($modifiedSubjects)){
                     /* @var $subject \Tripod\Mongo\ImpactedSubject */
                     foreach ($modifiedSubjects as $subject) {
+                        $subjectCount++;
+                        $this->getStat()->increment(MONGO_QUEUE_DISCOVER_SUBJECT);
+                        $subjectTimer = new \Tripod\Timer();
+                        $subjectTimer->start();
                         if(isset($this->args[self::QUEUE_KEY]) || count($subject->getSpecTypes()) == 0)
                         {
                             $queueName = (isset($this->args[self::QUEUE_KEY]) ? $this->args[self::QUEUE_KEY] : Config::getApplyQueueName());
@@ -114,6 +121,9 @@ class DiscoverImpactedSubjects extends JobBase {
                                 $this->addSubjectToQueue($queuedSubject, $queueName);
                             }
                         }
+                        $subjectTimer->stop();
+                        // stat time taken to discover impacted subjects for the given subject of change
+                        $this->getStat()->timer(MONGO_QUEUE_DISCOVER_SUBJECT, $subjectTimer->result());
                     }
                     if(!empty($this->subjectsGroupedByQueue))
                     {
@@ -130,7 +140,7 @@ class DiscoverImpactedSubjects extends JobBase {
             $timer->stop();
             $this->getStat()->timer(MONGO_QUEUE_DISCOVER_SUCCESS,$timer->result());
             $this->debugLog("DiscoverImpactedSubjects::perform() done in {$timer->result()}ms");
-
+            $this->getStat()->custom(STAT_TYPE_COUNT, MONGO_QUEUE_DISCOVER_JOB . '.' . STAT_TYPE_COUNT, $subjectCount);
         }
         catch(\Exception $e)
         {
