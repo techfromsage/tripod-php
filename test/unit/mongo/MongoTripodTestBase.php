@@ -1,5 +1,7 @@
 <?php
 
+use Tripod\ITripodStat;
+
 set_include_path(
   get_include_path()
   . PATH_SEPARATOR . dirname(dirname(dirname(dirname(__FILE__))))
@@ -407,6 +409,23 @@ abstract class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         );
         $collection->insert($doc, array("w" => 1));
     }
+
+    /**
+     * @param string $host
+     * @param string|int $port
+     * @param string $prefix
+     * @return PHPUnit_Framework_MockObject_MockObject|\Tripod\StatsD
+     */
+    protected function getMockStat($host, $port, $prefix='')
+    {
+        /** @var \Tripod\StatsD|PHPUnit_Framework_MockObject_MockObject $stat */
+        $stat = $this->getMockBuilder('\Tripod\StatsD')
+            ->setMethods(array('send'))
+            ->setConstructorArgs(array($host, $port, $prefix))
+            ->getMock();
+
+        return $stat;
+    }
 }
 
 /**
@@ -420,24 +439,5 @@ class TestTripod extends \Tripod\Mongo\Driver
     public function getCollectionReadPreference()
     {
         return $this->collection->getReadPreference();
-    }
-}
-
-/**
- * Class TripodTestConfig
- */
-class TripodTestConfig extends \Tripod\Mongo\Config
-{
-    /**
-     * Constructor
-     */
-    public function __construct() {}
-
-    /**
-     * @param array $config
-     */
-    public function loadConfig(array $config)
-    {
-        parent::loadConfig($config);
     }
 }

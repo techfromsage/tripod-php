@@ -68,7 +68,7 @@ abstract class DriverBase
     {
         if ($this->stat==null)
         {
-            $stat = \Tripod\TripodStatFactory::create($this->statsConfig);
+            $stat = $this->getStatFromStatFactory($this->statsConfig);
 
             if($stat instanceof \Tripod\StatsD)
             {
@@ -82,6 +82,16 @@ abstract class DriverBase
             $this->stat = $stat;
         }
         return $this->stat;
+    }
+
+    /**
+     * For mocking out the creation of stat objects
+     * @param array $config
+     * @return \Tripod\ITripodStat
+     */
+    protected function getStatFromStatFactory(array $config)
+    {
+        return \Tripod\TripodStatFactory::create($this->statsConfig);
     }
 
     /**
