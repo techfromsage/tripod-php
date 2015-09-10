@@ -36,8 +36,6 @@ class DiscoverImpactedSubjects extends JobBase {
 
             $this->debugLog("DiscoverImpactedSubjects::perform() start");
 
-            $this->getStat()->increment(MONGO_QUEUE_DISCOVER_JOB);
-
             $timer = new \Tripod\Timer();
             $timer->start();
 
@@ -67,7 +65,6 @@ class DiscoverImpactedSubjects extends JobBase {
                     /* @var $subject \Tripod\Mongo\ImpactedSubject */
                     foreach ($modifiedSubjects as $subject) {
                         $subjectCount++;
-                        $this->getStat()->increment(MONGO_QUEUE_DISCOVER_SUBJECT);
                         $subjectTimer = new \Tripod\Timer();
                         $subjectTimer->start();
                         if(isset($this->args[self::QUEUE_KEY]) || count($subject->getSpecTypes()) == 0)

@@ -532,7 +532,6 @@ class Views extends CompositeBase
                 'filter'=>$filter,
                 'from'=>$from));
             $this->getStat()->timer(MONGO_CREATE_VIEW.".$viewId",$t->result());
-            $this->getStat()->increment(MONGO_CREATE_VIEW.".$viewId");
         }
     }
 

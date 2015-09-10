@@ -22,8 +22,6 @@ class ApplyOperation extends JobBase {
             $timer = new \Tripod\Timer();
             $timer->start();
 
-            $this->getStat()->increment(MONGO_QUEUE_APPLY_OPERATION_JOB);
-
             $this->validateArgs();
 
             $statsConfig = array();
@@ -39,8 +37,6 @@ class ApplyOperation extends JobBase {
 
             foreach($this->args[self::SUBJECTS_KEY] as $subject)
             {
-                $this->getStat()->increment(MONGO_QUEUE_APPLY_OPERATION_SUBJECT);
-                $this->getStat()->increment(MONGO_QUEUE_APPLY_OPERATION.'.'.$subject['operation']);
                 $opTimer = new \Tripod\Timer();
                 $opTimer->start();
 

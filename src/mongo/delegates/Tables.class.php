@@ -294,7 +294,6 @@ class Tables extends CompositeBase
         $query = array('distinct'=>$fieldName, 'filter'=>$filter);
         $this->timingLog(MONGO_TABLE_ROWS_DISTINCT, array('duration'=>$t->result(), 'query'=>$query, 'collection'=>TABLE_ROWS_COLLECTION));
         $this->getStat()->timer(MONGO_TABLE_ROWS_DISTINCT.".$tableSpecId",$t->result());
-        $this->getStat()->increment(MONGO_TABLE_ROWS_DISTINCT.".$tableSpecId");
         return array(
             "head"=>array(
                 "count"=>count($results)
