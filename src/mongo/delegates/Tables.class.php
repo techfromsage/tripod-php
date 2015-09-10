@@ -567,11 +567,8 @@ class Tables extends CompositeBase
                 );
 
                 $jobOptions = array();
-                if(isset($this->stat))
-                {
-                    $jobOptions['statsConfig'] = $this->getStat()->getConfig();
-                }
-                elseif(!empty($this->statsConfig))
+
+                if(!empty($this->statsConfig))
                 {
                     $jobOptions['statsConfig'] = $this->statsConfig;
                 }

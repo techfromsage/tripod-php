@@ -72,7 +72,7 @@ abstract class DriverBase
 
             if($stat instanceof \Tripod\StatsD)
             {
-                $prefix = "tripod.group_by_db.".$this->podName;
+                $prefix = "tripod.group_by_db.".$this->storeName;
                 if (!is_null($stat->getPrefix()))
                 {
                     $prefix = "{$stat->getPrefix()}.$prefix";

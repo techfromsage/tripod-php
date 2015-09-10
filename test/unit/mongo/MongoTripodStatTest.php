@@ -163,6 +163,42 @@ class MongoTripodStatTest extends MongoTripodTestBase
         $stat->custom('foobaz', 'FOO.BAR', 'abc');
     }
 
+    public function testPassStatConfigToTripodConstructor()
+    {
+        $statsDConfig = $this->getStatsDConfig();
+        $opts = array('statsConfig'=>$statsDConfig);
+
+        $mockStat = $this->getMockStat($opts['statsConfig']['config']['host'], $opts['statsConfig']['config']['port'], $opts['statsConfig']['config']['prefix']);
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
+            ->setMethods(array('getStatFromStatFactory'))
+            ->setConstructorArgs(array('CBD_testing', 'tripod_php_testing', $opts))
+            ->getMock();
+
+
+        $tripod->expects($this->once())
+            ->method('getStatFromStatFactory')
+            ->with($opts['statsConfig'])
+            ->will($this->returnValue($mockStat));
+
+        $stat = $tripod->getStat();
+
+        $this->assertInstanceOf('\Tripod\StatsD', $stat);
+
+        $this->assertEquals('example.com', $stat->getHost());
+        $this->assertEquals(1234, $stat->getPort());
+        $this->assertEquals('somePrefix.tripod.group_by_db.tripod_php_testing', $stat->getPrefix());
+
+        $config = $stat->getConfig();
+        $this->assertEquals(
+            array(
+                'host'=>'example.com',
+                'port'=>1234,
+                'prefix'=>'somePrefix.tripod.group_by_db.tripod_php_testing'
+            ),
+            $config['config']
+        );
+    }
+
 
     /**
      * @return array

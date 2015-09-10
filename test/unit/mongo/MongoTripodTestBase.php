@@ -441,3 +441,22 @@ class TestTripod extends \Tripod\Mongo\Driver
         return $this->collection->getReadPreference();
     }
 }
+
+/**
+ * Class TripodTestConfig
+ */
+class TripodTestConfig extends \Tripod\Mongo\Config
+{
+    /**
+     * Constructor
+     */
+    public function __construct(){}
+
+    /**
+     * @param array $config
+     */
+    public function loadConfig(array $config)
+    {
+        parent::loadConfig($config);
+    }
+}
