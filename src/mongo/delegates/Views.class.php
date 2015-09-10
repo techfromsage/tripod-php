@@ -22,8 +22,9 @@ class Views extends CompositeBase
      * @param \MongoCollection $collection
      * @param $defaultContext
      * @param null $stat
+     * @param string $readPreference
      */
-    function __construct($storeName, \MongoCollection $collection,$defaultContext,$stat=null) // todo: $collection -> podname
+    function __construct($storeName, \MongoCollection $collection,$defaultContext,$stat=null,$readPreference=\MongoClient::RP_PRIMARY) // todo: $collection -> podname
     {
         $this->storeName = $storeName;
         $this->labeller = new Labeller();
@@ -32,7 +33,7 @@ class Views extends CompositeBase
         $this->defaultContext = $defaultContext;
         $this->config = Config::getInstance();
         $this->stat = $stat;
-        $this->readPreference = \MongoClient::RP_PRIMARY; // todo: figure out where this should go.
+        $this->readPreference = $readPreference;
     }
 
     /**
@@ -122,7 +123,7 @@ class Views extends CompositeBase
      * @param $viewType
      * @return \Tripod\Mongo\MongoGraph
      */
-    public function getViews(Array $filter,$viewType)
+    public function getViews(Array $filter, $viewType)
     {
         $query = array("_id.type"=>$viewType);
         foreach ($filter as $predicate=>$object)
@@ -141,7 +142,7 @@ class Views extends CompositeBase
                 $query['value.'._GRAPHS.'.'.$predicate] = $object;
             }
         }
-        $viewCollection = $this->getConfigInstance()->getCollectionForView($this->storeName, $viewType);
+        $viewCollection = $this->getConfigInstance()->getCollectionForView($this->storeName, $viewType, $this->readPreference);
         return $this->fetchGraph($query,MONGO_VIEW,$viewCollection);
     }
 
@@ -162,7 +163,7 @@ class Views extends CompositeBase
         $contextAlias = $this->getContextAlias($context);
 
         $query = array( "_id" => array("r"=>$resourceAlias,"c"=>$contextAlias,"type"=>$viewType));
-        $viewCollection = $this->config->getCollectionForView($this->storeName, $viewType);
+        $viewCollection = $this->config->getCollectionForView($this->storeName, $viewType, $this->readPreference);
         $graph = $this->fetchGraph($query,MONGO_VIEW,$viewCollection);
         if ($graph->is_empty())
         {
@@ -287,7 +288,7 @@ class Views extends CompositeBase
             foreach (Config::getInstance()->getViewSpecifications($this->storeName) as $type=>$spec)
             {
                 if($spec['from']==$this->podName){
-                    $this->config->getCollectionForView($this->storeName, $type)
+                    $this->config->getCollectionForView($this->storeName, $type, $this->readPreference)
                         ->remove(array("_id" => array("r"=>$resourceAlias,"c"=>$contextAlias,"type"=>$type)));
                 }
             }

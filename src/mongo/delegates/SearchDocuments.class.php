@@ -15,8 +15,9 @@ class SearchDocuments extends DriverBase
      * @param \MongoCollection $collection
      * @param string $defaultContext
      * @param \Tripod\ITripodStat|null $stat
+     * @param string $readPreference
      */
-    public function __construct($storeName, \MongoCollection $collection, $defaultContext, $stat=null)
+    public function __construct($storeName, \MongoCollection $collection, $defaultContext, $stat=null , $readPreference=\MongoClient::RP_PRIMARY)
     {
         $this->labeller = new Labeller();
         $this->storeName = $storeName;
@@ -24,6 +25,7 @@ class SearchDocuments extends DriverBase
         $this->podName = $collection->getName();
         $this->defaultContext = $defaultContext;
         $this->stat = $stat;
+        $this->readPreference = $readPreference;
     }
 
     /**
