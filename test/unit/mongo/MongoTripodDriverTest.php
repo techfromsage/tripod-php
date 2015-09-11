@@ -870,13 +870,16 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $oG->add_resource_triple($uri_1, $oG->qname_to_uri("rdf:type"), $oG->qname_to_uri("acorn:Resource"));
         $oG->add_resource_triple($uri_2, $oG->qname_to_uri("rdf:type"), $oG->qname_to_uri("acorn:Resource"));
 
+        $stat = $this->getMockStat('example.com',1234,'foo.bar');
+        $statsConfig = $stat->getConfig();
+
         // just updates, all three operations async
         /** @var \Tripod\Mongo\Driver|PHPUnit_Framework_MockObject_MockObject $mockTripod */
         $mockTripod = $this->getMock(
             '\Tripod\Mongo\Driver',
             array(
                 'getDataUpdater',
-                'getComposite'
+                'getComposite',
             ),
             array(
                 'CBD_testing',
@@ -887,16 +890,19 @@ class MongoTripodDriverTest extends MongoTripodTestBase
                         OP_TABLES=>true,
                         OP_VIEWS=>true,
                         OP_SEARCH=>true
-                    )
+                    ),
+                    'statsConfig'=>$statsConfig
                 )
             )
         );
+
+        $mockTripod->setStat($stat);
 
         $mockTripodUpdates = $this->getMock(
             '\Tripod\Mongo\Updates',
             array(
                 'storeChanges',
-                'getDiscoverImpactedSubjects'
+                'getDiscoverImpactedSubjects',
             ),
             array(
                 $mockTripod,
@@ -928,7 +934,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
             'storeName'=>'tripod_php_testing',
             'podName'=>'CBD_testing',
             'contextAlias'=>'http://talisaspire.com/',
-            'statsConfig'=>array()
+            'statsConfig'=>$statsConfig
         );
 
         // getComposite() should only be called if there are synchronous operations
@@ -2067,6 +2073,52 @@ class MongoTripodDriverTest extends MongoTripodTestBase
     }
 
     /** END: saveChangesHooks tests */
+
+    public function testPassStatConfigToTripodConstructor()
+    {
+        $statsDConfig = $this->getStatsDConfig();
+        $opts = array('statsConfig'=>$statsDConfig);
+
+        $mockStat = $this->getMockStat($opts['statsConfig']['config']['host'], $opts['statsConfig']['config']['port'], $opts['statsConfig']['config']['prefix']);
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
+            ->setMethods(array('getStatFromStatFactory'))
+            ->setConstructorArgs(array('CBD_testing', 'tripod_php_testing', $opts))
+            ->getMock();
+
+
+        $tripod->expects($this->once())
+            ->method('getStatFromStatFactory')
+            ->with($opts['statsConfig'])
+            ->will($this->returnValue($mockStat));
+
+        $stat = $tripod->getStat();
+
+        $this->assertInstanceOf('\Tripod\StatsD', $stat);
+
+        $this->assertEquals('example.com', $stat->getHost());
+        $this->assertEquals(1234, $stat->getPort());
+        $this->assertEquals('somePrefix.tripod.group_by_db.tripod_php_testing', $stat->getPrefix());
+
+        $config = $stat->getConfig();
+        $this->assertEquals(
+            array(
+                'host'=>'example.com',
+                'port'=>1234,
+                'prefix'=>'somePrefix.tripod.group_by_db.tripod_php_testing'
+            ),
+            $config['config']
+        );
+
+        $cleanConfig = $tripod->getStatsConfig();
+        $this->assertEquals(
+            array(
+                'host'=>'example.com',
+                'port'=>1234,
+                'prefix'=>'somePrefix'
+            ),
+            $cleanConfig['config']
+        );
+    }
 
 }
 class TestSaveChangesHookA implements \Tripod\IEventHook

@@ -214,9 +214,9 @@ class SearchIndexer extends CompositeBase
                 );
                 $jobOptions = array();
 
-                if(!empty($this->statsConfig))
+                if($this->stat || !empty($this->statsConfig))
                 {
-                    $jobOptions['statsConfig'] = $this->statsConfig;
+                    $jobOptions['statsConfig'] = $this->getStatsConfig();
                 }
 
                 $this->getApplyOperation()->createJob(array($subject), $queueName, $jobOptions);

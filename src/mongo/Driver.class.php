@@ -107,8 +107,8 @@ class Driver extends DriverBase implements \Tripod\IDriver
 
         if(isset($opts['stat']))
         {
-            $this->stat = $opts['stat'];
-            $this->statsConfig = $this->stat->getConfig();
+            $this->statsConfig = $opts['stat']->getConfig();
+            $this->setStat($opts['stat']);
         }
         else
         {

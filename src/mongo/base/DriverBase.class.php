@@ -68,18 +68,7 @@ abstract class DriverBase
     {
         if ($this->stat==null)
         {
-            $stat = $this->getStatFromStatFactory($this->statsConfig);
-
-            if($stat instanceof \Tripod\StatsD)
-            {
-                $prefix = "tripod.group_by_db.".$this->storeName;
-                if (!is_null($stat->getPrefix()))
-                {
-                    $prefix = "{$stat->getPrefix()}.$prefix";
-                }
-                $stat->setPrefix($prefix);
-            }
-            $this->stat = $stat;
+            $this->setStat($this->getStatFromStatFactory($this->statsConfig));
         }
         return $this->stat;
     }
@@ -99,7 +88,39 @@ abstract class DriverBase
      */
     public function setStat(\Tripod\ITripodStat $stat)
     {
+        if($stat instanceof \Tripod\StatsD && strpos($stat->getPrefix(), STAT_PREFIX) === false)
+        {
+            $prefix = STAT_PREFIX.$this->storeName;
+            if (!is_null($stat->getPrefix()))
+            {
+                $prefix = "{$stat->getPrefix()}.$prefix";
+            }
+            $stat->setPrefix($prefix);
+        }
         $this->stat = $stat;
+    }
+
+    /**
+     * Returns that stat object config
+     * @return array
+     */
+    public function getStatsConfig()
+    {
+        $stat = $this->getStat();
+        if($stat)
+        {
+            $statConfig = $stat->getConfig();
+            // Remove any prefix that we've added
+            if(isset($statConfig['config']['prefix']) && strpos($statConfig['config']['prefix'], STAT_PREFIX) !== false)
+            {
+                $statConfig['config']['prefix'] = preg_replace("/\.?".STAT_PREFIX.$this->storeName."/", '', $statConfig['config']['prefix']);
+            }
+        }
+        else
+        {
+            $statConfig = $this->statsConfig;
+        }
+        return $statConfig;
     }
     /**
      * @var Labeller

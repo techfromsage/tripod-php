@@ -91,6 +91,8 @@ define('MONGO_CONNECTION_ERROR','MONGO_CONNECTION_ERROR');
 
 define('STAT_TYPE_COUNT', 'count');
 
+define('STAT_PREFIX', 'tripod.group_by_db.');
+
 //Audit types, statuses
 define('AUDIT_TYPE_REMOVE_INERT_LOCKS', 'REMOVE_INERT_LOCKS');
 define('AUDIT_STATUS_IN_PROGRESS', 'IN_PROGRESS');

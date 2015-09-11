@@ -834,7 +834,7 @@ class Updates extends DriverBase {
                 "storeName" => $this->storeName,
                 "podName" => $this->podName,
                 "contextAlias" => $contextAlias,
-                "statsConfig"=>$this->statsConfig
+                "statsConfig"=>$this->getStatsConfig()
             );
 
 

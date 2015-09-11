@@ -426,6 +426,21 @@ abstract class MongoTripodTestBase extends PHPUnit_Framework_TestCase
 
         return $stat;
     }
+
+    /**
+     * @return array
+     */
+    protected function getStatsDConfig()
+    {
+        return array(
+            'class'=>'Tripod\StatsD',
+            'config'=>array(
+                'host'=>'example.com',
+                'port'=>1234,
+                'prefix'=>'somePrefix'
+            )
+        );
+    }
 }
 
 /**
