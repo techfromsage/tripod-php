@@ -17,6 +17,7 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
      * For mocking
      * @param string $storeName
      * @param string $podName
+     * @param array $opts
      * @return \Tripod\Mongo\Driver
      */
     protected function getTripod($storeName,$podName,$opts=array()) {
@@ -119,10 +120,10 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
 
     /**
      * Actually enqueues the job with Resque. Returns a tracking token. For mocking.
-     * @param $queueName
-     * @param $class
-     * @param $data
-     * @param bool|false $tracking
+     * @param string $queueName
+     * @param string $class
+     * @param mixed $data
+     * @internal param bool|\Tripod\Mongo\Jobs\false $tracking
      * @return string
      */
     protected function enqueue($queueName, $class, $data)
@@ -132,7 +133,8 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
 
     /**
      * Given a token, return the job status. For mocking
-     * @param $token
+     * @param string $token
+     * @return mixed
      */
     protected function getJobStatus($token)
     {

@@ -71,6 +71,8 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
     {
         $this->setArgs();
 
+        $this->args['statsConfig'] = $this->getStatsDConfig();
+
         $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
             ->setMethods(array('getComposite'))
             ->setConstructorArgs(array('CBD_testing', 'tripod_php_testing'))
@@ -112,8 +114,15 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
             ));
 
         $discoverImpactedSubjects = $this->getMockBuilder('\Tripod\Mongo\Jobs\DiscoverImpactedSubjects')
-            ->setMethods(array('getTripod', 'getApplyOperation'))
+            ->setMethods(array('getTripod', 'getApplyOperation', 'getStat'))
             ->getMock();
+
+        $statMock = $this->getMockStat(
+            $this->args['statsConfig']['config']['host'],
+            $this->args['statsConfig']['config']['port'],
+            $this->args['statsConfig']['config']['prefix'],
+            array('timer','custom')
+        );
 
         $discoverImpactedSubjects->expects($this->once())
             ->method('getTripod')
@@ -181,18 +190,37 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
             ->method('getApplyOperation')
             ->will($this->returnValue($applyOperation));
 
+        $discoverImpactedSubjects->expects($this->exactly(5))
+            ->method('getStat')
+            ->will($this->returnValue($statMock));
+
         $applyOperation->expects($this->exactly(2))
             ->method('createJob')
             ->withConsecutive(
                 array(
                     array($viewSubject),
-                    \Tripod\Mongo\Config::getApplyQueueName()
+                    \Tripod\Mongo\Config::getApplyQueueName(),
+                    array('statsConfig'=>$this->args['statsConfig'])
                 ),
                 array(
                    $tableSubjects,
-                    \Tripod\Mongo\Config::getApplyQueueName()
+                    \Tripod\Mongo\Config::getApplyQueueName(),
+                    array('statsConfig'=>$this->args['statsConfig'])
                 )
             );
+
+        $statMock->expects($this->exactly(4))
+            ->method('timer')
+            ->withConsecutive(
+                array(MONGO_QUEUE_DISCOVER_SUBJECT, $this->anything()),
+                array(MONGO_QUEUE_DISCOVER_SUBJECT, $this->anything()),
+                array(MONGO_QUEUE_DISCOVER_SUBJECT, $this->anything()),
+                array(MONGO_QUEUE_DISCOVER_SUCCESS, $this->anything())
+            );
+
+        $statMock->expects($this->once())
+            ->method('custom')
+            ->with(STAT_TYPE_COUNT, MONGO_QUEUE_DISCOVER_JOB . '.' . STAT_TYPE_COUNT, 3);
 
         $discoverImpactedSubjects->perform();
     }

@@ -416,11 +416,12 @@ abstract class MongoTripodTestBase extends PHPUnit_Framework_TestCase
      * @param string $prefix
      * @return PHPUnit_Framework_MockObject_MockObject|\Tripod\StatsD
      */
-    protected function getMockStat($host, $port, $prefix='')
+    protected function getMockStat($host, $port, $prefix='', array $mockedMethods = array())
     {
+        $mockedMethods = array_merge(array('send'), $mockedMethods);
         /** @var \Tripod\StatsD|PHPUnit_Framework_MockObject_MockObject $stat */
         $stat = $this->getMockBuilder('\Tripod\StatsD')
-            ->setMethods(array('send'))
+            ->setMethods($mockedMethods)
             ->setConstructorArgs(array($host, $port, $prefix))
             ->getMock();
 

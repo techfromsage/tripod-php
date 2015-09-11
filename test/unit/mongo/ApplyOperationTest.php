@@ -33,10 +33,17 @@ class ApplyOperationTest extends MongoTripodTestBase
     {
         $this->setArgs();
         $applyOperation = $this->getMockBuilder('\Tripod\Mongo\Jobs\ApplyOperation')
-            ->setMethods(array('createImpactedSubject'))
+            ->setMethods(array('createImpactedSubject', 'getStat'))
             ->getMock();
 
         $applyOperation->args = $this->args;
+
+        $statMock = $this->getMockStat(
+            $this->args['statsConfig']['config']['host'],
+            $this->args['statsConfig']['config']['port'],
+            $this->args['statsConfig']['config']['prefix'],
+            array('timer','custom')
+        );
 
         $subject = $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
             ->setMethods(array('getTripod'))
@@ -69,6 +76,20 @@ class ApplyOperationTest extends MongoTripodTestBase
             ->method('createImpactedSubject')
             ->will($this->returnValue($subject));
 
+        $applyOperation->expects($this->exactly(3))
+            ->method('getStat')
+            ->will($this->returnValue($statMock));
+
+        $statMock->expects($this->once())
+            ->method('custom')
+            ->with(STAT_TYPE_COUNT, MONGO_QUEUE_APPLY_OPERATION_JOB . '.' . STAT_TYPE_COUNT, 1);
+        $statMock->expects($this->exactly(2))
+            ->method('timer')
+            ->withConsecutive(
+                array(MONGO_QUEUE_APPLY_OPERATION.'.'.OP_VIEWS, $this->anything()),
+                array(MONGO_QUEUE_APPLY_OPERATION_SUCCESS, $this->anything())
+            );
+
         $subject->expects($this->once())
             ->method('getTripod')
             ->will($this->returnValue($tripod));
@@ -89,10 +110,16 @@ class ApplyOperationTest extends MongoTripodTestBase
     {
         $this->setArgs();
         $applyOperation = $this->getMockBuilder('\Tripod\Mongo\Jobs\ApplyOperation')
-            ->setMethods(array('createImpactedSubject'))
+            ->setMethods(array('createImpactedSubject', 'getStat'))
             ->getMock();
 
-        $this->setArgs();
+        $statMock = $this->getMockStat(
+            $this->args['statsConfig']['config']['host'],
+            $this->args['statsConfig']['config']['port'],
+            $this->args['statsConfig']['config']['prefix'],
+            array('timer','custom')
+        );
+
         $impactedSubject = new \Tripod\Mongo\ImpactedSubject(
             array(
                 _ID_RESOURCE=>'http://example.com/resources/foo',
@@ -103,7 +130,7 @@ class ApplyOperationTest extends MongoTripodTestBase
             'CBD_testing',
             array('t_resource')
         );
-        $this->args['subject'] = $impactedSubject->toArray();
+        $this->args['subjects'] = array($impactedSubject->toArray());
 
         $applyOperation->args = $this->args;
 
@@ -138,6 +165,21 @@ class ApplyOperationTest extends MongoTripodTestBase
             ->method('createImpactedSubject')
             ->will($this->returnValue($subject));
 
+        $applyOperation->expects($this->exactly(3))
+            ->method('getStat')
+            ->will($this->returnValue($statMock));
+
+        $statMock->expects($this->once())
+            ->method('custom')
+            ->with(STAT_TYPE_COUNT, MONGO_QUEUE_APPLY_OPERATION_JOB . '.' . STAT_TYPE_COUNT, 1);
+        $statMock->expects($this->exactly(2))
+            ->method('timer')
+            ->withConsecutive(
+                array(MONGO_QUEUE_APPLY_OPERATION.'.'.OP_TABLES, $this->anything()),
+                array(MONGO_QUEUE_APPLY_OPERATION_SUCCESS, $this->anything())
+            );
+
+
         $subject->expects($this->once())
             ->method('getTripod')
             ->will($this->returnValue($tripod));
@@ -158,10 +200,16 @@ class ApplyOperationTest extends MongoTripodTestBase
     {
         $this->setArgs();
         $applyOperation = $this->getMockBuilder('\Tripod\Mongo\Jobs\ApplyOperation')
-            ->setMethods(array('createImpactedSubject'))
+            ->setMethods(array('createImpactedSubject', 'getStat'))
             ->getMock();
 
-        $this->setArgs();
+        $statMock = $this->getMockStat(
+            $this->args['statsConfig']['config']['host'],
+            $this->args['statsConfig']['config']['port'],
+            $this->args['statsConfig']['config']['prefix'],
+            array('timer','custom')
+        );
+
         $impactedSubject = new \Tripod\Mongo\ImpactedSubject(
             array(
                 _ID_RESOURCE=>'http://example.com/resources/foo',
@@ -172,7 +220,7 @@ class ApplyOperationTest extends MongoTripodTestBase
             'CBD_testing',
             array('t_resource')
         );
-        $this->args['subject'] = $impactedSubject->toArray();
+        $this->args['subjects'] = array($impactedSubject->toArray());
 
         $applyOperation->args = $this->args;
 
@@ -203,6 +251,21 @@ class ApplyOperationTest extends MongoTripodTestBase
         $applyOperation->expects($this->once())
             ->method('createImpactedSubject')
             ->will($this->returnValue($subject));
+
+        $applyOperation->expects($this->exactly(3))
+            ->method('getStat')
+            ->will($this->returnValue($statMock));
+
+        $statMock->expects($this->once())
+            ->method('custom')
+            ->with(STAT_TYPE_COUNT, MONGO_QUEUE_APPLY_OPERATION_JOB . '.' . STAT_TYPE_COUNT, 1);
+        $statMock->expects($this->exactly(2))
+            ->method('timer')
+            ->withConsecutive(
+                array(MONGO_QUEUE_APPLY_OPERATION.'.'.OP_SEARCH, $this->anything()),
+                array(MONGO_QUEUE_APPLY_OPERATION_SUCCESS, $this->anything())
+            );
+
 
         $subject->expects($this->once())
             ->method('getTripod')
@@ -358,6 +421,9 @@ class ApplyOperationTest extends MongoTripodTestBase
         $applyOperation->createJob(array($impactedSubject), $queueName);
     }
 
+    /**
+     * Sets job arguments
+     */
     protected function setArgs()
     {
         $subject = new \Tripod\Mongo\ImpactedSubject(
@@ -372,7 +438,8 @@ class ApplyOperationTest extends MongoTripodTestBase
 
         $this->args = array(
             'tripodConfig'=>\Tripod\Mongo\Config::getConfig(),
-            'subjects'=>array($subject->toArray())
+            'subjects'=>array($subject->toArray()),
+            'statsConfig'=>$this->getStatsDConfig()
         );
     }
 }
