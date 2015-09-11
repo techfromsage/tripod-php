@@ -1,7 +1,10 @@
 {
-    "stat": {
-        "host" : "localhost",
-        "port" : 8125
+    "statsConfig": {
+        "class":"Tripod\StatsD",
+        "config": {
+            "host" : "localhost",
+            "port" : 8125
+        }
     },
     "tripod" : {
         "async" : {
