@@ -102,7 +102,7 @@ abstract class DriverBase
     }
 
     /**
-     * Returns that stat object config
+     * Returns stat object config
      * @return array
      */
     public function getStatsConfig()
