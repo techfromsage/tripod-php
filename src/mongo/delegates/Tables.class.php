@@ -260,7 +260,6 @@ class Tables extends CompositeBase
         $t->stop();
         $this->timingLog(MONGO_TABLE_ROWS, array('duration'=>$t->result(), 'query'=>$filter, 'collection'=>TABLE_ROWS_COLLECTION));
         $this->getStat()->timer(MONGO_TABLE_ROWS.".$tableSpecId",$t->result());
-        $this->getStat()->increment(MONGO_TABLE_ROWS.".$tableSpecId");
 
         return array(
             "head"=>array(
@@ -610,7 +609,6 @@ class Tables extends CompositeBase
             'filter'=>$filter,
             'from'=>$from));
         $this->getStat()->timer(MONGO_CREATE_TABLE.".$tableType",$t->result());
-        $this->getStat()->increment(MONGO_CREATE_TABLE.".$tableType");
     }
 
     /**
