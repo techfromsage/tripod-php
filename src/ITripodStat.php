@@ -10,9 +10,10 @@ interface ITripodStat
 {
     /**
      * @param string $operation
+     * @param int|number $inc Amount to increment by
      * @return mixed
      */
-    public function increment($operation);
+    public function increment($operation, $inc=1);
 
     /**
      * @param string $operation
@@ -20,4 +21,15 @@ interface ITripodStat
      * @return mixed
      */
     public function timer($operation,$duration);
+
+    /**
+     * @return array
+     */
+    public function getConfig();
+
+    /**
+     * @param array $config
+     * @return ITripodStat
+     */
+    public static function createFromConfig(array $config);
 }

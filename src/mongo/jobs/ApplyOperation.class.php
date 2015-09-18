@@ -24,24 +24,40 @@ class ApplyOperation extends JobBase {
 
             $this->validateArgs();
 
+            $statsConfig = array();
+            if(isset($this->args['statsConfig']))
+            {
+                $statsConfig['statsConfig'] = $this->args['statsConfig'];
+            }
+
             // set the config to what is received
             \Tripod\Mongo\Config::setConfig($this->args[self::TRIPOD_CONFIG_KEY]);
 
+            $this->getStat()->increment(MONGO_QUEUE_APPLY_OPERATION_JOB . '.' . SUBJECT_COUNT, count($this->args[self::SUBJECTS_KEY]));
+
             foreach($this->args[self::SUBJECTS_KEY] as $subject)
             {
+                $opTimer = new \Tripod\Timer();
+                $opTimer->start();
+
                 $impactedSubject = $this->createImpactedSubject($subject);
                 $impactedSubject->update();
+
+                $opTimer->stop();
+                // stat time taken to perform operation for the given subject
+                $this->getStat()->timer(MONGO_QUEUE_APPLY_OPERATION.'.'.$subject['operation'], $opTimer->result());
             }
 
 
             $timer->stop();
-            // stat time taken to process item, from time it was created (queued)
+            // stat time taken to process job, from time it was picked up
             $this->getStat()->timer(MONGO_QUEUE_APPLY_OPERATION_SUCCESS,$timer->result());
 
             $this->debugLog("ApplyOperation::perform() done in {$timer->result()}ms");
         }
         catch (\Exception $e)
         {
+            $this->getStat()->increment(MONGO_QUEUE_APPLY_OPERATION_FAIL);
             $this->errorLog("Caught exception in ".get_class($this).": ".$e->getMessage());
             throw $e;
         }
@@ -50,8 +66,9 @@ class ApplyOperation extends JobBase {
     /**
      * @param \Tripod\Mongo\ImpactedSubject[] $subjects
      * @param string|null $queueName
+     * @param array $otherData
      */
-    public function createJob(Array $subjects, $queueName=null)
+    public function createJob(Array $subjects, $queueName=null,$otherData=array())
     {
         if(!$queueName)
         {
@@ -67,7 +84,7 @@ class ApplyOperation extends JobBase {
             self::TRIPOD_CONFIG_KEY=>\Tripod\Mongo\Config::getConfig()
         );
 
-        $this->submitJob($queueName,get_class($this),$data);
+        $this->submitJob($queueName,get_class($this),array_merge($otherData,$data));
     }
 
     /**

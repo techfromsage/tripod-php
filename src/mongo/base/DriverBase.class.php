@@ -48,6 +48,9 @@ abstract class DriverBase
      */
     protected $stat = null;
 
+    /** @var array  */
+    protected $statsConfig = array();
+
     /**
      * @var \MongoDB
      */
@@ -63,9 +66,63 @@ abstract class DriverBase
      */
     public function getStat()
     {
-        return ($this->stat==null) ? NoStat::getInstance() : $this->stat;
+        if ($this->stat==null)
+        {
+            $this->setStat($this->getStatFromStatFactory($this->statsConfig));
+        }
+        return $this->stat;
     }
 
+    /**
+     * For mocking out the creation of stat objects
+     * @param array $config
+     * @return \Tripod\ITripodStat
+     */
+    protected function getStatFromStatFactory(array $config)
+    {
+        return \Tripod\TripodStatFactory::create($this->statsConfig);
+    }
+
+    /**
+     * @param \Tripod\ITripodStat $stat
+     */
+    public function setStat(\Tripod\ITripodStat $stat)
+    {
+        // TODO: how do we decouple this and still allow StatsD to know which db we're using?
+        if($stat instanceof \Tripod\StatsD && strpos($stat->getPrefix(), STAT_PREFIX) === false)
+        {
+            $prefix = STAT_PREFIX.$this->storeName;
+            if (!is_null($stat->getPrefix()))
+            {
+                $prefix = "{$stat->getPrefix()}.$prefix";
+            }
+            $stat->setPrefix($prefix);
+        }
+        $this->stat = $stat;
+    }
+
+    /**
+     * Returns stat object config
+     * @return array
+     */
+    public function getStatsConfig()
+    {
+        $stat = $this->getStat();
+        if($stat)
+        {
+            $statConfig = $stat->getConfig();
+            // Remove any prefix that we've added
+            if(isset($statConfig['config']['prefix']) && strpos($statConfig['config']['prefix'], STAT_PREFIX) !== false)
+            {
+                $statConfig['config']['prefix'] = preg_replace("/\.?".STAT_PREFIX.$this->storeName."/", '', $statConfig['config']['prefix']);
+            }
+        }
+        else
+        {
+            $statConfig = $this->statsConfig;
+        }
+        return $statConfig;
+    }
     /**
      * @var Labeller
      */
@@ -195,6 +252,7 @@ abstract class DriverBase
     {
         return $this->podName;
     }
+
 
     ///////// LOGGING METHODS BELOW ////////
 
@@ -425,8 +483,10 @@ final class NoStat implements \Tripod\ITripodStat
 
     /**
      * @param string $operation
+     * @param int|number $inc
+     * @return void
      */
-    public function increment($operation)
+    public function increment($operation, $inc = 1)
     {
         // do nothing
     }
@@ -434,10 +494,19 @@ final class NoStat implements \Tripod\ITripodStat
     /**
      * @param string $operation
      * @param number $duration
+     * @return void
      */
     public function timer($operation, $duration)
     {
         // do nothing
+    }
+
+    /**
+     * @return array
+     */
+    public function getConfig()
+    {
+        return array();
     }
 
     /**
@@ -450,6 +519,15 @@ final class NoStat implements \Tripod\ITripodStat
             self::$instance = new NoStat();
         }
         return self::$instance;
+    }
+
+    /**
+     * @param array $config
+     * @return NoStat
+     */
+    public static function createFromConfig(array $config = array())
+    {
+        return self::getInstance();
     }
 }
 

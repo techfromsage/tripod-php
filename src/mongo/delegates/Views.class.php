@@ -167,6 +167,7 @@ class Views extends CompositeBase
         $graph = $this->fetchGraph($query,MONGO_VIEW,$viewCollection);
         if ($graph->is_empty())
         {
+            $this->getStat()->increment(MONGO_VIEW_CACHE_MISS.".$viewType");
             $viewSpec = Config::getInstance()->getViewSpecification($this->storeName, $viewType);
             if($viewSpec == null)
             {
@@ -483,7 +484,13 @@ class Views extends CompositeBase
                         array($viewId)
                     );
 
-                    $this->getApplyOperation()->createJob(array($subject), $queueName);
+                    $jobOptions = array();
+                    if($this->stat || !empty($this->statsConfig))
+                    {
+                        $jobOptions['statsConfig'] = $this->getStatsConfig();
+                    }
+
+                    $this->getApplyOperation()->createJob(array($subject), $queueName, $jobOptions);
                 }
                 else
                 {

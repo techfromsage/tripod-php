@@ -290,9 +290,8 @@ class Tables extends CompositeBase
 
         $t->stop();
         $query = array('distinct'=>$fieldName, 'filter'=>$filter);
-        $this->timingLog(MONGO_TABLE_ROWS, array('duration'=>$t->result(), 'query'=>$query, 'collection'=>TABLE_ROWS_COLLECTION));
-        $this->getStat()->timer(MONGO_TABLE_ROWS.".$tableSpecId",$t->result());
-
+        $this->timingLog(MONGO_TABLE_ROWS_DISTINCT, array('duration'=>$t->result(), 'query'=>$query, 'collection'=>TABLE_ROWS_COLLECTION));
+        $this->getStat()->timer(MONGO_TABLE_ROWS_DISTINCT.".$tableSpecId",$t->result());
         return array(
             "head"=>array(
                 "count"=>count($results)
@@ -564,7 +563,15 @@ class Tables extends CompositeBase
                     $from,
                     array($tableType)
                 );
-                $this->getApplyOperation()->createJob(array($subject), $queueName);
+
+                $jobOptions = array();
+
+                if($this->stat || !empty($this->statsConfig))
+                {
+                    $jobOptions['statsConfig'] = $this->getStatsConfig();
+                }
+
+                $this->getApplyOperation()->createJob(array($subject), $queueName, $jobOptions);
             }
             else
             {
@@ -612,6 +619,7 @@ class Tables extends CompositeBase
      *
      * @param \MongoCollection $collection
      * @param array $generatedRow The rows to save.
+     * @throws \Exception
      */
     protected function truncatingSave(\MongoCollection $collection, array $generatedRow)
     {

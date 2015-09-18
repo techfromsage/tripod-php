@@ -17,17 +17,19 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
      * For mocking
      * @param string $storeName
      * @param string $podName
+     * @param array $opts
      * @return \Tripod\Mongo\Driver
      */
-    protected function getTripod($storeName,$podName) {
+    protected function getTripod($storeName,$podName,$opts=array()) {
+        $opts = array_merge($opts,array(
+            'stat'=>$this->getStat(),
+            'readPreference'=>\MongoClient::RP_PRIMARY // important: make sure we always read from the primary
+        ));
         if ($this->tripod == null) {
             $this->tripod = new \Tripod\Mongo\Driver(
                 $podName,
                 $storeName,
-                array(
-                    'stat'=>$this->getStat(),
-                    'readPreference'=>\MongoClient::RP_PRIMARY // important: make sure we always read from the primary
-                )
+                $opts
             );
         }
         return $this->tripod;
@@ -118,10 +120,10 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
 
     /**
      * Actually enqueues the job with Resque. Returns a tracking token. For mocking.
-     * @param $queueName
-     * @param $class
-     * @param $data
-     * @param bool|false $tracking
+     * @param string $queueName
+     * @param string $class
+     * @param mixed $data
+     * @internal param bool|\Tripod\Mongo\Jobs\false $tracking
      * @return string
      */
     protected function enqueue($queueName, $class, $data)
@@ -131,12 +133,26 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
 
     /**
      * Given a token, return the job status. For mocking
-     * @param $token
+     * @param string $token
+     * @return mixed
      */
     protected function getJobStatus($token)
     {
         $status = new \Resque_Job_Status($token);
         return $status->get();
+    }
+
+    /**
+     * @return \Tripod\ITripodStat
+     */
+    public function getStat()
+    {
+        if(!isset($this->statsConfig) && isset($this->args['statsConfig']))
+        {
+
+            $this->statsConfig = $this->args['statsConfig'];
+        }
+        return parent::getStat();
     }
 }
 

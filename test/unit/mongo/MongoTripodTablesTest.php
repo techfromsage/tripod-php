@@ -277,7 +277,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $mockTables->expects($this->once())->method('deleteTableRowsForResource')->with("http://foo","context");
         $mockTables->expects($this->never())->method('generateTableRowsForType');
 
-        $mockTables->update(new \Tripod\Mongo\ImpactedSubject(array("r"=>"http://foo","c"=>"context"),OP_TABLES,"foo","bar",array("t_table"),true));
+        $mockTables->update(new \Tripod\Mongo\ImpactedSubject(array("r"=>"http://foo","c"=>"context"),OP_TABLES,"foo","bar",array("t_table")));
     }
 
     public function testUpdateWillGenerateRows()
@@ -287,7 +287,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $mockTables->expects($this->once())->method('generateTableRowsForResource')->with("http://foo","context");
         $mockTables->expects($this->never())->method('deleteTableRowsForResource');
 
-        $mockTables->update(new \Tripod\Mongo\ImpactedSubject(array("r"=>"http://foo","c"=>"context"),OP_TABLES,"foo","bar",array("t_table"),false));
+        $mockTables->update(new \Tripod\Mongo\ImpactedSubject(array("r"=>"http://foo","c"=>"context"),OP_TABLES,"foo","bar",array("t_table")));
     }
 
     public function testGenerateTableRows()
@@ -350,7 +350,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
     public function testGenerateTableRowsForResourceUnnamespaced()
     {
-        $this->tripodTables->update(new \Tripod\Mongo\ImpactedSubject(array("r"=>"http://basedata.com/b/2","c"=>"http://basedata.com/b/DefaultGraph"),OP_TABLES,$this->tripodTables->getStoreName(),$this->tripodTables->getPodName(),array("t_work2"),false));
+        $this->tripodTables->update(new \Tripod\Mongo\ImpactedSubject(array("r"=>"http://basedata.com/b/2","c"=>"http://basedata.com/b/DefaultGraph"),OP_TABLES,$this->tripodTables->getStoreName(),$this->tripodTables->getPodName(),array("t_work2")));
 
         $rows = $this->tripodTables->getTableRows("t_work2");
 
@@ -358,7 +358,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
     }
     public function testGenerateTableRowsForResourceNamespaced()
     {
-        $this->tripodTables->update(new \Tripod\Mongo\ImpactedSubject(array("r"=>"baseData:2","c"=>"baseData:DefaultGraph"),OP_TABLES,$this->tripodTables->getStoreName(),$this->tripodTables->getPodName(),array("t_work2"),false));
+        $this->tripodTables->update(new \Tripod\Mongo\ImpactedSubject(array("r"=>"baseData:2","c"=>"baseData:DefaultGraph"),OP_TABLES,$this->tripodTables->getStoreName(),$this->tripodTables->getPodName(),array("t_work2")));
 
         $rows = $this->tripodTables->getTableRows("t_work2");
 
@@ -366,7 +366,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
     }
     public function testGenerateTableRowsForResourceContextNamespaced()
     {
-        $this->tripodTables->update(new \Tripod\Mongo\ImpactedSubject(array("r"=>"http://basedata.com/b/2","c"=>"baseData:DefaultGraph"),OP_TABLES,$this->tripodTables->getStoreName(),$this->tripodTables->getPodName(),array("t_work2"),false));
+        $this->tripodTables->update(new \Tripod\Mongo\ImpactedSubject(array("r"=>"http://basedata.com/b/2","c"=>"baseData:DefaultGraph"),OP_TABLES,$this->tripodTables->getStoreName(),$this->tripodTables->getPodName(),array("t_work2")));
 
         $rows = $this->tripodTables->getTableRows("t_work2");
 
@@ -374,7 +374,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
     }
     public function testGenerateTableRowsForResourceResourceNamespaced()
     {
-        $this->tripodTables->update(new \Tripod\Mongo\ImpactedSubject(array("r"=>"baseData:2","c"=>"http://basedata.com/b/DefaultGraph"),OP_TABLES,$this->tripodTables->getStoreName(),$this->tripodTables->getPodName(),array("t_work2"),false));
+        $this->tripodTables->update(new \Tripod\Mongo\ImpactedSubject(array("r"=>"baseData:2","c"=>"http://basedata.com/b/DefaultGraph"),OP_TABLES,$this->tripodTables->getStoreName(),$this->tripodTables->getPodName(),array("t_work2")));
 
         $rows = $this->tripodTables->getTableRows("t_work2");
 

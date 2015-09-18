@@ -31,19 +31,6 @@ class Driver extends DriverBase implements \Tripod\IDriver
      */
     private $search_indexer = null;
 
-
-    /**
-     * @var array The original read preference gets stored here
-     *            when changing for a write.
-     */
-    private $originalCollectionReadPreference = array();
-
-    /**
-     * @var array The original read preference gets stored here
-     *            when changing for a write.
-     */
-    private $originalDbReadPreference = array();
-
     /**
      * @var array
      */
@@ -76,7 +63,7 @@ class Driver extends DriverBase implements \Tripod\IDriver
         $opts = array_merge(array(
                 'defaultContext'=>null,
                 OP_ASYNC=>array(OP_VIEWS=>false,OP_TABLES=>true,OP_SEARCH=>true),
-                'stat'=>null,
+                'statsConfig'=>array(),
                 'readPreference'=>\MongoClient::RP_PRIMARY_PREFERRED,
                 'retriesToGetLock' => 20)
             ,$opts);
@@ -111,14 +98,22 @@ class Driver extends DriverBase implements \Tripod\IDriver
         }
 
         // if there is no es configured then remove OP_SEARCH from async (no point putting these onto the queue) TRI-19
-        if($this->config->getSearchDocumentSpecifications($this->storeName) == null) {
+        if($this->config->getSearchDocumentSpecifications($this->storeName) == null)
+        {
             unset($async[OP_SEARCH]);
         }
 
         $this->async = $async;
 
-        // is a custom stat tracker passed in?
-        if ($opts['stat']!=null) $this->stat = $opts['stat'];
+        if(isset($opts['stat']))
+        {
+            $this->statsConfig = $opts['stat']->getConfig();
+            $this->setStat($opts['stat']);
+        }
+        else
+        {
+            $this->statsConfig = $opts['statsConfig'];
+        }
 
         // Set the read preference if passed in
         if ($opts['readPreference']) $this->readPreference = $opts['readPreference'];
@@ -680,7 +675,8 @@ class Driver extends DriverBase implements \Tripod\IDriver
                 OP_ASYNC=>$this->async,
                 'stat'=>$this->stat,
                 'readPreference'=>$readPreference['type'],
-                'retriesToGetLock' => $this->retriesToGetLock
+                'retriesToGetLock' => $this->retriesToGetLock,
+                'statsConfig'=>$this->statsConfig
             );
 
             $this->dataUpdater = new Updates($this, $opts);

@@ -133,8 +133,10 @@ class Updates extends DriverBase {
 
         $this->async = $async;
 
-        // is a custom stat tracker passed in?
-        if ($opts['stat']!=null) $this->stat = $opts['stat'];
+        if (isset($opts['statsConfig']))
+        {
+            $this->statsConfig = $opts['statsConfig'];
+        }
     }
 
     /**
@@ -831,8 +833,10 @@ class Updates extends DriverBase {
                 "tripodConfig" => Config::getConfig(),
                 "storeName" => $this->storeName,
                 "podName" => $this->podName,
-                "contextAlias" => $contextAlias
+                "contextAlias" => $contextAlias,
+                "statsConfig"=>$this->getStatsConfig()
             );
+
 
             if(isset($this->queueName))
             {

@@ -213,8 +213,14 @@ class SearchIndexer extends CompositeBase
                     $from,
                     array($searchDocumentType)
                 );
+                $jobOptions = array();
 
-                $this->getApplyOperation()->createJob(array($subject), $queueName);
+                if($this->stat || !empty($this->statsConfig))
+                {
+                    $jobOptions['statsConfig'] = $this->getStatsConfig();
+                }
+
+                $this->getApplyOperation()->createJob(array($subject), $queueName, $jobOptions);
             }
             else
             {
@@ -234,7 +240,6 @@ class SearchIndexer extends CompositeBase
             'filter'=>$filter,
             'from'=>$from));
         $this->getStat()->timer(MONGO_CREATE_SEARCH_DOC.".$searchDocumentType",$t->result());
-        
     }
 
     /**
