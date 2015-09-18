@@ -71,9 +71,10 @@ class Tables extends CompositeBase
      * @param \MongoCollection $collection
      * @param string $defaultContext
      * @param \Tripod\ITripodStat|null $stat
+     * @param string $readPreference
      * todo: MongoCollection -> podName
      */
-    public function __construct($storeName,\MongoCollection $collection,$defaultContext,$stat=null)
+    public function __construct($storeName,\MongoCollection $collection,$defaultContext,$stat=null,$readPreference=\MongoClient::RP_PRIMARY)
     {
         $this->labeller = new Labeller();
         $this->storeName = $storeName;
@@ -82,7 +83,7 @@ class Tables extends CompositeBase
         $this->config = Config::getInstance();
         $this->defaultContext = $this->labeller->uri_to_alias($defaultContext); // make sure default context is qnamed if applicable
         $this->stat = $stat;
-        $this->readPreference = \MongoClient::RP_PRIMARY;  // todo: figure out where this should go.
+        $this->readPreference = $readPreference;
     }
 
     /**
@@ -243,7 +244,7 @@ class Tables extends CompositeBase
 
         $filter["_id." . _ID_TYPE] = $tableSpecId;
 
-        $collection = $this->config->getCollectionForTable($this->storeName, $tableSpecId);
+        $collection = $this->config->getCollectionForTable($this->storeName, $tableSpecId, $this->readPreference);
         $results = (empty($limit)) ? $collection->find($filter) : $collection->find($filter)->skip($offset)->limit($limit);
         if (isset($sortBy))
         {
@@ -252,8 +253,6 @@ class Tables extends CompositeBase
         $rows = array();
         foreach ($results as $doc)
         {
-//            $log = new \Monolog\Logger("TEST");
-//            $log->error("Doc",$doc);
             if (array_key_exists(_IMPACT_INDEX,$doc['value'])) unset($doc['value'][_IMPACT_INDEX]); // remove impact index from client
             $rows[] = $doc['value'];
         }
@@ -287,7 +286,7 @@ class Tables extends CompositeBase
 
         $filter['_id.'._ID_TYPE] = $tableSpecId;
 
-        $collection = $this->config->getCollectionForTable($this->storeName, $tableSpecId);
+        $collection = $this->config->getCollectionForTable($this->storeName, $tableSpecId, $this->readPreference);
         $results = $collection->distinct($fieldName, $filter);
 
         $t->stop();

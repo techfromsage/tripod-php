@@ -137,7 +137,7 @@ class DiscoverImpactedSubjects extends JobBase {
             $timer->stop();
             $this->getStat()->timer(MONGO_QUEUE_DISCOVER_SUCCESS,$timer->result());
             $this->debugLog("DiscoverImpactedSubjects::perform() done in {$timer->result()}ms");
-            $this->getStat()->custom(STAT_TYPE_COUNT, MONGO_QUEUE_DISCOVER_JOB . '.' . STAT_TYPE_COUNT, $subjectCount);
+            $this->getStat()->increment(MONGO_QUEUE_DISCOVER_JOB . '.' . SUBJECT_COUNT, $subjectCount);
         }
         catch(\Exception $e)
         {

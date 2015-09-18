@@ -29,13 +29,14 @@ class StatsD implements ITripodStat
 
     /**
      * @param string $operation
+     * @param int $inc
      * @return void
      */
-    public function increment($operation)
+    public function increment($operation, $inc=1)
     {
         $key = (empty($this->prefix)) ? $operation : "{$this->prefix}.$operation";
         $this->send(
-            array($key=>"1|c")
+            array($key=>$inc."|c")
         );
     }
 
@@ -64,19 +65,6 @@ class StatsD implements ITripodStat
         $this->send(
             array($key=>$value."|g")
         );
-    }
-
-    /**
-     * Route all 'custom' metrics to gauge()
-     *
-     * @param string $function
-     * @param string $operation
-     * @param mixed $value
-     * @return void
-     */
-    public function custom($function, $operation, $value)
-    {
-        $this->gauge($operation, $value);
     }
 
     /**

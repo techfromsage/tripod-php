@@ -29,9 +29,10 @@ class SearchIndexer extends CompositeBase
 
     /**
      * @param \Tripod\Mongo\Driver $tripod
+     * @param string $readPreference
      * @throws \Tripod\Exceptions\SearchException
      */
-    public function __construct(\Tripod\Mongo\Driver $tripod)
+    public function __construct(\Tripod\Mongo\Driver $tripod, $readPreference=\MongoClient::RP_PRIMARY)
     {
         $this->tripod = $tripod;
         $this->storeName = $tripod->getStoreName();
@@ -46,7 +47,7 @@ class SearchIndexer extends CompositeBase
         } else {
             throw new \Tripod\Exceptions\SearchException("Did not recognise Search Provider, or could not find class: $provider");
         }
-        $this->readPreference = \MongoClient::RP_PRIMARY;  // todo: figure out where this should go.
+        $this->readPreference = $readPreference;
     }
 
     /**

@@ -145,21 +145,4 @@ class MongoTripodStatTest extends MongoTripodTestBase
 
         $stat->gauge('FOO.BAR', 'abc');
     }
-
-    public function testStatsDCustomIsJustAliasForGauge()
-    {
-        $statConfig = $this->getStatsDConfig();
-
-        $stat = $this->getMockBuilder('\Tripod\StatsD')
-            ->setMethods(array('gauge'))
-            ->setConstructorArgs(array($statConfig['config']['host'], $statConfig['config']['port'], $statConfig['config']['prefix']))
-            ->getMock();
-
-        $stat->expects($this->exactly(2))
-            ->method('gauge')
-            ->with('FOO.BAR','abc');
-
-        $stat->custom('wibble', 'FOO.BAR', 'abc');
-        $stat->custom('foobaz', 'FOO.BAR', 'abc');
-    }
 }

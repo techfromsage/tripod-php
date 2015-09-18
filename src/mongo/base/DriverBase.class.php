@@ -88,6 +88,7 @@ abstract class DriverBase
      */
     public function setStat(\Tripod\ITripodStat $stat)
     {
+        // TODO: how do we decouple this and still allow StatsD to know which db we're using?
         if($stat instanceof \Tripod\StatsD && strpos($stat->getPrefix(), STAT_PREFIX) === false)
         {
             $prefix = STAT_PREFIX.$this->storeName;
@@ -482,9 +483,10 @@ final class NoStat implements \Tripod\ITripodStat
 
     /**
      * @param string $operation
+     * @param int|number $inc
      * @return void
      */
-    public function increment($operation)
+    public function increment($operation, $inc = 1)
     {
         // do nothing
     }
@@ -495,17 +497,6 @@ final class NoStat implements \Tripod\ITripodStat
      * @return void
      */
     public function timer($operation, $duration)
-    {
-        // do nothing
-    }
-
-    /**
-     * @param string $function
-     * @param string $operation
-     * @param mixed $value
-     * @return void
-     */
-    public function custom($function, $operation, $value)
     {
         // do nothing
     }

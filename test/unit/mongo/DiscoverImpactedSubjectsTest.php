@@ -121,7 +121,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
             $this->args['statsConfig']['config']['host'],
             $this->args['statsConfig']['config']['port'],
             $this->args['statsConfig']['config']['prefix'],
-            array('timer','custom')
+            array('timer','increment')
         );
 
         $discoverImpactedSubjects->expects($this->once())
@@ -219,8 +219,8 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
             );
 
         $statMock->expects($this->once())
-            ->method('custom')
-            ->with(STAT_TYPE_COUNT, MONGO_QUEUE_DISCOVER_JOB . '.' . STAT_TYPE_COUNT, 3);
+            ->method('increment')
+            ->with(MONGO_QUEUE_DISCOVER_JOB . '.' . SUBJECT_COUNT, 3);
 
         $discoverImpactedSubjects->perform();
     }

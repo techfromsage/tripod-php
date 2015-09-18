@@ -10,9 +10,10 @@ interface ITripodStat
 {
     /**
      * @param string $operation
+     * @param int|number $inc Amount to increment by
      * @return mixed
      */
-    public function increment($operation);
+    public function increment($operation, $inc=1);
 
     /**
      * @param string $operation
@@ -20,16 +21,6 @@ interface ITripodStat
      * @return mixed
      */
     public function timer($operation,$duration);
-
-    /**
-     * A custom metric defined by the Stat class
-     *
-     * @param string $function The internal function name to use to record the stat
-     * @param string $operation
-     * @param mixed $value
-     * @return mixed
-     */
-    public function custom($function, $operation, $value);
 
     /**
      * @return array

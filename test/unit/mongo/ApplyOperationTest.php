@@ -42,7 +42,7 @@ class ApplyOperationTest extends MongoTripodTestBase
             $this->args['statsConfig']['config']['host'],
             $this->args['statsConfig']['config']['port'],
             $this->args['statsConfig']['config']['prefix'],
-            array('timer','custom')
+            array('timer','increment')
         );
 
         $subject = $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
@@ -81,8 +81,8 @@ class ApplyOperationTest extends MongoTripodTestBase
             ->will($this->returnValue($statMock));
 
         $statMock->expects($this->once())
-            ->method('custom')
-            ->with(STAT_TYPE_COUNT, MONGO_QUEUE_APPLY_OPERATION_JOB . '.' . STAT_TYPE_COUNT, 1);
+            ->method('increment')
+            ->with(MONGO_QUEUE_APPLY_OPERATION_JOB . '.' . SUBJECT_COUNT, 1);
         $statMock->expects($this->exactly(2))
             ->method('timer')
             ->withConsecutive(
@@ -117,7 +117,7 @@ class ApplyOperationTest extends MongoTripodTestBase
             $this->args['statsConfig']['config']['host'],
             $this->args['statsConfig']['config']['port'],
             $this->args['statsConfig']['config']['prefix'],
-            array('timer','custom')
+            array('timer','increment')
         );
 
         $impactedSubject = new \Tripod\Mongo\ImpactedSubject(
@@ -170,8 +170,8 @@ class ApplyOperationTest extends MongoTripodTestBase
             ->will($this->returnValue($statMock));
 
         $statMock->expects($this->once())
-            ->method('custom')
-            ->with(STAT_TYPE_COUNT, MONGO_QUEUE_APPLY_OPERATION_JOB . '.' . STAT_TYPE_COUNT, 1);
+            ->method('increment')
+            ->with(MONGO_QUEUE_APPLY_OPERATION_JOB . '.' . SUBJECT_COUNT, 1);
         $statMock->expects($this->exactly(2))
             ->method('timer')
             ->withConsecutive(
@@ -207,7 +207,7 @@ class ApplyOperationTest extends MongoTripodTestBase
             $this->args['statsConfig']['config']['host'],
             $this->args['statsConfig']['config']['port'],
             $this->args['statsConfig']['config']['prefix'],
-            array('timer','custom')
+            array('timer','increment')
         );
 
         $impactedSubject = new \Tripod\Mongo\ImpactedSubject(
@@ -257,8 +257,8 @@ class ApplyOperationTest extends MongoTripodTestBase
             ->will($this->returnValue($statMock));
 
         $statMock->expects($this->once())
-            ->method('custom')
-            ->with(STAT_TYPE_COUNT, MONGO_QUEUE_APPLY_OPERATION_JOB . '.' . STAT_TYPE_COUNT, 1);
+            ->method('increment')
+            ->with(MONGO_QUEUE_APPLY_OPERATION_JOB . '.' . SUBJECT_COUNT, 1);
         $statMock->expects($this->exactly(2))
             ->method('timer')
             ->withConsecutive(

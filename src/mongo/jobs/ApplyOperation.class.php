@@ -33,7 +33,7 @@ class ApplyOperation extends JobBase {
             // set the config to what is received
             \Tripod\Mongo\Config::setConfig($this->args[self::TRIPOD_CONFIG_KEY]);
 
-            $this->getStat()->custom(STAT_TYPE_COUNT, MONGO_QUEUE_APPLY_OPERATION_JOB . '.' . STAT_TYPE_COUNT, count($this->args[self::SUBJECTS_KEY]));
+            $this->getStat()->increment(MONGO_QUEUE_APPLY_OPERATION_JOB . '.' . SUBJECT_COUNT, count($this->args[self::SUBJECTS_KEY]));
 
             foreach($this->args[self::SUBJECTS_KEY] as $subject)
             {
