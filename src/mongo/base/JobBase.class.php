@@ -147,9 +147,8 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
      */
     public function getStat()
     {
-        if(!isset($this->statsConfig) && isset($this->args['statsConfig']))
+        if((!isset($this->statsConfig) || empty($this->statsConfig)) && isset($this->args['statsConfig']))
         {
-
             $this->statsConfig = $this->args['statsConfig'];
         }
         return parent::getStat();

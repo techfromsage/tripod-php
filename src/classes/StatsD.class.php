@@ -14,6 +14,8 @@ class StatsD implements ITripodStat
     private $port;
     /** @var string  */
     private $prefix;
+    /** @var  string */
+    private $pivotValue;
 
     /**
      * @param string $host
@@ -34,9 +36,8 @@ class StatsD implements ITripodStat
      */
     public function increment($operation, $inc=1)
     {
-        $key = (empty($this->prefix)) ? $operation : "{$this->prefix}.$operation";
         $this->send(
-            array($key=>$inc."|c")
+            $this->generateStatData($operation, $inc."|c")
         );
     }
 
@@ -47,9 +48,8 @@ class StatsD implements ITripodStat
      */
     public function timer($operation, $duration)
     {
-        $key = (empty($this->prefix)) ? $operation : "{$this->prefix}.$operation";
         $this->send(
-            array($key=>array("1|c","$duration|ms"))
+            $this->generateStatData($operation, array("1|c","$duration|ms"))
         );
     }
 
@@ -192,4 +192,67 @@ class StatsD implements ITripodStat
         $this->host = $host;
     }
 
+    /**
+     * @param string $operation
+     * @param string|array $value
+     * @return array
+     */
+    protected function generateStatData($operation, $value)
+    {
+        $data = array();
+        foreach($this->getStatsPaths() as $path)
+        {
+            $data[$path . ".$operation"]=$value;
+        }
+        return $data;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPivotValue()
+    {
+        return $this->pivotValue;
+    }
+
+    /**
+     * @param string $pivotValue
+     */
+    public function setPivotValue($pivotValue)
+    {
+        $this->pivotValue = $pivotValue;
+    }
+
+    /**
+     * @return array
+     */
+    protected function getStatsPaths()
+    {
+        return(array_values(array_filter($this->getStoreStatPath(), $this->getAggregateStatPath())));
+    }
+
+    /**
+     * @return null|string
+     */
+    protected function getStoreStatPath()
+    {
+        $path = null;
+        if(isset($this->pivotValue))
+        {
+            if(!empty($this->prefix))
+            {
+                $path = $this->prefix . '.';
+            }
+            $path .= STAT_CLASS . '.' . STAT_PIVOT_FIELD . '.' . $this->pivotValue;
+        }
+        return $path;
+    }
+
+    /**
+     * @return string
+     */
+    protected function getAggregateStatPath()
+    {
+        return (empty($this->prefix) ? STAT_CLASS : $this->prefix . '.' . STAT_CLASS);
+    }
 }

@@ -89,14 +89,9 @@ abstract class DriverBase
     public function setStat(\Tripod\ITripodStat $stat)
     {
         // TODO: how do we decouple this and still allow StatsD to know which db we're using?
-        if($stat instanceof \Tripod\StatsD && strpos($stat->getPrefix(), STAT_PREFIX) === false)
+        if($stat instanceof \Tripod\StatsD)
         {
-            $prefix = STAT_PREFIX.$this->storeName;
-            if (!is_null($stat->getPrefix()))
-            {
-                $prefix = "{$stat->getPrefix()}.$prefix";
-            }
-            $stat->setPrefix($prefix);
+            $stat->setPivotValue($this->getStoreName());
         }
         $this->stat = $stat;
     }
@@ -111,11 +106,6 @@ abstract class DriverBase
         if($stat)
         {
             $statConfig = $stat->getConfig();
-            // Remove any prefix that we've added
-            if(isset($statConfig['config']['prefix']) && strpos($statConfig['config']['prefix'], STAT_PREFIX) !== false)
-            {
-                $statConfig['config']['prefix'] = preg_replace("/\.?".STAT_PREFIX.$this->storeName."/", '', $statConfig['config']['prefix']);
-            }
         }
         else
         {
