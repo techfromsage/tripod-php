@@ -2097,14 +2097,14 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
         $this->assertEquals('example.com', $stat->getHost());
         $this->assertEquals(1234, $stat->getPort());
-        $this->assertEquals('somePrefix.tripod.group_by_db.tripod_php_testing', $stat->getPrefix());
+        $this->assertEquals('somePrefix', $stat->getPrefix());
 
         $config = $stat->getConfig();
         $this->assertEquals(
             array(
                 'host'=>'example.com',
                 'port'=>1234,
-                'prefix'=>'somePrefix.tripod.group_by_db.tripod_php_testing'
+                'prefix'=>'somePrefix'
             ),
             $config['config']
         );
