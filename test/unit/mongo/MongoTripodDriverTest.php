@@ -1988,7 +1988,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
     }
 
     public function testStatsD() {
-        $mockStatsD = $this->getMock('\Tripod\StatsD', array('send'), array("localhost","2012","myapp.tripod.group_by_db.tripod_php_testing"));
+        $mockStatsD = $this->getMock('\Tripod\StatsD', array('send'), array("localhost","2012","myapp"));
+        $mockStatsD->setPivotValue('tripod_php_testing');
 
         /* @var $mockTripod \Tripod\Mongo\Driver PHPUnit_Framework_MockObject_MockObject */
         $mockTripod = $this->getMock('\Tripod\Mongo\Driver', array('getStat'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/',"statsDHost"=>"localhost","statsDPort"=>"2012","statsDPrefix"=>"myapp")));
@@ -1998,7 +1999,12 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
         $mockStatsD->expects($this->once())
             ->method("send")
-            ->with(array("myapp.tripod.group_by_db.tripod_php_testing.MONGO_GET_ETAG"=>"1|c"));
+            ->with(
+                array(
+                    "myapp.tripod.MONGO_GET_ETAG"=>"1|c",
+                    "myapp.tripod.group_by_db.tripod_php_testing.MONGO_GET_ETAG"=>"1|c"
+                )
+            );
 
         $mockTripod->getETag("http://foo");
     }

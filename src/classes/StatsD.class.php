@@ -61,9 +61,8 @@ class StatsD implements ITripodStat
      */
     public function gauge($operation, $value)
     {
-        $key = (empty($this->prefix)) ? $operation : "{$this->prefix}.$operation";
         $this->send(
-            array($key=>$value."|g")
+            $this->generateStatData($operation, $value.'|g')
         );
     }
 
