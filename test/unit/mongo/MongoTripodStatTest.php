@@ -260,4 +260,49 @@ class MongoTripodStatTest extends MongoTripodTestBase
         $stat->setPivotValue('wibble');
         $stat->gauge('FOO.BAR', 'abc');
     }
+
+    public function testPrefixCannotStartWithDot()
+    {
+        $this->setExpectedException('InvalidArgumentException', 'Invalid prefix supplied');
+
+        $stat = new \Tripod\StatsD('foo.bar', 4567, '.some_prefix');
+    }
+
+    public function testPrefixCannotEndWithDot()
+    {
+        $this->setExpectedException('InvalidArgumentException', 'Invalid prefix supplied');
+
+        $stat = new \Tripod\StatsD('foo.bar', 4567, 'some_prefix.');
+    }
+
+    public function testPrefixCannotContainConsecutiveDot()
+    {
+        $this->setExpectedException('InvalidArgumentException', 'Invalid prefix supplied');
+
+        $stat = new \Tripod\StatsD('foo.bar', 4567, 'some..prefix');
+    }
+
+    public function testPivotValueCannotStartWithDot()
+    {
+        $this->setExpectedException('InvalidArgumentException', 'Invalid pivot value supplied');
+
+        $stat = new \Tripod\StatsD('foo.bar', 4567);
+        $stat->setPivotValue('.someValue');
+    }
+
+    public function testPivotValueCannotEndWithDot()
+    {
+        $this->setExpectedException('InvalidArgumentException', 'Invalid pivot value supplied');
+
+        $stat = new \Tripod\StatsD('foo.bar', 4567);
+        $stat->setPivotValue('someValue.');
+    }
+
+    public function testPivotValueCannotContainConsecutiveDot()
+    {
+        $this->setExpectedException('InvalidArgumentException', 'Invalid pivot value supplied');
+
+        $stat = new \Tripod\StatsD('foo.bar', 4567);
+        $stat->setPivotValue('some..value');
+    }
 }

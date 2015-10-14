@@ -26,7 +26,7 @@ class StatsD implements ITripodStat
     {
         $this->host = $host;
         $this->port = $port;
-        $this->prefix = $prefix;
+        $this->setPrefix($prefix);
     }
 
     /**
@@ -153,10 +153,18 @@ class StatsD implements ITripodStat
 
     /**
      * @param string $prefix
+     * @throws \InvalidArgumentException
      */
     public function setPrefix($prefix)
     {
-        $this->prefix = $prefix;
+        if($this->isValidPathValue($prefix))
+        {
+            $this->prefix = $prefix;
+        }
+        else
+        {
+            throw new \InvalidArgumentException('Invalid prefix supplied');
+        }
     }
 
     /**
@@ -192,9 +200,15 @@ class StatsD implements ITripodStat
     }
 
     /**
+     * This method combines the by database and aggregate stats to send to StatsD.  The return will look something list:
+     * {
+     *  "{prefix}.tripod.group_by_db.{storeName}.{stat}"=>"1|c",
+     *  "{prefix}.tripod.{stat}"=>"1|c"
+     * }
+     *
      * @param string $operation
      * @param string|array $value
-     * @return array
+     * @return array An associative array of the grouped_by_database and aggregate stats
      */
     protected function generateStatData($operation, $value)
     {
@@ -216,10 +230,18 @@ class StatsD implements ITripodStat
 
     /**
      * @param string $pivotValue
+     * @throws \InvalidArgumentException
      */
     public function setPivotValue($pivotValue)
     {
-        $this->pivotValue = $pivotValue;
+        if($this->isValidPathValue($pivotValue))
+        {
+            $this->pivotValue = $pivotValue;
+        }
+        else
+        {
+            throw new \InvalidArgumentException('Invalid pivot value supplied');
+        }
     }
 
     /**
@@ -253,5 +275,15 @@ class StatsD implements ITripodStat
     protected function getAggregateStatPath()
     {
         return (empty($this->prefix) ? STAT_CLASS : $this->prefix . '.' . STAT_CLASS);
+    }
+
+    /**
+     * StatsD paths cannot start with, end with, or have more than one consecutive '.'
+     * @param $value
+     * @return bool
+     */
+    protected function isValidPathValue($value)
+    {
+        return (preg_match("/(^\.)|(\.\.+)|(\.$)/", $value) === 0);
     }
 }
