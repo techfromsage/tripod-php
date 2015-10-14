@@ -58,10 +58,31 @@ class MongoTripodStatTest extends MongoTripodTestBase
         $stat->expects($this->once())
             ->method('send')
             ->with(
-                array('FOO.BAR'=>"1|c"),
+                array(STAT_CLASS.'.FOO.BAR'=>"1|c"),
                 1
             );
 
+
+        $stat->increment('FOO.BAR');
+    }
+
+    public function testStatsDIncrementWithPivotValueNoPrefix()
+    {
+        $statConfig = $this->getStatsDConfig();
+
+        $stat = $this->getMockStat($statConfig['config']['host'], $statConfig['config']['port']);
+
+        $stat->expects($this->once())
+            ->method('send')
+            ->with(
+                array(
+                    STAT_CLASS.'.'.STAT_PIVOT_FIELD.'.wibble.FOO.BAR'=>'1|c',
+                    STAT_CLASS.'.FOO.BAR'=>"1|c"
+                ),
+                1
+            );
+
+        $stat->setPivotValue('wibble');
 
         $stat->increment('FOO.BAR');
     }
@@ -74,12 +95,31 @@ class MongoTripodStatTest extends MongoTripodTestBase
         $stat->expects($this->once())
             ->method('send')
             ->with(
-                array('somePrefix.FOO.BAR'=>"1|c"),
+                array('somePrefix.' . STAT_CLASS. '.FOO.BAR'=>"1|c"),
                 1
             );
 
 
         $stat->increment('FOO.BAR');
+    }
+
+    public function testStatsDIncrementWithPivotValueAndPrefix()
+    {
+        $statConfig = $this->getStatsDConfig();
+
+        $stat = $this->getMockStat($statConfig['config']['host'], $statConfig['config']['port'], $statConfig['config']['prefix']);
+        $stat->expects($this->once())
+            ->method('send')
+            ->with(
+                array(
+                    'somePrefix.' . STAT_CLASS . '.' . STAT_PIVOT_FIELD . '.wibble.FOO.BAR'=>"5|c",
+                    'somePrefix.' . STAT_CLASS.'.FOO.BAR'=>"5|c"
+                ),
+                1
+            );
+
+        $stat->setPivotValue('wibble');
+        $stat->increment('FOO.BAR', 5);
     }
 
     public function testStatsDTimerNoPrefix()
@@ -90,7 +130,7 @@ class MongoTripodStatTest extends MongoTripodTestBase
         $stat->expects($this->once())
             ->method('send')
             ->with(
-                array('FOO.BAR'=>array("1|c","1234|ms")),
+                array(STAT_CLASS . '.FOO.BAR'=>array("1|c","1234|ms")),
                 1
             );
 
@@ -98,6 +138,24 @@ class MongoTripodStatTest extends MongoTripodTestBase
         $stat->timer('FOO.BAR', 1234);
     }
 
+    public function testStatsDTimerWithPivotValueNoPrefix()
+    {
+        $statConfig = $this->getStatsDConfig();
+
+        $stat = $this->getMockStat($statConfig['config']['host'], $statConfig['config']['port']);
+        $stat->expects($this->once())
+            ->method('send')
+            ->with(
+                array(
+                    STAT_CLASS . '.' . STAT_PIVOT_FIELD . '.wibble.FOO.BAR'=>array("1|c","1234|ms"),
+                    STAT_CLASS . '.FOO.BAR'=>array("1|c","1234|ms")
+                ),
+                1
+            );
+
+        $stat->setPivotValue('wibble');
+        $stat->timer('FOO.BAR', 1234);
+    }
     public function testStatsDTimerWithPrefix()
     {
         $statConfig = $this->getStatsDConfig();
@@ -106,11 +164,30 @@ class MongoTripodStatTest extends MongoTripodTestBase
         $stat->expects($this->once())
             ->method('send')
             ->with(
-                array('somePrefix.FOO.BAR'=>array("1|c","4567|ms")),
+                array('somePrefix.' . STAT_CLASS. '.FOO.BAR'=>array("1|c","4567|ms")),
                 1
             );
 
 
+        $stat->timer('FOO.BAR',4567);
+    }
+
+    public function testStatsDTimerWithPrefixAndPivotValue()
+    {
+        $statConfig = $this->getStatsDConfig();
+
+        $stat = $this->getMockStat($statConfig['config']['host'], $statConfig['config']['port'], $statConfig['config']['prefix']);
+        $stat->expects($this->once())
+            ->method('send')
+            ->with(
+                array(
+                    'somePrefix.' . STAT_CLASS . '.' . STAT_PIVOT_FIELD . '.wibble.FOO.BAR'=>array("1|c","4567|ms"),
+                    'somePrefix.' . STAT_CLASS . '.FOO.BAR'=>array("1|c","4567|ms")
+                ),
+                1
+            );
+
+        $stat->setPivotValue('wibble');
         $stat->timer('FOO.BAR',4567);
     }
 
@@ -122,10 +199,29 @@ class MongoTripodStatTest extends MongoTripodTestBase
         $stat->expects($this->once())
             ->method('send')
             ->with(
-                array('FOO.BAR'=>"xyz|g"),
+                array(STAT_CLASS.'.FOO.BAR'=>"xyz|g"),
                 1
             );
 
+
+        $stat->gauge('FOO.BAR', 'xyz');
+    }
+
+    public function testStatsDGaugeWithPivotValueNoPrefix()
+    {
+        $statConfig = $this->getStatsDConfig();
+
+        $stat = $this->getMockStat($statConfig['config']['host'], $statConfig['config']['port']);
+        $stat->expects($this->once())
+            ->method('send')
+            ->with(
+                array(
+                    STAT_CLASS. '.' . STAT_PIVOT_FIELD .'.wibble.FOO.BAR'=>"xyz|g",
+                    STAT_CLASS.'.FOO.BAR'=>"xyz|g"
+                ),
+                1
+            );
+        $stat->setPivotValue('wibble');
 
         $stat->gauge('FOO.BAR', 'xyz');
     }
@@ -138,11 +234,75 @@ class MongoTripodStatTest extends MongoTripodTestBase
         $stat->expects($this->once())
             ->method('send')
             ->with(
-                array('somePrefix.FOO.BAR'=>"abc|g"),
+                array('somePrefix.' . STAT_CLASS . '.FOO.BAR'=>"abc|g"),
                 1
             );
 
 
         $stat->gauge('FOO.BAR', 'abc');
+    }
+
+    public function testStatsDGaugeWithPrefixAndPivotValue()
+    {
+        $statConfig = $this->getStatsDConfig();
+
+        $stat = $this->getMockStat($statConfig['config']['host'], $statConfig['config']['port'], $statConfig['config']['prefix']);
+        $stat->expects($this->once())
+            ->method('send')
+            ->with(
+                array(
+                    'somePrefix.' . STAT_CLASS . '.' . STAT_PIVOT_FIELD . '.wibble.FOO.BAR'=>"abc|g",
+                    'somePrefix.' . STAT_CLASS . '.FOO.BAR'=>"abc|g"
+                ),
+                1
+            );
+
+        $stat->setPivotValue('wibble');
+        $stat->gauge('FOO.BAR', 'abc');
+    }
+
+    public function testPrefixCannotStartWithDot()
+    {
+        $this->setExpectedException('InvalidArgumentException', 'Invalid prefix supplied');
+
+        $stat = new \Tripod\StatsD('foo.bar', 4567, '.some_prefix');
+    }
+
+    public function testPrefixCannotEndWithDot()
+    {
+        $this->setExpectedException('InvalidArgumentException', 'Invalid prefix supplied');
+
+        $stat = new \Tripod\StatsD('foo.bar', 4567, 'some_prefix.');
+    }
+
+    public function testPrefixCannotContainConsecutiveDot()
+    {
+        $this->setExpectedException('InvalidArgumentException', 'Invalid prefix supplied');
+
+        $stat = new \Tripod\StatsD('foo.bar', 4567, 'some..prefix');
+    }
+
+    public function testPivotValueCannotStartWithDot()
+    {
+        $this->setExpectedException('InvalidArgumentException', 'Invalid pivot value supplied');
+
+        $stat = new \Tripod\StatsD('foo.bar', 4567);
+        $stat->setPivotValue('.someValue');
+    }
+
+    public function testPivotValueCannotEndWithDot()
+    {
+        $this->setExpectedException('InvalidArgumentException', 'Invalid pivot value supplied');
+
+        $stat = new \Tripod\StatsD('foo.bar', 4567);
+        $stat->setPivotValue('someValue.');
+    }
+
+    public function testPivotValueCannotContainConsecutiveDot()
+    {
+        $this->setExpectedException('InvalidArgumentException', 'Invalid pivot value supplied');
+
+        $stat = new \Tripod\StatsD('foo.bar', 4567);
+        $stat->setPivotValue('some..value');
     }
 }

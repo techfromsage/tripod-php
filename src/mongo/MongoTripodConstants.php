@@ -89,7 +89,8 @@ define('MONGO_CONNECTION_ERROR','MONGO_CONNECTION_ERROR');
 
 define('SUBJECT_COUNT', 'subject_count');
 
-define('STAT_PREFIX', 'tripod.group_by_db.');
+define('STAT_CLASS', 'tripod');
+define('STAT_PIVOT_FIELD', 'group_by_db');
 
 //Audit types, statuses
 define('AUDIT_TYPE_REMOVE_INERT_LOCKS', 'REMOVE_INERT_LOCKS');

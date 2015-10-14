@@ -14,6 +14,8 @@ class StatsD implements ITripodStat
     private $port;
     /** @var string  */
     private $prefix;
+    /** @var  string */
+    private $pivotValue;
 
     /**
      * @param string $host
@@ -24,7 +26,7 @@ class StatsD implements ITripodStat
     {
         $this->host = $host;
         $this->port = $port;
-        $this->prefix = $prefix;
+        $this->setPrefix($prefix);
     }
 
     /**
@@ -34,9 +36,8 @@ class StatsD implements ITripodStat
      */
     public function increment($operation, $inc=1)
     {
-        $key = (empty($this->prefix)) ? $operation : "{$this->prefix}.$operation";
         $this->send(
-            array($key=>$inc."|c")
+            $this->generateStatData($operation, $inc."|c")
         );
     }
 
@@ -47,9 +48,8 @@ class StatsD implements ITripodStat
      */
     public function timer($operation, $duration)
     {
-        $key = (empty($this->prefix)) ? $operation : "{$this->prefix}.$operation";
         $this->send(
-            array($key=>array("1|c","$duration|ms"))
+            $this->generateStatData($operation, array("1|c","$duration|ms"))
         );
     }
 
@@ -61,9 +61,8 @@ class StatsD implements ITripodStat
      */
     public function gauge($operation, $value)
     {
-        $key = (empty($this->prefix)) ? $operation : "{$this->prefix}.$operation";
         $this->send(
-            array($key=>$value."|g")
+            $this->generateStatData($operation, $value.'|g')
         );
     }
 
@@ -154,10 +153,18 @@ class StatsD implements ITripodStat
 
     /**
      * @param string $prefix
+     * @throws \InvalidArgumentException
      */
     public function setPrefix($prefix)
     {
-        $this->prefix = $prefix;
+        if($this->isValidPathValue($prefix))
+        {
+            $this->prefix = $prefix;
+        }
+        else
+        {
+            throw new \InvalidArgumentException('Invalid prefix supplied');
+        }
     }
 
     /**
@@ -192,4 +199,91 @@ class StatsD implements ITripodStat
         $this->host = $host;
     }
 
+    /**
+     * This method combines the by database and aggregate stats to send to StatsD.  The return will look something list:
+     * {
+     *  "{prefix}.tripod.group_by_db.{storeName}.{stat}"=>"1|c",
+     *  "{prefix}.tripod.{stat}"=>"1|c"
+     * }
+     *
+     * @param string $operation
+     * @param string|array $value
+     * @return array An associative array of the grouped_by_database and aggregate stats
+     */
+    protected function generateStatData($operation, $value)
+    {
+        $data = array();
+        foreach($this->getStatsPaths() as $path)
+        {
+            $data[$path . ".$operation"]=$value;
+        }
+        return $data;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPivotValue()
+    {
+        return $this->pivotValue;
+    }
+
+    /**
+     * @param string $pivotValue
+     * @throws \InvalidArgumentException
+     */
+    public function setPivotValue($pivotValue)
+    {
+        if($this->isValidPathValue($pivotValue))
+        {
+            $this->pivotValue = $pivotValue;
+        }
+        else
+        {
+            throw new \InvalidArgumentException('Invalid pivot value supplied');
+        }
+    }
+
+    /**
+     * @return array
+     */
+    protected function getStatsPaths()
+    {
+        return(array_values(array_filter(array($this->getStoreStatPath(), $this->getAggregateStatPath()))));
+    }
+
+    /**
+     * @return null|string
+     */
+    protected function getStoreStatPath()
+    {
+        $path = null;
+        if(isset($this->pivotValue))
+        {
+            if(!empty($this->prefix))
+            {
+                $path = $this->prefix . '.';
+            }
+            $path .= STAT_CLASS . '.' . STAT_PIVOT_FIELD . '.' . $this->pivotValue;
+        }
+        return $path;
+    }
+
+    /**
+     * @return string
+     */
+    protected function getAggregateStatPath()
+    {
+        return (empty($this->prefix) ? STAT_CLASS : $this->prefix . '.' . STAT_CLASS);
+    }
+
+    /**
+     * StatsD paths cannot start with, end with, or have more than one consecutive '.'
+     * @param $value
+     * @return bool
+     */
+    protected function isValidPathValue($value)
+    {
+        return (preg_match("/(^\.)|(\.\.+)|(\.$)/", $value) === 0);
+    }
 }
