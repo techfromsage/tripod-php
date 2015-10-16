@@ -137,7 +137,7 @@ Functions can be nested, so the input values of a function can be supplied by an
             "value": {
                 "conditional" : // This defines the function to run
                 {
-                    "if:[
+                    "if":[
                         {
                             "arithmetic": // This will run an arithmetic function to set the left side of the condition
                             {
@@ -169,7 +169,7 @@ Only *one* function can be defined at a time, however.  This is *not* valid:
                     "replace": "bar",
                     "subject": "$x"
                 },
-                "arithmetic":["$x", "-", 4"]
+                "arithmetic":["$x", "-", 4]
             }
         }
     ]
