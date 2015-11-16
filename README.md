@@ -321,10 +321,10 @@ Coming soon (aka a loose roadmap)
 * ~~PHP >5.3.0 only. We still have some legacy servers on PHP 5.2 which is the only reason we continue support.~~
 * Performance improvements for ```ExtendedGraph```. The internal structure of this object is a relic from the days of Talis' own proprietary triple store and how it used to return data. We bootstrap onto that using the ```MongoGraph``` object to marshal data in and out. This relies heavily on regex and we know that from our own data gathered in the field this is a single point of optimisation that would cut CPU cycles and memory usage. On the bright side it's nice to have such targeted, low hanging fruit to pick.
 * Versioned config. This will allow views and tables to self-heal when their specs are updated. At present you have to delete and re-gen the lot when specs change.
-* Publish updates to a spout for [Apache Storm](http://storm.incubator.apache.org/)
+* ~~Publish updates to a spout for [Apache Storm](http://storm.incubator.apache.org/)~~ We implemented [event hooks](https://github.com/talis/tripod-php/blob/master/docs/primers/hooks.md) which would allow you to implement this.
 * Push the config inside the database, and version it. This will mean that multiple apps can work from the same database with the same config.
 * Ability to specify specially annotated Entities in the fashion of Doctrine et al. These would be a way to implement models without the complexity of having to worry about `ExtendedGraph`. A lot of the config could be derived from the annotations on the Entity classes themselves. We are now working on an alpha of this, see [this issue](https://github.com/talis/tripod-php/issues/10). It will likely be an additional library that depends on Tripod rather than being merged into the core.
-* We've learnt a lot since starting this project two years ago. Now the library is functionally stable we could do with re-architecting the object structure and responsibilities. That's one of the reasons we've open sourced - hopefully we'll be embarrassed into having a long over due tidy up.
+* We've learnt a lot since starting this project four years ago. Now the library is functionally stable we could do with re-architecting the object structure and responsibilities. That's one of the reasons we've open sourced - hopefully we'll be embarrassed into having a long over due tidy up.
 
 Presentations
 ----
