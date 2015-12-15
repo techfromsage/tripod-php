@@ -17,9 +17,15 @@
             "homepage": "http://talis.com/"
         }
     ],
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/talis/php-resque"
+        }
+    ],
     "require": {
         "semsol/arc2": "v2.2.4",
-        "chrisboulton/php-resque": "dev-master#98fde571db008a8b48e73022599d1d1c07d4a7b5",
+        "chrisboulton/php-resque": "dev-TENT-1578-ImproveLoggingOfLostJobs",
         "monolog/monolog" : "~1.13"
     },
     "require-dev": {
