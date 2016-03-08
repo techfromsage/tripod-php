@@ -1327,7 +1327,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $transactionColletion = $transactionMongo->selectCollection($newConfig['transaction_log']['database'], $newConfig['transaction_log']['collection']);
         $transactionCount = $transactionColletion->count();
         $transactionExampleDocument = $transactionColletion->findOne();
-        $this->assertEquals(20, $transactionCount);
+        $this->assertEquals(24, $transactionCount);
         $this->assertContains('transaction_', $transactionExampleDocument["_id"]);
     }
 

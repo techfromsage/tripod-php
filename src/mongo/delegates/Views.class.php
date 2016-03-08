@@ -585,6 +585,7 @@ class Views extends CompositeBase
                     ? $this->config->getCollectionForCBD($this->storeName, $ruleset['from'])
                     : $this->config->getCollectionForCBD($this->storeName, $from)
                 );
+
                 $cursor = $collection->find(array('_id'=>array('$in'=>$joinUris)));
                 $cursor->timeout(\Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout());
 
@@ -599,8 +600,37 @@ class Views extends CompositeBase
                     {
                         // make sure any sequences are expanded before extracting properties
                         if (isset($ruleset['joins'])) $this->expandSequence($ruleset['joins'],$linkMatch);
+                        if (isset($ruleset['filter']))
+                        {
+                            foreach($ruleset['filter'] as $filterPredicate => $filter)
+                            {
+                                foreach($filter as $filterType => $filterMatch)
+                                {
+                                    if (isset($linkMatch[$filterPredicate]))
+                                    {
+                                        foreach($linkMatch[$filterPredicate] as $linkMatchType => $linkMatchValues)
+                                        {
+                                            if (is_array($linkMatchValues) == false)
+                                            {
+                                                $linkMatchValues = array($linkMatchType => $linkMatchValues);
+                                            }
+                                            foreach($linkMatchValues as $linkMatchType => $linkMatchValue)
+                                            {
+                                                if ($this->matchesFilter($linkMatchType, $linkMatchValue, $filterType, $filterMatch))
+                                                {
+                                                    $dest[_GRAPHS][] = $this->extractProperties($linkMatch,$ruleset,$from);
+                                                }
+                                            }
 
-                        $dest[_GRAPHS][] = $this->extractProperties($linkMatch,$ruleset,$from);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            $dest[_GRAPHS][] = $this->extractProperties($linkMatch,$ruleset,$from);
+                        }
 
                         if (isset($ruleset['joins']))
                         {
@@ -619,6 +649,27 @@ class Views extends CompositeBase
             }
         }
         return;
+    }
+
+    /**
+     * Check to see if a linkMatch matches a filter.
+     *
+     * @param string $linkMatchType
+     * @param string $linkMatchValue
+     * @param string $filterType
+     * @param string $filterMatch
+     * @return bool
+     */
+    protected function matchesFilter($linkMatchType, $linkMatchValue, $filterType, $filterMatch)
+    {
+        if ($linkMatchType === $filterType)
+        {
+            if ($linkMatchValue === $filterMatch || $this->labeller->uri_to_alias($linkMatchValue) === $filterMatch)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
 
@@ -641,6 +692,39 @@ class Views extends CompositeBase
                 if(isset($source[$p]))
                 {
                     $obj[$p] = $source[$p];
+                }
+                if($p === INCLUDE_RDF_SEQUENCE)
+                {
+                    if ($source['rdf:type'])
+                    {
+                        foreach($source['rdf:type'] as $u => $t)
+                        {
+                            if (is_array($t) == false)
+                            {
+                                $t = array($u => $t);
+                            }
+                            foreach($t as $typeOfType => $type)
+                            {
+                                if ($typeOfType === 'u' && $type === 'rdf:Seq')
+                                {
+                                    $seqNumber = 1;
+                                    $found = true;
+                                    while($found)
+                                    {
+                                        if (isset($source['rdf:_'.$seqNumber]))
+                                        {
+                                            $obj['rdf:_'.$seqNumber] = $source['rdf:_'.$seqNumber];
+                                            $seqNumber++;
+                                        }
+                                        else
+                                        {
+                                            $found = false;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
             if (isset($viewSpec['joins']))

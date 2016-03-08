@@ -106,6 +106,340 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $this->assertEquals($expectedView,$actualView);
     }
 
+    /**
+     * Tests view filters removes data, but keeps it in the impact index
+     */
+    public function testGenerateViewWithFilterRemovesFilteredDataButKeepsResourcesInTheImpactIndex()
+    {
+        // get the view - this should trigger generation
+        $this->tripodViews->getViewForResource("http://talisaspire.com/resources/filter1","v_resource_filter1");
+
+        $expectedView = array(
+            "_id"=>array(
+                _ID_RESOURCE=>"http://talisaspire.com/resources/filter1",
+                _ID_CONTEXT=>'http://talisaspire.com/',
+                "type"=>"v_resource_filter1"),
+            "value"=>array(
+                _GRAPHS=>array(
+                    // This Book should not be included in the view - we are filtering to include only chapters.
+                    //
+                    // array(
+                    //     "_id"=>array("r"=>"http://talisaspire.com/works/filter1","c"=>'http://talisaspire.com/'),
+                    //     "dct:subject"=>array("u"=>"http://talisaspire.com/disciplines/physics"),
+                    //     "rdf:type"=>array(
+                    //         array(VALUE_URI=>"bibo:Book"),
+                    //         array(VALUE_URI=>"acorn:Work")
+                    //     )
+                    // ),
+                     array(
+                         "_id"=>array("r"=>"http://talisaspire.com/works/filter3","c"=>'http://talisaspire.com/'),
+                         "dct:subject"=>array("u"=>"http://talisaspire.com/disciplines/physics"),
+                         "rdf:type"=>array(
+                             array(VALUE_URI=>"bibo:Chapter"),
+                             array(VALUE_URI=>"acorn:Work")
+                         )
+                     ),
+                    array(
+                        "_id"=>array("r"=>"http://talisaspire.com/resources/filter1","c"=>'http://talisaspire.com/'),
+                        "rdf:type"=>array(
+                            array(VALUE_URI=>"bibo:Book"),
+                            array(VALUE_URI=>"acorn:Resource"),
+                            array(VALUE_URI=>"rdf:Seq")
+                        ),
+                        "searchterms:topic"=>array(
+                            array(VALUE_LITERAL=>"engineering: general"),
+                            array(VALUE_LITERAL=>"physics"),
+                            array(VALUE_LITERAL=>"science")
+                        ),
+                        "dct:isVersionOf"=>array(
+                            array(VALUE_URI=>"http://talisaspire.com/works/filter1"),
+                            array(VALUE_URI=>"http://talisaspire.com/works/filter2"),
+                            array(VALUE_URI=>"http://talisaspire.com/works/filter3")
+                        )
+                    )
+                ),
+                _IMPACT_INDEX=>array(
+                    array(_ID_RESOURCE=>"http://talisaspire.com/resources/filter1",_ID_CONTEXT=>'http://talisaspire.com/'),
+                    // This item has been filtered - but it should still be in the impact index
+                    array(_ID_RESOURCE=>"http://talisaspire.com/works/filter1",_ID_CONTEXT=>'http://talisaspire.com/'),
+                    array(_ID_RESOURCE=>"http://talisaspire.com/works/filter2",_ID_CONTEXT=>'http://talisaspire.com/'),
+                    array(_ID_RESOURCE=>"http://talisaspire.com/works/filter3",_ID_CONTEXT=>'http://talisaspire.com/')
+                )
+            )
+        );
+        // get the view direct from mongo
+        $mongo = new MongoClient(\Tripod\Mongo\Config::getInstance()->getConnStr('tripod_php_testing'));
+        $actualView = $mongo->selectCollection('tripod_php_testing','views')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/filter1',"c"=>'http://talisaspire.com/',"type"=>'v_resource_filter1')));
+        $this->assertEquals($expectedView,$actualView);
+    }
+
+    /**
+     * Tests view filter by literal values
+     */
+    public function testGenerateViewWithFilterOnLiteralValue()
+    {
+        // get the view - this should trigger generation
+        $this->tripodViews->getViewForResource("http://talisaspire.com/resources/filter1","v_resource_filter2");
+
+        $expectedView = array(
+            "_id"=>array(
+                _ID_RESOURCE=>"http://talisaspire.com/resources/filter1",
+                _ID_CONTEXT=>'http://talisaspire.com/',
+                "type"=>"v_resource_filter2"),
+            "value"=>array(
+                _GRAPHS=>array(
+                    // http://talisaspire.com/works/filter2 has the matching literal
+                    // http://talisaspire.com/works/filter1 doesn't - it should not be in the results
+                    array(
+                        "_id"=>array("r"=>"http://talisaspire.com/works/filter2","c"=>'http://talisaspire.com/'),
+                        "dct:subject"=>array("u"=>"http://talisaspire.com/disciplines/physics"),
+                        "rdf:type"=>array(
+                            array(VALUE_URI=>"bibo:Book"),
+                            array(VALUE_URI=>"acorn:Work")
+                        )
+                    ),
+                    array(
+                        "_id"=>array("r"=>"http://talisaspire.com/resources/filter1","c"=>'http://talisaspire.com/'),
+                        "rdf:type"=>array(
+                            array(VALUE_URI=>"bibo:Book"),
+                            array(VALUE_URI=>"acorn:Resource"),
+                            array(VALUE_URI=>"rdf:Seq")
+                        ),
+                        "searchterms:topic"=>array(
+                            array(VALUE_LITERAL=>"engineering: general"),
+                            array(VALUE_LITERAL=>"physics"),
+                            array(VALUE_LITERAL=>"science")
+                        ),
+                        "dct:isVersionOf"=>array(
+                            array(VALUE_URI=>"http://talisaspire.com/works/filter1"),
+                            array(VALUE_URI=>"http://talisaspire.com/works/filter2"),
+                            array(VALUE_URI=>"http://talisaspire.com/works/filter3")
+                        )
+                    )
+                ),
+                _IMPACT_INDEX=>array(
+                    array(_ID_RESOURCE=>"http://talisaspire.com/resources/filter1",_ID_CONTEXT=>'http://talisaspire.com/'),
+                    // This item has been filtered - but it should still be in the impact index
+                    array(_ID_RESOURCE=>"http://talisaspire.com/works/filter1",_ID_CONTEXT=>'http://talisaspire.com/'),
+                    array(_ID_RESOURCE=>"http://talisaspire.com/works/filter2",_ID_CONTEXT=>'http://talisaspire.com/'),
+                    array(_ID_RESOURCE=>"http://talisaspire.com/works/filter3",_ID_CONTEXT=>'http://talisaspire.com/')
+                )
+            )
+        );
+        // get the view direct from mongo
+        $mongo = new MongoClient(\Tripod\Mongo\Config::getInstance()->getConnStr('tripod_php_testing'));
+        $actualView = $mongo->selectCollection('tripod_php_testing','views')->findOne(
+            array('_id'=>array("r"=>'http://talisaspire.com/resources/filter1',"c"=>'http://talisaspire.com/',"type"=>'v_resource_filter2'))
+        );
+        $this->assertEquals($expectedView,$actualView);
+    }
+
+    /**
+     * Test data removed from view by filter is included in view after update and regeneration
+     */
+    public function testGenerateViewCorrectlyAfterUpdateAffectsFilter()
+    {
+        // get the view - this should trigger generation
+        $this->tripodViews->getViewForResource("http://talisaspire.com/resources/filter1","v_resource_filter1");
+
+        $expectedView = array(
+            "_id"=>array(
+                _ID_RESOURCE=>"http://talisaspire.com/resources/filter1",
+                _ID_CONTEXT=>'http://talisaspire.com/',
+                "type"=>"v_resource_filter1"),
+            "value"=>array(
+                _GRAPHS=>array(
+                    // This Book should not be included in the view - we are filtering to include only chapters.
+                    //
+                    // array(
+                    //     "_id"=>array("r"=>"http://talisaspire.com/works/filter1","c"=>'http://talisaspire.com/'),
+                    //     "dct:subject"=>array("u"=>"http://talisaspire.com/disciplines/physics"),
+                    //     "rdf:type"=>array(
+                    //         array(VALUE_URI=>"bibo:Book"),
+                    //         array(VALUE_URI=>"acorn:Work")
+                    //     )
+                    // ),
+                    array(
+                        "_id"=>array("r"=>"http://talisaspire.com/works/filter3","c"=>'http://talisaspire.com/'),
+                        "dct:subject"=>array("u"=>"http://talisaspire.com/disciplines/physics"),
+                        "rdf:type"=>array(
+                            array(VALUE_URI=>"bibo:Chapter"),
+                            array(VALUE_URI=>"acorn:Work")
+                        )
+                    ),
+                    array(
+                        "_id"=>array("r"=>"http://talisaspire.com/resources/filter1","c"=>'http://talisaspire.com/'),
+                        "rdf:type"=>array(
+                            array(VALUE_URI=>"bibo:Book"),
+                            array(VALUE_URI=>"acorn:Resource"),
+                            array(VALUE_URI=>"rdf:Seq")
+                        ),
+                        "searchterms:topic"=>array(
+                            array(VALUE_LITERAL=>"engineering: general"),
+                            array(VALUE_LITERAL=>"physics"),
+                            array(VALUE_LITERAL=>"science")
+                        ),
+                        "dct:isVersionOf"=>array(
+                            array(VALUE_URI=>"http://talisaspire.com/works/filter1"),
+                            array(VALUE_URI=>"http://talisaspire.com/works/filter2"),
+                            array(VALUE_URI=>"http://talisaspire.com/works/filter3")
+                        )
+                    )
+                ),
+                _IMPACT_INDEX=>array(
+                    array(_ID_RESOURCE=>"http://talisaspire.com/resources/filter1",_ID_CONTEXT=>'http://talisaspire.com/'),
+                    // This item has been filtered - but it should still be in the impact index
+                    array(_ID_RESOURCE=>"http://talisaspire.com/works/filter1",_ID_CONTEXT=>'http://talisaspire.com/'),
+                    array(_ID_RESOURCE=>"http://talisaspire.com/works/filter2",_ID_CONTEXT=>'http://talisaspire.com/'),
+                    array(_ID_RESOURCE=>"http://talisaspire.com/works/filter3",_ID_CONTEXT=>'http://talisaspire.com/')
+                )
+            )
+        );
+        // get the view direct from mongo
+        $mongo = new MongoClient(\Tripod\Mongo\Config::getInstance()->getConnStr('tripod_php_testing'));
+        $actualView = $mongo->selectCollection('tripod_php_testing','views')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/filter1',"c"=>'http://talisaspire.com/',"type"=>'v_resource_filter1')));
+        $this->assertEquals($expectedView,$actualView);
+
+        // Modify http://talisaspire.com/works/filter1 so that it is a Chapter (included in the view) not a Book (excluded from the view)
+        $oldGraph = new \Tripod\ExtendedGraph();
+        $oldGraph->add_resource_triple("http://talisaspire.com/works/filter1","http://www.w3.org/1999/02/22-rdf-syntax-ns#type","http://purl.org/ontology/bibo/Book");
+        $newGraph = new \Tripod\ExtendedGraph();
+        $newGraph->add_resource_triple("http://talisaspire.com/works/filter1","http://www.w3.org/1999/02/22-rdf-syntax-ns#type","http://purl.org/ontology/bibo/Chapter");
+
+        $context = 'http://talisaspire.com/';
+        $tripod = new \Tripod\Mongo\Driver('CBD_testing', 'tripod_php_testing', array('defaultContext'=>$context));
+        $tripod->saveChanges($oldGraph,$newGraph);
+
+
+        $expectedUpdatedView = array(
+            "_id"=>array(
+                _ID_RESOURCE=>"http://talisaspire.com/resources/filter1",
+                _ID_CONTEXT=>'http://talisaspire.com/',
+                "type"=>"v_resource_filter1"),
+            "value"=>array(
+                _GRAPHS=>array(
+                    // This work is now included as it's type has changed to Chapter
+                    array(
+                        "_id"=>array("r"=>"http://talisaspire.com/works/filter1","c"=>'http://talisaspire.com/'),
+                        "dct:subject"=>array("u"=>"http://talisaspire.com/disciplines/physics"),
+                        "rdf:type"=>array(
+                            array(VALUE_URI=>"acorn:Work"),
+                            array(VALUE_URI=>"bibo:Chapter")
+                        )
+                    ),
+                    array(
+                        "_id"=>array("r"=>"http://talisaspire.com/works/filter3","c"=>'http://talisaspire.com/'),
+                        "dct:subject"=>array("u"=>"http://talisaspire.com/disciplines/physics"),
+                        "rdf:type"=>array(
+                            array(VALUE_URI=>"bibo:Chapter"),
+                            array(VALUE_URI=>"acorn:Work")
+                        )
+                    ),
+                    array(
+                        "_id"=>array("r"=>"http://talisaspire.com/resources/filter1","c"=>'http://talisaspire.com/'),
+                        "rdf:type"=>array(
+                            array(VALUE_URI=>"bibo:Book"),
+                            array(VALUE_URI=>"acorn:Resource"),
+                            array(VALUE_URI=>"rdf:Seq")
+                        ),
+                        "searchterms:topic"=>array(
+                            array(VALUE_LITERAL=>"engineering: general"),
+                            array(VALUE_LITERAL=>"physics"),
+                            array(VALUE_LITERAL=>"science")
+                        ),
+                        "dct:isVersionOf"=>array(
+                            array(VALUE_URI=>"http://talisaspire.com/works/filter1"),
+                            array(VALUE_URI=>"http://talisaspire.com/works/filter2"),
+                            array(VALUE_URI=>"http://talisaspire.com/works/filter3")
+                        )
+                    )
+                ),
+                _IMPACT_INDEX=>array(
+                    array(_ID_RESOURCE=>"http://talisaspire.com/resources/filter1",_ID_CONTEXT=>'http://talisaspire.com/'),
+                    // This item has been filtered - but it should still be in the impact index
+                    array(_ID_RESOURCE=>"http://talisaspire.com/works/filter1",_ID_CONTEXT=>'http://talisaspire.com/'),
+                    array(_ID_RESOURCE=>"http://talisaspire.com/works/filter2",_ID_CONTEXT=>'http://talisaspire.com/'),
+                    array(_ID_RESOURCE=>"http://talisaspire.com/works/filter3",_ID_CONTEXT=>'http://talisaspire.com/')
+                )
+            )
+        );
+
+        $updatedView = $mongo->selectCollection('tripod_php_testing','views')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/filter1',"c"=>'http://talisaspire.com/',"type"=>'v_resource_filter1')));
+        $this->assertEquals($expectedUpdatedView,$updatedView);
+    }
+
+    /**
+     * Test including an rdf sequence in a view
+     */
+    public function testGenerateViewContainingRdfSequence()
+    {
+        // get the view - this should trigger generation
+        $this->tripodViews->getViewForResource("http://talisaspire.com/resources/filter1","v_resource_rdfsequence");
+
+        $expectedView = array(
+            "_id"=>array(
+                _ID_RESOURCE=>"http://talisaspire.com/resources/filter1",
+                _ID_CONTEXT=>'http://talisaspire.com/',
+                "type"=>"v_resource_rdfsequence"),
+            "value"=>array(
+                _GRAPHS=>array(
+                     array(
+                         "_id"=>array("r"=>"http://talisaspire.com/works/filter1","c"=>'http://talisaspire.com/'),
+                         "dct:subject"=>array("u"=>"http://talisaspire.com/disciplines/physics"),
+                         "rdf:type"=>array(
+                             array(VALUE_URI=>"bibo:Book"),
+                             array(VALUE_URI=>"acorn:Work")
+                         )
+                     ),
+                    array(
+                        "_id"=>array("r"=>"http://talisaspire.com/works/filter2","c"=>'http://talisaspire.com/'),
+                        "dct:subject"=>array("u"=>"http://talisaspire.com/disciplines/physics"),
+                        "rdf:type"=>array(
+                            array(VALUE_URI=>"bibo:Book"),
+                            array(VALUE_URI=>"acorn:Work")
+                        )
+                    ),
+                    array(
+                        "_id"=>array("r"=>"http://talisaspire.com/works/filter3","c"=>'http://talisaspire.com/'),
+                        "dct:subject"=>array("u"=>"http://talisaspire.com/disciplines/physics"),
+                        "rdf:type"=>array(
+                            array(VALUE_URI=>"bibo:Chapter"),
+                            array(VALUE_URI=>"acorn:Work")
+                        )
+                    ),
+                    array(
+                        "_id"=>array("r"=>"http://talisaspire.com/resources/filter1","c"=>'http://talisaspire.com/'),
+                        "rdf:type"=>array(
+                            array(VALUE_URI=>"bibo:Book"),
+                            array(VALUE_URI=>"acorn:Resource"),
+                            array(VALUE_URI=>"rdf:Seq")
+                        ),
+                        "dct:isVersionOf"=>array(
+                            array(VALUE_URI=>"http://talisaspire.com/works/filter1"),
+                            array(VALUE_URI=>"http://talisaspire.com/works/filter2"),
+                            array(VALUE_URI=>"http://talisaspire.com/works/filter3")
+                        ),
+                        "rdf:_1"=>array("u"=>"http://talisaspire.com/1"),
+                        "rdf:_2"=>array("u"=>"http://talisaspire.com/2"),
+                        "rdf:_3"=>array("u"=>"http://talisaspire.com/3")
+                    )
+                ),
+                _IMPACT_INDEX=>array(
+                    array(_ID_RESOURCE=>"http://talisaspire.com/resources/filter1",_ID_CONTEXT=>'http://talisaspire.com/'),
+                    // This item has been filtered - but it should still be in the impact index
+                    array(_ID_RESOURCE=>"http://talisaspire.com/works/filter1",_ID_CONTEXT=>'http://talisaspire.com/'),
+                    array(_ID_RESOURCE=>"http://talisaspire.com/works/filter2",_ID_CONTEXT=>'http://talisaspire.com/'),
+                    array(_ID_RESOURCE=>"http://talisaspire.com/works/filter3",_ID_CONTEXT=>'http://talisaspire.com/')
+                )
+            )
+        );
+        // get the view direct from mongo
+        $mongo = new MongoClient(\Tripod\Mongo\Config::getInstance()->getConnStr('tripod_php_testing'));
+        $actualView = $mongo->selectCollection('tripod_php_testing','views')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/filter1',"c"=>'http://talisaspire.com/',"type"=>'v_resource_rdfsequence')));
+
+        $this->assertEquals($expectedView,$actualView);
+    }
+
     public function testGenerateViewWithTTL()
     {
         $expiryDate = new MongoDate(time()+300);
@@ -559,7 +893,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
                 'tripod_php_testing',
                 'CBD_testing',
                 // Don't include v_resource_full_ttl, because TTL views don't include impactIndex
-                array('v_resource_full', 'v_resource_to_single_source')
+                array('v_resource_full', 'v_resource_to_single_source', 'v_resource_filter1', 'v_resource_filter2', 'v_resource_rdfsequence')
             )
         );
 
@@ -687,7 +1021,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             );
 
         // Because we're not deleting $url1, the all the views for it will regenerate
-        $mockViews->expects($this->exactly(3))
+        $mockViews->expects($this->exactly(6))
             ->method('generateView')
             ->withConsecutive(
                 array(
@@ -702,6 +1036,21 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
                 ),
                 array(
                     $this->equalTo('v_resource_to_single_source'),
+                    $this->equalTo($uri1),
+                    $this->equalTo($context)
+                ),
+                array(
+                    $this->equalTo('v_resource_filter1'),
+                    $this->equalTo($uri1),
+                    $this->equalTo($context)
+                ),
+                array(
+                    $this->equalTo('v_resource_filter2'),
+                    $this->equalTo($uri1),
+                    $this->equalTo($context)
+                ),
+                array(
+                    $this->equalTo('v_resource_rdfsequence'),
                     $this->equalTo($uri1),
                     $this->equalTo($context)
                 )
@@ -726,7 +1075,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
                 'tripod_php_testing',
                 'CBD_testing',
                 // Don't include v_resource_to_single_source because $url2 wouldn't be joined in it
-                array('v_resource_full')
+                array('v_resource_full','v_resource_filter1','v_resource_filter2', 'v_resource_rdfsequence')
             )
         );
 
@@ -853,7 +1202,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             );
 
         // Because we're not deleting $url1, the all the views for it will regenerate
-        $mockViews->expects($this->exactly(3))
+        $mockViews->expects($this->exactly(6))
             ->method('generateView')
             ->withConsecutive(
                 array(
@@ -868,6 +1217,21 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
                 ),
                 array(
                     $this->equalTo('v_resource_to_single_source'),
+                    $this->equalTo($uri1),
+                    $this->equalTo($context)
+                ),
+                array(
+                    $this->equalTo('v_resource_filter1'),
+                    $this->equalTo($uri1),
+                    $this->equalTo($context)
+                ),
+                array(
+                    $this->equalTo('v_resource_filter2'),
+                    $this->equalTo($uri1),
+                    $this->equalTo($context)
+                ),
+                array(
+                    $this->equalTo('v_resource_rdfsequence'),
                     $this->equalTo($uri1),
                     $this->equalTo($context)
                 )
@@ -894,7 +1258,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
                 'tripod_php_testing',
                 'CBD_testing',
                 // Don't include v_resource_to_single_source because $url2 wouldn't be joined in it
-                array('v_resource_full')
+                array('v_resource_full', 'v_resource_filter1', 'v_resource_filter2', 'v_resource_rdfsequence')
             )
         );
 
@@ -1020,7 +1384,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             );
 
         // Because we're not deleting $url1, the all the views for it will regenerate
-        $mockViews->expects($this->exactly(3))
+        $mockViews->expects($this->exactly(6))
             ->method('generateView')
             ->withConsecutive(
                 array(
@@ -1035,6 +1399,21 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
                 ),
                 array(
                     $this->equalTo('v_resource_to_single_source'),
+                    $this->equalTo($uri1),
+                    $this->equalTo($context)
+                ),
+                array(
+                    $this->equalTo('v_resource_filter1'),
+                    $this->equalTo($uri1),
+                    $this->equalTo($context)
+                ),
+                array(
+                    $this->equalTo('v_resource_filter2'),
+                    $this->equalTo($uri1),
+                    $this->equalTo($context)
+                ),
+                array(
+                    $this->equalTo('v_resource_rdfsequence'),
                     $this->equalTo($uri1),
                     $this->equalTo($context)
                 )
@@ -1059,7 +1438,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
                 OP_VIEWS,
                 'tripod_php_testing',
                 'CBD_testing',
-                array('v_resource_full', 'v_resource_to_single_source')
+                array('v_resource_full', 'v_resource_to_single_source', 'v_resource_filter1', 'v_resource_filter2', 'v_resource_rdfsequence')
             )
         );
 

@@ -136,7 +136,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $t1 = $this->tripodTables->getTableRows("t_source_count");
 
         // expecting two rows
-        $this->assertEquals(count($t1['results']),2);
+        $this->assertEquals(count($t1['results']),3);
         $result = $t1['results'][0];
 
         // check out the columns
@@ -154,7 +154,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $t1 = $this->tripodTables->getTableRows("t_source_count");
 
         // expecting two rows
-        $this->assertEquals(count($t1['results']),2);
+        $this->assertEquals(count($t1['results']),3);
         $result = $t1['results'][0];
 
         // check out the columns
@@ -175,7 +175,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $t2 = $this->tripodTables->getTableRows("t_source_count");
 
         $result = null;
-        $this->assertEquals(count($t2['results']),2);
+        $this->assertEquals(count($t2['results']),3);
         foreach ($t2['results'] as $r)
         {
             if ($r['_id']['r'] == $subject) {
@@ -198,7 +198,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $t1 = $this->tripodTables->getTableRows("t_source_count_regex");
 
         // expecting two rows
-        $this->assertEquals(count($t1['results']),2);
+        $this->assertEquals(count($t1['results']),3);
         $result = $t1['results'][0];
 
         // check out the columns
@@ -221,7 +221,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $t2 = $this->tripodTables->getTableRows("t_source_count_regex");
 
         $result = null;
-        $this->assertEquals(count($t2['results']),2);
+        $this->assertEquals(count($t2['results']),3);
         foreach ($t2['results'] as $r)
         {
             if ($r['_id']['r'] == $subject) {
@@ -297,7 +297,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $t1 = $this->tripodTables->getTableRows("t_resource");
 
         // expecting two rows
-        $this->assertEquals(count($t1['results']),2);
+        $this->assertEquals(count($t1['results']),3);
         $result = $t1['results'][0];
 
         // check out the columns
@@ -785,7 +785,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $table = 't_distinct';
         $this->generateTableRows($table);
         $rows = $this->tripodTables->getTableRows($table, array(), array(), 0, 0);
-        $this->assertEquals(8, $rows['head']['count']);
+        $this->assertEquals(11, $rows['head']['count']);
         $results = $this->tripodTables->distinct($table, "value.title");
 
         $this->assertArrayHasKey('head', $results);
@@ -811,9 +811,9 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $results = $this->tripodTables->distinct($table, "value.type");
         $this->assertArrayHasKey('head', $results);
         $this->assertArrayHasKey('count', $results['head']);
-        $this->assertEquals(5, $results['head']['count']);
+        $this->assertEquals(6, $results['head']['count']);
         $this->assertArrayHasKey('results', $results);
-        $this->assertEquals(5, count($results['results']));
+        $this->assertEquals(6, count($results['results']));
         $this->assertContains('acorn:Resource', $results['results']);
         $this->assertContains('acorn:Work', $results['results']);
         $this->assertContains('bibo:Book', $results['results']);
