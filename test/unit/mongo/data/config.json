@@ -179,6 +179,48 @@
                             }
                         }
                     }
+                },
+                {
+                    "_id": "v_resource_filter1",
+                    "_version": "0.1",
+                    "from": "CBD_testing",
+                    "type": "acorn:Resource",
+                    "include": ["rdf:type", "searchterms:topic"],
+                    "joins": {
+                        "dct:isVersionOf": {
+                            "filter" : {
+                                "rdf:type" : {"u" : "bibo:Chapter"}
+                            },
+                            "include": ["dct:subject", "rdf:type"]
+                        }
+                    }
+                },
+                {
+                    "_id": "v_resource_filter2",
+                    "_version": "0.1",
+                    "from": "CBD_testing",
+                    "type": "acorn:Resource",
+                    "include": ["rdf:type", "searchterms:topic"],
+                    "joins": {
+                        "dct:isVersionOf": {
+                            "filter" : {
+                                "bibo:isbn13" : {"l" : "1234567890123"}
+                            },
+                            "include": ["dct:subject", "rdf:type"]
+                        }
+                    }
+                },
+                {
+                    "_id": "v_resource_rdfsequence",
+                    "_version": "0.1",
+                    "from": "CBD_testing",
+                    "type": "acorn:Resource",
+                    "include": ["_seq_", "rdf:type"],
+                    "joins": {
+                        "dct:isVersionOf": {
+                            "include": ["dct:subject", "rdf:type"]
+                        }
+                    }
                 }
             ],
             "search_config": {

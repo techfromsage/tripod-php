@@ -163,12 +163,21 @@ class MongoTripodNQuadSerializerTest extends MongoTripodTestBase
 <http://basedata.com/b/docWithEmptySeq123> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://basedata.com/b/DocWithSequence> <http://talisaspire.com/> .
 <http://basedata.com/b/docWithEmptySeq123> <http://basedata.com/b/hasSequence> <http://basedata.com/b/sequence123> <http://talisaspire.com/> .
 <http://basedata.com/b/docWithEmptySeq123> <http://purl.org/dc/terms/creator> <http://schemas.talis.com/2005/user/schema#xyz> <http://talisaspire.com/> .
-<http://basedata.com/b/docWithEmptySeq123> <http://purl.org/dc/terms/title> \"Doc with sequence\" <http://talisaspire.com/> .
-";
+<http://basedata.com/b/docWithEmptySeq123> <http://purl.org/dc/terms/title> \"Doc with sequence\" <http://talisaspire.com/> .";
         
         $serializer = new NQuadSerializer();
         $actual = $serializer->getSerializedIndex($g->_index, \Tripod\Mongo\Config::getInstance()->getDefaultContextAlias());
 
-        $this->assertEquals($expected, $actual);
+        // This test initially asserted that $expected was equal to $actual
+        //   $this->assertEquals($expected, $actual);
+        // However, each time test data was added - it would also need to be added to expected above.
+        // Rather than increasing the size of $expected further when adding new test data
+        // this test now asserts that each line in $expected has been serialised correctly, without failing
+        // due to new test data.
+        foreach(preg_split("/((\r?\n)|(\r\n?))/", $expected) as $expectedLine){
+            $this->assertTrue(strpos($actual, rtrim($expectedLine)) !== false, "Failed checking for line: " . rtrim($expectedLine));
+        }
+
+
     }
 }
