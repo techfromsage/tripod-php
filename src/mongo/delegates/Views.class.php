@@ -169,6 +169,7 @@ class Views extends CompositeBase
         {
             $this->getStat()->increment(MONGO_VIEW_CACHE_MISS.".$viewType");
             $viewSpec = Config::getInstance()->getViewSpecification($this->storeName, $viewType);
+            // TODO: remove this line once discussion closed.
             if($viewSpec == null)
             {
                 return new \Tripod\Mongo\MongoGraph();
