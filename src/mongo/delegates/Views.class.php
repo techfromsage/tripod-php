@@ -194,6 +194,19 @@ class Views extends CompositeBase
     }
 
     /**
+     * For given $viewType, return the associated collection for the primary CBD
+     * @param $viewType
+     * @throws \Tripod\Exceptions\ConfigException
+     * @return \MongoCollection|null
+     */
+    private function getCBDCollectionForViewType($viewType) {
+        $config = $this->getConfigInstance();
+        $viewSpec = $config->getViewSpecification($this->storeName, $viewType);
+        $fromCollection = $this->getFromCollectionForViewSpec($viewSpec);
+        return $config->getCollectionForCBD($this->storeName, $fromCollection);
+    }
+
+    /**
      * For given $resources, return the views of type $viewType
      * @param array $resources
      * @param $viewType
@@ -202,8 +215,6 @@ class Views extends CompositeBase
      */
     public function getViewForResources(Array $resources,$viewType,$context=null)
     {
-        $contextAlias = $this->getContextAlias($context);
-
         $cursorSize = 101;
         if(count($resources) > 101) {
             $cursorSize = count($resources);
@@ -217,25 +228,22 @@ class Views extends CompositeBase
         $missingSubjects = array_diff($resources,$returnedSubjects);
         if (!empty($missingSubjects))
         {
+            $cbdCollection = $this->getCBDCollectionForViewType($viewType);
+            $contextAlias = $this->getContextAlias($context);
+
             $regrabResources = array();
             foreach($missingSubjects as $missingSubject)
             {
-                $viewSpec = $this->getConfigInstance()->getViewSpecification($this->storeName, $viewType);
-                $fromCollection = $this->getFromCollectionForViewSpec($viewSpec);
-
                 $missingSubjectAlias = $this->labeller->uri_to_alias($missingSubject);
-                $doc = $this->getConfigInstance()->getCollectionForCBD($this->storeName, $fromCollection)
+                $doc = $cbdCollection
                     ->findOne(array( "_id" => array("r"=>$missingSubjectAlias,"c"=>$contextAlias)));
 
-                if($doc == NULL)
+                if(!is_null($doc))
                 {
-                    // nothing in source CBD for this subject, there can never be a view for it
-                    continue;
+                    // generate view then try again
+                    $this->generateView($viewType,$missingSubject,$context);
+                    $regrabResources[] = $missingSubject;
                 }
-
-                // generate view then try again
-                $this->generateView($viewType,$missingSubject,$context);
-                $regrabResources[] = $missingSubject;
             }
 
             if(!empty($regrabResources)) {
