@@ -69,6 +69,10 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
                 _ID_RESOURCE=>"http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA",
                 _ID_CONTEXT=>'http://talisaspire.com/',
                 "type"=>"v_resource_full"),
+            _SPEC_KEY => array(
+                _SPEC_TYPE => "v_resource_full",
+                _SPEC_REVISION => 1
+            ),
             "value"=>array(
                 _GRAPHS=>array(
                     array(
@@ -119,6 +123,10 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
                 _ID_RESOURCE=>"http://talisaspire.com/resources/filter1",
                 _ID_CONTEXT=>'http://talisaspire.com/',
                 "type"=>"v_resource_filter1"),
+            _SPEC_KEY => array(
+                _SPEC_TYPE => "v_resource_filter1",
+                _SPEC_REVISION => 1
+            ),
             "value"=>array(
                 _GRAPHS=>array(
                     // This Book should not be included in the view - we are filtering to include only chapters.
@@ -186,6 +194,10 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
                 _ID_RESOURCE=>"http://talisaspire.com/resources/filter1",
                 _ID_CONTEXT=>'http://talisaspire.com/',
                 "type"=>"v_resource_filter2"),
+            _SPEC_KEY => array(
+                _SPEC_TYPE => "v_resource_filter2",
+                _SPEC_REVISION => 1
+            ),
             "value"=>array(
                 _GRAPHS=>array(
                     // http://talisaspire.com/works/filter2 has the matching literal
@@ -247,6 +259,10 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
                 _ID_RESOURCE=>"http://talisaspire.com/resources/filter1",
                 _ID_CONTEXT=>'http://talisaspire.com/',
                 "type"=>"v_resource_filter1"),
+            _SPEC_KEY => array(
+                _SPEC_TYPE => "v_resource_filter1",
+                _SPEC_REVISION => 1
+            ),
             "value"=>array(
                 _GRAPHS=>array(
                     // This Book should not be included in the view - we are filtering to include only chapters.
@@ -316,6 +332,10 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
                 _ID_RESOURCE=>"http://talisaspire.com/resources/filter1",
                 _ID_CONTEXT=>'http://talisaspire.com/',
                 "type"=>"v_resource_filter1"),
+            _SPEC_KEY => array(
+                _SPEC_TYPE => "v_resource_filter1",
+                _SPEC_REVISION => 1
+            ),
             "value"=>array(
                 _GRAPHS=>array(
                     // This work is now included as it's type has changed to Chapter
@@ -381,6 +401,10 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
                 _ID_RESOURCE=>"http://talisaspire.com/resources/filter1",
                 _ID_CONTEXT=>'http://talisaspire.com/',
                 "type"=>"v_resource_rdfsequence"),
+            _SPEC_KEY => array(
+                _SPEC_TYPE => "v_resource_rdfsequence",
+                _SPEC_REVISION => 1
+            ),
             "value"=>array(
                 _GRAPHS=>array(
                      array(
@@ -454,6 +478,10 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
                 "r"=>"http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA",
                 "c"=>'http://talisaspire.com/',
                 "type"=>"v_resource_full_ttl"),
+            _SPEC_KEY => array(
+                _SPEC_TYPE => "v_resource_full_ttl",
+                _SPEC_REVISION => 1
+            ),
             "value"=>array(
                 _GRAPHS=>array(
                     array(
@@ -548,6 +576,10 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
                 "r"=>"http://talisaspire.com/works/4d101f63c10a6",
                 "c"=>"http://talisaspire.com/",
                 "type"=>"v_counts"),
+            _SPEC_KEY => array(
+                _SPEC_TYPE => "v_counts",
+                _SPEC_REVISION => 1
+            ),
             "value"=>array(
                 _GRAPHS=>array(
                     array(

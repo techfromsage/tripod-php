@@ -1795,6 +1795,18 @@ class Config
 
     /**
      * @param string $storeName
+     * @param Array $spec
+     * @param string $readPreference
+     * @throws \Tripod\Exceptions\ConfigException
+     * @return \MongoCollection
+     */
+    public function getFromCollectionForSpec($storeName, $spec, $readPreference = \MongoClient::RP_PRIMARY_PREFERRED)
+    {
+        return $this->getCollectionForCBD($storeName, $spec['from'], $readPreference);
+    }
+
+    /**
+     * @param string $storeName
      * @param string $viewId
      * @param string $readPreference
      * @throws \Tripod\Exceptions\ConfigException

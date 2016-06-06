@@ -34,6 +34,7 @@ require_once TRIPOD_DIR . '/mongo/Driver.class.php';
 
 require_once TRIPOD_DIR.'/mongo/base/JobBase.class.php';
 require_once TRIPOD_DIR . '/mongo/jobs/DiscoverImpactedSubjects.class.php';
+require_once TRIPOD_DIR . '/mongo/jobs/DiscoverOutdatedComposites.class.php';
 require_once TRIPOD_DIR.'/mongo/jobs/ApplyOperation.class.php';
 
 require_once TRIPOD_DIR . '/mongo/util/IndexUtils.class.php';

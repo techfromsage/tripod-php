@@ -63,6 +63,7 @@
                 {
                     "_id": "v_resource_full",
                     "_version": "0.1",
+                    "_revision": 1,
                     "from": "CBD_testing",
                     "ensureIndexes": [
                         {
@@ -80,6 +81,7 @@
                 },
                 {
                     "_id": "v_resource_full_ttl",
+                    "_revision": 1,
                     "type": "acorn:Resource",
                     "from": "CBD_testing",
                     "to_data_source": "rs2",
@@ -93,6 +95,7 @@
                 },
                 {
                     "_id": "v_resource_to_single_source",
+                    "_revision": 1,
                     "type": "acorn:Resource",
                     "from": "CBD_testing",
                     "include": ["rdf:type"],
@@ -104,6 +107,7 @@
                 },
                 {
                     "_id": "v_work_see_also",
+                    "_revision": 1,
                     "type": "acorn:Work",
                     "from": "CBD_testing",
                     "joins": {
@@ -112,6 +116,7 @@
                 },
                 {
                     "_id": "v_work2_see_also",
+                    "_revision": 1,
                     "type": "http://talisaspire.com/schema#Work2",
                     "from": "CBD_testing",
                     "joins": {
@@ -120,6 +125,7 @@
                 },
                 {
                     "_id": "v_counts",
+                    "_revision": 1,
                     "type": "acorn:Work",
                     "from": "CBD_testing",
                     "to_data_source": "rs2",
@@ -168,6 +174,7 @@
                 },
                 {
                     "_id": "v_doc_with_seqeunce",
+                    "_revision": 1,
                     "type": ["baseData:DocWithSequence"],
                     "from": "CBD_testing",
                     "joins": {
@@ -183,6 +190,7 @@
                 {
                     "_id": "v_resource_filter1",
                     "_version": "0.1",
+                    "_revision": 1,
                     "from": "CBD_testing",
                     "type": "acorn:Resource",
                     "include": ["rdf:type", "searchterms:topic"],
@@ -198,6 +206,7 @@
                 {
                     "_id": "v_resource_filter2",
                     "_version": "0.1",
+                    "_revision": 1,
                     "from": "CBD_testing",
                     "type": "acorn:Resource",
                     "include": ["rdf:type", "searchterms:topic"],
@@ -213,6 +222,7 @@
                 {
                     "_id": "v_resource_rdfsequence",
                     "_version": "0.1",
+                    "_revision": 1,
                     "from": "CBD_testing",
                     "type": "acorn:Resource",
                     "include": ["_seq_", "rdf:type"],

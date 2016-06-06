@@ -175,7 +175,9 @@ class Views extends CompositeBase
                 return new \Tripod\Mongo\MongoGraph();
             }
 
-            $fromCollection = $this->getFromCollectionForViewSpec($viewSpec);
+
+            $fromCollection = $viewSpec['from'];
+
 
             $doc = $this->config->getCollectionForCBD($this->storeName, $fromCollection)
                 ->findOne(array( "_id" => array("r"=>$resourceAlias,"c"=>$contextAlias)));
@@ -203,8 +205,7 @@ class Views extends CompositeBase
     private function getCBDCollectionForViewType($viewType) {
         $config = $this->getConfigInstance();
         $viewSpec = $config->getViewSpecification($this->storeName, $viewType);
-        $fromCollection = $this->getFromCollectionForViewSpec($viewSpec);
-        return $config->getCollectionForCBD($this->storeName, $fromCollection);
+        return $config->getFromCollectionForSpec($this->storeName, $viewSpec);
     }
 
     /**
@@ -408,53 +409,11 @@ class Views extends CompositeBase
             $from = $this->getFromCollectionForViewSpec($viewSpec);
             $collection = $this->config->getCollectionForView($this->storeName, $viewId);
 
+            $this->ensureIndices($viewSpec, $collection);
+
             if (!isset($viewSpec['joins']))
             {
                 throw new \Tripod\Exceptions\ViewException('Could not find any joins in view specification - usecase better served with select()');
-            }
-
-            // ensure that the ID field, view type, and the impactIndex indexes are correctly set up
-            $collection->ensureIndex(
-                array(
-                    '_id.r'=>1,
-                    '_id.c'=>1,
-                    '_id.type'=>1
-                ),
-                array(
-                    'background'=>1
-                )
-            );
-
-            $collection->ensureIndex(
-                array(
-                    '_id.type'=>1
-                ),
-                array(
-                    'background'=>1
-                )
-            );
-
-            $collection->ensureIndex(
-                array(
-                    'value.'._IMPACT_INDEX=>1
-                ),
-                array(
-                    'background'=>1
-                )
-            );
-
-            // ensure any custom view indexes
-            if (isset($viewSpec['ensureIndexes']))
-            {
-                foreach ($viewSpec['ensureIndexes'] as $ensureIndex)
-                {
-                    $collection->ensureIndex(
-                        $ensureIndex,
-                        array(
-                            'background'=>1
-                        )
-                    );
-                }
             }
 
             $types = array(); // this is used to filter the CBD table to speed up the view creation
@@ -503,31 +462,7 @@ class Views extends CompositeBase
                 }
                 else
                 {
-                    // set up ID
-                    $generatedView = array("_id"=>array(_ID_RESOURCE=>$doc["_id"][_ID_RESOURCE],_ID_CONTEXT=>$doc["_id"][_ID_CONTEXT],_ID_TYPE=>$viewSpec['_id']));
-                    $value = array(); // everything must go in the value object todo: this is a hang over from map reduce days, engineer out once we have stability on new PHP method for M/R
-
-                    $value[_GRAPHS] = array();
-
-                    $buildImpactIndex=true;
-                    if (isset($viewSpec['ttl']))
-                    {
-                        $buildImpactIndex=false;
-                        $value[_EXPIRES] = new \MongoDate($this->getExpirySecFromNow($viewSpec['ttl']));
-                    }
-                    else
-                    {
-                        $value[_IMPACT_INDEX] = array($doc['_id']);
-                    }
-
-                    $this->doJoins($doc,$viewSpec['joins'],$value,$from,$contextAlias,$buildImpactIndex);
-
-                    // add top level properties
-                    $value[_GRAPHS][] = $this->extractProperties($doc,$viewSpec,$from);
-
-                    $generatedView['value'] = $value;
-
-                    $collection->save($generatedView);
+                    $this->saveGeneratedView($viewSpec, $collection, $doc, $from, $contextAlias);
                 }
             }
 
@@ -539,6 +474,102 @@ class Views extends CompositeBase
                 'from'=>$from));
             $this->getStat()->timer(MONGO_CREATE_VIEW.".$viewId",$t->result());
         }
+    }
+
+    protected function ensureIndices($viewSpec, $collection) {
+
+        // ensure that the ID field, view type, and the impactIndex indexes are correctly set up
+        $collection->ensureIndex(
+            array(
+                '_id.r'=>1,
+                '_id.c'=>1,
+                '_id.type'=>1
+            ),
+            array(
+                'background'=>1
+            )
+        );
+
+        $collection->ensureIndex(
+            array(
+                '_id.type'=>1
+            ),
+            array(
+                'background'=>1
+            )
+        );
+
+        $collection->ensureIndex(
+            array(
+                'value.'._IMPACT_INDEX=>1
+            ),
+            array(
+                'background'=>1
+            )
+        );
+
+        // spec type/revision index lets us find outdated views
+        $collection->ensureIndex(
+            array(
+                _SPEC_KEY.'.'._SPEC_TYPE => 1,
+                _SPEC_KEY.'.'._SPEC_REVISION => 1
+            ),
+            array(
+                'background'=>1
+            )
+        );
+
+        // ensure any custom view indexes
+        if (isset($viewSpec['ensureIndexes']))
+        {
+            foreach ($viewSpec['ensureIndexes'] as $ensureIndex)
+            {
+                $collection->ensureIndex(
+                    $ensureIndex,
+                    array(
+                        'background'=>1
+                    )
+                );
+            }
+        }
+    }
+
+    protected function saveGeneratedView($viewSpec, $collection, $doc, $from, $contextAlias) {
+        // set up ID
+        $generatedView = array(
+            "_id" => array(
+                _ID_RESOURCE=>$doc["_id"][_ID_RESOURCE],
+                _ID_CONTEXT=>$doc["_id"][_ID_CONTEXT],
+                _ID_TYPE=>$viewSpec['_id']
+            ),
+            _SPEC_KEY => array(
+                _SPEC_TYPE=> $viewSpec['_id'],
+                _SPEC_REVISION => $viewSpec[_REVISION]
+            )
+        );
+        $value = array(); // everything must go in the value object todo: this is a hang over from map reduce days, engineer out once we have stability on new PHP method for M/R
+
+        $value[_GRAPHS] = array();
+
+        $buildImpactIndex=true;
+        if (isset($viewSpec['ttl']))
+        {
+            $buildImpactIndex=false;
+            $value[_EXPIRES] = new \MongoDate($this->getExpirySecFromNow($viewSpec['ttl']));
+        }
+        else
+        {
+            $value[_IMPACT_INDEX] = array($doc['_id']);
+        }
+
+        $this->doJoins($doc,$viewSpec['joins'],$value,$from,$contextAlias,$buildImpactIndex);
+
+        // add top level properties
+        $value[_GRAPHS][] = $this->extractProperties($doc,$viewSpec,$from);
+
+        $generatedView['value'] = $value;
+
+        $collection->save($generatedView);
     }
 
     /**

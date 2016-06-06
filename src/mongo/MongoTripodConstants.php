@@ -7,6 +7,10 @@ define('VIEWS_COLLECTION', 'views');
 define('LOCKS_COLLECTION', 'locks');
 define('AUDIT_MANUAL_ROLLBACKS_COLLECTION','audit_manual_rollbacks');
 
+// Config specification keys
+define('CONFIG_KEY_SPEC_VIEWS', 'view_specifications');
+define('CONFIG_KEY_SPEC_TABLE_ROWS', 'table_specifications');
+
 // search
 define('SEARCH_INDEX_COLLECTION', 'search');
 define("SEARCH_PROVIDER_MONGO", '\Tripod\Mongo\MongoSearchProvider');
@@ -18,7 +22,11 @@ define('_ID_KEY', '_id');
 define('_ID_RESOURCE','r');
 define('_ID_CONTEXT','c');
 define('_ID_TYPE','type');
+define('_SPEC_KEY','_spec');
+define('_SPEC_REVISION','revision');
+define('_SPEC_TYPE','type');
 define('_VERSION','_version');
+define('_REVISION','_revision');
 define('_LOCKED_FOR_TRANS','_lockedForTrans');
 define('_LOCKED_FOR_TRANS_TS','_lts');
 define('_IMPACT_INDEX','_impactIndex');
