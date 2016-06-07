@@ -874,6 +874,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
     public function testGetViewSpecification(){
         $expectedVspec = array(
             "_id"=> "v_resource_full",
+            "_revision" => 1,
             "_version" => "0.1",
             "from"=>"CBD_testing",
             "to_data_source"=>"rs1", // This should get added automatically
