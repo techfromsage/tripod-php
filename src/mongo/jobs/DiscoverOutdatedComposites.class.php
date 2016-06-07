@@ -6,12 +6,22 @@ use \Tripod\Mongo\Config;
 /**
  * Class DiscoverImpactedSubjects
  *
- * This job finds documents in composite collections whose specs are out-of-date. It should be periodically triggered.
+ * This job finds documents in composite collections whose specs are out-of-date. It should be periodically triggered (e.g. every five minutes) by an external service (e.g. CRON).
  *
  * The job will find all composite specifications, and for each of those, run a query to find a set of outdated documents.
  *
  * For a config with S specifications, each `perform()` call will therefore run S independent queries, each of which may
  * return up to CURSOR_LIMIT documents to update, thus regenerating a maximum of `S*CURSOR_LIMIT` composite documents.
+ * 
+ * There are a number of things left TODO, as later considerations:
+ * 
+ * [1] Randomise the order of the specs, to avoid contention 
+ *     (e.g. one heavily-used view sucking up all regens in cursor)
+ *
+ * [2] Reduce number of queries. Currently, it fetches a collection for every composite spec, 
+ *     even when many composites will share the same collection (e.g. db.views on data1, or 
+ *     db.table_rows on data2). It should be possible to group by datasource/collection pair.
+ *     That would reduce the number of queries from |specifications| to |<datasource,collection>|
  *
  * @package Tripod\Mongo\Jobs
  */
@@ -37,8 +47,12 @@ class DiscoverOutdatedComposites extends JobBase {
         // set the config to what is received
         \Tripod\Mongo\Config::setConfig($config);
 
-        // TODO: remove these fakes. Only here to satisfy Views, which probably does not
-        // need either of these as constructor arguments.
+        // TODO: remove $views from here. We need it because that class provides a method for
+        // regenerating indvidual views.  However, that should probably be abstracted somewhere,
+        // into a method capable of regenerating individual composites, by type.
+
+        // TODO: these fakes are only here to satisfy Views, which probably does not
+        // need either of these as constructor arguments (most methods in Views are agnostic)
         $fakeCollection = null;
         $fakeDefaultContext = null;
 
@@ -48,25 +62,21 @@ class DiscoverOutdatedComposites extends JobBase {
             $fakeDefaultContext
         );
 
-        // closure around $cursorLimit in $this->getRegenTasksForMetadata
-        $getRegenTasksForMetadata = function($metadatum) use ($cursorLimit) { 
-            return $this->getRegenTasksForMetadata($metadatum, $cursorLimit); 
+        // closure around $cursorLimit in $this->getRegenTaskForMetadata
+        $getRegenTaskForMetadata = function($metadatum) use ($cursorLimit) { 
+            return $this->getRegenTaskForMetadata($metadatum, $cursorLimit); 
         };
-
-        // TODO: optimisations... this currently fetches a collection for every composite spec, even when many 
-        // composites will share the same collection (e.g. db.views on data1, or db.table_rows on data2).
-        // It should be possible to compose each individual query into an '$or' query across all $metadatum 
-        // instances that share the same datasource/collection pair.
-        // That would reduce the number of queries from |specifications| to |<datasource,collection>| pairs.
 
         // compile a list of all composite configuration metadata objects
         $compositeMetadata = $this->getCompositeMetadata($config, $storeName);
 
-        // for each composite metadata instance, fetch regen tasks (where they exist), which include specific CBDs to regenerate
-        $regenTasksIncludingNulls = array_map($getRegenTasksForMetadata, $compositeMetadata);
+        // for each composite metadata instance, fetch regen tasks (where they exist), 
+        // which include specific CBDs to regenerate
+        $regenTasksIncludingNulls = array_map($getRegenTaskForMetadata, $compositeMetadata);
         $regenTasks = array_filter($regenTasksIncludingNulls, 'isset');
 
         // for collected regeneration tasks, run the update
+        // TODO: this will probably want to schedule updates, rather than running directly
         $this->runRegenerationTasks($regenTasks, $views);
     }
 
@@ -100,48 +110,92 @@ class DiscoverOutdatedComposites extends JobBase {
         );
     }
 
+    // TODO: this is hard-coded to use \Views; abstract it
     protected function runRegenerationTasks($regenTasks, $views) {
         foreach ($regenTasks as $regenTask) {
-            $spec = $regenTask->specification;
+            $specification = $regenTask->specification;
             $compositeCollection = $regenTask->compositeCollection;
-            foreach($cbdDocs as $cbdDoc) {
-                $this->regenerateComposite($specification, $compositeCollection, $cbdDoc, $views);
+            foreach($regenTask->$cbdDocuments as $cbdDoc) {
+                $this->regenerateComposite(
+                    $specification, 
+                    $compositeCollection, 
+                    $cbdDoc, 
+                    $views
+                );
             }
         }
     }
 
-    protected function getRegenTasksForMetadata($metadatum, $cursorLimit) {
-        $compositeCollection = $metadatum->compositeCollection;
-        $specification = $metadatum->specification;
-        $cbdCollection = $metadatum->cbdCollection;
-
+    /**
+     * Generates regeneration task data for any outdated documents in a composite collection,
+     * by scanning that composite collection one cursor-page at a time.
+     *
+     * @param CompositeMetadata $metadatum - the composite collection to search
+     * @return CompositeRegenTask|null - a CompositeRegenTask, if outdated documents are found; null otherwise
+    **/
+    public function getRegenTaskForMetadata($metadatum, $cursorLimit) {
         $filterOutdated = $metadatum->getOutdatedQueryComponent();
-
         if(!isset($filterOutdated)) {
             return null;
         } else {
+            $compositeCollection = $metadatum->compositeCollection;
+            $specification = $metadatum->specification;
+            $cbdCollection = $metadatum->cbdCollection;
+
+            $cbdIdFields = array(_ID_KEY.'.'._ID_RESOURCE => 1, _ID_KEY.'.'._ID_CONTEXT => 1);
+
             // find one cursor page at a time for this composite
             $outdatedComposites = 
                 $compositeCollection
-                    // TODO: select only the fields we need from the database, 
-                    // not entire composite document; just array(_ID_KEY)
-                    ->find($filterOutdated)
+                    ->find($filterOutdated, $cbdIdFields)
                     ->limit($cursorLimit);
 
-            $outdatedCbdIds = array_map($this->composite2cbdId, $outdatedComposites);
-            $filterCbdsById = array('$or' => $outdatedCbdIds);
-            $cbdDocs = $cbdCollection->find($filterCbdsById);
+            if(!$outdatedComposites->hasNext()) {
+                // no outdated composite documents found, so no work to be done
+                return null;
+            } else {
+                // find IDs root CBDs required to regenerate the composite
+                $composite2cbdId = function($doc) { return $this->composite2cbdId($doc); };
 
-            return new CbdRegeneration($specification, $compositeCollection, $cbdDocs);
+                $outdatedCbdIds = 
+                    array_map($composite2cbdId, iterator_to_array($outdatedComposites, false));
+
+                // fetch the CBDs themselves
+                $filterCbdsById = array('$or' => $outdatedCbdIds);
+                $cbdDocs = $cbdCollection->find($filterCbdsById);
+
+                if(!$cbdDocs->hasNext()) {
+                    // no CBDs found, so nothing to regenerate
+                    return null;
+                } else {
+                    // return a task to regenerate outdated composite documents
+                    return new CompositeRegenTask($specification, $compositeCollection, $cbdDocs);
+                }
+            }
         }
+    }
+
+    public function iterator2array($iterator) {
+        $array = array();
+        foreach($iterator as $item) {
+            $array[] = $item;
+        }
+        return $array;
     }
 
     public function getCompositeMetadata($config, $storeName) {
         // for a given view specification, collect the metadata we need to run queries
         $view2metadata = function($spec) use ($config, $storeName) {
+            // TODO: it would be useful if config->getCollectionForView were abstracted
+            // to lookup by composite-type
             $viewCollection = $config->getCollectionForView($storeName, $spec[_ID_KEY]);
             $cbdCollection = $config->getFromCollectionForSpec($storeName, $spec);
-            return new CompositeMetadata(OP_VIEWS, $spec, $viewCollection, $cbdCollection);
+            return new CompositeMetadata(
+                COMPOSITE_TYPE_VIEWS, 
+                $spec, 
+                $viewCollection, 
+                $cbdCollection
+            );
         };
 
         $viewMetadata = array_map($view2metadata, $config->getViewSpecifications($storeName));
@@ -150,6 +204,12 @@ class DiscoverOutdatedComposites extends JobBase {
         return $viewMetadata;
     }
 
+    /**
+    * Converts a composite document into an ID for finding its root CBD.
+    *
+    * @param array $compositeDocument - the composite being examined
+    * @return array - the ID of $compositeDocument's root CBD.
+    **/
     protected function composite2cbdId($compositeDocument) {
         // these must be valid - they come from a valid composite
         $cbdResourceAlias = $compositeDocument[_ID_KEY][_ID_RESOURCE];
@@ -196,7 +256,7 @@ class CompositeMetadata {
 }
 
 
-class CbdRegeneration {
+class CompositeRegenTask {
     public $specification;
     public $compositeCollection;
     public $cbdDocuments;
