@@ -37,6 +37,11 @@ define('VALUE_LITERAL','l');
 define('_UPDATED_TS', '_uts');
 define('_CREATED_TS', '_cts');
 
+// available composite types
+define('COMPOSITE_TYPE_VIEWS','COMPOSITE_TYPE_VIEWS');
+define('COMPOSITE_TYPE_TABLES','COMPOSITE_TYPE_TABLES');
+define('COMPOSITE_TYPE_SEARCH','COMPOSITE_TYPE_SEARCH');
+
 // operations that Tripod performs
 define('OP_VIEWS','generate_views');
 define('OP_TABLES','generate_table_rows');
