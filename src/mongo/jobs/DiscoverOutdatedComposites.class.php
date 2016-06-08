@@ -155,10 +155,8 @@ class DiscoverOutdatedComposites extends JobBase {
                 return null;
             } else {
                 // find IDs root CBDs required to regenerate the composite
-                $composite2cbdId = function($doc) { return $this->composite2cbdId($doc); };
-
                 $outdatedCbdIds = 
-                    array_map($composite2cbdId, iterator_to_array($outdatedComposites, false));
+                    array_map(array($this, 'composite2cbdId'), iterator_to_array($outdatedComposites, false));
 
                 // fetch the CBDs themselves
                 $filterCbdsById = array('$or' => $outdatedCbdIds);
