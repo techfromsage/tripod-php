@@ -1806,6 +1806,32 @@ class Config
     }
 
     /**
+     * Gets the collection containing documents for a given composite type.
+     * @param string $compositeType
+     * @param string $storeName
+     * @param string $viewId
+     * @param string $readPreference
+     * @throws \Tripod\Exceptions\ConfigException
+     * @return \MongoCollection
+     */
+    public function getCollectionForCompositeType($compositeType, $storeName, $compositeId, $readPreference = \MongoClient::RP_PRIMARY_PREFERRED)
+    {
+        switch ($compositeType) {
+            case COMPOSITE_TYPE_VIEWS:
+                return $this->getCollectionForView($storeName, $compositeId, $readPreference);
+
+            case COMPOSITE_TYPE_TABLES:
+                return $this->getCollectionForTable($storeName, $compositeId, $readPreference);
+
+            case COMPOSITE_TYPE_SEARCH:
+                return $this->getCollectionForSearchDocument($storeName, $compositeId, $readPreference);
+
+            default:
+                throw new \Tripod\Exceptions\ConfigException("Undefined composite type '$compositeType' requested");
+        }
+    }
+
+    /**
      * @param string $storeName
      * @param string $viewId
      * @param string $readPreference

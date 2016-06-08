@@ -173,27 +173,23 @@ class DiscoverOutdatedComposites extends JobBase {
         }
     }
 
-    public function iterator2array($iterator) {
-        $array = array();
-        foreach($iterator as $item) {
-            $array[] = $item;
-        }
-        return $array;
-    }
-
     public function getCompositeMetadata($config, $storeName) {
-        // for a given view specification, collect the metadata we need to run queries
-        $view2metadata = function($spec) use ($config, $storeName) {
-            // TODO: it would be useful if config->getCollectionForView were abstracted
-            // to lookup by composite-type
-            $viewCollection = $config->getCollectionForView($storeName, $spec[_ID_KEY]);
+        // for a given composite type and specification, collect the metadata we need to run queries
+        $composite2metadata = function($compositeType, $spec) use ($config, $storeName) {
+            $compositeCollection = 
+                $config->getCollectionForCompositeType($compositeType, $storeName, $spec[_ID_KEY]);
             $cbdCollection = $config->getFromCollectionForSpec($storeName, $spec);
             return new CompositeMetadata(
-                COMPOSITE_TYPE_VIEWS, 
+                $compositeType, 
                 $spec, 
-                $viewCollection, 
+                $compositeCollection, 
                 $cbdCollection
             );
+        };
+
+        // views
+        $view2metadata = function($spec) use ($composite2metadata) {
+            return $composite2metadata(COMPOSITE_TYPE_VIEWS, $spec);
         };
 
         $viewMetadata = array_map($view2metadata, $config->getViewSpecifications($storeName));
