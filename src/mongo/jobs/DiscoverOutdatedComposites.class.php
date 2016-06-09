@@ -95,13 +95,18 @@ class DiscoverOutdatedComposites extends JobBase {
         );
     }
 
-    
+    /**
+    * Given an array of regeneration tasks, runs all those tasks.
+    *
+    * @param array $regenTasks
+    **/
     public function runRegenerationTasks($regenTasks) {
         foreach ($regenTasks as $regenTask) {
             $specification = $regenTask->specification;
             $compositeCollection = $regenTask->compositeCollection;
             $compositeRegenFunction = $regenTask->compositeRegenFunction;
             
+            // regenerate individual composites from root CBDs and specifications
             foreach($regenTask->cbdDocuments as $cbdDoc) {
                 $compositeRegenFunction($specification, $compositeCollection, $cbdDoc);
             }
@@ -183,6 +188,13 @@ class DiscoverOutdatedComposites extends JobBase {
         };
     }
 
+    /**
+    * Gets a list of all CompositeMetadata objects, one per composite in the specification.
+    *
+    * @param \Config $config - the configuration instance
+    * @param string $storeName
+    * @return array - an array of CompositeMetadata objects
+    **/
     public function getCompositeMetadata($config, $storeName) {
         // for a given composite type and specification, collect the metadata we need to run queries
         $composite2metadata = function($compositeType, $spec, $regenFunc) use ($config, $storeName) {
@@ -225,6 +237,9 @@ class DiscoverOutdatedComposites extends JobBase {
     }
 }
 
+/**
+* Represents data about a particular kind of composite, and provides tools for regenerating documents.
+**/
 class CompositeMetadata {
     public $compositeType;
     public $specification;
@@ -279,7 +294,12 @@ class CompositeMetadata {
     }
 }
 
-
+/**
+* Represents a task for regenerating a number of composites.
+* 
+* Contains enough information on the composite collection, and a list of root CBDs,
+* which are used to regenerate outdated composite documents.
+**/
 class CompositeRegenTask {
     public $compositeRegenFunction;
     public $specification;
