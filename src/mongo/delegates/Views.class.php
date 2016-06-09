@@ -406,7 +406,7 @@ class Views extends CompositeBase
             $t = new \Tripod\Timer();
             $t->start();
 
-            $from = $this->getFromCollectionForViewSpec($viewSpec);
+            $from = $viewSpec['from'];
             $collection = $this->config->getCollectionForView($this->storeName, $viewId);
 
             $this->ensureIndices($viewSpec, $collection);
@@ -509,15 +509,7 @@ class Views extends CompositeBase
         );
 
         // spec type/revision index lets us find outdated views
-        $collection->ensureIndex(
-            array(
-                _SPEC_KEY.'.'._SPEC_TYPE => 1,
-                _SPEC_KEY.'.'._SPEC_REVISION => 1
-            ),
-            array(
-                'background'=>1
-            )
-        );
+        Config::ensureIndexForSpecRevision($collection);
 
         // ensure any custom view indexes
         if (isset($viewSpec['ensureIndexes']))
@@ -534,6 +526,18 @@ class Views extends CompositeBase
         }
     }
 
+    /**
+    * Constructs a view document to save from the relevant root CBD document, and saves it.
+    *
+    * TODO: we must only save if $viewSpec[_revision] >= current saved view document spec.revision
+    * This will ensure that view specification revisions monotonically increase.
+    *
+    * @param array $viewSpec
+    * @param \MongoCollection $collection - the views composite collection
+    * @param array $doc - the root CBD from which this view is generated
+    * @param string $from - the name of the CBD collection from which $doc is drawn
+    * @param array $contextAlias - the context for this view
+    **/
     public function saveGeneratedView($viewSpec, $collection, $doc, $from, $contextAlias) {
         // set up ID
         $generatedView = array(
@@ -541,12 +545,15 @@ class Views extends CompositeBase
                 _ID_RESOURCE=>$doc["_id"][_ID_RESOURCE],
                 _ID_CONTEXT=>$doc["_id"][_ID_CONTEXT],
                 _ID_TYPE=>$viewSpec['_id']
-            ),
-            _SPEC_KEY => array(
-                _SPEC_TYPE=> $viewSpec['_id'],
-                _SPEC_REVISION => $viewSpec[_REVISION]
             )
         );
+
+        // if specification is revisioned, add revision information to what we will save
+        $specRevision = Config::getSpecRevisionSubDoc($viewSpec);
+        if(isset($specRevision)) {
+            $generatedView = array_merge($generatedView, $specRevision);
+        }
+
         $value = array(); // everything must go in the value object todo: this is a hang over from map reduce days, engineer out once we have stability on new PHP method for M/R
 
         $value[_GRAPHS] = array();
@@ -859,24 +866,6 @@ class Views extends CompositeBase
         }
 
         return $obj;
-    }
-
-    /**
-     * @param string $viewSpec
-     * @return string
-     */
-    private function getFromCollectionForViewSpec($viewSpec)
-    {
-        $from = null;
-        if (isset($viewSpec["from"]))
-        {
-            $from = $viewSpec["from"];
-        }
-        else
-        {
-            $from = $this->podName;
-        }
-        return $from;
     }
 
     /**

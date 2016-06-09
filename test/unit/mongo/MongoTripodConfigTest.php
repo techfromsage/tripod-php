@@ -1695,4 +1695,40 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         }
         $this->assertEquals(getenv(MONGO_TRIPOD_RESQUE_SERVER), \Tripod\Mongo\Config::getResqueServer());
     }
+
+    public function testGetSpecRevisionSubDocIsNullForNullOrUnrevisionedSpec() {
+        $this->assertNull(\Tripod\Mongo\Config::getSpecRevisionSubDoc(null));
+        $this->assertNull(\Tripod\Mongo\Config::getSpecRevisionSubDoc(array()));
+        $this->assertNull(\Tripod\Mongo\Config::getSpecRevisionSubDoc(array('_id' => 'foo')));
+    }
+
+    public function testGetSpecRevisionSubDocGeneratedForRevisonedSpec() {
+        $fakeSpec = array(_ID_KEY => 'fakeSpec1', _REVISION => 1);
+        $expectedSubDoc = 
+            array(
+                _SPEC_KEY => array(
+                    _SPEC_TYPE => $fakeSpec[_ID_KEY],
+                    _SPEC_REVISION => $fakeSpec[_REVISION]));
+
+        $actualSubDoc = \Tripod\Mongo\Config::getSpecRevisionSubDoc($fakeSpec);
+    }
+
+    public function testEnsureIndexForSpecRevisionCorrectlyEnsuresIndices() {
+        $mockDb = $this->getMock("MongoDB", array("selectCollection"),array(new MongoClient(),"test"));
+        $mockViewColl = $this->getMock("MongoCollection", array("ensureIndex"),array($mockDb,VIEWS_COLLECTION));
+
+        $mockViewColl->expects($this->once())
+            ->method('ensureIndex')
+            ->with(
+                array(
+                    _SPEC_KEY.'.'._SPEC_TYPE => 1,
+                    _SPEC_KEY.'.'._SPEC_REVISION => 1
+                ),
+                array(
+                    'background' => 1,
+                    'sparse' => 1
+                ));
+
+        \Tripod\Mongo\Config::ensureIndexForSpecRevision($mockViewColl);
+    }
 }

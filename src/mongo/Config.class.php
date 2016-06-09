@@ -2064,6 +2064,48 @@ class Config
     }
 
     /**
+    * Creates a specification revision subdocument for a composite specification.
+    *
+    * @param \MongoCollection $specification - the composite specification
+    * @return array|null - the subdocument to add to the composite
+    **/
+    public static function getSpecRevisionSubDoc($specification) {
+        if(isset($specification) && isset($specification[_ID_KEY]) && isset($specification[_REVISION])) {
+            return array(
+                _SPEC_KEY => array(
+                    _SPEC_TYPE=> $specification[_ID_KEY],
+                    _SPEC_REVISION => $specification[_REVISION]
+                )
+            );
+        } else {
+            return null;
+        }
+    }
+
+    /**
+    * Ensures that specification revision is indexed for a composite collection.
+    *
+    * Note that spec revision is not required for all composite documents, so
+    * a sparse index is used to avoid indexing unrevisioned documents.
+    *
+    * @param \MongoCollection $compositeCollection - the composite collection
+    **/
+    public static function ensureIndexForSpecRevision($compositeCollection) {
+        if(isset($compositeCollection)) {
+            $compositeCollection->ensureIndex(
+                array(
+                    _SPEC_KEY.'.'._SPEC_TYPE => 1,
+                    _SPEC_KEY.'.'._SPEC_REVISION => 1
+                ),
+                array(
+                    'background' => 1,
+                    'sparse' => 1
+                )
+            );
+        }
+    }
+
+    /**
      * @return string
      */
     public static function getDiscoverQueueName()
