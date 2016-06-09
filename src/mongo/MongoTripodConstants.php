@@ -7,10 +7,6 @@ define('VIEWS_COLLECTION', 'views');
 define('LOCKS_COLLECTION', 'locks');
 define('AUDIT_MANUAL_ROLLBACKS_COLLECTION','audit_manual_rollbacks');
 
-// Config specification keys
-define('CONFIG_KEY_SPEC_VIEWS', 'view_specifications');
-define('CONFIG_KEY_SPEC_TABLE_ROWS', 'table_specifications');
-
 // search
 define('SEARCH_INDEX_COLLECTION', 'search');
 define("SEARCH_PROVIDER_MONGO", '\Tripod\Mongo\MongoSearchProvider');
