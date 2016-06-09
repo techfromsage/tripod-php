@@ -200,7 +200,7 @@ class DiscoverOutdatedComposites extends JobBase {
 
         // views
         $viewRegen = $this->makeViewRegenFunc($storeName);
-        $view2metadata = function($spec) use ($viewRegen) {
+        $view2metadata = function($spec) use ($composite2metadata, $viewRegen) {
             return $composite2metadata(COMPOSITE_TYPE_VIEWS, $spec, $viewRegen);
         };
 

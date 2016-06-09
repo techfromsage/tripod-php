@@ -279,8 +279,7 @@ class DiscoverOutdatedCompositesTest extends MongoTripodTestBase
         // the task should contain all root CBDs used to regenerate the chosen composites
         // However, it's hard to compare this directly, so extract CBD IDs and compare with
         // those extracted directly from the affected views
-        $cbdDocs = iterator_to_array($actualRegenTask->cbdDocuments, false);
-        $actualCbdResourceIds = array_map($doc2resource, $cbdDocs);
+        $actualCbdResourceIds = array_map($doc2resource, $actualRegenTask->cbdDocuments);
 
         $this->assertEquals($expectedCbdResourceIds, $actualCbdResourceIds);
     }
