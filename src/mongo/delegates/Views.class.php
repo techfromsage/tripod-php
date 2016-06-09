@@ -534,7 +534,7 @@ class Views extends CompositeBase
         }
     }
 
-    protected function saveGeneratedView($viewSpec, $collection, $doc, $from, $contextAlias) {
+    public function saveGeneratedView($viewSpec, $collection, $doc, $from, $contextAlias) {
         // set up ID
         $generatedView = array(
             "_id" => array(

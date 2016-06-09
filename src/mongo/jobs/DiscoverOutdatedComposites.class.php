@@ -47,21 +47,6 @@ class DiscoverOutdatedComposites extends JobBase {
         // set the config to what is received
         \Tripod\Mongo\Config::setConfig($config);
 
-        // TODO: remove $views from here. We need it because that class provides a method for
-        // regenerating indvidual views.  However, that should probably be abstracted somewhere,
-        // into a method capable of regenerating individual composites, by type.
-
-        // TODO: these fakes are only here to satisfy Views, which probably does not
-        // need either of these as constructor arguments (most methods in Views are agnostic)
-        $fakeCollection = null;
-        $fakeDefaultContext = null;
-
-        $views = new \Tripod\Mongo\Composites\Views(
-            $storeName,
-            $fakeCollection,
-            $fakeDefaultContext
-        );
-
         // closure around $cursorLimit in $this->getRegenTaskForMetadata
         $getRegenTaskForMetadata = function($metadatum) use ($cursorLimit) { 
             return $this->getRegenTaskForMetadata($metadatum, $cursorLimit); 
@@ -77,7 +62,7 @@ class DiscoverOutdatedComposites extends JobBase {
 
         // for collected regeneration tasks, run the update
         // TODO: this will probably want to schedule updates, rather than running directly
-        $this->runRegenerationTasks($regenTasks, $views);
+        $this->runRegenerationTasks($regenTasks);
     }
 
     /**
@@ -110,18 +95,15 @@ class DiscoverOutdatedComposites extends JobBase {
         );
     }
 
-    // TODO: this is hard-coded to use \Views; abstract it
-    protected function runRegenerationTasks($regenTasks, $views) {
+    
+    public function runRegenerationTasks($regenTasks) {
         foreach ($regenTasks as $regenTask) {
             $specification = $regenTask->specification;
             $compositeCollection = $regenTask->compositeCollection;
-            foreach($regenTask->$cbdDocuments as $cbdDoc) {
-                $this->regenerateComposite(
-                    $specification, 
-                    $compositeCollection, 
-                    $cbdDoc, 
-                    $views
-                );
+            $compositeRegenFunction = $regenTask->compositeRegenFunction;
+            
+            foreach($regenTask->cbdDocuments as $cbdDoc) {
+                $compositeRegenFunction($specification, $compositeCollection, $cbdDoc);
             }
         }
     }
@@ -141,6 +123,7 @@ class DiscoverOutdatedComposites extends JobBase {
             $compositeCollection = $metadatum->compositeCollection;
             $specification = $metadatum->specification;
             $cbdCollection = $metadatum->cbdCollection;
+            $compositeRegenFunction = $metadatum->compositeRegenFunction;
 
             $cbdIdFields = array(_ID_KEY.'.'._ID_RESOURCE => 1, _ID_KEY.'.'._ID_CONTEXT => 1);
 
@@ -167,15 +150,42 @@ class DiscoverOutdatedComposites extends JobBase {
                     return null;
                 } else {
                     // return a task to regenerate outdated composite documents
-                    return new CompositeRegenTask($specification, $compositeCollection, $cbdDocs);
+                    return new CompositeRegenTask(
+                        $compositeRegenFunction, 
+                        $specification, 
+                        $compositeCollection, 
+                        iterator_to_array($cbdDocs, false)
+                    );
                 }
             }
         }
     }
 
+    // TODO: this should really live in IComposite implementations, but cannot yet.
+    public function makeViewRegenFunc($storeName) {
+        // TODO: remove $views from here. We need it because that class provides a method for
+        // regenerating indvidual views.  However, that should probably be abstracted somewhere,
+        // into a method capable of regenerating individual composites, by type.
+
+        // TODO: these fakes are only here to satisfy Views, which probably does not
+        // need either of these as constructor arguments (most methods in Views are agnostic)
+        $fakeCollection = \Tripod\Mongo\Config::getInstance()->getCollectionForCBD($storeName, 'CBD_testing');
+        $fakeDefaultContext = 'http://talisaspire.com/';
+
+        $views = new \Tripod\Mongo\Composites\Views(
+            $storeName,
+            $fakeCollection,
+            $fakeDefaultContext
+        );
+
+        return function($spec, $compositeCollection, $cbdDoc) use ($fakeDefaultContext, $views) {
+            $views->saveGeneratedView($spec, $compositeCollection, $cbdDoc, $spec['from'], $fakeDefaultContext);
+        };
+    }
+
     public function getCompositeMetadata($config, $storeName) {
         // for a given composite type and specification, collect the metadata we need to run queries
-        $composite2metadata = function($compositeType, $spec) use ($config, $storeName) {
+        $composite2metadata = function($compositeType, $spec, $regenFunc) use ($config, $storeName) {
             $compositeCollection = 
                 $config->getCollectionForCompositeType($compositeType, $storeName, $spec[_ID_KEY]);
             $cbdCollection = $config->getFromCollectionForSpec($storeName, $spec);
@@ -183,13 +193,15 @@ class DiscoverOutdatedComposites extends JobBase {
                 $compositeType, 
                 $spec, 
                 $compositeCollection, 
-                $cbdCollection
+                $cbdCollection,
+                $regenFunc
             );
         };
 
         // views
-        $view2metadata = function($spec) use ($composite2metadata) {
-            return $composite2metadata(COMPOSITE_TYPE_VIEWS, $spec);
+        $viewRegen = $this->makeViewRegenFunc($storeName);
+        $view2metadata = function($spec) use ($viewRegen) {
+            return $composite2metadata(COMPOSITE_TYPE_VIEWS, $spec, $viewRegen);
         };
 
         $viewMetadata = array_map($view2metadata, $config->getViewSpecifications($storeName));
@@ -211,14 +223,6 @@ class DiscoverOutdatedComposites extends JobBase {
         return array(_ID_KEY => 
             array(_ID_RESOURCE => $cbdResourceAlias, _ID_CONTEXT => $cbdContextAlias));
     }
-
-    // TODO: this is limited to views at present. Abstract it.
-    protected function regenerateComposite($spec, $compositeCollection, $cbdDoc, $views, $context=null) {
-        // regenerate this composite from the CBD
-        $contextAlias = $this->getContextAlias($context);
-        $views->saveGeneratedView($spec, $compositeCollection, $cbdDoc, $spec['from'], $contextAlias);
-    }
-
 }
 
 class CompositeMetadata {
@@ -226,15 +230,41 @@ class CompositeMetadata {
     public $specification;
     public $compositeCollection;
     public $cbdCollection;
+    public $compositeRegenFunction;
 
-    public function __construct($compositeType, $specification, $compositeCollection, $cbdCollection)
+    public function __construct($compositeType, $specification, $compositeCollection, $cbdCollection, $compositeRegenFunction)
     {
         $this->compositeType = $compositeType;
         $this->specification = $specification;
         $this->compositeCollection = $compositeCollection;
         $this->cbdCollection = $cbdCollection;
+        $this->compositeRegenFunction = $compositeRegenFunction;
     }
 
+    /**
+    * Create a query component for finding composites matching matching the specification,
+    * but which are outdated.
+    *
+    * The mongodb equivalent is:
+    *
+    * { "_spec.type": <THIS TYPE>, "_spec.revision": { "$lt": <SPEC REVISION NUMBER> }}
+    *
+    * ALTERNATIVE: This is predicated on having independent revisions for each composite spec. However,
+    * It would also be possible to run this query using a single global revision and a composite spec hash:
+    *
+    * { 
+    *   "_spec.type": <THIS TYPE>, 
+    *   "_spec.revision": { "$lt": <GLOBAL REVISION NUMBER> }, 
+    *   "_spec.hash": { "$ne": <HASH OF THE SPEC> }
+    * }
+    *
+    * That alternative would make managing the revision numbers much more straightforward, since we can simply
+    * Increment that global number on every build, and the hash will tell us if an update is required. Crucially,
+    * The presence of _spec.revision will impose order, so we don't end up playing tennis between two clients with
+    * different versions.
+    *
+    * @return array - the query compontent used to find outdated documents for this composite.
+    **/
     public function getOutdatedQueryComponent() {
         if(isset($this->specification[_REVISION])) {
             $specType = _SPEC_KEY.'.'._SPEC_TYPE;
@@ -251,12 +281,14 @@ class CompositeMetadata {
 
 
 class CompositeRegenTask {
+    public $compositeRegenFunction;
     public $specification;
     public $compositeCollection;
     public $cbdDocuments;
 
-    public function __construct($specification, $compositeCollection, $cbdDocuments)
+    public function __construct($compositeRegenFunction, $specification, $compositeCollection, $cbdDocuments)
     {
+        $this->compositeRegenFunction = $compositeRegenFunction;
         $this->specification = $specification;
         $this->compositeCollection = $compositeCollection;
         $this->cbdDocuments = $cbdDocuments;

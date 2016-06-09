@@ -139,7 +139,7 @@ class DiscoverOutdatedCompositesTest extends MongoTripodTestBase
         unset($FAKE_VIEW_SPEC[_REVISION]);
 
         // construct a CompositeMetadata around the fake view spec
-        $compositeMetadata = new \Tripod\Mongo\Jobs\CompositeMetadata(COMPOSITE_TYPE_VIEWS, $FAKE_VIEW_SPEC, null, null);
+        $compositeMetadata = new \Tripod\Mongo\Jobs\CompositeMetadata(COMPOSITE_TYPE_VIEWS, $FAKE_VIEW_SPEC, null, null, function() {});
 
         // the outdated query-component should be null when revision is missing
         $this->assertNull($compositeMetadata->getOutdatedQueryComponent(), 'For a CompositeMetadata whose spec has no "revision", getOutdatedQueryComponent() should return NULL.');
@@ -159,7 +159,7 @@ class DiscoverOutdatedCompositesTest extends MongoTripodTestBase
 
         // construct a CompositeMetadata around the fake view spec
         $compositeMetadata = 
-            new \Tripod\Mongo\Jobs\CompositeMetadata(COMPOSITE_TYPE_VIEWS, $FAKE_VIEW_SPEC, null, null);
+            new \Tripod\Mongo\Jobs\CompositeMetadata(COMPOSITE_TYPE_VIEWS, $FAKE_VIEW_SPEC, null, null, function() {});
 
         // $queryComponent should be a $lt on the specified revision for the view
         $queryComponent = $compositeMetadata->getOutdatedQueryComponent();
@@ -182,7 +182,7 @@ class DiscoverOutdatedCompositesTest extends MongoTripodTestBase
         $mockCompositeMetadata = 
             $this->getMockBuilder('\Tripod\Mongo\Jobs\CompositeMetadata')
                 ->setMethods(array('getOutdatedQueryComponent'))
-                ->setConstructorArgs(array(COMPOSITE_TYPE_VIEWS, $VIEW_SPEC, null, null))
+                ->setConstructorArgs(array(COMPOSITE_TYPE_VIEWS, $VIEW_SPEC, null, null, function() {}))
                 ->getMock();
         $mockCompositeMetadata->expects($this->once())
             ->method('getOutdatedQueryComponent')
@@ -211,7 +211,7 @@ class DiscoverOutdatedCompositesTest extends MongoTripodTestBase
         // construct a CompositeMetadata around specified view spec
         $compositeMetadata = 
             new \Tripod\Mongo\Jobs\CompositeMetadata(
-                COMPOSITE_TYPE_VIEWS, $VIEW_SPEC, $viewCollection, $cbdCollection
+                COMPOSITE_TYPE_VIEWS, $VIEW_SPEC, $viewCollection, $cbdCollection, function() {}
             );
 
         // setup to call getRegenTaskForMetadata
@@ -262,7 +262,7 @@ class DiscoverOutdatedCompositesTest extends MongoTripodTestBase
         $cbdCollection = $CONFIG->getFromCollectionForSpec(self::STORE_NAME, $VIEW_SPEC);
         $compositeMetadata = 
             new \Tripod\Mongo\Jobs\CompositeMetadata(
-                COMPOSITE_TYPE_VIEWS, $FAKE_VIEW_SPEC, $viewCollection, $cbdCollection
+                COMPOSITE_TYPE_VIEWS, $FAKE_VIEW_SPEC, $viewCollection, $cbdCollection, function() {}
             );
 
         // setup to call getRegenTaskForMetadata
@@ -283,6 +283,62 @@ class DiscoverOutdatedCompositesTest extends MongoTripodTestBase
         $actualCbdResourceIds = array_map($doc2resource, $cbdDocs);
 
         $this->assertEquals($expectedCbdResourceIds, $actualCbdResourceIds);
+    }
+
+
+    public function testRunRegenerationTasksUpdateTheAppropriateDocuments() {
+        $CONFIG = \Tripod\Mongo\Config::getInstance();
+        $VIEW_ID = 'v_resource_full';
+        $VIEW_SPEC = $CONFIG->getViewSpecification(self::STORE_NAME, $VIEW_ID);
+
+        $mongo = new MongoClient($CONFIG->getConnStr(self::STORE_NAME));
+        $viewCollection = $CONFIG->getCollectionForView(self::STORE_NAME, $VIEW_SPEC[_ID_KEY]);
+
+
+        // trigger generation for some particular views (so the view documents exist)
+        $this->tripodViews->getViewForResource(
+            "http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA",
+            $VIEW_ID
+        );
+
+        // Create a fake view with an incremented revision
+        // Now, all documents for this view will be treated as "outdated"
+        $FAKE_VIEW_SPEC = $VIEW_SPEC;
+        $FAKE_VIEW_SPEC[_REVISION] += 1;
+
+        $SPEC_KEY_REVISION = _SPEC_KEY.'.'._SPEC_REVISION;
+        $SPEC_KEY_TYPE     = _SPEC_KEY.'.'._SPEC_TYPE;
+
+        $filterToMatchView = array($SPEC_KEY_TYPE => $VIEW_ID);
+        $filterToMatchViewAndRevision = array($SPEC_KEY_TYPE => $VIEW_ID, $SPEC_KEY_REVISION => $FAKE_VIEW_SPEC[_REVISION]);
+
+        // before regeneration, we should have three documents, none of which have new revision
+        $this->assertEquals(3, $viewCollection->count($filterToMatchView));
+        $this->assertEquals(0, $viewCollection->count($filterToMatchViewAndRevision));
+
+        // 
+        $discoverOutdatedComposites = $this->newDiscoverOutdatedComposites();
+
+        // construct a CompositeMetadata around our fake view spec
+        $cbdCollection = $CONFIG->getFromCollectionForSpec(self::STORE_NAME, $VIEW_SPEC);
+
+        $compositeMetadata = 
+            new \Tripod\Mongo\Jobs\CompositeMetadata(
+                COMPOSITE_TYPE_VIEWS, $FAKE_VIEW_SPEC, $viewCollection, $cbdCollection, 
+                $discoverOutdatedComposites->makeViewRegenFunc(self::STORE_NAME)
+            );
+
+        // setup to call getRegenTaskForMetadata
+        $regenTask = $discoverOutdatedComposites->getRegenTaskForMetadata($compositeMetadata, 10);
+        $this->assertInstanceOf('Tripod\Mongo\Jobs\CompositeRegenTask', $regenTask);
+        $this->assertCount(3, $regenTask->cbdDocuments);
+
+        // UNDER TEST: this should trigger a regeneration of the outdated documents.
+        $discoverOutdatedComposites->runRegenerationTasks(array($regenTask));
+
+        // after regeneration, we should have three documents, *ALL* of which have new revision
+        $this->assertEquals(3, $viewCollection->count($filterToMatchView));
+        $this->assertEquals(3, $viewCollection->count($filterToMatchViewAndRevision));
     }
 
     // -- utility methods
