@@ -19,7 +19,7 @@ class Views extends CompositeBase
      * Construct accepts actual objects rather than strings as this class is a delegate of
      * Tripod and should inherit connections set up there
      * @param string $storeName
-     * @param \MongoCollection $collection
+     * @param \MongoCollection $collection // TODO: should this really be a constructor arg?
      * @param $defaultContext
      * @param null $stat
      * @param string $readPreference
