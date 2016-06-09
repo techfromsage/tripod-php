@@ -536,7 +536,7 @@ class Views extends CompositeBase
     * @param \MongoCollection $collection - the views composite collection
     * @param array $doc - the root CBD from which this view is generated
     * @param string $from - the name of the CBD collection from which $doc is drawn
-    * @param array $contextAlias - the context for this view
+    * @param string $contextAlias - the context for this view
     **/
     public function saveGeneratedView($viewSpec, $collection, $doc, $from, $contextAlias) {
         // set up ID
