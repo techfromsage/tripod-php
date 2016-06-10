@@ -132,24 +132,29 @@ class DiscoverOutdatedComposites extends JobBase {
 
     // TODO: this should really live in IComposite implementations, but cannot yet.
     public function makeViewRegenFunc($config, $storeName) {
-        $defaultContext = $config->getDefaultContextAlias();
         // TODO: remove $views from here. We need it because that class provides a method for
         // regenerating indvidual views.  However, that should probably be abstracted somewhere,
         // into a method capable of regenerating individual composites, by type.
 
-        // TODO: these fakes are only here to satisfy Views, which probably does not
-        // need either of these as constructor arguments (most methods in Views are agnostic)
-        $fakeCollection = $config->getCollectionForCBD($storeName, 'CBD_testing');
+        // TODO: this fake is only here to satisfy Views, which does not
+        // need a collection as a constructor argument
+        $pods = $config->getPods($storeName);
+        if(empty($pods)) {
+            throw new Exception("There are no pods for $storeName");
+        } else {
+            $anyPod = $pods[0];
+            $fakeCollection = $config->getCollectionForCBD($storeName, $anyPod);
 
-        $views = new \Tripod\Mongo\Composites\Views(
-            $storeName,
-            $fakeCollection,
-            $defaultContext
-        );
+            $views = new \Tripod\Mongo\Composites\Views(
+                $storeName,
+                $fakeCollection,
+                $config->getDefaultContextAlias()
+            );
 
-        return function($spec, $compositeCollection, $cbdDoc) use ($defaultContext, $views) {
-            $views->saveGeneratedView($spec, $compositeCollection, $cbdDoc, $spec['from'], $defaultContext);
-        };
+            return function($spec, $compositeCollection, $cbdDoc) use ($views) {
+                $views->regenerateOne($spec, $compositeCollection, $cbdDoc);
+            };
+        }
     }
     
     /**

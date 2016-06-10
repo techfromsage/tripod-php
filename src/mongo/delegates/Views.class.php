@@ -12,7 +12,7 @@ use Tripod\Mongo\Labeller;
  * Class Views
  * @package Tripod\Mongo\Composites
  */
-class Views extends CompositeBase
+class Views extends CompositeBase implements ICompositeRegen
 {
 
     /**
@@ -877,4 +877,15 @@ class Views extends CompositeBase
         return $this->getConfigInstance()->getCollectionForView($this->storeName, $viewSpecId);
     }
 
+    
+    /**
+     * Regenerate a specific composite document from its spec and root CBD
+     * @param $specification
+     * @param $compositeCollection
+     * @param $rootCbd
+     * @return void
+     */
+    public function regenerateOne($specification, $compositeCollection, $rootCbd) {
+        $this->saveGeneratedView($specification, $compositeCollection, $rootCbd, $specification['from'], $this->defaultContext);
+    }
 }

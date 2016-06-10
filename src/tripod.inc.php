@@ -20,6 +20,7 @@ require_once TRIPOD_DIR.'mongo/MongoGraph.class.php';
 require_once TRIPOD_DIR.'mongo/ImpactedSubject.class.php';
 require_once TRIPOD_DIR . 'mongo/base/DriverBase.class.php';
 require_once TRIPOD_DIR.'mongo/IComposite.php';
+require_once TRIPOD_DIR.'mongo/ICompositeRegen.php';
 require_once TRIPOD_DIR.'mongo/base/CompositeBase.class.php';
 require_once TRIPOD_DIR . 'mongo/delegates/TransactionLog.class.php';
 require_once TRIPOD_DIR . 'mongo/delegates/Updates.class.php';
