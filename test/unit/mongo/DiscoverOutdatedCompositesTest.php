@@ -324,7 +324,7 @@ class DiscoverOutdatedCompositesTest extends MongoTripodTestBase
         $compositeMetadata = 
             new \Tripod\Mongo\Jobs\CompositeMetadata(
                 COMPOSITE_TYPE_VIEWS, $FAKE_VIEW_SPEC, $viewCollection, $cbdCollection, 
-                $discoverOutdatedComposites->makeViewRegenFunc(self::STORE_NAME)
+                $discoverOutdatedComposites->makeViewRegenFunc($CONFIG, self::STORE_NAME)
             );
 
         // setup to call getRegenTaskForMetadata

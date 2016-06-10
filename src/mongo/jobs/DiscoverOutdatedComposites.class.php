@@ -119,7 +119,7 @@ class DiscoverOutdatedComposites extends JobBase {
         };
 
         // views
-        $viewRegen = $this->makeViewRegenFunc($storeName);
+        $viewRegen = $this->makeViewRegenFunc($config, $storeName);
         $view2metadata = function($spec) use ($composite2metadata, $viewRegen) {
             return $composite2metadata(COMPOSITE_TYPE_VIEWS, $spec, $viewRegen);
         };
@@ -131,24 +131,24 @@ class DiscoverOutdatedComposites extends JobBase {
     }
 
     // TODO: this should really live in IComposite implementations, but cannot yet.
-    public function makeViewRegenFunc($storeName) {
+    public function makeViewRegenFunc($config, $storeName) {
+        $defaultContext = $config->getDefaultContextAlias();
         // TODO: remove $views from here. We need it because that class provides a method for
         // regenerating indvidual views.  However, that should probably be abstracted somewhere,
         // into a method capable of regenerating individual composites, by type.
 
         // TODO: these fakes are only here to satisfy Views, which probably does not
         // need either of these as constructor arguments (most methods in Views are agnostic)
-        $fakeCollection = \Tripod\Mongo\Config::getInstance()->getCollectionForCBD($storeName, 'CBD_testing');
-        $fakeDefaultContext = 'http://talisaspire.com/';
+        $fakeCollection = $config->getCollectionForCBD($storeName, 'CBD_testing');
 
         $views = new \Tripod\Mongo\Composites\Views(
             $storeName,
             $fakeCollection,
-            $fakeDefaultContext
+            $defaultContext
         );
 
-        return function($spec, $compositeCollection, $cbdDoc) use ($fakeDefaultContext, $views) {
-            $views->saveGeneratedView($spec, $compositeCollection, $cbdDoc, $spec['from'], $fakeDefaultContext);
+        return function($spec, $compositeCollection, $cbdDoc) use ($defaultContext, $views) {
+            $views->saveGeneratedView($spec, $compositeCollection, $cbdDoc, $spec['from'], $defaultContext);
         };
     }
     
