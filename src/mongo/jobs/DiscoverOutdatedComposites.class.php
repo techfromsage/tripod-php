@@ -105,7 +105,7 @@ class DiscoverOutdatedComposites extends JobBase {
     **/
     public function getCompositeMetadata($config, $storeName) {
         // for a given composite type and specification, collect the metadata we need to run queries
-        $composite2metadata = function($compositeType, $spec, $regenFunc) use ($config, $storeName) {
+        $compositeToMetadata = function($compositeType, $spec, $regenFunc) use ($config, $storeName) {
             $compositeCollection = 
                 $config->getCollectionForCompositeType($compositeType, $storeName, $spec[_ID_KEY]);
             $cbdCollection = $config->getFromCollectionForSpec($storeName, $spec);
@@ -120,8 +120,8 @@ class DiscoverOutdatedComposites extends JobBase {
 
         // views
         $viewRegen = $this->makeViewRegenFunc($config, $storeName);
-        $view2metadata = function($spec) use ($composite2metadata, $viewRegen) {
-            return $composite2metadata(COMPOSITE_TYPE_VIEWS, $spec, $viewRegen);
+        $view2metadata = function($spec) use ($compositeToMetadata, $viewRegen) {
+            return $compositeToMetadata(COMPOSITE_TYPE_VIEWS, $spec, $viewRegen);
         };
 
         $viewMetadata = array_map($view2metadata, $config->getViewSpecifications($storeName));
@@ -188,7 +188,7 @@ class DiscoverOutdatedComposites extends JobBase {
             } else {
                 // find IDs root CBDs required to regenerate the composite
                 $outdatedCbdIds = 
-                    array_map(array($this, 'composite2cbdId'), iterator_to_array($outdatedComposites, false));
+                    array_map(array($this, 'compositeToCBDID'), iterator_to_array($outdatedComposites, false));
 
                 // fetch the CBDs themselves
                 $filterCbdsById = array('$or' => $outdatedCbdIds);
@@ -216,7 +216,7 @@ class DiscoverOutdatedComposites extends JobBase {
     * @param array $compositeDocument - the composite being examined
     * @return array - the ID of $compositeDocument's root CBD.
     **/
-    protected function composite2cbdId($compositeDocument) {
+    protected function compositeToCBDID($compositeDocument) {
         // these must be valid - they come from a valid composite
         $cbdResourceAlias = $compositeDocument[_ID_KEY][_ID_RESOURCE];
         $cbdContextAlias = $compositeDocument[_ID_KEY][_ID_CONTEXT];
