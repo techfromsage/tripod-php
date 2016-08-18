@@ -121,6 +121,7 @@ class Config
 
     const VALIDATE_MIN = 'MIN';
     const VALIDATE_MAX = 'MAX';
+    const CONNECTION_RETRIES = 30;
 
     /**
      * @var string
@@ -1759,7 +1760,23 @@ class Config
         }
         if(!isset($this->connections[$dataSource]))
         {
-            $this->connections[$dataSource] = new \MongoClient($ds['connection'], $connectionOptions);
+            $retries = 1;
+            $exception = null;
+
+            do {
+                try {
+                    $this->connections[$dataSource] = new \MongoClient($ds['connection'], $connectionOptions);
+                } catch (\MongoConnectionException $e) {
+                    sleep(1);
+                    $retries++;
+                    $exception = $e;
+                }
+
+            } while ($retries < self::CONNECTION_RETRIES && (!isset($this->connections[$dataSource]) && $this->connections[$dataSource]>connected !== true ));
+
+            if (!isset($this->connections[$dataSource])) {
+                throw new \MongoConnectionException($exception);
+            }
         }
         return $this->connections[$dataSource];
     }
@@ -2113,3 +2130,4 @@ class Config
         return self::$logger;
     }
 }
+
