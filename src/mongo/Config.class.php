@@ -1767,6 +1767,7 @@ class Config
                 try {
                     $this->connections[$dataSource] = new \MongoClient($ds['connection'], $connectionOptions);
                 } catch (\MongoConnectionException $e) {
+                    self::getLogger()->warn("MongoConnectionException: " . $e->getMessage());
                     sleep(1);
                     $retries++;
                     $exception = $e;
@@ -1775,6 +1776,7 @@ class Config
             } while ($retries < self::CONNECTION_RETRIES && (!isset($this->connections[$dataSource]) && $this->connections[$dataSource]>connected !== true ));
 
             if (!isset($this->connections[$dataSource])) {
+                self::getLogger()->warn("MongoConnectionException after " . self::CONNECTION_RETRIES . " attempts: " . $e->getMessage());
                 throw new \MongoConnectionException($exception);
             }
         }
