@@ -213,10 +213,10 @@ abstract class DriverBase
                 $retries++;
                 $exception = $e;
             }
-        } while ($retries < 30 && $cursorSuccess === false);
+        } while ($retries <= Config::CONNECTION_RETRIES && $cursorSuccess === false);
 
         if ($cursorSuccess === false) {
-            self::getLogger()->warn("MongoCursorException after " . self::CONNECTION_RETRIES . " attempts: " . $e->getMessage());
+            self::getLogger()->warn("MongoCursorException after " . $retries . " attempts (MAX:".Config::CONNECTION_RETRIES."): " . $e->getMessage());
             throw new \MongoCursorException($exception);
         }
 
