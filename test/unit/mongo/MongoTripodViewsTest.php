@@ -1771,174 +1771,174 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             $this->fail();
         }
     }
-//    public function testCursorNoExceptions()
-//    {
-//        $uri1 = "http://uri1";
-//
-//        $viewType = "someView";
-//        $context = "http://someContext";
-//
-//        $returnedGraph = new \Tripod\ExtendedGraph();
-//        $returnedGraph->add_literal_triple($uri1,'http://somepred','someval');
-//
-//        $mockDb = $this->getMock("MongoDB", array("selectCollection"),array(new MongoClient(),"test"));
-//        $mockCursor = $this->getMock('MongoCursor', array(), array(new MongoClient(), 'test.views'));
-//        $mockColl = $this->getMock("MongoCollection", array('findOne'),array($mockDb,$this->tripod->getPodName()));
-//        $mockViewColl = $this->getMock("MongoCollection", array('findOne', 'find'), array($mockDb,VIEWS_COLLECTION));
-//        $mockViewColl->expects($this->once())->method('find')->will($this->returnValue($mockCursor));
-//
-//        $mockDb->expects($this->any())->method("selectCollection")->will($this->returnValue($mockColl));
-//        $mockColl->expects($this->once())->method("findOne")->will($this->returnValue(null));
-//
-//
-//        /** @var PHPUnit_Framework_MockObject_MockObject|TripodTestConfig $mockConfig */
-//        $mockConfig = $this->getMock(
-//            'TripodTestConfig',
-//            array('getCollectionForCBD','getCollectionForView')
-//        );
-//
-//        $mockConfig->expects($this->atLeastOnce())
-//            ->method('getCollectionForCBD')
-//            ->with('tripod_php_testing', $this->anything(), $this->anything())
-//            ->will($this->returnValue($mockColl));
-//
-//        $mockConfig->expects($this->atLeastOnce())
-//            ->method('getCollectionForView')
-//            ->with('tripod_php_testing', $this->anything(), $this->anything())
-//            ->will($this->returnValue($mockViewColl));
-//
-//        $mockConfig->loadConfig(\Tripod\Mongo\Config::getConfig());
-//
-//        /* @var $mockTripodViews|PHPUnit_Framework_MockObject_MockObject Views */
-//        $mockTripodViews = $this->getMock(
-//            '\Tripod\Mongo\Composites\Views',
-//            array('generateView', 'getConfigInstance'),
-//            array('tripod_php_testing',$mockColl,$context));
-//
-//        $mockTripodViews->expects($this->never())
-//            ->method('generateView');
-//
-//        $mockTripodViews->expects($this->atLeastOnce())
-//            ->method('getConfigInstance')
-//            ->will($this->returnValue($mockConfig));
-//
-//        $mockTripodViews->getViewForResources(array($uri1),$viewType,$context);
-//    }
-//    public function testCursorExceptionThrown()
-//    {
-//        $uri1 = "http://uri1";
-//
-//        $viewType = "someView";
-//        $context = "http://someContext";
-//
-//        $returnedGraph = new \Tripod\ExtendedGraph();
-//        $returnedGraph->add_literal_triple($uri1,'http://somepred','someval');
-//
-//        $mockDb = $this->getMock("MongoDB", array("selectCollection"),array(new MongoClient(),"test"));
-//        $mockCursor = $this->getMock('MongoCursor', array('rewind'), array(new MongoClient(), 'test.views'));
-//        $mockCursor->expects($this->exactly(30))->method('rewind')->will($this->throwException(new \MongoCursorException('Exception thrown when cursoring to Mongo')));
-//        $mockColl = $this->getMock("MongoCollection", array('findOne'),array($mockDb,$this->tripod->getPodName()));
-//        $mockViewColl = $this->getMock("MongoCollection", array('findOne', 'find'), array($mockDb,VIEWS_COLLECTION));
-//        $mockViewColl->expects($this->once())->method('find')->will($this->returnValue($mockCursor));
-//
-//        $mockDb->expects($this->any())->method("selectCollection")->will($this->returnValue($mockColl));
-//        $mockColl->expects($this->never())->method("findOne");
-//
-//
-//        /** @var PHPUnit_Framework_MockObject_MockObject|TripodTestConfig $mockConfig */
-//        $mockConfig = $this->getMock(
-//            'TripodTestConfig',
-//            array('getCollectionForCBD','getCollectionForView')
-//        );
-//
-//        $mockConfig->expects($this->never())
-//            ->method('getCollectionForCBD');
-//
-//        $mockConfig->expects($this->atLeastOnce())
-//            ->method('getCollectionForView')
-//            ->with('tripod_php_testing', $this->anything(), $this->anything())
-//            ->will($this->returnValue($mockViewColl));
-//
-//        $mockConfig->loadConfig(\Tripod\Mongo\Config::getConfig());
-//
-//        /* @var $mockTripodViews|PHPUnit_Framework_MockObject_MockObject Views */
-//        $mockTripodViews = $this->getMock(
-//            '\Tripod\Mongo\Composites\Views',
-//            array('generateView', 'getConfigInstance'),
-//            array('tripod_php_testing',$mockColl,$context));
-//
-//        $mockTripodViews->expects($this->never())
-//            ->method('generateView');
-//
-//        $mockTripodViews->expects($this->atLeastOnce())
-//            ->method('getConfigInstance')
-//            ->will($this->returnValue($mockConfig));
-//
-//        $this->setExpectedException('\MongoCursorException', "Exception thrown when cursoring to Mongo");
-//        $mockTripodViews->getViewForResources(array($uri1),$viewType,$context);
-//    }
-//    public function testCursorNoExceptionThrownWhenCursorThrowsSomeExceptions()
-//    {
-//        $uri1 = "http://uri1";
-//
-//        $viewType = "someView";
-//        $context = "http://someContext";
-//
-//        $returnedGraph = new \Tripod\ExtendedGraph();
-//        $returnedGraph->add_literal_triple($uri1,'http://somepred','someval');
-//
-//        $mockDb = $this->getMock("MongoDB", array("selectCollection"),array(new MongoClient(),"test"));
-//        $mockCursor = $this->getMock('MongoCursor', array('rewind'), array(new MongoClient(), 'test.views'));
-//
-//        $mockCursor->expects($this->exactly(5))
-//            ->method('rewind')
-//            ->will($this->onConsecutiveCalls(
-//                $this->throwException(new \MongoCursorException('Exception thrown when cursoring to Mongo')),
-//                $this->throwException(new \MongoCursorException('Exception thrown when cursoring to Mongo')),
-//                $this->throwException(new \MongoCursorException('Exception thrown when cursoring to Mongo')),
-//                $this->throwException(new \MongoCursorException('Exception thrown when cursoring to Mongo')),
-//                $this->returnValue($mockCursor)));
-//
-//
-//        $mockColl = $this->getMock("MongoCollection", array('findOne'),array($mockDb,$this->tripod->getPodName()));
-//        $mockViewColl = $this->getMock("MongoCollection", array('findOne', 'find'), array($mockDb,VIEWS_COLLECTION));
-//        $mockViewColl->expects($this->once())->method('find')->will($this->returnValue($mockCursor));
-//
-//        $mockDb->expects($this->any())->method("selectCollection")->will($this->returnValue($mockColl));
-//        $mockColl->expects($this->once())->method("findOne")->will($this->returnValue(null));
-//
-//
-//        /** @var PHPUnit_Framework_MockObject_MockObject|TripodTestConfig $mockConfig */
-//        $mockConfig = $this->getMock(
-//            'TripodTestConfig',
-//            array('getCollectionForCBD','getCollectionForView')
-//        );
-//
-//        $mockConfig->expects($this->atLeastOnce())
-//            ->method('getCollectionForCBD')
-//            ->with('tripod_php_testing', $this->anything(), $this->anything())
-//            ->will($this->returnValue($mockColl));
-//
-//        $mockConfig->expects($this->atLeastOnce())
-//            ->method('getCollectionForView')
-//            ->with('tripod_php_testing', $this->anything(), $this->anything())
-//            ->will($this->returnValue($mockViewColl));
-//
-//        $mockConfig->loadConfig(\Tripod\Mongo\Config::getConfig());
-//
-//        /* @var $mockTripodViews|PHPUnit_Framework_MockObject_MockObject Views */
-//        $mockTripodViews = $this->getMock(
-//            '\Tripod\Mongo\Composites\Views',
-//            array('generateView', 'getConfigInstance'),
-//            array('tripod_php_testing',$mockColl,$context));
-//
-//        $mockTripodViews->expects($this->never())
-//            ->method('generateView');
-//
-//        $mockTripodViews->expects($this->atLeastOnce())
-//            ->method('getConfigInstance')
-//            ->will($this->returnValue($mockConfig));
-//
-//        $mockTripodViews->getViewForResources(array($uri1),$viewType,$context);
-//    }
+    public function testCursorNoExceptions()
+    {
+        $uri1 = "http://uri1";
+
+        $viewType = "someView";
+        $context = "http://someContext";
+
+        $returnedGraph = new \Tripod\ExtendedGraph();
+        $returnedGraph->add_literal_triple($uri1,'http://somepred','someval');
+
+        $mockDb = $this->getMock("MongoDB", array("selectCollection"),array(new MongoClient(),"test"));
+        $mockCursor = $this->getMock('MongoCursor', array(), array(new MongoClient(), 'test.views'));
+        $mockColl = $this->getMock("MongoCollection", array('findOne'),array($mockDb,$this->tripod->getPodName()));
+        $mockViewColl = $this->getMock("MongoCollection", array('findOne', 'find'), array($mockDb,VIEWS_COLLECTION));
+        $mockViewColl->expects($this->once())->method('find')->will($this->returnValue($mockCursor));
+
+        $mockDb->expects($this->any())->method("selectCollection")->will($this->returnValue($mockColl));
+        $mockColl->expects($this->once())->method("findOne")->will($this->returnValue(null));
+
+
+        /** @var PHPUnit_Framework_MockObject_MockObject|TripodTestConfig $mockConfig */
+        $mockConfig = $this->getMock(
+            'TripodTestConfig',
+            array('getCollectionForCBD','getCollectionForView')
+        );
+
+        $mockConfig->expects($this->atLeastOnce())
+            ->method('getCollectionForCBD')
+            ->with('tripod_php_testing', $this->anything(), $this->anything())
+            ->will($this->returnValue($mockColl));
+
+        $mockConfig->expects($this->atLeastOnce())
+            ->method('getCollectionForView')
+            ->with('tripod_php_testing', $this->anything(), $this->anything())
+            ->will($this->returnValue($mockViewColl));
+
+        $mockConfig->loadConfig(\Tripod\Mongo\Config::getConfig());
+
+        /* @var $mockTripodViews|PHPUnit_Framework_MockObject_MockObject Views */
+        $mockTripodViews = $this->getMock(
+            '\Tripod\Mongo\Composites\Views',
+            array('generateView', 'getConfigInstance'),
+            array('tripod_php_testing',$mockColl,$context));
+
+        $mockTripodViews->expects($this->never())
+            ->method('generateView');
+
+        $mockTripodViews->expects($this->atLeastOnce())
+            ->method('getConfigInstance')
+            ->will($this->returnValue($mockConfig));
+
+        $mockTripodViews->getViewForResources(array($uri1),$viewType,$context);
+    }
+    public function testCursorExceptionThrown()
+    {
+        $uri1 = "http://uri1";
+
+        $viewType = "someView";
+        $context = "http://someContext";
+
+        $returnedGraph = new \Tripod\ExtendedGraph();
+        $returnedGraph->add_literal_triple($uri1,'http://somepred','someval');
+
+        $mockDb = $this->getMock("MongoDB", array("selectCollection"),array(new MongoClient(),"test"));
+        $mockCursor = $this->getMock('MongoCursor', array('rewind'), array(new MongoClient(), 'test.views'));
+        $mockCursor->expects($this->exactly(30))->method('rewind')->will($this->throwException(new \MongoCursorException('Exception thrown when cursoring to Mongo')));
+        $mockColl = $this->getMock("MongoCollection", array('findOne'),array($mockDb,$this->tripod->getPodName()));
+        $mockViewColl = $this->getMock("MongoCollection", array('findOne', 'find'), array($mockDb,VIEWS_COLLECTION));
+        $mockViewColl->expects($this->once())->method('find')->will($this->returnValue($mockCursor));
+
+        $mockDb->expects($this->any())->method("selectCollection")->will($this->returnValue($mockColl));
+        $mockColl->expects($this->never())->method("findOne");
+
+
+        /** @var PHPUnit_Framework_MockObject_MockObject|TripodTestConfig $mockConfig */
+        $mockConfig = $this->getMock(
+            'TripodTestConfig',
+            array('getCollectionForCBD','getCollectionForView')
+        );
+
+        $mockConfig->expects($this->never())
+            ->method('getCollectionForCBD');
+
+        $mockConfig->expects($this->atLeastOnce())
+            ->method('getCollectionForView')
+            ->with('tripod_php_testing', $this->anything(), $this->anything())
+            ->will($this->returnValue($mockViewColl));
+
+        $mockConfig->loadConfig(\Tripod\Mongo\Config::getConfig());
+
+        /* @var $mockTripodViews|PHPUnit_Framework_MockObject_MockObject Views */
+        $mockTripodViews = $this->getMock(
+            '\Tripod\Mongo\Composites\Views',
+            array('generateView', 'getConfigInstance'),
+            array('tripod_php_testing',$mockColl,$context));
+
+        $mockTripodViews->expects($this->never())
+            ->method('generateView');
+
+        $mockTripodViews->expects($this->atLeastOnce())
+            ->method('getConfigInstance')
+            ->will($this->returnValue($mockConfig));
+
+        $this->setExpectedException('\MongoCursorException', "Exception thrown when cursoring to Mongo");
+        $mockTripodViews->getViewForResources(array($uri1),$viewType,$context);
+    }
+    public function testCursorNoExceptionThrownWhenCursorThrowsSomeExceptions()
+    {
+        $uri1 = "http://uri1";
+
+        $viewType = "someView";
+        $context = "http://someContext";
+
+        $returnedGraph = new \Tripod\ExtendedGraph();
+        $returnedGraph->add_literal_triple($uri1,'http://somepred','someval');
+
+        $mockDb = $this->getMock("MongoDB", array("selectCollection"),array(new MongoClient(),"test"));
+        $mockCursor = $this->getMock('MongoCursor', array('rewind'), array(new MongoClient(), 'test.views'));
+
+        $mockCursor->expects($this->exactly(5))
+            ->method('rewind')
+            ->will($this->onConsecutiveCalls(
+                $this->throwException(new \MongoCursorException('Exception thrown when cursoring to Mongo')),
+                $this->throwException(new \MongoCursorException('Exception thrown when cursoring to Mongo')),
+                $this->throwException(new \MongoCursorException('Exception thrown when cursoring to Mongo')),
+                $this->throwException(new \MongoCursorException('Exception thrown when cursoring to Mongo')),
+                $this->returnValue($mockCursor)));
+
+
+        $mockColl = $this->getMock("MongoCollection", array('findOne'),array($mockDb,$this->tripod->getPodName()));
+        $mockViewColl = $this->getMock("MongoCollection", array('findOne', 'find'), array($mockDb,VIEWS_COLLECTION));
+        $mockViewColl->expects($this->once())->method('find')->will($this->returnValue($mockCursor));
+
+        $mockDb->expects($this->any())->method("selectCollection")->will($this->returnValue($mockColl));
+        $mockColl->expects($this->once())->method("findOne")->will($this->returnValue(null));
+
+
+        /** @var PHPUnit_Framework_MockObject_MockObject|TripodTestConfig $mockConfig */
+        $mockConfig = $this->getMock(
+            'TripodTestConfig',
+            array('getCollectionForCBD','getCollectionForView')
+        );
+
+        $mockConfig->expects($this->atLeastOnce())
+            ->method('getCollectionForCBD')
+            ->with('tripod_php_testing', $this->anything(), $this->anything())
+            ->will($this->returnValue($mockColl));
+
+        $mockConfig->expects($this->atLeastOnce())
+            ->method('getCollectionForView')
+            ->with('tripod_php_testing', $this->anything(), $this->anything())
+            ->will($this->returnValue($mockViewColl));
+
+        $mockConfig->loadConfig(\Tripod\Mongo\Config::getConfig());
+
+        /* @var $mockTripodViews|PHPUnit_Framework_MockObject_MockObject Views */
+        $mockTripodViews = $this->getMock(
+            '\Tripod\Mongo\Composites\Views',
+            array('generateView', 'getConfigInstance'),
+            array('tripod_php_testing',$mockColl,$context));
+
+        $mockTripodViews->expects($this->never())
+            ->method('generateView');
+
+        $mockTripodViews->expects($this->atLeastOnce())
+            ->method('getConfigInstance')
+            ->will($this->returnValue($mockConfig));
+
+        $mockTripodViews->getViewForResources(array($uri1),$viewType,$context);
+    }
 }
