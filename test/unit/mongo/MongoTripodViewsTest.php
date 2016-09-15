@@ -1879,9 +1879,6 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
     }
     public function testCursorNoExceptionThrownWhenCursorThrowsSomeExceptions()
     {
-        error_reporting(E_ALL);
-        ini_set('display_errors', true);
-
         $uri1 = "http://uri1";
 
         $viewType = "someView";
