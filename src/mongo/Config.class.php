@@ -1765,7 +1765,7 @@ class Config
 
             do {
                 try {
-                    $this->connections[$dataSource] = new \MongoClient($ds['connection'], $connectionOptions);
+                    $this->connections[$dataSource] = $this->getMongoClient($ds['connection'], $connectionOptions);
                 } catch (\MongoConnectionException $e) {
                     self::getLogger()->warn("MongoConnectionException: " . $e->getMessage());
                     sleep(1);
@@ -1773,14 +1773,25 @@ class Config
                     $exception = $e;
                 }
 
-            } while ($retries < self::CONNECTION_RETRIES && (!isset($this->connections[$dataSource]) && $this->connections[$dataSource]->connected !== true ));
+            } while ($retries <= self::CONNECTION_RETRIES && (!isset($this->connections[$dataSource]) || (isset($this->connections[$dataSource]) && $this->connections[$dataSource]->connected !== true)));
 
             if (!isset($this->connections[$dataSource])) {
-                self::getLogger()->warn("MongoConnectionException after " . self::CONNECTION_RETRIES . " attempts: " . $e->getMessage());
+                self::getLogger()->warn("MongoConnectionException after " . $retries . " attempts (MAX:".self::CONNECTION_RETRIES."): " . $e->getMessage());
                 throw new \MongoConnectionException($exception);
             }
         }
         return $this->connections[$dataSource];
+    }
+
+    /**
+     * Create a Mongo Client - used for mocking
+     * @param string $connection
+     * @param array $connectionOptions
+     * @return \MongoClient
+     */
+    protected function getMongoClient($connection, $connectionOptions)
+    {
+        return new \MongoClient($connection, $connectionOptions);
     }
 
     /**
