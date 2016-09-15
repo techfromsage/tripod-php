@@ -1773,7 +1773,7 @@ class Config
                     $exception = $e;
                 }
 
-            } while ($retries < self::CONNECTION_RETRIES && (!isset($this->connections[$dataSource]) && $this->connections[$dataSource]>connected !== true ));
+            } while ($retries < self::CONNECTION_RETRIES && (!isset($this->connections[$dataSource]) && $this->connections[$dataSource]->connected !== true ));
 
             if (!isset($this->connections[$dataSource])) {
                 self::getLogger()->warn("MongoConnectionException after " . self::CONNECTION_RETRIES . " attempts: " . $e->getMessage());
