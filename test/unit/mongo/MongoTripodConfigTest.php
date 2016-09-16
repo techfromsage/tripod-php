@@ -1694,4 +1694,61 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         }
         $this->assertEquals(getenv(MONGO_TRIPOD_RESQUE_SERVER), \Tripod\Mongo\Config::getResqueServer());
     }
+
+    // MongoClient creation tests
+    public function testMongoConnectionNoExceptions()
+    {
+        $mockConfig = $this->getMock('TripodTestConfig', array('getMongoClient'));
+        $mockConfig->loadConfig(json_decode(file_get_contents(dirname(__FILE__).'/data/config.json'), true));
+        $mockConfig->expects($this->exactly(1))
+            ->method('getMongoClient')
+            ->with('mongodb://localhost', array('connectTimeoutMS' => 20000))
+            ->will($this->returnCallback(
+                function()
+                {
+                    $mongo = new MongoClient();
+                    return $mongo;
+                }
+            ));
+        $mockConfig->getDatabase('tripod_php_testing', 'rs1', MongoClient::RP_SECONDARY_PREFERRED);
+        $mockConfig->getCollectionForCBD('tripod_php_testing', 'CBD_testing', MongoClient::RP_SECONDARY_PREFERRED);
+        $mockConfig->getCollectionForCBD('tripod_php_testing', 'CBD_testing', MongoClient::RP_NEAREST);
+    }
+    public function testMongoConnectionExceptionThrown()
+    {
+        $this->setExpectedException('\MongoConnectionException', "Exception thrown when connecting to Mongo");
+        $mockConfig = $this->getMock('TripodTestConfig', array('getMongoClient'));
+        $mockConfig->loadConfig(json_decode(file_get_contents(dirname(__FILE__).'/data/config.json'), true));
+        $mockConfig->expects($this->exactly(30))
+            ->method('getMongoClient')
+            ->with('mongodb://localhost', array('connectTimeoutMS' => 20000))
+            ->will($this->throwException(new \MongoConnectionException('Exception thrown when connecting to Mongo')));
+
+        $mockConfig->getDatabase('tripod_php_testing', 'rs1', MongoClient::RP_SECONDARY_PREFERRED);
+    }
+    public function testMongoConnectionNoExceptionThrownWhenConnectionThrowsSomeExceptions()
+    {
+        $mockConfig = $this->getMock('TripodTestConfig', array('getMongoClient'));
+        $mockConfig->loadConfig(json_decode(file_get_contents(dirname(__FILE__).'/data/config.json'), true));
+        $mockConfig->expects($this->exactly(5))
+            ->method('getMongoClient')
+            ->with('mongodb://localhost', array('connectTimeoutMS' => 20000))
+            ->will($this->onConsecutiveCalls(
+                $this->throwException(new \MongoConnectionException('Exception thrown when connecting to Mongo')),
+                $this->throwException(new \MongoConnectionException('Exception thrown when connecting to Mongo')),
+                $this->throwException(new \MongoConnectionException('Exception thrown when connecting to Mongo')),
+                $this->throwException(new \MongoConnectionException('Exception thrown when connecting to Mongo')),
+                $this->returnCallback(
+                    function()
+                    {
+                        $mongo = new MongoClient();
+                        return $mongo;
+                    }
+                )
+            ));
+
+        $mockConfig->getDatabase('tripod_php_testing', 'rs1', MongoClient::RP_SECONDARY_PREFERRED);
+        $mockConfig->getCollectionForCBD('tripod_php_testing', 'CBD_testing', MongoClient::RP_SECONDARY_PREFERRED);
+        $mockConfig->getCollectionForCBD('tripod_php_testing', 'CBD_testing', MongoClient::RP_NEAREST);
+    }
 }

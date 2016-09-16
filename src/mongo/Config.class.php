@@ -121,6 +121,7 @@ class Config
 
     const VALIDATE_MIN = 'MIN';
     const VALIDATE_MAX = 'MAX';
+    const CONNECTION_RETRIES = 30;
 
     /**
      * @var string
@@ -1759,9 +1760,44 @@ class Config
         }
         if(!isset($this->connections[$dataSource]))
         {
-            $this->connections[$dataSource] = new \MongoClient($ds['connection'], $connectionOptions);
+            $retries = 1;
+            $exception = null;
+            $connected = false;
+
+            do {
+                try {
+                    $this->connections[$dataSource] = $this->getMongoClient($ds['connection'], $connectionOptions);
+                    // Check if we are connected
+                    $connections = $this->connections[$dataSource]->getConnections();
+                    if (empty($connections) === false) {
+                        $connected = true;
+                    }
+                } catch (\MongoConnectionException $e) {
+                    self::getLogger()->error("MongoConnectionException attempt ".$retries.". Retrying...:" . $e->getMessage());
+                    sleep(1);
+                    $retries++;
+                    $exception = $e;
+                }
+
+            } while ($retries <= self::CONNECTION_RETRIES && $connected === false);
+
+            if (!isset($this->connections[$dataSource])) {
+                self::getLogger()->error("MongoConnectionException failed after " . $retries . " attempts (MAX:".self::CONNECTION_RETRIES."): " . $e->getMessage());
+                throw new \MongoConnectionException($exception);
+            }
         }
         return $this->connections[$dataSource];
+    }
+
+    /**
+     * Create a Mongo Client - used for mocking
+     * @param string $connection
+     * @param array $connectionOptions
+     * @return \MongoClient
+     */
+    protected function getMongoClient($connection, $connectionOptions)
+    {
+        return new \MongoClient($connection, $connectionOptions);
     }
 
     /**
@@ -2113,3 +2149,4 @@ class Config
         return self::$logger;
     }
 }
+

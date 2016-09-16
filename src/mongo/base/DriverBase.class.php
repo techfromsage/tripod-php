@@ -183,22 +183,43 @@ abstract class DriverBase
 
         $ttlExpiredResources = false;
         $cursor->batchSize($cursorSize);
-        foreach($cursor as $result)
-        {
-            // handle MONGO_VIEWS that have expired due to ttl. These are expired
-            // on read (lazily) rather than on write
-            if ($type==MONGO_VIEW && array_key_exists(_EXPIRES,$result['value']))
-            {
-                // if expires < current date, regenerate view..
-                $currentDate = new \MongoDate();
-                if ($result['value'][_EXPIRES]<$currentDate)
+
+        $retries = 1;
+        $exception = null;
+        $cursorSuccess = false;
+
+        do {
+            try {
+                foreach($cursor as $result)
                 {
-                    // regenerate!
-                    $this->generateView($result['_id']['type'],$result['_id']['r']);
+                    // handle MONGO_VIEWS that have expired due to ttl. These are expired
+                    // on read (lazily) rather than on write
+                    if ($type==MONGO_VIEW && array_key_exists(_EXPIRES,$result['value']))
+                    {
+                        // if expires < current date, regenerate view..
+                        $currentDate = new \MongoDate();
+                        if ($result['value'][_EXPIRES]<$currentDate)
+                        {
+                            // regenerate!
+                            $this->generateView($result['_id']['type'],$result['_id']['r']);
+                        }
+                    }
+                    $graph->add_tripod_array($result);
                 }
+                $cursorSuccess = true;
+            } catch (\MongoCursorException $e) {
+                self::getLogger()->error("MongoCursorException attempt ".$retries.". Retrying...:" . $e->getMessage());
+                sleep(1);
+                $retries++;
+                $exception = $e;
             }
-            $graph->add_tripod_array($result);
+        } while ($retries <= Config::CONNECTION_RETRIES && $cursorSuccess === false);
+
+        if ($cursorSuccess === false) {
+            self::getLogger()->error("MongoCursorException failed after " . $retries . " attempts (MAX:".Config::CONNECTION_RETRIES."): " . $e->getMessage());
+            throw new \MongoCursorException($exception);
         }
+
         if ($ttlExpiredResources)
         {
             // generate views and retry...
