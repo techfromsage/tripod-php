@@ -208,7 +208,7 @@ abstract class DriverBase
                 }
                 $cursorSuccess = true;
             } catch (\MongoCursorException $e) {
-                self::getLogger()->warn("MongoCursorException: " . $e->getMessage());
+                self::getLogger()->error("MongoCursorException attempt ".$retries.". Retrying...:" . $e->getMessage());
                 sleep(1);
                 $retries++;
                 $exception = $e;
@@ -216,7 +216,7 @@ abstract class DriverBase
         } while ($retries <= Config::CONNECTION_RETRIES && $cursorSuccess === false);
 
         if ($cursorSuccess === false) {
-            self::getLogger()->warn("MongoCursorException after " . $retries . " attempts (MAX:".Config::CONNECTION_RETRIES."): " . $e->getMessage());
+            self::getLogger()->error("MongoCursorException failed after " . $retries . " attempts (MAX:".Config::CONNECTION_RETRIES."): " . $e->getMessage());
             throw new \MongoCursorException($exception);
         }
 

@@ -1773,16 +1773,16 @@ class Config
                         $connected = true;
                     }
                 } catch (\MongoConnectionException $e) {
-                    self::getLogger()->warn("MongoConnectionException: " . $e->getMessage());
+                    self::getLogger()->error("MongoConnectionException attempt ".$retries.". Retrying...:" . $e->getMessage());
                     sleep(1);
                     $retries++;
                     $exception = $e;
                 }
 
-            } while ($retries <= self::CONNECTION_RETRIES && $connected == false);
+            } while ($retries <= self::CONNECTION_RETRIES && $connected === false);
 
             if (!isset($this->connections[$dataSource])) {
-                self::getLogger()->warn("MongoConnectionException after " . $retries . " attempts (MAX:".self::CONNECTION_RETRIES."): " . $e->getMessage());
+                self::getLogger()->error("MongoConnectionException failed after " . $retries . " attempts (MAX:".self::CONNECTION_RETRIES."): " . $e->getMessage());
                 throw new \MongoConnectionException($exception);
             }
         }
