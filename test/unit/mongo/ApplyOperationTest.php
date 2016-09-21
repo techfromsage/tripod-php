@@ -15,6 +15,7 @@ class ApplyOperationTest extends MongoTripodTestBase
         unset($this->args['tripodConfig']);
         $job = new \Tripod\Mongo\Jobs\ApplyOperation();
         $job->args = $this->args;
+        $jobs->payload['id'] = uniqid();
         $this->setExpectedException('Exception', "Argument tripodConfig was not present in supplied job args for job Tripod\Mongo\Jobs\ApplyOperation");
         $job->perform();
     }

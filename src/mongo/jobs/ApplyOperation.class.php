@@ -17,7 +17,7 @@ class ApplyOperation extends JobBase {
     {
         try
         {
-            $this->debugLog("ApplyOperation::perform() start");
+            $this->debugLog("[JOBID " . $this->job->payload['id'] . "] ApplyOperation::perform() start");
 
             $timer = new \Tripod\Timer();
             $timer->start();
@@ -53,7 +53,7 @@ class ApplyOperation extends JobBase {
             // stat time taken to process job, from time it was picked up
             $this->getStat()->timer(MONGO_QUEUE_APPLY_OPERATION_SUCCESS,$timer->result());
 
-            $this->debugLog("ApplyOperation::perform() done in {$timer->result()}ms");
+            $this->debugLog("[JOBID " . $this->job->payload['id'] . "] ApplyOperation::perform() done in {$timer->result()}ms");
         }
         catch (\Exception $e)
         {
@@ -100,7 +100,7 @@ class ApplyOperation extends JobBase {
             $args["storeName"],
             $args["podName"],
             $args["specTypes"]
-        );        
+        );
     }
 
     /**

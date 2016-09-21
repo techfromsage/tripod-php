@@ -34,7 +34,7 @@ class DiscoverImpactedSubjects extends JobBase {
         try
         {
 
-            $this->debugLog("DiscoverImpactedSubjects::perform() start");
+            $this->debugLog("[JOBID " . $this->job->payload['id'] . "] DiscoverImpactedSubjects::perform() start");
 
             $timer = new \Tripod\Timer();
             $timer->start();
@@ -136,7 +136,7 @@ class DiscoverImpactedSubjects extends JobBase {
             // stat time taken to process item, from time it was created (queued)
             $timer->stop();
             $this->getStat()->timer(MONGO_QUEUE_DISCOVER_SUCCESS,$timer->result());
-            $this->debugLog("DiscoverImpactedSubjects::perform() done in {$timer->result()}ms");
+            $this->debugLog("[JOBID " . $this->job->payload['id'] . "] DiscoverImpactedSubjects::perform() done in {$timer->result()}ms");
             $this->getStat()->increment(MONGO_QUEUE_DISCOVER_JOB . '.' . SUBJECT_COUNT, $subjectCount);
         }
         catch(\Exception $e)
