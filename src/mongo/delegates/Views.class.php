@@ -98,7 +98,11 @@ class Views extends CompositeBase
         $affectedViews = array();
         foreach($this->config->getCollectionsForViews($this->storeName) as $collection)
         {
+            $t = new \Tripod\Timer();
+            $t->start();
             $views = $collection->find($query,array("_id"=>true));
+            $t->stop();
+            $this->timingLog(MONGO_FIND_IMPACTED, array('duration'=>$t->result(), 'query'=>$query, 'storeName'=>$this->storeName, 'collection'=>$collection));
             foreach($views as $v)
             {
                 $affectedViews[] = $v;

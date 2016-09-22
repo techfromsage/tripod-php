@@ -118,6 +118,7 @@ abstract class CompositeBase extends \Tripod\Mongo\DriverBase implements \Tripod
                 $impactedSubjects[] = new \Tripod\Mongo\ImpactedSubject($candidate['id'], $this->getOperationType(), $this->getStoreName(), $podName, $specTypes);
             }
         }
+
         return $impactedSubjects;
     }
 

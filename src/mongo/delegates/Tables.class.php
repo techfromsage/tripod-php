@@ -199,7 +199,11 @@ class Tables extends CompositeBase
 
         foreach($this->config->getCollectionsForTables($this->storeName) as $collection)
         {
+            $t = new \Tripod\Timer();
+            $t->start();
             $tableRows = $collection->find($query, array("_id"=>true));
+            $t->stop();
+            $this->timingLog(MONGO_FIND_IMPACTED, array('duration'=>$t->result(), 'query'=>$query, 'storeName'=>$this->storeName, 'collection'=>$collection));
             foreach($tableRows as $t)
             {
                 $affectedTableRows[] = $t;
@@ -307,6 +311,9 @@ class Tables extends CompositeBase
      */
     protected function deleteTableRowsForResource($resource, $context=null, $specType = null)
     {
+        $t = new \Tripod\Timer();
+        $t->start();
+
         $resourceAlias = $this->labeller->uri_to_alias($resource);
         $contextAlias = $this->getContextAlias($context);
         $query = array(_ID_KEY . '.' . _ID_RESOURCE => $resourceAlias,  _ID_KEY . '.' . _ID_CONTEXT => $contextAlias);
@@ -336,6 +343,9 @@ class Tables extends CompositeBase
                 $this->config->getCollectionForTable($this->storeName, $specName)->remove($query);
             }
         }
+
+        $t->stop();
+        $this->timingLog(MONGO_DELETE_TABLE_ROWS, array('duration'=>$t->result(), 'query'=>$query, 'collection'=>TABLE_ROWS_COLLECTION));
     }
 
     /**
@@ -343,6 +353,8 @@ class Tables extends CompositeBase
      * @param string $tableId
      */
     public function deleteTableRowsByTableId($tableId) {
+        $t = new \Tripod\Timer();
+        $t->start();
         $tableSpec = Config::getInstance()->getTableSpecification($this->storeName, $tableId);
         if ($tableSpec==null)
         {
@@ -352,6 +364,9 @@ class Tables extends CompositeBase
 
         $this->config->getCollectionForTable($this->storeName, $tableId)
             ->remove(array("_id.type"=>$tableId), array('fsync'=>true));
+
+        $t->stop();
+        $this->timingLog(MONGO_DELETE_TABLE_ROWS, array('duration'=>$t->result(), 'query'=>$query));
     }
 
     /**
