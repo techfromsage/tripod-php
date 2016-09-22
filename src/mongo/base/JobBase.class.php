@@ -64,7 +64,7 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
      */
     public function debugLog($message, $params = null)
     {
-        parent::debugLog("[PID ".getmypid()."] ".$message, $params);
+        parent::debugLog($message, $params);
     }
 
     /**
@@ -73,7 +73,7 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
      */
     public function errorLog($message, $params = null)
     {
-        parent::errorLog("[PID ".getmypid()."] ".$message, $params);
+        parent::errorLog($message, $params);
     }
 
 
@@ -153,5 +153,6 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
         }
         return parent::getStat();
     }
+
 }
 
