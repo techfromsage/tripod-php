@@ -13,6 +13,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
         unset($this->args['tripodConfig']);
         $job = new \Tripod\Mongo\Jobs\DiscoverImpactedSubjects();
         $job->args = $this->args;
+        $job->job->payload['id'] = uniqid();
         $this->setExpectedException('Exception', "Argument tripodConfig was not present in supplied job args for job Tripod\Mongo\Jobs\DiscoverImpactedSubjects");
         $job->perform();
     }
