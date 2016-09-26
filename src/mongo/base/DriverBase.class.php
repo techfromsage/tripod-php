@@ -275,6 +275,7 @@ abstract class DriverBase
      */
     public function timingLog($type, $params=null)
     {
+        $type = "[PID " . getmypid() ."] " . $type;
         $this->log(\Psr\Log\LogLevel::INFO,$type,$params); // todo: timing log is a bit weird. Should it infact go in a different channel? Is it just debug?
     }
 
@@ -288,8 +289,8 @@ abstract class DriverBase
      */
     public function infoLog($message, $params=null)
     {
+        $message = "[PID " . getmypid() ."] " . $message;
         $this->log(\Psr\Log\LogLevel::INFO,$message,$params);
-
     }
 
     /**
@@ -298,6 +299,7 @@ abstract class DriverBase
      */
     public function debugLog($message, $params=null)
     {
+        $message = "[PID " . getmypid() ."] " . $message;
         $this->log(\Psr\Log\LogLevel::DEBUG,$message,$params);
     }
 
@@ -307,6 +309,7 @@ abstract class DriverBase
      */
     public function errorLog($message, $params=null)
     {
+        $message = "[PID " . getmypid() ."] " . $message;
         $this->log(\Psr\Log\LogLevel::ERROR,$message,$params);
     }
 
@@ -316,6 +319,7 @@ abstract class DriverBase
      */
     public function warningLog($message, $params=null)
     {
+        $message = "[PID " . getmypid() ."] " . $message;
         $this->log(\Psr\Log\LogLevel::WARNING,$message,$params);
     }
 
@@ -324,7 +328,7 @@ abstract class DriverBase
      * @param string $message
      * @param array|null $params
      */
-    private function log($level, $message,$params)
+    private function log($level, $message, $params)
     {
         ($params==null) ? self::getLogger()->log($level, $message) : self::getLogger()->log($level, $message, $params);
     }
