@@ -10,6 +10,9 @@ require_once TRIPOD_DIR . 'exceptions/SearchException.class.php';
 use Tripod\Mongo\Config;
 use Tripod\Mongo\ImpactedSubject;
 use Tripod\Mongo\Labeller;
+use \MongoDB\Driver\ReadPreference;
+use \MongoDB\Collection;
+
 /**
  * Class SearchIndexer
  * @package Tripod\Mongo\Composites
@@ -32,7 +35,7 @@ class SearchIndexer extends CompositeBase
      * @param string $readPreference
      * @throws \Tripod\Exceptions\SearchException
      */
-    public function __construct(\Tripod\Mongo\Driver $tripod, $readPreference=\MongoClient::RP_PRIMARY)
+    public function __construct(\Tripod\Mongo\Driver $tripod, $readPreference = ReadPreference::RP_PRIMARY)
     {
         $this->tripod = $tripod;
         $this->storeName = $tripod->getStoreName();
@@ -271,11 +274,11 @@ class SearchIndexer extends CompositeBase
     }
 
     /**
-     * @param \MongoCollection $collection
+     * @param Collection $collection
      * @param string $context
      * @return \Tripod\Mongo\SearchDocuments
      */
-    protected function getSearchDocumentGenerator(\MongoCollection $collection, $context )
+    protected function getSearchDocumentGenerator(Collection $collection, $context )
     {
         return new \Tripod\Mongo\SearchDocuments($this->storeName, $collection, $context, $this->tripod->getStat());
     }

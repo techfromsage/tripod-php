@@ -2,6 +2,9 @@
 
 namespace Tripod\Mongo;
 
+use \MongoDB\Driver\ReadPreference;
+use \MongoDB\Collection;
+
 /**
  * Class SearchDocuments
  * @package Tripod\Mongo
@@ -12,12 +15,12 @@ class SearchDocuments extends DriverBase
      * Construct accepts actual objects rather than strings as this class is a delegate of
      * Tripod and should inherit connections set up there
      * @param string $storeName
-     * @param \MongoCollection $collection
+     * @param Collection $collection
      * @param string $defaultContext
      * @param \Tripod\ITripodStat|null $stat
      * @param string $readPreference
      */
-    public function __construct($storeName, \MongoCollection $collection, $defaultContext, $stat=null , $readPreference=\MongoClient::RP_PRIMARY)
+    public function __construct($storeName, Collection $collection, $defaultContext, $stat=null , $readPreference = ReadPreference::RP_PRIMARY)
     {
         $this->labeller = new Labeller();
         $this->storeName = $storeName;

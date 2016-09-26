@@ -4,6 +4,8 @@ namespace Tripod\Mongo;
 
 use Tripod\Exceptions\Exception;
 use Tripod\IEventHook;
+use \MongoDB\Driver\ReadPreference;
+use \MongoDB\Collection;
 
 require_once TRIPOD_DIR . 'mongo/Config.class.php';
 
@@ -57,7 +59,7 @@ class Updates extends DriverBase {
     protected $locksDb;
 
     /**
-     * @var \MongoCollection
+     * @var Collection
      */
     protected $locksCollection;
 
@@ -91,7 +93,7 @@ class Updates extends DriverBase {
                 'defaultContext'=>null,
                 OP_ASYNC=>array(OP_VIEWS=>false,OP_TABLES=>true,OP_SEARCH=>true),
                 'stat'=>null,
-                'readPreference'=>\MongoClient::RP_PRIMARY_PREFERRED,
+                'readPreference' => ReadPreference::RP_PRIMARY_PREFERRED,
                 'retriesToGetLock' => 20)
             ,$opts);
         $this->readPreference = $opts['readPreference'];
@@ -230,18 +232,18 @@ class Updates extends DriverBase {
     {
         // Set db preference
         $dbPref = $this->getDatabase()->getReadPreference();
-        if($dbPref['type'] !== \MongoClient::RP_PRIMARY){
+        if($dbPref['type'] !== ReadPreference::RP_PRIMARY){
             $this->originalDbReadPreference = $this->db->getReadPreference();
             $tagsets = (isset($dbPref['tagsets']) ? $dbPref['tagsets'] : array());
-            $this->db->setReadPreference(\MongoClient::RP_PRIMARY, $tagsets);
+            $this->db->setReadPreference(ReadPreference::RP_PRIMARY, $tagsets);
         }
 
         $collPref = $this->getCollection()->getReadPreference();
         // Set collection preference
-        if($collPref['type'] !== \MongoClient::RP_PRIMARY){
+        if($collPref['type'] !== ReadPreference::RP_PRIMARY){
             $this->originalCollectionReadPreference = $this->collection->getReadPreference();
             $tagsets = (isset($collPref['tagsets']) ? $collPref['tagsets'] : array());
-            $this->collection->setReadPreference(\MongoClient::RP_PRIMARY, $tagsets);
+            $this->collection->setReadPreference(ReadPreference::RP_PRIMARY, $tagsets);
         }
     }
 
@@ -1170,7 +1172,7 @@ class Updates extends DriverBase {
     /// Collection methods
 
     /**
-     * @return \MongoCollection
+     * @return Collection
      */
     protected function getAuditManualRollbacksCollection()
     {
@@ -1334,7 +1336,7 @@ class Updates extends DriverBase {
     }
 
     /**
-     * @return \MongoCollection
+     * @return Collection
      */
     protected function getLocksCollection()
     {

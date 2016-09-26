@@ -671,7 +671,8 @@ class Driver extends DriverBase implements \Tripod\IDriver
     {
         if(!isset($this->dataUpdater))
         {
-            $readPreference = $this->collection->getReadPreference();
+            $readPreference = $this->collection->__debugInfo()['readPreference']->getMode();
+
             $opts = array(
                 'defaultContext'=>$this->defaultContext,
                 OP_ASYNC=>$this->async,

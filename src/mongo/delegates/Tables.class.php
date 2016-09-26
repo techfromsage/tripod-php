@@ -8,6 +8,8 @@ require_once TRIPOD_DIR . 'mongo/base/DriverBase.class.php';
 use Tripod\Mongo\Config;
 use Tripod\Mongo\ImpactedSubject;
 use Tripod\Mongo\Labeller;
+use \MongoDB\Driver\ReadPreference;
+use \MongoDB\Collection;
 
 /**
  * Class Tables
@@ -68,13 +70,13 @@ class Tables extends CompositeBase
      * Construct accepts actual objects rather than strings as this class is a delegate of
      * Tripod and should inherit connections set up there
      * @param string $storeName
-     * @param \MongoCollection $collection
+     * @param Collection $collection
      * @param string $defaultContext
      * @param \Tripod\ITripodStat|null $stat
      * @param string $readPreference
      * todo: MongoCollection -> podName
      */
-    public function __construct($storeName,\MongoCollection $collection,$defaultContext,$stat=null,$readPreference=\MongoClient::RP_PRIMARY)
+    public function __construct($storeName, Collection $collection,$defaultContext,$stat=null,$readPreference = ReadPreference::RP_PRIMARY)
     {
         $this->labeller = new Labeller();
         $this->storeName = $storeName;
@@ -249,11 +251,17 @@ class Tables extends CompositeBase
         $filter["_id." . _ID_TYPE] = $tableSpecId;
 
         $collection = $this->config->getCollectionForTable($this->storeName, $tableSpecId, $this->readPreference);
-        $results = (empty($limit)) ? $collection->find($filter) : $collection->find($filter)->skip($offset)->limit($limit);
-        if (isset($sortBy))
-        {
-            $results->sort($sortBy);
+
+        $findOptions = array();
+        if (!empty($limit)) {
+           $findOptions['skip'] = $offset;
+           $findOptions['limit'] = $limit;
         }
+        if (isset($sortBy)) {
+            $findOptions['sortBy'] = $sortBy;
+        }
+        $results = $collection->find($filter, $findOptions);
+
         $rows = array();
         foreach ($results as $doc)
         {
@@ -267,7 +275,7 @@ class Tables extends CompositeBase
 
         return array(
             "head"=>array(
-                "count"=>$results->count(),
+                "count" => $collection->count($filter),
                 "offset"=>$offset,
                 "limit"=>$limit
             ),
@@ -632,11 +640,11 @@ class Tables extends CompositeBase
      * If an exception in thrown because a field is too large to index, the field is
      * truncated and the save is retried.
      *
-     * @param \MongoCollection $collection
+     * @param Collection $collection
      * @param array $generatedRow The rows to save.
      * @throws \Exception
      */
-    protected function truncatingSave(\MongoCollection $collection, array $generatedRow)
+    protected function truncatingSave(Collection $collection, array $generatedRow)
     {
         try
         {
@@ -658,10 +666,10 @@ class Tables extends CompositeBase
     /**
      * Truncate any indexed fields in the generated rows which are too large to index
      *
-     * @param \MongoCollection $collection
+     * @param Collection $collection
      * @param array $generatedRow - Pass by reference so that the contents is truncated
      */
-    protected function truncateFields(\MongoCollection $collection, array &$generatedRow)
+    protected function truncateFields(Collection $collection, array &$generatedRow)
     {
         // Find the name of any indexed fields
         $indexedFields = array();
@@ -1448,10 +1456,10 @@ class Tables extends CompositeBase
 
     /**
      * Ensure $indexToEnsure on the given mongo $collection
-     * @param array $collection
-     * @param \MongoCollection $indexToEnsure
+     * @param Collection $collection
+     * @param array $indexToEnsure
      */
-    protected function ensureIndex(\MongoCollection $collection,array $indexToEnsure)
+    protected function ensureIndex(Collection $collection,array $indexToEnsure)
     {
         $collection->ensureIndex(
             $indexToEnsure,

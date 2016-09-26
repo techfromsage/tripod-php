@@ -1832,7 +1832,7 @@ class Config
      * @param string $podName
      * @param string $readPreference
      * @throws \Tripod\Exceptions\ConfigException
-     * @return \MongoCollection
+     * @return Collection
      */
     public function getCollectionForCBD($storeName, $podName, $readPreference = ReadPreference::RP_PRIMARY_PREFERRED)
     {
@@ -1851,7 +1851,7 @@ class Config
      * @param string $viewId
      * @param string $readPreference
      * @throws \Tripod\Exceptions\ConfigException
-     * @return \MongoCollection
+     * @return Collection
      */
     public function getCollectionForView($storeName, $viewId, $readPreference = ReadPreference::RP_PRIMARY_PREFERRED)
     {
@@ -1870,7 +1870,7 @@ class Config
      * @param string $searchDocumentId
      * @param string $readPreference
      * @throws \Tripod\Exceptions\ConfigException
-     * @return \MongoCollection
+     * @return Collection
      */
     public function getCollectionForSearchDocument($storeName, $searchDocumentId, $readPreference = ReadPreference::RP_PRIMARY_PREFERRED)
     {
@@ -1889,7 +1889,7 @@ class Config
      * @param string $tableId
      * @param string $readPreference
      * @throws \Tripod\Exceptions\ConfigException
-     * @return \MongoCollection
+     * @return Collection
      */
     public function getCollectionForTable($storeName, $tableId, $readPreference = ReadPreference::RP_PRIMARY_PREFERRED)
     {
@@ -1908,7 +1908,7 @@ class Config
      * @param array $tables
      * @param string $readPreference
      * @throws \Tripod\Exceptions\ConfigException
-     * @return \MongoCollection[]
+     * @return Collection[]
      */
     public function getCollectionsForTables($storeName, array $tables = array(), $readPreference = ReadPreference::RP_PRIMARY_PREFERRED)
     {
@@ -1949,7 +1949,7 @@ class Config
      * @param array $views
      * @param string $readPreference
      * @throws \Tripod\Exceptions\ConfigException
-     * @return \MongoCollection[]
+     * @return Collection[]
      */
     public function getCollectionsForViews($storeName, array $views = array(), $readPreference = ReadPreference::RP_PRIMARY_PREFERRED)
     {
@@ -1990,7 +1990,7 @@ class Config
      * @param array $searchSpecIds
      * @param string $readPreference
      * @throws \Tripod\Exceptions\ConfigException
-     * @return \MongoCollection[]
+     * @return Collection[]
      */
     public function getCollectionsForSearch($storeName, array $searchSpecIds = array(), $readPreference = ReadPreference::RP_PRIMARY_PREFERRED)
     {
@@ -2029,7 +2029,7 @@ class Config
     /**
      * @param string $storeName
      * @param string $readPreference
-     * @return \MongoCollection
+     * @return Collection
      */
     public function getCollectionForTTLCache($storeName, $readPreference = ReadPreference::RP_PRIMARY_PREFERRED)
     {
@@ -2042,7 +2042,7 @@ class Config
     /**
      * @param string $storeName
      * @param string $readPreference
-     * @return \MongoCollection
+     * @return Collection
      */
     public function getCollectionForLocks($storeName, $readPreference = ReadPreference::RP_PRIMARY_PREFERRED)
     {
@@ -2055,7 +2055,7 @@ class Config
     /**
      * @param string $storeName
      * @param string $readPreference
-     * @return \MongoCollection
+     * @return Collection
      */
     public function getCollectionForManualRollbackAudit($storeName, $readPreference = ReadPreference::RP_PRIMARY_PREFERRED)
     {

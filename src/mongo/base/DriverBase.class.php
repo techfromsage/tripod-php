@@ -9,6 +9,7 @@ $TOTAL_TIME=0;
 use Monolog\Logger;
 use Tripod\Exceptions\Exception;
 use Tripod\IEventHook;
+use \MongoDB\Collection;
 
 /**
  * Class DriverBase
@@ -24,7 +25,7 @@ abstract class DriverBase
     const HOOK_FN_FAILURE = "failure";
 
     /**
-     * @var \MongoCollection
+     * @var Collection
      */
     protected $collection;
 
@@ -145,7 +146,7 @@ abstract class DriverBase
     /**
      * @param array $query
      * @param string $type
-     * @param \MongoCollection|null $collection
+     * @param Collection|null $collection
      * @param array $includeProperties
      * @param int $cursorSize
      * @return MongoGraph
@@ -448,7 +449,7 @@ abstract class DriverBase
     }
 
     /**
-     * @return \MongoCollection
+     * @return Collection
      */
     protected function getCollection()
     {

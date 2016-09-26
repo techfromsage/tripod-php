@@ -7,6 +7,8 @@ require_once TRIPOD_DIR . 'mongo/base/DriverBase.class.php';
 use Tripod\Mongo\Config;
 use Tripod\Mongo\ImpactedSubject;
 use Tripod\Mongo\Labeller;
+use \MongoDB\Driver\ReadPreference;
+use \MongoDB\Collection;
 
 /**
  * Class Views
@@ -19,12 +21,12 @@ class Views extends CompositeBase
      * Construct accepts actual objects rather than strings as this class is a delegate of
      * Tripod and should inherit connections set up there
      * @param string $storeName
-     * @param \MongoCollection $collection
+     * @param Collection $collection
      * @param $defaultContext
      * @param null $stat
      * @param string $readPreference
      */
-    function __construct($storeName, \MongoCollection $collection,$defaultContext,$stat=null,$readPreference=\MongoClient::RP_PRIMARY) // todo: $collection -> podname
+    function __construct($storeName, Collection $collection,$defaultContext,$stat=null,$readPreference = ReadPreference::RP_PRIMARY) // todo: $collection -> podname
     {
         $this->storeName = $storeName;
         $this->labeller = new Labeller();
@@ -845,7 +847,7 @@ class Views extends CompositeBase
 
     /**
      * @param string $viewSpecId
-     * @return \MongoCollection
+     * @return Collection
      */
     protected function getCollectionForViewSpec($viewSpecId)
     {
