@@ -135,6 +135,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
             ->will($this->returnValue($tripod));
 
         $discoverImpactedSubjects->args = $this->args;
+        $discoverImpactedSubjects->job->payload['id'] = uniqid();
 
         $applyOperation = $this->getMockBuilder('\Tripod\Mongo\Jobs\ApplyOperation')
             ->setMethods(array('createJob'))
@@ -345,6 +346,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
         $args = $this->args;
         $args['queue'] = 'TRIPOD_TESTING_QUEUE_' . uniqid();
         $discoverImpactedSubjects->args = $args;
+        $discoverImpactedSubjects->job->payload['id'] = uniqid();
 
         $tripod->expects($this->exactly(3))
             ->method('getComposite')
@@ -517,6 +519,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
         $args = $this->args;
         $args['operations'] = array(OP_TABLES);
         $discoverImpactedSubjects->args = $args;
+        $discoverImpactedSubjects->job->payload['id'] = uniqid();
 
         $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
             ->setMethods(array('getComposite'))
@@ -751,6 +754,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
         $args['operations'] = array(OP_TABLES);
         $args['queue'] = 'TRIPOD_TESTING_QUEUE_' . uniqid();
         $discoverImpactedSubjects->args = $args;
+        $discoverImpactedSubjects->job->payload['id'] = uniqid();
 
         $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
             ->setMethods(array('getComposite'))
