@@ -1,6 +1,15 @@
 <?php
 
 namespace Tripod\Mongo;
+
+use \MongoDB\Client;
+use \MongoDB\Database;
+use \MongoDB\Collection;
+use \MongoDB\Driver\ReadPreference;
+use \MongoDB\Driver\Command;
+use \MongoDB\Driver\Manager;
+use \MongoDB\Driver\Exception;
+
 /**
  * Holds the global configuration for Tripod
  */
@@ -1716,13 +1725,13 @@ class Config
     }
 
     /**
-     * @param $storeName
+     * @param string $storeName
      * @param string|null $dataSource
      * @param string $readPreference
      * @throws \Tripod\Exceptions\ConfigException
-     * @return \MongoDB
+     * @return Database
      */
-    public function getDatabase($storeName, $dataSource = null, $readPreference = \MongoClient::RP_PRIMARY_PREFERRED)
+    public function getDatabase($storeName, $dataSource = null, $readPreference = ReadPreference::RP_PRIMARY_PREFERRED)
     {
         if(!isset($this->dbConfig[$storeName]))
         {
@@ -1735,15 +1744,17 @@ class Config
         }
 
         $client = $this->getConnectionForDataSource($dataSource);
-        $db = $client->selectDB($this->dbConfig[$storeName]['database']);
-        $db->setReadPreference($readPreference);
+        $db = $client->selectDatabase($this->dbConfig[$storeName]['database'], array(
+            'readPreference' => new ReadPreference($readPreference)
+        ));
         return $db;
     }
 
     /**
      * @param string $dataSource
-     * @return \MongoClient
+     * @return Client
      * @throws \Tripod\Exceptions\ConfigException
+     * @throws ConnectionTimeoutException
      */
     protected function getConnectionForDataSource($dataSource)
     {
@@ -1766,14 +1777,17 @@ class Config
 
             do {
                 try {
-                    $this->connections[$dataSource] = $this->getMongoClient($ds['connection'], $connectionOptions);
-                    // Check if we are connected
-                    $connections = $this->connections[$dataSource]->getConnections();
-                    if (empty($connections) === false) {
+                    $connectionString = $ds['connection'] . '?' . http_build_query($connectionOptions);
+                    $this->connections[$dataSource] = $this->getMongoClient($connectionString);
+                    $manager = new Manager($connectionString);
+                    $command = new Command(['ping' => 1]);
+                    $manager->executeCommand('admin', $command);
+
+                    if(empty($manager->getServers()) === false) {
                         $connected = true;
                     }
-                } catch (\MongoConnectionException $e) {
-                    self::getLogger()->error("MongoConnectionException attempt ".$retries.". Retrying...:" . $e->getMessage());
+                } catch (ConnectionTimeoutException $e) {
+                    self::getLogger()->error("ConnectionTimeoutException attempt ".$retries.". Retrying...:" . $e->getMessage());
                     sleep(1);
                     $retries++;
                     $exception = $e;
@@ -1783,7 +1797,7 @@ class Config
 
             if (!isset($this->connections[$dataSource])) {
                 self::getLogger()->error("MongoConnectionException failed after " . $retries . " attempts (MAX:".self::CONNECTION_RETRIES."): " . $e->getMessage());
-                throw new \MongoConnectionException($exception);
+                throw new ConnectionTimeoutException($exception);
             }
         }
         return $this->connections[$dataSource];
@@ -1791,21 +1805,24 @@ class Config
 
     /**
      * Create a Mongo Client - used for mocking
-     * @param string $connection
-     * @param array $connectionOptions
-     * @return \MongoClient
+     * @param string $connectionString
+     * @return Client
      */
-    protected function getMongoClient($connection, $connectionOptions)
+    protected function getMongoClient($connectionString)
     {
-        return new \MongoClient($connection, $connectionOptions);
+        $client = new Client($connectionString,
+            [],
+            ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']]
+        );
+        return $client;
     }
 
     /**
-     * @param \MongoDB $db
+     * @param Database $db
      * @param string $collectionName
-     * @return \MongoCollection
+     * @return Collection
      */
-    protected function getMongoCollection(\MongoDB $db, $collectionName)
+    protected function getMongoCollection(Database $db, $collectionName)
     {
         return $db->selectCollection($collectionName);
     }
@@ -1817,7 +1834,7 @@ class Config
      * @throws \Tripod\Exceptions\ConfigException
      * @return \MongoCollection
      */
-    public function getCollectionForCBD($storeName, $podName, $readPreference = \MongoClient::RP_PRIMARY_PREFERRED)
+    public function getCollectionForCBD($storeName, $podName, $readPreference = ReadPreference::RP_PRIMARY_PREFERRED)
     {
         if(isset($this->podConnections[$storeName]) && isset($this->podConnections[$storeName][$podName]))
         {
@@ -1836,7 +1853,7 @@ class Config
      * @throws \Tripod\Exceptions\ConfigException
      * @return \MongoCollection
      */
-    public function getCollectionForView($storeName, $viewId, $readPreference = \MongoClient::RP_PRIMARY_PREFERRED)
+    public function getCollectionForView($storeName, $viewId, $readPreference = ReadPreference::RP_PRIMARY_PREFERRED)
     {
         if(isset($this->viewSpecs[$storeName]) && isset($this->viewSpecs[$storeName][$viewId]))
         {
@@ -1855,7 +1872,7 @@ class Config
      * @throws \Tripod\Exceptions\ConfigException
      * @return \MongoCollection
      */
-    public function getCollectionForSearchDocument($storeName, $searchDocumentId, $readPreference = \MongoClient::RP_PRIMARY_PREFERRED)
+    public function getCollectionForSearchDocument($storeName, $searchDocumentId, $readPreference = ReadPreference::RP_PRIMARY_PREFERRED)
     {
         if(array_key_exists($storeName, $this->searchDocSpecs) && array_key_exists($searchDocumentId, $this->searchDocSpecs[$storeName]))
         {
@@ -1874,7 +1891,7 @@ class Config
      * @throws \Tripod\Exceptions\ConfigException
      * @return \MongoCollection
      */
-    public function getCollectionForTable($storeName, $tableId, $readPreference = \MongoClient::RP_PRIMARY_PREFERRED)
+    public function getCollectionForTable($storeName, $tableId, $readPreference = ReadPreference::RP_PRIMARY_PREFERRED)
     {
         if(isset($this->tableSpecs[$storeName][$tableId]) && isset($this->tableSpecs[$storeName][$tableId]))
         {
@@ -1893,7 +1910,7 @@ class Config
      * @throws \Tripod\Exceptions\ConfigException
      * @return \MongoCollection[]
      */
-    public function getCollectionsForTables($storeName, array $tables = array(), $readPreference = \MongoClient::RP_PRIMARY_PREFERRED)
+    public function getCollectionsForTables($storeName, array $tables = array(), $readPreference = ReadPreference::RP_PRIMARY_PREFERRED)
     {
         if(!isset($this->tableSpecs[$storeName]))
         {
@@ -1934,7 +1951,7 @@ class Config
      * @throws \Tripod\Exceptions\ConfigException
      * @return \MongoCollection[]
      */
-    public function getCollectionsForViews($storeName, array $views = array(), $readPreference = \MongoClient::RP_PRIMARY_PREFERRED)
+    public function getCollectionsForViews($storeName, array $views = array(), $readPreference = ReadPreference::RP_PRIMARY_PREFERRED)
     {
         if(!isset($this->viewSpecs[$storeName]))
         {
@@ -1975,7 +1992,7 @@ class Config
      * @throws \Tripod\Exceptions\ConfigException
      * @return \MongoCollection[]
      */
-    public function getCollectionsForSearch($storeName, array $searchSpecIds = array(), $readPreference = \MongoClient::RP_PRIMARY_PREFERRED)
+    public function getCollectionsForSearch($storeName, array $searchSpecIds = array(), $readPreference = ReadPreference::RP_PRIMARY_PREFERRED)
     {
         if(!isset($this->searchDocSpecs[$storeName]))
         {
@@ -2014,7 +2031,7 @@ class Config
      * @param string $readPreference
      * @return \MongoCollection
      */
-    public function getCollectionForTTLCache($storeName, $readPreference = \MongoClient::RP_PRIMARY_PREFERRED)
+    public function getCollectionForTTLCache($storeName, $readPreference = ReadPreference::RP_PRIMARY_PREFERRED)
     {
         return $this->getMongoCollection(
             $this->getDatabase($storeName, $this->dbConfig[$storeName]['data_source'], $readPreference),
@@ -2027,7 +2044,7 @@ class Config
      * @param string $readPreference
      * @return \MongoCollection
      */
-    public function getCollectionForLocks($storeName, $readPreference = \MongoClient::RP_PRIMARY_PREFERRED)
+    public function getCollectionForLocks($storeName, $readPreference = ReadPreference::RP_PRIMARY_PREFERRED)
     {
         return $this->getMongoCollection(
             $this->getDatabase($storeName, $this->dbConfig[$storeName]['data_source'], $readPreference),
@@ -2040,7 +2057,7 @@ class Config
      * @param string $readPreference
      * @return \MongoCollection
      */
-    public function getCollectionForManualRollbackAudit($storeName, $readPreference = \MongoClient::RP_PRIMARY_PREFERRED)
+    public function getCollectionForManualRollbackAudit($storeName, $readPreference = ReadPreference::RP_PRIMARY_PREFERRED)
     {
         return $this->getMongoCollection(
             $this->getDatabase($storeName, $this->dbConfig[$storeName]['data_source'], $readPreference),
@@ -2053,7 +2070,7 @@ class Config
      * @return \MongoDB
      * @throws \Tripod\Exceptions\ConfigException
      */
-    public function getTransactionLogDatabase($readPreference = \MongoClient::RP_PRIMARY_PREFERRED)
+    public function getTransactionLogDatabase($readPreference = ReadPreference::RP_PRIMARY_PREFERRED)
     {
         $client = $this->getConnectionForDataSource($this->tConfig['data_source']);
         $db = $client->selectDB($this->tConfig['database']);

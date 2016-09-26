@@ -79,7 +79,7 @@ class Tables extends CompositeBase
         $this->labeller = new Labeller();
         $this->storeName = $storeName;
         $this->collection = $collection;
-        $this->podName = $collection->getName();
+        $this->podName = $collection->getCollectionName();
         $this->config = Config::getInstance();
         $this->defaultContext = $this->labeller->uri_to_alias($defaultContext); // make sure default context is qnamed if applicable
         $this->stat = $stat;
@@ -666,9 +666,9 @@ class Tables extends CompositeBase
         // Find the name of any indexed fields
         $indexedFields = array();
         $indexesGroupedByCollection = $this->config->getIndexesGroupedByCollection($this->storeName);
-        if (isset($indexesGroupedByCollection) && isset($indexesGroupedByCollection[$collection->getName()]))
+        if (isset($indexesGroupedByCollection) && isset($indexesGroupedByCollection[$collection->getCollectionName()]))
         {
-            $indexes = $indexesGroupedByCollection[$collection->getName()];
+            $indexes = $indexesGroupedByCollection[$collection->getCollectionName()];
             if (isset($indexes))
             {
                 foreach($indexes as $repset)

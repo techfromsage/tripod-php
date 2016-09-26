@@ -6,6 +6,7 @@ namespace Tripod\Mongo;
 
 use Tripod\Exceptions\Exception;
 use Tripod\IEventHook;
+use \MongoDB;
 
 $TOTAL_TIME=0;
 
@@ -60,11 +61,12 @@ class Driver extends DriverBase implements \Tripod\IDriver
      */
     public function __construct($podName, $storeName, $opts=array())
     {
+
         $opts = array_merge(array(
                 'defaultContext'=>null,
                 OP_ASYNC=>array(OP_VIEWS=>false,OP_TABLES=>true,OP_SEARCH=>true),
                 'statsConfig'=>array(),
-                'readPreference'=>\MongoClient::RP_PRIMARY_PREFERRED,
+                'readPreference'=>MongoDB\Driver\ReadPreference::RP_PRIMARY_PREFERRED,
                 'retriesToGetLock' => 20)
             ,$opts);
         $this->podName = $podName;

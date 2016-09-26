@@ -22,7 +22,7 @@ class SearchDocuments extends DriverBase
         $this->labeller = new Labeller();
         $this->storeName = $storeName;
         $this->collection = $collection;
-        $this->podName = $collection->getName();
+        $this->podName = $collection->getCollectionName();
         $this->defaultContext = $defaultContext;
         $this->stat = $stat;
         $this->readPreference = $readPreference;

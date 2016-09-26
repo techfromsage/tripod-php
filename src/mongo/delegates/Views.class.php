@@ -29,7 +29,7 @@ class Views extends CompositeBase
         $this->storeName = $storeName;
         $this->labeller = new Labeller();
         $this->collection = $collection;
-        $this->podName = $collection->getName();
+        $this->podName = $collection->getCollectionName();
         $this->defaultContext = $defaultContext;
         $this->config = Config::getInstance();
         $this->stat = $stat;

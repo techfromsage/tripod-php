@@ -160,11 +160,11 @@ abstract class DriverBase
         if ($collection==null)
         {
             $collection = $this->collection;
-            $collectionName = $collection->getName();
+            $collectionName = $collection->getCollectionName();
         }
         else
         {
-            $collectionName = $collection->getName();
+            $collectionName = $collection->getCollectionName();
         }
 
         if (empty($includeProperties))
@@ -178,11 +178,13 @@ abstract class DriverBase
             {
                 $fields[$this->labeller->uri_to_alias($property)] = true;
             }
-            $cursor = $collection->find($query,$fields);
+            $cursor = $collection->find($query, array(
+                'projection' => $fields,
+                'batchSize' => $cursorSize
+            ));
         }
 
         $ttlExpiredResources = false;
-        $cursor->batchSize($cursorSize);
 
         $retries = 1;
         $exception = null;

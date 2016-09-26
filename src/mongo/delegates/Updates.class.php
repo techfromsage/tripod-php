@@ -476,7 +476,7 @@ class Updates extends DriverBase {
     protected function applyChangeSet(\Tripod\ChangeSet $cs, $originalCBDs, $contextAlias, $transaction_id)
     {
         $subjectsAndPredicatesOfChange = array();
-        if (in_array($this->getCollection()->getName(), $this->getConfigInstance()->getPods($this->getStoreName())))
+        if (in_array($this->getCollection()->getCollectionName(), $this->getConfigInstance()->getPods($this->getStoreName())))
         {
             // how many subjects of change?
             /** @noinspection PhpParamsInspection */
