@@ -26,6 +26,7 @@ class ApplyOperationTest extends MongoTripodTestBase
         unset($this->args['subjects']);
         $job = new \Tripod\Mongo\Jobs\ApplyOperation();
         $job->args = $this->args;
+        $job->job->payload['id'] = uniqid();
         $this->setExpectedException('Exception', "Argument subjects was not present in supplied job args for job Tripod\Mongo\Jobs\ApplyOperation");
         $job->perform();
     }
@@ -38,6 +39,7 @@ class ApplyOperationTest extends MongoTripodTestBase
             ->getMock();
 
         $applyOperation->args = $this->args;
+        $applyOperation->job->payload['id'] = uniqid();
 
         $statMock = $this->getMockStat(
             $this->args['statsConfig']['config']['host'],
@@ -134,6 +136,7 @@ class ApplyOperationTest extends MongoTripodTestBase
         $this->args['subjects'] = array($impactedSubject->toArray());
 
         $applyOperation->args = $this->args;
+        $applyOperation->job->payload['id'] = uniqid();
 
         $subject = $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
             ->setMethods(array('getTripod'))
@@ -224,6 +227,7 @@ class ApplyOperationTest extends MongoTripodTestBase
         $this->args['subjects'] = array($impactedSubject->toArray());
 
         $applyOperation->args = $this->args;
+        $applyOperation->job->payload['id'] = uniqid();
 
         $subject = $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
             ->setMethods(array('getTripod'))

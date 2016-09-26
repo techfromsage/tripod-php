@@ -24,6 +24,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
         unset($this->args['storeName']);
         $job = new \Tripod\Mongo\Jobs\DiscoverImpactedSubjects();
         $job->args = $this->args;
+        $job->job->payload['id'] = uniqid();
         $this->setExpectedException('Exception', "Argument storeName was not present in supplied job args for job Tripod\Mongo\Jobs\DiscoverImpactedSubjects");
         $job->perform();
     }
@@ -34,6 +35,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
         unset($this->args['podName']);
         $job = new \Tripod\Mongo\Jobs\DiscoverImpactedSubjects();
         $job->args = $this->args;
+        $job->job->payload['id'] = uniqid();
         $this->setExpectedException('Exception', "Argument podName was not present in supplied job args for job Tripod\Mongo\Jobs\DiscoverImpactedSubjects");
         $job->perform();
     }
@@ -44,6 +46,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
         unset($this->args['changes']);
         $job = new \Tripod\Mongo\Jobs\DiscoverImpactedSubjects();
         $job->args = $this->args;
+        $job->job->payload['id'] = uniqid();
         $this->setExpectedException('Exception', "Argument changes was not present in supplied job args for job Tripod\Mongo\Jobs\DiscoverImpactedSubjects");
         $job->perform();
     }
@@ -54,6 +57,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
         unset($this->args['operations']);
         $job = new \Tripod\Mongo\Jobs\DiscoverImpactedSubjects();
         $job->args = $this->args;
+        $job->job->payload['id'] = uniqid();
         $this->setExpectedException('Exception', "Argument operations was not present in supplied job args for job Tripod\Mongo\Jobs\DiscoverImpactedSubjects");
         $job->perform();
     }
@@ -64,6 +68,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
         unset($this->args['contextAlias']);
         $job = new \Tripod\Mongo\Jobs\DiscoverImpactedSubjects();
         $job->args = $this->args;
+        $job->job->payload['id'] = uniqid();
         $this->setExpectedException('Exception', "Argument contextAlias was not present in supplied job args for job Tripod\Mongo\Jobs\DiscoverImpactedSubjects");
         $job->perform();
     }
@@ -134,6 +139,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
         $applyOperation = $this->getMockBuilder('\Tripod\Mongo\Jobs\ApplyOperation')
             ->setMethods(array('createJob'))
             ->getMock();
+        $applyOperation->job->payload['id'] = uniqid();
 
         $viewSubject = new \Tripod\Mongo\ImpactedSubject(
             array(
