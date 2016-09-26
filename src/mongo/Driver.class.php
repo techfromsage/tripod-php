@@ -6,7 +6,7 @@ namespace Tripod\Mongo;
 
 use Tripod\Exceptions\Exception;
 use Tripod\IEventHook;
-use \MongoDB;
+use \MongoDB\Driver\ReadPreference;
 
 $TOTAL_TIME=0;
 
@@ -66,7 +66,7 @@ class Driver extends DriverBase implements \Tripod\IDriver
                 'defaultContext'=>null,
                 OP_ASYNC=>array(OP_VIEWS=>false,OP_TABLES=>true,OP_SEARCH=>true),
                 'statsConfig'=>array(),
-                'readPreference'=>MongoDB\Driver\ReadPreference::RP_PRIMARY_PREFERRED,
+                'readPreference'=>ReadPreference::RP_PRIMARY_PREFERRED,
                 'retriesToGetLock' => 20)
             ,$opts);
         $this->podName = $podName;
