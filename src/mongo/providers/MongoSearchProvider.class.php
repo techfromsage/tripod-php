@@ -210,7 +210,7 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
         $searchDocs = array();
         foreach($this->config->getCollectionsForSearch($this->storeName, $searchTypes) as $collection)
         {
-            $cursor = $collection->find($query, array('_id'=>true));
+            $cursor = $collection->find($query, array('projection' => array('_id'=>true)));
             foreach($cursor as $d)
             {
                 $searchDocs[] = $d;
@@ -275,9 +275,10 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
         $searchTimer = new \Tripod\Timer();
         $searchTimer->start();
         $cursor = $this->config->getCollectionForSearchDocument($this->storeName, $type)
-            ->find($query, $fieldsToReturn)
-            ->limit($limit)
-            ->skip($offset);
+            ->find($query, array(
+                'projection' => $fieldsToReturn,
+                'limit' => $limit,
+                'skip' => $offset));
 
         $searchResults = array();
         $searchResults['head'] = array();
@@ -289,8 +290,9 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
         $searchResults['head']['query_terms_used'] = $terms;
         $searchResults['results']   = array();
 
-        if($cursor->count() > 0) {
-            $searchResults['head']['count']     = $cursor->count();
+        $count = $this->config->getCollectionForSearchDocument($this->storeName, $type)->count($query);
+        if($count > 0) {
+            $searchResults['head']['count']     = $count;
 
             foreach($cursor as $result)
             {

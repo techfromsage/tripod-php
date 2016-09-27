@@ -203,7 +203,7 @@ class Tables extends CompositeBase
         {
             $t = new \Tripod\Timer();
             $t->start();
-            $tableRows = $collection->find($query, array("_id"=>true));
+            $tableRows = $collection->find($query, array('projection' => array("_id"=>true)));
             $t->stop();
             $this->timingLog(MONGO_FIND_IMPACTED, array('duration'=>$t->result(), 'query'=>$query, 'storeName'=>$this->storeName, 'collection'=>$collection));
             foreach($tableRows as $t)
@@ -254,11 +254,11 @@ class Tables extends CompositeBase
 
         $findOptions = array();
         if (!empty($limit)) {
-           $findOptions['skip'] = $offset;
-           $findOptions['limit'] = $limit;
+           $findOptions['skip'] = (int) $offset;
+           $findOptions['limit'] = (int) $limit;
         }
         if (isset($sortBy)) {
-            $findOptions['sortBy'] = $sortBy;
+            $findOptions['sort'] = $sortBy;
         }
         $results = $collection->find($filter, $findOptions);
 
@@ -397,7 +397,7 @@ class Tables extends CompositeBase
         // now go through the types
         $query = array("_id"=>array('$in'=>$filter));
         $resourceAndType = $this->config->getCollectionForCBD($this->storeName, $this->podName)
-            ->find($query,array("_id"=>1,"rdf:type"=>1));
+            ->find($query, array('projection' => array("_id"=>1,"rdf:type"=>1)));
 
         foreach ($resourceAndType as $rt)
         {

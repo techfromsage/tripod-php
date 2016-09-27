@@ -30,11 +30,13 @@ abstract class CompositeBase extends \Tripod\Mongo\DriverBase implements \Tripod
             $filter[] = array(_ID_RESOURCE=>$resourceAlias,_ID_CONTEXT=>$contextAlias);
         }
         $query = array(_ID_KEY=>array('$in'=>$filter));
-        $docs = $this->getCollection()->find($query, array(_ID_KEY=>true, 'rdf:type'=>true));
+        $docs = $this->getCollection()->find($query, array(
+            'projection' => array(_ID_KEY=>true, 'rdf:type'=>true)
+        ));
 
         $types = $this->getTypesInSpecifications();
 
-        if($docs->count() !== 0 ) {
+        if($this->getCollection()->count($query) !== 0 ) {
             foreach($docs as $doc)
             {
                 $docResource = $doc[_ID_KEY][_ID_RESOURCE];

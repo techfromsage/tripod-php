@@ -9,6 +9,7 @@ $TOTAL_TIME=0;
 use Monolog\Logger;
 use Tripod\Exceptions\Exception;
 use Tripod\IEventHook;
+use \MongoDB\Driver\ReadPreference;
 use \MongoDB\Collection;
 
 /**
@@ -60,7 +61,7 @@ abstract class DriverBase
     /**
      * @var string
      */
-    protected $readPreference;
+    protected $readPreference = ReadPreference::RP_PRIMARY_PREFERRED;
 
     /**
      * @return \Tripod\ITripodStat

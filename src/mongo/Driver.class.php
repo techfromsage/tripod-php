@@ -432,22 +432,25 @@ class Driver extends DriverBase implements \Tripod\IDriver
             $query["_id."._ID_CONTEXT] = $contextAlias;
         }
 
-        if (isset($sortBy))
-        {
-            $results = (empty($limit)) ? $this->collection->find($query,$fields) : $this->collection->find($query,$fields)->skip($offset)->limit($limit);
-            $results->sort($sortBy);
+        $findOptions = array(
+            'projection' => $fields
+        );
+        if (!empty($limit)) {
+            $findOptions['skip'] = $offset;
+            $findOptions['limit'] = $limit;
         }
-        else
-        {
-            $results = (empty($limit)) ? $this->collection->find($query,$fields) : $this->collection->find($query,$fields)->skip($offset)->limit($limit);
+        if (isset($sortBy)) {
+            $findOptions['sort'] = $sortBy;
         }
+        $results = $this->collection->find($query, $findOptions);
 
         $t->stop();
         $this->timingLog(MONGO_SELECT, array('duration'=>$t->result(), 'query'=>$query));
         $this->getStat()->timer(MONGO_SELECT.".{$this->podName}",$t->result());
 
         $rows = array();
-        $count=$results->count();
+        $count=$this->collection->count($query);
+
         foreach ($results as $doc)
         {
             $row = array();
@@ -530,7 +533,7 @@ class Driver extends DriverBase implements \Tripod\IDriver
             "_id" => array(
                 _ID_RESOURCE=>$resource,
                 _ID_CONTEXT=>$this->getContextAlias($context)));
-        $doc = $this->collection->findOne($query,array(_UPDATED_TS=>true));
+        $doc = $this->collection->findOne($query,array('projection' => array(_UPDATED_TS=>true)));
         /* @var $lastUpdatedDate \MongoDate */
         $lastUpdatedDate = ($doc!=null && array_key_exists(_UPDATED_TS,$doc)) ? $doc[_UPDATED_TS] : null;
         return ($lastUpdatedDate==null) ? '' : $lastUpdatedDate->__toString();

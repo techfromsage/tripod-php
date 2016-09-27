@@ -162,6 +162,7 @@ class Updates extends DriverBase {
             "newGraph"=>$newGraph,
             "context"=>$context
         ));
+
         $this->setReadPreferenceToPrimary();
         try{
             $contextAlias = $this->getContextAlias($context);
@@ -884,9 +885,9 @@ class Updates extends DriverBase {
             if(!empty($fromDateTime)) $query[_LOCKED_FOR_TRANS_TS][MONGO_OPERATION_GTE] = new \MongoDate(strtotime($fromDateTime));
             if(!empty($tillDateTime)) $query[_LOCKED_FOR_TRANS_TS][MONGO_OPERATION_LTE] = new \MongoDate(strtotime($tillDateTime));
         }
-        $docs = $this->getLocksCollection()->find($query)->sort(array(_LOCKED_FOR_TRANS => 1));
+        $docs = $this->getLocksCollection()->find($query, array('sort' => array(_LOCKED_FOR_TRANS => 1)));
 
-        if($docs->count() == 0 ) {
+        if($this->getLocksCollection()->count($query) == 0 ) {
             return array();
         }
 
@@ -986,9 +987,10 @@ class Updates extends DriverBase {
      */
     public function removeInertLocks($transaction_id, $reason)
     {
-        $docs = $this->getLocksCollection()->find(array(_LOCKED_FOR_TRANS => $transaction_id));
+        $query = array(_LOCKED_FOR_TRANS => $transaction_id);
+        $docs = $this->getLocksCollection()->find($query);
 
-        if($docs->count() == 0 ) {
+        if($this->getLocksCollection()->count($query) == 0 ) {
             return false;
         }else{
 
@@ -1140,7 +1142,7 @@ class Updates extends DriverBase {
             $document  = $this->getCollection()->findOne(array(_ID_KEY => array(_ID_RESOURCE => $this->labeller->uri_to_alias($s), _ID_CONTEXT => $contextAlias)));
             if(empty($document)){ //if document is not there, create it
                 try{
-                    $result = $this->getCollection()->insert(
+                    $result = $this->getCollection()->insertOne(
                         array(
                             _ID_KEY => array(_ID_RESOURCE => $this->labeller->uri_to_alias($s), _ID_CONTEXT => $contextAlias)
                         ),

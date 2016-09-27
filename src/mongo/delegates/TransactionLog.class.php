@@ -162,7 +162,7 @@ class TransactionLog
             $query['endTime'] = $q;
         }
 
-        return $this->transaction_collection->find($query)->sort(array('endTime'=>1));
+        return $this->transaction_collection->find($query, array('sort' => array('endTime'=>1)));
     }
 
     /**

@@ -102,7 +102,7 @@ class Views extends CompositeBase
         {
             $t = new \Tripod\Timer();
             $t->start();
-            $views = $collection->find($query,array("_id"=>true));
+            $views = $collection->find($query, array('projection' => array("_id"=>true)));
             $t->stop();
             $this->timingLog(MONGO_FIND_IMPACTED, array('duration'=>$t->result(), 'query'=>$query, 'storeName'=>$this->storeName, 'collection'=>$collection));
             foreach($views as $v)
@@ -306,7 +306,7 @@ class Views extends CompositeBase
 
         // now generate view for $resources themselves... Maybe an optimisation down the line to cut out the query here
         $query = array("_id"=>array('$in'=>$filter));
-        $resourceAndType = $this->collection->find($query,array("_id"=>1,"rdf:type"=>1));
+        $resourceAndType = $this->collection->find($query, array('projection' => array("_id"=>1,"rdf:type"=>1)));
 
         foreach ($resourceAndType as $rt)
         {
