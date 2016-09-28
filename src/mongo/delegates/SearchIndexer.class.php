@@ -124,8 +124,10 @@ class SearchIndexer extends CompositeBase
             'c'=>$this->getContextAlias($context)
         ));
 
-        $resourceAndType = $mongoCollection->find($query,array("_id"=>1,"rdf:type"=>1));
-        $resourceAndType->timeout($this->config->getMongoCursorTimeout());
+        $resourceAndType = $mongoCollection->find($query,array(
+            'projection' => array("_id"=>1,"rdf:type"=>1),
+            'maxTimeMS' => $this->config->getMongoCursorTimeout()
+        ));
         foreach ($resourceAndType as $rt)
         {
             if (array_key_exists("rdf:type",$rt))
@@ -203,8 +205,9 @@ class SearchIndexer extends CompositeBase
             $filter["_id"] = array(_ID_RESOURCE=>$this->labeller->uri_to_alias($resource),_ID_CONTEXT=>$contextAlias);
         }
 
-        $docs = $this->config->getCollectionForCBD($this->getStoreName(), $from)->find($filter);
-        $docs->timeout($this->config->getMongoCursorTimeout());
+        $docs = $this->config->getCollectionForCBD($this->getStoreName(), $from)->find($filter, array(
+            'maxTimeMS' => $this->config->getMongoCursorTimeout()
+        ));
         foreach ($docs as $doc)
         {
             if($queueName && !$resourceUri)

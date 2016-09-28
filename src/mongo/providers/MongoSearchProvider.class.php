@@ -64,10 +64,10 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
         }
 
         try {
-            $collection->ensureIndex(array('_id.type' => 1), array('background' => 1));
-            $collection->ensureIndex(array('_id.r' => 1, '_id.c' => 1), array('background' => 1));
-            $collection->ensureIndex(array('_impactIndex' => 1), array('background' => 1));
-            $collection->save($document);
+            $collection->createIndex(array('_id.type' => 1), array('background' => 1));
+            $collection->createIndex(array('_id.r' => 1, '_id.c' => 1), array('background' => 1));
+            $collection->createIndex(array('_impactIndex' => 1), array('background' => 1));
+            $collection->insertOne($document);
         } catch (\Exception $e) {
             throw new \Tripod\Exceptions\SearchException("Failed to Index Document \n" . print_r($document, true), 0, $e);
         }
@@ -112,7 +112,7 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
             }
             foreach($this->config->getCollectionsForSearch($this->storeName, $searchTypes) as $collection)
             {
-                $collection->remove($query);
+                $collection->deleteMany($query);
             }
         } catch (\Exception $e) {
             throw new \Tripod\Exceptions\SearchException("Failed to Remove Document with id \n" . print_r($query, true), 0, $e);
@@ -347,7 +347,7 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
     	}
     	    	
     	return $this->config->getCollectionForSearchDocument($this->storeName, $typeId)
-            ->remove(array("_id.type" => $typeId));
+            ->deleteMany(array("_id.type" => $typeId));
     }
 
     /**

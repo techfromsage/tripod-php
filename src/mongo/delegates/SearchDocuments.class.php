@@ -119,7 +119,7 @@ class SearchDocuments extends DriverBase
         Config::getInstance()->getCollectionForSearchDocument(
             $this->storeName,
             $specId)
-            ->ensureIndex(
+            ->createIndex(
                 array('_id.type'=>1),
                 array(
                     'background'=>1
@@ -129,7 +129,7 @@ class SearchDocuments extends DriverBase
         Config::getInstance()->getCollectionForSearchDocument(
             $this->storeName,
             $specId)
-            ->ensureIndex(
+            ->createIndex(
                 array('_impactIndex'=>1),
                 array(
                     'background'=>1
@@ -221,8 +221,9 @@ class SearchDocuments extends DriverBase
                     : $config->getCollectionForCBD($this->storeName, $from)
                 );
 
-                $cursor = $collection->find(array('_id'=>array('$in'=>$joinUris)));
-                $cursor->timeout(\Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout());
+                $cursor = $collection->find(array('_id'=>array('$in'=>$joinUris)), array(
+                    'maxTimeMS' => \Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout()
+                ));
 
                 // add to impact index
                 $this->addIdToImpactIndex($joinUris, $target);

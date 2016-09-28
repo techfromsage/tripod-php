@@ -6,6 +6,7 @@ use Tripod\Exceptions\Exception;
 use Tripod\IEventHook;
 use \MongoDB\Driver\ReadPreference;
 use \MongoDB\Collection;
+use \MongoDB\Operation\FindOneAndUpdate;
 
 require_once TRIPOD_DIR . 'mongo/Config.class.php';
 
@@ -29,13 +30,13 @@ class Updates extends DriverBase {
      * @var array The original read preference gets stored here
      *            when changing for a write.
      */
-    private $originalCollectionReadPreference = array();
+    private $originalCollectionReadPreference = '';
 
     /**
      * @var array The original read preference gets stored here
      * when changing for a write.
      */
-    private $originalDbReadPreference = array();
+    private $originalDbReadPreference = '';
 
     /**
      * @var Driver
@@ -232,19 +233,18 @@ class Updates extends DriverBase {
     protected function setReadPreferenceToPrimary()
     {
         // Set db preference
-        $dbPref = $this->getDatabase()->getReadPreference();
-        if($dbPref['type'] !== ReadPreference::RP_PRIMARY){
-            $this->originalDbReadPreference = $this->db->getReadPreference();
-            $tagsets = (isset($dbPref['tagsets']) ? $dbPref['tagsets'] : array());
-            $this->db->setReadPreference(ReadPreference::RP_PRIMARY, $tagsets);
+        $dbPref = $this->getDatabase()->__debugInfo()['readPreference']->getMode();
+        $this->originalDbReadPreference = $this->db->__debugInfo()['readPreference']->getMode();
+        if ($dbPref !== ReadPreference::RP_PRIMARY) {
+            $this->db = $this->db->withOptions(array('readPreference' => new ReadPreference(ReadPreference::RP_PRIMARY)));
         }
 
-        $collPref = $this->getCollection()->getReadPreference();
+        $collPref = $this->getCollection()->__debugInfo()['readPreference']->getMode();
+
         // Set collection preference
-        if($collPref['type'] !== ReadPreference::RP_PRIMARY){
-            $this->originalCollectionReadPreference = $this->collection->getReadPreference();
-            $tagsets = (isset($collPref['tagsets']) ? $collPref['tagsets'] : array());
-            $this->collection->setReadPreference(ReadPreference::RP_PRIMARY, $tagsets);
+        $this->originalCollectionReadPreference = $collPref;
+        if ($collPref !== ReadPreference::RP_PRIMARY) {
+            $this->collection = $this->collection->withOptions(array('readPreference' => new ReadPreference(ReadPreference::RP_PRIMARY)));
         }
     }
 
@@ -253,25 +253,37 @@ class Updates extends DriverBase {
      * Reset the original read preference after changing with setReadPreferenceToPrimary
      */
     protected function resetOriginalReadPreference(){
-        if($this->originalDbReadPreference !== $this->db->getReadPreference())
+
+//        echo __FUNCTION__.'<br />';
+//        echo 'original:'.$this->originalDbReadPreference.'<br />';
+//        echo '<pre>'.print_r($this->db->__debugInfo()['readPreference']->getMode(),true).'</pre>';
+////        echo 'db RP:'.$this->db->__debugInfo().'<br />';
+//        die();
+        if($this->originalDbReadPreference !== $this->db->__debugInfo()['readPreference']->getMode())
         {
-            $pref = (isset($this->originalDbReadPreference['type'])
-                ? $this->originalDbReadPreference['type']
+            $pref = (isset($this->originalDbReadPreference)
+                ? $this->originalDbReadPreference
                 : $this->readPreference
             );
-            $tagsets = (isset($this->originalDbReadPreference['tagsets'])
-                ? $this->originalDbReadPreference['tagsets'] : array());
-            $this->db->setReadPreference($pref, $tagsets);
+
+            $this->db = $this->db->withOptions(array(
+                'readPreference' => new ReadPreference($pref)
+            ));
         }
+
+//        echo 'originalCollectionReadPreference:<pre>'.print_r($this->originalCollectionReadPreference,true).'</pre>';
+//        echo 'collection<pre>'.print_r($this->getCollection()->__debugInfo()['readPreference']->getMode(),true).'</pre>';
+//        die();
         // Reset collection object
-        if($this->originalCollectionReadPreference !== $this->getCollection()->getReadPreference()){
-            $pref = (isset($this->originalCollectionReadPreference['type'])
-                ? $this->originalCollectionReadPreference['type']
+        if($this->originalCollectionReadPreference !== $this->getCollection()->__debugInfo()['readPreference']->getMode()){
+            $pref = (isset($this->originalCollectionReadPreference)
+                ? $this->originalCollectionReadPreference
                 : $this->readPreference
             );
-            $tagsets = (isset($this->originalCollectionReadPreference['tagsets'])
-                ? $this->originalCollectionReadPreference['tagsets'] : array());
-            $this->collection->setReadPreference($pref, $tagsets);
+            $this->collection = $this->collection->withOptions(array(
+                'readPreference' => new ReadPreference($pref)
+            ));
+//            $this->collection->setReadPreference($pref, $tagsets);
         }
     }
 
@@ -620,14 +632,17 @@ class Updates extends DriverBase {
             {
                 try
                 {
-                    $newDoc = $this->getCollection()->findAndModify($update['criteria'],$update['changes'],null,array("upsert"=>$update['upsert'],"new"=>true));
+                    $newDoc = $this->getCollection()->findOneAndUpdate($update['criteria'], $update['changes'], array(
+                        'upsert' => $update['upsert'],
+                        'returnDocument' => FindOneAndUpdate::RETURN_DOCUMENT_AFTER
+                    ));
                     array_push($newCBDs, $newDoc);
                 }
                 catch (\Exception $e)
                 {
                     $this->errorLog(MONGO_WRITE,
                         array(
-                            'description'=>'Error with Mongo DB findAndModify:' . $e->getMessage(),
+                            'description'=>'Error with Mongo DB findOneAndUpdate:' . $e->getMessage(),
                             'transaction_id'=>$transaction_id,
                             'mongoDriverError' => $this->getDatabase()->lastError()
                         )
@@ -1004,7 +1019,7 @@ class Updates extends DriverBase {
                     $documents[] = $doc[_ID_KEY][_ID_RESOURCE];
                 }
 
-                $result = $auditCollection->insert(
+                $result = $auditCollection->insertOne(
                     array(
                         _ID_KEY => $auditDocumentId,
                         'type' => AUDIT_TYPE_REMOVE_INERT_LOCKS,
@@ -1015,7 +1030,7 @@ class Updates extends DriverBase {
                         _CREATED_TS=> $this->getMongoDate(),
                     )
                 );
-                if(!$result["ok"] || $result['err']!=NULL){
+                if (!$result->isAcknowledged()) {
                     throw new \Exception("Failed to create audit entry with error message- " . $result['err']);
                 }
             }
@@ -1037,7 +1052,7 @@ class Updates extends DriverBase {
                 $this->unlockAllDocuments($transaction_id);
 
                 //3. Update audit entry to say it was completed
-                $result = $auditCollection->update(array(_ID_KEY => $auditDocumentId), array(MONGO_OPERATION_SET => array("status" => AUDIT_STATUS_COMPLETED, _UPDATED_TS => $this->getMongoDate())));
+                $result = $auditCollection->updateOne(array(_ID_KEY => $auditDocumentId), array(MONGO_OPERATION_SET => array("status" => AUDIT_STATUS_COMPLETED, _UPDATED_TS => $this->getMongoDate())));
                 if($result['err']!=NULL )
                 {
                     throw new \Exception("Failed to update audit entry with error message- " . $result['err']);
@@ -1073,15 +1088,15 @@ class Updates extends DriverBase {
      */
     protected function unlockAllDocuments($transaction_id)
     {
-        $res = $this->getLocksCollection()->remove(array(_LOCKED_FOR_TRANS => $transaction_id), array('w' => 1));
+        $result = $this->getLocksCollection()->deleteOne(array(_LOCKED_FOR_TRANS => $transaction_id), array('w' => 1));
 
         // I can't check $res['n']>0 here, because same method is called in rollback where there might be no locked subjects at all
-        if(!$res["ok"] || $res['err']!=NULL){
+        if(!$result->isAcknowledged()) {
             $this->errorLog(MONGO_LOCK,
                 array(
                     'description'=>'Driver::unlockAllDocuments - Failed to unlock documents (transaction_id - ' .$transaction_id .')',
                     'mongoDriverError' => $this->getLocksDatabase()->lastError(),
-                    $res
+                    $result
                 )
             );
             throw new \Exception("Failed to unlock documents as part of transaction : ".$transaction_id);
@@ -1113,7 +1128,7 @@ class Updates extends DriverBase {
             return false;
         else{
             try{ //Add a entry to locks collection for this subject, will throws exception if an entry already there
-                $result = $this->getLocksCollection()->insert(
+                $result = $this->getLocksCollection()->insertOne(
                     array(
                         _ID_KEY => array(_ID_RESOURCE => $this->labeller->uri_to_alias($s), _ID_CONTEXT => $contextAlias),
                         _LOCKED_FOR_TRANS => $transaction_id,
@@ -1122,7 +1137,7 @@ class Updates extends DriverBase {
                     array("w" => 1)
                 );
 
-                if(!$result["ok"] || $result['err']!=NULL){
+                if (!$result->isAcknowledged()) {
                     throw new \Exception("Failed to lock document with error message- " . $result['err']);
                 }
             }
@@ -1149,7 +1164,7 @@ class Updates extends DriverBase {
                         array("w" => 1)
                     );
 
-                    if(!$result["ok"] || $result['err']!=NULL){
+                    if (!$result->isAcknowledged()) {
                         throw new \Exception("Failed to create new document with error message- " . $result['err']);
                     }
                     $document  = $this->getCollection()->findOne(array(_ID_KEY => array(_ID_RESOURCE => $this->labeller->uri_to_alias($s), _ID_CONTEXT => $contextAlias)));
@@ -1311,7 +1326,7 @@ class Updates extends DriverBase {
      */
     protected function updateCollection($query, $update, $options)
     {
-        return $this->getCollection()->update($query, $update, $options);
+        return $this->getCollection()->updateMany($query, $update, $options);
     }
 
     /**

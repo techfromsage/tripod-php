@@ -69,6 +69,7 @@ class Driver extends DriverBase implements \Tripod\IDriver
                 'readPreference'=>ReadPreference::RP_PRIMARY_PREFERRED,
                 'retriesToGetLock' => 20)
             ,$opts);
+
         $this->podName = $podName;
         $this->storeName = $storeName;
         $this->config = $this->getTripodConfigInstance();
@@ -369,7 +370,7 @@ class Driver extends DriverBase implements \Tripod\IDriver
                 $cachedResults['results'] = $results;
                 $cachedResults['created'] = new \MongoDate();
                 $this->debugLog("Adding result to cache",$cachedResults);
-                $this->config->getCollectionForTTLCache($this->storeName)->insert($cachedResults);
+                $this->config->getCollectionForTTLCache($this->storeName)->insertOne($cachedResults);
             }
         }
 
@@ -436,8 +437,8 @@ class Driver extends DriverBase implements \Tripod\IDriver
             'projection' => $fields
         );
         if (!empty($limit)) {
-            $findOptions['skip'] = $offset;
-            $findOptions['limit'] = $limit;
+            $findOptions['skip'] = (int) $offset;
+            $findOptions['limit'] = (int) $limit;
         }
         if (isset($sortBy)) {
             $findOptions['sort'] = $sortBy;
@@ -536,7 +537,11 @@ class Driver extends DriverBase implements \Tripod\IDriver
         $doc = $this->collection->findOne($query,array('projection' => array(_UPDATED_TS=>true)));
         /* @var $lastUpdatedDate \MongoDate */
         $lastUpdatedDate = ($doc!=null && array_key_exists(_UPDATED_TS,$doc)) ? $doc[_UPDATED_TS] : null;
-        return ($lastUpdatedDate==null) ? '' : $lastUpdatedDate->__toString();
+
+//        echo '<pre>'.print_r($doc,true).'</pre>';
+//        echo 'last updated:'.print_r($lastUpdatedDate,true).'<br />';
+//        die();
+        return (isset($lastUpdatedDate) == null) ? '' : $lastUpdatedDate->sec;
     }
 
     /**
@@ -680,7 +685,7 @@ class Driver extends DriverBase implements \Tripod\IDriver
                 'defaultContext'=>$this->defaultContext,
                 OP_ASYNC=>$this->async,
                 'stat'=>$this->stat,
-                'readPreference'=>$readPreference['type'],
+                'readPreference'=>$readPreference,
                 'retriesToGetLock' => $this->retriesToGetLock,
                 'statsConfig'=>$this->statsConfig
             );

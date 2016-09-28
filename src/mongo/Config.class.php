@@ -2073,8 +2073,9 @@ class Config
     public function getTransactionLogDatabase($readPreference = ReadPreference::RP_PRIMARY_PREFERRED)
     {
         $client = $this->getConnectionForDataSource($this->tConfig['data_source']);
-        $db = $client->selectDB($this->tConfig['database']);
-        $db->setReadPreference($readPreference);
+        $db = $client->selectDatabase($this->tConfig['database']);
+
+        $db = $db->withOptions(array('readPreference' => new ReadPreference($readPreference)));
         return $db;
     }
 

@@ -45,9 +45,9 @@ class TransactionLog
             "sessionId" => ((session_id() != '') ? session_id() : '')
         );
 
-        $ret = $this->insertTransaction($transaction);
+        $result = $this->insertTransaction($transaction);
 
-        if(isset($ret['err']) && $ret['err'] != NULL ){
+        if (!$result->isAcknowledged()) {
             throw new \Tripod\Exceptions\Exception("Error creating new transaction: " . var_export($ret,true));
         }
     }
@@ -201,7 +201,7 @@ class TransactionLog
      */
     protected function insertTransaction($transaction)
     {
-        return $this->transaction_collection->insert($transaction, array("w" => 1));
+        return $this->transaction_collection->insertOne($transaction, array("w" => 1));
     }
 
     /**
@@ -214,7 +214,7 @@ class TransactionLog
      */
     protected function updateTransaction($query, $update, $options)
     {
-        return $this->transaction_collection->update($query, $update, $options);
+        return $this->transaction_collection->updateMany($query, $update, $options);
     }
 
 

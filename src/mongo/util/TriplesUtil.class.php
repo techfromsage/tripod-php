@@ -100,7 +100,7 @@ class TriplesUtil
         else
         {
             $m = new \MongoClient(Config::getInstance()->getConnStr($storeName));
-            $collection = $m->selectDB($storeName)->selectCollection($podName);
+            $collection = $m->selectDatabase($storeName)->selectCollection($podName);
         }
 
         $graph = new MongoGraph();
@@ -297,7 +297,7 @@ class TriplesUtil
         }
         try
         {
-            $collection->insert($cbdGraph->to_tripod_array($cbdSubject,$context),array("w"=>1));
+            $collection->insertOne($cbdGraph->to_tripod_array($cbdSubject,$context),array("w"=>1));
             print ".";
         }
         catch (\MongoException $e)
@@ -325,7 +325,7 @@ class TriplesUtil
                 print "MongoCursorException on update: ".$e->getMessage().", retrying\n";
                 try
                 {
-                    $collection->insert($cbdGraph->to_tripod_array($cbdSubject,$context),array("w"=>1));
+                    $collection->insertOne($cbdGraph->to_tripod_array($cbdSubject,$context),array("w"=>1));
                 }
                 catch (\MongoException $e2)
                 {
