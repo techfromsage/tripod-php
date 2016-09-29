@@ -7,6 +7,8 @@ require_once TRIPOD_DIR . 'mongo/delegates/SearchDocuments.class.php';
 require_once TRIPOD_DIR . 'mongo/providers/ISearchProvider.php';
 require_once TRIPOD_DIR.'classes/Timer.class.php';
 
+use \MongoDB\BSON\Regex;
+
 /**
  * Class MongoSearchProvider
  * @package Tripod\Mongo
@@ -252,7 +254,7 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
 
         $regexes = array();
         foreach($terms as $t){
-            $regexes[] = new \MongoRegex("/{$t}/");
+            $regexes[] = new Regex("{$t}", '');
         }
 
         $query = array();
