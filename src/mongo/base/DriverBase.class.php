@@ -11,6 +11,7 @@ use Tripod\Exceptions\Exception;
 use Tripod\IEventHook;
 use \MongoDB\Driver\ReadPreference;
 use \MongoDB\Collection;
+use \MongoDB\BSON\UTCDateTime;
 
 /**
  * Class DriverBase
@@ -201,7 +202,7 @@ abstract class DriverBase
                     if ($type==MONGO_VIEW && array_key_exists(_EXPIRES,$result['value']))
                     {
                         // if expires < current date, regenerate view..
-                        $currentDate = new \MongoDate();
+                        $currentDate = new UTCDateTime(floor(microtime(true))*1000);
                         if ($result['value'][_EXPIRES]<$currentDate)
                         {
                             // regenerate!

@@ -3,6 +3,8 @@
 namespace Tripod\Mongo;
 require_once TRIPOD_DIR . 'mongo/Config.class.php';
 
+use \MongoDB\BSON\UTCDateTime;
+
 /**
  * Class TransactionLog
  * @package Tripod\Mongo
@@ -40,7 +42,7 @@ class TransactionLog
             "collectionName"=>$podName,
             "changes" => $changes,
             "status" => "in_progress",
-            "startTime" => new \MongoDate(),
+            "startTime" => new UTCDateTime(floor(microtime(true))*1000),
             "originalCBDs"=>$originalCBDs,
             "sessionId" => ((session_id() != '') ? session_id() : '')
         );
@@ -48,7 +50,7 @@ class TransactionLog
         $result = $this->insertTransaction($transaction);
 
         if (!$result->isAcknowledged()) {
-            throw new \Tripod\Exceptions\Exception("Error creating new transaction: " . var_export($ret,true));
+            throw new \Tripod\Exceptions\Exception("Error creating new transaction: " . var_export($result,true));
         }
     }
 
@@ -83,7 +85,7 @@ class TransactionLog
      */
     public function failTransaction($transaction_id, \Exception $error=null)
     {
-        $params = array('status' => 'failed', 'failedTime' => new \MongoDate());
+        $params = array('status' => 'failed', 'failedTime' => new UTCDateTime(floor(microtime(true))*1000));
         if($error!=null)
         {
             $params['error'] = array('reason'=>$error->getMessage(), 'trace'=>$error->getTraceAsString());
@@ -107,7 +109,7 @@ class TransactionLog
 
         $this->updateTransaction(
             array("_id" => $transaction_id),
-            array('$set' => array('status' => 'completed', 'endTime' => new \MongoDate(), 'newCBDs'=>$newCBDs)),
+            array('$set' => array('status' => 'completed', 'endTime' => new UTCDateTime(floor(microtime(true))*1000), 'newCBDs'=>$newCBDs)),
             array('w' => 1)
         );
     }
@@ -153,10 +155,10 @@ class TransactionLog
 
         if(!empty($fromDate)) {
             $q = array();
-            $q['$gte'] = new \MongoDate(strtotime($fromDate));
+            $q['$gte'] = new UTCDateTime(strtotime($fromDate) * 1000);
 
             if(!empty($toDate)){
-                $q['$lte'] = new \MongoDate(strtotime($toDate));
+                $q['$lte'] = new UTCDateTime(strtotime($toDate) * 1000);
             }
 
             $query['endTime'] = $q;

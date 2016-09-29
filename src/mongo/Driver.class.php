@@ -7,6 +7,7 @@ namespace Tripod\Mongo;
 use Tripod\Exceptions\Exception;
 use Tripod\IEventHook;
 use \MongoDB\Driver\ReadPreference;
+use \MongoDB\BSON\UTCDateTime;
 
 $TOTAL_TIME=0;
 
@@ -332,8 +333,9 @@ class Driver extends DriverBase implements \Tripod\IDriver
             if (!empty($candidate))
             {
                 $this->debugLog("Found candidate",array("candidate"=>$candidate));
-                $ttlTo = new \MongoDate($candidate['created']->sec+$ttl);
-                if ($ttlTo>(new \MongoDate()))
+
+                $ttlTo = new UTCDateTime(($candidate['created']->sec+$ttl) * 1000);
+                if ($ttlTo>(new UTCDateTime(floor(microtime(true))*1000)))
                 {
                     // cache hit!
                     $this->debugLog("Cache hit",array("id"=>$id));
@@ -368,7 +370,7 @@ class Driver extends DriverBase implements \Tripod\IDriver
                 $cachedResults = array();
                 $cachedResults['_id'] = $id;
                 $cachedResults['results'] = $results;
-                $cachedResults['created'] = new \MongoDate();
+                $cachedResults['created'] = new UTCDateTime(floor(microtime(true))*1000);
                 $this->debugLog("Adding result to cache",$cachedResults);
                 $this->config->getCollectionForTTLCache($this->storeName)->insertOne($cachedResults);
             }
@@ -535,7 +537,7 @@ class Driver extends DriverBase implements \Tripod\IDriver
                 _ID_RESOURCE=>$resource,
                 _ID_CONTEXT=>$this->getContextAlias($context)));
         $doc = $this->collection->findOne($query,array('projection' => array(_UPDATED_TS=>true)));
-        /* @var $lastUpdatedDate \MongoDate */
+        /* @var $lastUpdatedDate UTCDateTime */
         $lastUpdatedDate = ($doc!=null && array_key_exists(_UPDATED_TS,$doc)) ? $doc[_UPDATED_TS] : null;
 
 //        echo '<pre>'.print_r($doc,true).'</pre>';

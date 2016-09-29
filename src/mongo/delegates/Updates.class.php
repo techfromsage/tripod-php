@@ -7,6 +7,8 @@ use Tripod\IEventHook;
 use \MongoDB\Driver\ReadPreference;
 use \MongoDB\Collection;
 use \MongoDB\Operation\FindOneAndUpdate;
+use \MongoDB\BSON\UTCDateTime;
+use \MongoDB\BSON\ObjectId;
 
 require_once TRIPOD_DIR . 'mongo/Config.class.php';
 
@@ -609,7 +611,7 @@ class Updates extends DriverBase {
                 // currently the only criteria is the doc id
                 //var_dump($targetGraph->to_tripod_array($subjectOfChange));
 
-                $updatedAt = new \MongoDate();
+                $updatedAt = new UTCDateTime(floor(microtime(true))*1000);
 
                 if (!isset($doc[_VERSION]))
                 {
@@ -897,8 +899,8 @@ class Updates extends DriverBase {
         if(!empty($fromDateTime) || !empty($tillDateTime)){
             $query[_LOCKED_FOR_TRANS_TS] = array();
 
-            if(!empty($fromDateTime)) $query[_LOCKED_FOR_TRANS_TS][MONGO_OPERATION_GTE] = new \MongoDate(strtotime($fromDateTime));
-            if(!empty($tillDateTime)) $query[_LOCKED_FOR_TRANS_TS][MONGO_OPERATION_LTE] = new \MongoDate(strtotime($tillDateTime));
+            if(!empty($fromDateTime)) $query[_LOCKED_FOR_TRANS_TS][MONGO_OPERATION_GTE] = new UTCDateTime(strtotime($fromDateTime) * 1000);
+            if(!empty($tillDateTime)) $query[_LOCKED_FOR_TRANS_TS][MONGO_OPERATION_LTE] = new UTCDateTime(strtotime($tillDateTime) * 1000);
         }
         $docs = $this->getLocksCollection()->find($query, array('sort' => array(_LOCKED_FOR_TRANS => 1)));
 
@@ -1132,7 +1134,7 @@ class Updates extends DriverBase {
                     array(
                         _ID_KEY => array(_ID_RESOURCE => $this->labeller->uri_to_alias($s), _ID_CONTEXT => $contextAlias),
                         _LOCKED_FOR_TRANS => $transaction_id,
-                        _LOCKED_FOR_TRANS_TS=>new \MongoDate()
+                        _LOCKED_FOR_TRANS_TS => new UTCDateTime(floor(microtime(true))*1000)
                     ),
                     array("w" => 1)
                 );
@@ -1206,11 +1208,11 @@ class Updates extends DriverBase {
     }
 
     /**
-     * @return \MongoId
+     * @return ObjectId
      */
     protected function generateIdForNewMongoDocument()
     {
-        return new \MongoId();
+        return new ObjectId();
     }
 
     /**
@@ -1218,7 +1220,7 @@ class Updates extends DriverBase {
      */
     protected function getMongoDate()
     {
-        return new \MongoDate();
+        return new UTCDateTime(floor(microtime(true))*1000);
     }
 
 
