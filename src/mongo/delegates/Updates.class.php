@@ -235,18 +235,26 @@ class Updates extends DriverBase {
     protected function setReadPreferenceToPrimary()
     {
         // Set db preference
-        $dbPref = $this->getDatabase()->__debugInfo()['readPreference']->getMode();
+        /** @var ReadPreference $dbReadPref */
+        $dbReadPref = $this->getDatabase()->__debugInfo()['readPreference'];
+
+        $dbPref = $dbReadPref->getMode();
+        $dbTagsets = $dbReadPref->getTagsets();
+
         $this->originalDbReadPreference = $this->db->__debugInfo()['readPreference']->getMode();
         if ($dbPref !== ReadPreference::RP_PRIMARY) {
-            $this->db = $this->db->withOptions(array('readPreference' => new ReadPreference(ReadPreference::RP_PRIMARY)));
+            $this->db = $this->db->withOptions(array('readPreference' => new ReadPreference(ReadPreference::RP_PRIMARY, $dbTagsets)));
         }
 
-        $collPref = $this->getCollection()->__debugInfo()['readPreference']->getMode();
+        /** @var ReadPreference $collReadPref */
+        $collReadPref = $this->getCollection()->__debugInfo()['readPreference'];
+        $collPref = $collReadPref->getMode();
+        $collTagsets = $collReadPref->getTagsets();
 
         // Set collection preference
         $this->originalCollectionReadPreference = $collPref;
         if ($collPref !== ReadPreference::RP_PRIMARY) {
-            $this->collection = $this->collection->withOptions(array('readPreference' => new ReadPreference(ReadPreference::RP_PRIMARY)));
+            $this->collection = $this->collection->withOptions(array('readPreference' => new ReadPreference(ReadPreference::RP_PRIMARY, $collTagsets)));
         }
     }
 
@@ -256,36 +264,33 @@ class Updates extends DriverBase {
      */
     protected function resetOriginalReadPreference(){
 
-//        echo __FUNCTION__.'<br />';
-//        echo 'original:'.$this->originalDbReadPreference.'<br />';
-//        echo '<pre>'.print_r($this->db->__debugInfo()['readPreference']->getMode(),true).'</pre>';
-////        echo 'db RP:'.$this->db->__debugInfo().'<br />';
-//        die();
-        if($this->originalDbReadPreference !== $this->db->__debugInfo()['readPreference']->getMode())
+        /** @var ReadPreference $dbReadPref */
+        $dbReadPref = $this->db->__debugInfo()['readPreference'];
+        if($this->originalDbReadPreference !== $dbReadPref->getMode())
         {
             $pref = (isset($this->originalDbReadPreference)
                 ? $this->originalDbReadPreference
                 : $this->readPreference
             );
+            $dbTagsets = $dbReadPref->getTagsets();
 
             $this->db = $this->db->withOptions(array(
-                'readPreference' => new ReadPreference($pref)
+                'readPreference' => new ReadPreference($pref, $dbTagsets)
             ));
         }
 
-//        echo 'originalCollectionReadPreference:<pre>'.print_r($this->originalCollectionReadPreference,true).'</pre>';
-//        echo 'collection<pre>'.print_r($this->getCollection()->__debugInfo()['readPreference']->getMode(),true).'</pre>';
-//        die();
         // Reset collection object
-        if($this->originalCollectionReadPreference !== $this->getCollection()->__debugInfo()['readPreference']->getMode()){
+        /** @var ReadPreference $collReadPref */
+        $collReadPref = $this->getCollection()->__debugInfo()['readPreference'];
+        if($this->originalCollectionReadPreference !== $collReadPref->getMode()){
             $pref = (isset($this->originalCollectionReadPreference)
                 ? $this->originalCollectionReadPreference
                 : $this->readPreference
             );
+            $collTagsets = $collReadPref->getTagsets();
             $this->collection = $this->collection->withOptions(array(
-                'readPreference' => new ReadPreference($pref)
+                'readPreference' => new ReadPreference($pref, $collTagsets)
             ));
-//            $this->collection->setReadPreference($pref, $tagsets);
         }
     }
 
