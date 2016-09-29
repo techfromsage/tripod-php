@@ -540,10 +540,7 @@ class Driver extends DriverBase implements \Tripod\IDriver
         /* @var $lastUpdatedDate UTCDateTime */
         $lastUpdatedDate = ($doc!=null && array_key_exists(_UPDATED_TS,$doc)) ? $doc[_UPDATED_TS] : null;
 
-//        echo '<pre>'.print_r($doc,true).'</pre>';
-//        echo 'last updated:'.print_r($lastUpdatedDate,true).'<br />';
-//        die();
-        return (isset($lastUpdatedDate) == null) ? '' : $lastUpdatedDate->sec;
+        return (isset($lastUpdatedDate) == null) ? '' : $lastUpdatedDate->__toString();
     }
 
     /**

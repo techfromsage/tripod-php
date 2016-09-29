@@ -575,7 +575,7 @@ class Tables extends CompositeBase
         }
 
         $docs = $this->config->getCollectionForCBD($this->storeName, $from)->find($filter, array(
-            'maxTimeMS' => \Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout()
+            'maxTimeMS' => 1000000
         ));
 
         foreach ($docs as $doc)
@@ -1326,8 +1326,9 @@ class Tables extends CompositeBase
                     ? $this->config->getCollectionForCBD($this->storeName, $ruleset['from'])
                     : $this->config->getCollectionForCBD($this->storeName, $from)
                 );
+
                 $cursor = $collection->find(array('_id'=>array('$in'=>$joinUris)), array(
-                    'maxTimeMS' => \Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout()
+                    'maxTimeMS' => 1000000
                 ));
 
                 $this->addIdToImpactIndex($joinUris, $dest);
