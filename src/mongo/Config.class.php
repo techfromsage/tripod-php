@@ -8,7 +8,7 @@ use \MongoDB\Collection;
 use \MongoDB\Driver\ReadPreference;
 use \MongoDB\Driver\Command;
 use \MongoDB\Driver\Manager;
-use \MongoDB\Driver\Exception;
+use \MongoDB\Driver\Exception\ConnectionTimeoutException;
 
 /**
  * Holds the global configuration for Tripod

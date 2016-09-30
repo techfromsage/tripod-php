@@ -4,6 +4,8 @@ require_once 'src/ITripodStat.php';
 require_once 'src/classes/StatsD.class.php';
 require_once 'src/mongo/Driver.class.php';
 
+use \MongoDB\Driver\ReadPreference;
+
 /**
  * Class MongoTripodDriverTest
  */
@@ -653,7 +655,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
             'TestTripod',
             array('getDataUpdater'),
             array('CBD_testing','tripod_php_testing',
-                array('defaultContext'=>'http://talisaspire.com/', 'readPreference'=>MongoClient::RP_SECONDARY_PREFERRED))
+                array('defaultContext'=>'http://talisaspire.com/', 'readPreference'=>ReadPreference::RP_SECONDARY_PREFERRED))
         );
 
         $tripodUpdate = $this->getMock('\Tripod\Mongo\Updates',
@@ -674,7 +676,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
             ->will($this->returnValue($tripodUpdate));
 
         $expectedCollectionReadPreference = $tripodMock->getCollectionReadPreference();
-        $this->assertEquals($expectedCollectionReadPreference['type'], MongoClient::RP_SECONDARY_PREFERRED);
+        $this->assertEquals($expectedCollectionReadPreference->getMode(), ReadPreference::RP_SECONDARY_PREFERRED);
 
         // Assert that a simple save results in read preferences being restored
         $g = new \Tripod\Mongo\MongoGraph();

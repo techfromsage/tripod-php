@@ -433,8 +433,10 @@ class Updates extends DriverBase {
         if (!empty($originalCBDs)) {  // restore the original CBDs
             foreach ($originalCBDs as $g)
             {
+                /** @var UpdateResult $result */
                 $result = $this->updateCollection(array(_ID_KEY => $g[_ID_KEY]), $g, array('w' => 1));
-                if($result['err']!=NULL )
+
+                if(!$result->isAcknowledged())
                 {
                     // Error log here
                     $this->errorLog(MONGO_ROLLBACK,
@@ -1059,8 +1061,10 @@ class Updates extends DriverBase {
                 $this->unlockAllDocuments($transaction_id);
 
                 //3. Update audit entry to say it was completed
+
                 $result = $auditCollection->updateOne(array(_ID_KEY => $auditDocumentId), array(MONGO_OPERATION_SET => array("status" => AUDIT_STATUS_COMPLETED, _UPDATED_TS => $this->getMongoDate())));
-                if($result['err']!=NULL )
+
+                if(!$result->isAcknowledged())
                 {
                     throw new \Exception("Failed to update audit entry with error message- " . $result['err']);
                 }
@@ -1075,7 +1079,7 @@ class Updates extends DriverBase {
                 //4. Update audit entry to say it was failed with error
                 $result = $auditCollection->updateOne(array(_ID_KEY => $auditDocumentId), array(MONGO_OPERATION_SET => array("status" => AUDIT_STATUS_ERROR, _UPDATED_TS => $this->getMongoDate(), 'error' => $e->getMessage())));
 
-                if($result['err']!=NULL )
+                if(!$result->isAcknowledged())
                 {
                     $logInfo['additional-error']=  "Failed to update audit entry with error message- " . $result['err'];
                 }
@@ -1097,7 +1101,6 @@ class Updates extends DriverBase {
     {
         $result = $this->getLocksCollection()->deleteMany(array(_LOCKED_FOR_TRANS => $transaction_id), array('w' => 1));
 
-        // I can't check $res['n']>0 here, because same method is called in rollback where there might be no locked subjects at all
         if(!$result->isAcknowledged()) {
             $this->errorLog(MONGO_LOCK,
                 array(

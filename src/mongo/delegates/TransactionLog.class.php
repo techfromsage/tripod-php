@@ -4,6 +4,8 @@ namespace Tripod\Mongo;
 require_once TRIPOD_DIR . 'mongo/Config.class.php';
 
 use \MongoDB\BSON\UTCDateTime;
+use \MongoDB\InsertOneResult;
+use \MongoDB\UpdateOneResult;
 
 /**
  * Class TransactionLog
@@ -47,10 +49,13 @@ class TransactionLog
             "sessionId" => ((session_id() != '') ? session_id() : '')
         );
 
-        $result = $this->insertTransaction($transaction);
-
-        if (!$result->isAcknowledged()) {
-            throw new \Tripod\Exceptions\Exception("Error creating new transaction: " . var_export($result,true));
+        try {
+            $result = $this->insertTransaction($transaction);
+            if (!$result->isAcknowledged()) {
+                throw new \Exception('Error creating new transaction');
+            }
+        } catch(\Exception $e) {
+            throw new \Tripod\Exceptions\Exception("Error creating new transaction: " . $e->getMessage());
         }
     }
 
@@ -155,13 +160,13 @@ class TransactionLog
 
         if(!empty($fromDate)) {
             $q = array();
-            $q['$gte'] = new UTCDateTime(strtotime($fromDate) * 1000);
+            $q['$gte'] = (int) (new UTCDateTime(floor((new \DateTime($fromDate))->format('U') )))->__toString();
 
             if(!empty($toDate)){
-                $q['$lte'] = new UTCDateTime(strtotime($toDate) * 1000);
+                $q['$lte'] = (int) (new UTCDateTime(floor((new \DateTime($toDate))->format('U') )))->__toString();
             }
 
-            $query['endTime'] = $q;
+            $query['endTime.sec'] = $q;
         }
 
         return $this->transaction_collection->find($query, array('sort' => array('endTime'=>1)));
@@ -198,7 +203,7 @@ class TransactionLog
     /**
      * Proxy method to help with test mocking
      * @param array $transaction
-     * @return array|bool
+     * @return InsertOneResult
      * @codeCoverageIgnore
      */
     protected function insertTransaction($transaction)
@@ -211,7 +216,7 @@ class TransactionLog
      * @param array $query
      * @param array $update
      * @param array $options
-     * @return bool
+     * @return UpdateOneResult
      * @codeCoverageIgnore
      */
     protected function updateTransaction($query, $update, $options)

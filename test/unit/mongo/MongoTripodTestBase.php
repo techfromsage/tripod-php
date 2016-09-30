@@ -232,8 +232,8 @@ abstract class MongoTripodTestBase extends PHPUnit_Framework_TestCase
     protected function assertTransactionDate(Array $doc, $key)
     {
         $this->assertTrue(isset($doc[$key]), 'the date property: {$key} was not present in document');
-        $this->assertTrue(!empty($doc[$key]->sec),'the date property: {$key} does not have a "sec" property');
-        $this->assertTrue(!empty($doc[$key]->usec), 'the date property: {$key} does not have a "usec" property');
+        $this->assertInstanceOf('MongoDB\BSON\UTCDateTime', $doc[$key]);
+        $this->assertNotEmpty($doc[$key]->toDateTime());
     }
 
     /**
@@ -454,7 +454,7 @@ class TestTripod extends \Tripod\Mongo\Driver
      */
     public function getCollectionReadPreference()
     {
-        return $this->collection->getReadPreference();
+        return $this->collection->__debugInfo()['readPreference'];
     }
 }
 

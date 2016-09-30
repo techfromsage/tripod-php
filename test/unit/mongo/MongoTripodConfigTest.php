@@ -1,6 +1,11 @@
 <?php
 require_once 'MongoTripodTestBase.php';
 require_once 'src/mongo/Config.class.php';
+
+use \MongoDB\Driver\ReadPreference;
+use \MongoDB\Client;
+use \MongoDB\Driver\Exception\ConnectionTimeoutException;
+
 class MongoTripodConfigTest extends MongoTripodTestBase
 {
     /**
@@ -1054,19 +1059,19 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $mockConfig->expects($this->exactly(2))
             ->method('getDatabase')
             ->withConsecutive(
-                  array('tripod_php_testing', 'rs1', MongoClient::RP_SECONDARY_PREFERRED),
-                  array('tripod_php_testing', 'rs1', MongoClient::RP_NEAREST)
+                  array('tripod_php_testing', 'rs1', ReadPreference::RP_SECONDARY_PREFERRED),
+                  array('tripod_php_testing', 'rs1', ReadPreference::RP_NEAREST)
             )
             ->will($this->returnCallback(
                 function()
                 {
-                    $mongo = new MongoClient();
-                    return $mongo->selectDB('tripod_php_testing');
+                    $mongo = new Client();
+                    return $mongo->selectDatabase('tripod_php_testing');
                 }
             ));
 
-        $mockConfig->getCollectionForCBD('tripod_php_testing', 'CBD_testing', MongoClient::RP_SECONDARY_PREFERRED);
-        $mockConfig->getCollectionForCBD('tripod_php_testing', 'CBD_testing', MongoClient::RP_NEAREST);
+        $mockConfig->getCollectionForCBD('tripod_php_testing', 'CBD_testing', ReadPreference::RP_SECONDARY_PREFERRED);
+        $mockConfig->getCollectionForCBD('tripod_php_testing', 'CBD_testing', ReadPreference::RP_NEAREST);
 
     }
 
@@ -1285,17 +1290,19 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         // Make sure the dbs do not exist
         $transactionConnInfo = $newConfig['data_sources'][$newConfig['transaction_log']['data_source']];
         $options = isset($transactionConnInfo['replicaSet']) && !empty($transactionConnInfo['replicaSet']) ? array('replicaSet' => $transactionConnInfo['replicaSet']): array();
-        $transactionMongo = new MongoClient($transactionConnInfo['connection'], $options);
-        $transactionDbInfo = $transactionMongo->listDBs();
-        foreach($transactionDbInfo['databases'] as $db){
-            $this->assertNotEquals($db['name'], $newConfig['transaction_log']['database']);
+        $transactionMongo = new Client($transactionConnInfo['connection'], $options);
+        $transactionDbInfo = $transactionMongo->listDatabases();
+
+        foreach($transactionDbInfo as $db){
+            $this->assertNotEquals($db->getName(), $newConfig['transaction_log']['database']);
         }
+
         $tqueuesConnInfo = $newConfig['data_sources'][$newConfig['transaction_log']['data_source']];
         $options = isset($tqueuesConnInfo['replicaSet']) && !empty($tqueuesConnInfo['replicaSet']) ? array('replicaSet' => $tqueuesConnInfo['replicaSet']): array();
-        $queuesMongo = new MongoClient($tqueuesConnInfo['connection'], $options);
-        $queuesDbInfo = $queuesMongo->listDBs();
-        foreach($queuesDbInfo['databases'] as $db){
-            $this->assertNotEquals($db['name'], $newConfig['transaction_log']['database']);
+        $queuesMongo = new Client($tqueuesConnInfo['connection'], $options);
+        $queuesDbInfo = $queuesMongo->listDatabases();
+        foreach($queuesDbInfo as $db){
+            $this->assertNotEquals($db->getName(), $newConfig['transaction_log']['database']);
         }
 
         // Start adding some data
@@ -1314,10 +1321,10 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $this->tripod->saveChanges($graph, $newGraph);
 
         // Make sure the dbs do now exist
-        $transactionDbInfo = $transactionMongo->listDBs();
+        $transactionDbInfo = $transactionMongo->listDatabases();
         $transactionDbExists = false;
-        foreach($transactionDbInfo['databases'] as $db){
-            if($db['name'] === $newConfig['transaction_log']['database']){
+        foreach($transactionDbInfo as $db){
+            if($db->getName() === $newConfig['transaction_log']['database']){
                 $transactionDbExists = true;
             }
         }
@@ -1702,29 +1709,29 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $mockConfig->loadConfig(json_decode(file_get_contents(dirname(__FILE__).'/data/config.json'), true));
         $mockConfig->expects($this->exactly(1))
             ->method('getMongoClient')
-            ->with('mongodb://localhost', array('connectTimeoutMS' => 20000))
+            ->with('mongodb://localhost?connectTimeoutMS=20000')
             ->will($this->returnCallback(
                 function()
                 {
-                    $mongo = new MongoClient();
+                    $mongo = new Client();
                     return $mongo;
                 }
             ));
-        $mockConfig->getDatabase('tripod_php_testing', 'rs1', MongoClient::RP_SECONDARY_PREFERRED);
-        $mockConfig->getCollectionForCBD('tripod_php_testing', 'CBD_testing', MongoClient::RP_SECONDARY_PREFERRED);
-        $mockConfig->getCollectionForCBD('tripod_php_testing', 'CBD_testing', MongoClient::RP_NEAREST);
+        $mockConfig->getDatabase('tripod_php_testing', 'rs1', ReadPreference::RP_SECONDARY_PREFERRED);
+        $mockConfig->getCollectionForCBD('tripod_php_testing', 'CBD_testing', ReadPreference::RP_SECONDARY_PREFERRED);
+        $mockConfig->getCollectionForCBD('tripod_php_testing', 'CBD_testing', ReadPreference::RP_NEAREST);
     }
     public function testMongoConnectionExceptionThrown()
     {
-        $this->setExpectedException('\MongoConnectionException', "Exception thrown when connecting to Mongo");
+        $this->setExpectedException('\MongoDB\Driver\Exception\ConnectionTimeoutException', "Exception thrown when connecting to Mongo");
         $mockConfig = $this->getMock('TripodTestConfig', array('getMongoClient'));
         $mockConfig->loadConfig(json_decode(file_get_contents(dirname(__FILE__).'/data/config.json'), true));
         $mockConfig->expects($this->exactly(30))
             ->method('getMongoClient')
-            ->with('mongodb://localhost', array('connectTimeoutMS' => 20000))
-            ->will($this->throwException(new \MongoConnectionException('Exception thrown when connecting to Mongo')));
+            ->with('mongodb://localhost?connectTimeoutMS=20000')
+            ->will($this->throwException(new ConnectionTimeoutException('Exception thrown when connecting to Mongo')));
 
-        $mockConfig->getDatabase('tripod_php_testing', 'rs1', MongoClient::RP_SECONDARY_PREFERRED);
+        $mockConfig->getDatabase('tripod_php_testing', 'rs1', ReadPreference::RP_SECONDARY_PREFERRED);
     }
     public function testMongoConnectionNoExceptionThrownWhenConnectionThrowsSomeExceptions()
     {
@@ -1732,23 +1739,23 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $mockConfig->loadConfig(json_decode(file_get_contents(dirname(__FILE__).'/data/config.json'), true));
         $mockConfig->expects($this->exactly(5))
             ->method('getMongoClient')
-            ->with('mongodb://localhost', array('connectTimeoutMS' => 20000))
+            ->with('mongodb://localhost?connectTimeoutMS=20000')
             ->will($this->onConsecutiveCalls(
-                $this->throwException(new \MongoConnectionException('Exception thrown when connecting to Mongo')),
-                $this->throwException(new \MongoConnectionException('Exception thrown when connecting to Mongo')),
-                $this->throwException(new \MongoConnectionException('Exception thrown when connecting to Mongo')),
-                $this->throwException(new \MongoConnectionException('Exception thrown when connecting to Mongo')),
+                $this->throwException(new ConnectionTimeoutException('Exception thrown when connecting to Mongo')),
+                $this->throwException(new ConnectionTimeoutException('Exception thrown when connecting to Mongo')),
+                $this->throwException(new ConnectionTimeoutException('Exception thrown when connecting to Mongo')),
+                $this->throwException(new ConnectionTimeoutException('Exception thrown when connecting to Mongo')),
                 $this->returnCallback(
                     function()
                     {
-                        $mongo = new MongoClient();
+                        $mongo = new Client();
                         return $mongo;
                     }
                 )
             ));
 
-        $mockConfig->getDatabase('tripod_php_testing', 'rs1', MongoClient::RP_SECONDARY_PREFERRED);
-        $mockConfig->getCollectionForCBD('tripod_php_testing', 'CBD_testing', MongoClient::RP_SECONDARY_PREFERRED);
-        $mockConfig->getCollectionForCBD('tripod_php_testing', 'CBD_testing', MongoClient::RP_NEAREST);
+        $mockConfig->getDatabase('tripod_php_testing', 'rs1', ReadPreference::RP_SECONDARY_PREFERRED);
+        $mockConfig->getCollectionForCBD('tripod_php_testing', 'CBD_testing', ReadPreference::RP_SECONDARY_PREFERRED);
+        $mockConfig->getCollectionForCBD('tripod_php_testing', 'CBD_testing', ReadPreference::RP_NEAREST);
     }
 }

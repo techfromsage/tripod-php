@@ -12,8 +12,8 @@ class MongoTransactionLogTest extends MongoTripodTestBase
     /**
      * @var \Tripod\Mongo\Driver
      */
-    protected $tripod
-    ;
+    protected $tripod;
+
     /**
      * @var \Tripod\Mongo\TransactionLog
      */
@@ -716,10 +716,19 @@ class MongoTransactionLogTest extends MongoTripodTestBase
      */
     public function testCreateNewTransactionThrowsExceptionIfInsertFails()
     {
+        $mockInsert = $this->getMockBuilder('\MongoDB\InsertOneResult')
+            ->disableOriginalConstructor()
+            ->setMethods(['isAcknowledged'])
+            ->getMock();
+        $mockInsert
+            ->expects($this->once())
+            ->method('isAcknowledged')
+            ->will($this->returnValue(false));
+
         $mockTransactionLog = $this->getMock('\Tripod\Mongo\TransactionLog', array('insertTransaction'), array(), '', false, true);
         $mockTransactionLog->expects($this->once())
             ->method('insertTransaction')
-            ->will($this->returnValue(array('err'=>'something went wrong')));
+            ->will($this->returnValue($mockInsert));
 
         /* @var $mockTransactionLog \Tripod\Mongo\TransactionLog */
         try {
