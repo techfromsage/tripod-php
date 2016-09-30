@@ -111,12 +111,12 @@ abstract class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         $config = \Tripod\Mongo\Config::getInstance();
         if($toTransactionLog == true)
         {
-            return $this->getTlogCollection()->insert($doc, array("w"=>1));
+            return $this->getTlogCollection()->insertOne($doc, array("w"=>1));
         } else {
             return $config->getCollectionForCBD(
                 $this->tripod->getStoreName(),
                 $this->tripod->getPodName()
-            )->insert($doc, array("w"=>1));
+            )->insertOne($doc, array("w"=>1));
         }
     }
 
@@ -407,7 +407,7 @@ abstract class MongoTripodTestBase extends PHPUnit_Framework_TestCase
             _LOCKED_FOR_TRANS => $transaction_id,
             _LOCKED_FOR_TRANS_TS=>new MongoDate()
         );
-        $collection->insert($doc, array("w" => 1));
+        $collection->insertOne($doc, array("w" => 1));
     }
 
     /**

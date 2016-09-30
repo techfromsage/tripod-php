@@ -1073,7 +1073,7 @@ class Updates extends DriverBase {
                 );
 
                 //4. Update audit entry to say it was failed with error
-                $result = $auditCollection->update(array(_ID_KEY => $auditDocumentId), array(MONGO_OPERATION_SET => array("status" => AUDIT_STATUS_ERROR, _UPDATED_TS => $this->getMongoDate(), 'error' => $e->getMessage())));
+                $result = $auditCollection->updateOne(array(_ID_KEY => $auditDocumentId), array(MONGO_OPERATION_SET => array("status" => AUDIT_STATUS_ERROR, _UPDATED_TS => $this->getMongoDate(), 'error' => $e->getMessage())));
 
                 if($result['err']!=NULL )
                 {
@@ -1095,7 +1095,7 @@ class Updates extends DriverBase {
      */
     protected function unlockAllDocuments($transaction_id)
     {
-        $result = $this->getLocksCollection()->deleteOne(array(_LOCKED_FOR_TRANS => $transaction_id), array('w' => 1));
+        $result = $this->getLocksCollection()->deleteMany(array(_LOCKED_FOR_TRANS => $transaction_id), array('w' => 1));
 
         // I can't check $res['n']>0 here, because same method is called in rollback where there might be no locked subjects at all
         if(!$result->isAcknowledged()) {
@@ -1131,9 +1131,9 @@ class Updates extends DriverBase {
                 )
             );
 
-        if($countEntriesInLocksCollection > 0) //Subject is already locked
+        if ($countEntriesInLocksCollection > 0){ //Subject is already locked
             return false;
-        else{
+        } else {
             try{ //Add a entry to locks collection for this subject, will throws exception if an entry already there
                 $result = $this->getLocksCollection()->insertOne(
                     array(
@@ -1333,7 +1333,7 @@ class Updates extends DriverBase {
      */
     protected function updateCollection($query, $update, $options)
     {
-        return $this->getCollection()->updateMany($query, $update, $options);
+        return $this->getCollection()->replaceOne($query, $update, $options);
     }
 
     /**

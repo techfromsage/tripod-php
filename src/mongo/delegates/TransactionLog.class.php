@@ -216,7 +216,7 @@ class TransactionLog
      */
     protected function updateTransaction($query, $update, $options)
     {
-        return $this->transaction_collection->updateMany($query, $update, $options);
+        return $this->transaction_collection->updateOne($query, $update, $options);
     }
 
 
