@@ -10,7 +10,7 @@ services:
 install:
 - composer install
 before_script:
-- echo "extension = mongodb.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+- pecl install mongodb
 - sleep 15
 script: ant
 notifications:
