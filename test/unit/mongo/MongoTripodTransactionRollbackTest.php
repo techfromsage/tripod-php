@@ -2,6 +2,9 @@
 require_once 'MongoTripodTestBase.php';
 /** @noinspection PhpIncludeInspection */
 require_once 'src/mongo/Driver.class.php';
+
+use \MongoDB\BSON\UTCDateTime;
+
 /**
  * This test suite was added to specifically verify behaviour of code
  * during Driver->storeChanges.
@@ -59,8 +62,8 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
             'rdf:type'=>array('u'=>'acorn:Resource'),
             'dct:title'=>array(array('l'=>'Title one'),array('l'=>'Title two')),
             '_version'=>0,
-            '_cts'=> new MongoDate(strtotime("2013-03-21 00:00:00")),
-            '_uts'=> new MongoDate(strtotime("2013-03-21 00:00:00"))
+            '_cts'=> new UTCDateTime(strtotime("2013-03-21 00:00:00")*1000),
+            '_uts'=> new UTCDateTime(strtotime("2013-03-21 00:00:00")*1000)
         );
 
         $doc2 = array(
@@ -68,8 +71,8 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
             'rdf:type'=>array('u'=>'acorn:Book'),
             'dct:title'=>array(array('l'=>'Title three'),array('l'=>'Title four')),
             '_version'=>0,
-            '_cts'=> new MongoDate(strtotime("2013-03-21 00:00:00")),
-            '_uts'=> new MongoDate(strtotime("2013-03-21 00:00:00"))
+            '_cts'=> new UTCDateTime(strtotime("2013-03-21 00:00:00")*1000),
+            '_uts'=> new UTCDateTime(strtotime("2013-03-21 00:00:00")*1000)
         );
         $this->addDocument($doc1);
         $this->addDocument($doc2);
@@ -211,8 +214,8 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
             'rdf:type'=>array('u'=>'acorn:Resource'),
             'dct:title'=>array(array('l'=>'Title one'),array('l'=>'Title two')),
             '_version'=>0,
-            '_cts'=> new \MongoDate(strtotime("2013-03-21 00:00:00")),
-            '_uts'=> new \MongoDate(strtotime("2013-03-21 00:00:00"))
+            '_cts'=> new UTCDateTime(strtotime("2013-03-21 00:00:00")*1000),
+            '_uts'=> new UTCDateTime(strtotime("2013-03-21 00:00:00")*1000)
         );
 
         $doc2 = array(
@@ -220,8 +223,8 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
             'rdf:type'=>array('u'=>'acorn:Book'),
             'dct:title'=>array(array('l'=>'Title three'),array('l'=>'Title four')),
             '_version'=>0,
-            '_cts'=> new \MongoDate(strtotime("2013-03-21 00:00:00")),
-            '_uts'=> new \MongoDate(strtotime("2013-03-21 00:00:00"))
+            '_cts'=> new UTCDateTime(strtotime("2013-03-21 00:00:00")*1000),
+            '_uts'=> new UTCDateTime(strtotime("2013-03-21 00:00:00")*1000)
         );
         $this->addDocument($doc1);
         $this->addDocument($doc2);
@@ -312,8 +315,8 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
             'rdf:type'=>array('u'=>'acorn:Resource'),
             'dct:title'=>array(array('l'=>'Title one'),array('l'=>'Title two')),
             '_version'=>0,
-            '_cts'=> new MongoDate(),
-            '_uts'=> new MongoDate()
+            '_cts'=> new UTCDateTime(floor(microtime(true))*1000),
+            '_uts'=> new UTCDateTime(floor(microtime(true))*1000)
         );
 
         $doc2 = array(
@@ -321,8 +324,8 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
             'rdf:type'=>array('u'=>'acorn:Book'),
             'dct:title'=>array(array('l'=>'Title three'),array('l'=>'Title four')),
             '_version'=>0,
-            '_cts'=> new MongoDate(),
-            '_uts'=> new MongoDate()
+            '_cts'=> new UTCDateTime(floor(microtime(true))*1000),
+            '_uts'=> new UTCDateTime(floor(microtime(true))*1000)
         );
         $this->addDocument($doc1);
         $this->addDocument($doc2);
@@ -435,17 +438,17 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
             return false;
         else{
             try{ //Add a entry to locks collection for this subject, will throws exception if an entry already there
-                $result = $lCollection->insert(
+                $result = $lCollection->insertOne(
                     array(
                         '_id' => array(_ID_RESOURCE => $this->labeller->uri_to_alias($s), _ID_CONTEXT => $contextAlias),
                         _LOCKED_FOR_TRANS => $transaction_id,
-                        _LOCKED_FOR_TRANS_TS=>new MongoDate()
+                        _LOCKED_FOR_TRANS_TS => new UTCDateTime(floor(microtime(true))*1000)
                     ),
                     array("w" => 1)
                 );
 
-                if(!$result["ok"] || $result['err']!=NULL){
-                    throw new Exception("Failed to lock document with error message- " . $result['err']);
+                if(!$result->isAcknowledged()){
+                    throw new Exception("Failed to lock document with error message- " . $this->getLastDBError());
                 }
             }
             catch(Exception $e) { //Subject is already locked or unable to lock
@@ -464,15 +467,15 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
             $document  = $this->getTripodCollection($this->tripod)->findOne(array('_id' => array(_ID_RESOURCE => $this->labeller->uri_to_alias($s), _ID_CONTEXT => $contextAlias)));
             if(empty($document)){ //if document is not there, create it
                 try{
-                    $result = $this->getTripodCollection($this->tripod)->insert(
+                    $result = $this->getTripodCollection($this->tripod)->insertOne(
                         array(
                             '_id' => array(_ID_RESOURCE => $this->labeller->uri_to_alias($s), _ID_CONTEXT => $contextAlias)
                         ),
                         array("w" => 1)
                     );
 
-                    if(!$result["ok"] || $result['err']!=NULL){
-                        throw new Exception("Failed to create new document with error message- " . $result['err']);
+                    if(!$result->isAcknowledged()){
+                        throw new Exception("Failed to create new document with error message- " . $this->getLastDBError());
                     }
                     $document  = $this->getTripodCollection($this->tripod)->findOne(array('_id' => array(_ID_RESOURCE => $this->labeller->uri_to_alias($s), _ID_CONTEXT => $contextAlias)));
                 }
@@ -490,6 +493,19 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
             }
             return $document;
         }
+    }
+
+    private function getLastDBError($db = null) {
+        if (is_null($db)) {
+            $db = $this->config->getDatabase(
+                $this->storeName,
+                $this->config->getDataSourceForPod($this->storeName, $this->podName),
+                $this->readPreference
+            );
+        }
+        return $db->command([
+            'getLastError' =>  1
+        ])->toArray()[0];
     }
 }
 

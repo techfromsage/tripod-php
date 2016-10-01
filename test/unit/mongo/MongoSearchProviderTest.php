@@ -1,8 +1,8 @@
 <?php
-    require_once 'MongoTripodTestBase.php';
-    require_once 'src/mongo/Driver.class.php';
-    require_once 'src/mongo/delegates/SearchIndexer.class.php';
-    require_once 'src/mongo/providers/MongoSearchProvider.class.php';
+require_once 'MongoTripodTestBase.php';
+require_once 'src/mongo/Driver.class.php';
+require_once 'src/mongo/delegates/SearchIndexer.class.php';
+require_once 'src/mongo/providers/MongoSearchProvider.class.php';
 
 /**
  * Class MongoSearchProviderTest
@@ -53,7 +53,6 @@ class MongoSearchProviderTest extends MongoTripodTestBase
     }
 
     public function testSearchIndexing() {
-
 
         // assert that there are only 12 based on the data we loaded into tripod
         $actualSearchDocumentCount = $this->getCountForSearchSpecs($this->tripod);

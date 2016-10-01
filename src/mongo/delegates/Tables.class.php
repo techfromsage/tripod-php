@@ -651,13 +651,13 @@ class Tables extends CompositeBase
     {
         try
         {
-            $collection->insertOne($generatedRow);
+            $collection->updateOne($generatedRow['_id'], array('$set' => $generatedRow), array('upsert' => true));
         } catch (\Exception $e) {
             // We only truncate and retry the save if the \Exception contains this text.
             if (strpos($e->getMessage(),"Btree::insert: key too large to index") !== FALSE)
             {
                 $this->truncateFields($collection, $generatedRow);
-                $collection->insertOne($generatedRow);
+                $collection->updateOne($generatedRow['_id'], array('$set' => $generatedRow), array('upsert' => true));
             }
             else
             {

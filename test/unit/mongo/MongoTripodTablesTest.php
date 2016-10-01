@@ -310,13 +310,13 @@ class MongoTripodTablesTest extends MongoTripodTestBase
     {
         $this->tripodTables->generateTableRows("t_resource");
 
-        $t1 = $this->tripodTables->getTableRows("t_resource",array(),array("value.isbn"=>-1));
-        // expecting two rows, first row should be one with highest numberic value of ISBN, due to sort DESC
+        $t1 = $this->tripodTables->getTableRows("t_resource",array(),array("value.isbn" => -1, "_id.r" => 1));
+        // expecting two rows, first row should be one with highest numeric value of ISBN, due to sort DESC
         $this->assertEquals('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2',$t1['results'][0]['_id']['r']);
 
-        $t1 = $this->tripodTables->getTableRows("t_resource",array(),array("value.isbn"=>1));
+        $t1 = $this->tripodTables->getTableRows("t_resource",array(),array("value.isbn" => 1, "_id.r" => 1));
 
-        // expecting two rows, first row should be one with lowest numberic value of ISBN, due to sort ASC
+        // expecting two rows, first row should be one with lowest numeric value of ISBN, due to sort ASC
         $this->assertEquals('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA',$t1['results'][0]['_id']['r']);
     }
 
@@ -562,7 +562,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         // We should have 1 result and it should have modified fields
         $this->assertTrue($rows["head"]["count"]==1,"Expected one row");
 
-        $this->assertInstanceOf('MongoDate', $rows['results'][0]['mongoDate']);
+        $this->assertInstanceOf('\MongoDB\BSON\UTCDateTime', $rows['results'][0]['mongoDate']);
     }
 
     /**
@@ -617,10 +617,8 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         // Check borked data
         // Trying to use date but passed in a string - should default to 0 for sec and usec
-        $this->assertInstanceOf('MongoDate', $rows['results'][0]['mongoDateInvalid']);
-        $this->assertEquals(0, $rows['results'][0]['mongoDateInvalid']->sec);
-        $this->assertEquals(0, $rows['results'][0]['mongoDateInvalid']->usec);
-
+        $this->assertInstanceOf('\MongoDB\BSON\UTCDateTime', $rows['results'][0]['mongoDateInvalid']);
+        $this->assertEquals(0, $rows['results'][0]['mongoDateInvalid']->__toString());
     }
 
     /**

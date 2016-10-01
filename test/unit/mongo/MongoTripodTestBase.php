@@ -1,6 +1,7 @@
 <?php
 
 use Tripod\ITripodStat;
+use \MongoDB\BSON\UTCDateTime;
 
 set_include_path(
   get_include_path()
@@ -405,7 +406,7 @@ abstract class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         $doc = array(
             '_id' => array(_ID_RESOURCE => $labeller->uri_to_alias($subject), _ID_CONTEXT => \Tripod\Mongo\Config::getInstance()->getDefaultContextAlias()),
             _LOCKED_FOR_TRANS => $transaction_id,
-            _LOCKED_FOR_TRANS_TS=>new MongoDate()
+            _LOCKED_FOR_TRANS_TS => new UTCDateTime(floor(microtime(true))*1000)
         );
         $collection->insertOne($doc, array("w" => 1));
     }

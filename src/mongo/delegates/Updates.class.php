@@ -408,7 +408,7 @@ class Updates extends DriverBase {
                     'description'=>'Save Failed Rolling back transaction:' . $e->getMessage(),
                     'transaction_id'=>$transaction_id,
                     'subjectsOfChange'=>implode(",",$subjectsOfChange),
-                    'mongoDriverError' => $this->getDatabase()->lastError(),
+                    'mongoDriverError' => $this->getLastDBError($this->getDatabase()),
                     'exceptionMessage' => $e->getMessage()
                 )
             );
@@ -444,7 +444,7 @@ class Updates extends DriverBase {
                             'description' => 'Driver::rollbackTransaction - Error updating transaction',
                             'exception_message' => $exception->getMessage(),
                             'transaction_id' => $transaction_id,
-                            'mongoDriverError' => $this->getDatabase()->lastError()
+                            'mongoDriverError' => $this->getLastDBError($this->getDatabase())
                         )
                     );
                     throw new \Exception("Failed to restore Original CBDS for transaction: {$transaction_id} stopped at ".$g[_ID_KEY]);
@@ -458,7 +458,7 @@ class Updates extends DriverBase {
                     'description'=>'Driver::rollbackTransaction - Unlocking documents',
                     'exception_message' => $exception->getMessage(),
                     'transaction_id'=>$transaction_id,
-                    'mongoDriverError' => $this->getDatabase()->lastError()
+                    'mongoDriverError' => $this->getLastDBError($this->getDatabase())
                 )
             );
         }
@@ -653,7 +653,7 @@ class Updates extends DriverBase {
                         array(
                             'description'=>'Error with Mongo DB findOneAndUpdate:' . $e->getMessage(),
                             'transaction_id'=>$transaction_id,
-                            'mongoDriverError' => $this->getDatabase()->lastError()
+                            'mongoDriverError' => $this->getLastDBError($this->getDatabase())
                         )
                     );
                     throw new \Exception($e);
@@ -906,8 +906,12 @@ class Updates extends DriverBase {
         if(!empty($fromDateTime) || !empty($tillDateTime)){
             $query[_LOCKED_FOR_TRANS_TS] = array();
 
-            if(!empty($fromDateTime)) $query[_LOCKED_FOR_TRANS_TS][MONGO_OPERATION_GTE] = new UTCDateTime(strtotime($fromDateTime) * 1000);
-            if(!empty($tillDateTime)) $query[_LOCKED_FOR_TRANS_TS][MONGO_OPERATION_LTE] = new UTCDateTime(strtotime($tillDateTime) * 1000);
+            if (!empty($fromDateTime)) {
+                $query[_LOCKED_FOR_TRANS_TS][MONGO_OPERATION_GTE] = new UTCDateTime(strtotime($fromDateTime)*1000);
+            }
+            if (!empty($tillDateTime)) {
+                $query[_LOCKED_FOR_TRANS_TS][MONGO_OPERATION_LTE] = new UTCDateTime(strtotime($tillDateTime)*1000);
+            }
         }
         $docs = $this->getLocksCollection()->find($query, array('sort' => array(_LOCKED_FOR_TRANS => 1)));
 
@@ -996,7 +1000,7 @@ class Updates extends DriverBase {
                 'retries' => $this->retriesToGetLock,
                 'transaction_id'=>$transaction_id,
                 'subjectsOfChange'=>implode(", ",$subjectsOfChange),
-                'mongoDriverError' => $this->getDatabase()->lastError()
+                'mongoDriverError' => $this->getLastDBError($this->getDatabase()),
             )
         );
         return NULL;
@@ -1105,7 +1109,7 @@ class Updates extends DriverBase {
             $this->errorLog(MONGO_LOCK,
                 array(
                     'description'=>'Driver::unlockAllDocuments - Failed to unlock documents (transaction_id - ' .$transaction_id .')',
-                    'mongoDriverError' => $this->getLocksDatabase()->lastError(),
+                    'mongoDriverError' => $this->getLastDBError($this->getLocksDatabase()),
                     $result
                 )
             );

@@ -513,7 +513,7 @@ class Views extends CompositeBase
                     if (isset($viewSpec['ttl']))
                     {
                         $buildImpactIndex=false;
-                        $value[_EXPIRES] = new UTCDateTime($this->getExpirySecFromNow(30) * 1000);
+                        $value[_EXPIRES] = new UTCDateTime($this->getExpirySecFromNow($viewSpec['ttl']) * 1000);
                     }
                     else
                     {

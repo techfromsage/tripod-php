@@ -160,13 +160,13 @@ class TransactionLog
 
         if(!empty($fromDate)) {
             $q = array();
-            $q['$gte'] = (int) (new UTCDateTime(floor((new \DateTime($fromDate))->format('U') )))->__toString();
+            $q['$gte'] = new UTCDateTime(strtotime($fromDate)*1000);
 
             if(!empty($toDate)){
-                $q['$lte'] = (int) (new UTCDateTime(floor((new \DateTime($toDate))->format('U') )))->__toString();
+                $q['$lte'] = new UTCDateTime(strtotime($toDate)*1000);
             }
 
-            $query['endTime.sec'] = $q;
+            $query['endTime'] = $q;
         }
 
         return $this->transaction_collection->find($query, array('sort' => array('endTime'=>1)));

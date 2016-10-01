@@ -12,6 +12,7 @@ use Tripod\IEventHook;
 use \MongoDB\Driver\ReadPreference;
 use \MongoDB\Collection;
 use \MongoDB\BSON\UTCDateTime;
+use \MongoDB\Database;
 
 /**
  * Class DriverBase
@@ -203,7 +204,7 @@ abstract class DriverBase
                     {
                         // if expires < current date, regenerate view..
                         $currentDate = new UTCDateTime(floor(microtime(true))*1000);
-                        if ($result['value'][_EXPIRES]<$currentDate)
+                        if ($result['value'][_EXPIRES]->__toString() < $currentDate)
                         {
                             // regenerate!
                             $this->generateView($result['_id']['type'],$result['_id']['r']);
@@ -212,7 +213,7 @@ abstract class DriverBase
                     $graph->add_tripod_array($result);
                 }
                 $cursorSuccess = true;
-            } catch (\MongoCursorException $e) {
+            } catch (\Exception $e) {
                 self::getLogger()->error("MongoCursorException attempt ".$retries.". Retrying...:" . $e->getMessage());
                 sleep(1);
                 $retries++;
@@ -448,6 +449,24 @@ abstract class DriverBase
             );
         }
         return $this->db;
+    }
+
+    /**
+     * Retrieve last error from database
+     * @param $db
+     * @return array
+     */
+    protected function getLastDBError(\MongoDB\Database $db) {
+//        if (is_null($db)) {
+//            $db = $this->config->getDatabase(
+//                $this->storeName,
+//                $this->config->getDataSourceForPod($this->storeName, $this->podName),
+//                $this->readPreference
+//            );
+//        }
+        return $db->command([
+            'getLastError' =>  1
+        ])->toArray()[0];
     }
 
     /**
