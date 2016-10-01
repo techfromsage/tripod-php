@@ -223,7 +223,7 @@ abstract class DriverBase
 
         if ($cursorSuccess === false) {
             self::getLogger()->error("MongoCursorException failed after " . $retries . " attempts (MAX:".Config::CONNECTION_RETRIES."): " . $e->getMessage());
-            throw new \MongoCursorException($exception);
+            throw new \Exception($exception);
         }
 
         if ($ttlExpiredResources)
@@ -457,13 +457,6 @@ abstract class DriverBase
      * @return array
      */
     protected function getLastDBError(\MongoDB\Database $db) {
-//        if (is_null($db)) {
-//            $db = $this->config->getDatabase(
-//                $this->storeName,
-//                $this->config->getDataSourceForPod($this->storeName, $this->podName),
-//                $this->readPreference
-//            );
-//        }
         return $db->command([
             'getLastError' =>  1
         ])->toArray()[0];

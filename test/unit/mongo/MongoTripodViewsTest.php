@@ -103,7 +103,11 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         );
         // get the view direct from mongo
 //        $result = $this->tripod->getViewForResource("http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA","v_resource_full");
-        $mongo = new MongoClient(\Tripod\Mongo\Config::getInstance()->getConnStr('tripod_php_testing'));
+        $mongo = new Client(
+            \Tripod\Mongo\Config::getInstance()->getConnStr('tripod_php_testing'),
+            [],
+            ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']]
+        );
         $actualView = $mongo->selectCollection('tripod_php_testing','views')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA',"c"=>'http://talisaspire.com/',"type"=>'v_resource_full')));
         $this->assertEquals($expectedView,$actualView);
     }
@@ -170,7 +174,11 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             )
         );
         // get the view direct from mongo
-        $mongo = new MongoClient(\Tripod\Mongo\Config::getInstance()->getConnStr('tripod_php_testing'));
+        $mongo = new Client(
+            \Tripod\Mongo\Config::getInstance()->getConnStr('tripod_php_testing'),
+            [],
+            ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']]
+        );
         $actualView = $mongo->selectCollection('tripod_php_testing','views')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/filter1',"c"=>'http://talisaspire.com/',"type"=>'v_resource_filter1')));
         $this->assertEquals($expectedView,$actualView);
     }
@@ -229,7 +237,11 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             )
         );
         // get the view direct from mongo
-        $mongo = new MongoClient(\Tripod\Mongo\Config::getInstance()->getConnStr('tripod_php_testing'));
+        $mongo = new Client(
+            \Tripod\Mongo\Config::getInstance()->getConnStr('tripod_php_testing'),
+            [],
+            ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']]
+        );
         $actualView = $mongo->selectCollection('tripod_php_testing','views')->findOne(
             array('_id'=>array("r"=>'http://talisaspire.com/resources/filter1',"c"=>'http://talisaspire.com/',"type"=>'v_resource_filter2'))
         );
@@ -298,7 +310,11 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             )
         );
         // get the view direct from mongo
-        $mongo = new MongoClient(\Tripod\Mongo\Config::getInstance()->getConnStr('tripod_php_testing'));
+        $mongo = new Client(
+            \Tripod\Mongo\Config::getInstance()->getConnStr('tripod_php_testing'),
+            [],
+            ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']]
+        );
         $actualView = $mongo->selectCollection('tripod_php_testing','views')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/filter1',"c"=>'http://talisaspire.com/',"type"=>'v_resource_filter1')));
         $this->assertEquals($expectedView,$actualView);
 
@@ -436,7 +452,11 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             )
         );
         // get the view direct from mongo
-        $mongo = new MongoClient(\Tripod\Mongo\Config::getInstance()->getConnStr('tripod_php_testing'));
+        $mongo = new Client(
+            \Tripod\Mongo\Config::getInstance()->getConnStr('tripod_php_testing'),
+            [],
+            ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']]
+        );
         $actualView = $mongo->selectCollection('tripod_php_testing','views')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/filter1',"c"=>'http://talisaspire.com/',"type"=>'v_resource_rdfsequence')));
 
         $this->assertEquals($expectedView,$actualView);
@@ -1941,14 +1961,6 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             ->getMock();
         $mockCursor = $this->getMock('\ArrayIterator', array('rewind'));
 
-
-
-
-
-
-//        $mockDb = $this->getMock("MongoDB", array("selectCollection"),array(new MongoClient(),"test"));
-//        $mockCursor = $this->getMock('MongoCursor', array('rewind'), array(new MongoClient(), 'test.views'));
-
         $mockCursor->expects($this->exactly(5))
             ->method('rewind')
             ->will($this->onConsecutiveCalls(
@@ -1958,9 +1970,6 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
                 $this->throwException(new \Exception('Exception thrown when cursoring to Mongo')),
                 $this->returnValue($mockCursor)));
 
-
-//        $mockColl = $this->getMock("MongoCollection", array('findOne'),array($mockDb,$this->tripod->getPodName()));
-//        $mockViewColl = $this->getMock("MongoCollection", array('findOne', 'find'), array($mockDb,VIEWS_COLLECTION));
         $mockViewColl->expects($this->once())->method('find')->will($this->returnValue($mockCursor));
 
         $mockDb->expects($this->any())->method("selectCollection")->will($this->returnValue($mockColl));
