@@ -1,5 +1,5 @@
 language: php
-sudo: false
+sudo: required
 php:
 - 5.6
 - 5.5
@@ -11,7 +11,6 @@ before_install:
 - pecl install mongodb
 install:
 - composer install
-
 script: ant
 notifications:
   hipchat:
