@@ -5,14 +5,13 @@ php:
 - 5.5
 - 5.4
 services:
-- mongodb-2.6-precise
 - redis
-packages:
-- mongodb-org
 before_install:
+- sudo apt-get install -y mongodb-org=2.6.9 mongodb-org-server=2.6.9 mongodb-org-shell=2.6.9 mongodb-org-mongos=2.6.9 mongodb-org-tools=2.6.9
 - pecl install mongodb
 install:
 - composer install
+
 script: ant
 notifications:
   hipchat:
