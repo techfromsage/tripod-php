@@ -7,11 +7,10 @@ php:
 services:
 - mongodb
 - redis
+before_install:
+- pecl install mongodb
 install:
 - composer install
-before_script:
-- pecl install mongodb
-- sleep 15
 script: ant
 notifications:
   hipchat:
