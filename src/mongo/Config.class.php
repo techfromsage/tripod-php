@@ -1783,7 +1783,8 @@ class Config
                     $command = new Command(['ping' => 1]);
                     $manager->executeCommand('admin', $command);
 
-                    if(empty($manager->getServers()) === false) {
+                    $servers = $manager->getServers();
+                    if(empty($servers) === false) {
                         $connected = true;
                     }
                 } catch (ConnectionTimeoutException $e) {
