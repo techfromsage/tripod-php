@@ -1773,20 +1773,12 @@ class Config
         {
             $retries = 1;
             $exception = null;
-            $connected = false;
 
             do {
                 try {
                     $connectionString = $ds['connection'] . '?' . http_build_query($connectionOptions);
                     $this->connections[$dataSource] = $this->getMongoClient($connectionString);
-                    $manager = new Manager($connectionString);
-                    $command = new Command(['ping' => 1]);
-                    $manager->executeCommand('admin', $command);
-
-                    $servers = $manager->getServers();
-                    if(empty($servers) === false) {
-                        $connected = true;
-                    }
+                    break;
                 } catch (ConnectionTimeoutException $e) {
                     self::getLogger()->error("ConnectionTimeoutException attempt ".$retries.". Retrying...:" . $e->getMessage());
                     sleep(1);
@@ -1794,7 +1786,7 @@ class Config
                     $exception = $e;
                 }
 
-            } while ($retries <= self::CONNECTION_RETRIES && $connected === false);
+            } while ($retries <= self::CONNECTION_RETRIES);
 
             if (!isset($this->connections[$dataSource])) {
                 self::getLogger()->error("MongoConnectionException failed after " . $retries . " attempts (MAX:".self::CONNECTION_RETRIES."): " . $e->getMessage());
