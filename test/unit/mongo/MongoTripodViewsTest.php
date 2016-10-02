@@ -464,7 +464,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
 
     public function testGenerateViewWithTTL()
     {
-        $expiryDate = new UTCDateTime(strtotime(time()+300)*1000);
+        $expiryDate = new UTCDateTime((time()+300)*1000);
         $mockTripodViews = $this->getMock('\Tripod\Mongo\Composites\Views', array('getExpirySecFromNow'), $this->viewsConstParams);
         $mockTripodViews->expects($this->once())->method('getExpirySecFromNow')->with(300)->will($this->returnValue((time()+300)));
 
@@ -556,7 +556,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
 
     public function testGenerateViewWithCountAggregate()
     {
-        $expiryDate = new UTCDateTime(strtotime(time()+300)*1000);
+        $expiryDate = new UTCDateTime((time()+300)*1000);
         /**
          * @var $mockTripodViews \Tripod\Mongo\Composites\Views
          */
