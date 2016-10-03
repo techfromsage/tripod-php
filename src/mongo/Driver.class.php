@@ -459,7 +459,7 @@ class Driver extends DriverBase implements \Tripod\IDriver
             $row = array();
             foreach ($doc as $key=>$value)
             {
-                if ($key == "_id")
+                if ($key == "_id" || $key === '_version')
                 {
                     $row[$key] = $value;
                 }
