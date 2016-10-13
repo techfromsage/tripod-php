@@ -5,6 +5,7 @@ namespace Tripod\Mongo;
 use Tripod\Exceptions\Exception;
 use Tripod\IEventHook;
 use \MongoDB\Driver\ReadPreference;
+use \MongoDB\Database;
 use \MongoDB\Collection;
 use \MongoDB\Operation\FindOneAndUpdate;
 use \MongoDB\BSON\UTCDateTime;
@@ -1228,7 +1229,7 @@ class Updates extends DriverBase {
     }
 
     /**
-     * @return \MongoDate
+     * @return UTCDateTime
      */
     protected function getMongoDate()
     {
@@ -1355,7 +1356,7 @@ class Updates extends DriverBase {
     }
 
     /**
-     * @return \MongoDB
+     * @return Database
      */
     protected function getLocksDatabase()
     {

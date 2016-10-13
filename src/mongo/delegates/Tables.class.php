@@ -1269,7 +1269,6 @@ class Tables extends CompositeBase
                     break;
                 case 'date':
                     if(is_string($value)) $value = new UTCDateTime((strtotime($value) * 1000));
-                    //if(is_string($value)) $value = new \MongoDate(strtotime($value));
                     break;
                 default:
                     throw new \Exception("Could not apply modifier:".$modifier);

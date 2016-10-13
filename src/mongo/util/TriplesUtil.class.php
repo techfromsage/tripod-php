@@ -300,7 +300,7 @@ class TriplesUtil
             $collection->insertOne($cbdGraph->to_tripod_array($cbdSubject,$context),array("w"=>1));
             print ".";
         }
-        catch (\MongoException $e)
+        catch (\Exception $e)
         {
             if (preg_match('/E11000/',$e->getMessage()))
             {
@@ -314,7 +314,7 @@ class TriplesUtil
                 {
                     $collection->update($criteria,$existingGraph->to_tripod_array($cbdSubject,$context),array("w"=>1));
                 }
-                catch (\MongoException $e2)
+                catch (\Exception $e2)
                 {
                     throw new \Exception($e2->getMessage()); // todo: would be good to have typed exception
                 }
@@ -327,7 +327,7 @@ class TriplesUtil
                 {
                     $collection->insertOne($cbdGraph->to_tripod_array($cbdSubject,$context),array("w"=>1));
                 }
-                catch (\MongoException $e2)
+                catch (\Exception $e2)
                 {
                     throw new \Exception($e2->getMessage()); // todo: would be good to have typed exception
                 }

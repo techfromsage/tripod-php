@@ -8,6 +8,8 @@ use Tripod\Exceptions\Exception;
 use Tripod\IEventHook;
 use \MongoDB\Driver\ReadPreference;
 use \MongoDB\BSON\UTCDateTime;
+use \MongoDB\BSON\Javascript;
+use \MongoDB\Database;
 
 $TOTAL_TIME=0;
 
@@ -57,7 +59,7 @@ class Driver extends DriverBase implements \Tripod\IDriver
      * <li>defaultContext: (string) to use where a specific default context is not defined. Default is Null</li>
      * <li>async: (array) determines the async behaviour of views, tables and search. For each of these array keys, if set to true, generation of these elements will be done asyncronously on save. Default is array(OP_VIEWS=>false,OP_TABLES=>true,OP_SEARCH=>true)</li>
      * <li>stat: this sets the stats object to use to record statistics around operations performed by Driver. Default is null</li>
-     * <li>readPreference: The Read preference to set for Mongo: Default is Mongo:RP_PRIMARY_PREFERRED</li>
+     * <li>readPreference: The Read preference to set for Mongo: Default is ReadPreference::RP_PRIMARY_PREFERRED</li>
      * <li>retriesToGetLock: Retries to do when unable to get lock on a document, default is 20</li></ul>
      */
     public function __construct($podName, $storeName, $opts=array())
@@ -352,12 +354,18 @@ class Driver extends DriverBase implements \Tripod\IDriver
         {
             if ($groupBy)
             {
-                // todo: if sharded, believe this actually needs to be a MR-function
-                $results = $this->collection->group(
-                    $groupBy,
-                    array("count"=>0),
-                    new \MongoCode("function(obj,prev) { prev.count++; }"),
-                    $query);
+                $ops = [
+                    ['$match' => $query],
+                    ['$group' => ['_id' => '$'.$groupBy,'total' => ['$sum' => 1]]]
+                ];
+                $cursor = $this->collection->aggregate($ops);
+                foreach($cursor as $doc) {
+                    if (!is_array($doc[_ID_KEY])) {
+                        $results[$doc[_ID_KEY]] = $doc['total'];
+                    } else {
+                        $results[implode(';',$doc[_ID_KEY])] = $doc['total'];
+                    }
+                }
             }
             else
             {

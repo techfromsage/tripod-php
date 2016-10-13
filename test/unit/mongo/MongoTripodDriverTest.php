@@ -226,6 +226,16 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $count = $this->tripod->getCount(array("rdf:type.".VALUE_URI=>"bibo:Book"));
         $this->assertEquals(9,$count);
     }
+    public function testGetCountWithGroupBy() {
+        $count = $this->tripod->getCount(array("rdf:type.".VALUE_URI=>"bibo:Book"), "bibo:isbn13.l");
+
+        $this->assertCount(5, $count);
+        $this->assertEquals(2, $count['1234567890123']);
+        $this->assertEquals(1, $count['']);
+        $this->assertEquals(1, $count['9780393929691;9780393929691-2']);
+        $this->assertEquals(4, $count['9780393929691']);
+        $this->assertEquals(1, $count['9780393929690']);
+    }
 
     public function testTripodSaveChangesRemovesLiteralTriple()
     {
