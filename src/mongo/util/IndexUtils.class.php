@@ -41,7 +41,7 @@ class IndexUtils
                     {
                         // no name
                         $config->getCollectionForCBD($storeName, $collectionName)
-                            ->ensureIndex(
+                            ->createIndex(
                                 $fields,
                                 array(
                                     "background"=>$background
@@ -51,7 +51,7 @@ class IndexUtils
                     else
                     {
                         $config->getCollectionForCBD($storeName, $collectionName)
-                            ->ensureIndex(
+                            ->createIndex(
                                 $fields,
                                 array(
                                     'name'=>$indexName,
@@ -79,7 +79,7 @@ class IndexUtils
                     }
                     foreach($indexes as $index)
                     {
-                        $collection->ensureIndex(
+                        $collection->createIndex(
                             $index,
                             array(
                                 "background"=>$background
@@ -106,7 +106,7 @@ class IndexUtils
                     }
                     foreach($indexes as $index)
                     {
-                        $collection->ensureIndex(
+                        $collection->createIndex(
                             $index,
                             array(
                                 "background"=>$background
