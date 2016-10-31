@@ -331,7 +331,7 @@ class Driver extends DriverBase implements \Tripod\IDriver
             $id['query'] = $query;
             $id['groupBy'] = $groupBy;
             $this->debugLog("Looking in cache",array("id"=>$id));
-            $candidate = $this->config->getCollectionForTTLCache($this->storeName)->findOne(array("_id"=>$id));
+            $candidate = $this->config->getCollectionForTTLCache($this->storeName)->findOne(array(_ID_KEY => $id));
             if (!empty($candidate))
             {
                 $this->debugLog("Found candidate",array("candidate"=>$candidate));
@@ -356,7 +356,7 @@ class Driver extends DriverBase implements \Tripod\IDriver
             {
                 $ops = [
                     ['$match' => $query],
-                    ['$group' => ['_id' => '$'.$groupBy,'total' => ['$sum' => 1]]]
+                    ['$group' => [_ID_KEY => '$'.$groupBy,'total' => ['$sum' => 1]]]
                 ];
                 $cursor = $this->collection->aggregate($ops);
                 foreach($cursor as $doc) {
@@ -376,7 +376,7 @@ class Driver extends DriverBase implements \Tripod\IDriver
             {
                 // add to cache
                 $cachedResults = array();
-                $cachedResults['_id'] = $id;
+                $cachedResults[_ID_KEY] = $id;
                 $cachedResults['results'] = $results;
                 $cachedResults['created'] = new UTCDateTime(floor(microtime(true))*1000);
                 $this->debugLog("Adding result to cache",$cachedResults);
