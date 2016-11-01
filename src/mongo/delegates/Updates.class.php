@@ -232,6 +232,8 @@ class Updates extends DriverBase {
     /**
      * Change the read preferences to RP_PRIMARY
      * Used for a write operation
+     * @todo When there is a getReadPreference function available in the PHP Mongo library (or the read
+     * preference is readable) we should use that instead of the debugInfo function we're using here.
      */
     protected function setReadPreferenceToPrimary()
     {
