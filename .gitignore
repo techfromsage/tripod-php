@@ -2,11 +2,10 @@
 composer.phar
 output
 vendor
-
+tags
 atlassian-ide-plugin.xml
 
 composer.lock
 
 test/performance/rest-interface/.vagrant/
 test/performance/rest-interface/config/tripod-config-*.json
-

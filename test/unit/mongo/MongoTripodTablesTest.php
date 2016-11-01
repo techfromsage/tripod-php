@@ -24,13 +24,12 @@ class MongoTripodTablesTest extends MongoTripodTestBase
     protected $tripodTables = null;
 
     private $tablesConstParams = null;
-    
-    protected $defaultContext = 'http://talisaspire.com/';
-    
-    protected $defaultStoreName = 'tripod_php_testing';
-    
-    protected $defaultPodName = 'CBD_testing';
 
+    protected $defaultContext = 'http://talisaspire.com/';
+
+    protected $defaultStoreName = 'tripod_php_testing';
+
+    protected $defaultPodName = 'CBD_testing';
 
     protected function setUp()
     {
@@ -692,33 +691,6 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $this->assertEquals("http://talisaspire.com/works/4d101f63c10a6", $rows['results'][0]['workLink']);
     }
 
-
-    /**
-     * Test to ensure only indexes on rs2 get ensured when table row generation happens
-     */
-    public function testJoinLinkGenerationOnlyFiresEnsureIndexesForOwnDataSource()
-    {
-        /* @var $mockTables \Tripod\Mongo\Composites\Tables|PHPUnit_Framework_MockObject_MockObject*/
-        $mockTables = $this->getMock('\Tripod\Mongo\Composites\Tables',array("ensureIndex"),array($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),null));
-
-        $mockTables->expects($this->once())->method("ensureIndex"); // should only ever get called once
-
-        $mockTables->generateTableRows("t_join_link","http://somesubject");
-    }
-
-    /**
-     * Test to ensure only indexes on rs2 get ensured when table row generation happens
-     */
-    public function testResourceGenerationOnlyFiresEnsureIndexesForOwnDataSource()
-    {
-        /* @var $mockTables \Tripod\Mongo\Composites\Tables|PHPUnit_Framework_MockObject_MockObject*/
-        $mockTables = $this->getMock('\Tripod\Mongo\Composites\Tables',array("ensureIndex"),array($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),null));
-
-        $mockTables->expects($this->exactly(3))->method("ensureIndex"); // should only ever get called twice
-
-        $mockTables->generateTableRows("t_resource","http://somesubject");
-    }
-
     /**
      * Test to ensure that impact index contains joined ids for resources that do not yet exist in the database (i.e.
      * allow open world model)
@@ -871,7 +843,6 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             $this->generateTableRows($specId);
         }
 
-        
         $uri = "http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2";
 
         /** @var PHPUnit_Framework_MockObject_MockObject|\Tripod\Mongo\Driver $tripod */
@@ -921,7 +892,6 @@ class MongoTripodTablesTest extends MongoTripodTestBase
                     $this->equalTo($this->defaultContext)
                 )
             );
-
 
         $tripod->expects($this->once())
             ->method('getComposite')
@@ -987,7 +957,6 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             $this->generateTableRows($specId);
         }
 
-        
         $uri = "http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2";
 
         $labeller = new \Tripod\Mongo\Labeller();
@@ -1003,7 +972,6 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             $this->defaultContext
         );
 
-
         $impactedSubjects = $table->getImpactedSubjects($subjectsAndPredicatesOfChange, $this->defaultContext);
 
         $this->assertEmpty($impactedSubjects);
@@ -1011,7 +979,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
     public function testUpdateOfResourceInImpactIndexTriggersRegenerationTableRows()
     {
-        
+
         /** @var \Tripod\Mongo\Composites\Tables|PHPUnit_Framework_MockObject_MockObject $mockTables */
         $mockTables = $this->getMock(
             '\Tripod\Mongo\Composites\Tables',
@@ -1082,7 +1050,6 @@ class MongoTripodTablesTest extends MongoTripodTestBase
     public function testRdfTypeTriggersGenerationOfTableRows()
     {
         $uri = 'http://example.com/resources/' . uniqid();
-        
 
         $labeller = new \Tripod\Mongo\Labeller();
         $graph = new \Tripod\ExtendedGraph();
@@ -1483,7 +1450,6 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             $tables->update($subject);
         }
 
-
         $tableRows = $tripod->getTableRows(
             't_users',
             array(
@@ -1608,7 +1574,6 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             $this->generateTableRows($specId);
         }
 
-
         $context = 'http://talisaspire.com/';
         $uri = "http://talisaspire.com/works/4d101f63c10a6";
 
@@ -1617,7 +1582,6 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $config = \Tripod\Mongo\Config::getConfig();
         unset($config['stores']['tripod_php_testing']['table_specifications'][0]);
         \Tripod\Mongo\Config::setConfig($config);
-
 
         /** @var PHPUnit_Framework_MockObject_MockObject|\Tripod\Mongo\Driver $mockTripod */
         $mockTripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
@@ -1651,7 +1615,6 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         $labeller = new \Tripod\Mongo\Labeller();
 
-
         $mockTripod->expects($this->once())
             ->method('getComposite')
             ->with(OP_TABLES)
@@ -1659,7 +1622,6 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         $mockTables->expects($this->never())
             ->method('update');
-
 
         $originalGraph = $mockTripod->describeResource($uri);
         $updatedGraph = $originalGraph->get_subject_subgraph($uri);

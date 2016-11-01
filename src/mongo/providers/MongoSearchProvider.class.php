@@ -66,9 +66,6 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
         }
 
         try {
-            $collection->createIndex(array('_id.type' => 1), array('background' => 1));
-            $collection->createIndex(array('_id.r' => 1, '_id.c' => 1), array('background' => 1));
-            $collection->createIndex(array('_impactIndex' => 1), array('background' => 1));
             $result = $collection->insertOne($document);
             if (!$result->isAcknowledged()) {
                 throw new \Tripod\Exceptions\SearchException("Inserting search document not acknowledged");
@@ -334,7 +331,7 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
     {
         return SEARCH_INDEX_COLLECTION;
     }
-    
+
     /**
      * Removes all documents from search index based on the specified type id.
      * Here search type id represents to id from, mongo tripod config, that is converted to _id.type in SEARCH_INDEX_COLLECTION
@@ -345,13 +342,13 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
      */
     public function deleteSearchDocumentsByTypeId($typeId)
     {
-    	$searchSpec = $this->getSearchDocumentSpecification($typeId);
-    	if ($searchSpec == null)
-    	{    		
-    		throw new \Tripod\Exceptions\SearchException("Could not find a search specification for $typeId");
-    	}
-    	    	
-    	return $this->config->getCollectionForSearchDocument($this->storeName, $typeId)
+        $searchSpec = $this->getSearchDocumentSpecification($typeId);
+        if ($searchSpec == null)
+        {
+            throw new \Tripod\Exceptions\SearchException("Could not find a search specification for $typeId");
+        }
+
+        return $this->config->getCollectionForSearchDocument($this->storeName, $typeId)
             ->deleteMany(array("_id.type" => $typeId));
     }
 
@@ -362,6 +359,6 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
      */
     protected function getSearchDocumentSpecification($typeId)
     {
-    	return Config::getInstance()->getSearchDocumentSpecification($this->storeName, $typeId);
+        return Config::getInstance()->getSearchDocumentSpecification($this->storeName, $typeId);
     }
 }
