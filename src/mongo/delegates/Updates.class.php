@@ -1047,7 +1047,8 @@ class Updates extends DriverBase {
                     )
                 );
                 if (!$result->isAcknowledged()) {
-                    throw new \Exception("Failed to create audit entry with error message- " . $result['err']);
+                    $error = $this->getLastDBError($this->getDatabase());
+                    throw new \Exception("Failed to create audit entry with error message- " . $error['err']);
                 }
             }
             catch(\Exception $e) { //simply send false as status as we are unable to create audit entry
@@ -1073,7 +1074,8 @@ class Updates extends DriverBase {
 
                 if(!$result->isAcknowledged())
                 {
-                    throw new \Exception("Failed to update audit entry with error message- " . $result['err']);
+                    $error = $this->getLastDBError($this->getDatabase());
+                    throw new \Exception("Failed to update audit entry with error message- " . $error['err']);
                 }
             }
             catch(\Exception $e) {
@@ -1088,7 +1090,8 @@ class Updates extends DriverBase {
 
                 if(!$result->isAcknowledged())
                 {
-                    $logInfo['additional-error']=  "Failed to update audit entry with error message- " . $result['err'];
+                    $error = $this->getLastDBError($this->getDatabase());
+                    $logInfo['additional-error']=  "Failed to update audit entry with error message- " . $error['err'];
                 }
 
                 $this->errorLog(MONGO_LOCK, $logInfo);
@@ -1155,7 +1158,8 @@ class Updates extends DriverBase {
                 );
 
                 if (!$result->isAcknowledged()) {
-                    throw new \Exception("Failed to lock document with error message- " . $result['err']);
+                    $error = $this->getLastDBError($this->getDatabase());
+                    throw new \Exception("Failed to lock document with error message- " . $error['err']);
                 }
             }
             catch(\Exception $e) { //Subject is already locked or unable to lock
@@ -1182,7 +1186,8 @@ class Updates extends DriverBase {
                     );
 
                     if (!$result->isAcknowledged()) {
-                        throw new \Exception("Failed to create new document with error message- " . $result['err']);
+                        $error = $this->getLastDBError($this->getDatabase());
+                        throw new \Exception("Failed to create new document with error message- " . $error['err']);
                     }
                     $document  = $this->getCollection()->findOne(array(_ID_KEY => array(_ID_RESOURCE => $this->labeller->uri_to_alias($s), _ID_CONTEXT => $contextAlias)));
                 }

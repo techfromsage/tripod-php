@@ -707,7 +707,7 @@ class Tables extends CompositeBase
                 {
                     // The key will have the index name in the following format added to it.
                     // Adjust the max key size allowed to take it into account.
-                    $maxKeySize = 1024 - strlen("value_".$indexedFieldname."_1");
+                    $maxKeySize = 1020 - strlen("value_".$indexedFieldname."_1");
 
                     if (array_key_exists($indexedFieldname, $field))
                     {

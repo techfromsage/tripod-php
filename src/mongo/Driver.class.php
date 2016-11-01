@@ -380,7 +380,10 @@ class Driver extends DriverBase implements \Tripod\IDriver
                 $cachedResults['results'] = $results;
                 $cachedResults['created'] = new UTCDateTime(floor(microtime(true))*1000);
                 $this->debugLog("Adding result to cache",$cachedResults);
-                $this->config->getCollectionForTTLCache($this->storeName)->insertOne($cachedResults);
+                $result = $this->config->getCollectionForTTLCache($this->storeName)->insertOne($cachedResults);
+                if (!$result->isAcknowledged()) {
+                    $this->debugLog("Insert cache result not acknowledged");
+                }
             }
         }
 

@@ -69,7 +69,10 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
             $collection->createIndex(array('_id.type' => 1), array('background' => 1));
             $collection->createIndex(array('_id.r' => 1, '_id.c' => 1), array('background' => 1));
             $collection->createIndex(array('_impactIndex' => 1), array('background' => 1));
-            $collection->insertOne($document);
+            $result = $collection->insertOne($document);
+            if (!$result->isAcknowledged()) {
+                throw new \Tripod\Exceptions\SearchException("Inserting search document not acknowledged");
+            }
         } catch (\Exception $e) {
             throw new \Tripod\Exceptions\SearchException("Failed to Index Document \n" . print_r($document, true), 0, $e);
         }
