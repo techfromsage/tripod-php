@@ -503,51 +503,6 @@ class Tables extends CompositeBase
             return null;
         }
 
-        // ensure that the ID field, view type, and the impactIndex indexes are correctly set up
-        $collection->createIndex(
-            array(
-                '_id.r'=>1,
-                '_id.c'=>1,
-                '_id.type'=>1
-            ),
-            array(
-                'background'=>1
-            )
-        );
-
-        $collection->createIndex(
-            array(
-                '_id.type'=>1
-            ),
-            array(
-                'background'=>1
-            )
-        );
-
-        $collection->createIndex(
-            array(
-                'value.'._IMPACT_INDEX=>1
-            ),
-            array(
-                'background'=>1
-            )
-        );
-
-        // ensure any custom view indexes
-        foreach (Config::getInstance()->getTableSpecifications($this->storeName) as $tSpec)
-        {
-            if (isset($tSpec['ensureIndexes']) && $tSpec['to_data_source'] == $tableSpec['to_data_source']) // only ensure table_rows indexes for the data source that matches the table spec we're generating
-            {
-                foreach ($tSpec['ensureIndexes'] as $ensureIndex)
-                {
-                    $this->ensureIndex(
-                        $collection,
-                        $ensureIndex
-                    );
-                }
-            }
-        }
-
         // default the context
         $contextAlias = $this->getContextAlias($context);
 
@@ -1459,21 +1414,6 @@ class Tables extends CompositeBase
         return false;
     }
 
-    /**
-     * Ensure $indexToEnsure on the given mongo $collection
-     * @param Collection $collection
-     * @param array $indexToEnsure
-     */
-    protected function ensureIndex(Collection $collection,array $indexToEnsure)
-    {
-        $collection->createIndex(
-            $indexToEnsure,
-            array(
-                'background'=>1
-            )
-        );
-
-    }
     /**
      * Apply a regex to the RDF property value defined in $value
      * @param $regex

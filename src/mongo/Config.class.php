@@ -388,7 +388,6 @@ class Config
             }
         }
 
-
     }
 
     /**
@@ -1013,7 +1012,6 @@ class Config
         return $predicates;
     }
 
-
     /**
      * Returns an array of associated predicates in a table or search document specification
      * Note: will not return viewSpec predicates
@@ -1065,7 +1063,6 @@ class Config
                 {
                     $this->checkModifierFunctions($v, $parent[$k], $k);
                 }
-
 
             } else if(is_string($k))
             {
@@ -1496,7 +1493,6 @@ class Config
     {
         return (isset($this->viewSpecs[$storeName])  ? $this->viewSpecs[$storeName] : array());
     }
-
 
     /**
      * This method returns a unique list of every rdf type configured in a specifications ['type'] restriction
@@ -2089,6 +2085,14 @@ class Config
     }
 
     /**
+     * @return string
+     */
+    public static function getEnsureIndexesQueueName()
+    {
+        return self::getQueueName(TRIPOD_ENSURE_INDEXES_QUEUE, "ensureindexes");
+    }
+
+    /**
      * @param string $envVar
      * @param string $type
      * @return string
@@ -2160,4 +2164,3 @@ class Config
         return self::$logger;
     }
 }
-

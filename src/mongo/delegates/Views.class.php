@@ -411,50 +411,6 @@ class Views extends CompositeBase
                 throw new \Tripod\Exceptions\ViewException('Could not find any joins in view specification - usecase better served with select()');
             }
 
-            // ensure that the ID field, view type, and the impactIndex indexes are correctly set up
-            $collection->createIndex(
-                array(
-                    '_id.r'=>1,
-                    '_id.c'=>1,
-                    '_id.type'=>1
-                ),
-                array(
-                    'background'=>1
-                )
-            );
-
-            $collection->createIndex(
-                array(
-                    '_id.type'=>1
-                ),
-                array(
-                    'background'=>1
-                )
-            );
-
-            $collection->createIndex(
-                array(
-                    'value.'._IMPACT_INDEX=>1
-                ),
-                array(
-                    'background'=>1
-                )
-            );
-
-            // ensure any custom view indexes
-            if (isset($viewSpec['ensureIndexes']))
-            {
-                foreach ($viewSpec['ensureIndexes'] as $ensureIndex)
-                {
-                    $collection->createIndex(
-                        $ensureIndex,
-                        array(
-                            'background'=>1
-                        )
-                    );
-                }
-            }
-
             $types = array(); // this is used to filter the CBD table to speed up the view creation
             if (is_array($viewSpec["type"]))
             {
@@ -681,7 +637,6 @@ class Views extends CompositeBase
         }
         return false;
     }
-
 
     /**
      * Returns a document with properties extracted from $source, according to $viewSpec. Useful for partial representations
