@@ -6,6 +6,7 @@ require_once TRIPOD_DIR . 'mongo/Config.class.php';
 use \MongoDB\BSON\UTCDateTime;
 use \MongoDB\InsertOneResult;
 use \MongoDB\UpdateOneResult;
+use \MongoDB\Driver\Cursor;
 
 /**
  * Class TransactionLog
@@ -144,7 +145,7 @@ class TransactionLog
      * @param string $podName
      * @param string|null $fromDate only transactions after this specified date will be replayed. This must be a datetime string i.e. '2010-01-15 00:00:00'
      * @param string|null $toDate only transactions after this specified date will be replayed. This must be a datetime string i.e. '2010-01-15 00:00:00'
-     * @return \MongoCursor
+     * @return Cursor
      * @throws \InvalidArgumentException
      */
     public function getCompletedTransactions($storeName=null, $podName=null, $fromDate=null, $toDate=null)

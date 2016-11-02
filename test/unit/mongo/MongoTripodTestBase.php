@@ -2,6 +2,7 @@
 
 use Tripod\ITripodStat;
 use \MongoDB\BSON\UTCDateTime;
+use \MongoDB\Collection;
 
 set_include_path(
   get_include_path()
@@ -122,7 +123,7 @@ abstract class MongoTripodTestBase extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @return MongoCollection
+     * @return Collection
      */
     protected function getTlogCollection()
     {
@@ -133,7 +134,7 @@ abstract class MongoTripodTestBase extends PHPUnit_Framework_TestCase
 
     /**
      * @param \Tripod\Mongo\Driver $tripod
-     * @return MongoCollection
+     * @return Collection
      */
     protected function getTripodCollection(\Tripod\Mongo\Driver $tripod)
     {
@@ -148,7 +149,7 @@ abstract class MongoTripodTestBase extends PHPUnit_Framework_TestCase
 
     /**
      * @param mixed $_id
-     * @param \MongoCollection|null $collection
+     * @param Collection|null $collection
      * @param bool $fromTransactionLog
      * @return array|null
      */

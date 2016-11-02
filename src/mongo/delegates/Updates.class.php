@@ -58,7 +58,7 @@ class Updates extends DriverBase {
     private $async = null;
 
     /**
-     * @var \MongoDB
+     * @var Database
      */
     protected $locksDb;
 

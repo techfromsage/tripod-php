@@ -24,7 +24,6 @@ class MongoTransactionLogTest extends MongoTripodTestBase
     protected function setUp()
     {
         parent::setup();
-        //Mongo::setPoolSize(200);
 
         // Stub ouf 'addToElastic' search to prevent writes into Elastic Search happening by default.
         /** @var \Tripod\Mongo\Driver|PHPUnit_Framework_MockObject_MockObject $tripod */

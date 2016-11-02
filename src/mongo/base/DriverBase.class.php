@@ -56,7 +56,7 @@ abstract class DriverBase
     protected $statsConfig = array();
 
     /**
-     * @var \MongoDB
+     * @var Database
      */
     protected $db = null;
 
@@ -214,7 +214,7 @@ abstract class DriverBase
                 }
                 $cursorSuccess = true;
             } catch (\Exception $e) {
-                self::getLogger()->error("MongoCursorException attempt ".$retries.". Retrying...:" . $e->getMessage());
+                self::getLogger()->error("CursorException attempt ".$retries.". Retrying...:" . $e->getMessage());
                 sleep(1);
                 $retries++;
                 $exception = $e;
@@ -222,7 +222,7 @@ abstract class DriverBase
         } while ($retries <= Config::CONNECTION_RETRIES && $cursorSuccess === false);
 
         if ($cursorSuccess === false) {
-            self::getLogger()->error("MongoCursorException failed after " . $retries . " attempts (MAX:".Config::CONNECTION_RETRIES."): " . $e->getMessage());
+            self::getLogger()->error("CursorException failed after " . $retries . " attempts (MAX:".Config::CONNECTION_RETRIES."): " . $e->getMessage());
             throw new \Exception($exception);
         }
 
@@ -436,7 +436,7 @@ abstract class DriverBase
     }
 
     /**
-     * @return\MongoDB
+     * @return Database
      */
     protected function getDatabase()
     {

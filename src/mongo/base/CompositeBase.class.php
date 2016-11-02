@@ -133,7 +133,7 @@ abstract class CompositeBase extends \Tripod\Mongo\DriverBase implements \Tripod
     /**
      * @param array $resourcesAndPredicates
      * @param string $contextAlias
-     * @return mixed // @todo: This may eventually return a either a MongoCursor or array
+     * @return mixed // @todo: This may eventually return a either a Cursor or array
      */
     public abstract function findImpactedComposites(Array $resourcesAndPredicates,$contextAlias);
 

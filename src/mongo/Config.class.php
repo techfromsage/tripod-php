@@ -2060,7 +2060,7 @@ class Config
 
     /**
      * @param $readPreference
-     * @return \MongoDB
+     * @return Database
      * @throws \Tripod\Exceptions\ConfigException
      */
     public function getTransactionLogDatabase($readPreference = ReadPreference::RP_PRIMARY_PREFERRED)

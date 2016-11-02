@@ -2,6 +2,9 @@
 
 namespace Tripod\Mongo;
 
+use \MongoDB\Client;
+use \MongoDB\Collection;
+
 /**
  * Created by Chris Clarke
  * Date: 12/01/2012
@@ -99,7 +102,11 @@ class TriplesUtil
         }
         else
         {
-            $m = new \MongoClient(Config::getInstance()->getConnStr($storeName));
+            $m = new Client(
+                Config::getInstance()->getConnStr($storeName),
+                [],
+                ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']]
+            );
             $collection = $m->selectDatabase($storeName)->selectCollection($podName);
         }
 
@@ -284,11 +291,11 @@ class TriplesUtil
     /**
      * @param string $cbdSubject
      * @param MongoGraph $cbdGraph
-     * @param \MongoCollection $collection
+     * @param Collection $collection
      * @param string $context
      * @throws \Exception
      */
-    protected function saveCBD($cbdSubject,MongoGraph $cbdGraph,\MongoCollection $collection,$context)
+    protected function saveCBD($cbdSubject,MongoGraph $cbdGraph,Collection $collection,$context)
     {
         $cbdSubject = $this->labeller->uri_to_alias($cbdSubject);
         if ($cbdGraph == null || $cbdGraph->is_empty())
@@ -312,7 +319,7 @@ class TriplesUtil
                 $existingGraph->add_graph($cbdGraph);
                 try
                 {
-                    $collection->update($criteria,$existingGraph->to_tripod_array($cbdSubject,$context),array("w"=>1));
+                    $collection->updateOne($criteria, ['$set' => $existingGraph->to_tripod_array($cbdSubject,$context)],array("w"=>1));
                 }
                 catch (\Exception $e2)
                 {
@@ -322,7 +329,7 @@ class TriplesUtil
             else
             {
                 // retry
-                print "MongoCursorException on update: ".$e->getMessage().", retrying\n";
+                print "CursorException on update: ".$e->getMessage().", retrying\n";
                 try
                 {
                     $collection->insertOne($cbdGraph->to_tripod_array($cbdSubject,$context),array("w"=>1));

@@ -35,7 +35,6 @@ class MongoTripodTablesTest extends MongoTripodTestBase
     protected function setUp()
     {
         parent::setup();
-        //Mongo::setPoolSize(200);
 
         $this->tripodTransactionLog = new \Tripod\Mongo\TransactionLog();
         $this->tripodTransactionLog->purgeAllTransactions();
