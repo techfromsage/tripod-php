@@ -7,6 +7,8 @@ require_once TRIPOD_DIR . 'mongo/delegates/SearchDocuments.class.php';
 require_once TRIPOD_DIR . 'mongo/providers/ISearchProvider.php';
 require_once TRIPOD_DIR.'classes/Timer.class.php';
 
+use \MongoDB\BSON\Regex;
+
 /**
  * Class MongoSearchProvider
  * @package Tripod\Mongo
@@ -64,10 +66,13 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
         }
 
         try {
-            $collection->ensureIndex(array('_id.type' => 1), array('background' => 1));
-            $collection->ensureIndex(array('_id.r' => 1, '_id.c' => 1), array('background' => 1));
-            $collection->ensureIndex(array('_impactIndex' => 1), array('background' => 1));
-            $collection->save($document);
+            $collection->createIndex(array('_id.type' => 1), array('background' => 1));
+            $collection->createIndex(array('_id.r' => 1, '_id.c' => 1), array('background' => 1));
+            $collection->createIndex(array('_impactIndex' => 1), array('background' => 1));
+            $result = $collection->insertOne($document);
+            if (!$result->isAcknowledged()) {
+                throw new \Tripod\Exceptions\SearchException("Inserting search document not acknowledged");
+            }
         } catch (\Exception $e) {
             throw new \Tripod\Exceptions\SearchException("Failed to Index Document \n" . print_r($document, true), 0, $e);
         }
@@ -112,7 +117,7 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
             }
             foreach($this->config->getCollectionsForSearch($this->storeName, $searchTypes) as $collection)
             {
-                $collection->remove($query);
+                $collection->deleteMany($query);
             }
         } catch (\Exception $e) {
             throw new \Tripod\Exceptions\SearchException("Failed to Remove Document with id \n" . print_r($query, true), 0, $e);
@@ -210,7 +215,7 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
         $searchDocs = array();
         foreach($this->config->getCollectionsForSearch($this->storeName, $searchTypes) as $collection)
         {
-            $cursor = $collection->find($query, array('_id'=>true));
+            $cursor = $collection->find($query, array('projection' => array('_id'=>true)));
             foreach($cursor as $d)
             {
                 $searchDocs[] = $d;
@@ -252,7 +257,7 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
 
         $regexes = array();
         foreach($terms as $t){
-            $regexes[] = new \MongoRegex("/{$t}/");
+            $regexes[] = new Regex("{$t}", '');
         }
 
         $query = array();
@@ -275,9 +280,10 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
         $searchTimer = new \Tripod\Timer();
         $searchTimer->start();
         $cursor = $this->config->getCollectionForSearchDocument($this->storeName, $type)
-            ->find($query, $fieldsToReturn)
-            ->limit($limit)
-            ->skip($offset);
+            ->find($query, array(
+                'projection' => $fieldsToReturn,
+                'limit' => $limit,
+                'skip' => $offset));
 
         $searchResults = array();
         $searchResults['head'] = array();
@@ -289,8 +295,9 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
         $searchResults['head']['query_terms_used'] = $terms;
         $searchResults['results']   = array();
 
-        if($cursor->count() > 0) {
-            $searchResults['head']['count']     = $cursor->count();
+        $count = $this->config->getCollectionForSearchDocument($this->storeName, $type)->count($query);
+        if($count > 0) {
+            $searchResults['head']['count']     = $count;
 
             foreach($cursor as $result)
             {
@@ -345,7 +352,7 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
     	}
     	    	
     	return $this->config->getCollectionForSearchDocument($this->storeName, $typeId)
-            ->remove(array("_id.type" => $typeId));
+            ->deleteMany(array("_id.type" => $typeId));
     }
 
     /**

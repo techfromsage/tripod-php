@@ -4,6 +4,8 @@ require_once 'src/mongo/Driver.class.php';
 require_once 'src/mongo/delegates/TransactionLog.class.php';
 require_once 'src/mongo/MongoGraph.class.php';
 
+use \MongoDB\BSON\UTCDateTime;
+
 /**
  * Class MongoTransactionLogTest
  */
@@ -12,8 +14,8 @@ class MongoTransactionLogTest extends MongoTripodTestBase
     /**
      * @var \Tripod\Mongo\Driver
      */
-    protected $tripod
-    ;
+    protected $tripod;
+
     /**
      * @var \Tripod\Mongo\TransactionLog
      */
@@ -22,7 +24,6 @@ class MongoTransactionLogTest extends MongoTripodTestBase
     protected function setUp()
     {
         parent::setup();
-        //Mongo::setPoolSize(200);
 
         // Stub ouf 'addToElastic' search to prevent writes into Elastic Search happening by default.
         /** @var \Tripod\Mongo\Driver|PHPUnit_Framework_MockObject_MockObject $tripod */
@@ -440,15 +441,15 @@ class MongoTransactionLogTest extends MongoTripodTestBase
             ),
             'collectionName' => 'CBD_testing',
             'dbName' => 'tripod_php_testing',
-            'startTime' => new MongoDate(strtotime($startTime)),
-            'endTime' => new MongoDate(strtotime($endTime)),
+            'startTime' => new UTCDateTime(strtotime($startTime)*1000),
+            'endTime' => new UTCDateTime(strtotime($endTime)*1000),
             'status' => 'completed',
             'newCBDs' => array(array(
                 "_id" => array('r' => $subjectOfChange, 'c' => 'http://talisaspire.com/'),
                 "searchterms:title" => array('l' => 'anything at all'),
                 "_version" => $_version,
-                "_uts" => new MongoDate(),
-                "_cts" => new MongoDate(),
+                "_uts" => new UTCDateTime(floor(microtime(true))*1000),
+                "_cts" => new UTCDateTime(floor(microtime(true))*1000),
             )),
             'originalCBDs' => array(array(
                 "_id" => array('r' => $subjectOfChange, 'c' => 'http://talisaspire.com/')
@@ -716,10 +717,19 @@ class MongoTransactionLogTest extends MongoTripodTestBase
      */
     public function testCreateNewTransactionThrowsExceptionIfInsertFails()
     {
+        $mockInsert = $this->getMockBuilder('\MongoDB\InsertOneResult')
+            ->disableOriginalConstructor()
+            ->setMethods(['isAcknowledged'])
+            ->getMock();
+        $mockInsert
+            ->expects($this->once())
+            ->method('isAcknowledged')
+            ->will($this->returnValue(false));
+
         $mockTransactionLog = $this->getMock('\Tripod\Mongo\TransactionLog', array('insertTransaction'), array(), '', false, true);
         $mockTransactionLog->expects($this->once())
             ->method('insertTransaction')
-            ->will($this->returnValue(array('err'=>'something went wrong')));
+            ->will($this->returnValue($mockInsert));
 
         /* @var $mockTransactionLog \Tripod\Mongo\TransactionLog */
         try {

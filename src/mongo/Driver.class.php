@@ -6,6 +6,10 @@ namespace Tripod\Mongo;
 
 use Tripod\Exceptions\Exception;
 use Tripod\IEventHook;
+use \MongoDB\Driver\ReadPreference;
+use \MongoDB\BSON\UTCDateTime;
+use \MongoDB\BSON\Javascript;
+use \MongoDB\Database;
 
 $TOTAL_TIME=0;
 
@@ -55,18 +59,20 @@ class Driver extends DriverBase implements \Tripod\IDriver
      * <li>defaultContext: (string) to use where a specific default context is not defined. Default is Null</li>
      * <li>async: (array) determines the async behaviour of views, tables and search. For each of these array keys, if set to true, generation of these elements will be done asyncronously on save. Default is array(OP_VIEWS=>false,OP_TABLES=>true,OP_SEARCH=>true)</li>
      * <li>stat: this sets the stats object to use to record statistics around operations performed by Driver. Default is null</li>
-     * <li>readPreference: The Read preference to set for Mongo: Default is Mongo:RP_PRIMARY_PREFERRED</li>
+     * <li>readPreference: The Read preference to set for Mongo: Default is ReadPreference::RP_PRIMARY_PREFERRED</li>
      * <li>retriesToGetLock: Retries to do when unable to get lock on a document, default is 20</li></ul>
      */
     public function __construct($podName, $storeName, $opts=array())
     {
+
         $opts = array_merge(array(
                 'defaultContext'=>null,
                 OP_ASYNC=>array(OP_VIEWS=>false,OP_TABLES=>true,OP_SEARCH=>true),
                 'statsConfig'=>array(),
-                'readPreference'=>\MongoClient::RP_PRIMARY_PREFERRED,
+                'readPreference'=>ReadPreference::RP_PRIMARY_PREFERRED,
                 'retriesToGetLock' => 20)
             ,$opts);
+
         $this->podName = $podName;
         $this->storeName = $storeName;
         $this->config = $this->getTripodConfigInstance();
@@ -325,12 +331,13 @@ class Driver extends DriverBase implements \Tripod\IDriver
             $id['query'] = $query;
             $id['groupBy'] = $groupBy;
             $this->debugLog("Looking in cache",array("id"=>$id));
-            $candidate = $this->config->getCollectionForTTLCache($this->storeName)->findOne(array("_id"=>$id));
+            $candidate = $this->config->getCollectionForTTLCache($this->storeName)->findOne(array(_ID_KEY => $id));
             if (!empty($candidate))
             {
                 $this->debugLog("Found candidate",array("candidate"=>$candidate));
-                $ttlTo = new \MongoDate($candidate['created']->sec+$ttl);
-                if ($ttlTo>(new \MongoDate()))
+
+                $ttlTo = new UTCDateTime(($candidate['created']->sec+$ttl) * 1000);
+                if ($ttlTo>(new UTCDateTime(floor(microtime(true))*1000)))
                 {
                     // cache hit!
                     $this->debugLog("Cache hit",array("id"=>$id));
@@ -347,12 +354,18 @@ class Driver extends DriverBase implements \Tripod\IDriver
         {
             if ($groupBy)
             {
-                // todo: if sharded, believe this actually needs to be a MR-function
-                $results = $this->collection->group(
-                    $groupBy,
-                    array("count"=>0),
-                    new \MongoCode("function(obj,prev) { prev.count++; }"),
-                    $query);
+                $ops = [
+                    ['$match' => $query],
+                    ['$group' => [_ID_KEY => '$'.$groupBy,'total' => ['$sum' => 1]]]
+                ];
+                $cursor = $this->collection->aggregate($ops);
+                foreach($cursor as $doc) {
+                    if (!is_array($doc[_ID_KEY])) {
+                        $results[$doc[_ID_KEY]] = $doc['total'];
+                    } else {
+                        $results[implode(';',$doc[_ID_KEY])] = $doc['total'];
+                    }
+                }
             }
             else
             {
@@ -363,11 +376,14 @@ class Driver extends DriverBase implements \Tripod\IDriver
             {
                 // add to cache
                 $cachedResults = array();
-                $cachedResults['_id'] = $id;
+                $cachedResults[_ID_KEY] = $id;
                 $cachedResults['results'] = $results;
-                $cachedResults['created'] = new \MongoDate();
+                $cachedResults['created'] = new UTCDateTime(floor(microtime(true))*1000);
                 $this->debugLog("Adding result to cache",$cachedResults);
-                $this->config->getCollectionForTTLCache($this->storeName)->insert($cachedResults);
+                $result = $this->config->getCollectionForTTLCache($this->storeName)->insertOne($cachedResults);
+                if (!$result->isAcknowledged()) {
+                    $this->debugLog("Insert cache result not acknowledged");
+                }
             }
         }
 
@@ -430,28 +446,31 @@ class Driver extends DriverBase implements \Tripod\IDriver
             $query["_id."._ID_CONTEXT] = $contextAlias;
         }
 
-        if (isset($sortBy))
-        {
-            $results = (empty($limit)) ? $this->collection->find($query,$fields) : $this->collection->find($query,$fields)->skip($offset)->limit($limit);
-            $results->sort($sortBy);
+        $findOptions = array(
+            'projection' => $fields
+        );
+        if (!empty($limit)) {
+            $findOptions['skip'] = (int) $offset;
+            $findOptions['limit'] = (int) $limit;
         }
-        else
-        {
-            $results = (empty($limit)) ? $this->collection->find($query,$fields) : $this->collection->find($query,$fields)->skip($offset)->limit($limit);
+        if (isset($sortBy)) {
+            $findOptions['sort'] = $sortBy;
         }
+        $results = $this->collection->find($query, $findOptions);
 
         $t->stop();
         $this->timingLog(MONGO_SELECT, array('duration'=>$t->result(), 'query'=>$query));
         $this->getStat()->timer(MONGO_SELECT.".{$this->podName}",$t->result());
 
         $rows = array();
-        $count=$results->count();
+        $count=$this->collection->count($query);
+
         foreach ($results as $doc)
         {
             $row = array();
             foreach ($doc as $key=>$value)
             {
-                if ($key == "_id")
+                if ($key == _ID_KEY || $key === _VERSION)
                 {
                     $row[$key] = $value;
                 }
@@ -528,10 +547,11 @@ class Driver extends DriverBase implements \Tripod\IDriver
             "_id" => array(
                 _ID_RESOURCE=>$resource,
                 _ID_CONTEXT=>$this->getContextAlias($context)));
-        $doc = $this->collection->findOne($query,array(_UPDATED_TS=>true));
-        /* @var $lastUpdatedDate \MongoDate */
+        $doc = $this->collection->findOne($query,array('projection' => array(_UPDATED_TS=>true)));
+        /* @var $lastUpdatedDate UTCDateTime */
         $lastUpdatedDate = ($doc!=null && array_key_exists(_UPDATED_TS,$doc)) ? $doc[_UPDATED_TS] : null;
-        return ($lastUpdatedDate==null) ? '' : $lastUpdatedDate->__toString();
+
+        return (isset($lastUpdatedDate) == null) ? '' : $lastUpdatedDate->__toString();
     }
 
     /**
@@ -669,12 +689,13 @@ class Driver extends DriverBase implements \Tripod\IDriver
     {
         if(!isset($this->dataUpdater))
         {
-            $readPreference = $this->collection->getReadPreference();
+            $readPreference = $this->collection->__debugInfo()['readPreference']->getMode();
+
             $opts = array(
                 'defaultContext'=>$this->defaultContext,
                 OP_ASYNC=>$this->async,
                 'stat'=>$this->stat,
-                'readPreference'=>$readPreference['type'],
+                'readPreference'=>$readPreference,
                 'retriesToGetLock' => $this->retriesToGetLock,
                 'statsConfig'=>$this->statsConfig
             );

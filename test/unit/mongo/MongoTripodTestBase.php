@@ -1,6 +1,8 @@
 <?php
 
 use Tripod\ITripodStat;
+use \MongoDB\BSON\UTCDateTime;
+use \MongoDB\Collection;
 
 set_include_path(
   get_include_path()
@@ -111,17 +113,17 @@ abstract class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         $config = \Tripod\Mongo\Config::getInstance();
         if($toTransactionLog == true)
         {
-            return $this->getTlogCollection()->insert($doc, array("w"=>1));
+            return $this->getTlogCollection()->insertOne($doc, array("w"=>1));
         } else {
             return $config->getCollectionForCBD(
                 $this->tripod->getStoreName(),
                 $this->tripod->getPodName()
-            )->insert($doc, array("w"=>1));
+            )->insertOne($doc, array("w"=>1));
         }
     }
 
     /**
-     * @return MongoCollection
+     * @return Collection
      */
     protected function getTlogCollection()
     {
@@ -132,7 +134,7 @@ abstract class MongoTripodTestBase extends PHPUnit_Framework_TestCase
 
     /**
      * @param \Tripod\Mongo\Driver $tripod
-     * @return MongoCollection
+     * @return Collection
      */
     protected function getTripodCollection(\Tripod\Mongo\Driver $tripod)
     {
@@ -147,7 +149,7 @@ abstract class MongoTripodTestBase extends PHPUnit_Framework_TestCase
 
     /**
      * @param mixed $_id
-     * @param \MongoCollection|null $collection
+     * @param Collection|null $collection
      * @param bool $fromTransactionLog
      * @return array|null
      */
@@ -232,8 +234,8 @@ abstract class MongoTripodTestBase extends PHPUnit_Framework_TestCase
     protected function assertTransactionDate(Array $doc, $key)
     {
         $this->assertTrue(isset($doc[$key]), 'the date property: {$key} was not present in document');
-        $this->assertTrue(!empty($doc[$key]->sec),'the date property: {$key} does not have a "sec" property');
-        $this->assertTrue(!empty($doc[$key]->usec), 'the date property: {$key} does not have a "usec" property');
+        $this->assertInstanceOf('MongoDB\BSON\UTCDateTime', $doc[$key]);
+        $this->assertNotEmpty($doc[$key]->toDateTime());
     }
 
     /**
@@ -405,9 +407,9 @@ abstract class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         $doc = array(
             '_id' => array(_ID_RESOURCE => $labeller->uri_to_alias($subject), _ID_CONTEXT => \Tripod\Mongo\Config::getInstance()->getDefaultContextAlias()),
             _LOCKED_FOR_TRANS => $transaction_id,
-            _LOCKED_FOR_TRANS_TS=>new MongoDate()
+            _LOCKED_FOR_TRANS_TS => new UTCDateTime(floor(microtime(true))*1000)
         );
-        $collection->insert($doc, array("w" => 1));
+        $collection->insertOne($doc, array("w" => 1));
     }
 
     /**
@@ -454,7 +456,7 @@ class TestTripod extends \Tripod\Mongo\Driver
      */
     public function getCollectionReadPreference()
     {
-        return $this->collection->getReadPreference();
+        return $this->collection->__debugInfo()['readPreference'];
     }
 }
 

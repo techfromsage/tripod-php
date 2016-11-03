@@ -8,6 +8,9 @@ require_once TRIPOD_DIR . 'mongo/base/DriverBase.class.php';
 use Tripod\Mongo\Config;
 use Tripod\Mongo\ImpactedSubject;
 use Tripod\Mongo\Labeller;
+use \MongoDB\Driver\ReadPreference;
+use \MongoDB\Collection;
+use \MongoDB\BSON\UTCDateTime;
 
 /**
  * Class Tables
@@ -68,18 +71,18 @@ class Tables extends CompositeBase
      * Construct accepts actual objects rather than strings as this class is a delegate of
      * Tripod and should inherit connections set up there
      * @param string $storeName
-     * @param \MongoCollection $collection
+     * @param Collection $collection
      * @param string $defaultContext
      * @param \Tripod\ITripodStat|null $stat
      * @param string $readPreference
      * todo: MongoCollection -> podName
      */
-    public function __construct($storeName,\MongoCollection $collection,$defaultContext,$stat=null,$readPreference=\MongoClient::RP_PRIMARY)
+    public function __construct($storeName, Collection $collection,$defaultContext,$stat=null,$readPreference = ReadPreference::RP_PRIMARY)
     {
         $this->labeller = new Labeller();
         $this->storeName = $storeName;
         $this->collection = $collection;
-        $this->podName = $collection->getName();
+        $this->podName = $collection->getCollectionName();
         $this->config = Config::getInstance();
         $this->defaultContext = $this->labeller->uri_to_alias($defaultContext); // make sure default context is qnamed if applicable
         $this->stat = $stat;
@@ -201,7 +204,7 @@ class Tables extends CompositeBase
         {
             $t = new \Tripod\Timer();
             $t->start();
-            $tableRows = $collection->find($query, array("_id"=>true));
+            $tableRows = $collection->find($query, array('projection' => array("_id"=>true)));
             $t->stop();
             $this->timingLog(MONGO_FIND_IMPACTED, array('duration'=>$t->result(), 'query'=>$query, 'storeName'=>$this->storeName, 'collection'=>$collection));
             foreach($tableRows as $t)
@@ -249,11 +252,17 @@ class Tables extends CompositeBase
         $filter["_id." . _ID_TYPE] = $tableSpecId;
 
         $collection = $this->config->getCollectionForTable($this->storeName, $tableSpecId, $this->readPreference);
-        $results = (empty($limit)) ? $collection->find($filter) : $collection->find($filter)->skip($offset)->limit($limit);
-        if (isset($sortBy))
-        {
-            $results->sort($sortBy);
+
+        $findOptions = array();
+        if (!empty($limit)) {
+           $findOptions['skip'] = (int) $offset;
+           $findOptions['limit'] = (int) $limit;
         }
+        if (isset($sortBy)) {
+            $findOptions['sort'] = $sortBy;
+        }
+        $results = $collection->find($filter, $findOptions);
+
         $rows = array();
         foreach ($results as $doc)
         {
@@ -267,7 +276,7 @@ class Tables extends CompositeBase
 
         return array(
             "head"=>array(
-                "count"=>$results->count(),
+                "count" => $collection->count($filter),
                 "offset"=>$offset,
                 "limit"=>$limit
             ),
@@ -340,7 +349,7 @@ class Tables extends CompositeBase
             // Ignore any other types of specs that might have been passed in here
             if(isset($specTypes[$specName]))
             {
-                $this->config->getCollectionForTable($this->storeName, $specName)->remove($query);
+                $this->config->getCollectionForTable($this->storeName, $specName)->deleteMany($query);
             }
         }
 
@@ -362,8 +371,9 @@ class Tables extends CompositeBase
             return;
         }
 
+        $query = array("_id.type"=>$tableId);
         $this->config->getCollectionForTable($this->storeName, $tableId)
-            ->remove(array("_id.type"=>$tableId), array('fsync'=>true));
+            ->deleteMany($query);
 
         $t->stop();
         $this->timingLog(MONGO_DELETE_TABLE_ROWS, array('duration'=>$t->result(), 'query'=>$query));
@@ -389,7 +399,7 @@ class Tables extends CompositeBase
         // now go through the types
         $query = array("_id"=>array('$in'=>$filter));
         $resourceAndType = $this->config->getCollectionForCBD($this->storeName, $this->podName)
-            ->find($query,array("_id"=>1,"rdf:type"=>1));
+            ->find($query, array('projection' => array("_id"=>1,"rdf:type"=>1)));
 
         foreach ($resourceAndType as $rt)
         {
@@ -494,7 +504,7 @@ class Tables extends CompositeBase
         }
 
         // ensure that the ID field, view type, and the impactIndex indexes are correctly set up
-        $collection->ensureIndex(
+        $collection->createIndex(
             array(
                 '_id.r'=>1,
                 '_id.c'=>1,
@@ -505,7 +515,7 @@ class Tables extends CompositeBase
             )
         );
 
-        $collection->ensureIndex(
+        $collection->createIndex(
             array(
                 '_id.type'=>1
             ),
@@ -514,7 +524,7 @@ class Tables extends CompositeBase
             )
         );
 
-        $collection->ensureIndex(
+        $collection->createIndex(
             array(
                 'value.'._IMPACT_INDEX=>1
             ),
@@ -564,8 +574,9 @@ class Tables extends CompositeBase
             $filter["_id"] = array(_ID_RESOURCE=>$this->labeller->uri_to_alias($resource),_ID_CONTEXT=>$contextAlias);
         }
 
-        $docs = $this->config->getCollectionForCBD($this->storeName, $from)->find($filter);
-        $docs->timeout(\Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout());
+        $docs = $this->config->getCollectionForCBD($this->storeName, $from)->find($filter, array(
+            'maxTimeMS' => 1000000
+        ));
 
         foreach ($docs as $doc)
         {
@@ -632,21 +643,21 @@ class Tables extends CompositeBase
      * If an exception in thrown because a field is too large to index, the field is
      * truncated and the save is retried.
      *
-     * @param \MongoCollection $collection
+     * @param Collection $collection
      * @param array $generatedRow The rows to save.
      * @throws \Exception
      */
-    protected function truncatingSave(\MongoCollection $collection, array $generatedRow)
+    protected function truncatingSave(Collection $collection, array $generatedRow)
     {
         try
         {
-            $collection->save($generatedRow);
+            $collection->updateOne($generatedRow['_id'], array('$set' => $generatedRow), array('upsert' => true));
         } catch (\Exception $e) {
             // We only truncate and retry the save if the \Exception contains this text.
             if (strpos($e->getMessage(),"Btree::insert: key too large to index") !== FALSE)
             {
                 $this->truncateFields($collection, $generatedRow);
-                $collection->save($generatedRow);
+                $collection->updateOne($generatedRow['_id'], array('$set' => $generatedRow), array('upsert' => true));
             }
             else
             {
@@ -658,17 +669,17 @@ class Tables extends CompositeBase
     /**
      * Truncate any indexed fields in the generated rows which are too large to index
      *
-     * @param \MongoCollection $collection
+     * @param Collection $collection
      * @param array $generatedRow - Pass by reference so that the contents is truncated
      */
-    protected function truncateFields(\MongoCollection $collection, array &$generatedRow)
+    protected function truncateFields(Collection $collection, array &$generatedRow)
     {
         // Find the name of any indexed fields
         $indexedFields = array();
         $indexesGroupedByCollection = $this->config->getIndexesGroupedByCollection($this->storeName);
-        if (isset($indexesGroupedByCollection) && isset($indexesGroupedByCollection[$collection->getName()]))
+        if (isset($indexesGroupedByCollection) && isset($indexesGroupedByCollection[$collection->getCollectionName()]))
         {
-            $indexes = $indexesGroupedByCollection[$collection->getName()];
+            $indexes = $indexesGroupedByCollection[$collection->getCollectionName()];
             if (isset($indexes))
             {
                 foreach($indexes as $repset)
@@ -696,7 +707,7 @@ class Tables extends CompositeBase
                 {
                     // The key will have the index name in the following format added to it.
                     // Adjust the max key size allowed to take it into account.
-                    $maxKeySize = 1024 - strlen("value_".$indexedFieldname."_1");
+                    $maxKeySize = 1020 - strlen("value_".$indexedFieldname."_1");
 
                     if (array_key_exists($indexedFieldname, $field))
                     {
@@ -1257,7 +1268,7 @@ class Tables extends CompositeBase
                     if(is_array($value)) $value = implode($options['glue'], $value);
                     break;
                 case 'date':
-                    if(is_string($value)) $value = new \MongoDate(strtotime($value));
+                    if(is_string($value)) $value = new UTCDateTime((strtotime($value) * 1000));
                     break;
                 default:
                     throw new \Exception("Could not apply modifier:".$modifier);
@@ -1314,8 +1325,10 @@ class Tables extends CompositeBase
                     ? $this->config->getCollectionForCBD($this->storeName, $ruleset['from'])
                     : $this->config->getCollectionForCBD($this->storeName, $from)
                 );
-                $cursor = $collection->find(array('_id'=>array('$in'=>$joinUris)));
-                $cursor->timeout(\Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout());
+
+                $cursor = $collection->find(array('_id'=>array('$in'=>$joinUris)), array(
+                    'maxTimeMS' => 1000000
+                ));
 
                 $this->addIdToImpactIndex($joinUris, $dest);
                 foreach($cursor as $linkMatch) {
@@ -1448,12 +1461,12 @@ class Tables extends CompositeBase
 
     /**
      * Ensure $indexToEnsure on the given mongo $collection
-     * @param array $collection
-     * @param \MongoCollection $indexToEnsure
+     * @param Collection $collection
+     * @param array $indexToEnsure
      */
-    protected function ensureIndex(\MongoCollection $collection,array $indexToEnsure)
+    protected function ensureIndex(Collection $collection,array $indexToEnsure)
     {
-        $collection->ensureIndex(
+        $collection->createIndex(
             $indexToEnsure,
             array(
                 'background'=>1

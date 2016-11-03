@@ -7,6 +7,9 @@ require_once TRIPOD_DIR . 'mongo/base/DriverBase.class.php';
 use Tripod\Mongo\Config;
 use Tripod\Mongo\ImpactedSubject;
 use Tripod\Mongo\Labeller;
+use \MongoDB\Driver\ReadPreference;
+use \MongoDB\Collection;
+use \MongoDB\BSON\UTCDateTime;
 
 /**
  * Class Views
@@ -19,17 +22,17 @@ class Views extends CompositeBase
      * Construct accepts actual objects rather than strings as this class is a delegate of
      * Tripod and should inherit connections set up there
      * @param string $storeName
-     * @param \MongoCollection $collection
+     * @param Collection $collection
      * @param $defaultContext
      * @param null $stat
      * @param string $readPreference
      */
-    function __construct($storeName, \MongoCollection $collection,$defaultContext,$stat=null,$readPreference=\MongoClient::RP_PRIMARY) // todo: $collection -> podname
+    function __construct($storeName, Collection $collection,$defaultContext,$stat=null,$readPreference = ReadPreference::RP_PRIMARY) // todo: $collection -> podname
     {
         $this->storeName = $storeName;
         $this->labeller = new Labeller();
         $this->collection = $collection;
-        $this->podName = $collection->getName();
+        $this->podName = $collection->getCollectionName();
         $this->defaultContext = $defaultContext;
         $this->config = Config::getInstance();
         $this->stat = $stat;
@@ -100,7 +103,7 @@ class Views extends CompositeBase
         {
             $t = new \Tripod\Timer();
             $t->start();
-            $views = $collection->find($query,array("_id"=>true));
+            $views = $collection->find($query, array('projection' => array("_id"=>true)));
             $t->stop();
             $this->timingLog(MONGO_FIND_IMPACTED, array('duration'=>$t->result(), 'query'=>$query, 'storeName'=>$this->storeName, 'collection'=>$collection));
             foreach($views as $v)
@@ -294,7 +297,7 @@ class Views extends CompositeBase
             {
                 if($spec['from']==$this->podName){
                     $this->config->getCollectionForView($this->storeName, $type, $this->readPreference)
-                        ->remove(array("_id" => array("r"=>$resourceAlias,"c"=>$contextAlias,"type"=>$type)));
+                        ->deleteOne(array("_id" => array("r"=>$resourceAlias,"c"=>$contextAlias,"type"=>$type)));
                 }
             }
 
@@ -304,7 +307,7 @@ class Views extends CompositeBase
 
         // now generate view for $resources themselves... Maybe an optimisation down the line to cut out the query here
         $query = array("_id"=>array('$in'=>$filter));
-        $resourceAndType = $this->collection->find($query,array("_id"=>1,"rdf:type"=>1));
+        $resourceAndType = $this->collection->find($query, array('projection' => array("_id"=>1,"rdf:type"=>1)));
 
         foreach ($resourceAndType as $rt)
         {
@@ -374,7 +377,7 @@ class Views extends CompositeBase
         }
 
         $this->config->getCollectionForView($this->storeName, $viewId)
-            ->remove(array("_id.type"=>$viewId), array('fsync'=>true));
+            ->deleteMany(array("_id.type"=>$viewId));
     }
 
     /**
@@ -409,7 +412,7 @@ class Views extends CompositeBase
             }
 
             // ensure that the ID field, view type, and the impactIndex indexes are correctly set up
-            $collection->ensureIndex(
+            $collection->createIndex(
                 array(
                     '_id.r'=>1,
                     '_id.c'=>1,
@@ -420,7 +423,7 @@ class Views extends CompositeBase
                 )
             );
 
-            $collection->ensureIndex(
+            $collection->createIndex(
                 array(
                     '_id.type'=>1
                 ),
@@ -429,7 +432,7 @@ class Views extends CompositeBase
                 )
             );
 
-            $collection->ensureIndex(
+            $collection->createIndex(
                 array(
                     'value.'._IMPACT_INDEX=>1
                 ),
@@ -443,7 +446,7 @@ class Views extends CompositeBase
             {
                 foreach ($viewSpec['ensureIndexes'] as $ensureIndex)
                 {
-                    $collection->ensureIndex(
+                    $collection->createIndex(
                         $ensureIndex,
                         array(
                             'background'=>1
@@ -473,8 +476,9 @@ class Views extends CompositeBase
                 $filter["_id"] = array(_ID_RESOURCE=>$resourceAlias,_ID_CONTEXT=>$contextAlias);
             }
 
-            $docs = $this->config->getCollectionForCBD($this->storeName, $from)->find($filter);
-            $docs->timeout(\Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout());
+            $docs = $this->config->getCollectionForCBD($this->storeName, $from)->find($filter, array(
+                'maxTimeMS' => \Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout()
+            ));
 
             foreach ($docs as $doc)
             {
@@ -499,7 +503,8 @@ class Views extends CompositeBase
                 else
                 {
                     // set up ID
-                    $generatedView = array("_id"=>array(_ID_RESOURCE=>$doc["_id"][_ID_RESOURCE],_ID_CONTEXT=>$doc["_id"][_ID_CONTEXT],_ID_TYPE=>$viewSpec['_id']));
+                    $id = array("_id"=>array(_ID_RESOURCE=>$doc["_id"][_ID_RESOURCE],_ID_CONTEXT=>$doc["_id"][_ID_CONTEXT],_ID_TYPE=>$viewSpec['_id']));
+                    $generatedView = $id;
                     $value = array(); // everything must go in the value object todo: this is a hang over from map reduce days, engineer out once we have stability on new PHP method for M/R
 
                     $value[_GRAPHS] = array();
@@ -508,7 +513,7 @@ class Views extends CompositeBase
                     if (isset($viewSpec['ttl']))
                     {
                         $buildImpactIndex=false;
-                        $value[_EXPIRES] = new \MongoDate($this->getExpirySecFromNow($viewSpec['ttl']));
+                        $value[_EXPIRES] = new UTCDateTime($this->getExpirySecFromNow($viewSpec['ttl']) * 1000);
                     }
                     else
                     {
@@ -522,7 +527,7 @@ class Views extends CompositeBase
 
                     $generatedView['value'] = $value;
 
-                    $collection->save($generatedView);
+                    $collection->replaceOne($id, $generatedView, ['upsert' => true]);
                 }
             }
 
@@ -590,8 +595,9 @@ class Views extends CompositeBase
                     : $this->config->getCollectionForCBD($this->storeName, $from)
                 );
 
-                $cursor = $collection->find(array('_id'=>array('$in'=>$joinUris)));
-                $cursor->timeout(\Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout());
+                $cursor = $collection->find(array('_id'=>array('$in'=>$joinUris)), array(
+                    'maxTimeMS' => \Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout()
+                ));
 
                 $this->addIdToImpactIndex($joinUris, $dest, $buildImpactIndex);
                 foreach($cursor as $linkMatch) {
@@ -845,7 +851,7 @@ class Views extends CompositeBase
 
     /**
      * @param string $viewSpecId
-     * @return \MongoCollection
+     * @return Collection
      */
     protected function getCollectionForViewSpec($viewSpecId)
     {

@@ -35,7 +35,6 @@ class MongoTripodTablesTest extends MongoTripodTestBase
     protected function setUp()
     {
         parent::setup();
-        //Mongo::setPoolSize(200);
 
         $this->tripodTransactionLog = new \Tripod\Mongo\TransactionLog();
         $this->tripodTransactionLog->purgeAllTransactions();
@@ -310,13 +309,13 @@ class MongoTripodTablesTest extends MongoTripodTestBase
     {
         $this->tripodTables->generateTableRows("t_resource");
 
-        $t1 = $this->tripodTables->getTableRows("t_resource",array(),array("value.isbn"=>-1));
-        // expecting two rows, first row should be one with highest numberic value of ISBN, due to sort DESC
+        $t1 = $this->tripodTables->getTableRows("t_resource",array(),array("value.isbn" => -1, "_id.r" => 1));
+        // expecting two rows, first row should be one with highest numeric value of ISBN, due to sort DESC
         $this->assertEquals('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2',$t1['results'][0]['_id']['r']);
 
-        $t1 = $this->tripodTables->getTableRows("t_resource",array(),array("value.isbn"=>1));
+        $t1 = $this->tripodTables->getTableRows("t_resource",array(),array("value.isbn" => 1, "_id.r" => 1));
 
-        // expecting two rows, first row should be one with lowest numberic value of ISBN, due to sort ASC
+        // expecting two rows, first row should be one with lowest numeric value of ISBN, due to sort ASC
         $this->assertEquals('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA',$t1['results'][0]['_id']['r']);
     }
 
@@ -562,7 +561,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         // We should have 1 result and it should have modified fields
         $this->assertTrue($rows["head"]["count"]==1,"Expected one row");
 
-        $this->assertInstanceOf('MongoDate', $rows['results'][0]['mongoDate']);
+        $this->assertInstanceOf('\MongoDB\BSON\UTCDateTime', $rows['results'][0]['mongoDate']);
     }
 
     /**
@@ -617,10 +616,8 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         // Check borked data
         // Trying to use date but passed in a string - should default to 0 for sec and usec
-        $this->assertInstanceOf('MongoDate', $rows['results'][0]['mongoDateInvalid']);
-        $this->assertEquals(0, $rows['results'][0]['mongoDateInvalid']->sec);
-        $this->assertEquals(0, $rows['results'][0]['mongoDateInvalid']->usec);
-
+        $this->assertInstanceOf('\MongoDB\BSON\UTCDateTime', $rows['results'][0]['mongoDateInvalid']);
+        $this->assertEquals(0, $rows['results'][0]['mongoDateInvalid']->__toString());
     }
 
     /**
@@ -648,7 +645,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
     public function testGenerateTableRowsTruncatesFieldsTooLargeToIndex()
     {
         $fullTitle = "Mahommah Gardo Baquaqua. Biography of Mahommah G. Baquaqua, a Native of Zoogoo, in the Interior of Africa. (A Convert to Christianity,) With a Description of That Part of the World; Including the Manners and Customs of the Inhabitants, Their Religious Notions, Form of Government, Laws, Appearance of the Country, Buildings, Agriculture, Manufactures, Shepherds and Herdsmen, Domestic Animals, Marriage Ceremonials, Funeral Services, Styles of Dress, Trade and Commerce, Modes of Warfare, System of Slavery, &amp;c., &amp;c. Mahommah&#039;s Early Life, His Education, His Capture and Slavery in Western Africa and Brazil, His Escape to the United States, from Thence to Hayti, (the City of Port Au Prince,) His Reception by the Baptist Missionary There, The Rev. W. L. Judd; His Conversion to Christianity, Baptism, and Return to This Country, His Views, Objects and Aim. Written and Revised from His Own Words, by Samuel Moore, Esq., Late Publisher of the &quot;North of England Shipping Gazette,&quot; Author of Several Popular Works, and Editor of Sundry Reform Papers.";
-        $truncatedTitle = substr($fullTitle,0,1011); // 1011 = 1024 - index name "value_title_1"
+        $truncatedTitle = substr($fullTitle,0,1007); // 1007 = 1024 - index name "value_title_1" + Randomness
         $fullTitleLength = strlen($fullTitle);
         $truncatedTitleLength = strLen($truncatedTitle);
 

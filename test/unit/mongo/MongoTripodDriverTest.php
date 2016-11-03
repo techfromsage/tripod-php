@@ -4,6 +4,10 @@ require_once 'src/ITripodStat.php';
 require_once 'src/classes/StatsD.class.php';
 require_once 'src/mongo/Driver.class.php';
 
+use \MongoDB\Driver\ReadPreference;
+use \MongoDB\BSON\UTCDateTime;
+use \MongoDB\BSON\ObjectId;
+
 /**
  * Class MongoTripodDriverTest
  */
@@ -221,6 +225,16 @@ class MongoTripodDriverTest extends MongoTripodTestBase
     {
         $count = $this->tripod->getCount(array("rdf:type.".VALUE_URI=>"bibo:Book"));
         $this->assertEquals(9,$count);
+    }
+    public function testGetCountWithGroupBy() {
+        $count = $this->tripod->getCount(array("rdf:type.".VALUE_URI=>"bibo:Book"), "bibo:isbn13.l");
+
+        $this->assertCount(5, $count);
+        $this->assertEquals(2, $count['1234567890123']);
+        $this->assertEquals(1, $count['']);
+        $this->assertEquals(1, $count['9780393929691;9780393929691-2']);
+        $this->assertEquals(4, $count['9780393929691']);
+        $this->assertEquals(1, $count['9780393929690']);
     }
 
     public function testTripodSaveChangesRemovesLiteralTriple()
@@ -653,7 +667,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
             'TestTripod',
             array('getDataUpdater'),
             array('CBD_testing','tripod_php_testing',
-                array('defaultContext'=>'http://talisaspire.com/', 'readPreference'=>MongoClient::RP_SECONDARY_PREFERRED))
+                array('defaultContext'=>'http://talisaspire.com/', 'readPreference'=>ReadPreference::RP_SECONDARY_PREFERRED))
         );
 
         $tripodUpdate = $this->getMock('\Tripod\Mongo\Updates',
@@ -674,7 +688,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
             ->will($this->returnValue($tripodUpdate));
 
         $expectedCollectionReadPreference = $tripodMock->getCollectionReadPreference();
-        $this->assertEquals($expectedCollectionReadPreference['type'], MongoClient::RP_SECONDARY_PREFERRED);
+        $this->assertEquals($expectedCollectionReadPreference->getMode(), ReadPreference::RP_SECONDARY_PREFERRED);
 
         // Assert that a simple save results in read preferences being restored
         $g = new \Tripod\Mongo\MongoGraph();
@@ -1799,7 +1813,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $docs = $this->tripod->getLockedDocuments(null, date("y-m-d H:i:s", strtotime("+1 min")));
         $this->assertEquals(1, count($docs));
 
-        $docs = $this->tripod->getLockedDocuments(null, date("y-m-d H:i:s"), strtotime("-1 min"));
+        $docs = $this->tripod->getLockedDocuments(null, date("y-m-d H:i:s", strtotime("-1 min")));
         $this->assertEquals(0, count($docs));
     }
 
@@ -1847,9 +1861,9 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $this->setExpectedException('Exception', 'Some unexpected error occurred.');
 
         /* @var $auditManualRollbackCollection PHPUnit_Framework_MockObject_MockObject */
-        $auditManualRollbackCollection = $this->getMock("MongoCollection", array('insert'), array(), '', false);
+        $auditManualRollbackCollection = $this->getMock("MongoCollection", array('insertOne'), array(), '', false);
         $auditManualRollbackCollection->expects($this->once())
-            ->method('insert')
+            ->method('insertOne')
             ->will($this->throwException(new Exception('Some unexpected error occurred.')));
 
         /* @var $tripod PHPUnit_Framework_MockObject_MockObject */
@@ -1873,21 +1887,40 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $subject = "http://basedata.com/b/1";
         $this->lockDocument($subject,"transaction_400");
 
-        $mongoDocumentId = new MongoId();
-        $mongoDate = new MongoDate();
+        $mongoDocumentId = new ObjectId();
+        $mongoDate = new UTCDateTime(floor(microtime(true))*1000);
 
         $this->setExpectedException('Exception', 'Some unexpected error occurred.');
 
         /* @var $auditManualRollbackCollection PHPUnit_Framework_MockObject_MockObject */
-        $auditManualRollbackCollection = $this->getMock("MongoCollection", array('update', 'insert'), array(), '', false);
+        $auditManualRollbackCollection = $this->getMock("MongoCollection", array('updateOne', 'insertOne'), array(), '', false);
+
+        $mockInsert = $this->getMockBuilder('\MongoDB\InsertOneResult')
+            ->disableOriginalConstructor()
+            ->setMethods(['isAcknowledged'])
+            ->getMock();
+        $mockInsert
+            ->expects($this->once())
+            ->method('isAcknowledged')
+            ->will($this->returnValue(true));
 
         $auditManualRollbackCollection->expects($this->once())
-            ->method('insert')
-            ->will($this->returnValue(array("ok" => true, 'err'=>NULL)));
+            ->method('insertOne')
+            ->will($this->returnValue($mockInsert));
+
+        $mockUpdate = $this->getMockBuilder('\MongoDB\UpdateOneResult')
+            ->disableOriginalConstructor()
+            ->setMethods(['isAcknowledged'])
+            ->getMock();
+        $mockUpdate
+            ->expects($this->once())
+            ->method('isAcknowledged')
+            ->will($this->returnValue(true));
 
         $auditManualRollbackCollection->expects($this->once())
-            ->method('update')
-            ->with(array("_id" => $mongoDocumentId), array('$set' => array("status" => AUDIT_STATUS_ERROR, _UPDATED_TS => $mongoDate, 'error' => 'Some unexpected error occurred.')));
+            ->method('updateOne')
+            ->with(array("_id" => $mongoDocumentId), array('$set' => array("status" => AUDIT_STATUS_ERROR, _UPDATED_TS => $mongoDate, 'error' => 'Some unexpected error occurred.')))
+            ->will($this->returnValue($mockUpdate));
 
         /* @var $tripod PHPUnit_Framework_MockObject_MockObject */
         $tripod = $this->getMock('\Tripod\Mongo\Driver', array('getDataUpdater'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
@@ -1925,14 +1958,32 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $this->lockDocument($subject,"transaction_400");
         $this->lockDocument($subject2,"transaction_400");
 
-        $mongoDocumentId = new MongoId();
-        $mongoDate = new MongoDate();
+        $mongoDocumentId = new ObjectId();
+        $mongoDate = new UTCDateTime(floor(microtime(true))*1000);
 
         /* @var $auditManualRollbackCollection PHPUnit_Framework_MockObject_MockObject */
-        $auditManualRollbackCollection = $this->getMock("MongoCollection", array('insert','update'), array(), '', false);
+        $auditManualRollbackCollection = $this->getMock("MongoCollection", array('insertOne','updateOne'), array(), '', false);
+
+        $mockInsert = $this->getMockBuilder('\MongoDB\InsertOneResult')
+            ->disableOriginalConstructor()
+            ->setMethods(['isAcknowledged'])
+            ->getMock();
+        $mockInsert
+            ->expects($this->once())
+            ->method('isAcknowledged')
+            ->will($this->returnValue(true));
+
+        $mockUpdate = $this->getMockBuilder('\MongoDB\UpdateOneResult')
+            ->disableOriginalConstructor()
+            ->setMethods(['isAcknowledged'])
+            ->getMock();
+        $mockUpdate
+            ->expects($this->once())
+            ->method('isAcknowledged')
+            ->will($this->returnValue(true));
 
         $auditManualRollbackCollection->expects($this->once())
-            ->method('insert')
+            ->method('insertOne')
             ->with(array(
                 '_id' => $mongoDocumentId,
                 'type' => AUDIT_TYPE_REMOVE_INERT_LOCKS,
@@ -1942,11 +1993,12 @@ class MongoTripodDriverTest extends MongoTripodTestBase
                 'documents' => array("baseData:1", "tenantData:1"),
                 _CREATED_TS=> $mongoDate,
             ))
-            ->will($this->returnValue(array("ok" => true, 'err'=>NULL)));
+            ->will($this->returnValue($mockInsert));
 
         $auditManualRollbackCollection->expects($this->once())
-            ->method('update')
-            ->with(array("_id" => $mongoDocumentId), array('$set' => array("status" => AUDIT_STATUS_COMPLETED, _UPDATED_TS => $mongoDate)));
+            ->method('updateOne')
+            ->with(array("_id" => $mongoDocumentId), array('$set' => array("status" => AUDIT_STATUS_COMPLETED, _UPDATED_TS => $mongoDate)))
+            ->will($this->returnValue($mockUpdate));
 
         /* @var \Tripod\Mongo\Driver PHPUnit_Framework_MockObject_MockObject */
         $tripod = $this->getMock('\Tripod\Mongo\Driver', array('getDataUpdater'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));

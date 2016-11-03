@@ -1,4 +1,6 @@
 <?php
+require_once dirname(__FILE__) . '/common.inc.php';
+
 /**
  * Detects un-namespaced subjects or object uris in CBD collections of the target database. Optionally supply a base uri to match against that rather than all uris
  */
@@ -9,10 +11,15 @@ if ($argc!=4 && $argc!=3)
 }
 
 array_shift($argv);
-$client = new \MongoClient($argv[0]);
+/** @var \MongoDB\Client $client */
+$client = new \MongoDB\Client(
+    $argv[0],
+    [],
+    ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']]
+);
 
-/* @var $db MongoDB */
-$db = $client->selectDb($argv[1]);
+/** @var \MongoDB\Database $db */
+$db = $client->selectDatabase($argv[1]);
 
 /**
  * @param string $uri
@@ -32,12 +39,14 @@ function isUnNamespaced($uri,$baseUri=null)
 }
 
 $results = array();
-foreach ($db->listCollections() as $collection)
+foreach ($db->listCollections() as $collectionInfo)
 {
-    /* @var $collection MongoCollection */
-    if (strpos($collection->getName(),'CBD_')===0) // only process CBD_collections
+
+    /** @var \MongoDB\Collection $collection*/
+    if (strpos($collectionInfo->getName(),'CBD_')===0) // only process CBD_collections
     {
-        echo "Checking out {$collection->getName()}\n";
+        $collection = $db->selectCollection($collectionInfo->getName());
+        echo "Checking out {$collectionInfo->getName()}\n";
         $count = 0;
         foreach ($collection->find() as $doc)
         {
@@ -47,7 +56,7 @@ foreach ($db->listCollections() as $collection)
             }
             else
             {
-                if (isUnNamespaced($doc['_id']['r'],$argv[2]))
+                if (isUnNamespaced($doc['_id']['r'], (isset($argv[2]) ? $argv[2] : null) ))
                 {
                     echo "  Un-namespaced subject: {$doc['_id']['r']}\n";
                     $count++;
@@ -68,7 +77,7 @@ foreach ($db->listCollections() as $collection)
                     }
                     else if (isset($value['u']))
                     {
-                        if (isUnNamespaced($value['u'],$argv[2]))
+                        if (isUnNamespaced($value['u'], (isset($argv[2]) ? $argv[2] : null)))
                         {
                             echo "  Un-namespaced object uri (single value): {$value['u']}\n";
                             $count++;
@@ -80,7 +89,7 @@ foreach ($db->listCollections() as $collection)
                         {
                             if (isset($v['u']))
                             {
-                                if (isUnNamespaced($v['u'],$argv[2]))
+                                if (isUnNamespaced($v['u'], (isset($argv[2]) ? $argv[2] : null)))
                                 {
                                     echo "  Un-namespaced object uri (multiple value): {$v['u']}\n";
                                     $count++;
@@ -91,8 +100,8 @@ foreach ($db->listCollections() as $collection)
                 }
             }
         }
-        $results[] = "{$collection->getName()} has $count un-namespaced uris";
-        echo "Done with {$collection->getName()}\n";
+        $results[] = "{$collectionInfo->getName()} has $count un-namespaced uris";
+        echo "Done with {$collectionInfo->getName()}\n";
     }
 }
 echo "\n".implode("\n",$results)."\n";

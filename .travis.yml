@@ -1,18 +1,18 @@
 language: php
-sudo: false
+sudo: required
 php:
+- 7.0
 - 5.6
 - 5.5
 - 5.4
-- 5.3
 services:
-- mongodb
 - redis
+before_install:
+- sudo apt-get install -y mongodb-org=2.6.9 mongodb-org-server=2.6.9 mongodb-org-shell=2.6.9 mongodb-org-mongos=2.6.9 mongodb-org-tools=2.6.9
+- echo "extension = mongodb.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+- sleep 15
 install:
 - composer install
-before_script:
-- echo "extension = mongo.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
-- sleep 15
 script: ant
 notifications:
   hipchat:

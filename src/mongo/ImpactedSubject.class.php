@@ -1,6 +1,9 @@
 <?php
 
 namespace Tripod\Mongo;
+
+use \MongoDB\Driver\ReadPreference;
+
 /**
  * A subject that has been involved in an modification event (create/update, delete) and will therefore require
  * view, table and search doc generation
@@ -150,6 +153,8 @@ class ImpactedSubject
      */
     protected function getTripod()
     {
-        return new Driver($this->getPodName(),$this->getStoreName(),array("readPreference"=>\MongoClient::RP_PRIMARY));
+        return new Driver($this->getPodName(),$this->getStoreName(),array(
+            'readPreference' => ReadPreference::RP_PRIMARY
+        ));
     }
 }

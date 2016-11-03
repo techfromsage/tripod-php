@@ -10,6 +10,9 @@ require_once TRIPOD_DIR . 'exceptions/SearchException.class.php';
 use Tripod\Mongo\Config;
 use Tripod\Mongo\ImpactedSubject;
 use Tripod\Mongo\Labeller;
+use \MongoDB\Driver\ReadPreference;
+use \MongoDB\Collection;
+
 /**
  * Class SearchIndexer
  * @package Tripod\Mongo\Composites
@@ -32,7 +35,7 @@ class SearchIndexer extends CompositeBase
      * @param string $readPreference
      * @throws \Tripod\Exceptions\SearchException
      */
-    public function __construct(\Tripod\Mongo\Driver $tripod, $readPreference=\MongoClient::RP_PRIMARY)
+    public function __construct(\Tripod\Mongo\Driver $tripod, $readPreference = ReadPreference::RP_PRIMARY)
     {
         $this->tripod = $tripod;
         $this->storeName = $tripod->getStoreName();
@@ -121,8 +124,10 @@ class SearchIndexer extends CompositeBase
             'c'=>$this->getContextAlias($context)
         ));
 
-        $resourceAndType = $mongoCollection->find($query,array("_id"=>1,"rdf:type"=>1));
-        $resourceAndType->timeout($this->config->getMongoCursorTimeout());
+        $resourceAndType = $mongoCollection->find($query,array(
+            'projection' => array("_id"=>1,"rdf:type"=>1),
+            'maxTimeMS' => $this->config->getMongoCursorTimeout()
+        ));
         foreach ($resourceAndType as $rt)
         {
             if (array_key_exists("rdf:type",$rt))
@@ -200,8 +205,9 @@ class SearchIndexer extends CompositeBase
             $filter["_id"] = array(_ID_RESOURCE=>$this->labeller->uri_to_alias($resource),_ID_CONTEXT=>$contextAlias);
         }
 
-        $docs = $this->config->getCollectionForCBD($this->getStoreName(), $from)->find($filter);
-        $docs->timeout($this->config->getMongoCursorTimeout());
+        $docs = $this->config->getCollectionForCBD($this->getStoreName(), $from)->find($filter, array(
+            'maxTimeMS' => $this->config->getMongoCursorTimeout()
+        ));
         foreach ($docs as $doc)
         {
             if($queueName && !$resourceUri)
@@ -271,11 +277,11 @@ class SearchIndexer extends CompositeBase
     }
 
     /**
-     * @param \MongoCollection $collection
+     * @param Collection $collection
      * @param string $context
      * @return \Tripod\Mongo\SearchDocuments
      */
-    protected function getSearchDocumentGenerator(\MongoCollection $collection, $context )
+    protected function getSearchDocumentGenerator(Collection $collection, $context )
     {
         return new \Tripod\Mongo\SearchDocuments($this->storeName, $collection, $context, $this->tripod->getStat());
     }

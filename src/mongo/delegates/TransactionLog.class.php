@@ -3,6 +3,11 @@
 namespace Tripod\Mongo;
 require_once TRIPOD_DIR . 'mongo/Config.class.php';
 
+use \MongoDB\BSON\UTCDateTime;
+use \MongoDB\InsertOneResult;
+use \MongoDB\UpdateOneResult;
+use \MongoDB\Driver\Cursor;
+
 /**
  * Class TransactionLog
  * @package Tripod\Mongo
@@ -40,15 +45,18 @@ class TransactionLog
             "collectionName"=>$podName,
             "changes" => $changes,
             "status" => "in_progress",
-            "startTime" => new \MongoDate(),
+            "startTime" => new UTCDateTime(floor(microtime(true))*1000),
             "originalCBDs"=>$originalCBDs,
             "sessionId" => ((session_id() != '') ? session_id() : '')
         );
 
-        $ret = $this->insertTransaction($transaction);
-
-        if(isset($ret['err']) && $ret['err'] != NULL ){
-            throw new \Tripod\Exceptions\Exception("Error creating new transaction: " . var_export($ret,true));
+        try {
+            $result = $this->insertTransaction($transaction);
+            if (!$result->isAcknowledged()) {
+                throw new \Exception('Error creating new transaction');
+            }
+        } catch(\Exception $e) {
+            throw new \Tripod\Exceptions\Exception("Error creating new transaction: " . $e->getMessage());
         }
     }
 
@@ -83,7 +91,7 @@ class TransactionLog
      */
     public function failTransaction($transaction_id, \Exception $error=null)
     {
-        $params = array('status' => 'failed', 'failedTime' => new \MongoDate());
+        $params = array('status' => 'failed', 'failedTime' => new UTCDateTime(floor(microtime(true))*1000));
         if($error!=null)
         {
             $params['error'] = array('reason'=>$error->getMessage(), 'trace'=>$error->getTraceAsString());
@@ -107,7 +115,7 @@ class TransactionLog
 
         $this->updateTransaction(
             array("_id" => $transaction_id),
-            array('$set' => array('status' => 'completed', 'endTime' => new \MongoDate(), 'newCBDs'=>$newCBDs)),
+            array('$set' => array('status' => 'completed', 'endTime' => new UTCDateTime(floor(microtime(true))*1000), 'newCBDs'=>$newCBDs)),
             array('w' => 1)
         );
     }
@@ -137,7 +145,7 @@ class TransactionLog
      * @param string $podName
      * @param string|null $fromDate only transactions after this specified date will be replayed. This must be a datetime string i.e. '2010-01-15 00:00:00'
      * @param string|null $toDate only transactions after this specified date will be replayed. This must be a datetime string i.e. '2010-01-15 00:00:00'
-     * @return \MongoCursor
+     * @return Cursor
      * @throws \InvalidArgumentException
      */
     public function getCompletedTransactions($storeName=null, $podName=null, $fromDate=null, $toDate=null)
@@ -153,16 +161,16 @@ class TransactionLog
 
         if(!empty($fromDate)) {
             $q = array();
-            $q['$gte'] = new \MongoDate(strtotime($fromDate));
+            $q['$gte'] = new UTCDateTime(strtotime($fromDate)*1000);
 
             if(!empty($toDate)){
-                $q['$lte'] = new \MongoDate(strtotime($toDate));
+                $q['$lte'] = new UTCDateTime(strtotime($toDate)*1000);
             }
 
             $query['endTime'] = $q;
         }
 
-        return $this->transaction_collection->find($query)->sort(array('endTime'=>1));
+        return $this->transaction_collection->find($query, array('sort' => array('endTime'=>1)));
     }
 
     /**
@@ -196,12 +204,12 @@ class TransactionLog
     /**
      * Proxy method to help with test mocking
      * @param array $transaction
-     * @return array|bool
+     * @return InsertOneResult
      * @codeCoverageIgnore
      */
     protected function insertTransaction($transaction)
     {
-        return $this->transaction_collection->insert($transaction, array("w" => 1));
+        return $this->transaction_collection->insertOne($transaction, array("w" => 1));
     }
 
     /**
@@ -209,12 +217,12 @@ class TransactionLog
      * @param array $query
      * @param array $update
      * @param array $options
-     * @return bool
+     * @return UpdateOneResult
      * @codeCoverageIgnore
      */
     protected function updateTransaction($query, $update, $options)
     {
-        return $this->transaction_collection->update($query, $update, $options);
+        return $this->transaction_collection->updateOne($query, $update, $options);
     }
 
 

@@ -9,6 +9,10 @@ $TOTAL_TIME=0;
 use Monolog\Logger;
 use Tripod\Exceptions\Exception;
 use Tripod\IEventHook;
+use \MongoDB\Driver\ReadPreference;
+use \MongoDB\Collection;
+use \MongoDB\BSON\UTCDateTime;
+use \MongoDB\Database;
 
 /**
  * Class DriverBase
@@ -24,7 +28,7 @@ abstract class DriverBase
     const HOOK_FN_FAILURE = "failure";
 
     /**
-     * @var \MongoCollection
+     * @var Collection
      */
     protected $collection;
 
@@ -52,14 +56,14 @@ abstract class DriverBase
     protected $statsConfig = array();
 
     /**
-     * @var \MongoDB
+     * @var Database
      */
     protected $db = null;
 
     /**
      * @var string
      */
-    protected $readPreference;
+    protected $readPreference = ReadPreference::RP_PRIMARY_PREFERRED;
 
     /**
      * @return \Tripod\ITripodStat
@@ -145,7 +149,7 @@ abstract class DriverBase
     /**
      * @param array $query
      * @param string $type
-     * @param \MongoCollection|null $collection
+     * @param Collection|null $collection
      * @param array $includeProperties
      * @param int $cursorSize
      * @return MongoGraph
@@ -160,11 +164,11 @@ abstract class DriverBase
         if ($collection==null)
         {
             $collection = $this->collection;
-            $collectionName = $collection->getName();
+            $collectionName = $collection->getCollectionName();
         }
         else
         {
-            $collectionName = $collection->getName();
+            $collectionName = $collection->getCollectionName();
         }
 
         if (empty($includeProperties))
@@ -178,11 +182,13 @@ abstract class DriverBase
             {
                 $fields[$this->labeller->uri_to_alias($property)] = true;
             }
-            $cursor = $collection->find($query,$fields);
+            $cursor = $collection->find($query, array(
+                'projection' => $fields,
+                'batchSize' => $cursorSize
+            ));
         }
 
         $ttlExpiredResources = false;
-        $cursor->batchSize($cursorSize);
 
         $retries = 1;
         $exception = null;
@@ -197,8 +203,8 @@ abstract class DriverBase
                     if ($type==MONGO_VIEW && array_key_exists(_EXPIRES,$result['value']))
                     {
                         // if expires < current date, regenerate view..
-                        $currentDate = new \MongoDate();
-                        if ($result['value'][_EXPIRES]<$currentDate)
+                        $currentDate = new UTCDateTime(floor(microtime(true))*1000);
+                        if ($result['value'][_EXPIRES]->__toString() < $currentDate)
                         {
                             // regenerate!
                             $this->generateView($result['_id']['type'],$result['_id']['r']);
@@ -207,8 +213,8 @@ abstract class DriverBase
                     $graph->add_tripod_array($result);
                 }
                 $cursorSuccess = true;
-            } catch (\MongoCursorException $e) {
-                self::getLogger()->error("MongoCursorException attempt ".$retries.". Retrying...:" . $e->getMessage());
+            } catch (\Exception $e) {
+                self::getLogger()->error("CursorException attempt ".$retries.". Retrying...:" . $e->getMessage());
                 sleep(1);
                 $retries++;
                 $exception = $e;
@@ -216,8 +222,8 @@ abstract class DriverBase
         } while ($retries <= Config::CONNECTION_RETRIES && $cursorSuccess === false);
 
         if ($cursorSuccess === false) {
-            self::getLogger()->error("MongoCursorException failed after " . $retries . " attempts (MAX:".Config::CONNECTION_RETRIES."): " . $e->getMessage());
-            throw new \MongoCursorException($exception);
+            self::getLogger()->error("CursorException failed after " . $retries . " attempts (MAX:".Config::CONNECTION_RETRIES."): " . $e->getMessage());
+            throw new \Exception($exception);
         }
 
         if ($ttlExpiredResources)
@@ -430,7 +436,7 @@ abstract class DriverBase
     }
 
     /**
-     * @return\MongoDB
+     * @return Database
      */
     protected function getDatabase()
     {
@@ -446,7 +452,18 @@ abstract class DriverBase
     }
 
     /**
-     * @return \MongoCollection
+     * Retrieve last error from database
+     * @param $db
+     * @return array
+     */
+    protected function getLastDBError(\MongoDB\Database $db) {
+        return $db->command([
+            'getLastError' =>  1
+        ])->toArray()[0];
+    }
+
+    /**
+     * @return Collection
      */
     protected function getCollection()
     {

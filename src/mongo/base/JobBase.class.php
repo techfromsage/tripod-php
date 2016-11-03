@@ -3,6 +3,7 @@
 namespace Tripod\Mongo\Jobs;
 use Tripod\Exceptions\Exception;
 use Tripod\Exceptions\JobException;
+use \MongoDB\Driver\ReadPreference;
 
 /**
  * Todo: How to inject correct stat class... :-S
@@ -23,7 +24,7 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
     protected function getTripod($storeName,$podName,$opts=array()) {
         $opts = array_merge($opts,array(
             'stat'=>$this->getStat(),
-            'readPreference'=>\MongoClient::RP_PRIMARY // important: make sure we always read from the primary
+            'readPreference' => ReadPreference::RP_PRIMARY // important: make sure we always read from the primary
         ));
         if ($this->tripod == null) {
             $this->tripod = new \Tripod\Mongo\Driver(

@@ -79,9 +79,10 @@ class MongoTripodDocumentStructureTest extends MongoTripodTestBase
         // assert that the $_updated_ts has changed, but the created_ts is the same
         $updated_document = $this->getDocument($id);
         $this->assertEquals($_created_ts, $updated_document[_CREATED_TS]);
-        $this->assertNotEquals($_updated_ts, $updated_document[_UPDATED_TS]);
+        $this->assertNotEquals($_updated_ts->__toString(), $updated_document[_UPDATED_TS]->__toString());
         // assert that the seconds for the updated document _updated_ts is greated than the first version
-        $this->assertGreaterThan($_updated_ts->sec, $updated_document[_UPDATED_TS]->sec);
+
+        $this->assertGreaterThan($_updated_ts->__toString(), $updated_document[_UPDATED_TS]->__toString());
 
         sleep(1);
 
@@ -97,8 +98,8 @@ class MongoTripodDocumentStructureTest extends MongoTripodTestBase
         // assert that the $_updated_ts has changed, but the created_ts is the same
         $final_document = $this->getDocument($id);
         $this->assertEquals($updated_document[_CREATED_TS], $final_document[_CREATED_TS]);
-        $this->assertNotEquals($updated_document[_UPDATED_TS], $final_document[_UPDATED_TS]);
-        $this->assertGreaterThan($updated_document[_UPDATED_TS]->sec, $final_document[_UPDATED_TS]->sec);
+        $this->assertNotEquals($updated_document[_UPDATED_TS]->__toString(), $final_document[_UPDATED_TS]->__toString());
+        $this->assertGreaterThan($updated_document[_UPDATED_TS]->__toString(), $final_document[_UPDATED_TS]->__toString());
 
         sleep(1);
 
@@ -114,8 +115,8 @@ class MongoTripodDocumentStructureTest extends MongoTripodTestBase
         $this->assertDocumentDoesNotHaveProperty($id, 'searchterms:title');
 
         $this->assertEquals($final_document[_CREATED_TS], $deleted_document[_CREATED_TS]);
-        $this->assertNotEquals($final_document[_UPDATED_TS], $deleted_document[_UPDATED_TS]);
-        $this->assertGreaterThan($final_document[_UPDATED_TS]->sec, $deleted_document[_UPDATED_TS]->sec);
+        $this->assertNotEquals($final_document[_UPDATED_TS]->__toString(), $deleted_document[_UPDATED_TS]->__toString());
+        $this->assertGreaterThan($final_document[_UPDATED_TS]->__toString(), $deleted_document[_UPDATED_TS]->__toString());
     }
 
 

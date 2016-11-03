@@ -2,6 +2,9 @@
 
 namespace Tripod\Mongo;
 
+use \MongoDB\Driver\ReadPreference;
+use \MongoDB\Collection;
+
 /**
  * Class SearchDocuments
  * @package Tripod\Mongo
@@ -12,17 +15,17 @@ class SearchDocuments extends DriverBase
      * Construct accepts actual objects rather than strings as this class is a delegate of
      * Tripod and should inherit connections set up there
      * @param string $storeName
-     * @param \MongoCollection $collection
+     * @param Collection $collection
      * @param string $defaultContext
      * @param \Tripod\ITripodStat|null $stat
      * @param string $readPreference
      */
-    public function __construct($storeName, \MongoCollection $collection, $defaultContext, $stat=null , $readPreference=\MongoClient::RP_PRIMARY)
+    public function __construct($storeName, Collection $collection, $defaultContext, $stat=null , $readPreference = ReadPreference::RP_PRIMARY)
     {
         $this->labeller = new Labeller();
         $this->storeName = $storeName;
         $this->collection = $collection;
-        $this->podName = $collection->getName();
+        $this->podName = $collection->getCollectionName();
         $this->defaultContext = $defaultContext;
         $this->stat = $stat;
         $this->readPreference = $readPreference;
@@ -73,8 +76,9 @@ class SearchDocuments extends DriverBase
                 // add id of current record to rules..
                 $indexRules['condition']['_id'] = array(
                     'r'=>$this->labeller->uri_to_alias($resource),
-                    'c'=>$this->labeller->uri_to_alias($context));				
-                if (Config::getInstance()->getCollectionForCBD($this->storeName, $irFrom)->find($indexRules['condition'])->hasNext())
+                    'c'=>$this->labeller->uri_to_alias($context));
+
+                if (Config::getInstance()->getCollectionForCBD($this->storeName, $irFrom)->findOne($indexRules['condition']))
                 {
                     // match found, add this spec id to those that should be generated
                    $proceedWithGeneration = true;
@@ -116,7 +120,7 @@ class SearchDocuments extends DriverBase
         Config::getInstance()->getCollectionForSearchDocument(
             $this->storeName,
             $specId)
-            ->ensureIndex(
+            ->createIndex(
                 array('_id.type'=>1),
                 array(
                     'background'=>1
@@ -126,7 +130,7 @@ class SearchDocuments extends DriverBase
         Config::getInstance()->getCollectionForSearchDocument(
             $this->storeName,
             $specId)
-            ->ensureIndex(
+            ->createIndex(
                 array('_impactIndex'=>1),
                 array(
                     'background'=>1
@@ -218,8 +222,9 @@ class SearchDocuments extends DriverBase
                     : $config->getCollectionForCBD($this->storeName, $from)
                 );
 
-                $cursor = $collection->find(array('_id'=>array('$in'=>$joinUris)));
-                $cursor->timeout(\Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout());
+                $cursor = $collection->find(array('_id'=>array('$in'=>$joinUris)), array(
+                    'maxTimeMS' => \Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout()
+                ));
 
                 // add to impact index
                 $this->addIdToImpactIndex($joinUris, $target);

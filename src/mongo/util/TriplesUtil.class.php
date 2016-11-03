@@ -2,6 +2,9 @@
 
 namespace Tripod\Mongo;
 
+use \MongoDB\Client;
+use \MongoDB\Collection;
+
 /**
  * Created by Chris Clarke
  * Date: 12/01/2012
@@ -99,8 +102,12 @@ class TriplesUtil
         }
         else
         {
-            $m = new \MongoClient(Config::getInstance()->getConnStr($storeName));
-            $collection = $m->selectDB($storeName)->selectCollection($podName);
+            $m = new Client(
+                Config::getInstance()->getConnStr($storeName),
+                [],
+                ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']]
+            );
+            $collection = $m->selectDatabase($storeName)->selectCollection($podName);
         }
 
         $graph = new MongoGraph();
@@ -284,11 +291,11 @@ class TriplesUtil
     /**
      * @param string $cbdSubject
      * @param MongoGraph $cbdGraph
-     * @param \MongoCollection $collection
+     * @param Collection $collection
      * @param string $context
      * @throws \Exception
      */
-    protected function saveCBD($cbdSubject,MongoGraph $cbdGraph,\MongoCollection $collection,$context)
+    protected function saveCBD($cbdSubject,MongoGraph $cbdGraph,Collection $collection,$context)
     {
         $cbdSubject = $this->labeller->uri_to_alias($cbdSubject);
         if ($cbdGraph == null || $cbdGraph->is_empty())
@@ -297,10 +304,10 @@ class TriplesUtil
         }
         try
         {
-            $collection->insert($cbdGraph->to_tripod_array($cbdSubject,$context),array("w"=>1));
+            $collection->insertOne($cbdGraph->to_tripod_array($cbdSubject,$context),array("w"=>1));
             print ".";
         }
-        catch (\MongoException $e)
+        catch (\Exception $e)
         {
             if (preg_match('/E11000/',$e->getMessage()))
             {
@@ -312,9 +319,9 @@ class TriplesUtil
                 $existingGraph->add_graph($cbdGraph);
                 try
                 {
-                    $collection->update($criteria,$existingGraph->to_tripod_array($cbdSubject,$context),array("w"=>1));
+                    $collection->updateOne($criteria, ['$set' => $existingGraph->to_tripod_array($cbdSubject,$context)],array("w"=>1));
                 }
-                catch (\MongoException $e2)
+                catch (\Exception $e2)
                 {
                     throw new \Exception($e2->getMessage()); // todo: would be good to have typed exception
                 }
@@ -322,12 +329,12 @@ class TriplesUtil
             else
             {
                 // retry
-                print "MongoCursorException on update: ".$e->getMessage().", retrying\n";
+                print "CursorException on update: ".$e->getMessage().", retrying\n";
                 try
                 {
-                    $collection->insert($cbdGraph->to_tripod_array($cbdSubject,$context),array("w"=>1));
+                    $collection->insertOne($cbdGraph->to_tripod_array($cbdSubject,$context),array("w"=>1));
                 }
-                catch (\MongoException $e2)
+                catch (\Exception $e2)
                 {
                     throw new \Exception($e2->getMessage()); // todo: would be good to have typed exception
                 }
