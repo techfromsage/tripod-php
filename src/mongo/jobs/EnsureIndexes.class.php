@@ -63,4 +63,24 @@ class EnsureIndexes extends JobBase {
     {
         return new \Tripod\Mongo\IndexUtils();
     }
+
+    public function createJob($storeName, $reindex, $queueName=null)
+    {
+        if(!$queueName)
+        {
+            $queueName = \Tripod\Mongo\Config::getEnsureIndexesQueueName();
+        }
+        elseif(strpos($queueName, \Tripod\Mongo\Config::getEnsureIndexesQueueName()) === false)
+        {
+            $queueName = \Tripod\Mongo\Config::getEnsureIndexesQueueName() . '::' . $queueName;
+        }
+
+        $data = array(
+            self::STORENAME_KEY=>$storeName,
+            self::REINDEX_KEY=>$reindex,
+            self::TRIPOD_CONFIG_KEY=>\Tripod\Mongo\Config::getConfig()
+        );
+
+        $this->submitJob($queueName,get_class($this),$data);
+    }
 }
