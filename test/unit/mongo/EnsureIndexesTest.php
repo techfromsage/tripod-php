@@ -59,7 +59,7 @@ class EnsureIndexesTest extends MongoTripodTestBase
      */
     public function testSuccessfullyEnsureIndexesJob()
     {
-        $job = $this->createJob();
+        $job = $this->createMockJob();
         $job->args = $this->createDefaultArguments();
         $this->jobSuccessfullyEnsuresIndexes($job);
 
@@ -71,7 +71,7 @@ class EnsureIndexesTest extends MongoTripodTestBase
      */
     public function testEnsureIndexesJobThrowsErrorWhenCreatingIndexes()
     {
-        $job = $this->createJob();
+        $job = $this->createMockJob();
         $job->args = $this->createDefaultArguments();
         $this->jobThrowsExceptionWhenEnsuringIndexes($job);
         $this->setExpectedException('Exception', "Ensuring index failed");
@@ -92,7 +92,7 @@ class EnsureIndexesTest extends MongoTripodTestBase
         );
 
         //create mock job
-        $job = $this->createJob();
+        $job = $this->createMockJob();
         $job->expects($this->once())
             ->method('submitJob')
             ->with(
@@ -170,7 +170,7 @@ class EnsureIndexesTest extends MongoTripodTestBase
             'reindex'=>false
         );
 
-        $job = $this->createJob();
+        $job = $this->createMockJob();
 
         $queueName = \Tripod\Mongo\Config::getEnsureIndexesQueueName() . '::TRIPOD_TESTING_QUEUE_' . uniqid();
 
@@ -194,7 +194,7 @@ class EnsureIndexesTest extends MongoTripodTestBase
      *  @param  array list of methods to stub
      *  @return PHPUnit_Framework_MockObject_MockObject
      */
-    protected function createJob($methods=array())
+    protected function createMockJob($methods=array())
     {
         $methodsToStub = array('getIndexUtils', 'submitJob', 'warningLog', 'enqueue', 'getJobStatus');
 
