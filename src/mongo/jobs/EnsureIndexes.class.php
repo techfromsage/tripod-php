@@ -10,6 +10,7 @@ class EnsureIndexes extends JobBase {
 
     const STORENAME_KEY  = 'storeName';
     const REINDEX_KEY    = 'reindex';
+    const BACKGROUND_KEY = 'background';
 
     /**
      * Runs the EnsureIndexes Job
@@ -31,7 +32,7 @@ class EnsureIndexes extends JobBase {
             $this->getIndexUtils()->ensureIndexes(
                 $this->args[self::REINDEX_KEY],
                 $this->args[self::STORENAME_KEY],
-                true // always create indexes in the background
+                $this->args[self::BACKGROUND_KEY]
             );
 
             $timer->stop();
@@ -48,11 +49,13 @@ class EnsureIndexes extends JobBase {
     }
 
     /**
+     * This method is use to schedule an EnsureIndexes job.
+     *
      * @param string $storeName
      * @param booelan $reindex
      * @param string $queueName
      */
-    public function createJob($storeName, $reindex, $queueName=null)
+    public function createJob($storeName, $reindex, $background, $queueName=null)
     {
         if(!$queueName)
         {
@@ -64,9 +67,10 @@ class EnsureIndexes extends JobBase {
         }
 
         $data = array(
-            self::STORENAME_KEY=>$storeName,
-            self::REINDEX_KEY=>$reindex,
-            self::TRIPOD_CONFIG_KEY=>\Tripod\Mongo\Config::getConfig()
+            self::STORENAME_KEY => $storeName,
+            self::REINDEX_KEY => $reindex,
+            self::BACKGROUND_KEY => $background,
+            self::TRIPOD_CONFIG_KEY => \Tripod\Mongo\Config::getConfig()
         );
 
         $this->submitJob($queueName,get_class($this),$data);
@@ -78,7 +82,7 @@ class EnsureIndexes extends JobBase {
      */
     protected function getMandatoryArgs()
     {
-        return array(self::TRIPOD_CONFIG_KEY, self::STORENAME_KEY, self::REINDEX_KEY);
+        return array(self::TRIPOD_CONFIG_KEY, self::STORENAME_KEY, self::REINDEX_KEY, self::BACKGROUND_KEY);
     }
 
     /**

@@ -69,9 +69,9 @@ class IndexUtils
                 if($collection)
                 {
                     $indexes = array(
-                        array(_ID_KEY.'.'._ID_RESOURCE=>1, _ID_KEY.'.'._ID_CONTEXT=>1, _ID_KEY.'.'._ID_TYPE=>1),
-                        array(_ID_KEY.'.'._ID_TYPE=>1),
-                        array("value."._IMPACT_INDEX=>1)
+                        array(_ID_KEY.'.'._ID_RESOURCE => 1, _ID_KEY.'.'._ID_CONTEXT => 1, _ID_KEY.'.'._ID_TYPE => 1),
+                        array(_ID_KEY.'.'._ID_TYPE => 1),
+                        array('value.'._IMPACT_INDEX => 1)
                     );
                     if(isset($spec['ensureIndexes']))
                     {
@@ -100,9 +100,9 @@ class IndexUtils
                 if($collection)
                 {
                     $indexes = array(
-                        array(_ID_KEY.'.'._ID_RESOURCE=>1, _ID_KEY.'.'._ID_CONTEXT=>1, _ID_KEY.'.'._ID_TYPE=>1),
-                        array(_ID_KEY.'.'._ID_TYPE=>1),
-                        array("value."._IMPACT_INDEX=>1)
+                        array(_ID_KEY.'.'._ID_RESOURCE => 1, _ID_KEY.'.'._ID_CONTEXT => 1, _ID_KEY.'.'._ID_TYPE => 1),
+                        array(_ID_KEY.'.'._ID_TYPE => 1),
+                        array('value.'._IMPACT_INDEX => 1)
                     );
                     if(isset($spec['ensureIndexes']))
                     {
@@ -131,9 +131,9 @@ class IndexUtils
                 if($collection)
                 {
                     $indexes = array(
-                        array(_ID_KEY.'.'._ID_RESOURCE=>1, _ID_KEY.'.'._ID_CONTEXT=>1),
-                        array(_ID_KEY.'.'._ID_TYPE=>1),
-                        array(_IMPACT_INDEX=>1)
+                        array(_ID_KEY.'.'._ID_RESOURCE => 1, _ID_KEY.'.'._ID_CONTEXT => 1),
+                        array(_ID_KEY.'.'._ID_TYPE => 1),
+                        array(_IMPACT_INDEX => 1)
                     );
 
                     if($reindex)

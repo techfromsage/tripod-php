@@ -393,10 +393,10 @@ class IndexUtilsTest extends MongoTripodTestBase
         $mockCollection->expects($this->exactly(4))
             ->method('createIndex')
             ->withConsecutive(
-                array(array('rdf:type.u' => 1), array('name'=>'rdf_type', 'background'=>$background)),
-                array(array('_id' =>1 , '_lockedForTrans'=>1), array('name'=>'_lockedForTransIdx', 'background'=>$background)),
-                array(array('_id' =>1 , '_uts'=>1), array('name'=>'_updatedTsIdx', 'background'=>$background)),
-                array(array('_id' =>1 , '_cts'=>1), array('name'=>'_createdTsIdx', 'background'=>$background))
+                array(array('rdf:type.u' => 1), array('name' => 'rdf_type', 'background' => $background)),
+                array(array(_ID_KEY => 1, _LOCKED_FOR_TRANS => 1), array('name' => '_lockedForTransIdx', 'background' => $background)),
+                array(array(_ID_KEY => 1, _UPDATED_TS => 1), array('name' => '_updatedTsIdx', 'background' => $background)),
+                array(array(_ID_KEY => 1, _CREATED_TS => 1), array('name' => '_createdTsIdx', 'background' => $background))
             );
     }
 
@@ -413,10 +413,10 @@ class IndexUtilsTest extends MongoTripodTestBase
         $mockCollection->expects($this->exactly(4))
             ->method('createIndex')
             ->withConsecutive(
-                array(array('_id.r' =>1, '_id.c'=>1, '_id.type'=>1), array('background'=>$background)),
-                array(array('_id.type' => 1), array('background'=>$background)),
-                array(array('value._impactIndex' =>1), array('background'=>$background)),
-                array(array('rdf:type.u' => 1), array('background'=>$background))
+                array(array(_ID_KEY.'.'._ID_RESOURCE => 1, _ID_KEY.'.'._ID_CONTEXT => 1, _ID_KEY.'.'._ID_TYPE => 1), array('background'=>$background)),
+                array(array(_ID_KEY.'.'._ID_TYPE => 1), array('background' => $background)),
+                array(array('value.'._IMPACT_INDEX => 1), array('background' => $background)),
+                array(array('rdf:type.u' => 1), array('background' => $background))
             );
     }
 
@@ -433,9 +433,9 @@ class IndexUtilsTest extends MongoTripodTestBase
         $mockCollection->expects($this->exactly(4))
             ->method('createIndex')
             ->withConsecutive(
-                array(array('_id.r' =>1, '_id.c'=>1, '_id.type'=>1), array('background'=>$background)),
-                array(array('_id.type' => 1), array('background'=>$background)),
-                array(array('value._impactIndex' =>1), array('background'=>$background)),
+                array(array(_ID_KEY.'.'._ID_RESOURCE => 1, _ID_KEY.'.'._ID_CONTEXT => 1, _ID_KEY.'.'._ID_TYPE => 1), array('background'=>$background)),
+                array(array(_ID_KEY.'.'._ID_TYPE => 1), array('background' => $background)),
+                array(array('value.'._IMPACT_INDEX => 1), array('background' => $background)),
                 array(array('rdf:type.u' => 1), array('background'=>$background))
             );
     }
@@ -452,9 +452,9 @@ class IndexUtilsTest extends MongoTripodTestBase
         $mockCollection->expects($this->exactly(3))
             ->method('createIndex')
             ->withConsecutive(
-                array(array('_id.r' =>1, '_id.c'=>1), array('background'=>$background)),
-                array(array('_id.type' => 1), array('background'=>$background)),
-                array(array('_impactIndex' =>1), array('background'=>$background))
+                array(array(_ID_KEY.'.'._ID_RESOURCE => 1, _ID_KEY.'.'._ID_CONTEXT => 1), array('background' => $background)),
+                array(array(_ID_KEY.'.'._ID_TYPE => 1), array('background' => $background)),
+                array(array(_IMPACT_INDEX => 1), array('background' => $background))
             );
 
     }
@@ -468,7 +468,6 @@ class IndexUtilsTest extends MongoTripodTestBase
      */
     protected function setConfigForCBDIndexes($mockConfig)
     {
-
         // minimal config to verify that
         $config=array();
         $config["data_sources"] = array(
@@ -507,7 +506,6 @@ class IndexUtilsTest extends MongoTripodTestBase
 
     protected function setConfigForViewIndexes($mockConfig)
     {
-
         // minimal config to verify that
         $config=array();
         $config["data_sources"] = array(
@@ -551,7 +549,6 @@ class IndexUtilsTest extends MongoTripodTestBase
 
     protected function setConfigForTableIndexes($mockConfig)
     {
-
         // minimal config to verify that
         $config=array();
         $config["data_sources"] = array(
@@ -598,7 +595,6 @@ class IndexUtilsTest extends MongoTripodTestBase
 
     protected function setConfigForSearchDocIndexes($mockConfig)
     {
-
         // minimal config to verify that
         $config=array();
         $config["data_sources"] = array(

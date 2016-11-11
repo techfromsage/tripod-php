@@ -17,7 +17,8 @@ class EnsureIndexesTest extends MongoTripodTestBase
         $this->args = array(
             'tripodConfig' => '',
             'storeName'    => '',
-            'reindex'      => ''
+            'reindex'      => '',
+            'background'   => ''
         );
         parent::setUp();
     }
@@ -50,12 +51,14 @@ class EnsureIndexesTest extends MongoTripodTestBase
         return array(
             array('tripodConfig'),
             array('storeName'),
-            array('reindex')
+            array('reindex'),
+            array('background')
         );
     }
 
     /**
      * Test the job behaves as expected
+     * @group ensure-indexes
      */
     public function testSuccessfullyEnsureIndexesJob()
     {
@@ -68,6 +71,7 @@ class EnsureIndexesTest extends MongoTripodTestBase
 
     /**
      * Test that the job fails by throwing an exception
+     * @group ensure-indexes
      */
     public function testEnsureIndexesJobThrowsErrorWhenCreatingIndexes()
     {
@@ -86,9 +90,10 @@ class EnsureIndexesTest extends MongoTripodTestBase
     public function testEnsureIndexesCreateJobDefaultQueue()
     {
         $jobData = array(
-            'storeName'=>'tripod_php_testing',
-            'tripodConfig'=>\Tripod\Mongo\Config::getConfig(),
-            'reindex'=>false
+            'storeName' => 'tripod_php_testing',
+            'tripodConfig' => \Tripod\Mongo\Config::getConfig(),
+            'reindex' => false,
+            'background' => true
         );
 
         //create mock job
@@ -101,7 +106,7 @@ class EnsureIndexesTest extends MongoTripodTestBase
                 $jobData
             );
 
-        $job->createJob('tripod_php_testing', false);
+        $job->createJob('tripod_php_testing', false, true);
     }
 
     /**
@@ -111,9 +116,10 @@ class EnsureIndexesTest extends MongoTripodTestBase
     public function testEnsureIndexesCreateJobUnreachableRedis()
     {
         $jobData = array(
-            'storeName'=>'tripod_php_testing',
-            'tripodConfig'=>\Tripod\Mongo\Config::getConfig(),
-            'reindex'=>false
+            'storeName' => 'tripod_php_testing',
+            'tripodConfig' => \Tripod\Mongo\Config::getConfig(),
+            'reindex' => false,
+            'background' => true
         );
 
         //create mock job
@@ -123,13 +129,15 @@ class EnsureIndexesTest extends MongoTripodTestBase
 
         $e = new Exception("Connection to Redis failed after 1 failures.Last Error : (0) php_network_getaddresses: getaddrinfo failed: nodename nor servname provided, or not known");
 
-        $job->expects($this->any())->method("enqueue")->will($this->throwException($e));
+        // this is called 6 times because after the first attempt fails it will
+        // retry 5 times.
+        $job->expects($this->exactly(6))->method("enqueue")->will($this->throwException($e));
 
         // expect 5 retries. Catch this with call to warning log
         $job->expects($this->exactly(5))->method("warningLog");
 
         $this->setExpectedException('\Tripod\Exceptions\JobException','Exception queuing job  - Connection to Redis failed after 1 failures.Last Error : (0) php_network_getaddresses: getaddrinfo failed: nodename nor servname provided, or not known');
-        $job->createJob('tripod_php_testing', false);
+        $job->createJob('tripod_php_testing', false, true);
 
     }
 
@@ -140,22 +148,25 @@ class EnsureIndexesTest extends MongoTripodTestBase
     public function testEnsureIndexesCreateJobStatusFalse()
     {
         $jobData = array(
-            'storeName'=>'tripod_php_testing',
-            'tripodConfig'=>\Tripod\Mongo\Config::getConfig(),
-            'reindex'=>false
+            'storeName' => 'tripod_php_testing',
+            'tripodConfig' => \Tripod\Mongo\Config::getConfig(),
+            'reindex' => false,
+            'background' => true
         );
 
         $job = $this->getMockBuilder('\Tripod\Mongo\Jobs\EnsureIndexes')
             ->setMethods(array('warningLog', 'enqueue', 'getJobStatus'))
             ->getMock();
 
-        $job->expects($this->any())->method("enqueue")->will($this->returnValue("sometoken"));
-        $job->expects($this->any())->method("getJobStatus")->will($this->returnValue(false));
+        // both of these methods will be called 6 times because after the first attempt fails it will
+        // retry 5 times.
+        $job->expects($this->exactly(6))->method("enqueue")->will($this->returnValue("sometoken"));
+        $job->expects($this->exactly(6))->method("getJobStatus")->will($this->returnValue(false));
 
         // expect 5 retries. Catch this with call to warning log
         $job->expects($this->exactly(5))->method("warningLog");
         $this->setExpectedException('\Tripod\Exceptions\JobException', 'Exception queuing job  - Could not retrieve status for queued job - job sometoken failed to tripod::ensureindexes');
-        $job->createJob('tripod_php_testing', false);
+        $job->createJob('tripod_php_testing', false, true);
     }
 
     /**
@@ -165,9 +176,10 @@ class EnsureIndexesTest extends MongoTripodTestBase
     public function testEnsureIndexesCreateJobSpecifyQueue()
     {
         $jobData = array(
-            'storeName'=>'tripod_php_testing',
-            'tripodConfig'=>\Tripod\Mongo\Config::getConfig(),
-            'reindex'=>false
+            'storeName' => 'tripod_php_testing',
+            'tripodConfig' => \Tripod\Mongo\Config::getConfig(),
+            'reindex' => false,
+            'background' => true
         );
 
         $job = $this->createMockJob();
@@ -182,7 +194,7 @@ class EnsureIndexesTest extends MongoTripodTestBase
                 $jobData
             );
 
-        $job->createJob('tripod_php_testing', false, $queueName);
+        $job->createJob('tripod_php_testing', false, true, $queueName);
     }
     /*
      *  HELPER METHODS BELOW HERE
@@ -219,7 +231,8 @@ class EnsureIndexesTest extends MongoTripodTestBase
         $arguments = array(
             'tripodConfig' => \Tripod\Mongo\Config::getConfig(),
             'storeName'    => 'tripod_php_testing',
-            'reindex'      => false
+            'reindex'      => false,
+            'background'   => true
         );
 
         return $arguments;
