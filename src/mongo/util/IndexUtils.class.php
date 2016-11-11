@@ -154,6 +154,11 @@ class IndexUtils
         }
     }
 
+    /**
+     * returns mongo tripod config instance, this method aids helps with
+     * testing.
+     * @return \Tripod\Mongo\Config
+     */
     protected function getConfig()
     {
         return Config::getInstance();
