@@ -28,6 +28,7 @@ class EnsureIndexes extends JobBase {
             $this->validateArgs();
 
             \Tripod\Mongo\Config::setConfig($this->args[self::TRIPOD_CONFIG_KEY]);
+            $this->debugLog('Ensuring indexes for tenant=' . $this->args[self::STORENAME_KEY]. ', reindex=' . $this->args[self::REINDEX_KEY] . ', background=' . $this->args[self::BACKGROUND_KEY]);
 
             $this->getIndexUtils()->ensureIndexes(
                 $this->args[self::REINDEX_KEY],
