@@ -2178,6 +2178,33 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         );
     }
 
+    /** START: getETag tests */
+
+    public function testEtagIsMicrotimeFormat() {
+
+        $config = \Tripod\Mongo\Config::getInstance();
+        $updatedAt = new UTCDateTime(floor(microtime(true) * 1000));
+
+        $_id = array(
+            'r' => 'http://talisaspire.com/resources/testEtag',
+            'c' => 'http://talisaspire.com/');
+        $doc = array(
+            '_id' => $_id,
+            'dct:title' => array('l'=>'etag'),
+            '_version' => 0,
+            '_cts' => $updatedAt,
+            '_uts' => $updatedAt
+        );
+        $config->getCollectionForCBD(
+            'tripod_php_testing',
+            'CBD_testing'
+        )->insertOne($doc, array("w"=>1));
+
+        $tripod = new \Tripod\Mongo\Driver('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/'));
+        $this->assertRegExp('/^0.[0-9]{6} [0-9]{10}/', $tripod->getETag($_id['r']));
+    }
+
+    /** END: getETag tests */
 }
 class TestSaveChangesHookA implements \Tripod\IEventHook
 {
