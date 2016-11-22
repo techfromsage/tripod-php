@@ -337,7 +337,7 @@ class Driver extends DriverBase implements \Tripod\IDriver
                 $this->debugLog("Found candidate",array("candidate"=>$candidate));
 
                 $ttlTo = new UTCDateTime(($candidate['created']->sec+$ttl) * 1000);
-                if ($ttlTo>(new UTCDateTime(floor(microtime(true))*1000)))
+                if ($ttlTo>(new UTCDateTime(floor(microtime(true) * 1000))))
                 {
                     // cache hit!
                     $this->debugLog("Cache hit",array("id"=>$id));
@@ -378,7 +378,7 @@ class Driver extends DriverBase implements \Tripod\IDriver
                 $cachedResults = array();
                 $cachedResults[_ID_KEY] = $id;
                 $cachedResults['results'] = $results;
-                $cachedResults['created'] = new UTCDateTime(floor(microtime(true))*1000);
+                $cachedResults['created'] = new UTCDateTime(floor(microtime(true) * 1000));
                 $this->debugLog("Adding result to cache",$cachedResults);
                 $result = $this->config->getCollectionForTTLCache($this->storeName)->insertOne($cachedResults);
                 if (!$result->isAcknowledged()) {
@@ -551,7 +551,16 @@ class Driver extends DriverBase implements \Tripod\IDriver
         /* @var $lastUpdatedDate UTCDateTime */
         $lastUpdatedDate = ($doc!=null && array_key_exists(_UPDATED_TS,$doc)) ? $doc[_UPDATED_TS] : null;
 
-        return (isset($lastUpdatedDate) == null) ? '' : $lastUpdatedDate->__toString();
+        if (isset($lastUpdatedDate) == null) {
+            $eTag = '';
+        } else {
+            // PHP 5.3 used MongoDate::__toString() to generate the etag.
+            // This is incompatible with UTCDate::__toString() so we convert it into a microtime representation.
+            // This ensures that if it is required to dual run 2 PHP versions, there are no etag compatibility issues.
+            $seconds = $lastUpdatedDate->__toString() / 1000;
+            $eTag = number_format(($seconds - floor($seconds)), 6) . ' ' . floor($seconds);
+        }
+        return $eTag;
     }
 
     /**

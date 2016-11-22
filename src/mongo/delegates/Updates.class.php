@@ -620,8 +620,7 @@ class Updates extends DriverBase {
                 // i.e. we only want to update document if it has all these values ( think platform 409 )
                 // currently the only criteria is the doc id
                 //var_dump($targetGraph->to_tripod_array($subjectOfChange));
-
-                $updatedAt = new UTCDateTime(floor(microtime(true))*1000);
+                $updatedAt = new UTCDateTime(floor(microtime(true) * 1000));
 
                 if (!isset($doc[_VERSION]))
                 {
@@ -1152,7 +1151,7 @@ class Updates extends DriverBase {
                     array(
                         _ID_KEY => array(_ID_RESOURCE => $this->labeller->uri_to_alias($s), _ID_CONTEXT => $contextAlias),
                         _LOCKED_FOR_TRANS => $transaction_id,
-                        _LOCKED_FOR_TRANS_TS => new UTCDateTime(floor(microtime(true))*1000)
+                        _LOCKED_FOR_TRANS_TS => new UTCDateTime(floor(microtime(true) * 1000))
                     ),
                     array("w" => 1)
                 );
@@ -1240,7 +1239,7 @@ class Updates extends DriverBase {
      */
     protected function getMongoDate()
     {
-        return new UTCDateTime(floor(microtime(true))*1000);
+        return new UTCDateTime(floor(microtime(true) * 1000));
     }
 
 

@@ -45,7 +45,7 @@ class TransactionLog
             "collectionName"=>$podName,
             "changes" => $changes,
             "status" => "in_progress",
-            "startTime" => new UTCDateTime(floor(microtime(true))*1000),
+            "startTime" => new UTCDateTime(floor(microtime(true) * 1000)),
             "originalCBDs"=>$originalCBDs,
             "sessionId" => ((session_id() != '') ? session_id() : '')
         );
@@ -91,7 +91,7 @@ class TransactionLog
      */
     public function failTransaction($transaction_id, \Exception $error=null)
     {
-        $params = array('status' => 'failed', 'failedTime' => new UTCDateTime(floor(microtime(true))*1000));
+        $params = array('status' => 'failed', 'failedTime' => new UTCDateTime(floor(microtime(true) * 1000)));
         if($error!=null)
         {
             $params['error'] = array('reason'=>$error->getMessage(), 'trace'=>$error->getTraceAsString());
@@ -115,7 +115,7 @@ class TransactionLog
 
         $this->updateTransaction(
             array("_id" => $transaction_id),
-            array('$set' => array('status' => 'completed', 'endTime' => new UTCDateTime(floor(microtime(true))*1000), 'newCBDs'=>$newCBDs)),
+            array('$set' => array('status' => 'completed', 'endTime' => new UTCDateTime(floor(microtime(true) * 1000)), 'newCBDs'=>$newCBDs)),
             array('w' => 1)
         );
     }

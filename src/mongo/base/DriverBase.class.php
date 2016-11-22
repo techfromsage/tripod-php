@@ -203,7 +203,7 @@ abstract class DriverBase
                     if ($type==MONGO_VIEW && array_key_exists(_EXPIRES,$result['value']))
                     {
                         // if expires < current date, regenerate view..
-                        $currentDate = new UTCDateTime(floor(microtime(true))*1000);
+                        $currentDate = new UTCDateTime(floor(microtime(true) * 1000));
                         if ($result['value'][_EXPIRES]->__toString() < $currentDate)
                         {
                             // regenerate!
