@@ -2201,7 +2201,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         )->insertOne($doc, array("w"=>1));
 
         $tripod = new \Tripod\Mongo\Driver('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/'));
-        $this->assertRegExp('/^0.[0-9]{6} [0-9]{10}/', $tripod->getETag($_id['r']));
+        $this->assertRegExp('/^0.[0-9]{8} [0-9]{10}/', $tripod->getETag($_id['r']));
     }
 
     /** END: getETag tests */
