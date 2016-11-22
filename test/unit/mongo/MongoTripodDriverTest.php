@@ -1888,7 +1888,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $this->lockDocument($subject,"transaction_400");
 
         $mongoDocumentId = new ObjectId();
-        $mongoDate = new UTCDateTime(floor(microtime(true))*1000);
+        $mongoDate = new UTCDateTime(floor(microtime(true)*1000));
 
         $this->setExpectedException('Exception', 'Some unexpected error occurred.');
 
@@ -1959,7 +1959,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $this->lockDocument($subject2,"transaction_400");
 
         $mongoDocumentId = new ObjectId();
-        $mongoDate = new UTCDateTime(floor(microtime(true))*1000);
+        $mongoDate = new UTCDateTime(floor(microtime(true)*1000));
 
         /* @var $auditManualRollbackCollection PHPUnit_Framework_MockObject_MockObject */
         $auditManualRollbackCollection = $this->getMock("MongoCollection", array('insertOne','updateOne'), array(), '', false);

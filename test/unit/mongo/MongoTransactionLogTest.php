@@ -448,8 +448,8 @@ class MongoTransactionLogTest extends MongoTripodTestBase
                 "_id" => array('r' => $subjectOfChange, 'c' => 'http://talisaspire.com/'),
                 "searchterms:title" => array('l' => 'anything at all'),
                 "_version" => $_version,
-                "_uts" => new UTCDateTime(floor(microtime(true))*1000),
-                "_cts" => new UTCDateTime(floor(microtime(true))*1000),
+                "_uts" => new UTCDateTime(floor(microtime(true)*1000)),
+                "_cts" => new UTCDateTime(floor(microtime(true)*1000)),
             )),
             'originalCBDs' => array(array(
                 "_id" => array('r' => $subjectOfChange, 'c' => 'http://talisaspire.com/')
