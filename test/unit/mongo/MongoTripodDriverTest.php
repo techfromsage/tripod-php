@@ -5,7 +5,6 @@ require_once 'src/classes/StatsD.class.php';
 require_once 'src/mongo/Driver.class.php';
 
 use \MongoDB\Driver\ReadPreference;
-use \MongoDB\BSON\UTCDateTime;
 use \MongoDB\BSON\ObjectId;
 
 /**
@@ -1888,7 +1887,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $this->lockDocument($subject,"transaction_400");
 
         $mongoDocumentId = new ObjectId();
-        $mongoDate = new UTCDateTime(floor(microtime(true))*1000);
+        $mongoDate = \Tripod\Mongo\DateUtil::getMongoDate();
 
         $this->setExpectedException('Exception', 'Some unexpected error occurred.');
 
@@ -1959,7 +1958,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $this->lockDocument($subject2,"transaction_400");
 
         $mongoDocumentId = new ObjectId();
-        $mongoDate = new UTCDateTime(floor(microtime(true))*1000);
+        $mongoDate = \Tripod\Mongo\DateUtil::getMongoDate();
 
         /* @var $auditManualRollbackCollection PHPUnit_Framework_MockObject_MockObject */
         $auditManualRollbackCollection = $this->getMock("MongoCollection", array('insertOne','updateOne'), array(), '', false);
@@ -2178,6 +2177,33 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         );
     }
 
+    /** START: getETag tests */
+
+    public function testEtagIsMicrotimeFormat() {
+
+        $config = \Tripod\Mongo\Config::getInstance();
+        $updatedAt = \Tripod\Mongo\DateUtil::getMongoDate();
+
+        $_id = array(
+            'r' => 'http://talisaspire.com/resources/testEtag',
+            'c' => 'http://talisaspire.com/');
+        $doc = array(
+            '_id' => $_id,
+            'dct:title' => array('l'=>'etag'),
+            '_version' => 0,
+            '_cts' => $updatedAt,
+            '_uts' => $updatedAt
+        );
+        $config->getCollectionForCBD(
+            'tripod_php_testing',
+            'CBD_testing'
+        )->insertOne($doc, array("w"=>1));
+
+        $tripod = new \Tripod\Mongo\Driver('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/'));
+        $this->assertRegExp('/^0.[0-9]{8} [0-9]{10}/', $tripod->getETag($_id['r']));
+    }
+
+    /** END: getETag tests */
 }
 class TestSaveChangesHookA implements \Tripod\IEventHook
 {

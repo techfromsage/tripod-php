@@ -9,7 +9,6 @@ use Tripod\Mongo\ImpactedSubject;
 use Tripod\Mongo\Labeller;
 use \MongoDB\Driver\ReadPreference;
 use \MongoDB\Collection;
-use \MongoDB\BSON\UTCDateTime;
 
 /**
  * Class Views
@@ -513,7 +512,7 @@ class Views extends CompositeBase
                     if (isset($viewSpec['ttl']))
                     {
                         $buildImpactIndex=false;
-                        $value[_EXPIRES] = new UTCDateTime($this->getExpirySecFromNow($viewSpec['ttl']) * 1000);
+                        $value[_EXPIRES] = \Tripod\Mongo\DateUtil::getMongoDate($this->getExpirySecFromNow($viewSpec['ttl']) * 1000);
                     }
                     else
                     {

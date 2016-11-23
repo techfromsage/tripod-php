@@ -10,7 +10,6 @@ use Tripod\Mongo\ImpactedSubject;
 use Tripod\Mongo\Labeller;
 use \MongoDB\Driver\ReadPreference;
 use \MongoDB\Collection;
-use \MongoDB\BSON\UTCDateTime;
 
 /**
  * Class Tables
@@ -1268,7 +1267,7 @@ class Tables extends CompositeBase
                     if(is_array($value)) $value = implode($options['glue'], $value);
                     break;
                 case 'date':
-                    if(is_string($value)) $value = new UTCDateTime((strtotime($value) * 1000));
+                    if(is_string($value)) $value = \Tripod\Mongo\DateUtil::getMongoDate((strtotime($value) * 1000));
                     break;
                 default:
                     throw new \Exception("Could not apply modifier:".$modifier);
