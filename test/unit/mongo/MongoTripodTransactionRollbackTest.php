@@ -3,8 +3,6 @@ require_once 'MongoTripodTestBase.php';
 /** @noinspection PhpIncludeInspection */
 require_once 'src/mongo/Driver.class.php';
 
-use \MongoDB\BSON\UTCDateTime;
-
 /**
  * This test suite was added to specifically verify behaviour of code
  * during Driver->storeChanges.
@@ -62,8 +60,8 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
             'rdf:type'=>array('u'=>'acorn:Resource'),
             'dct:title'=>array(array('l'=>'Title one'),array('l'=>'Title two')),
             '_version'=>0,
-            '_cts'=> new UTCDateTime(strtotime("2013-03-21 00:00:00")*1000),
-            '_uts'=> new UTCDateTime(strtotime("2013-03-21 00:00:00")*1000)
+            '_cts'=> \Tripod\Mongo\DateUtil::getMongoDate(strtotime("2013-03-21 00:00:00")*1000),
+            '_uts'=> \Tripod\Mongo\DateUtil::getMongoDate(strtotime("2013-03-21 00:00:00")*1000)
         );
 
         $doc2 = array(
@@ -71,8 +69,8 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
             'rdf:type'=>array('u'=>'acorn:Book'),
             'dct:title'=>array(array('l'=>'Title three'),array('l'=>'Title four')),
             '_version'=>0,
-            '_cts'=> new UTCDateTime(strtotime("2013-03-21 00:00:00")*1000),
-            '_uts'=> new UTCDateTime(strtotime("2013-03-21 00:00:00")*1000)
+            '_cts'=> \Tripod\Mongo\DateUtil::getMongoDate(strtotime("2013-03-21 00:00:00")*1000),
+            '_uts'=> \Tripod\Mongo\DateUtil::getMongoDate(strtotime("2013-03-21 00:00:00")*1000)
         );
         $this->addDocument($doc1);
         $this->addDocument($doc2);
@@ -214,8 +212,8 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
             'rdf:type'=>array('u'=>'acorn:Resource'),
             'dct:title'=>array(array('l'=>'Title one'),array('l'=>'Title two')),
             '_version'=>0,
-            '_cts'=> new UTCDateTime(strtotime("2013-03-21 00:00:00")*1000),
-            '_uts'=> new UTCDateTime(strtotime("2013-03-21 00:00:00")*1000)
+            '_cts'=> \Tripod\Mongo\DateUtil::getMongoDate(strtotime("2013-03-21 00:00:00")*1000),
+            '_uts'=> \Tripod\Mongo\DateUtil::getMongoDate(strtotime("2013-03-21 00:00:00")*1000)
         );
 
         $doc2 = array(
@@ -223,8 +221,8 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
             'rdf:type'=>array('u'=>'acorn:Book'),
             'dct:title'=>array(array('l'=>'Title three'),array('l'=>'Title four')),
             '_version'=>0,
-            '_cts'=> new UTCDateTime(strtotime("2013-03-21 00:00:00")*1000),
-            '_uts'=> new UTCDateTime(strtotime("2013-03-21 00:00:00")*1000)
+            '_cts'=> \Tripod\Mongo\DateUtil::getMongoDate(strtotime("2013-03-21 00:00:00")*100),
+            '_uts'=> \Tripod\Mongo\DateUtil::getMongoDate(strtotime("2013-03-21 00:00:00")*1000)
         );
         $this->addDocument($doc1);
         $this->addDocument($doc2);
@@ -315,8 +313,8 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
             'rdf:type'=>array('u'=>'acorn:Resource'),
             'dct:title'=>array(array('l'=>'Title one'),array('l'=>'Title two')),
             '_version'=>0,
-            '_cts'=> new UTCDateTime(floor(microtime(true)*1000)),
-            '_uts'=> new UTCDateTime(floor(microtime(true)*1000))
+            '_cts'=> \Tripod\Mongo\DateUtil::getMongoDate(),
+            '_uts'=> \Tripod\Mongo\DateUtil::getMongoDate()
         );
 
         $doc2 = array(
@@ -324,8 +322,8 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
             'rdf:type'=>array('u'=>'acorn:Book'),
             'dct:title'=>array(array('l'=>'Title three'),array('l'=>'Title four')),
             '_version'=>0,
-            '_cts'=> new UTCDateTime(floor(microtime(true)*1000)),
-            '_uts'=> new UTCDateTime(floor(microtime(true)*1000))
+            '_cts'=> \Tripod\Mongo\DateUtil::getMongoDate(),
+            '_uts'=> \Tripod\Mongo\DateUtil::getMongoDate()
         );
         $this->addDocument($doc1);
         $this->addDocument($doc2);
@@ -442,7 +440,7 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
                     array(
                         '_id' => array(_ID_RESOURCE => $this->labeller->uri_to_alias($s), _ID_CONTEXT => $contextAlias),
                         _LOCKED_FOR_TRANS => $transaction_id,
-                        _LOCKED_FOR_TRANS_TS => new UTCDateTime(floor(microtime(true)*1000))
+                        _LOCKED_FOR_TRANS_TS => \Tripod\Mongo\DateUtil::getMongoDate()
                     ),
                     array("w" => 1)
                 );

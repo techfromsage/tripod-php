@@ -8,7 +8,6 @@ use \MongoDB\Driver\ReadPreference;
 use \MongoDB\Database;
 use \MongoDB\Collection;
 use \MongoDB\Operation\FindOneAndUpdate;
-use \MongoDB\BSON\UTCDateTime;
 use \MongoDB\BSON\ObjectId;
 
 require_once TRIPOD_DIR . 'mongo/Config.class.php';
@@ -620,7 +619,7 @@ class Updates extends DriverBase {
                 // i.e. we only want to update document if it has all these values ( think platform 409 )
                 // currently the only criteria is the doc id
                 //var_dump($targetGraph->to_tripod_array($subjectOfChange));
-                $updatedAt = new UTCDateTime(floor(microtime(true) * 1000));
+                $updatedAt = \Tripod\Mongo\DateUtil::getMongoDate();
 
                 if (!isset($doc[_VERSION]))
                 {
@@ -909,10 +908,10 @@ class Updates extends DriverBase {
             $query[_LOCKED_FOR_TRANS_TS] = array();
 
             if (!empty($fromDateTime)) {
-                $query[_LOCKED_FOR_TRANS_TS][MONGO_OPERATION_GTE] = new UTCDateTime(strtotime($fromDateTime)*1000);
+                $query[_LOCKED_FOR_TRANS_TS][MONGO_OPERATION_GTE] = \Tripod\Mongo\DateUtil::getMongoDate(strtotime($fromDateTime)*1000);
             }
             if (!empty($tillDateTime)) {
-                $query[_LOCKED_FOR_TRANS_TS][MONGO_OPERATION_LTE] = new UTCDateTime(strtotime($tillDateTime)*1000);
+                $query[_LOCKED_FOR_TRANS_TS][MONGO_OPERATION_LTE] = \Tripod\Mongo\DateUtil::getMongoDate(strtotime($tillDateTime)*1000);
             }
         }
         $docs = $this->getLocksCollection()->find($query, array('sort' => array(_LOCKED_FOR_TRANS => 1)));
@@ -1151,7 +1150,7 @@ class Updates extends DriverBase {
                     array(
                         _ID_KEY => array(_ID_RESOURCE => $this->labeller->uri_to_alias($s), _ID_CONTEXT => $contextAlias),
                         _LOCKED_FOR_TRANS => $transaction_id,
-                        _LOCKED_FOR_TRANS_TS => new UTCDateTime(floor(microtime(true) * 1000))
+                        _LOCKED_FOR_TRANS_TS => \Tripod\Mongo\DateUtil::getMongoDate()
                     ),
                     array("w" => 1)
                 );
@@ -1235,11 +1234,11 @@ class Updates extends DriverBase {
     }
 
     /**
-     * @return UTCDateTime
+     * @return \MongoDB\BSON\UTCDateTime
      */
     protected function getMongoDate()
     {
-        return new UTCDateTime(floor(microtime(true) * 1000));
+        return \Tripod\Mongo\DateUtil::getMongoDate();
     }
 
 

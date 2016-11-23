@@ -4,8 +4,6 @@ require_once 'src/mongo/Driver.class.php';
 require_once 'src/mongo/delegates/TransactionLog.class.php';
 require_once 'src/mongo/MongoGraph.class.php';
 
-use \MongoDB\BSON\UTCDateTime;
-
 /**
  * Class MongoTransactionLogTest
  */
@@ -441,15 +439,15 @@ class MongoTransactionLogTest extends MongoTripodTestBase
             ),
             'collectionName' => 'CBD_testing',
             'dbName' => 'tripod_php_testing',
-            'startTime' => new UTCDateTime(strtotime($startTime)*1000),
-            'endTime' => new UTCDateTime(strtotime($endTime)*1000),
+            'startTime' => \Tripod\Mongo\DateUtil::getMongoDate(strtotime($startTime)*1000),
+            'endTime' => \Tripod\Mongo\DateUtil::getMongoDate(strtotime($endTime)*1000),
             'status' => 'completed',
             'newCBDs' => array(array(
                 "_id" => array('r' => $subjectOfChange, 'c' => 'http://talisaspire.com/'),
                 "searchterms:title" => array('l' => 'anything at all'),
                 "_version" => $_version,
-                "_uts" => new UTCDateTime(floor(microtime(true)*1000)),
-                "_cts" => new UTCDateTime(floor(microtime(true)*1000)),
+                "_uts" => \Tripod\Mongo\DateUtil::getMongoDate(),
+                "_cts" => \Tripod\Mongo\DateUtil::getMongoDate(),
             )),
             'originalCBDs' => array(array(
                 "_id" => array('r' => $subjectOfChange, 'c' => 'http://talisaspire.com/')

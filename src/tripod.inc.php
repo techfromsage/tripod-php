@@ -38,6 +38,7 @@ require_once TRIPOD_DIR.'/mongo/jobs/ApplyOperation.class.php';
 
 require_once TRIPOD_DIR . '/mongo/util/IndexUtils.class.php';
 require_once TRIPOD_DIR . '/mongo/util/TriplesUtil.class.php';
+require_once TRIPOD_DIR . '/mongo/util/DateUtil.class.php';
 
 require_once TRIPOD_DIR . '/mongo/serializers/NQuadSerializer.class.php';
 

@@ -5,7 +5,6 @@ require_once 'src/classes/StatsD.class.php';
 require_once 'src/mongo/Driver.class.php';
 
 use \MongoDB\Driver\ReadPreference;
-use \MongoDB\BSON\UTCDateTime;
 use \MongoDB\BSON\ObjectId;
 
 /**
@@ -1888,7 +1887,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $this->lockDocument($subject,"transaction_400");
 
         $mongoDocumentId = new ObjectId();
-        $mongoDate = new UTCDateTime(floor(microtime(true)*1000));
+        $mongoDate = \Tripod\Mongo\DateUtil::getMongoDate();
 
         $this->setExpectedException('Exception', 'Some unexpected error occurred.');
 
@@ -1959,7 +1958,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $this->lockDocument($subject2,"transaction_400");
 
         $mongoDocumentId = new ObjectId();
-        $mongoDate = new UTCDateTime(floor(microtime(true)*1000));
+        $mongoDate = \Tripod\Mongo\DateUtil::getMongoDate();
 
         /* @var $auditManualRollbackCollection PHPUnit_Framework_MockObject_MockObject */
         $auditManualRollbackCollection = $this->getMock("MongoCollection", array('insertOne','updateOne'), array(), '', false);
@@ -2183,7 +2182,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
     public function testEtagIsMicrotimeFormat() {
 
         $config = \Tripod\Mongo\Config::getInstance();
-        $updatedAt = new UTCDateTime(floor(microtime(true) * 1000));
+        $updatedAt = \Tripod\Mongo\DateUtil::getMongoDate();
 
         $_id = array(
             'r' => 'http://talisaspire.com/resources/testEtag',

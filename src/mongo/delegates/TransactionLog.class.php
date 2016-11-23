@@ -3,7 +3,6 @@
 namespace Tripod\Mongo;
 require_once TRIPOD_DIR . 'mongo/Config.class.php';
 
-use \MongoDB\BSON\UTCDateTime;
 use \MongoDB\InsertOneResult;
 use \MongoDB\UpdateOneResult;
 use \MongoDB\Driver\Cursor;
@@ -45,7 +44,7 @@ class TransactionLog
             "collectionName"=>$podName,
             "changes" => $changes,
             "status" => "in_progress",
-            "startTime" => new UTCDateTime(floor(microtime(true) * 1000)),
+            "startTime" => \Tripod\Mongo\DateUtil::getMongoDate(),
             "originalCBDs"=>$originalCBDs,
             "sessionId" => ((session_id() != '') ? session_id() : '')
         );
@@ -91,7 +90,7 @@ class TransactionLog
      */
     public function failTransaction($transaction_id, \Exception $error=null)
     {
-        $params = array('status' => 'failed', 'failedTime' => new UTCDateTime(floor(microtime(true) * 1000)));
+        $params = array('status' => 'failed', 'failedTime' => \Tripod\Mongo\DateUtil::getMongoDate());
         if($error!=null)
         {
             $params['error'] = array('reason'=>$error->getMessage(), 'trace'=>$error->getTraceAsString());
@@ -115,7 +114,7 @@ class TransactionLog
 
         $this->updateTransaction(
             array("_id" => $transaction_id),
-            array('$set' => array('status' => 'completed', 'endTime' => new UTCDateTime(floor(microtime(true) * 1000)), 'newCBDs'=>$newCBDs)),
+            array('$set' => array('status' => 'completed', 'endTime' => \Tripod\Mongo\DateUtil::getMongoDate(), 'newCBDs'=>$newCBDs)),
             array('w' => 1)
         );
     }
@@ -161,10 +160,10 @@ class TransactionLog
 
         if(!empty($fromDate)) {
             $q = array();
-            $q['$gte'] = new UTCDateTime(strtotime($fromDate)*1000);
+            $q['$gte'] = \Tripod\Mongo\DateUtil::getMongoDate(strtotime($fromDate)*1000);
 
             if(!empty($toDate)){
-                $q['$lte'] = new UTCDateTime(strtotime($toDate)*1000);
+                $q['$lte'] = \Tripod\Mongo\DateUtil::getMongoDate(strtotime($toDate)*1000);
             }
 
             $query['endTime'] = $q;

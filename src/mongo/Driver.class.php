@@ -7,7 +7,6 @@ namespace Tripod\Mongo;
 use Tripod\Exceptions\Exception;
 use Tripod\IEventHook;
 use \MongoDB\Driver\ReadPreference;
-use \MongoDB\BSON\UTCDateTime;
 use \MongoDB\BSON\Javascript;
 use \MongoDB\Database;
 
@@ -336,8 +335,8 @@ class Driver extends DriverBase implements \Tripod\IDriver
             {
                 $this->debugLog("Found candidate",array("candidate"=>$candidate));
 
-                $ttlTo = new UTCDateTime(($candidate['created']->sec+$ttl) * 1000);
-                if ($ttlTo>(new UTCDateTime(floor(microtime(true) * 1000))))
+                $ttlTo = \Tripod\Mongo\DateUtil::getMongoDate((( (int) $candidate['created']->__toString() / 1000) + $ttl) * 1000);
+                if ($ttlTo>(\Tripod\Mongo\DateUtil::getMongoDate()))
                 {
                     // cache hit!
                     $this->debugLog("Cache hit",array("id"=>$id));
@@ -378,7 +377,7 @@ class Driver extends DriverBase implements \Tripod\IDriver
                 $cachedResults = array();
                 $cachedResults[_ID_KEY] = $id;
                 $cachedResults['results'] = $results;
-                $cachedResults['created'] = new UTCDateTime(floor(microtime(true) * 1000));
+                $cachedResults['created'] = \Tripod\Mongo\DateUtil::getMongoDate();
                 $this->debugLog("Adding result to cache",$cachedResults);
                 $result = $this->config->getCollectionForTTLCache($this->storeName)->insertOne($cachedResults);
                 if (!$result->isAcknowledged()) {

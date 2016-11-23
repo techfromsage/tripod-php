@@ -5,7 +5,6 @@ require_once 'src/mongo/Driver.class.php';
 require_once 'src/mongo/delegates/Views.class.php';
 
 use \Tripod\Mongo\Composites\Views;
-use \MongoDB\BSON\UTCDateTime;
 use \MongoDB\Client;
 
 class MongoTripodViewsTest extends MongoTripodTestBase {
@@ -464,7 +463,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
 
     public function testGenerateViewWithTTL()
     {
-        $expiryDate = new UTCDateTime((time()+300)*1000);
+        $expiryDate = \Tripod\Mongo\DateUtil::getMongoDate((time()+300)*1000);
         $mockTripodViews = $this->getMock('\Tripod\Mongo\Composites\Views', array('getExpirySecFromNow'), $this->viewsConstParams);
         $mockTripodViews->expects($this->once())->method('getExpirySecFromNow')->with(300)->will($this->returnValue((time()+300)));
 
@@ -556,7 +555,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
 
     public function testGenerateViewWithCountAggregate()
     {
-        $expiryDate = new UTCDateTime((time()+300)*1000);
+        $expiryDate = \Tripod\Mongo\DateUtil::getMongoDate((time()+300)*1000);
         /**
          * @var $mockTripodViews \Tripod\Mongo\Composites\Views
          */
