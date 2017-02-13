@@ -35,6 +35,7 @@ require_once TRIPOD_DIR . '/mongo/Driver.class.php';
 require_once TRIPOD_DIR.'/mongo/base/JobBase.class.php';
 require_once TRIPOD_DIR . '/mongo/jobs/DiscoverImpactedSubjects.class.php';
 require_once TRIPOD_DIR.'/mongo/jobs/ApplyOperation.class.php';
+require_once TRIPOD_DIR.'/mongo/jobs/EnsureIndexes.class.php';
 
 require_once TRIPOD_DIR . '/mongo/util/IndexUtils.class.php';
 require_once TRIPOD_DIR . '/mongo/util/TriplesUtil.class.php';
@@ -139,7 +140,6 @@ define('BF_RESETDATAJOB', 'http://schemas.talis.com/2006/bigfoot/configuration#R
 define('BF_RESTOREJOB', 'http://schemas.talis.com/2006/bigfoot/configuration#RestoreJob');
 define('BF_SNAPSHOTJOB', 'http://schemas.talis.com/2006/bigfoot/configuration#SnapshotJob');
 define('BF_USER', 'http://schemas.talis.com/2006/bigfoot/configuration#User');
-
 
 define('ANALYZER_STANDARDEN', 'http://schemas.talis.com/2007/bigfoot/analyzers#standard-en');
 define('ANALYZER_STANDARDEL', 'http://schemas.talis.com/2007/bigfoot/analyzers#standard-el');

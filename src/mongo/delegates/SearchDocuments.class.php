@@ -68,7 +68,7 @@ class SearchDocuments extends DriverBase
         $proceedWithGeneration = false;
 
         foreach ($searchSpec['filter'] as $indexRules)
-        {        	
+        {
             // run a query to work out
             if (!empty($indexRules['condition']))
             {
@@ -117,27 +117,7 @@ class SearchDocuments extends DriverBase
         $_id['type'] = $specId;
         $generatedDocument['_id'] = $_id;
 
-        Config::getInstance()->getCollectionForSearchDocument(
-            $this->storeName,
-            $specId)
-            ->createIndex(
-                array('_id.type'=>1),
-                array(
-                    'background'=>1
-                )
-            );
-
-        Config::getInstance()->getCollectionForSearchDocument(
-            $this->storeName,
-            $specId)
-            ->createIndex(
-                array('_impactIndex'=>1),
-                array(
-                    'background'=>1
-                )
-            );
-
-        if(isset($searchSpec['fields'])){  	
+        if(isset($searchSpec['fields'])){
             $this->addFields($sourceDocument, $searchSpec['fields'], $generatedDocument);
         }
         if(isset($searchSpec['indices'])){
@@ -309,7 +289,7 @@ class SearchDocuments extends DriverBase
      */
     protected function getSearchDocumentSpecification($specId)
     {
-    	return Config::getInstance()->getSearchDocumentSpecification($this->storeName, $specId);
+        return Config::getInstance()->getSearchDocumentSpecification($this->storeName, $specId);
     }
 
     /**
@@ -333,35 +313,35 @@ class SearchDocuments extends DriverBase
             $limit = $field['limit'];
         } else {
             $limit = count($values);
-        }        
-        
-		if(count($values) > 0){						
-	        for ($i=0; $i<$limit; $i++) {	        	
-	            $v = $values[$i];
-	            if (empty($objName)) {
-	                if (!isset($target[$name])) {
-	                    $target[$name] = $v;
-	                } else if (is_array($target[$name])) {
-	                    $target[$name][] = $v;
-	                } else {
-	                    $existingVal = $target[$name];
-	                    $target[$name] = array();
-	                    $target[$name][] = $existingVal;
-	                    $target[$name][] = $v;
-	                }
-	            } else {
-	                if (!isset($target[$objName][$name])) {
-	                    $target[$objName][$name] = $v;
-	                } else if (is_array($target[$objName][$name])) {
-	                    $target[$objName][$name][] = $v;
-	                } else {
-	                    $existingVal = $target[$objName][$name];
-	                    $target[$objName][$name] = array();
-	                    $target[$objName][$name][] = $existingVal;
-	                    $target[$objName][$name][] = $v;
-	                }
-	            }
-	        }
+        }
+
+        if(count($values) > 0){
+            for ($i=0; $i<$limit; $i++) {
+                $v = $values[$i];
+                if (empty($objName)) {
+                    if (!isset($target[$name])) {
+                        $target[$name] = $v;
+                    } else if (is_array($target[$name])) {
+                        $target[$name][] = $v;
+                    } else {
+                        $existingVal = $target[$name];
+                        $target[$name] = array();
+                        $target[$name][] = $existingVal;
+                        $target[$name][] = $v;
+                    }
+                } else {
+                    if (!isset($target[$objName][$name])) {
+                        $target[$objName][$name] = $v;
+                    } else if (is_array($target[$objName][$name])) {
+                        $target[$objName][$name][] = $v;
+                    } else {
+                        $existingVal = $target[$objName][$name];
+                        $target[$objName][$name] = array();
+                        $target[$objName][$name][] = $existingVal;
+                        $target[$objName][$name][] = $v;
+                    }
+                }
+            }
         }
     }
 

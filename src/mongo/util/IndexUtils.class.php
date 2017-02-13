@@ -18,11 +18,11 @@ class IndexUtils
      */
     public function ensureIndexes($reindex=false,$storeName=null,$background=true)
     {
-        $config = Config::getInstance();
+        $config = $this->getConfig();
         $dbs = ($storeName==null) ? $config->getDbs() : array($storeName);
         foreach ($dbs as $storeName)
         {
-            $collections = Config::getInstance()->getIndexesGroupedByCollection($storeName);
+            $collections = $config->getIndexesGroupedByCollection($storeName);
             foreach ($collections as $collectionName=>$indexes)
             {
                 // Don't do this for composites, which could be anywhere
@@ -65,10 +65,14 @@ class IndexUtils
             // Index views
             foreach($config->getViewSpecifications($storeName) as $viewId=>$spec)
             {
-                $collection = Config::getInstance()->getCollectionForView($storeName, $viewId);
+                $collection = $config->getCollectionForView($storeName, $viewId);
                 if($collection)
                 {
-                    $indexes = array(array("_id.type"=>1));
+                    $indexes = array(
+                        array(_ID_KEY.'.'._ID_RESOURCE => 1, _ID_KEY.'.'._ID_CONTEXT => 1, _ID_KEY.'.'._ID_TYPE => 1),
+                        array(_ID_KEY.'.'._ID_TYPE => 1),
+                        array('value.'._IMPACT_INDEX => 1)
+                    );
                     if(isset($spec['ensureIndexes']))
                     {
                         $indexes = array_merge($indexes, $spec['ensureIndexes']);
@@ -92,10 +96,14 @@ class IndexUtils
             // Index table rows
             foreach($config->getTableSpecifications($storeName) as $tableId=>$spec)
             {
-                $collection = Config::getInstance()->getCollectionForTable($storeName, $tableId);
+                $collection = $config->getCollectionForTable($storeName, $tableId);
                 if($collection)
                 {
-                    $indexes = array(array("_id.type"=>1));
+                    $indexes = array(
+                        array(_ID_KEY.'.'._ID_RESOURCE => 1, _ID_KEY.'.'._ID_CONTEXT => 1, _ID_KEY.'.'._ID_TYPE => 1),
+                        array(_ID_KEY.'.'._ID_TYPE => 1),
+                        array('value.'._IMPACT_INDEX => 1)
+                    );
                     if(isset($spec['ensureIndexes']))
                     {
                         $indexes = array_merge($indexes, $spec['ensureIndexes']);
@@ -115,6 +123,44 @@ class IndexUtils
                     }
                 }
             }
+
+            // index search documents
+            foreach($config->getSearchDocumentSpecifications($storeName) as $searchId=>$spec)
+            {
+                $collection = $config->getCollectionForSearchDocument($storeName, $searchId);
+                if($collection)
+                {
+                    $indexes = array(
+                        array(_ID_KEY.'.'._ID_RESOURCE => 1, _ID_KEY.'.'._ID_CONTEXT => 1),
+                        array(_ID_KEY.'.'._ID_TYPE => 1),
+                        array(_IMPACT_INDEX => 1)
+                    );
+
+                    if($reindex)
+                    {
+                        $collection->deleteIndexes();
+                    }
+                    foreach($indexes as $index)
+                    {
+                        $collection->createIndex(
+                            $index,
+                            array(
+                                "background"=>$background
+                            )
+                        );
+                    }
+                }
+            }
         }
+    }
+
+    /**
+     * returns mongo tripod config instance, this method aids helps with
+     * testing.
+     * @return \Tripod\Mongo\Config
+     */
+    protected function getConfig()
+    {
+        return Config::getInstance();
     }
 }
