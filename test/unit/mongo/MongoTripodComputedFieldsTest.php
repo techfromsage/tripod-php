@@ -23,6 +23,65 @@ class MongoTripodComputedFieldsTest extends MongoTripodTestBase
         parent::tearDown();
     }
 
+    public function testConditionalComputedFieldWithDates() {
+        $tableSpec = array(
+            "_id"=> "t_conditional_creators",
+            "type"=> array("bibo:Document"),
+            "from"=>"CBD_testing",
+            "fields"=> array(
+                array(
+                    "fieldName" => "dateUpdated",
+                    "predicates" => array(array(
+                        "date" => array(
+                            "predicates" => array("dct:updated")
+                        )
+                    ))
+                ),
+                array(
+                    "fieldName" => "datePublished",
+                    "predicates" => array(array(
+                        "date" => array(
+                            "predicates" => array("dct:published")
+                        )
+                    ))
+                )
+            ),
+            "computed_fields"=>array(
+                array(
+                    "fieldName" => "status",
+                    "value" => array(
+                        "conditional" => array(
+                            "if" => array('$dateUpdated', '>', '$datePublished'),
+                            "then" => 'Updated',
+                            "else" => 'Published'
+                        )
+                    )
+                )
+            )
+        );
+
+        $oldConfig = \Tripod\Mongo\Config::getConfig();
+        $newConfig = \Tripod\Mongo\Config::getConfig();
+        $newConfig['stores']['tripod_php_testing']['table_specifications'][] = $tableSpec;
+        \Tripod\Mongo\Config::setConfig($newConfig);
+        \Tripod\Mongo\Config::getInstance();
+        $this->tripod = new \Tripod\Mongo\Driver('CBD_testing', 'tripod_php_testing');
+        $this->loadDatesDataViaTripod();
+        $this->tripod->generateTableRows('t_conditional_creators');
+
+        $collection = \Tripod\Mongo\Config::getInstance()->getCollectionForTable('tripod_php_testing', 't_conditional_creators');
+
+        $tableDoc = $collection->findOne(array('_id.type'=>'t_conditional_creators', '_id.r' => 'baseData:foo1234'));
+        $this->assertEquals('Updated', $tableDoc['value']['status']);
+
+        $tableDoc = $collection->findOne(array('_id.type'=>'t_conditional_creators', '_id.r' => 'baseData:foo12345'));
+        $this->assertEquals('Published', $tableDoc['value']['status']);
+
+        \Tripod\Mongo\Config::setConfig($oldConfig);
+        \Tripod\Mongo\Config::getInstance();
+        $collection->drop();
+    }
+
     public function testConditionalComputedField()
     {
         $tableSpec = array(

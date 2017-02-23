@@ -1,0 +1,52 @@
+[
+    {
+        "_id":
+        {
+            "r":"baseData:foo1234",
+            "c":"http://talisaspire.com/"
+        },
+        "rdf:type":
+            [
+                {
+                    "u":"bibo:Document"
+                }
+            ],
+        "dct:title" : {
+            "l" : "A document title"
+        },
+        "dct:isVersionOf" : {
+            "u" : "http://talisaspire.com/works/4d101f63c10a6"
+        },
+        "dct:updated" : {
+            "l" : "2017-02-23T14:49:02+00:00"
+        },
+        "dct:published" : {
+            "l" : "2017-02-22T14:49:02+00:00"
+        }
+    },
+    {
+        "_id":
+        {
+            "r":"baseData:foo12345",
+            "c":"http://talisaspire.com/"
+        },
+        "rdf:type":
+            [
+                {
+                    "u":"bibo:Document"
+                }
+            ],
+        "dct:title" : {
+            "l" : "A document title"
+        },
+        "dct:isVersionOf" : {
+            "u" : "http://talisaspire.com/works/4d101f63c10a6"
+        },
+        "dct:updated" : {
+            "l" : "2017-02-23T14:49:02+00:00"
+        },
+        "dct:published" : {
+            "l" : "2017-02-23T14:49:02+00:00"
+        }
+    }
+]

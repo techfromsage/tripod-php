@@ -926,6 +926,11 @@ class Tables extends CompositeBase
      */
     protected function castValueType($value, $type=null)
     {
+        // If value is a UTCDateTime, turn into a DateTime object in order to perform comparison
+        if ($value instanceof \MongoDB\BSON\UTCDateTime) {
+            $value = $value->toDateTime();
+        }
+
         switch($type)
         {
             case 'string':
