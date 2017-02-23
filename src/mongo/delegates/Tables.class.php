@@ -926,6 +926,11 @@ class Tables extends CompositeBase
      */
     protected function castValueType($value, $type=null)
     {
+        // If value is a UTCDateTime, turn into a timestamp in order to perform comparisons
+        if ($value instanceof UTCDateTime) {
+            $value = $value->toDateTime()->getTimestamp();
+        }
+        
         switch($type)
         {
             case 'string':
