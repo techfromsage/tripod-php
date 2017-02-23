@@ -51,6 +51,9 @@ abstract class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         }
     }
 
+    protected function loadDatesDataViaTripod() {
+        $this->loadDataViaTripod('/data/dates.json');
+    }
     protected function loadResourceDataViaTripod()
     {
         $this->loadDataViaTripod('/data/resources.json');
