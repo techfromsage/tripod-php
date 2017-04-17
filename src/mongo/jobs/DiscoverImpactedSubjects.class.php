@@ -21,11 +21,6 @@ class DiscoverImpactedSubjects extends JobBase {
     protected $applyOperation;
 
     /**
-     * @var array
-     */
-    protected $subjectsGroupedByQueue = array();
-
-    /**
      * Run the DiscoverImpactedSubjects job
      * @throws \Exception
      */
@@ -47,6 +42,7 @@ class DiscoverImpactedSubjects extends JobBase {
             $tripod = $this->getTripod($this->args[self::STORE_NAME_KEY],$this->args[self::POD_NAME_KEY]);
 
             $operations = $this->args[self::OPERATIONS_KEY];
+            $modifiedSubjects = array();
 
             $subjectsAndPredicatesOfChange = $this->args[self::CHANGES_KEY];
 
@@ -54,70 +50,13 @@ class DiscoverImpactedSubjects extends JobBase {
             {
                 /** @var \Tripod\Mongo\Composites\IComposite $composite */
                 $composite = $tripod->getComposite($op);
-                $modifiedSubjects = $composite->getImpactedSubjects($subjectsAndPredicatesOfChange,$this->args[self::CONTEXT_ALIAS_KEY]);
-                if(!empty($modifiedSubjects)){
-                    /* @var $subject \Tripod\Mongo\ImpactedSubject */
-                    foreach ($modifiedSubjects as $subject) {
-                        if(isset($this->args[self::QUEUE_KEY]) || count($subject->getSpecTypes()) == 0)
-                        {
-                            $queueName = (isset($this->args[self::QUEUE_KEY]) ? $this->args[self::QUEUE_KEY] : Config::getApplyQueueName());
-                            $this->addSubjectToQueue($subject, $queueName);
-                        }
-                        else
-                        {
-                            $specsGroupedByQueue = array();
-                            foreach($subject->getSpecTypes() as $specType)
-                            {
-                                $spec = null;
-                                switch($subject->getOperation())
-                                {
-                                    case OP_VIEWS:
-                                        $spec = Config::getInstance()->getViewSpecification($this->args[self::STORE_NAME_KEY], $specType);
-                                        break;
-                                    case OP_TABLES:
-                                        $spec = Config::getInstance()->getTableSpecification($this->args[self::STORE_NAME_KEY], $specType);
-                                        break;
-                                    case OP_SEARCH:
-                                        $spec = Config::getInstance()->getSearchDocumentSpecification($this->args[self::STORE_NAME_KEY], $specType);
-                                        break;
-                                }
-                                if(!$spec || !isset($spec['queue']))
-                                {
-                                    if(!$spec)
-                                    {
-                                        $spec = array();
-                                    }
-                                    $spec['queue'] = Config::getApplyQueueName();
-                                }
-                                if(!isset($specsGroupedByQueue[$spec['queue']]))
-                                {
-                                    $specsGroupedByQueue[$spec['queue']] = array();
-                                }
-                                $specsGroupedByQueue[$spec['queue']][] = $specType;
-                            }
+                $modifiedSubjects = array_merge($modifiedSubjects,$composite->getImpactedSubjects($subjectsAndPredicatesOfChange,$this->args['contextAlias']));
+            }
 
-                            foreach($specsGroupedByQueue as $queueName=>$specs)
-                            {
-                                $queuedSubject = new \Tripod\Mongo\ImpactedSubject(
-                                    $subject->getResourceId(),
-                                    $subject->getOperation(),
-                                    $subject->getStoreName(),
-                                    $subject->getPodName(),
-                                    $specs
-                                );
-
-                                $this->addSubjectToQueue($queuedSubject, $queueName);
-                            }
-                        }
-                    }
-                    if(!empty($this->subjectsGroupedByQueue))
-                    {
-                        foreach($this->subjectsGroupedByQueue as $queueName=>$subjects)
-                        {
-                            $this->getApplyOperation()->createJob($subjects, $queueName);
-                        }
-                        $this->subjectsGroupedByQueue = array();
-                    }
+            if(!empty($modifiedSubjects)){
+                /* @var $subject \Tripod\Mongo\ImpactedSubject */
+                foreach ($modifiedSubjects as $subject) {
+                    $subject->update();
                 }
             }
 
