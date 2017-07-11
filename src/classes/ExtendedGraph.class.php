@@ -608,7 +608,8 @@ class ExtendedGraph
             /** @var \ARC2_RDFXMLParser $parser */
             $parser = \ARC2::getRDFXMLParser();
             $parser->parse($base, $rdfxml );
-            $this->_add_arc2_triple_list($parser->getTriples());
+            $triples = $parser->getTriples();
+            $this->_add_arc2_triple_list($triples);
             unset($parser);
         }
     }
