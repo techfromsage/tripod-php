@@ -593,7 +593,8 @@ class ExtendedGraph
             if(!empty($errors)){
                 $this->parser_errors[]=$errors;
             }
-            $this->_add_arc2_triple_list($parser->getTriples());
+            $triples = $parser->getTriples();
+            $this->_add_arc2_triple_list($triples);
             unset($parser);
         }
     }
