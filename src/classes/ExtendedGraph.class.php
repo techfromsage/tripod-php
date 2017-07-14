@@ -668,7 +668,8 @@ class ExtendedGraph
             $parser = \ARC2::getSemHTMLParser();
             $parser->parse($base, $html );
             $parser->extractRDF('rdfa');
-            $this->_add_arc2_triple_list($parser->getTriples());
+	    $triples = $parser->getTriples();
+            $this->_add_arc2_triple_list($triples);
             unset($parser);
         }
     }
