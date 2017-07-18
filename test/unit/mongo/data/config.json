@@ -21,12 +21,12 @@
     "data_sources" : {
         "rs1" : {
             "type" : "mongo",
-            "connection": "mongodb:\/\/localhost",
+            "connection": "mongodb:\/\/localhost:27017",
             "replicaSet": ""
         },
         "rs2" : {
             "type" : "mongo",
-            "connection": "mongodb:\/\/localhost",
+            "connection": "mongodb:\/\/localhost:27017",
             "replicaSet": ""
         }
     },
