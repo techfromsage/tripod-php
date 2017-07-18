@@ -840,7 +840,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $config["data_sources"] = array(
             "db"=>array(
                 "type"=>"mongo",
-                "connection"=>"mongodb://localhost"
+                "connection"=>"mongodb://localhost:27017/"
             ),
             "tlog"=>array(
                 "type"=>"mongo",
