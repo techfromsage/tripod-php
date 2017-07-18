@@ -593,7 +593,8 @@ class ExtendedGraph
             if(!empty($errors)){
                 $this->parser_errors[]=$errors;
             }
-            $this->_add_arc2_triple_list($parser->getTriples());
+            $triples = $parser->getTriples();
+            $this->_add_arc2_triple_list($triples);
             unset($parser);
         }
     }
@@ -608,7 +609,8 @@ class ExtendedGraph
             /** @var \ARC2_RDFXMLParser $parser */
             $parser = \ARC2::getRDFXMLParser();
             $parser->parse($base, $rdfxml );
-            $this->_add_arc2_triple_list($parser->getTriples());
+            $triples = $parser->getTriples();
+            $this->_add_arc2_triple_list($triples);
             unset($parser);
         }
     }
@@ -666,7 +668,8 @@ class ExtendedGraph
             $parser = \ARC2::getSemHTMLParser();
             $parser->parse($base, $html );
             $parser->extractRDF('rdfa');
-            $this->_add_arc2_triple_list($parser->getTriples());
+	    $triples = $parser->getTriples();
+            $this->_add_arc2_triple_list($triples);
             unset($parser);
         }
     }

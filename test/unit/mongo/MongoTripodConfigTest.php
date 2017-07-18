@@ -150,7 +150,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
 
     public function testGetConnectionString()
     {
-        $this->assertEquals("mongodb://localhost",\Tripod\Mongo\Config::getInstance()->getConnStr("tripod_php_testing"));
+        $this->assertEquals("mongodb://localhost:27017/",\Tripod\Mongo\Config::getInstance()->getConnStr("tripod_php_testing"));
     }
 
     public function testGetConnectionStringThrowsException()
@@ -158,7 +158,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $this->setExpectedException(
             '\Tripod\Exceptions\ConfigException',
             'Database notexists does not exist in configuration');
-        $this->assertEquals("mongodb://localhost",\Tripod\Mongo\Config::getInstance()->getConnStr("notexists"));
+        $this->assertEquals("mongodb://localhost:27017/",\Tripod\Mongo\Config::getInstance()->getConnStr("notexists"));
     }
 
     public function testGetConnectionStringForReplicaSet(){
@@ -1709,7 +1709,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $mockConfig->loadConfig(json_decode(file_get_contents(dirname(__FILE__).'/data/config.json'), true));
         $mockConfig->expects($this->exactly(1))
             ->method('getMongoClient')
-            ->with('mongodb://localhost?connectTimeoutMS=20000')
+            ->with('mongodb://localhost:27017/?connectTimeoutMS=20000')
             ->will($this->returnCallback(
                 function()
                 {
@@ -1728,7 +1728,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $mockConfig->loadConfig(json_decode(file_get_contents(dirname(__FILE__).'/data/config.json'), true));
         $mockConfig->expects($this->exactly(30))
             ->method('getMongoClient')
-            ->with('mongodb://localhost?connectTimeoutMS=20000')
+            ->with('mongodb://localhost:27017/?connectTimeoutMS=20000')
             ->will($this->throwException(new ConnectionTimeoutException('Exception thrown when connecting to Mongo')));
 
         $mockConfig->getDatabase('tripod_php_testing', 'rs1', ReadPreference::RP_SECONDARY_PREFERRED);
@@ -1739,7 +1739,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $mockConfig->loadConfig(json_decode(file_get_contents(dirname(__FILE__).'/data/config.json'), true));
         $mockConfig->expects($this->exactly(5))
             ->method('getMongoClient')
-            ->with('mongodb://localhost?connectTimeoutMS=20000')
+            ->with('mongodb://localhost:27017/?connectTimeoutMS=20000')
             ->will($this->onConsecutiveCalls(
                 $this->throwException(new ConnectionTimeoutException('Exception thrown when connecting to Mongo')),
                 $this->throwException(new ConnectionTimeoutException('Exception thrown when connecting to Mongo')),
