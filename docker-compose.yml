@@ -1,0 +1,4 @@
+mongo:
+  image: mongo/2.6.12:latest
+  ports:
+      - "27017:27017"
