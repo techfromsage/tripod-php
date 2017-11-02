@@ -483,7 +483,7 @@ class Views extends CompositeBase
 
                     $generatedView['value'] = $value;
 
-                    $collection->replaceOne($id, $generatedView, ['upsert' => true]);
+                    $collection->replaceOne($generatedView['_id'], $generatedView, ['upsert' => true]);
                 }
             }
 
