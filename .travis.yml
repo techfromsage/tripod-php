@@ -15,7 +15,7 @@ before_install:
 - sleep 15
 install:
 - composer install
-# script: ant
+script: ant
 notifications:
   hipchat:
     rooms:
