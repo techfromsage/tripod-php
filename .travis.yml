@@ -10,12 +10,12 @@ services:
 - docker
 before_install:
 - docker pull rossfsinger/mongo-2.6.12
-- docker run -d -p 27017:27017 -v ~/data:/data/db rossfsinger/mongo-2.6.12:latest
+- docker run -d -p 127.0.0.1:27017:27017 -v ~/data:/data/db rossfsinger/mongo-2.6.12:latest
 - echo "extension = mongodb.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
 - sleep 15
 install:
 - composer install
-script: ant
+# script: ant
 notifications:
   hipchat:
     rooms:
