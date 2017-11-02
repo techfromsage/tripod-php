@@ -358,19 +358,30 @@ class Tables extends CompositeBase
 
     /**
      * This method will delete all table rows where the _id.type matches the specified $tableId
-     * @param string $tableId
+     * @param string                         $tableId   Table spec ID
+     * @param \MongoDB\BSON\UTCDateTime|null $timestamp Optional timestamp to delete all table rows that are older than
      */
-    public function deleteTableRowsByTableId($tableId) {
+    public function deleteTableRowsByTableId($tableId, $timestamp = null) {
         $t = new \Tripod\Timer();
         $t->start();
         $tableSpec = Config::getInstance()->getTableSpecification($this->storeName, $tableId);
-        if ($tableSpec==null)
-        {
+        if ($tableSpec == null) {
             $this->debugLog("Could not find a table specification for $tableId");
             return;
         }
 
-        $query = array("_id.type"=>$tableId);
+        $query = ['_id.type' => $tableId];
+        if ($timestamp) {
+            if (!($timestamp instanceof \MongoDB\BSON\UTCDateTime)) {
+                $timestamp = new \MongoDB\BSON\UTCDateTime($timestamp);
+            }
+            $query[\_CREATED_TS] = [
+                '$or' => [
+                    ['$lt' => $timestamp],
+                    ['$exists' => false]
+                ]
+            ];
+        }
         $this->config->getCollectionForTable($this->storeName, $tableId)
             ->deleteMany($query);
 
@@ -488,7 +499,7 @@ class Tables extends CompositeBase
      * @param string|null $queueName Queue for background bulk generation
      * @return null //@todo: this should be a bool
      */
-    public function generateTableRows($tableType,$resource=null,$context=null,$queueName=null)
+    public function generateTableRows($tableType, $resource = null, $context = null, $queueName = null)
     {
         $t = new \Tripod\Timer();
         $t->start();
@@ -496,8 +507,7 @@ class Tables extends CompositeBase
         $tableSpec = Config::getInstance()->getTableSpecification($this->storeName, $tableType);
         $collection = $this->config->getCollectionForTable($this->storeName, $tableType);
 
-        if ($tableSpec==null)
-        {
+        if ($tableSpec==null) {
             $this->debugLog("Could not find a table specification for $tableType");
             return null;
         }
@@ -509,22 +519,17 @@ class Tables extends CompositeBase
         $from = (isset($tableSpec["from"])) ? $tableSpec["from"] : $this->podName;
 
         $types = array();
-        if (is_array($tableSpec["type"]))
-        {
-            foreach ($tableSpec["type"] as $type)
-            {
+        if (is_array($tableSpec["type"])) {
+            foreach ($tableSpec["type"] as $type) {
                 $types[] = array("rdf:type.u"=>$this->labeller->qname_to_alias($type));
                 $types[] = array("rdf:type.u"=>$this->labeller->uri_to_alias($type));
             }
-        }
-        else
-        {
+        } else {
             $types[] = array("rdf:type.u"=>$this->labeller->qname_to_alias($tableSpec["type"]));
             $types[] = array("rdf:type.u"=>$this->labeller->uri_to_alias($tableSpec["type"]));
         }
         $filter = array('$or'=> $types);
-        if (isset($resource))
-        {
+        if (isset($resource)) {
             $filter["_id"] = array(_ID_RESOURCE=>$this->labeller->uri_to_alias($resource),_ID_CONTEXT=>$contextAlias);
         }
 
@@ -532,10 +537,8 @@ class Tables extends CompositeBase
             'maxTimeMS' => 1000000
         ));
 
-        foreach ($docs as $doc)
-        {
-            if($queueName && !$resource)
-            {
+        foreach ($docs as $doc) {
+            if ($queueName && !$resource) {
                 $subject = new ImpactedSubject(
                     $doc['_id'],
                     OP_TABLES,
@@ -546,32 +549,33 @@ class Tables extends CompositeBase
 
                 $jobOptions = array();
 
-                if($this->stat || !empty($this->statsConfig))
-                {
+                if($this->stat || !empty($this->statsConfig)) {
                     $jobOptions['statsConfig'] = $this->getStatsConfig();
                 }
 
                 $this->getApplyOperation()->createJob(array($subject), $queueName, $jobOptions);
-            }
-            else
-            {
+            } else {
                 // set up ID
-                $generatedRow = array("_id"=>array(_ID_RESOURCE=>$doc["_id"][_ID_RESOURCE],_ID_CONTEXT=>$doc["_id"][_ID_CONTEXT],_ID_TYPE=>$tableSpec['_id']));
-
-                $value = array('_id'=>$doc['_id']); // everything must go in the value object todo: this is a hang over from map reduce days, engineer out once we have stability on new PHP method for M/R
+                $generatedRow = [
+                    '_id' => [
+                        _ID_RESOURCE => $doc['_id'][_ID_RESOURCE],
+                        _ID_CONTEXT => $doc['_id'][_ID_CONTEXT],
+                        _ID_TYPE=>$tableSpec['_id']
+                    ],
+                    \_CREATED_TS => new \MongoDB\BSON\UTCDateTime()
+                ];
+                // everything must go in the value object todo: this is a hang over from map reduce days, engineer out once we have stability on new PHP method for M/R
+                $value = array('_id'=>$doc['_id'], '_cts' => new \MongoDB\BSON\UTCDateTime());
                 $this->addIdToImpactIndex($doc['_id'], $value); // need to add the doc to the impact index to be consistent with views/search etc. this is needed for discovering impacted operations
                 $this->addFields($doc,$tableSpec,$value);
-                if (isset($tableSpec['joins']))
-                {
+                if (isset($tableSpec['joins'])) {
                     $this->doJoins($doc,$tableSpec['joins'],$value,$from,$contextAlias);
                 }
-                if (isset($tableSpec['counts']))
-                {
+                if (isset($tableSpec['counts'])) {
                     $this->doCounts($doc,$tableSpec['counts'],$value);
                 }
 
-                if (isset($tableSpec['computed_fields']))
-                {
+                if (isset($tableSpec['computed_fields'])) {
                     $this->doComputedFields($tableSpec, $value);
                 }
 

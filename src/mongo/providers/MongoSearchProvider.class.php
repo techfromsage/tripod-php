@@ -336,20 +336,31 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
      * Removes all documents from search index based on the specified type id.
      * Here search type id represents to id from, mongo tripod config, that is converted to _id.type in SEARCH_INDEX_COLLECTION
      * If type id is not specified this method will throw an exception.
-     * @param string $typeId search type id
+     * @param string                         $typeId    Search type id
+     * @param \MongoDB\BSON\UTCDateTime|null $timestamp Optional timestamp to delete all search docs that are older than
      * @return bool|array  response returned by mongo
      * @throws \Tripod\Exceptions\Exception if there was an error performing the operation
      */
-    public function deleteSearchDocumentsByTypeId($typeId)
+    public function deleteSearchDocumentsByTypeId($typeId, $timestamp = null)
     {
         $searchSpec = $this->getSearchDocumentSpecification($typeId);
-        if ($searchSpec == null)
-        {
+        if ($searchSpec == null) {
             throw new \Tripod\Exceptions\SearchException("Could not find a search specification for $typeId");
         }
-
+        $query = ['_id.type' => $typeId];
+        if ($timestamp) {
+            if (!($timestamp instanceof \MongoDB\BSON\UTCDateTime)) {
+                $timestamp = new \MongoDB\BSON\UTCDateTime($timestamp);
+            }
+            $query[\_CREATED_TS] = [
+                '$or' => [
+                    ['$lt' => $timestamp],
+                    ['$exists' => false]
+                ]
+            ];
+        }
         return $this->config->getCollectionForSearchDocument($this->storeName, $typeId)
-            ->deleteMany(array("_id.type" => $typeId));
+            ->deleteMany($query);
     }
 
     /**

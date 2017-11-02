@@ -365,18 +365,30 @@ class Views extends CompositeBase
 
     /**
      * This method will delete all views where the _id.type of the viewmatches the specified $viewId
-     * @param $viewId
+     * @param string                         $viewId    View spec ID
+     * @param \MongoDB\BSON\UTCDateTime|null $timestamp Optional timestamp to delete all views that are older than
      */
-    public function deleteViewsByViewId($viewId){
+    public function deleteViewsByViewId($viewId, $timestamp = null)
+    {
         $viewSpec = Config::getInstance()->getViewSpecification($this->storeName, $viewId);
-        if ($viewSpec==null)
-        {
+        if ($viewSpec == null) {
             $this->debugLog("Could not find a view specification with viewId '$viewId'");
             return;
         }
-
+        $query = ['_id.type' => $viewId];
+        if ($timestamp) {
+            if (!($timestamp instanceof \MongoDB\BSON\UTCDateTime)) {
+                $timestamp = new \MongoDB\BSON\UTCDateTime($timestamp);
+            }
+            $query[\_CREATED_TS] = [
+                '$or' => [
+                    ['$lt' => $timestamp],
+                    ['$exists' => false]
+                ]
+            ];
+        }
         $this->config->getCollectionForView($this->storeName, $viewId)
-            ->deleteMany(array("_id.type"=>$viewId));
+            ->deleteMany($query);
     }
 
     /**
@@ -392,41 +404,32 @@ class Views extends CompositeBase
     {
         $contextAlias = $this->getContextAlias($context);
         $viewSpec = Config::getInstance()->getViewSpecification($this->storeName, $viewId);
-        if ($viewSpec==null)
-        {
+        if ($viewSpec == null) {
             $this->debugLog("Could not find a view specification for $resource with viewId '$viewId'");
             return null;
-        }
-        else
-        {
+        } else {
             $t = new \Tripod\Timer();
             $t->start();
 
             $from = $this->getFromCollectionForViewSpec($viewSpec);
             $collection = $this->config->getCollectionForView($this->storeName, $viewId);
 
-            if (!isset($viewSpec['joins']))
-            {
+            if (!isset($viewSpec['joins'])) {
                 throw new \Tripod\Exceptions\ViewException('Could not find any joins in view specification - usecase better served with select()');
             }
 
             $types = array(); // this is used to filter the CBD table to speed up the view creation
-            if (is_array($viewSpec["type"]))
-            {
-                foreach ($viewSpec["type"] as $type)
-                {
+            if (is_array($viewSpec["type"])) {
+                foreach ($viewSpec["type"] as $type) {
                     $types[] = array("rdf:type.u"=>$this->labeller->qname_to_alias($type));
                     $types[] = array("rdf:type.u"=>$this->labeller->uri_to_alias($type));
                 }
-            }
-            else
-            {
+            } else {
                 $types[] = array("rdf:type.u"=>$this->labeller->qname_to_alias($viewSpec["type"]));
                 $types[] = array("rdf:type.u"=>$this->labeller->uri_to_alias($viewSpec["type"]));
             }
             $filter = array('$or'=> $types);
-            if (isset($resource))
-            {
+            if (isset($resource)) {
                 $resourceAlias = $this->labeller->uri_to_alias($resource);
                 $filter["_id"] = array(_ID_RESOURCE=>$resourceAlias,_ID_CONTEXT=>$contextAlias);
             }
@@ -435,10 +438,8 @@ class Views extends CompositeBase
                 'maxTimeMS' => \Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout()
             ));
 
-            foreach ($docs as $doc)
-            {
-                if($queueName && !$resource)
-                {
+            foreach ($docs as $doc) {
+                if ($queueName && !$resource) {
                     $subject = new ImpactedSubject(
                         $doc['_id'],
                         OP_VIEWS,
@@ -448,30 +449,30 @@ class Views extends CompositeBase
                     );
 
                     $jobOptions = array();
-                    if($this->stat || !empty($this->statsConfig))
-                    {
+                    if ($this->stat || !empty($this->statsConfig)) {
                         $jobOptions['statsConfig'] = $this->getStatsConfig();
                     }
 
                     $this->getApplyOperation()->createJob(array($subject), $queueName, $jobOptions);
-                }
-                else
-                {
-                    // set up ID
-                    $id = array("_id"=>array(_ID_RESOURCE=>$doc["_id"][_ID_RESOURCE],_ID_CONTEXT=>$doc["_id"][_ID_CONTEXT],_ID_TYPE=>$viewSpec['_id']));
-                    $generatedView = $id;
+                } else {
+                    // Set up view meta information
+                    $generatedView = [
+                        '_id' => [
+                            _ID_RESOURCE => $doc['_id'][_ID_RESOURCE],
+                            _ID_CONTEXT => $doc['_id'][_ID_CONTEXT],
+                            _ID_TYPE=>$viewSpec['_id']
+                        ],
+                        \_CREATED_TS => new \MongoDB\BSON\UTCDateTime()
+                    ];
                     $value = array(); // everything must go in the value object todo: this is a hang over from map reduce days, engineer out once we have stability on new PHP method for M/R
 
                     $value[_GRAPHS] = array();
 
                     $buildImpactIndex=true;
-                    if (isset($viewSpec['ttl']))
-                    {
+                    if (isset($viewSpec['ttl'])) {
                         $buildImpactIndex=false;
                         $value[_EXPIRES] = \Tripod\Mongo\DateUtil::getMongoDate($this->getExpirySecFromNow($viewSpec['ttl']) * 1000);
-                    }
-                    else
-                    {
+                    } else {
                         $value[_IMPACT_INDEX] = array($doc['_id']);
                     }
 
