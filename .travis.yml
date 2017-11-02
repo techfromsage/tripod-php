@@ -11,6 +11,7 @@ services:
 before_install:
 - wget https://raw.githubusercontent.com/docker-library/mongo/0ac2867637ef5989e4dc051efa0ae296010e58c9/2.6/Dockerfile
 - wget https://raw.githubusercontent.com/docker-library/mongo/0ac2867637ef5989e4dc051efa0ae296010e58c9/2.6/docker-entrypoint.sh
+- chmod 0777 docker-entrypoint.sh
 - docker build -t mongo/2.6.12 .
 - docker run -d -p 27017:27017 -v ~/data:/data/db mongo/2.6.12:latest
 - echo "extension = mongodb.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
