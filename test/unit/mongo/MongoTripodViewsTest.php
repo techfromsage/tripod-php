@@ -390,7 +390,6 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         );
 
         $updatedView = $mongo->selectCollection('tripod_php_testing','views')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/filter1',"c"=>'http://talisaspire.com/',"type"=>'v_resource_filter1')));
-        $this->assertEquals($expectedUpdatedView,$updatedView);
         $this->assertEquals($expectedUpdatedView['_id'], $updatedView['_id']);
         $this->assertEquals($expectedUpdatedView['value'], $updatedView['value']);
         $this->assertInstanceOf('\MongoDB\BSON\UTCDateTime', $updatedView['_cts']);
