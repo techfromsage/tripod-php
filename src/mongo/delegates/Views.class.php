@@ -378,7 +378,7 @@ class Views extends CompositeBase
         $query = ['_id.type' => $viewId];
         if ($timestamp) {
             if (!($timestamp instanceof \MongoDB\BSON\UTCDateTime)) {
-                $timestamp = new \MongoDB\BSON\UTCDateTime($timestamp);
+                $timestamp = \Tripod\Mongo\DateUtil::getMongoDate($timestamp);
             }
             $query[\_CREATED_TS] = [
                 '$or' => [
@@ -462,7 +462,7 @@ class Views extends CompositeBase
                             _ID_CONTEXT => $doc['_id'][_ID_CONTEXT],
                             _ID_TYPE=>$viewSpec['_id']
                         ],
-                        \_CREATED_TS => new \MongoDB\BSON\UTCDateTime()
+                        \_CREATED_TS => \Tripod\Mongo\DateUtil::getMongoDate()
                     ];
                     $value = array(); // everything must go in the value object todo: this is a hang over from map reduce days, engineer out once we have stability on new PHP method for M/R
 

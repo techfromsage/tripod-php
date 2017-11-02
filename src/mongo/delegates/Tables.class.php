@@ -373,7 +373,7 @@ class Tables extends CompositeBase
         $query = ['_id.type' => $tableId];
         if ($timestamp) {
             if (!($timestamp instanceof \MongoDB\BSON\UTCDateTime)) {
-                $timestamp = new \MongoDB\BSON\UTCDateTime($timestamp);
+                $timestamp = \Tripod\Mongo\DateUtil::getMongoDate($timestamp);
             }
             $query[\_CREATED_TS] = [
                 '$or' => [
@@ -562,10 +562,10 @@ class Tables extends CompositeBase
                         _ID_CONTEXT => $doc['_id'][_ID_CONTEXT],
                         _ID_TYPE=>$tableSpec['_id']
                     ],
-                    \_CREATED_TS => new \MongoDB\BSON\UTCDateTime()
+                    \_CREATED_TS => \Tripod\Mongo\DateUtil::getMongoDate()
                 ];
                 // everything must go in the value object todo: this is a hang over from map reduce days, engineer out once we have stability on new PHP method for M/R
-                $value = array('_id'=>$doc['_id'], '_cts' => new \MongoDB\BSON\UTCDateTime());
+                $value = ['_id' => $doc['_id']];
                 $this->addIdToImpactIndex($doc['_id'], $value); // need to add the doc to the impact index to be consistent with views/search etc. this is needed for discovering impacted operations
                 $this->addFields($doc,$tableSpec,$value);
                 if (isset($tableSpec['joins'])) {
