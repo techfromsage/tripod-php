@@ -108,7 +108,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']]
         );
         $actualView = $mongo->selectCollection('tripod_php_testing','views')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA',"c"=>'http://talisaspire.com/',"type"=>'v_resource_full')));
-        $this->assertEquals($expectedView,$actualView);
+        $this->assertEquals($expectedView['_id'], $actualView['_id']);
+        $this->assertEquals($expectedView['value'], $actualView['value']);
+        $this->assertInstanceOf('\MongoDB\BSON\UTCDateTime', $actualView['_cts']);
     }
 
     /**
@@ -179,7 +181,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']]
         );
         $actualView = $mongo->selectCollection('tripod_php_testing','views')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/filter1',"c"=>'http://talisaspire.com/',"type"=>'v_resource_filter1')));
-        $this->assertEquals($expectedView,$actualView);
+        $this->assertEquals($expectedView['_id'], $actualView['_id']);
+        $this->assertEquals($expectedView['value'], $actualView['value']);
+        $this->assertInstanceOf('\MongoDB\BSON\UTCDateTime', $actualView['_cts']);
     }
 
     /**
@@ -244,7 +248,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $actualView = $mongo->selectCollection('tripod_php_testing','views')->findOne(
             array('_id'=>array("r"=>'http://talisaspire.com/resources/filter1',"c"=>'http://talisaspire.com/',"type"=>'v_resource_filter2'))
         );
-        $this->assertEquals($expectedView,$actualView);
+        $this->assertEquals($expectedView['_id'], $actualView['_id']);
+        $this->assertEquals($expectedView['value'], $actualView['value']);
+        $this->assertInstanceOf('\MongoDB\BSON\UTCDateTime', $actualView['_cts']);
     }
 
     /**
@@ -315,7 +321,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']]
         );
         $actualView = $mongo->selectCollection('tripod_php_testing','views')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/filter1',"c"=>'http://talisaspire.com/',"type"=>'v_resource_filter1')));
-        $this->assertEquals($expectedView,$actualView);
+        $this->assertEquals($expectedView['_id'], $actualView['_id']);
+        $this->assertEquals($expectedView['value'], $actualView['value']);
+        $this->assertInstanceOf('\MongoDB\BSON\UTCDateTime', $actualView['_cts']);
 
         // Modify http://talisaspire.com/works/filter1 so that it is a Chapter (included in the view) not a Book (excluded from the view)
         $oldGraph = new \Tripod\ExtendedGraph();
@@ -383,6 +391,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
 
         $updatedView = $mongo->selectCollection('tripod_php_testing','views')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/filter1',"c"=>'http://talisaspire.com/',"type"=>'v_resource_filter1')));
         $this->assertEquals($expectedUpdatedView,$updatedView);
+        $this->assertEquals($expectedUpdatedView['_id'], $updatedView['_id']);
+        $this->assertEquals($expectedUpdatedView['value'], $updatedView['value']);
+        $this->assertInstanceOf('\MongoDB\BSON\UTCDateTime', $updatedView['_cts']);
     }
 
     /**
@@ -458,7 +469,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         );
         $actualView = $mongo->selectCollection('tripod_php_testing','views')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/filter1',"c"=>'http://talisaspire.com/',"type"=>'v_resource_rdfsequence')));
 
-        $this->assertEquals($expectedView,$actualView);
+        $this->assertEquals($expectedView['_id'], $actualView['_id']);
+        $this->assertEquals($expectedView['value'], $actualView['value']);
+        $this->assertInstanceOf('\MongoDB\BSON\UTCDateTime', $actualView['_cts']);
     }
 
     public function testGenerateViewWithTTL()
@@ -504,7 +517,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         );
         // get the view direct from mongo
         $actualView = \Tripod\Mongo\Config::getInstance()->getCollectionForView('tripod_php_testing', 'v_resource_full_ttl')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA',"c"=>'http://talisaspire.com/',"type"=>'v_resource_full_ttl')));
-        $this->assertEquals($expectedView,$actualView);
+        $this->assertEquals($expectedView['_id'], $actualView['_id']);
+        $this->assertEquals($expectedView['value'], $actualView['value']);
+        $this->assertInstanceOf('\MongoDB\BSON\UTCDateTime', $actualView['_cts']);
     }
 
     /**
@@ -609,7 +624,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         );
 
         $actualView = \Tripod\Mongo\Config::getInstance()->getCollectionForView('tripod_php_testing', 'v_counts')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/works/4d101f63c10a6',"c"=>"http://talisaspire.com/","type"=>'v_counts')));
-        $this->assertEquals($expectedView,$actualView);
+        $this->assertEquals($expectedView['_id'], $actualView['_id']);
+        $this->assertEquals($expectedView['value'], $actualView['value']);
+        $this->assertInstanceOf('\MongoDB\BSON\UTCDateTime', $actualView['_cts']);
     }
 
     public function testGetViewWithNamespaces()
