@@ -813,4 +813,16 @@ class Views extends CompositeBase
         return $this->getConfigInstance()->getCollectionForView($this->storeName, $viewSpecId);
     }
 
+    /**
+     * Count the number of documents in the spec that match $filters
+     *
+     * @param string $viewSpec View spec ID
+     * @param array  $filters  Query filters to get count on
+     * @return integer
+     */
+    public function count($viewSpec, array $filters = [])
+    {
+        $filters['_id.type'] = $viewSpec;
+        return $this->getCollectionForViewSpec($viewSpec)->count($filters);
+    }
 }

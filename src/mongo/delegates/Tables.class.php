@@ -1441,4 +1441,17 @@ class Tables extends CompositeBase
             throw new \Tripod\Exceptions\Exception("Was expecting either VALUE_URI or VALUE_LITERAL when applying regex to value - possible data corruption with: ".var_export($value,true));
         }
     }
+
+    /**
+     * Count the number of documents in the spec that match $filters
+     *
+     * @param string $tableSpec Table spec ID
+     * @param array  $filters   Query filters to get count on
+     * @return integer
+     */
+    public function count($tableSpec, array $filters = [])
+    {
+        $filters['_id.type'] = $tableSpec;
+        return $this->config->getCollectionForTable($this->storeName, $tableSpec)->count($filters);
+    }
 }

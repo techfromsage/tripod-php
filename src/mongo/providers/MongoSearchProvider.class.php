@@ -372,4 +372,17 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
     {
         return Config::getInstance()->getSearchDocumentSpecification($this->storeName, $typeId);
     }
+
+    /**
+     * Count the number of documents in the spec that match $filters
+     *
+     * @param string $searchSpec Search spec ID
+     * @param array  $filters    Query filters to get count on
+     * @return integer
+     */
+    public function count($searchSpec, array $filters = [])
+    {
+        $filters['_id.type'] = $searchSpec;
+        return $this->config->getCollectionForSearchDocument($this->storeName, $searchSpec)->count($filters);
+    }
 }
