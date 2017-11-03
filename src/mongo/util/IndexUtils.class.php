@@ -68,11 +68,12 @@ class IndexUtils
                 $collection = $config->getCollectionForView($storeName, $viewId);
                 if($collection)
                 {
-                    $indexes = array(
-                        array(_ID_KEY.'.'._ID_RESOURCE => 1, _ID_KEY.'.'._ID_CONTEXT => 1, _ID_KEY.'.'._ID_TYPE => 1),
-                        array(_ID_KEY.'.'._ID_TYPE => 1),
-                        array('value.'._IMPACT_INDEX => 1)
-                    );
+                    $indexes = [
+                        [_ID_KEY.'.'._ID_RESOURCE => 1, _ID_KEY.'.'._ID_CONTEXT => 1, _ID_KEY.'.'._ID_TYPE => 1],
+                        [_ID_KEY.'.'._ID_TYPE => 1],
+                        ['value.'._IMPACT_INDEX => 1],
+                        [\_CREATED_TS => 1]
+                    ];
                     if(isset($spec['ensureIndexes']))
                     {
                         $indexes = array_merge($indexes, $spec['ensureIndexes']);
@@ -99,11 +100,12 @@ class IndexUtils
                 $collection = $config->getCollectionForTable($storeName, $tableId);
                 if($collection)
                 {
-                    $indexes = array(
-                        array(_ID_KEY.'.'._ID_RESOURCE => 1, _ID_KEY.'.'._ID_CONTEXT => 1, _ID_KEY.'.'._ID_TYPE => 1),
-                        array(_ID_KEY.'.'._ID_TYPE => 1),
-                        array('value.'._IMPACT_INDEX => 1)
-                    );
+                    $indexes = [
+                        [_ID_KEY.'.'._ID_RESOURCE => 1, _ID_KEY.'.'._ID_CONTEXT => 1, _ID_KEY.'.'._ID_TYPE => 1],
+                        [_ID_KEY.'.'._ID_TYPE => 1],
+                        ['value.'._IMPACT_INDEX => 1],
+                        [\_CREATED_TS => 1]
+                    ];
                     if(isset($spec['ensureIndexes']))
                     {
                         $indexes = array_merge($indexes, $spec['ensureIndexes']);
@@ -130,11 +132,12 @@ class IndexUtils
                 $collection = $config->getCollectionForSearchDocument($storeName, $searchId);
                 if($collection)
                 {
-                    $indexes = array(
-                        array(_ID_KEY.'.'._ID_RESOURCE => 1, _ID_KEY.'.'._ID_CONTEXT => 1),
-                        array(_ID_KEY.'.'._ID_TYPE => 1),
-                        array(_IMPACT_INDEX => 1)
-                    );
+                    $indexes = [
+                        [_ID_KEY.'.'._ID_RESOURCE => 1, _ID_KEY.'.'._ID_CONTEXT => 1],
+                        [_ID_KEY.'.'._ID_TYPE => 1],
+                        [_IMPACT_INDEX => 1],
+                        [\_CREATED_TS => 1]
+                    ];
 
                     if($reindex)
                     {
