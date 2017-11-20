@@ -526,7 +526,7 @@ class IndexUtilsTest extends MongoTripodTestBase
                     array(
                         "_id" => "v_testview",
                         "ensureIndexes" => array(
-                            array("rdf:type.u"=>1)
+                            array("rdf:type.u"=>1, '_cts' => 1)
                         ),
                         "from" => "CBD_testing",
                         "type" => "temp:TestType",
