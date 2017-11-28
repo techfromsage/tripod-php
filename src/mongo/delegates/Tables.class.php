@@ -375,11 +375,9 @@ class Tables extends CompositeBase
             if (!($timestamp instanceof \MongoDB\BSON\UTCDateTime)) {
                 $timestamp = \Tripod\Mongo\DateUtil::getMongoDate($timestamp);
             }
-            $query[\_CREATED_TS] = [
-                '$or' => [
-                    ['$lt' => $timestamp],
-                    ['$exists' => false]
-                ]
+            $query['$or'] = [
+                [\_CREATED_TS => ['$lt' => $timestamp]],
+                [\_CREATED_TS => ['$exists' => false]]
             ];
         }
         $this->config->getCollectionForTable($this->storeName, $tableId)

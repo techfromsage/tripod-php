@@ -352,11 +352,9 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
             if (!($timestamp instanceof \MongoDB\BSON\UTCDateTime)) {
                 $timestamp = new \MongoDB\BSON\UTCDateTime($timestamp);
             }
-            $query[\_CREATED_TS] = [
-                '$or' => [
-                    ['$lt' => $timestamp],
-                    ['$exists' => false]
-                ]
+            $query['$or'] = [
+                [\_CREATED_TS => ['$lt' => $timestamp]],
+                [\_CREATED_TS => ['$exists' => false]]
             ];
         }
         return $this->config->getCollectionForSearchDocument($this->storeName, $typeId)
