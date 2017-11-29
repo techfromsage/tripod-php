@@ -5,9 +5,10 @@ namespace Tripod\Mongo\Composites;
 require_once TRIPOD_DIR . 'mongo/MongoTripodConstants.php';
 require_once TRIPOD_DIR . 'mongo/base/DriverBase.class.php';
 
-use Tripod\Mongo\Config;
-use Tripod\Mongo\ImpactedSubject;
-use Tripod\Mongo\Labeller;
+use \Tripod\Mongo\Jobs\ApplyOperation;
+use \Tripod\Mongo\Config;
+use \Tripod\Mongo\ImpactedSubject;
+use \Tripod\Mongo\Labeller;
 use \MongoDB\Driver\ReadPreference;
 use \MongoDB\Collection;
 
