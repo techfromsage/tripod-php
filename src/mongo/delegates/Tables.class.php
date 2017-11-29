@@ -495,7 +495,7 @@ class Tables extends CompositeBase
      * @param string|null $resource
      * @param string|null $context
      * @param string|null $queueName Queue for background bulk generation
-     * @return null //@todo: this should be a bool
+     * @return array
      */
     public function generateTableRows($tableType, $resource = null, $context = null, $queueName = null)
     {
@@ -535,7 +535,14 @@ class Tables extends CompositeBase
             'maxTimeMS' => 1000000
         ));
 
+        $jobOptions = [];
+        if ($queueName && !$resource && ($this->stat || !empty($this->statsConfig))) {
+            $jobOptions['statsConfig'] = $this->getStatsConfig();
+            $jobOptions[ApplyOperation::TRACKING_KEY] = \uniqid();
+        }
+        $count = 0;
         foreach ($docs as $doc) {
+            $count++;
             if ($queueName && !$resource) {
                 $subject = new ImpactedSubject(
                     $doc['_id'],
@@ -544,10 +551,8 @@ class Tables extends CompositeBase
                     $from,
                     array($tableType)
                 );
-
-                $jobOptions = array();
-
-                if($this->stat || !empty($this->statsConfig)) {
+                if (empty($jobOptions))
+                if ($this->stat || !empty($this->statsConfig)) {
                     $jobOptions['statsConfig'] = $this->getStatsConfig();
                 }
 
@@ -591,6 +596,12 @@ class Tables extends CompositeBase
             'filter'=>$filter,
             'from'=>$from));
         $this->getStat()->timer(MONGO_CREATE_TABLE.".$tableType",$t->result());
+
+        $stat = ['count' => $count];
+        if (isset($jobOptions[ApplyOperation::TRACKING_KEY])) {
+            $stat[ApplyOperation::TRACKING_KEY] = $jobOptions[ApplyOperation::TRACKING_KEY];
+        }
+        return $stat;
     }
 
     /**

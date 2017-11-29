@@ -9,6 +9,8 @@ namespace Tripod\Mongo\Jobs;
 class ApplyOperation extends JobBase {
 
     const SUBJECTS_KEY = 'subjects';
+    const TRACKING_KEY = 'batchId';
+
     /**
      * Run the ApplyOperation job
      * @throws \Exception
@@ -35,8 +37,7 @@ class ApplyOperation extends JobBase {
 
             $this->getStat()->increment(MONGO_QUEUE_APPLY_OPERATION_JOB . '.' . SUBJECT_COUNT, count($this->args[self::SUBJECTS_KEY]));
 
-            foreach($this->args[self::SUBJECTS_KEY] as $subject)
-            {
+            foreach ($this->args[self::SUBJECTS_KEY] as $subject) {
                 $opTimer = new \Tripod\Timer();
                 $opTimer->start();
 
@@ -52,6 +53,12 @@ class ApplyOperation extends JobBase {
             $timer->stop();
             // stat time taken to process job, from time it was picked up
             $this->getStat()->timer(MONGO_QUEUE_APPLY_OPERATION_SUCCESS,$timer->result());
+
+            if (isset($this->args[self::TRACKING_KEY])) {
+                $this->getStat()->increment(
+                    \MONGO_QUEUE_APPLY_OPERATION . '.' . $subject['operation'] . '.' . $this->args[self::TRACKING_KEY]
+                );
+            }
 
             $this->debugLog("[JOBID " . $this->job->payload['id'] . "] ApplyOperation::perform() done in {$timer->result()}ms");
         }
@@ -100,7 +107,7 @@ class ApplyOperation extends JobBase {
             $args["storeName"],
             $args["podName"],
             $args["specTypes"]
-        );        
+        );
     }
 
     /**
