@@ -56,7 +56,7 @@ class ApplyOperation extends JobBase {
 
             if (isset($this->args[self::TRACKING_KEY])) {
                 $this->getStat()->increment(
-                    \MONGO_QUEUE_APPLY_OPERATION . '.' . $subject['operation'] . '.' . $this->args[self::TRACKING_KEY]
+                    BATCH_TRACKING_GROUP . '.' . $subject['operation'] . '.' . $this->args[self::TRACKING_KEY]
                 );
             }
 
