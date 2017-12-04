@@ -2,6 +2,9 @@
 
 namespace Tripod\Mongo\Jobs;
 
+use Tripod\Mongo\JobGroup;
+
+
 /**
  * Class ApplyOperation
  * @package Tripod\Mongo\Jobs
@@ -17,8 +20,7 @@ class ApplyOperation extends JobBase {
      */
     public function perform()
     {
-        try
-        {
+        try {
             $this->debugLog("[JOBID " . $this->job->payload['id'] . "] ApplyOperation::perform() start");
 
             $timer = new \Tripod\Timer();
@@ -55,15 +57,35 @@ class ApplyOperation extends JobBase {
             $this->getStat()->timer(MONGO_QUEUE_APPLY_OPERATION_SUCCESS,$timer->result());
 
             if (isset($this->args[self::TRACKING_KEY])) {
-                $this->getStat()->increment(
-                    BATCH_TRACKING_GROUP . '.' . $subject['operation'] . '.' . $this->args[self::TRACKING_KEY]
-                );
+                $jobGroup = new JobGroup($this->args[self::TRACKING_KEY]);
+                $jobCount = $jobGroup->incrementJobCount(-1);
+                if ($jobCount <= 0) {
+                    // @todo Replace this with ObjectId->getTimestamp() if we upgrade Mongo driver to 1.2
+                    $timestamp = new \MongoDB\BSON\UTCDateTime(hexdec(substr($jobGroup->getId(), 0, 8)) * 1000);
+                    $tripod = $this->getTripod($this->args['storeName'], $this->args['podName']);
+                    $count = 0;
+                    foreach ($this->args['specId'] as $specId) {
+                        switch ($this->args['operation']) {
+                            case \OP_VIEWS:
+                                $count += $tripod->getTripodViews()->deleteViewsByViewId($specId, $timestamp);
+                                break;
+                            case \OP_TABLES:
+                                $count += $tripod->getTripodTables()->deleteTableRowsByTableId($specId, $timestamp);
+                                break;
+                            case \OP_SEARCH:
+                                $searchProvider = new \Tripod\Mongo\MongoSearchProvider($tripod);
+                                $count += $searchProvider->deleteSearchDocumentsByTypeId($specId, $timestamp);
+                                break;
+                        }
+                    }
+                    $this->infoLog(
+                        '[JobGroupId ' . $jobGroup->getId()->__toString() . '] composite cleanup for ' .
+                        $this->args['operation'] . ' removed ' . $count . ' stale composite documents'
+                    );
+                }
             }
-
             $this->debugLog("[JOBID " . $this->job->payload['id'] . "] ApplyOperation::perform() done in {$timer->result()}ms");
-        }
-        catch (\Exception $e)
-        {
+        } catch (\Exception $e) {
             $this->getStat()->increment(MONGO_QUEUE_APPLY_OPERATION_FAIL);
             $this->errorLog("Caught exception in ".get_class($this).": ".$e->getMessage());
             throw $e;

@@ -338,7 +338,7 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
      * If type id is not specified this method will throw an exception.
      * @param string                         $typeId    Search type id
      * @param \MongoDB\BSON\UTCDateTime|null $timestamp Optional timestamp to delete all search docs that are older than
-     * @return bool|array  response returned by mongo
+     * @return integer                                  The number of search documnts deleted
      * @throws \Tripod\Exceptions\Exception if there was an error performing the operation
      */
     public function deleteSearchDocumentsByTypeId($typeId, $timestamp = null)
@@ -357,8 +357,9 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
                 [\_CREATED_TS => ['$exists' => false]]
             ];
         }
-        return $this->config->getCollectionForSearchDocument($this->storeName, $typeId)
+        $deleteResponse = $this->config->getCollectionForSearchDocument($this->storeName, $typeId)
             ->deleteMany($query);
+        return $deleteResponse->getDeletedCount();
     }
 
     /**

@@ -361,6 +361,7 @@ class Tables extends CompositeBase
      * This method will delete all table rows where the _id.type matches the specified $tableId
      * @param string                         $tableId   Table spec ID
      * @param \MongoDB\BSON\UTCDateTime|null $timestamp Optional timestamp to delete all table rows that are older than
+     * @return integer                                  The number of table rows deleted
      */
     public function deleteTableRowsByTableId($tableId, $timestamp = null) {
         $t = new \Tripod\Timer();
@@ -381,11 +382,12 @@ class Tables extends CompositeBase
                 [\_CREATED_TS => ['$exists' => false]]
             ];
         }
-        $this->config->getCollectionForTable($this->storeName, $tableId)
+        $deleteResult = $this->config->getCollectionForTable($this->storeName, $tableId)
             ->deleteMany($query);
 
         $t->stop();
         $this->timingLog(MONGO_DELETE_TABLE_ROWS, array('duration'=>$t->result(), 'query'=>$query));
+        return $deleteResult->getDeletedCount();
     }
 
     /**
@@ -531,7 +533,8 @@ class Tables extends CompositeBase
         if (isset($resource)) {
             $filter["_id"] = array(_ID_RESOURCE=>$this->labeller->uri_to_alias($resource),_ID_CONTEXT=>$contextAlias);
         }
-
+        // @todo Change this to a command when we upgrade MongoDB to 1.1+
+        $count = $this->config->getCollectionForCBD($this->storeName, $from)->count($filter);
         $docs = $this->config->getCollectionForCBD($this->storeName, $from)->find($filter, array(
             'maxTimeMS' => 1000000
         ));
@@ -539,11 +542,12 @@ class Tables extends CompositeBase
         $jobOptions = [];
         if ($queueName && !$resource && ($this->stat || !empty($this->statsConfig))) {
             $jobOptions['statsConfig'] = $this->getStatsConfig();
-            $jobOptions[ApplyOperation::TRACKING_KEY] = \uniqid();
+            $jobGroup = new JobGroup($this->storeName);
+            $jobOptions[ApplyOperation::TRACKING_KEY] = $jobGroup->getId()->__toString();
+            $jobGroup->setJobCount($count);;
         }
-        $count = 0;
+
         foreach ($docs as $doc) {
-            $count++;
             if ($queueName && !$resource) {
                 $subject = new ImpactedSubject(
                     $doc['_id'],
