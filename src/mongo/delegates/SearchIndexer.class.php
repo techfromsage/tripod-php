@@ -10,6 +10,7 @@ require_once TRIPOD_DIR . 'exceptions/SearchException.class.php';
 use Tripod\Mongo\Config;
 use Tripod\Mongo\ImpactedSubject;
 use Tripod\Mongo\Labeller;
+use Tripod\Mongo\Jobs\ApplyOperation;
 use \MongoDB\Driver\ReadPreference;
 use \MongoDB\Collection;
 
@@ -174,9 +175,9 @@ class SearchIndexer extends CompositeBase
         // default the context
         $contextAlias = $this->getContextAlias($context);
         $spec = \Tripod\Mongo\Config::getInstance()->getSearchDocumentSpecification($this->getStoreName(), $searchDocumentType);
-        
+
         if($resourceUri)
-        {            
+        {
             $this->generateAndIndexSearchDocuments($resourceUri, $contextAlias, $spec['from'], $searchDocumentType);
             return;
         }
@@ -205,13 +206,20 @@ class SearchIndexer extends CompositeBase
             $filter["_id"] = array(_ID_RESOURCE=>$this->labeller->uri_to_alias($resource),_ID_CONTEXT=>$contextAlias);
         }
 
+        $count = $this->config->getCollectionForCBD($this->getStoreName(), $from)->count($filter);
         $docs = $this->config->getCollectionForCBD($this->getStoreName(), $from)->find($filter, array(
             'maxTimeMS' => $this->config->getMongoCursorTimeout()
         ));
-        foreach ($docs as $doc)
-        {
-            if($queueName && !$resourceUri)
-            {
+
+        $jobOptions = [];
+        if ($queueName && !$resource) {
+            $jobOptions['statsConfig'] = $this->getStatsConfig();
+            $jobGroup = new JobGroup($this->storeName);
+            $jobOptions[ApplyOperation::TRACKING_KEY] = $jobGroup->getId()->__toString();
+            $jobGroup->setJobCount($count);
+        }
+        foreach ($docs as $doc) {
+            if ($queueName && !$resourceUri) {
                 $subject = new ImpactedSubject(
                     $doc['_id'],
                     OP_SEARCH,
@@ -219,17 +227,9 @@ class SearchIndexer extends CompositeBase
                     $from,
                     array($searchDocumentType)
                 );
-                $jobOptions = array();
-
-                if($this->stat || !empty($this->statsConfig))
-                {
-                    $jobOptions['statsConfig'] = $this->getStatsConfig();
-                }
 
                 $this->getApplyOperation()->createJob(array($subject), $queueName, $jobOptions);
-            }
-            else
-            {
+            } else {
                 $this->generateAndIndexSearchDocuments(
                     $doc[_ID_KEY][_ID_RESOURCE],
                     $doc[_ID_KEY][_ID_CONTEXT],
@@ -246,6 +246,12 @@ class SearchIndexer extends CompositeBase
             'filter'=>$filter,
             'from'=>$from));
         $this->getStat()->timer(MONGO_CREATE_SEARCH_DOC.".$searchDocumentType",$t->result());
+
+        $stat = ['count' => $count];
+        if (isset($jobOptions[ApplyOperation::TRACKING_KEY])) {
+            $stat[ApplyOperation::TRACKING_KEY] = $jobOptions[ApplyOperation::TRACKING_KEY];
+        }
+        return $stat;
     }
 
     /**
@@ -266,7 +272,7 @@ class SearchIndexer extends CompositeBase
     {
     	return $this->getSearchProvider()->deleteSearchDocumentsByTypeId($typeId);
     }
-    
+
 
     /**
      * @return \Tripod\ISearchProvider
