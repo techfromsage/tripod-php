@@ -31,6 +31,7 @@ require_once TRIPOD_DIR . 'IDriver.php';
 require_once TRIPOD_DIR.'classes/ChangeSet.class.php';
 require_once TRIPOD_DIR.'classes/Labeller.class.php';
 require_once TRIPOD_DIR . '/mongo/Driver.class.php';
+require_once TRIPOD_DIR . '/mongo/JobGroup.php';
 
 require_once TRIPOD_DIR.'/mongo/base/JobBase.class.php';
 require_once TRIPOD_DIR . '/mongo/jobs/DiscoverImpactedSubjects.class.php';
