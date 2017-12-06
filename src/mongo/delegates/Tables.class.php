@@ -545,7 +545,7 @@ class Tables extends CompositeBase
             $jobOptions['statsConfig'] = $this->getStatsConfig();
             $jobGroup = new JobGroup($this->storeName);
             $jobOptions[ApplyOperation::TRACKING_KEY] = $jobGroup->getId()->__toString();
-            $jobGroup->setJobCount($count);;
+            $jobGroup->setJobCount($count);
         }
 
         foreach ($docs as $doc) {
@@ -557,10 +557,6 @@ class Tables extends CompositeBase
                     $from,
                     array($tableType)
                 );
-                if (empty($jobOptions))
-                if ($this->stat || !empty($this->statsConfig)) {
-                    $jobOptions['statsConfig'] = $this->getStatsConfig();
-                }
 
                 $this->getApplyOperation()->createJob(array($subject), $queueName, $jobOptions);
             } else {

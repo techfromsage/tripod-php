@@ -37,6 +37,8 @@ class JobGroup
         );
         if (\is_array($updateResult)) {
             return $updateResult['count'];
+        } elseif (isset($updateResult->count)) {
+            return $updateResult->count;
         }
     }
 
