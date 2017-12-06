@@ -57,7 +57,7 @@ class ApplyOperation extends JobBase {
             $this->getStat()->timer(MONGO_QUEUE_APPLY_OPERATION_SUCCESS,$timer->result());
 
             if (isset($this->args[self::TRACKING_KEY])) {
-                $jobGroup = new JobGroup($this->args[self::TRACKING_KEY]);
+                $jobGroup = new JobGroup($this->args['storeName'], $this->args[self::TRACKING_KEY]);
                 $jobCount = $jobGroup->incrementJobCount(-1);
                 if ($jobCount <= 0) {
                     // @todo Replace this with ObjectId->getTimestamp() if we upgrade Mongo driver to 1.2
