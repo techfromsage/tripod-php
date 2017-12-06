@@ -49,41 +49,41 @@ class ApplyOperation extends JobBase {
                 $opTimer->stop();
                 // stat time taken to perform operation for the given subject
                 $this->getStat()->timer(MONGO_QUEUE_APPLY_OPERATION.'.'.$subject['operation'], $opTimer->result());
+
+                if (isset($this->args[self::TRACKING_KEY])) {
+                    $jobGroup = new JobGroup($subject['storeName'], $this->args[self::TRACKING_KEY]);
+                    $jobCount = $jobGroup->incrementJobCount(-1);
+                    if ($jobCount <= 0) {
+                        // @todo Replace this with ObjectId->getTimestamp() if we upgrade Mongo driver to 1.2
+                        $timestamp = new \MongoDB\BSON\UTCDateTime(hexdec(substr($jobGroup->getId(), 0, 8)) * 1000);
+                        $tripod = $this->getTripod($subject['storeName'], $subject['podName']);
+                        $count = 0;
+                        foreach ($subject['specTypes'] as $specId) {
+                            switch ($subject['operation']) {
+                                case \OP_VIEWS:
+                                    $count += $tripod->getTripodViews()->deleteViewsByViewId($specId, $timestamp);
+                                    break;
+                                case \OP_TABLES:
+                                    $count += $tripod->getTripodTables()->deleteTableRowsByTableId($specId, $timestamp);
+                                    break;
+                                case \OP_SEARCH:
+                                    $searchProvider = new \Tripod\Mongo\MongoSearchProvider($tripod);
+                                    $count += $searchProvider->deleteSearchDocumentsByTypeId($specId, $timestamp);
+                                    break;
+                            }
+                        }
+                        $this->infoLog(
+                            '[JobGroupId ' . $jobGroup->getId()->__toString() . '] composite cleanup for ' .
+                            $this->args['operation'] . ' removed ' . $count . ' stale composite documents'
+                        );
+                    }
+                }
             }
 
 
             $timer->stop();
             // stat time taken to process job, from time it was picked up
             $this->getStat()->timer(MONGO_QUEUE_APPLY_OPERATION_SUCCESS,$timer->result());
-
-            if (isset($this->args[self::TRACKING_KEY])) {
-                $jobGroup = new JobGroup($this->args['storeName'], $this->args[self::TRACKING_KEY]);
-                $jobCount = $jobGroup->incrementJobCount(-1);
-                if ($jobCount <= 0) {
-                    // @todo Replace this with ObjectId->getTimestamp() if we upgrade Mongo driver to 1.2
-                    $timestamp = new \MongoDB\BSON\UTCDateTime(hexdec(substr($jobGroup->getId(), 0, 8)) * 1000);
-                    $tripod = $this->getTripod($this->args['storeName'], $this->args['podName']);
-                    $count = 0;
-                    foreach ($this->args['specId'] as $specId) {
-                        switch ($this->args['operation']) {
-                            case \OP_VIEWS:
-                                $count += $tripod->getTripodViews()->deleteViewsByViewId($specId, $timestamp);
-                                break;
-                            case \OP_TABLES:
-                                $count += $tripod->getTripodTables()->deleteTableRowsByTableId($specId, $timestamp);
-                                break;
-                            case \OP_SEARCH:
-                                $searchProvider = new \Tripod\Mongo\MongoSearchProvider($tripod);
-                                $count += $searchProvider->deleteSearchDocumentsByTypeId($specId, $timestamp);
-                                break;
-                        }
-                    }
-                    $this->infoLog(
-                        '[JobGroupId ' . $jobGroup->getId()->__toString() . '] composite cleanup for ' .
-                        $this->args['operation'] . ' removed ' . $count . ' stale composite documents'
-                    );
-                }
-            }
             $this->debugLog("[JOBID " . $this->job->payload['id'] . "] ApplyOperation::perform() done in {$timer->result()}ms");
         } catch (\Exception $e) {
             $this->getStat()->increment(MONGO_QUEUE_APPLY_OPERATION_FAIL);
