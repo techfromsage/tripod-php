@@ -35,7 +35,9 @@ class JobGroup
             ['$inc' => ['count' => $inc]],
             ['upsert' => true, 'returnDocument' => \MongoDB\Operation\FindOneAndUpdate::RETURN_DOCUMENT_AFTER]
         );
-        return $updateResult['count'];
+        if (\is_array($updateResult)) {
+            return $updateResult['count'];
+        }
     }
 
     /**
