@@ -33,7 +33,7 @@ class JobGroup
         $updateResult = $this->getMongoCollection()->findOneAndUpdate(
             ['_id' => $this->id],
             ['$inc' => ['count' => $inc]],
-            ['upsert' => true, 'returnDocument' => MongoDB\Operation\FindOneAndUpdate::RETURN_DOCUMENT_AFTER]
+            ['upsert' => true, 'returnDocument' => \MongoDB\Operation\FindOneAndUpdate::RETURN_DOCUMENT_AFTER]
         );
         return $updateResult['count'];
     }
