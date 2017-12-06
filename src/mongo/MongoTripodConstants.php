@@ -6,7 +6,7 @@ define('TABLE_ROWS_COLLECTION', 'table_rows');
 define('VIEWS_COLLECTION', 'views');
 define('LOCKS_COLLECTION', 'locks');
 define('AUDIT_MANUAL_ROLLBACKS_COLLECTION','audit_manual_rollbacks');
-define('OPERATION_GROUP_COLLECTION', 'job_groups');
+define('OPERATION_GROUPS_COLLECTION', 'job_groups');
 
 // search
 define('SEARCH_INDEX_COLLECTION', 'search');
