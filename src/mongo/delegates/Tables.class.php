@@ -383,7 +383,7 @@ class Tables extends CompositeBase
                 [\_CREATED_TS => ['$exists' => false]]
             ];
         }
-        $deleteResult = $this->config->getCollectionForTable($this->storeName, $tableId)
+        $deleteResult = $this->getCollectionForTableSpec($tableId)
             ->deleteMany($query);
 
         $t->stop();
@@ -1463,6 +1463,17 @@ class Tables extends CompositeBase
     public function count($tableSpec, array $filters = [])
     {
         $filters['_id.type'] = $tableSpec;
-        return $this->config->getCollectionForTable($this->storeName, $tableSpec)->count($filters);
+        return $this->getCollectionForTableSpec($tableSpec)->count($filters);
+    }
+
+    /**
+     * For mocking
+     *
+     * @param string $tableSpecId Table spec ID
+     * @return \MongoDB\Collection
+     */
+    protected function getCollectionForTableSpec($tableSpecId)
+    {
+        return $this->getConfigInstance()->getCollectionForTable($this->storeName, $tableSpecId);
     }
 }

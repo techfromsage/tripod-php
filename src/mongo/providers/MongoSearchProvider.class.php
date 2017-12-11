@@ -357,7 +357,7 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
                 [\_CREATED_TS => ['$exists' => false]]
             ];
         }
-        $deleteResponse = $this->config->getCollectionForSearchDocument($this->storeName, $typeId)
+        $deleteResponse = $this->getCollectionForSearchSpec($typeId)
             ->deleteMany($query);
         return $deleteResponse->getDeletedCount();
     }
@@ -382,6 +382,17 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
     public function count($searchSpec, array $filters = [])
     {
         $filters['_id.type'] = $searchSpec;
-        return $this->config->getCollectionForSearchDocument($this->storeName, $searchSpec)->count($filters);
+        return $this->getCollectionForSearchSpec($searchSpec)->count($filters);
+    }
+
+    /**
+     * For mocking
+     *
+     * @param string $searchSpecId Search spec ID
+     * @return \MongoDB\Collection
+     */
+    protected function getCollectionForSearchSpec($searchSpecId)
+    {
+        return $this->config->getCollectionForSearchDocument($this->storeName, $searchSpecId);
     }
 }

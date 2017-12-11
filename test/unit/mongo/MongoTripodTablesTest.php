@@ -1631,6 +1631,132 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         // The table row should still be there, even if the tablespec no longer exists
         $this->assertGreaterThan(0, $collection->count(array('_id.type'=>'t_resource', 'value._impactIndex'=>array(_ID_RESOURCE=>$uri, _ID_CONTEXT=>$context))));
+    }
 
+    public function testCountTables()
+    {
+        $collection = $this->getMockBuilder('\MongoDB\Collection')
+            ->disableOriginalConstructor()
+            ->setMethods(['count'])
+            ->getMock();
+        $tables = $this->getMockBuilder('\Tripod\Mongo\Composites\Tables')
+            ->setMethods(['getCollectionForTableSpec'])
+            ->setConstructorArgs(['tripod_php_testing', $collection, 'http://example.com/'])
+            ->getMock();
+
+        $tables->expects($this->once())
+            ->method('getCollectionForTableSpec')
+            ->with('t_source_count')
+            ->will($this->returnValue($collection));
+
+        $collection->expects($this->once())
+            ->method('count')
+            ->with(['_id.type' => 't_source_count'])
+            ->will($this->returnValue(50));
+
+        $this->assertEquals(50, $tables->count('t_source_count'));
+    }
+
+    public function testCountTablesWithFilters()
+    {
+        $filters = ['_cts' => ['$lte' => new \MongoDB\BSON\UTCDateTime()]];
+        $query = array_merge(['_id.type' => 't_source_count'], $filters);
+        $collection = $this->getMockBuilder('\MongoDB\Collection')
+            ->disableOriginalConstructor()
+            ->setMethods(['count'])
+            ->getMock();
+        $tables = $this->getMockBuilder('\Tripod\Mongo\Composites\Tables')
+            ->setMethods(['getCollectionForTableSpec'])
+            ->setConstructorArgs(['tripod_php_testing', $collection, 'http://example.com/'])
+            ->getMock();
+
+        $tables->expects($this->once())
+            ->method('getCollectionForTableSpec')
+            ->with('t_source_count')
+            ->will($this->returnValue($collection));
+
+        $collection->expects($this->once())
+            ->method('count')
+            ->with($query)
+            ->will($this->returnValue(37));
+
+        $this->assertEquals(37, $tables->count('t_source_count', $filters));
+    }
+
+    public function testDeleteTableRowsByTableId()
+    {
+        $collection = $this->getMockBuilder('\MongoDB\Collection')
+            ->disableOriginalConstructor()
+            ->setMethods(['deleteMany'])
+            ->getMock();
+
+        $deleteResult = $this->getMockBuilder('MongoDB\DeleteResult')
+            ->setMethods(['getDeletedCount'])
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $deleteResult->expects($this->once())
+            ->method('getDeletedCount')
+            ->will($this->returnValue(2));
+
+        $tables = $this->getMockBuilder('\Tripod\Mongo\Composites\Tables')
+            ->setMethods(['getCollectionForTableSpec'])
+            ->setConstructorArgs(['tripod_php_testing', $collection, 'http://example.com/'])
+            ->getMock();
+
+        $tables->expects($this->once())
+            ->method('getCollectionForTableSpec')
+            ->with('t_source_count')
+            ->will($this->returnValue($collection));
+
+        $collection->expects($this->once())
+            ->method('deleteMany')
+            ->with(['_id.type' => 't_source_count'])
+            ->will($this->returnValue($deleteResult));
+
+        $this->assertEquals(2, $tables->deleteTableRowsByTableId('t_source_count'));
+    }
+
+    public function testDeleteTableRowsByTableIdWithTimestamp()
+    {
+        $timestamp = new \MongoDB\BSON\UTCDateTime();
+
+        $query = [
+            '_id.type' => 't_source_count',
+            '$or' => [
+                [\_CREATED_TS => ['$lt' => $timestamp]],
+                [\_CREATED_TS => ['$exists' => false]]
+            ]
+        ];
+        $collection = $this->getMockBuilder('\MongoDB\Collection')
+            ->disableOriginalConstructor()
+            ->setMethods(['deleteMany'])
+            ->getMock();
+
+        $deleteResult = $this->getMockBuilder('MongoDB\DeleteResult')
+            ->setMethods(['getDeletedCount'])
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $deleteResult->expects($this->once())
+            ->method('getDeletedCount')
+            ->will($this->returnValue(11));
+
+        $tables = $this->getMockBuilder('\Tripod\Mongo\Composites\Tables')
+            ->setMethods(['getCollectionForTableSpec'])
+            ->setConstructorArgs(['tripod_php_testing', $collection, 'http://example.com/'])
+            ->getMock();
+
+        $tables->expects($this->once())
+            ->method('getCollectionForTableSpec')
+            ->with('t_source_count')
+            ->will($this->returnValue($collection));
+
+        $collection->expects($this->once())
+            ->method('deleteMany')
+            ->with($query)
+            ->will($this->returnValue($deleteResult));
+
+        $this->assertEquals(11, $tables->deleteTableRowsByTableId('t_source_count', $timestamp));
     }
 }

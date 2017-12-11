@@ -388,7 +388,7 @@ class Views extends CompositeBase
                 [\_CREATED_TS => ['$exists' => false]]
             ];
         }
-        $deleteResult = $this->config->getCollectionForView($this->storeName, $viewId)
+        $deleteResult = $this->getCollectionForViewSpec($viewId)
             ->deleteMany($query);
         return $deleteResult->getDeletedCount();
     }
