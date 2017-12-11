@@ -8,6 +8,11 @@ class JobGroup
     private $collection;
     private $storeName;
 
+    /**
+     * Constructor method
+     * @param string                        $storeName Tripod store (database) name
+     * @param string|\MongoDB\BSON\ObjectId $groupId   Optional tracking ID, will assign a new one if omitted
+     */
     public function __construct($storeName, $groupId = null)
     {
         $this->storeName = $storeName;
@@ -19,6 +24,12 @@ class JobGroup
         $this->id = $groupId;
     }
 
+    /**
+     * Update the number of jobs
+     *
+     * @param integer $count Number of jobs in group
+     * @return void
+     */
     public function setJobCount($count)
     {
         $this->getMongoCollection()->updateOne(
@@ -28,6 +39,12 @@ class JobGroup
         );
     }
 
+    /**
+     * Update the number of jobs by $inc.  To decrement, use a negative integer
+     *
+     * @param integer $inc Number to increment or decrement by
+     * @return integer Updated job count
+     */
     public function incrementJobCount($inc = 1)
     {
         $updateResult = $this->getMongoCollection()->findOneAndUpdate(
