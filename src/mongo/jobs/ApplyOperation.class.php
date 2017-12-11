@@ -3,6 +3,7 @@
 namespace Tripod\Mongo\Jobs;
 
 use Tripod\Mongo\JobGroup;
+use Tripod\Mongo\Driver;
 
 
 /**
@@ -51,7 +52,7 @@ class ApplyOperation extends JobBase {
                 $this->getStat()->timer(MONGO_QUEUE_APPLY_OPERATION.'.'.$subject['operation'], $opTimer->result());
 
                 if (isset($this->args[self::TRACKING_KEY])) {
-                    $jobGroup = new JobGroup($subject['storeName'], $this->args[self::TRACKING_KEY]);
+                    $jobGroup = $this->getJobGroup($subject['storeName'], $this->args[self::TRACKING_KEY]);
                     $jobCount = $jobGroup->incrementJobCount(-1);
                     if ($jobCount <= 0) {
                         // @todo Replace this with ObjectId->getTimestamp() if we upgrade Mongo driver to 1.2
@@ -61,13 +62,13 @@ class ApplyOperation extends JobBase {
                         foreach ($subject['specTypes'] as $specId) {
                             switch ($subject['operation']) {
                                 case \OP_VIEWS:
-                                    $count += $tripod->getTripodViews()->deleteViewsByViewId($specId, $timestamp);
+                                    $count += $tripod->getComposite(\OP_VIEWS)->deleteViewsByViewId($specId, $timestamp);
                                     break;
                                 case \OP_TABLES:
-                                    $count += $tripod->getTripodTables()->deleteTableRowsByTableId($specId, $timestamp);
+                                    $count += $tripod->getComposite(\OP_TABLES)->deleteTableRowsByTableId($specId, $timestamp);
                                     break;
                                 case \OP_SEARCH:
-                                    $searchProvider = new \Tripod\Mongo\MongoSearchProvider($tripod);
+                                    $searchProvider = $this->getSearchProvider($tripod);
                                     $count += $searchProvider->deleteSearchDocumentsByTypeId($specId, $timestamp);
                                     break;
                             }
@@ -139,5 +140,28 @@ class ApplyOperation extends JobBase {
     protected function getMandatoryArgs()
     {
         return array(self::TRIPOD_CONFIG_KEY,self::SUBJECTS_KEY);
+    }
+
+    /**
+     * For mocking
+     *
+     * @param string                        $storeName   Tripod store (database) name
+     * @param string|\MongoDB\BSON\ObjectId $trackingKey JobGroup ID
+     * @return JobGroup
+     */
+    protected function getJobGroup($storeName, $trackingKey)
+    {
+        return new JobGroup($storeName, $trackingKey);
+    }
+
+    /**
+     * For mocking
+     *
+     * @param Driver $tripod
+     * @return \Tripod\Mongo\MongoSearchProvider
+     */
+    protected function getSearchProvider(Driver $tripod)
+    {
+        return new \Tripod\Mongo\MongoSearchProvider($tripod);
     }
 }

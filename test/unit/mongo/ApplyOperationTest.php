@@ -1,5 +1,7 @@
 <?php
 
+use Tripod\Mongo\Jobs\ApplyOperation;
+
 require_once 'MongoTripodTestBase.php';
 
 /**
@@ -109,6 +111,216 @@ class ApplyOperationTest extends MongoTripodTestBase
         $applyOperation->perform();
     }
 
+    public function testApplyViewOperationDecrementsJobGroupForBatchOperations()
+    {
+        $this->setArgs();
+        $applyOperation = $this->getMockBuilder('\Tripod\Mongo\Jobs\ApplyOperation')
+            ->setMethods(['createImpactedSubject', 'getStat', 'getJobGroup', 'getTripod'])
+            ->getMock();
+
+        $applyOperation->args = $this->args;
+        $applyOperation->job->payload['id'] = uniqid();
+        $jobTrackerId = new \MongoDB\BSON\ObjectId();
+        $applyOperation->args[ApplyOperation::TRACKING_KEY] = $jobTrackerId->__toString();
+
+        $jobGroup = $this->getMockBuilder('\Tripod\Mongo\JobGroup')
+            ->setMethods(['incrementJobCount'])
+            ->setConstructorArgs(['tripod_php_testing', $jobTrackerId])
+            ->getMock();
+
+        $jobGroup->expects($this->once())
+            ->method('incrementJobCount')
+            ->with(-1)
+            ->will($this->returnValue(2));
+
+        $statMock = $this->getMockStat(
+            $this->args['statsConfig']['config']['host'],
+            $this->args['statsConfig']['config']['port'],
+            $this->args['statsConfig']['config']['prefix'],
+            ['timer','increment']
+        );
+
+        $subject = $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
+            ->setMethods(['getTripod'])
+            ->setConstructorArgs(
+                [
+                    [
+                        _ID_RESOURCE=>'http://example.com/resources/foo',
+                        _ID_CONTEXT=>'http://talisaspire.com'
+                    ],
+                    OP_VIEWS,
+                    'tripod_php_testing',
+                    'CBD_testing'
+                ]
+            )->getMock();
+
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
+            ->setMethods(['getComposite'])
+            ->setConstructorArgs(['CBD_testing', 'tripod_php_testing'])
+            ->getMock();
+
+        $views = $this->getMockBuilder('\Tripod\Mongo\Composites\Views')
+            ->setMethods(['update', 'deleteViewsByViewId'])
+            ->setConstructorArgs(
+                [
+                    'tripod_php_testing',
+                    \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                    'http://talisapire.com/'
+                ]
+            )->getMock();
+
+        $applyOperation->expects($this->once())
+            ->method('createImpactedSubject')
+            ->will($this->returnValue($subject));
+
+        $applyOperation->expects($this->exactly(3))
+            ->method('getStat')
+            ->will($this->returnValue($statMock));
+
+        $applyOperation->expects($this->once())
+            ->method('getJobGroup')
+            ->with('tripod_php_testing', $jobTrackerId->__toString())
+            ->will($this->returnValue($jobGroup));
+
+        $applyOperation->expects($this->never())
+            ->method('getTripod');
+
+        $statMock->expects($this->once())
+            ->method('increment')
+            ->with(MONGO_QUEUE_APPLY_OPERATION_JOB . '.' . SUBJECT_COUNT, 1);
+        $statMock->expects($this->exactly(2))
+            ->method('timer')
+            ->withConsecutive(
+                [MONGO_QUEUE_APPLY_OPERATION.'.'.OP_VIEWS, $this->anything()],
+                [MONGO_QUEUE_APPLY_OPERATION_SUCCESS, $this->anything()]
+            );
+
+        $subject->expects($this->once())
+            ->method('getTripod')
+            ->will($this->returnValue($tripod));
+
+        $tripod->expects($this->once())
+            ->method('getComposite')
+            ->with(OP_VIEWS)
+            ->will($this->returnValue($views));
+
+        $views->expects($this->once())
+            ->method('update')
+            ->with($subject);
+
+        $views->expects($this->never())->method('deleteViewsByViewId');
+        $applyOperation->perform();
+    }
+
+    public function testApplyViewOperationCleanupIfAllGroupJobsComplete()
+    {
+        $this->setArgs(OP_VIEWS, ['v_foo_bar']);
+        $applyOperation = $this->getMockBuilder('\Tripod\Mongo\Jobs\ApplyOperation')
+            ->setMethods(['createImpactedSubject', 'getStat', 'getJobGroup', 'getTripod'])
+            ->getMock();
+
+        $applyOperation->args = $this->args;
+        $applyOperation->job->payload['id'] = uniqid();
+        $jobTrackerId = new \MongoDB\BSON\ObjectId();
+        $applyOperation->args[ApplyOperation::TRACKING_KEY] = $jobTrackerId->__toString();
+        $timestamp = new \MongoDB\BSON\UTCDateTime(hexdec(substr($jobTrackerId, 0, 8)) * 1000);
+
+        $jobGroup = $this->getMockBuilder('\Tripod\Mongo\JobGroup')
+            ->setMethods(['incrementJobCount'])
+            ->setConstructorArgs(['tripod_php_testing', $jobTrackerId])
+            ->getMock();
+
+        $jobGroup->expects($this->once())
+            ->method('incrementJobCount')
+            ->with(-1)
+            ->will($this->returnValue(0));
+
+        $statMock = $this->getMockStat(
+            $this->args['statsConfig']['config']['host'],
+            $this->args['statsConfig']['config']['port'],
+            $this->args['statsConfig']['config']['prefix'],
+            array('timer','increment')
+        );
+
+        $subject = $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
+            ->setMethods(['getTripod'])
+            ->setConstructorArgs(
+                [
+                    [
+                        _ID_RESOURCE=>'http://example.com/resources/foo',
+                        _ID_CONTEXT=>'http://talisaspire.com'
+                    ],
+                    OP_VIEWS,
+                    'tripod_php_testing',
+                    'CBD_testing'
+                ]
+            )->getMock();
+
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
+            ->setMethods(['getComposite'])
+            ->setConstructorArgs(['CBD_testing', 'tripod_php_testing'])
+            ->getMock();
+
+        $views = $this->getMockBuilder('\Tripod\Mongo\Composites\Views')
+            ->setMethods(['update', 'deleteViewsByViewId'])
+            ->setConstructorArgs(
+                [
+                    'tripod_php_testing',
+                    \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                    'http://talisapire.com/'
+                ]
+            )->getMock();
+
+        $applyOperation->expects($this->once())
+            ->method('createImpactedSubject')
+            ->will($this->returnValue($subject));
+
+        // $applyOperation->expects($this->exactly(3))
+        $applyOperation->expects($this->any())
+            ->method('getStat')
+            ->will($this->returnValue($statMock));
+
+        $applyOperation->expects($this->once())
+            ->method('getJobGroup')
+            ->with('tripod_php_testing', $jobTrackerId->__toString())
+            ->will($this->returnValue($jobGroup));
+
+        $applyOperation->expects($this->once())
+            ->method('getTripod')
+            ->with('tripod_php_testing', 'CBD_testing')
+            ->will($this->returnValue($tripod));
+
+        $statMock->expects($this->once())
+            ->method('increment')
+            ->with(MONGO_QUEUE_APPLY_OPERATION_JOB . '.' . SUBJECT_COUNT, 1);
+        $statMock->expects($this->exactly(2))
+            ->method('timer')
+            ->withConsecutive(
+                [MONGO_QUEUE_APPLY_OPERATION.'.'.OP_VIEWS, $this->anything()],
+                [MONGO_QUEUE_APPLY_OPERATION_SUCCESS, $this->anything()]
+            );
+
+        $subject->expects($this->once())
+            ->method('getTripod')
+            ->will($this->returnValue($tripod));
+
+        $tripod->expects($this->exactly(2))
+            ->method('getComposite')
+            ->with(OP_VIEWS)
+            ->will($this->returnValue($views));
+
+        $views->expects($this->once())
+            ->method('update')
+            ->with($subject);
+
+        $views->expects($this->once())
+            ->method('deleteViewsByViewId')
+            ->with('v_foo_bar', $timestamp)
+            ->will($this->returnValue(3));
+
+        $applyOperation->perform();
+    }
+
     public function testApplyTableOperation()
     {
         $this->setArgs();
@@ -200,9 +412,222 @@ class ApplyOperationTest extends MongoTripodTestBase
         $applyOperation->perform();
     }
 
+    public function testApplyTableOperationDecrementsJobGroupForBatchOperations()
+    {
+        $this->setArgs(OP_TABLES, ['t_resource']);
+        $applyOperation = $this->getMockBuilder('\Tripod\Mongo\Jobs\ApplyOperation')
+            ->setMethods(['createImpactedSubject', 'getStat', 'getJobGroup', 'getTripod'])
+            ->getMock();
+
+        $statMock = $this->getMockStat(
+            $this->args['statsConfig']['config']['host'],
+            $this->args['statsConfig']['config']['port'],
+            $this->args['statsConfig']['config']['prefix'],
+            ['timer', 'increment']
+        );
+
+        $applyOperation->args = $this->args;
+        $applyOperation->job->payload['id'] = uniqid();
+
+        $jobTrackerId = new \MongoDB\BSON\ObjectId();
+        $applyOperation->args[ApplyOperation::TRACKING_KEY] = $jobTrackerId->__toString();
+
+        $jobGroup = $this->getMockBuilder('\Tripod\Mongo\JobGroup')
+            ->setMethods(['incrementJobCount'])
+            ->setConstructorArgs(['tripod_php_testing', $jobTrackerId])
+            ->getMock();
+
+        $jobGroup->expects($this->once())
+            ->method('incrementJobCount')
+            ->with(-1)
+            ->will($this->returnValue(2));
+
+        $subject = $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
+            ->setMethods(['getTripod'])
+            ->setConstructorArgs(
+                [
+                    [
+                        _ID_RESOURCE=>'http://example.com/resources/foo',
+                        _ID_CONTEXT=>'http://talisaspire.com'
+                    ],
+                    OP_TABLES,
+                    'tripod_php_testing',
+                    'CBD_testing'
+                ]
+            )->getMock();
+
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
+            ->setMethods(['getComposite'])
+            ->setConstructorArgs(['CBD_testing', 'tripod_php_testing'])
+            ->getMock();
+
+        $tables = $this->getMockBuilder('\Tripod\Mongo\Composites\Tables')
+            ->setMethods(['update', 'deleteTableRowsByTableId'])
+            ->setConstructorArgs(
+                [
+                    'tripod_php_testing',
+                    \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                    'http://talisapire.com/'
+                ]
+            )->getMock();
+
+        $applyOperation->expects($this->once())
+            ->method('createImpactedSubject')
+            ->will($this->returnValue($subject));
+
+        $applyOperation->expects($this->exactly(3))
+            ->method('getStat')
+            ->will($this->returnValue($statMock));
+
+        $applyOperation->expects($this->once())
+            ->method('getJobGroup')
+            ->with('tripod_php_testing', $jobTrackerId->__toString())
+            ->will($this->returnValue($jobGroup));
+
+        $applyOperation->expects($this->never())
+            ->method('getTripod');
+
+        $statMock->expects($this->once())
+            ->method('increment')
+            ->with(MONGO_QUEUE_APPLY_OPERATION_JOB . '.' . SUBJECT_COUNT, 1);
+        $statMock->expects($this->exactly(2))
+            ->method('timer')
+            ->withConsecutive(
+                array(MONGO_QUEUE_APPLY_OPERATION.'.'.OP_TABLES, $this->anything()),
+                array(MONGO_QUEUE_APPLY_OPERATION_SUCCESS, $this->anything())
+            );
+
+
+        $subject->expects($this->once())
+            ->method('getTripod')
+            ->will($this->returnValue($tripod));
+
+        $tripod->expects($this->once())
+            ->method('getComposite')
+            ->with(OP_TABLES)
+            ->will($this->returnValue($tables));
+
+        $tables->expects($this->once())
+            ->method('update')
+            ->with($subject);
+        $tables->expects($this->never())
+            ->method('deleteTableRowsByTableId');
+
+        $applyOperation->perform();
+    }
+
+    public function testApplyTableOperationCleanupIfAllGroupJobsComplete()
+    {
+        $this->setArgs(OP_TABLES, ['t_resource']);
+        $applyOperation = $this->getMockBuilder('\Tripod\Mongo\Jobs\ApplyOperation')
+            ->setMethods(['createImpactedSubject', 'getStat', 'getJobGroup', 'getTripod'])
+            ->getMock();
+
+        $statMock = $this->getMockStat(
+            $this->args['statsConfig']['config']['host'],
+            $this->args['statsConfig']['config']['port'],
+            $this->args['statsConfig']['config']['prefix'],
+            ['timer','increment']
+        );
+
+        $applyOperation->args = $this->args;
+        $applyOperation->job->payload['id'] = uniqid();
+
+        $jobTrackerId = new \MongoDB\BSON\ObjectId();
+        $applyOperation->args[ApplyOperation::TRACKING_KEY] = $jobTrackerId->__toString();
+        $timestamp = new \MongoDB\BSON\UTCDateTime(hexdec(substr($jobTrackerId, 0, 8)) * 1000);
+
+        $jobGroup = $this->getMockBuilder('\Tripod\Mongo\JobGroup')
+            ->setMethods(['incrementJobCount'])
+            ->setConstructorArgs(['tripod_php_testing', $jobTrackerId])
+            ->getMock();
+
+        $jobGroup->expects($this->once())
+            ->method('incrementJobCount')
+            ->with(-1)
+            ->will($this->returnValue(0));
+
+        $subject = $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
+            ->setMethods(['getTripod'])
+            ->setConstructorArgs(
+                [
+                    [
+                        _ID_RESOURCE=>'http://example.com/resources/foo',
+                        _ID_CONTEXT=>'http://talisaspire.com'
+                    ],
+                    OP_TABLES,
+                    'tripod_php_testing',
+                    'CBD_testing'
+                ]
+            )->getMock();
+
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
+            ->setMethods(['getComposite'])
+            ->setConstructorArgs(['CBD_testing', 'tripod_php_testing'])
+            ->getMock();
+
+        $tables = $this->getMockBuilder('\Tripod\Mongo\Composites\Tables')
+            ->setMethods(['update', 'deleteTableRowsByTableId'])
+            ->setConstructorArgs(
+                [
+                    'tripod_php_testing',
+                    \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                    'http://talisapire.com/'
+                ]
+            )->getMock();
+
+        $applyOperation->expects($this->once())
+            ->method('createImpactedSubject')
+            ->will($this->returnValue($subject));
+
+        $applyOperation->expects($this->exactly(3))
+            ->method('getStat')
+            ->will($this->returnValue($statMock));
+
+        $applyOperation->expects($this->once())
+            ->method('getJobGroup')
+            ->with('tripod_php_testing', $jobTrackerId->__toString())
+            ->will($this->returnValue($jobGroup));
+
+        $applyOperation->expects($this->once())
+            ->method('getTripod')
+            ->with('tripod_php_testing', 'CBD_testing')
+            ->will($this->returnValue($tripod));
+
+        $statMock->expects($this->once())
+            ->method('increment')
+            ->with(MONGO_QUEUE_APPLY_OPERATION_JOB . '.' . SUBJECT_COUNT, 1);
+        $statMock->expects($this->exactly(2))
+            ->method('timer')
+            ->withConsecutive(
+                array(MONGO_QUEUE_APPLY_OPERATION.'.'.OP_TABLES, $this->anything()),
+                array(MONGO_QUEUE_APPLY_OPERATION_SUCCESS, $this->anything())
+            );
+
+
+        $subject->expects($this->once())
+            ->method('getTripod')
+            ->will($this->returnValue($tripod));
+
+        $tripod->expects($this->exactly(2))
+            ->method('getComposite')
+            ->with(OP_TABLES)
+            ->will($this->returnValue($tables));
+
+        $tables->expects($this->once())
+            ->method('update')
+            ->with($subject);
+        $tables->expects($this->once())
+            ->method('deleteTableRowsByTableId')
+            ->with('t_resource', $timestamp)
+            ->will($this->returnValue(4));
+
+        $applyOperation->perform();
+    }
+
     public function testApplySearchOperation()
     {
-        $this->setArgs();
+        $this->setArgs(OP_SEARCH, ['i_search_resource']);
         $applyOperation = $this->getMockBuilder('\Tripod\Mongo\Jobs\ApplyOperation')
             ->setMethods(array('createImpactedSubject', 'getStat'))
             ->getMock();
@@ -213,18 +638,6 @@ class ApplyOperationTest extends MongoTripodTestBase
             $this->args['statsConfig']['config']['prefix'],
             array('timer','increment')
         );
-
-        $impactedSubject = new \Tripod\Mongo\ImpactedSubject(
-            array(
-                _ID_RESOURCE=>'http://example.com/resources/foo',
-                _ID_CONTEXT=>'http://talisaspire.com/'
-            ),
-            OP_SEARCH,
-            'tripod_php_testing',
-            'CBD_testing',
-            array('t_resource')
-        );
-        $this->args['subjects'] = array($impactedSubject->toArray());
 
         $applyOperation->args = $this->args;
         $applyOperation->job->payload['id'] = uniqid();
@@ -284,6 +697,219 @@ class ApplyOperationTest extends MongoTripodTestBase
         $search->expects($this->once())
             ->method('update')
             ->with($subject);
+
+        $applyOperation->perform();
+    }
+
+    public function testApplySearchOperationDecrementsJobGroupForBatchOperations()
+    {
+        $this->setArgs(OP_SEARCH, ['i_search_resource']);
+        $applyOperation = $this->getMockBuilder('\Tripod\Mongo\Jobs\ApplyOperation')
+            ->setMethods(['createImpactedSubject', 'getStat', 'getJobGroup', 'getTripod'])
+            ->getMock();
+
+        $statMock = $this->getMockStat(
+            $this->args['statsConfig']['config']['host'],
+            $this->args['statsConfig']['config']['port'],
+            $this->args['statsConfig']['config']['prefix'],
+            ['timer', 'increment']
+        );
+
+        $applyOperation->args = $this->args;
+        $applyOperation->job->payload['id'] = uniqid();
+
+        $jobTrackerId = new \MongoDB\BSON\ObjectId();
+        $applyOperation->args[ApplyOperation::TRACKING_KEY] = $jobTrackerId->__toString();
+
+        $jobGroup = $this->getMockBuilder('\Tripod\Mongo\JobGroup')
+            ->setMethods(['incrementJobCount'])
+            ->setConstructorArgs(['tripod_php_testing', $jobTrackerId])
+            ->getMock();
+
+        $jobGroup->expects($this->once())
+            ->method('incrementJobCount')
+            ->with(-1)
+            ->will($this->returnValue(2));
+
+        $subject = $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
+            ->setMethods(['getTripod'])
+            ->setConstructorArgs(
+                [
+                    [
+                        _ID_RESOURCE=>'http://example.com/resources/foo',
+                        _ID_CONTEXT=>'http://talisaspire.com'
+                    ],
+                    OP_SEARCH,
+                    'tripod_php_testing',
+                    'CBD_testing'
+                ]
+            )->getMock();
+
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
+            ->setMethods(['getComposite'])
+            ->setConstructorArgs(['CBD_testing', 'tripod_php_testing'])
+            ->getMock();
+
+        $search = $this->getMockBuilder('\Tripod\Mongo\Composites\SearchIndexer')
+            ->setMethods(['update'])
+            ->setConstructorArgs([$tripod])
+            ->getMock();
+
+        $applyOperation->expects($this->once())
+            ->method('createImpactedSubject')
+            ->will($this->returnValue($subject));
+
+        $applyOperation->expects($this->exactly(3))
+            ->method('getStat')
+            ->will($this->returnValue($statMock));
+
+        $applyOperation->expects($this->once())
+            ->method('getJobGroup')
+            ->with('tripod_php_testing', $jobTrackerId->__toString())
+            ->will($this->returnValue($jobGroup));
+
+        $applyOperation->expects($this->never())
+            ->method('getTripod');
+
+        $statMock->expects($this->once())
+            ->method('increment')
+            ->with(MONGO_QUEUE_APPLY_OPERATION_JOB . '.' . SUBJECT_COUNT, 1);
+        $statMock->expects($this->exactly(2))
+            ->method('timer')
+            ->withConsecutive(
+                array(MONGO_QUEUE_APPLY_OPERATION.'.'.OP_SEARCH, $this->anything()),
+                array(MONGO_QUEUE_APPLY_OPERATION_SUCCESS, $this->anything())
+            );
+
+
+        $subject->expects($this->once())
+            ->method('getTripod')
+            ->will($this->returnValue($tripod));
+
+        $tripod->expects($this->once())
+            ->method('getComposite')
+            ->with(OP_SEARCH)
+            ->will($this->returnValue($search));
+
+        $search->expects($this->once())
+            ->method('update')
+            ->with($subject);
+
+        $applyOperation->perform();
+    }
+
+    public function testApplySearchOperationCleanupIfAllGroupJobsComplete()
+    {
+        $this->setArgs(OP_SEARCH, ['i_search_resource']);
+        $applyOperation = $this->getMockBuilder('\Tripod\Mongo\Jobs\ApplyOperation')
+            ->setMethods(['createImpactedSubject', 'getStat', 'getJobGroup', 'getTripod', 'getSearchProvider'])
+            ->getMock();
+
+        $statMock = $this->getMockStat(
+            $this->args['statsConfig']['config']['host'],
+            $this->args['statsConfig']['config']['port'],
+            $this->args['statsConfig']['config']['prefix'],
+            ['timer', 'increment']
+        );
+
+        $applyOperation->args = $this->args;
+        $applyOperation->job->payload['id'] = uniqid();
+
+        $jobTrackerId = new \MongoDB\BSON\ObjectId();
+        $applyOperation->args[ApplyOperation::TRACKING_KEY] = $jobTrackerId->__toString();
+        $timestamp = new \MongoDB\BSON\UTCDateTime(hexdec(substr($jobTrackerId, 0, 8)) * 1000);
+
+        $jobGroup = $this->getMockBuilder('\Tripod\Mongo\JobGroup')
+            ->setMethods(['incrementJobCount'])
+            ->setConstructorArgs(['tripod_php_testing', $jobTrackerId])
+            ->getMock();
+
+        $jobGroup->expects($this->once())
+            ->method('incrementJobCount')
+            ->with(-1)
+            ->will($this->returnValue(0));
+
+        $subject = $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
+            ->setMethods(['getTripod'])
+            ->setConstructorArgs(
+                [
+                    [
+                        _ID_RESOURCE=>'http://example.com/resources/foo',
+                        _ID_CONTEXT=>'http://talisaspire.com'
+                    ],
+                    OP_SEARCH,
+                    'tripod_php_testing',
+                    'CBD_testing'
+                ]
+            )->getMock();
+
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
+            ->setMethods(['getComposite'])
+            ->setConstructorArgs(['CBD_testing', 'tripod_php_testing'])
+            ->getMock();
+
+        $searchProvider = $this->getMockBuilder('\Tripod\Mongo\MongoSearchProvider')
+            ->setMethods(['deleteSearchDocumentsByTypeId'])
+            ->setConstructorArgs([$tripod])
+            ->getMock();
+
+        $search = $this->getMockBuilder('\Tripod\Mongo\Composites\SearchIndexer')
+            ->setMethods(['update'])
+            ->setConstructorArgs([$tripod])
+            ->getMock();
+
+        $applyOperation->expects($this->once())
+            ->method('createImpactedSubject')
+            ->will($this->returnValue($subject));
+
+        $applyOperation->expects($this->exactly(3))
+            ->method('getStat')
+            ->will($this->returnValue($statMock));
+
+        $applyOperation->expects($this->once())
+            ->method('getJobGroup')
+            ->with('tripod_php_testing', $jobTrackerId->__toString())
+            ->will($this->returnValue($jobGroup));
+
+        $applyOperation->expects($this->once())
+            ->method('getTripod')
+            ->with('tripod_php_testing', 'CBD_testing')
+            ->will($this->returnValue($tripod));
+
+        $applyOperation->expects($this->once())
+            ->method('getSearchProvider')
+            ->with($tripod)
+            ->will($this->returnValue($searchProvider));
+
+        $statMock->expects($this->once())
+            ->method('increment')
+            ->with(MONGO_QUEUE_APPLY_OPERATION_JOB . '.' . SUBJECT_COUNT, 1);
+
+        $statMock->expects($this->exactly(2))
+            ->method('timer')
+            ->withConsecutive(
+                array(MONGO_QUEUE_APPLY_OPERATION.'.'.OP_SEARCH, $this->anything()),
+                array(MONGO_QUEUE_APPLY_OPERATION_SUCCESS, $this->anything())
+            );
+
+
+        $subject->expects($this->once())
+            ->method('getTripod')
+            ->will($this->returnValue($tripod));
+
+        $tripod->expects($this->once())
+            ->method('getComposite')
+            ->with(OP_SEARCH)
+            ->will($this->returnValue($search));
+
+        $search->expects($this->once())
+            ->method('update')
+            ->with($subject);
+
+        $searchProvider->expects($this->once())
+            ->method('deleteSearchDocumentsByTypeId')
+            ->with('i_search_resource', $timestamp)
+            ->will($this->returnValue(8));
 
         $applyOperation->perform();
     }
@@ -429,22 +1055,23 @@ class ApplyOperationTest extends MongoTripodTestBase
     /**
      * Sets job arguments
      */
-    protected function setArgs()
+    protected function setArgs($operation = OP_VIEWS, array $specTypes = [])
     {
         $subject = new \Tripod\Mongo\ImpactedSubject(
-            array(
+            [
                 _ID_RESOURCE=>'http://example.com/resources/foo',
                 _ID_CONTEXT=>'http://talisaspire.com/'
-            ),
-            OP_VIEWS,
+            ],
+            $operation,
             'tripod_php_testing',
-            'CBD_testing'
+            'CBD_testing',
+            $specTypes
         );
 
         $this->args = array(
-            'tripodConfig'=>\Tripod\Mongo\Config::getConfig(),
-            'subjects'=>array($subject->toArray()),
-            'statsConfig'=>$this->getStatsDConfig()
+            'tripodConfig' => \Tripod\Mongo\Config::getConfig(),
+            'subjects'=> [$subject->toArray()],
+            'statsConfig' => $this->getStatsDConfig()
         );
     }
 }
