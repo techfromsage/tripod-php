@@ -1659,7 +1659,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
     public function testCountTablesWithFilters()
     {
-        $filters = ['_cts' => ['$lte' => new \MongoDB\BSON\UTCDateTime()]];
+        $filters = ['_cts' => ['$lte' => new \MongoDB\BSON\UTCDateTime(null)]];
         $query = array_merge(['_id.type' => 't_source_count'], $filters);
         $collection = $this->getMockBuilder('\MongoDB\Collection')
             ->disableOriginalConstructor()
@@ -1719,7 +1719,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
     public function testDeleteTableRowsByTableIdWithTimestamp()
     {
-        $timestamp = new \MongoDB\BSON\UTCDateTime();
+        $timestamp = new \MongoDB\BSON\UTCDateTime(null);
 
         $query = [
             '_id.type' => 't_source_count',

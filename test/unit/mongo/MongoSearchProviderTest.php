@@ -632,7 +632,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
            ->setConstructorArgs(['CBD_testing', 'tripod_php_testing'])
             ->getMock();
 
-        $filters = ['_cts' => ['$lte' => new \MongoDB\BSON\UTCDateTime()]];
+        $filters = ['_cts' => ['$lte' => new \MongoDB\BSON\UTCDateTime(null)]];
         $query = array_merge(['_id.type' => 'i_search_list'], $filters);
         $collection = $this->getMockBuilder('\MongoDB\Collection')
             ->disableOriginalConstructor()
@@ -701,7 +701,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
     public function testDeleteSearchDocumentsBySearchIdWithTimestamp()
     {
-        $timestamp = new \MongoDB\BSON\UTCDateTime();
+        $timestamp = new \MongoDB\BSON\UTCDateTime(null);
 
         $query = [
             '_id.type' => 'i_search_list',

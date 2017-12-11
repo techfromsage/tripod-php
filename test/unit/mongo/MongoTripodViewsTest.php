@@ -2051,7 +2051,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
 
     public function testCountViewsWithFilters()
     {
-        $filters = ['_cts' => ['$lte' => new \MongoDB\BSON\UTCDateTime()]];
+        $filters = ['_cts' => ['$lte' => new \MongoDB\BSON\UTCDateTime(null)]];
         $query = array_merge(['_id.type' => 'v_some_spec'], $filters);
         $collection = $this->getMockBuilder('\MongoDB\Collection')
             ->disableOriginalConstructor()
@@ -2111,7 +2111,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
 
     public function testDeleteViewsByViewIdWithTimestamp()
     {
-        $timestamp = new \MongoDB\BSON\UTCDateTime();
+        $timestamp = new \MongoDB\BSON\UTCDateTime(null);
 
         $query = [
             '_id.type' => 'v_resource_full',
