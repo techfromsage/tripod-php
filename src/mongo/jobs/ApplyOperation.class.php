@@ -51,6 +51,12 @@ class ApplyOperation extends JobBase {
                 // stat time taken to perform operation for the given subject
                 $this->getStat()->timer(MONGO_QUEUE_APPLY_OPERATION.'.'.$subject['operation'], $opTimer->result());
 
+                /**
+                 * ApplyOperation jobs can either apply to a single resource (e.g. 'create composite for the given
+                 * resource uri) or for a specification id (i.e. regenerate all of the composites defined by the
+                 * specification).  For the latter, we need to keep track of how many jobs have run so we can clean
+                 * up any stale composite documents when completed.  The TRACKING_KEY value will be the JobGroup id.
+                 */
                 if (isset($this->args[self::TRACKING_KEY])) {
                     $jobGroup = $this->getJobGroup($subject['storeName'], $this->args[self::TRACKING_KEY]);
                     $jobCount = $jobGroup->incrementJobCount(-1);

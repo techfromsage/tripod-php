@@ -275,8 +275,7 @@ class ApplyOperationTest extends MongoTripodTestBase
             ->method('createImpactedSubject')
             ->will($this->returnValue($subject));
 
-        // $applyOperation->expects($this->exactly(3))
-        $applyOperation->expects($this->any())
+        $applyOperation->expects($this->exactly(3))
             ->method('getStat')
             ->will($this->returnValue($statMock));
 

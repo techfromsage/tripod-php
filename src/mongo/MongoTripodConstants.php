@@ -98,8 +98,6 @@ define('SUBJECT_COUNT', 'subject_count');
 define('STAT_CLASS', 'tripod');
 define('STAT_PIVOT_FIELD', 'group_by_db');
 
-define('BATCH_TRACKING_GROUP', 'BATCH_TRACKING_GROUP');
-
 //Audit types, statuses
 define('AUDIT_TYPE_REMOVE_INERT_LOCKS', 'REMOVE_INERT_LOCKS');
 define('AUDIT_STATUS_IN_PROGRESS', 'IN_PROGRESS');

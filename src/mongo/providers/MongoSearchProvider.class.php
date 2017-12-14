@@ -338,7 +338,7 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
      * If type id is not specified this method will throw an exception.
      * @param string                         $typeId    Search type id
      * @param \MongoDB\BSON\UTCDateTime|null $timestamp Optional timestamp to delete all search docs that are older than
-     * @return integer                                  The number of search documnts deleted
+     * @return integer                                  The number of search documents deleted
      * @throws \Tripod\Exceptions\Exception if there was an error performing the operation
      */
     public function deleteSearchDocumentsByTypeId($typeId, $timestamp = null)

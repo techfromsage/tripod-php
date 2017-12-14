@@ -2,6 +2,8 @@
 
 namespace Tripod\Mongo;
 
+use \MongoDB\BSON\ObjectId;
+
 class JobGroup
 {
     private $id;
@@ -11,15 +13,15 @@ class JobGroup
     /**
      * Constructor method
      * @param string                        $storeName Tripod store (database) name
-     * @param string|\MongoDB\BSON\ObjectId $groupId   Optional tracking ID, will assign a new one if omitted
+     * @param string|ObjectId $groupId   Optional tracking ID, will assign a new one if omitted
      */
     public function __construct($storeName, $groupId = null)
     {
         $this->storeName = $storeName;
         if (!$groupId) {
-            $groupId = new \MongoDB\BSON\ObjectId();
-        } elseif (!$groupId instanceof \MongoDB\BSON\ObjectId) {
-            $groupId = new \MongoDB\BSON\ObjectId($groupId);
+            $groupId = new ObjectId();
+        } elseif (!$groupId instanceof ObjectId) {
+            $groupId = new ObjectId($groupId);
         }
         $this->id = $groupId;
     }
@@ -60,7 +62,7 @@ class JobGroup
     }
 
     /**
-     * @return \MongoDB\BSON\ObjectId
+     * @return ObjectId
      */
     public function getId()
     {

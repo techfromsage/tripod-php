@@ -168,6 +168,7 @@ class SearchIndexer extends CompositeBase
      * @param string|null $resourceUri
      * @param string|null $context
      * @param string|null $queueName
+     * @return array|null Will return an array with a count and group id, if $queueName is sent and $resourceUri is null
      */
     public function generateSearchDocuments($searchDocumentType, $resourceUri=null, $context=null, $queueName=null)
     {
@@ -213,7 +214,7 @@ class SearchIndexer extends CompositeBase
         ));
 
         $jobOptions = [];
-        if ($queueName && !$resource) {
+        if ($queueName && !$resourceUri) {
             $jobOptions['statsConfig'] = $this->getStatsConfig();
             $jobGroup = new JobGroup($this->storeName);
             $jobOptions[ApplyOperation::TRACKING_KEY] = $jobGroup->getId()->__toString();
