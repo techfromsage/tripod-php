@@ -336,20 +336,30 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
      * Removes all documents from search index based on the specified type id.
      * Here search type id represents to id from, mongo tripod config, that is converted to _id.type in SEARCH_INDEX_COLLECTION
      * If type id is not specified this method will throw an exception.
-     * @param string $typeId search type id
-     * @return bool|array  response returned by mongo
+     * @param string                         $typeId    Search type id
+     * @param \MongoDB\BSON\UTCDateTime|null $timestamp Optional timestamp to delete all search docs that are older than
+     * @return integer                                  The number of search documents deleted
      * @throws \Tripod\Exceptions\Exception if there was an error performing the operation
      */
-    public function deleteSearchDocumentsByTypeId($typeId)
+    public function deleteSearchDocumentsByTypeId($typeId, $timestamp = null)
     {
         $searchSpec = $this->getSearchDocumentSpecification($typeId);
-        if ($searchSpec == null)
-        {
+        if ($searchSpec == null) {
             throw new \Tripod\Exceptions\SearchException("Could not find a search specification for $typeId");
         }
-
-        return $this->config->getCollectionForSearchDocument($this->storeName, $typeId)
-            ->deleteMany(array("_id.type" => $typeId));
+        $query = ['_id.type' => $typeId];
+        if ($timestamp) {
+            if (!($timestamp instanceof \MongoDB\BSON\UTCDateTime)) {
+                $timestamp = new \MongoDB\BSON\UTCDateTime($timestamp);
+            }
+            $query['$or'] = [
+                [\_CREATED_TS => ['$lt' => $timestamp]],
+                [\_CREATED_TS => ['$exists' => false]]
+            ];
+        }
+        $deleteResponse = $this->getCollectionForSearchSpec($typeId)
+            ->deleteMany($query);
+        return $deleteResponse->getDeletedCount();
     }
 
     /**
@@ -360,5 +370,29 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
     protected function getSearchDocumentSpecification($typeId)
     {
         return Config::getInstance()->getSearchDocumentSpecification($this->storeName, $typeId);
+    }
+
+    /**
+     * Count the number of documents in the spec that match $filters
+     *
+     * @param string $searchSpec Search spec ID
+     * @param array  $filters    Query filters to get count on
+     * @return integer
+     */
+    public function count($searchSpec, array $filters = [])
+    {
+        $filters['_id.type'] = $searchSpec;
+        return $this->getCollectionForSearchSpec($searchSpec)->count($filters);
+    }
+
+    /**
+     * For mocking
+     *
+     * @param string $searchSpecId Search spec ID
+     * @return \MongoDB\Collection
+     */
+    protected function getCollectionForSearchSpec($searchSpecId)
+    {
+        return $this->config->getCollectionForSearchDocument($this->storeName, $searchSpecId);
     }
 }

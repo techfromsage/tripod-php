@@ -598,6 +598,160 @@ class MongoSearchProviderTest extends MongoTripodTestBase
     	$this->assertEquals(1, $newSearchDocumentCount, "Should have 1 search documents since there is one search document with 'i_search_list' type that does not match delete type.");
     }
 
+    public function testCountSearchDocuments()
+    {
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
+            ->setConstructorArgs(['CBD_testing', 'tripod_php_testing'])
+            ->getMock();
+
+        $collection = $this->getMockBuilder('\MongoDB\Collection')
+            ->disableOriginalConstructor()
+            ->setMethods(['count'])
+            ->getMock();
+        $search = $this->getMockBuilder('\Tripod\Mongo\MongoSearchProvider')
+            ->setMethods(['getCollectionForSearchSpec'])
+            ->setConstructorArgs([$tripod])
+            ->getMock();
+
+        $search->expects($this->once())
+            ->method('getCollectionForSearchSpec')
+            ->with('i_search_list')
+            ->will($this->returnValue($collection));
+
+        $collection->expects($this->once())
+            ->method('count')
+            ->with(['_id.type' => 'i_search_list'])
+            ->will($this->returnValue(21));
+
+        $this->assertEquals(21, $search->count('i_search_list'));
+    }
+
+    public function testCountSearchDocumentsWithFilters()
+    {
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
+           ->setConstructorArgs(['CBD_testing', 'tripod_php_testing'])
+            ->getMock();
+
+        $filters = ['_cts' => ['$lte' => new \MongoDB\BSON\UTCDateTime(null)]];
+        $query = array_merge(['_id.type' => 'i_search_list'], $filters);
+        $collection = $this->getMockBuilder('\MongoDB\Collection')
+            ->disableOriginalConstructor()
+            ->setMethods(['count'])
+            ->getMock();
+        $search = $this->getMockBuilder('\Tripod\Mongo\MongoSearchProvider')
+            ->setMethods(['getCollectionForSearchSpec'])
+            ->setConstructorArgs([$tripod])
+            ->getMock();
+
+        $search->expects($this->once())
+            ->method('getCollectionForSearchSpec')
+            ->with('i_search_list')
+            ->will($this->returnValue($collection));
+
+        $collection->expects($this->once())
+            ->method('count')
+            ->with($query)
+            ->will($this->returnValue(89));
+
+        $this->assertEquals(89, $search->count('i_search_list', $filters));
+    }
+
+    public function testDeleteSearchDocumentsBySearchId()
+    {
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
+            ->setConstructorArgs(['CBD_testing', 'tripod_php_testing'])
+            ->getMock();
+
+        $collection = $this->getMockBuilder('\MongoDB\Collection')
+            ->disableOriginalConstructor()
+            ->setMethods(['deleteMany'])
+            ->getMock();
+
+        $deleteResult = $this->getMockBuilder('MongoDB\DeleteResult')
+            ->setMethods(['getDeletedCount'])
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $deleteResult->expects($this->once())
+            ->method('getDeletedCount')
+            ->will($this->returnValue(9));
+
+        $search = $this->getMockBuilder('\Tripod\Mongo\MongoSearchProvider')
+            ->setMethods(['getCollectionForSearchSpec', 'getSearchDocumentSpecification'])
+            ->setConstructorArgs([$tripod])
+            ->getMock();
+
+        $search->expects($this->once())
+            ->method('getSearchDocumentSpecification')
+            ->with('i_search_list')
+            ->will($this->returnValue(['_id' => 'i_search_list']));
+
+        $search->expects($this->once())
+            ->method('getCollectionForSearchSpec')
+            ->with('i_search_list')
+            ->will($this->returnValue($collection));
+
+        $collection->expects($this->once())
+            ->method('deleteMany')
+            ->with(['_id.type' => 'i_search_list'])
+            ->will($this->returnValue($deleteResult));
+
+        $this->assertEquals(9, $search->deleteSearchDocumentsByTypeId('i_search_list'));
+    }
+
+    public function testDeleteSearchDocumentsBySearchIdWithTimestamp()
+    {
+        $timestamp = new \MongoDB\BSON\UTCDateTime(null);
+
+        $query = [
+            '_id.type' => 'i_search_list',
+            '$or' => [
+                [\_CREATED_TS => ['$lt' => $timestamp]],
+                [\_CREATED_TS => ['$exists' => false]]
+            ]
+        ];
+
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
+            ->setConstructorArgs(['CBD_testing', 'tripod_php_testing'])
+            ->getMock();
+
+        $collection = $this->getMockBuilder('\MongoDB\Collection')
+            ->disableOriginalConstructor()
+            ->setMethods(['deleteMany'])
+            ->getMock();
+
+        $deleteResult = $this->getMockBuilder('MongoDB\DeleteResult')
+            ->setMethods(['getDeletedCount'])
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $deleteResult->expects($this->once())
+            ->method('getDeletedCount')
+            ->will($this->returnValue(9));
+
+        $search = $this->getMockBuilder('\Tripod\Mongo\MongoSearchProvider')
+            ->setMethods(['getCollectionForSearchSpec', 'getSearchDocumentSpecification'])
+            ->setConstructorArgs([$tripod])
+            ->getMock();
+
+        $search->expects($this->once())
+            ->method('getSearchDocumentSpecification')
+            ->with('i_search_list')
+            ->will($this->returnValue(['_id' => 'i_search_list']));
+
+        $search->expects($this->once())
+            ->method('getCollectionForSearchSpec')
+            ->with('i_search_list')
+            ->will($this->returnValue($collection));
+
+        $collection->expects($this->once())
+            ->method('deleteMany')
+            ->with($query)
+            ->will($this->returnValue($deleteResult));
+
+        $this->assertEquals(9, $search->deleteSearchDocumentsByTypeId('i_search_list', $timestamp));
+    }
+
     /**
      * @param \Tripod\Mongo\Driver $tripod
      * @param array $specs

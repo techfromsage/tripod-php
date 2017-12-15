@@ -5,9 +5,11 @@ namespace Tripod\Mongo\Composites;
 require_once TRIPOD_DIR . 'mongo/MongoTripodConstants.php';
 require_once TRIPOD_DIR . 'mongo/base/DriverBase.class.php';
 
-use Tripod\Mongo\Config;
-use Tripod\Mongo\ImpactedSubject;
-use Tripod\Mongo\Labeller;
+use \Tripod\Mongo\Jobs\ApplyOperation;
+use \Tripod\Mongo\Config;
+use \Tripod\Mongo\ImpactedSubject;
+use \Tripod\Mongo\Labeller;
+use \Tripod\Mongo\JobGroup;
 use \MongoDB\Driver\ReadPreference;
 use \MongoDB\Collection;
 
@@ -358,24 +360,35 @@ class Tables extends CompositeBase
 
     /**
      * This method will delete all table rows where the _id.type matches the specified $tableId
-     * @param string $tableId
+     * @param string                         $tableId   Table spec ID
+     * @param \MongoDB\BSON\UTCDateTime|null $timestamp Optional timestamp to delete all table rows that are older than
+     * @return integer                                  The number of table rows deleted
      */
-    public function deleteTableRowsByTableId($tableId) {
+    public function deleteTableRowsByTableId($tableId, $timestamp = null) {
         $t = new \Tripod\Timer();
         $t->start();
         $tableSpec = Config::getInstance()->getTableSpecification($this->storeName, $tableId);
-        if ($tableSpec==null)
-        {
+        if ($tableSpec == null) {
             $this->debugLog("Could not find a table specification for $tableId");
             return;
         }
 
-        $query = array("_id.type"=>$tableId);
-        $this->config->getCollectionForTable($this->storeName, $tableId)
+        $query = ['_id.type' => $tableId];
+        if ($timestamp) {
+            if (!($timestamp instanceof \MongoDB\BSON\UTCDateTime)) {
+                $timestamp = \Tripod\Mongo\DateUtil::getMongoDate($timestamp);
+            }
+            $query['$or'] = [
+                [\_CREATED_TS => ['$lt' => $timestamp]],
+                [\_CREATED_TS => ['$exists' => false]]
+            ];
+        }
+        $deleteResult = $this->getCollectionForTableSpec($tableId)
             ->deleteMany($query);
 
         $t->stop();
         $this->timingLog(MONGO_DELETE_TABLE_ROWS, array('duration'=>$t->result(), 'query'=>$query));
+        return $deleteResult->getDeletedCount();
     }
 
     /**
@@ -486,9 +499,9 @@ class Tables extends CompositeBase
      * @param string|null $resource
      * @param string|null $context
      * @param string|null $queueName Queue for background bulk generation
-     * @return null //@todo: this should be a bool
+     * @return array
      */
-    public function generateTableRows($tableType,$resource=null,$context=null,$queueName=null)
+    public function generateTableRows($tableType, $resource = null, $context = null, $queueName = null)
     {
         $t = new \Tripod\Timer();
         $t->start();
@@ -496,8 +509,7 @@ class Tables extends CompositeBase
         $tableSpec = Config::getInstance()->getTableSpecification($this->storeName, $tableType);
         $collection = $this->config->getCollectionForTable($this->storeName, $tableType);
 
-        if ($tableSpec==null)
-        {
+        if ($tableSpec==null) {
             $this->debugLog("Could not find a table specification for $tableType");
             return null;
         }
@@ -509,33 +521,35 @@ class Tables extends CompositeBase
         $from = (isset($tableSpec["from"])) ? $tableSpec["from"] : $this->podName;
 
         $types = array();
-        if (is_array($tableSpec["type"]))
-        {
-            foreach ($tableSpec["type"] as $type)
-            {
+        if (is_array($tableSpec["type"])) {
+            foreach ($tableSpec["type"] as $type) {
                 $types[] = array("rdf:type.u"=>$this->labeller->qname_to_alias($type));
                 $types[] = array("rdf:type.u"=>$this->labeller->uri_to_alias($type));
             }
-        }
-        else
-        {
+        } else {
             $types[] = array("rdf:type.u"=>$this->labeller->qname_to_alias($tableSpec["type"]));
             $types[] = array("rdf:type.u"=>$this->labeller->uri_to_alias($tableSpec["type"]));
         }
         $filter = array('$or'=> $types);
-        if (isset($resource))
-        {
+        if (isset($resource)) {
             $filter["_id"] = array(_ID_RESOURCE=>$this->labeller->uri_to_alias($resource),_ID_CONTEXT=>$contextAlias);
         }
-
+        // @todo Change this to a command when we upgrade MongoDB to 1.1+
+        $count = $this->config->getCollectionForCBD($this->storeName, $from)->count($filter);
         $docs = $this->config->getCollectionForCBD($this->storeName, $from)->find($filter, array(
             'maxTimeMS' => 1000000
         ));
 
-        foreach ($docs as $doc)
-        {
-            if($queueName && !$resource)
-            {
+        $jobOptions = [];
+        if ($queueName && !$resource && ($this->stat || !empty($this->statsConfig))) {
+            $jobOptions['statsConfig'] = $this->getStatsConfig();
+            $jobGroup = new JobGroup($this->storeName);
+            $jobOptions[ApplyOperation::TRACKING_KEY] = $jobGroup->getId()->__toString();
+            $jobGroup->setJobCount($count);
+        }
+
+        foreach ($docs as $doc) {
+            if ($queueName && !$resource) {
                 $subject = new ImpactedSubject(
                     $doc['_id'],
                     OP_TABLES,
@@ -544,34 +558,29 @@ class Tables extends CompositeBase
                     array($tableType)
                 );
 
-                $jobOptions = array();
-
-                if($this->stat || !empty($this->statsConfig))
-                {
-                    $jobOptions['statsConfig'] = $this->getStatsConfig();
-                }
-
                 $this->getApplyOperation()->createJob(array($subject), $queueName, $jobOptions);
-            }
-            else
-            {
+            } else {
                 // set up ID
-                $generatedRow = array("_id"=>array(_ID_RESOURCE=>$doc["_id"][_ID_RESOURCE],_ID_CONTEXT=>$doc["_id"][_ID_CONTEXT],_ID_TYPE=>$tableSpec['_id']));
-
-                $value = array('_id'=>$doc['_id']); // everything must go in the value object todo: this is a hang over from map reduce days, engineer out once we have stability on new PHP method for M/R
+                $generatedRow = [
+                    '_id' => [
+                        _ID_RESOURCE => $doc['_id'][_ID_RESOURCE],
+                        _ID_CONTEXT => $doc['_id'][_ID_CONTEXT],
+                        _ID_TYPE=>$tableSpec['_id']
+                    ],
+                    \_CREATED_TS => \Tripod\Mongo\DateUtil::getMongoDate()
+                ];
+                // everything must go in the value object todo: this is a hang over from map reduce days, engineer out once we have stability on new PHP method for M/R
+                $value = ['_id' => $doc['_id']];
                 $this->addIdToImpactIndex($doc['_id'], $value); // need to add the doc to the impact index to be consistent with views/search etc. this is needed for discovering impacted operations
                 $this->addFields($doc,$tableSpec,$value);
-                if (isset($tableSpec['joins']))
-                {
+                if (isset($tableSpec['joins'])) {
                     $this->doJoins($doc,$tableSpec['joins'],$value,$from,$contextAlias);
                 }
-                if (isset($tableSpec['counts']))
-                {
+                if (isset($tableSpec['counts'])) {
                     $this->doCounts($doc,$tableSpec['counts'],$value);
                 }
 
-                if (isset($tableSpec['computed_fields']))
-                {
+                if (isset($tableSpec['computed_fields'])) {
                     $this->doComputedFields($tableSpec, $value);
                 }
 
@@ -589,6 +598,12 @@ class Tables extends CompositeBase
             'filter'=>$filter,
             'from'=>$from));
         $this->getStat()->timer(MONGO_CREATE_TABLE.".$tableType",$t->result());
+
+        $stat = ['count' => $count];
+        if (isset($jobOptions[ApplyOperation::TRACKING_KEY])) {
+            $stat[ApplyOperation::TRACKING_KEY] = $jobOptions[ApplyOperation::TRACKING_KEY];
+        }
+        return $stat;
     }
 
     /**
@@ -1436,5 +1451,29 @@ class Tables extends CompositeBase
         {
             throw new \Tripod\Exceptions\Exception("Was expecting either VALUE_URI or VALUE_LITERAL when applying regex to value - possible data corruption with: ".var_export($value,true));
         }
+    }
+
+    /**
+     * Count the number of documents in the spec that match $filters
+     *
+     * @param string $tableSpec Table spec ID
+     * @param array  $filters   Query filters to get count on
+     * @return integer
+     */
+    public function count($tableSpec, array $filters = [])
+    {
+        $filters['_id.type'] = $tableSpec;
+        return $this->getCollectionForTableSpec($tableSpec)->count($filters);
+    }
+
+    /**
+     * For mocking
+     *
+     * @param string $tableSpecId Table spec ID
+     * @return \MongoDB\Collection
+     */
+    protected function getCollectionForTableSpec($tableSpecId)
+    {
+        return $this->getConfigInstance()->getCollectionForTable($this->storeName, $tableSpecId);
     }
 }

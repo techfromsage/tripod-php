@@ -2055,6 +2055,19 @@ class Config
     }
 
     /**
+     * @param string $storeName
+     * @param string $readPreference
+     * @return Collection
+     */
+    public function getCollectionForJobGroups($storeName, $readPreference = ReadPreference::RP_PRIMARY_PREFERRED)
+    {
+        return $this->getMongoCollection(
+            $this->getDatabase($storeName, $this->dbConfig[$storeName]['data_source'], $readPreference),
+            OPERATION_GROUPS_COLLECTION
+        );
+    }
+
+    /**
      * @param $readPreference
      * @return Database
      * @throws \Tripod\Exceptions\ConfigException

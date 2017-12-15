@@ -410,13 +410,14 @@ class IndexUtilsTest extends MongoTripodTestBase
         // params that we know.
         // a) one custom index is created based on the view specification
         // b) three internal indexes are always created
-        $mockCollection->expects($this->exactly(4))
+        $mockCollection->expects($this->exactly(5))
             ->method('createIndex')
             ->withConsecutive(
                 array(array(_ID_KEY.'.'._ID_RESOURCE => 1, _ID_KEY.'.'._ID_CONTEXT => 1, _ID_KEY.'.'._ID_TYPE => 1), array('background'=>$background)),
                 array(array(_ID_KEY.'.'._ID_TYPE => 1), array('background' => $background)),
                 array(array('value.'._IMPACT_INDEX => 1), array('background' => $background)),
-                array(array('rdf:type.u' => 1), array('background' => $background))
+                [['_cts' => 1], ['background' => $background]],
+                [['rdf:type.u' => 1, '_cts' => 1], ['background' => $background]]
             );
     }
 
@@ -430,13 +431,14 @@ class IndexUtilsTest extends MongoTripodTestBase
         // params that we know.
         // a) one custom index is created based on the view specification
         // b) three internal indexes are always created
-        $mockCollection->expects($this->exactly(4))
+        $mockCollection->expects($this->exactly(5))
             ->method('createIndex')
             ->withConsecutive(
                 array(array(_ID_KEY.'.'._ID_RESOURCE => 1, _ID_KEY.'.'._ID_CONTEXT => 1, _ID_KEY.'.'._ID_TYPE => 1), array('background'=>$background)),
                 array(array(_ID_KEY.'.'._ID_TYPE => 1), array('background' => $background)),
                 array(array('value.'._IMPACT_INDEX => 1), array('background' => $background)),
-                array(array('rdf:type.u' => 1), array('background'=>$background))
+                [['_cts' => 1], ['background' => $background]],
+                [['rdf:type.u' => 1], ['background' => $background]]
             );
     }
 
@@ -449,12 +451,13 @@ class IndexUtilsTest extends MongoTripodTestBase
         // create index is called 3 times, each time with a different set of
         // params that we know.
         // for search docs only internal indexes are created
-        $mockCollection->expects($this->exactly(3))
+        $mockCollection->expects($this->exactly(4))
             ->method('createIndex')
             ->withConsecutive(
                 array(array(_ID_KEY.'.'._ID_RESOURCE => 1, _ID_KEY.'.'._ID_CONTEXT => 1), array('background' => $background)),
                 array(array(_ID_KEY.'.'._ID_TYPE => 1), array('background' => $background)),
-                array(array(_IMPACT_INDEX => 1), array('background' => $background))
+                array(array(_IMPACT_INDEX => 1), array('background' => $background)),
+                [['_cts' => 1], ['background' => $background]]
             );
 
     }
@@ -526,7 +529,7 @@ class IndexUtilsTest extends MongoTripodTestBase
                     array(
                         "_id" => "v_testview",
                         "ensureIndexes" => array(
-                            array("rdf:type.u"=>1)
+                            array("rdf:type.u"=>1, '_cts' => 1)
                         ),
                         "from" => "CBD_testing",
                         "type" => "temp:TestType",

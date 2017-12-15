@@ -111,7 +111,7 @@ class SearchDocuments extends DriverBase
         $this->debugLog("Processing {$specId}");
 
         // build the document
-        $generatedDocument = array();
+        $generatedDocument = [\_CREATED_TS => DateUtil::getMongoDate()];
         $this->addIdToImpactIndex($_id, $generatedDocument);
 
         $_id['type'] = $specId;

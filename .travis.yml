@@ -7,8 +7,10 @@ php:
 - 5.4
 services:
 - redis
+- docker
 before_install:
-- sudo apt-get install -y mongodb-org=2.6.9 mongodb-org-server=2.6.9 mongodb-org-shell=2.6.9 mongodb-org-mongos=2.6.9 mongodb-org-tools=2.6.9
+- docker pull rossfsinger/mongo-2.6.12
+- docker run -d -p 127.0.0.1:27017:27017 -v ~/data:/data/db rossfsinger/mongo-2.6.12:latest
 - echo "extension = mongodb.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
 - sleep 15
 install:

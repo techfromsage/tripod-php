@@ -108,7 +108,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']]
         );
         $actualView = $mongo->selectCollection('tripod_php_testing','views')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA',"c"=>'http://talisaspire.com/',"type"=>'v_resource_full')));
-        $this->assertEquals($expectedView,$actualView);
+        $this->assertEquals($expectedView['_id'], $actualView['_id']);
+        $this->assertEquals($expectedView['value'], $actualView['value']);
+        $this->assertInstanceOf('\MongoDB\BSON\UTCDateTime', $actualView['_cts']);
     }
 
     /**
@@ -179,7 +181,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']]
         );
         $actualView = $mongo->selectCollection('tripod_php_testing','views')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/filter1',"c"=>'http://talisaspire.com/',"type"=>'v_resource_filter1')));
-        $this->assertEquals($expectedView,$actualView);
+        $this->assertEquals($expectedView['_id'], $actualView['_id']);
+        $this->assertEquals($expectedView['value'], $actualView['value']);
+        $this->assertInstanceOf('\MongoDB\BSON\UTCDateTime', $actualView['_cts']);
     }
 
     /**
@@ -244,7 +248,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $actualView = $mongo->selectCollection('tripod_php_testing','views')->findOne(
             array('_id'=>array("r"=>'http://talisaspire.com/resources/filter1',"c"=>'http://talisaspire.com/',"type"=>'v_resource_filter2'))
         );
-        $this->assertEquals($expectedView,$actualView);
+        $this->assertEquals($expectedView['_id'], $actualView['_id']);
+        $this->assertEquals($expectedView['value'], $actualView['value']);
+        $this->assertInstanceOf('\MongoDB\BSON\UTCDateTime', $actualView['_cts']);
     }
 
     /**
@@ -315,7 +321,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']]
         );
         $actualView = $mongo->selectCollection('tripod_php_testing','views')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/filter1',"c"=>'http://talisaspire.com/',"type"=>'v_resource_filter1')));
-        $this->assertEquals($expectedView,$actualView);
+        $this->assertEquals($expectedView['_id'], $actualView['_id']);
+        $this->assertEquals($expectedView['value'], $actualView['value']);
+        $this->assertInstanceOf('\MongoDB\BSON\UTCDateTime', $actualView['_cts']);
 
         // Modify http://talisaspire.com/works/filter1 so that it is a Chapter (included in the view) not a Book (excluded from the view)
         $oldGraph = new \Tripod\ExtendedGraph();
@@ -382,7 +390,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         );
 
         $updatedView = $mongo->selectCollection('tripod_php_testing','views')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/filter1',"c"=>'http://talisaspire.com/',"type"=>'v_resource_filter1')));
-        $this->assertEquals($expectedUpdatedView,$updatedView);
+        $this->assertEquals($expectedUpdatedView['_id'], $updatedView['_id']);
+        $this->assertEquals($expectedUpdatedView['value'], $updatedView['value']);
+        $this->assertInstanceOf('\MongoDB\BSON\UTCDateTime', $updatedView['_cts']);
     }
 
     /**
@@ -458,7 +468,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         );
         $actualView = $mongo->selectCollection('tripod_php_testing','views')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/filter1',"c"=>'http://talisaspire.com/',"type"=>'v_resource_rdfsequence')));
 
-        $this->assertEquals($expectedView,$actualView);
+        $this->assertEquals($expectedView['_id'], $actualView['_id']);
+        $this->assertEquals($expectedView['value'], $actualView['value']);
+        $this->assertInstanceOf('\MongoDB\BSON\UTCDateTime', $actualView['_cts']);
     }
 
     public function testGenerateViewWithTTL()
@@ -504,7 +516,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         );
         // get the view direct from mongo
         $actualView = \Tripod\Mongo\Config::getInstance()->getCollectionForView('tripod_php_testing', 'v_resource_full_ttl')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA',"c"=>'http://talisaspire.com/',"type"=>'v_resource_full_ttl')));
-        $this->assertEquals($expectedView,$actualView);
+        $this->assertEquals($expectedView['_id'], $actualView['_id']);
+        $this->assertEquals($expectedView['value'], $actualView['value']);
+        $this->assertInstanceOf('\MongoDB\BSON\UTCDateTime', $actualView['_cts']);
     }
 
     /**
@@ -609,7 +623,9 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         );
 
         $actualView = \Tripod\Mongo\Config::getInstance()->getCollectionForView('tripod_php_testing', 'v_counts')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/works/4d101f63c10a6',"c"=>"http://talisaspire.com/","type"=>'v_counts')));
-        $this->assertEquals($expectedView,$actualView);
+        $this->assertEquals($expectedView['_id'], $actualView['_id']);
+        $this->assertEquals($expectedView['value'], $actualView['value']);
+        $this->assertInstanceOf('\MongoDB\BSON\UTCDateTime', $actualView['_cts']);
     }
 
     public function testGetViewWithNamespaces()
@@ -2007,5 +2023,132 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             ->will($this->returnValue($mockConfig));
 
         $mockTripodViews->getViewForResources(array($uri1),$viewType,$context);
+    }
+
+    public function testCountViews()
+    {
+        $collection = $this->getMockBuilder('\MongoDB\Collection')
+            ->disableOriginalConstructor()
+            ->setMethods(['count'])
+            ->getMock();
+        $views = $this->getMockBuilder('\Tripod\Mongo\Composites\Views')
+            ->setMethods(['getCollectionForViewSpec'])
+            ->setConstructorArgs(['tripod_php_testing', $collection, 'http://example.com/'])
+            ->getMock();
+
+        $views->expects($this->once())
+            ->method('getCollectionForViewSpec')
+            ->with('v_some_spec')
+            ->will($this->returnValue($collection));
+
+        $collection->expects($this->once())
+            ->method('count')
+            ->with(['_id.type' => 'v_some_spec'])
+            ->will($this->returnValue(101));
+
+        $this->assertEquals(101, $views->count('v_some_spec'));
+    }
+
+    public function testCountViewsWithFilters()
+    {
+        $filters = ['_cts' => ['$lte' => new \MongoDB\BSON\UTCDateTime(null)]];
+        $query = array_merge(['_id.type' => 'v_some_spec'], $filters);
+        $collection = $this->getMockBuilder('\MongoDB\Collection')
+            ->disableOriginalConstructor()
+            ->setMethods(['count'])
+            ->getMock();
+        $views = $this->getMockBuilder('\Tripod\Mongo\Composites\Views')
+            ->setMethods(['getCollectionForViewSpec'])
+            ->setConstructorArgs(['tripod_php_testing', $collection, 'http://example.com/'])
+            ->getMock();
+
+        $views->expects($this->once())
+            ->method('getCollectionForViewSpec')
+            ->with('v_some_spec')
+            ->will($this->returnValue($collection));
+
+        $collection->expects($this->once())
+            ->method('count')
+            ->with($query)
+            ->will($this->returnValue(101));
+
+        $this->assertEquals(101, $views->count('v_some_spec', $filters));
+    }
+
+    public function testDeleteViewsByViewId()
+    {
+        $collection = $this->getMockBuilder('\MongoDB\Collection')
+            ->disableOriginalConstructor()
+            ->setMethods(['deleteMany'])
+            ->getMock();
+
+        $deleteResult = $this->getMockBuilder('MongoDB\DeleteResult')
+            ->setMethods(['getDeletedCount'])
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $deleteResult->expects($this->once())
+            ->method('getDeletedCount')
+            ->will($this->returnValue(30));
+
+        $views = $this->getMockBuilder('\Tripod\Mongo\Composites\Views')
+            ->setMethods(['getCollectionForViewSpec'])
+            ->setConstructorArgs(['tripod_php_testing', $collection, 'http://example.com/'])
+            ->getMock();
+
+        $views->expects($this->once())
+            ->method('getCollectionForViewSpec')
+            ->with('v_resource_full')
+            ->will($this->returnValue($collection));
+
+        $collection->expects($this->once())
+            ->method('deleteMany')
+            ->with(['_id.type' => 'v_resource_full'])
+            ->will($this->returnValue($deleteResult));
+
+        $this->assertEquals(30, $views->deleteViewsByViewId('v_resource_full'));
+    }
+
+    public function testDeleteViewsByViewIdWithTimestamp()
+    {
+        $timestamp = new \MongoDB\BSON\UTCDateTime(null);
+
+        $query = [
+            '_id.type' => 'v_resource_full',
+            '$or' => [
+                [\_CREATED_TS => ['$lt' => $timestamp]],
+                [\_CREATED_TS => ['$exists' => false]]
+            ]
+        ];
+        $collection = $this->getMockBuilder('\MongoDB\Collection')
+            ->disableOriginalConstructor()
+            ->setMethods(['deleteMany'])
+            ->getMock();
+
+        $deleteResult = $this->getMockBuilder('MongoDB\DeleteResult')
+            ->setMethods(['getDeletedCount'])
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $deleteResult->expects($this->once())
+            ->method('getDeletedCount')
+            ->will($this->returnValue(30));
+
+        $views = $this->getMockBuilder('\Tripod\Mongo\Composites\Views')
+            ->setMethods(['getCollectionForViewSpec'])
+            ->setConstructorArgs(['tripod_php_testing', $collection, 'http://example.com/'])
+            ->getMock();
+
+        $views->expects($this->once())
+            ->method('getCollectionForViewSpec')
+            ->with('v_resource_full')
+            ->will($this->returnValue($collection));
+
+        $collection->expects($this->once())
+            ->method('deleteMany')
+            ->with($query)
+            ->will($this->returnValue($deleteResult));
+
+        $this->assertEquals(30, $views->deleteViewsByViewId('v_resource_full', $timestamp));
     }
 }
