@@ -402,7 +402,7 @@ class Views extends CompositeBase
      * @throws \Tripod\Exceptions\ViewException
      * @return array
      */
-    public function generateView($viewId,$resource=null,$context=null,$queueName=null)
+    public function generateView($viewId, $resource = null, $context = null, $queueName = null)
     {
         $contextAlias = $this->getContextAlias($context);
         $viewSpec = Config::getInstance()->getViewSpecification($this->storeName, $viewId);
@@ -472,22 +472,30 @@ class Views extends CompositeBase
                     ],
                     \_CREATED_TS => \Tripod\Mongo\DateUtil::getMongoDate()
                 ];
-                $value = array(); // everything must go in the value object todo: this is a hang over from map reduce days, engineer out once we have stability on new PHP method for M/R
 
-                $value[_GRAPHS] = array();
-
-                $buildImpactIndex=true;
-                if (isset($viewSpec['ttl'])) {
-                    $buildImpactIndex=false;
-                    $value[_EXPIRES] = \Tripod\Mongo\DateUtil::getMongoDate($this->getExpirySecFromNow($viewSpec['ttl']) * 1000);
+                if (isset($viewSpec['snapshot']) && $viewSpec['snapshot'] === true) {
+                    $generatedView['_id'][_CREATED_TS] = \Tripod\Mongo\DateUtil::getMongoDate();
+                    $buildImpactIndex = false;
                 } else {
-                    $value[_IMPACT_INDEX] = array($doc['_id']);
+                    $buildImpactIndex = true;
                 }
 
-                $this->doJoins($doc,$viewSpec['joins'],$value,$from,$contextAlias,$buildImpactIndex);
+                $value = []; // everything must go in the value object todo: this is a hang over from map reduce days, engineer out once we have stability on new PHP method for M/R
+                $value[_GRAPHS] = [];
+
+                if (isset($viewSpec['ttl'])) {
+                    $buildImpactIndex = false;
+                    $value[_EXPIRES] = \Tripod\Mongo\DateUtil::getMongoDate(
+                        $this->getExpirySecFromNow($viewSpec['ttl']) * 1000
+                    );
+                } elseif ($buildImpactIndex) {
+                    $value[_IMPACT_INDEX] = [$doc['_id']];
+                }
+
+                $this->doJoins($doc, $viewSpec['joins'], $value, $from, $contextAlias, $buildImpactIndex);
 
                 // add top level properties
-                $value[_GRAPHS][] = $this->extractProperties($doc,$viewSpec,$from);
+                $value[_GRAPHS][] = $this->extractProperties($doc, $viewSpec, $from);
 
                 $generatedView['value'] = $value;
 
