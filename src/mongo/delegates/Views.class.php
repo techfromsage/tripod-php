@@ -402,7 +402,7 @@ class Views extends CompositeBase
      * @throws \Tripod\Exceptions\ViewException
      * @return array
      */
-    public function generateView($viewId,$resource=null,$context=null,$queueName=null)
+    public function generateView($viewId, $resource = null, $context = null, $queueName = null)
     {
         $contextAlias = $this->getContextAlias($context);
         $viewSpec = Config::getInstance()->getViewSpecification($this->storeName, $viewId);
@@ -479,15 +479,19 @@ class Views extends CompositeBase
                 $buildImpactIndex=true;
                 if (isset($viewSpec['ttl'])) {
                     $buildImpactIndex=false;
-                    $value[_EXPIRES] = \Tripod\Mongo\DateUtil::getMongoDate($this->getExpirySecFromNow($viewSpec['ttl']) * 1000);
+                    if (is_int($viewSpec['ttl']) && $viewSpec['ttl'] > 0) {
+                        $value[_EXPIRES] = \Tripod\Mongo\DateUtil::getMongoDate(
+                            $this->getExpirySecFromNow($viewSpec['ttl']) * 1000
+                        );
+                    }
                 } else {
                     $value[_IMPACT_INDEX] = array($doc['_id']);
                 }
 
-                $this->doJoins($doc,$viewSpec['joins'],$value,$from,$contextAlias,$buildImpactIndex);
+                $this->doJoins($doc, $viewSpec['joins'], $value, $from, $contextAlias, $buildImpactIndex);
 
                 // add top level properties
-                $value[_GRAPHS][] = $this->extractProperties($doc,$viewSpec,$from);
+                $value[_GRAPHS][] = $this->extractProperties($doc, $viewSpec, $from);
 
                 $generatedView['value'] = $value;
 
@@ -501,7 +505,7 @@ class Views extends CompositeBase
             'duration'=>$t->result(),
             'filter'=>$filter,
             'from'=>$from));
-        $this->getStat()->timer(MONGO_CREATE_VIEW.".$viewId",$t->result());
+        $this->getStat()->timer(MONGO_CREATE_VIEW.".$viewId", $t->result());
 
         $stat = ['count' => $count];
         if (isset($jobOptions[ApplyOperation::TRACKING_KEY])) {
