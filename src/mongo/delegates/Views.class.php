@@ -104,16 +104,19 @@ class Views extends CompositeBase
         if (!empty($changedTypes)) {
             $idQuery = [];
             foreach ($changedTypes as $resourceAlias) {
-                $idQuery[] = ['$elemMatch' => [_ID_RESOURCE => $resourceAlias, _ID_CONTEXT => $contextAlias]];
+                $idQuery[] = [
+                    _ID_KEY . '.' . _ID_RESOURCE => $resourceAlias,
+                    _ID_KEY . '.' . _ID_CONTEXT => $contextAlias
+                ];
             }
             if (count($idQuery) === 1) {
                 $query = ['$or' => [
-                    ['_id' => $idQuery[0]],
+                    $idQuery[0],
                     $query
                 ]];
             } else {
                 $query = ['$or' => [
-                    ['_id' => ['$or' => $idQuery]],
+                    $idQuery,
                     $query
                 ]];
             }
