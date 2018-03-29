@@ -109,16 +109,9 @@ class Views extends CompositeBase
                     _ID_KEY . '.' . _ID_CONTEXT => $contextAlias
                 ];
             }
-            if (count($idQuery) === 1) {
-                $query = ['$or' => [
-                    $idQuery[0],
-                    $query
-                ]];
-            } else {
-                $query = ['$or' => [
-                    $idQuery,
-                    $query
-                ]];
+            $query['$or'] = [$query];
+            foreach ($idQuery as $id) {
+                $query['$or'][] = $id;
             }
         }
 
