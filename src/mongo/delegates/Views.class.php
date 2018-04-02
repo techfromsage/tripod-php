@@ -102,16 +102,12 @@ class Views extends CompositeBase
         $query = ['value.' . _IMPACT_INDEX => ['$in' => $filter]];
 
         if (!empty($changedTypes)) {
-            $idQuery = [];
+            $query = ['$or' => [$query]];
             foreach ($changedTypes as $resourceAlias) {
-                $idQuery[] = [
+                $query['$or'][] =  [
                     _ID_KEY . '.' . _ID_RESOURCE => $resourceAlias,
                     _ID_KEY . '.' . _ID_CONTEXT => $contextAlias
                 ];
-            }
-            $query['$or'] = [$query];
-            foreach ($idQuery as $id) {
-                $query['$or'][] = $id;
             }
         }
 
