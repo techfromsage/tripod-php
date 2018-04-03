@@ -93,7 +93,8 @@ class Views extends CompositeBase
             $resourceAlias = $this->labeller->uri_to_alias($resource);
             // build $filter for queries to impact index
             $filter[] = [_ID_RESOURCE => $resourceAlias, _ID_CONTEXT => $contextAlias];
-            if (!empty(array_intersect($predicates, $typeKeys))) {
+            $rdfTypePredicates = array_intersect($predicates, $typeKeys);
+            if (!empty($rdfTypePredicates)) {
                 $changedTypes[] = $resourceAlias;
             }
         }
