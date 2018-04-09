@@ -973,23 +973,28 @@ class MongoTripodConfigTest extends MongoTripodTestBase
 
     public function testGetAllTypesInSpecifications()
     {
-        $types = $this->tripodConfig->getAllTypesInSpecifications("tripod_php_testing");
-        $this->assertEquals(11, count($types), "There should be 11 types based on the configured view, table and search specifications in config.json");
-        $expectedValues = array(
-            "acorn:Resource",
-            "acorn:ResourceForTruncating",
-            "acorn:Work",
-            "http://talisaspire.com/schema#Work2",
-            "acorn:Work2",
-            "bibo:Book",
-            "resourcelist:List",
-            "spec:User",
-            "bibo:Document",
-            "baseData:Wibble",
-            "baseData:DocWithSequence"
+        $types = $this->tripodConfig->getAllTypesInSpecifications('tripod_php_testing');
+        $this->assertEquals(
+            12,
+            count($types),
+            'There should be 11 types based on the configured view, table and search specifications in config.json'
         );
+        $expectedValues = [
+            'acorn:Resource',
+            'acorn:ResourceForTruncating',
+            'acorn:Work',
+            'http://talisaspire.com/schema#Work2',
+            'acorn:Work2',
+            'bibo:Book',
+            'resourcelist:List',
+            'spec:User',
+            'bibo:Document',
+            'baseData:Wibble',
+            'baseData:DocWithSequence',
+            'dctype:Event'
+        ];
 
-        foreach($expectedValues as $expected){
+        foreach ($expectedValues as $expected) {
             $this->assertContains($expected, $types, "List of types should have contained $expected");
         }
     }
@@ -1334,7 +1339,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $transactionColletion = $transactionMongo->selectCollection($newConfig['transaction_log']['database'], $newConfig['transaction_log']['collection']);
         $transactionCount = $transactionColletion->count();
         $transactionExampleDocument = $transactionColletion->findOne();
-        $this->assertEquals(24, $transactionCount);
+        $this->assertEquals(26, $transactionCount);
         $this->assertContains('transaction_', $transactionExampleDocument["_id"]);
     }
 
