@@ -227,6 +227,7 @@
                     "from": "CBD_testing",
                     "type": "dctype:Event",
                     "ttl": -1,
+                    "include": ["rdf:type", "dct:created", "dct:title", "dct:references"],
                     "joins": {
                         "dct:references" : {
                             "include": ["dct:title", "dct:creator"]

@@ -6,6 +6,7 @@ require_once 'src/mongo/delegates/Views.class.php';
 
 use \Tripod\Mongo\Composites\Views;
 use \MongoDB\Client;
+use Tripod\ExtendedGraph;
 
 class MongoTripodViewsTest extends MongoTripodTestBase {
     /**
@@ -521,14 +522,15 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $this->assertInstanceOf('\MongoDB\BSON\UTCDateTime', $actualView['_cts']);
     }
 
-    public function testGenerateViewWithNegativeTTL()
+    public function testNonExpiringViewWithNegativeTTL()
     {
-        /** @var \Tripod\Mongo\Composites\Views|PHPUnit_Framework_MockObject_MockObject $mockTripodViews */
-        $mockTripodViews = $this->getMockBuilder('\Tripod\Mongo\Composites\Views')
-            ->setConstructorArgs($this->viewsConstParams)
-            ->getMock();
+        $views = new \Tripod\Mongo\Composites\Views(
+            $this->viewsConstParams[0],
+            $this->viewsConstParams[1],
+            $this->viewsConstParams[2]
+        );
 
-        $view = $mockTripodViews->getViewForResource(
+        $view = $views->getViewForResource(
             'http://talisaspire.com/events/1234',
             'v_event_no_expiration'
         );
@@ -575,9 +577,59 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
                     ]
                 ]
             );
-        $this->assertEquals($expectedView['_id'], $actualView['_id']);
-        $this->assertEquals($expectedView['value'], $actualView['value']);
+        $this->assertEquals(
+            $expectedView['_id'],
+            $actualView['_id'],
+            '_id does not match expected',
+            0.0,
+            10,
+            true
+        );
+        $this->assertContains(
+            $expectedView['value'][_GRAPHS][0],
+            $actualView['value'][_GRAPHS]
+        );
+        $this->assertContains(
+            $expectedView['value'][_GRAPHS][1],
+            $actualView['value'][_GRAPHS]
+        );
+        $this->assertCount(2, $actualView['value'][_GRAPHS]);
+        $this->assertArrayNotHasKey(_EXPIRES, $actualView['value']);
+        $this->assertArrayNotHasKey(_IMPACT_INDEX, $actualView['value']);
         $this->assertInstanceOf('\MongoDB\BSON\UTCDateTime', $actualView['_cts']);
+
+        // Fetch the joined resource and change it
+        $graph = $this->tripod->describeResource('http://talisaspire.com/resources/1234');
+
+        $updatedGraph = new ExtendedGraph($graph->to_ntriples());
+        $updatedGraph->replace_literal_triple(
+            'http://talisaspire.com/resources/1234',
+            'http://purl.org/dc/terms/title',
+            'A real piece of work',
+            'A literal treasure'
+        );
+
+        // This should not affect the view at all
+        $this->tripod->saveChanges($graph, $updatedGraph);
+
+        $view = $views->getViewForResource(
+            'http://talisaspire.com/events/1234',
+            'v_event_no_expiration'
+        );
+
+        // get the view direct from mongo, it should the same as earlier
+        $actualView2 = \Tripod\Mongo\Config::getInstance()
+            ->getCollectionForView('tripod_php_testing', 'v_event_no_expiration')
+            ->findOne(
+                [
+                    '_id' => [
+                        'r' => 'http://talisaspire.com/events/1234',
+                        'c' => 'http://talisaspire.com/',
+                        'type' => 'v_event_no_expiration'
+                    ]
+                ]
+            );
+        $this->assertEquals($actualView, $actualView2);
     }
 
     /**
