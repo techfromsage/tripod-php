@@ -521,6 +521,65 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $this->assertInstanceOf('\MongoDB\BSON\UTCDateTime', $actualView['_cts']);
     }
 
+    public function testGenerateViewWithNegativeTTL()
+    {
+        /** @var \Tripod\Mongo\Composites\Views|PHPUnit_Framework_MockObject_MockObject $mockTripodViews */
+        $mockTripodViews = $this->getMockBuilder('\Tripod\Mongo\Composites\Views')
+            ->setConstructorArgs($this->viewsConstParams)
+            ->getMock();
+
+        $view = $mockTripodViews->getViewForResource(
+            'http://talisaspire.com/events/1234',
+            'v_event_no_expiration'
+        );
+
+        // should have no impact index and no _expires
+        $expectedView = [
+            '_id' => [
+                'r' => 'http://talisaspire.com/events/1234',
+                'c '=> 'http://talisaspire.com/',
+                'type' => 'v_event_no_expiration'
+            ],
+            'value' => [
+                _GRAPHS => [
+                    [
+                        '_id' => [
+                            'r' => 'http://talisaspire.com/events/1234',
+                            'c'=> 'http://talisaspire.com/'
+                        ],
+                        'rdf:type' => ['u' => 'dctype:Event'],
+                        'dct:references' => ['u' => 'http://talisaspire.com/resources/1234'],
+                        'dct:created' => ['l' => '2018-04-09T00:00:00Z'],
+                        'dct:title' => ['l' => 'A significant event']
+                    ],
+                    [
+                        '_id' => [
+                            'r' => 'http://talisaspire.com/resources/1234',
+                            'c' => 'http://talisaspire.com/'
+                        ],
+                        'dct:title' => ['l' => 'A real piece of work'],
+                        'dct:creator' => ['l' => 'Anne Author']
+                    ]
+                ],
+            ]
+        ];
+        // get the view direct from mongo
+        $actualView = \Tripod\Mongo\Config::getInstance()
+            ->getCollectionForView('tripod_php_testing', 'v_event_no_expiration')
+            ->findOne(
+                [
+                    '_id' => [
+                        'r' => 'http://talisaspire.com/events/1234',
+                        'c' => 'http://talisaspire.com/',
+                        'type' => 'v_event_no_expiration'
+                    ]
+                ]
+            );
+        $this->assertEquals($expectedView['_id'], $actualView['_id']);
+        $this->assertEquals($expectedView['value'], $actualView['value']);
+        $this->assertInstanceOf('\MongoDB\BSON\UTCDateTime', $actualView['_cts']);
+    }
+
     /**
      * This test covers a bug we found where maxJoins causes a difference between the URIs included in the right hand
      * side vs. the left hand side of the join. Consider the data:

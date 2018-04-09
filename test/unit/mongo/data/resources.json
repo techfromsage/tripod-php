@@ -845,5 +845,41 @@
                 "u":"http://talisaspire.com/schema#Work"
             }
         ]
-    }
+    },
+    {
+        "_id": {
+            "r": "http://talisaspire.com/events/1234",
+            "c": "http://talisaspire.com/"
+        },
+        "rdf:type": {
+            "u": "dctype:Event"
+        },
+        "dct:created": {
+            "l": "2018-04-09T00:00:00Z"
+        },
+        "dct:title": {
+            "l": "A significant event"
+        },
+        "dct:references": {
+            "u": "http://talisaspire.com/resources/1234"
+        }        
+    },
+    {
+        "_id": {
+            "r": "http://talisaspire.com/resources/1234",
+            "c": "http://talisaspire.com/"
+        },
+        "rdf:type": {
+            "u": "dctype:Text"
+        },
+        "dct:created": {
+            "l": "2018-04-09T00:00:00Z"
+        },
+        "dct:title": {
+            "l": "A real piece of work"
+        },
+        "dct:creator": {
+            "l": "Anne Author"
+        }        
+    }    
 ]
