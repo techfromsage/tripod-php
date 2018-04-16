@@ -11,7 +11,6 @@ use \Tripod\Mongo\Labeller;
 use \MongoDB\Driver\ReadPreference;
 use \MongoDB\Collection;
 use Tripod\Mongo\JobGroup;
-use Monolog\Logger;
 
 /**
  * Class Views
@@ -29,7 +28,7 @@ class Views extends CompositeBase
      * @param null $stat
      * @param string $readPreference
      */
-    function __construct($storeName, Collection $collection,$defaultContext,$stat=null,$readPreference = ReadPreference::RP_PRIMARY) // todo: $collection -> podname
+    public function __construct($storeName, Collection $collection,$defaultContext,$stat=null,$readPreference = ReadPreference::RP_PRIMARY) // todo: $collection -> podname
     {
         $this->storeName = $storeName;
         $this->labeller = new Labeller();
@@ -311,8 +310,10 @@ class Views extends CompositeBase
         foreach ($resources as $resource)
         {
             $resourceAlias = $this->labeller->uri_to_alias($resource);
-            $this->getLogger()->warning('Generating views', ['store' => $this->storeName,
-            '_id' => $resourceAlias]);
+            $this->getLogger()->warning(
+                'Generating views',
+                ['store' => $this->storeName, '_id' => $resourceAlias]
+            );
             // delete any views this resource is involved in. It's type may have changed so it's not enough just to regen it with it's new type below.
             foreach (Config::getInstance()->getViewSpecifications($this->storeName) as $type=>$spec)
             {

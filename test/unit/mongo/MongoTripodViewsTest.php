@@ -4,7 +4,6 @@ require_once 'MongoTripodTestBase.php';
 require_once 'src/mongo/Driver.class.php';
 require_once 'src/mongo/delegates/Views.class.php';
 
-use \Tripod\Mongo\Composites\Views;
 use \MongoDB\Client;
 use Tripod\ExtendedGraph;
 

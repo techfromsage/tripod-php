@@ -977,7 +977,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $this->assertEquals(
             12,
             count($types),
-            'There should be 11 types based on the configured view, table and search specifications in config.json'
+            'There should be 12 types based on the configured view, table and search specifications in config.json'
         );
         $expectedValues = [
             'acorn:Resource',
