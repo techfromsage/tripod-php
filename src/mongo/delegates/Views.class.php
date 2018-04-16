@@ -28,7 +28,7 @@ class Views extends CompositeBase
      * @param null $stat
      * @param string $readPreference
      */
-    function __construct($storeName, Collection $collection,$defaultContext,$stat=null,$readPreference = ReadPreference::RP_PRIMARY) // todo: $collection -> podname
+    public function __construct($storeName, Collection $collection,$defaultContext,$stat=null,$readPreference = ReadPreference::RP_PRIMARY) // todo: $collection -> podname
     {
         $this->storeName = $storeName;
         $this->labeller = new Labeller();
@@ -75,40 +75,58 @@ class Views extends CompositeBase
      * @param string $contextAlias
      * @return array|mixed
      */
-    public function findImpactedComposites(Array $resourcesAndPredicates, $contextAlias)
+    public function findImpactedComposites(array $resourcesAndPredicates, $contextAlias)
     {
-        $resources = array_keys($resourcesAndPredicates);
-
         // This should never happen, but in the event that we have been passed an empty array or something
-        if(empty($resources))
-        {
-            return array();
+        if (empty($resourcesAndPredicates)) {
+            return [];
         }
 
         $contextAlias = $this->getContextAlias($contextAlias); // belt and braces
 
         // build a filter - will be used for impactIndex detection and finding direct views to re-gen
-        $filter = array();
-        foreach ($resources as $resource)
-        {
+        $filter = [];
+        $changedTypes = [];
+        $typeKeys = [RDF_TYPE, $this->labeller->uri_to_alias(RDF_TYPE)];
+        foreach ($resourcesAndPredicates as $resource => $predicates) {
             $resourceAlias = $this->labeller->uri_to_alias($resource);
             // build $filter for queries to impact index
-            $filter[] = array("r"=>$resourceAlias,"c"=>$contextAlias);
+            $filter[] = [_ID_RESOURCE => $resourceAlias, _ID_CONTEXT => $contextAlias];
+            $rdfTypePredicates = array_intersect($predicates, $typeKeys);
+            if (!empty($rdfTypePredicates)) {
+                $changedTypes[] = $resourceAlias;
+            }
         }
 
         // first re-gen views where resources appear in the impact index
-        $query = array("value."._IMPACT_INDEX=>array('$in'=>$filter));
+        $query = ['value.' . _IMPACT_INDEX => ['$in' => $filter]];
 
-        $affectedViews = array();
-        foreach($this->config->getCollectionsForViews($this->storeName) as $collection)
-        {
+        if (!empty($changedTypes)) {
+            $query = ['$or' => [$query]];
+            foreach ($changedTypes as $resourceAlias) {
+                $query['$or'][] =  [
+                    _ID_KEY . '.' . _ID_RESOURCE => $resourceAlias,
+                    _ID_KEY . '.' . _ID_CONTEXT => $contextAlias
+                ];
+            }
+        }
+
+        $affectedViews = [];
+        foreach ($this->config->getCollectionsForViews($this->storeName) as $collection) {
             $t = new \Tripod\Timer();
             $t->start();
-            $views = $collection->find($query, array('projection' => array("_id"=>true)));
+            $views = $collection->find($query, ['projection' => ['_id'=>true]]);
             $t->stop();
-            $this->timingLog(MONGO_FIND_IMPACTED, array('duration'=>$t->result(), 'query'=>$query, 'storeName'=>$this->storeName, 'collection'=>$collection));
-            foreach($views as $v)
-            {
+            $this->timingLog(
+                MONGO_FIND_IMPACTED,
+                [
+                    'duration' => $t->result(),
+                    'query' => $query,
+                    'storeName' => $this->storeName,
+                    'collection' => $collection
+                ]
+            );
+            foreach ($views as $v) {
                 $affectedViews[] = $v;
             }
         }
@@ -292,11 +310,15 @@ class Views extends CompositeBase
         foreach ($resources as $resource)
         {
             $resourceAlias = $this->labeller->uri_to_alias($resource);
-
+            $this->getLogger()->warning(
+                'Generating views',
+                ['store' => $this->storeName, '_id' => $resourceAlias]
+            );
             // delete any views this resource is involved in. It's type may have changed so it's not enough just to regen it with it's new type below.
             foreach (Config::getInstance()->getViewSpecifications($this->storeName) as $type=>$spec)
             {
                 if($spec['from']==$this->podName){
+
                     $this->config->getCollectionForView($this->storeName, $type, $this->readPreference)
                         ->deleteOne(array("_id" => array("r"=>$resourceAlias,"c"=>$contextAlias,"type"=>$type)));
                 }
@@ -402,7 +424,7 @@ class Views extends CompositeBase
      * @throws \Tripod\Exceptions\ViewException
      * @return array
      */
-    public function generateView($viewId,$resource=null,$context=null,$queueName=null)
+    public function generateView($viewId, $resource = null, $context = null, $queueName = null)
     {
         $contextAlias = $this->getContextAlias($context);
         $viewSpec = Config::getInstance()->getViewSpecification($this->storeName, $viewId);
@@ -479,15 +501,19 @@ class Views extends CompositeBase
                 $buildImpactIndex=true;
                 if (isset($viewSpec['ttl'])) {
                     $buildImpactIndex=false;
-                    $value[_EXPIRES] = \Tripod\Mongo\DateUtil::getMongoDate($this->getExpirySecFromNow($viewSpec['ttl']) * 1000);
+                    if (is_int($viewSpec['ttl']) && $viewSpec['ttl'] > 0) {
+                        $value[_EXPIRES] = \Tripod\Mongo\DateUtil::getMongoDate(
+                            $this->getExpirySecFromNow($viewSpec['ttl']) * 1000
+                        );
+                    }
                 } else {
                     $value[_IMPACT_INDEX] = array($doc['_id']);
                 }
 
-                $this->doJoins($doc,$viewSpec['joins'],$value,$from,$contextAlias,$buildImpactIndex);
+                $this->doJoins($doc, $viewSpec['joins'], $value, $from, $contextAlias, $buildImpactIndex);
 
                 // add top level properties
-                $value[_GRAPHS][] = $this->extractProperties($doc,$viewSpec,$from);
+                $value[_GRAPHS][] = $this->extractProperties($doc, $viewSpec, $from);
 
                 $generatedView['value'] = $value;
 
@@ -501,7 +527,7 @@ class Views extends CompositeBase
             'duration'=>$t->result(),
             'filter'=>$filter,
             'from'=>$from));
-        $this->getStat()->timer(MONGO_CREATE_VIEW.".$viewId",$t->result());
+        $this->getStat()->timer(MONGO_CREATE_VIEW.".$viewId", $t->result());
 
         $stat = ['count' => $count];
         if (isset($jobOptions[ApplyOperation::TRACKING_KEY])) {

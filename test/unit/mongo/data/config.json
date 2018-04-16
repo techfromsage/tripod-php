@@ -221,6 +221,18 @@
                             "include": ["dct:subject", "rdf:type"]
                         }
                     }
+                },
+                {
+                    "_id": "v_event_no_expiration",
+                    "from": "CBD_testing",
+                    "type": "dctype:Event",
+                    "ttl": -1,
+                    "include": ["rdf:type", "dct:created", "dct:title", "dct:references"],
+                    "joins": {
+                        "dct:references" : {
+                            "include": ["dct:title", "dct:creator"]
+                        }
+                    }
                 }
             ],
             "search_config": {
