@@ -42,7 +42,9 @@ class DiscoverImpactedSubjects extends JobBase {
             $this->validateArgs();
 
             // set the config to what is received
-            \Tripod\Mongo\Config::setConfig($this->args[self::TRIPOD_CONFIG_KEY]);
+            \Tripod\Mongo\Config::setConfig(
+                $this->getConfig($this->args[self::TRIPOD_CONFIG_KEY])
+            );
 
             $statsConfig = array();
             if(isset($this->args['statsConfig']))

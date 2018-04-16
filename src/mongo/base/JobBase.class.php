@@ -2,6 +2,7 @@
 
 namespace Tripod\Mongo\Jobs;
 use Tripod\Exceptions\Exception;
+use \Tripod\Exceptions\ConfigException;
 use Tripod\Exceptions\JobException;
 use \MongoDB\Driver\ReadPreference;
 
@@ -86,35 +87,29 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
      * @return a tracking token for the submitted job
      * @throws JobException if there is a problem queuing the job
      */
-    protected function submitJob($queueName, $class, Array $data, $retryAttempts=5)
+    protected function submitJob($queueName, $class, array $data, $retryAttempts = 5)
     {
         // @see https://github.com/chrisboulton/php-resque/issues/228, when this PR is merged we can stop tracking the status in this way
-        try
-        {
+        try {
+            if (isset($data[self::TRIPOD_CONFIG_KEY])) {
+                $data[self::TRIPOD_CONFIG_KEY] = $this->cacheConfig($data[self::TRIPOD_CONFIG_KEY]);
+            }
             $token = $this->enqueue($queueName, $class, $data);
-            if(!$this->getJobStatus($token))
-            {
+            if (!$this->getJobStatus($token)) {
                 $this->errorLog("Could not retrieve status for queued $class job - job $token failed to $queueName");
                 throw new \Exception("Could not retrieve status for queued job - job $token failed to $queueName");
-            }
-            else
-            {
+            } else {
                 $this->debugLog("Queued $class job with $token to $queueName");
                 return $token;
             }
-        }
-        catch (\Exception $e)
-        {
-            if ($retryAttempts>0)
-            {
+        } catch (\Exception $e) {
+            if ($retryAttempts > 0) {
                 sleep(1); // back off for 1 sec
                 $this->warningLog("Exception queuing $class job - {$e->getMessage()}, retrying $retryAttempts times");
-                return $this->submitJob($queueName,$class,$data,--$retryAttempts);
-            }
-            else
-            {
+                return $this->submitJob($queueName, $class, $data, --$retryAttempts);
+            } else {
                 $this->errorLog("Exception queuing $class job - {$e->getMessage()}");
-                throw new JobException("Exception queuing job  - {$e->getMessage()}",$e->getCode(),$e);
+                throw new JobException("Exception queuing job  - {$e->getMessage()}", $e->getCode(), $e);
             }
         }
     }
@@ -153,6 +148,53 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
             $this->statsConfig = $this->args['statsConfig'];
         }
         return parent::getStat();
+    }
+
+    protected function cacheConfig($config)
+    {
+        if (empty($config)) {
+            throw new ConfigException('Empty config sent');
+        }
+        $key = null;
+        if (is_array($config)) {
+            $key = self::TRIPOD_CONFIG_KEY . ':' . md5(json_encode($config));
+            \Resque::redis()->set($key);
+        } elseif (is_string($config)) {
+            if (strpos($config, self::TRIPOD_CONFIG_KEY . ':') === 0) {
+                $key = $config;
+            }
+        }
+
+        $cachedConfig = $this->getConfig($key);
+        if (empty($cachedConfig) && is_array($config)) {
+            \Resque::redis()->set($key);
+            try {
+                $cachedConfig = $this->cacheConfig($key);
+                return $cachedConfig;
+            } catch (ConfigException $e) {
+                return $config;
+            }
+        } elseif (empty($cachedConfig)) {
+            throw new ConfigException('Empty config or expired from cache');
+        }
+        return $key;
+    }
+
+    protected function getConfig($config)
+    {
+        if (is_array($config)) {
+            return $config;
+        }
+        if (is_string($config)) {
+            if (strpos($config, self::TRIPOD_CONFIG_KEY . ':') === 0) {
+                return \Resque::redis()->get($config);
+            }
+            $jsonConfig = json_decode($config, true);
+            if ($jsonConfig) {
+                return $jsonConfig;
+            }
+        }
+        return null;
     }
 
 }
