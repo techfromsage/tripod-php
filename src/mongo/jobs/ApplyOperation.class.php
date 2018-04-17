@@ -5,15 +5,18 @@ namespace Tripod\Mongo\Jobs;
 use Tripod\Mongo\JobGroup;
 use Tripod\Mongo\Driver;
 
-
 /**
  * Class ApplyOperation
  * @package Tripod\Mongo\Jobs
  */
-class ApplyOperation extends JobBase {
+class ApplyOperation extends JobBase
+{
 
     const SUBJECTS_KEY = 'subjects';
     const TRACKING_KEY = 'batchId';
+
+    protected $configRequired = true;
+    protected $mandatoryArgs = [self::SUBJECTS_KEY];
 
     /**
      * Run the ApplyOperation job
@@ -22,25 +25,10 @@ class ApplyOperation extends JobBase {
     public function perform()
     {
         try {
-            $this->debugLog("[JOBID " . $this->job->payload['id'] . "] ApplyOperation::perform() start");
-
-            $timer = new \Tripod\Timer();
-            $timer->start();
-
-            $this->validateArgs();
-
-            $statsConfig = array();
-            if(isset($this->args['statsConfig']))
-            {
-                $statsConfig['statsConfig'] = $this->args['statsConfig'];
-            }
-
-            // set the config to what is received
-            \Tripod\Mongo\Config::setConfig(
-                $this->getConfig($this->args[self::TRIPOD_CONFIG_KEY])
+            $this->getStat()->increment(
+                MONGO_QUEUE_APPLY_OPERATION_JOB . '.' . SUBJECT_COUNT,
+                count($this->args[self::SUBJECTS_KEY])
             );
-
-            $this->getStat()->increment(MONGO_QUEUE_APPLY_OPERATION_JOB . '.' . SUBJECT_COUNT, count($this->args[self::SUBJECTS_KEY]));
 
             foreach ($this->args[self::SUBJECTS_KEY] as $subject) {
                 $opTimer = new \Tripod\Timer();
@@ -89,11 +77,8 @@ class ApplyOperation extends JobBase {
                 }
             }
 
-
-            $timer->stop();
             // stat time taken to process job, from time it was picked up
-            $this->getStat()->timer(MONGO_QUEUE_APPLY_OPERATION_SUCCESS,$timer->result());
-            $this->debugLog("[JOBID " . $this->job->payload['id'] . "] ApplyOperation::perform() done in {$timer->result()}ms");
+            $this->getStat()->timer(MONGO_QUEUE_APPLY_OPERATION_SUCCESS, $this->timer->result());
         } catch (\Exception $e) {
             $this->getStat()->increment(MONGO_QUEUE_APPLY_OPERATION_FAIL);
             $this->errorLog("Caught exception in ".get_class($this).": ".$e->getMessage());
@@ -106,23 +91,25 @@ class ApplyOperation extends JobBase {
      * @param string|null $queueName
      * @param array $otherData
      */
-    public function createJob(Array $subjects, $queueName=null,$otherData=array())
+    public function createJob(array $subjects, $queueName = null, $otherData = [])
     {
-        if(!$queueName)
-        {
+        if (!$queueName) {
             $queueName = \Tripod\Mongo\Config::getApplyQueueName();
-        }
-        elseif(strpos($queueName, \Tripod\Mongo\Config::getApplyQueueName()) === false)
-        {
+        } elseif (strpos($queueName, \Tripod\Mongo\Config::getApplyQueueName()) === false) {
             $queueName = \Tripod\Mongo\Config::getApplyQueueName() . '::' . $queueName;
         }
 
-        $data = array(
-            self::SUBJECTS_KEY=>array_map(function(\Tripod\Mongo\ImpactedSubject $subject) { return $subject->toArray(); }, $subjects),
+        $data = [
+            self::SUBJECTS_KEY => array_map(
+                function (\Tripod\Mongo\ImpactedSubject $subject) {
+                    return $subject->toArray();
+                },
+                $subjects
+            ),
             self::TRIPOD_CONFIG_KEY=>\Tripod\Mongo\Config::getConfig()
-        );
+        ];
 
-        $this->submitJob($queueName,get_class($this),array_merge($otherData,$data));
+        $this->submitJob($queueName, get_class($this), array_merge($otherData, $data));
     }
 
     /**
@@ -139,15 +126,6 @@ class ApplyOperation extends JobBase {
             $args["podName"],
             $args["specTypes"]
         );
-    }
-
-    /**
-     * Validate args for ApplyOperation
-     * @return array
-     */
-    protected function getMandatoryArgs()
-    {
-        return array(self::TRIPOD_CONFIG_KEY,self::SUBJECTS_KEY);
     }
 
     /**

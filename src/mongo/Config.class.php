@@ -10,10 +10,13 @@ use \MongoDB\Driver\Command;
 use \MongoDB\Driver\Manager;
 use \MongoDB\Driver\Exception\ConnectionTimeoutException;
 
+use \Tripod\ITripodConfig;
+use \Tripod\ITripodConfigSerializer;
+
 /**
  * Holds the global configuration for Tripod
  */
-class Config
+class Config implements ITripodConfig, ITripodConfigSerializer
 {
     /**
      * @var Config
@@ -2175,5 +2178,33 @@ class Config
             self::$logger = $log;
         }
         return self::$logger;
+    }
+
+    /**
+     * Sets the Tripod config
+     *
+     * @param array $config
+     * @return void
+     */
+    public static function deserialize(array $config)
+    {
+        if (isset($config['class']) && isset($config['config'])) {
+            self::setConfig($config['config']);
+        } else {
+            self::setConfig($config);
+        }
+    }
+
+    /**
+     * Serializes the config into an array that can be passed to jobs, etc.
+     *
+     * @return array
+     */
+    public function serialize()
+    {
+        return [
+            'class' => get_class(),
+            'config' => self::getConfig()
+        ];
     }
 }

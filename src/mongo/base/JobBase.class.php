@@ -1,10 +1,13 @@
 <?php
 
 namespace Tripod\Mongo\Jobs;
+
 use Tripod\Exceptions\Exception;
 use \Tripod\Exceptions\ConfigException;
 use Tripod\Exceptions\JobException;
 use \MongoDB\Driver\ReadPreference;
+use Tripod\ITripodConfigSerializer;
+use Tripod\TripodConfigFactory;
 
 /**
  * Todo: How to inject correct stat class... :-S
@@ -13,7 +16,44 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
 {
     private $tripod;
     const TRIPOD_CONFIG_KEY = 'tripodConfig';
+    const TRIPOD_CONFIG_GENERATOR = 'tripodConfigGenerator';
     const QUEUE_KEY = 'queue';
+
+    protected $mandatoryArgs = [];
+    protected $configRequired = false;
+
+    /** @var \Tripod\ITripodConfig */
+    protected $tripodConfig;
+
+    /** @var \Tripod\Timer */
+    protected $timer;
+
+    abstract public function perform();
+
+    public function beforePeform()
+    {
+        $this->debugLog(
+            '[JOBID ' . $this->job->payload['id'] . '] ' . get_class($this) . '::perform() start'
+        );
+
+        $this->timer = new \Tripod\Timer();
+        $this->timer->start();
+        $this->validateArgs();
+        $this->setStatsConfig();
+
+        if ($this->configRequired) {
+            $this->setTripodConfig();
+        }
+    }
+
+    public function afterPerform()
+    {
+        // stat time taken to process item, from time it was created (queued)
+        $this->timer->stop();
+        $this->debugLog(
+            '[JOBID ' . $this->job->payload['id'] . '] ' . get_class($this) . "::perform() done in {$timer->result()}ms"
+        );
+    }
 
     /**
      * For mocking
@@ -22,11 +62,17 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
      * @param array $opts
      * @return \Tripod\Mongo\Driver
      */
-    protected function getTripod($storeName,$podName,$opts=array()) {
-        $opts = array_merge($opts,array(
-            'stat'=>$this->getStat(),
-            'readPreference' => ReadPreference::RP_PRIMARY // important: make sure we always read from the primary
-        ));
+    protected function getTripod($storeName, $podName, $opts = [])
+    {
+        $this->getTripodConfig();
+
+        $opts = array_merge(
+            $opts,
+            [
+                'stat' => $this->getStat(),
+                'readPreference' => ReadPreference::RP_PRIMARY // important: make sure we always read from the primary
+            ]
+        );
         if ($this->tripod == null) {
             $this->tripod = new \Tripod\Mongo\Driver(
                 $podName,
@@ -38,10 +84,13 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
     }
 
     /**
-     * Make sure each job considers how to validate it's args
+     * Make sure each job considers how to validate its args
      * @return array
      */
-    protected abstract function getMandatoryArgs();
+    protected function getMandatoryArgs()
+    {
+        return $this->mandatoryArgs;
+    }
 
     /**
      * Validate the arguments for this job
@@ -49,14 +98,26 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
      */
     protected function validateArgs()
     {
-        foreach ($this->getMandatoryArgs() as $arg)
-        {
-            if (!isset($this->args[$arg]))
-            {
-                $message = "Argument $arg was not present in supplied job args for job ".get_class($this);
+        $message = null;
+        foreach ($this->getMandatoryArgs() as $arg) {
+            if (!isset($this->args[$arg])) {
+                $message = "Argument $arg was not present in supplied job args for job " . get_class($this);
                 $this->errorLog($message);
                 throw new \Exception($message);
             }
+        }
+        if ($this->configRequired) {
+            $this->ensureConfig();
+        }
+    }
+
+    protected function ensureConfig()
+    {
+        if (!isset($this->args[self::TRIPOD_CONFIG_KEY]) && !isset($this->args[self::TRIPOD_CONFIG_GENERATOR])) {
+            $message = 'Argument ' . self::TRIPOD_CONFIG_KEY . ' or ' . self::TRIPOD_CONFIG_GENERATOR .
+                'was not present in supplied job args for job ' . get_class($this);
+            $this->errorLog($message);
+            throw new \Exception($message);
         }
     }
 
@@ -91,8 +152,8 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
     {
         // @see https://github.com/chrisboulton/php-resque/issues/228, when this PR is merged we can stop tracking the status in this way
         try {
-            if (isset($data[self::TRIPOD_CONFIG_KEY])) {
-                $data[self::TRIPOD_CONFIG_KEY] = $this->cacheConfig($data[self::TRIPOD_CONFIG_KEY]);
+            if (isset($data[self::TRIPOD_CONFIG_GENERATOR])) {
+                $data[self::TRIPOD_CONFIG_GENERATOR] = $this->cacheConfig($data[self::TRIPOD_CONFIG_KEY]);
             }
             $token = $this->enqueue($queueName, $class, $data);
             if (!$this->getJobStatus($token)) {
@@ -143,59 +204,63 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
      */
     public function getStat()
     {
-        if((!isset($this->statsConfig) || empty($this->statsConfig)) && isset($this->args['statsConfig']))
-        {
+        if ((!isset($this->statsConfig) || empty($this->statsConfig)) && isset($this->args['statsConfig'])) {
             $this->statsConfig = $this->args['statsConfig'];
         }
         return parent::getStat();
     }
 
-    protected function cacheConfig($config)
+    protected function serializeConfig(ITripodConfigSerializer $configSerializer)
     {
-        if (empty($config)) {
-            throw new ConfigException('Empty config sent');
-        }
-        $key = null;
-        if (is_array($config)) {
-            $key = self::TRIPOD_CONFIG_KEY . ':' . md5(json_encode($config));
-            \Resque::redis()->set($key);
-        } elseif (is_string($config)) {
-            if (strpos($config, self::TRIPOD_CONFIG_KEY . ':') === 0) {
-                $key = $config;
-            }
-        }
-
-        $cachedConfig = $this->getConfig($key);
-        if (empty($cachedConfig) && is_array($config)) {
-            \Resque::redis()->set($key);
-            try {
-                $cachedConfig = $this->cacheConfig($key);
-                return $cachedConfig;
-            } catch (ConfigException $e) {
-                return $config;
-            }
-        } elseif (empty($cachedConfig)) {
-            throw new ConfigException('Empty config or expired from cache');
-        }
-        return $key;
+        return $configSerializer->serialize();
     }
 
-    protected function getConfig($config)
+    protected function deserializeConfig(array $config)
     {
-        if (is_array($config)) {
-            return $config;
-        }
-        if (is_string($config)) {
-            if (strpos($config, self::TRIPOD_CONFIG_KEY . ':') === 0) {
-                return \Resque::redis()->get($config);
-            }
-            $jsonConfig = json_decode($config, true);
-            if ($jsonConfig) {
-                return $jsonConfig;
-            }
-        }
-        return null;
+        return TripodConfigFactory::create($config);
     }
 
+    protected function setTripodConfig()
+    {
+        if (isset($this->args[self::TRIPOD_CONFIG_GENERATOR])) {
+            $config =  $this->args[self::TRIPOD_CONFIG_GENERATOR];
+        } else {
+            $config = $this->args[self::TRIPOD_CONFIG_KEY];
+        }
+        $this->tripodConfig = $this->deserializeConfig($config);
+    }
+
+    protected function getTripodConfig()
+    {
+        if (!isset($this->tripodConfig)) {
+            $this->ensureConfig();
+            $this->setConfig();
+        }
+        return $this->tripodConfig;
+    }
+
+    protected function setStatsConfig()
+    {
+        if (isset($this->args['statsConfig'])) {
+            $this->statsConfig = $this->args['statsConfig'];
+        }
+    }
+
+    protected function getStatsConfig()
+    {
+        if (empty($this->statsConfig)) {
+            $this->setStatsConfig();
+        }
+        return $this->statsConfig;
+    }
+
+    protected function getTripodOptions()
+    {
+        $statsConfig = $this->getStatsConfig();
+        $options = [];
+        if (!empty($statsConfig)) {
+            $options['statsConfig'] = $statsConfig;
+        }
+        return $options;
+    }
 }
-

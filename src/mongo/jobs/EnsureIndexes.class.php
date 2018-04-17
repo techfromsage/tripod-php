@@ -6,11 +6,15 @@ namespace Tripod\Mongo\Jobs;
  * Class EnsureIndexes
  * @package Tripod\Mongo\Jobs
  */
-class EnsureIndexes extends JobBase {
+class EnsureIndexes extends JobBase
+{
 
     const STORENAME_KEY  = 'storeName';
     const REINDEX_KEY    = 'reindex';
     const BACKGROUND_KEY = 'background';
+
+    protected $mandatoryArgs = [self::STORENAME_KEY, self::REINDEX_KEY, self::BACKGROUND_KEY];
+    protected $configRequired = true;
 
     /**
      * Runs the EnsureIndexes Job
@@ -18,18 +22,7 @@ class EnsureIndexes extends JobBase {
      */
     public function perform()
     {
-        try
-        {
-            $this->debugLog("[JOBID " . $this->job->payload['id'] . "] EnsureIndexes::perform() start");
-
-            $timer = new \Tripod\Timer();
-            $timer->start();
-
-            $this->validateArgs();
-
-            \Tripod\Mongo\Config::setConfig(
-                $this->getConfig($this->args[self::TRIPOD_CONFIG_KEY])
-            );
+        try {
             $this->debugLog('Ensuring indexes for tenant=' . $this->args[self::STORENAME_KEY]. ', reindex=' . $this->args[self::REINDEX_KEY] . ', background=' . $this->args[self::BACKGROUND_KEY]);
 
             $this->getIndexUtils()->ensureIndexes(
@@ -38,13 +31,9 @@ class EnsureIndexes extends JobBase {
                 $this->args[self::BACKGROUND_KEY]
             );
 
-            $timer->stop();
             // stat time taken to process job, from time it was picked up
-            $this->getStat()->timer(MONGO_QUEUE_ENSURE_INDEXES_SUCCESS,$timer->result());
-            $this->debugLog("[JOBID " . $this->job->payload['id'] . "] EnsureIndexes::perform() done in {$timer->result()}ms");
-        }
-        catch(\Exception $e)
-        {
+            $this->getStat()->timer(MONGO_QUEUE_ENSURE_INDEXES_SUCCESS, $this->timer->result());
+        } catch (\Exception $e) {
             $this->getStat()->increment(MONGO_QUEUE_ENSURE_INDEXES_FAIL);
             $this->errorLog("Caught exception in ".get_class($this).": ".$e->getMessage());
             throw $e;
@@ -58,14 +47,11 @@ class EnsureIndexes extends JobBase {
      * @param booelan $reindex
      * @param string $queueName
      */
-    public function createJob($storeName, $reindex, $background, $queueName=null)
+    public function createJob($storeName, $reindex, $background, $queueName = null)
     {
-        if(!$queueName)
-        {
+        if (!$queueName) {
             $queueName = \Tripod\Mongo\Config::getEnsureIndexesQueueName();
-        }
-        elseif(strpos($queueName, \Tripod\Mongo\Config::getEnsureIndexesQueueName()) === false)
-        {
+        } elseif (strpos($queueName, \Tripod\Mongo\Config::getEnsureIndexesQueueName()) === false) {
             $queueName = \Tripod\Mongo\Config::getEnsureIndexesQueueName() . '::' . $queueName;
         }
 
@@ -76,16 +62,7 @@ class EnsureIndexes extends JobBase {
             self::TRIPOD_CONFIG_KEY => \Tripod\Mongo\Config::getConfig()
         );
 
-        $this->submitJob($queueName,get_class($this),$data);
-    }
-
-    /**
-     * Validate args for EnsureIndexesOperation
-     * @return array
-     */
-    protected function getMandatoryArgs()
-    {
-        return array(self::TRIPOD_CONFIG_KEY, self::STORENAME_KEY, self::REINDEX_KEY, self::BACKGROUND_KEY);
+        $this->submitJob($queueName, get_class($this), $data);
     }
 
     /**
@@ -95,5 +72,4 @@ class EnsureIndexes extends JobBase {
     {
         return new \Tripod\Mongo\IndexUtils();
     }
-
 }
