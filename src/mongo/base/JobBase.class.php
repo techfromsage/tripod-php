@@ -28,8 +28,18 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
     /** @var \Tripod\Timer */
     protected $timer;
 
+    /**
+     * The main method of the job
+     *
+     * @return void
+     */
     abstract public function perform();
 
+    /**
+     * Called in every job prior to perform()
+     *
+     * @return void
+     */
     public function beforePeform()
     {
         $this->debugLog(
@@ -46,6 +56,11 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
         }
     }
 
+    /**
+     * Called in every job after perform() unless failure
+     *
+     * @return void
+     */
     public function afterPerform()
     {
         // stat time taken to process item, from time it was created (queued)
@@ -59,7 +74,7 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
      * For mocking
      * @param string $storeName
      * @param string $podName
-     * @param array $opts
+     * @param array  $opts
      * @return \Tripod\Mongo\Driver
      */
     protected function getTripod($storeName, $podName, $opts = [])
@@ -122,8 +137,8 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
     }
 
     /**
-     * @param string $message
-     * @param mixed $params
+     * @param string $message Log message
+     * @param mixed  $params  Log params
      */
     public function debugLog($message, $params = null)
     {
@@ -131,8 +146,8 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
     }
 
     /**
-     * @param string $message
-     * @param mixed $params
+     * @param string $message Log message
+     * @param mixed  $params  Log params
      */
     public function errorLog($message, $params = null)
     {
@@ -141,12 +156,12 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
 
 
     /**
-     * @param string $queueName
-     * @param string $class
-     * @param array $data
-     * @param int $retryAttempts if queue fails, retry x times before throwing an exception
-     * @return a tracking token for the submitted job
-     * @throws JobException if there is a problem queuing the job
+     * @param string $queueName     Queue name
+     * @param string $class         Class name
+     * @param array  $data          Job arguments
+     * @param int    $retryAttempts If queue fails, retry x times before throwing an exception
+     * @return string A tracking token for the submitted job
+     * @throws JobException If there is a problem queuing the job
      */
     protected function submitJob($queueName, $class, array $data, $retryAttempts = 5)
     {
@@ -204,22 +219,39 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
      */
     public function getStat()
     {
-        if ((!isset($this->statsConfig) || empty($this->statsConfig)) && isset($this->args['statsConfig'])) {
-            $this->statsConfig = $this->args['statsConfig'];
+        if (!isset($this->statsConfig)) {
+            $this->getStatsConfig();
         }
         return parent::getStat();
     }
 
+    /**
+     * Take a Tripod Config Serializer and return a config array
+     *
+     * @param ITripodConfigSerializer $configSerializer An object that implements ITripodConfigSerializer
+     * @return array
+     */
     protected function serializeConfig(ITripodConfigSerializer $configSerializer)
     {
         return $configSerializer->serialize();
     }
 
+    /**
+     * Deserialize a tripodConfigGenerator argument to a Tripod Config object
+     *
+     * @param array $config The serialized Tripod config
+     * @return \Tripod\ITripodConfig
+     */
     protected function deserializeConfig(array $config)
     {
         return TripodConfigFactory::create($config);
     }
 
+    /**
+     * Sets the Tripod config for the job
+     *
+     * @return void
+     */
     protected function setTripodConfig()
     {
         if (isset($this->args[self::TRIPOD_CONFIG_GENERATOR])) {
@@ -230,6 +262,11 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
         $this->tripodConfig = $this->deserializeConfig($config);
     }
 
+    /**
+     * Returns the Tripod config required by the job
+     *
+     * @return \Tripod\ITripodConfig
+     */
     protected function getTripodConfig()
     {
         if (!isset($this->tripodConfig)) {
@@ -239,6 +276,11 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
         return $this->tripodConfig;
     }
 
+    /**
+     * Sets the stats config for the job
+     *
+     * @return void
+     */
     protected function setStatsConfig()
     {
         if (isset($this->args['statsConfig'])) {
@@ -246,6 +288,11 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
         }
     }
 
+    /**
+     * Gets the stats config for the job
+     *
+     * @return array
+     */
     protected function getStatsConfig()
     {
         if (empty($this->statsConfig)) {
@@ -254,6 +301,11 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
         return $this->statsConfig;
     }
 
+    /**
+     * Tripod options to pass between jobs
+     *
+     * @return array
+     */
     protected function getTripodOptions()
     {
         $statsConfig = $this->getStatsConfig();
