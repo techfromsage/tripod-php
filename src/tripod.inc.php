@@ -6,6 +6,8 @@ if (!defined('TRIPOD_DIR')) {
     define('TRIPOD_DIR', dirname(__FILE__) . '/' );
 }
 
+require_once TRIPOD_DIR . '/mongo/MongoTripodConstants.php';
+
 \Resque::setBackend(\Tripod\Mongo\Config::getResqueServer());
 
 define('RDF_TYPE', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
