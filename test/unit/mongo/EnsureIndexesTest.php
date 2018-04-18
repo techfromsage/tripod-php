@@ -1,12 +1,15 @@
 <?php
 
 require_once 'MongoTripodTestBase.php';
+require_once 'PerformJob.php';
 
 /**
  * Class EnsureIndexes Test
  */
 class EnsureIndexesTest extends MongoTripodTestBase
 {
+    use PerformJob;
+
     /**
      * @var array
      */
@@ -30,15 +33,21 @@ class EnsureIndexesTest extends MongoTripodTestBase
      * @group ensure-indexes
      * @throws Exception
      */
-    public function testMandatoryArgs($argumentName)
+    public function testMandatoryArgs($argument, $argumentName = null)
     {
+        if (!$argumentName) {
+            $argumentName = $argument;
+        }
         $job = new \Tripod\Mongo\Jobs\EnsureIndexes();
         $job->args = $this->args;
         $job->job->payload['id'] = uniqid();
-        unset($job->args[$argumentName]);
+        unset($job->args[$argument]);
 
-        $this->setExpectedException('Exception', "Argument $argumentName was not present in supplied job args for job Tripod\Mongo\Jobs\EnsureIndexes");
-        $job->perform();
+        $this->setExpectedException(
+            'Exception',
+            "Argument $argumentName was not present in supplied job args for job Tripod\Mongo\Jobs\EnsureIndexes"
+        );
+        $this->performJob($job);
     }
 
     /**
@@ -48,12 +57,12 @@ class EnsureIndexesTest extends MongoTripodTestBase
      */
     public function mandatoryArgDataProvider()
     {
-        return array(
-            array('tripodConfig'),
-            array('storeName'),
-            array('reindex'),
-            array('background')
-        );
+        return [
+            ['tripodConfig', 'tripodConfig or tripodConfigGenerator'],
+            ['storeName'],
+            ['reindex'],
+            ['background']
+        ];
     }
 
     /**
@@ -66,7 +75,7 @@ class EnsureIndexesTest extends MongoTripodTestBase
         $job->args = $this->createDefaultArguments();
         $this->jobSuccessfullyEnsuresIndexes($job);
 
-        $job->perform();
+        $this->performJob($job);
     }
 
     /**
@@ -80,7 +89,7 @@ class EnsureIndexesTest extends MongoTripodTestBase
         $this->jobThrowsExceptionWhenEnsuringIndexes($job);
         $this->setExpectedException('Exception', "Ensuring index failed");
 
-        $job->perform();
+        $this->performJob($job);
     }
 
     /**

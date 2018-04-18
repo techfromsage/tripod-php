@@ -22,22 +22,33 @@ class EnsureIndexes extends JobBase
      */
     public function perform()
     {
-        try {
-            $this->debugLog('Ensuring indexes for tenant=' . $this->args[self::STORENAME_KEY]. ', reindex=' . $this->args[self::REINDEX_KEY] . ', background=' . $this->args[self::BACKGROUND_KEY]);
+        $this->debugLog('Ensuring indexes for tenant=' . $this->args[self::STORENAME_KEY]. ', reindex=' . $this->args[self::REINDEX_KEY] . ', background=' . $this->args[self::BACKGROUND_KEY]);
 
-            $this->getIndexUtils()->ensureIndexes(
-                $this->args[self::REINDEX_KEY],
-                $this->args[self::STORENAME_KEY],
-                $this->args[self::BACKGROUND_KEY]
-            );
+        $this->getIndexUtils()->ensureIndexes(
+            $this->args[self::REINDEX_KEY],
+            $this->args[self::STORENAME_KEY],
+            $this->args[self::BACKGROUND_KEY]
+        );
+    }
 
-            // stat time taken to process job, from time it was picked up
-            $this->getStat()->timer(MONGO_QUEUE_ENSURE_INDEXES_SUCCESS, $this->timer->result());
-        } catch (\Exception $e) {
-            $this->getStat()->increment(MONGO_QUEUE_ENSURE_INDEXES_FAIL);
-            $this->errorLog("Caught exception in ".get_class($this).": ".$e->getMessage());
-            throw $e;
-        }
+    /**
+     * Stat string for successful job timer
+     *
+     * @return string
+     */
+    protected function getStatTimerSuccessKey()
+    {
+        return MONGO_QUEUE_ENSURE_INDEXES_SUCCESS;
+    }
+
+    /**
+     * Stat string for failed job increment
+     *
+     * @return string
+     */
+    protected function getStatFailureIncrementKey()
+    {
+        return MONGO_QUEUE_ENSURE_INDEXES_FAIL;
     }
 
     /**

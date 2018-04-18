@@ -36,11 +36,25 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
     abstract public function perform();
 
     /**
+     * Stat string for successful job timer
+     *
+     * @return string
+     */
+    abstract protected function getStatTimerSuccessKey();
+
+    /**
+     * Stat string for failed job increment
+     *
+     * @return string
+     */
+    abstract protected function getStatFailureIncrementKey();
+
+    /**
      * Called in every job prior to perform()
      *
      * @return void
      */
-    public function beforePeform()
+    public function beforePerform()
     {
         $this->debugLog(
             '[JOBID ' . $this->job->payload['id'] . '] ' . get_class($this) . '::perform() start'
@@ -66,8 +80,25 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
         // stat time taken to process item, from time it was created (queued)
         $this->timer->stop();
         $this->debugLog(
-            '[JOBID ' . $this->job->payload['id'] . '] ' . get_class($this) . "::perform() done in {$timer->result()}ms"
+            '[JOBID ' . $this->job->payload['id'] . '] ' . get_class($this) .
+            "::perform() done in {$this->timer->result()}ms"
         );
+        $this->getStat()->timer($this->getStatTimerSuccessKey(), $this->timer->result());
+    }
+
+    /**
+     * Resque event when a job failures
+     *
+     * @param \Exception $e Exception
+     * @return void
+     */
+    public function onFailure(\Exception $e)
+    {
+        $this->getStat()->increment($this->getStatFailureIncrementKey());
+        $this->errorLog(
+            'Caught exception in '. get_class($this) . ': ' . $e->getMessage()
+        );
+        throw $e;
     }
 
     /**
@@ -130,7 +161,7 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
     {
         if (!isset($this->args[self::TRIPOD_CONFIG_KEY]) && !isset($this->args[self::TRIPOD_CONFIG_GENERATOR])) {
             $message = 'Argument ' . self::TRIPOD_CONFIG_KEY . ' or ' . self::TRIPOD_CONFIG_GENERATOR .
-                'was not present in supplied job args for job ' . get_class($this);
+                ' was not present in supplied job args for job ' . get_class($this);
             $this->errorLog($message);
             throw new \Exception($message);
         }
@@ -293,7 +324,7 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
      *
      * @return array
      */
-    protected function getStatsConfig()
+    public function getStatsConfig()
     {
         if (empty($this->statsConfig)) {
             $this->setStatsConfig();
