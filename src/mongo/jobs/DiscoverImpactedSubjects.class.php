@@ -125,14 +125,9 @@ class DiscoverImpactedSubjects extends JobBase
         }
     }
 
-    /**
-     * Runs after job completes
-     *
-     * @return void
-     */
-    public function afterPerform()
+    public function tearDown()
     {
-        parent::afterPerform();
+        parent::tearDown();
         $this->getStat()->increment(MONGO_QUEUE_DISCOVER_JOB . '.' . SUBJECT_COUNT, $this->subjectCount);
     }
 

@@ -25,7 +25,7 @@ class ApplyOperationTest extends MongoTripodTestBase
             'Exception',
             'Argument tripodConfig or tripodConfigGenerator was not present in supplied job args for job Tripod\Mongo\Jobs\ApplyOperation'
         );
-        $job->beforePerform();
+        $this->performJob($job);
     }
 
     public function testMandatoryArgSubject()
@@ -36,7 +36,7 @@ class ApplyOperationTest extends MongoTripodTestBase
         $job->args = $this->args;
         $job->job->payload['id'] = uniqid();
         $this->setExpectedException('Exception', "Argument subjects was not present in supplied job args for job Tripod\Mongo\Jobs\ApplyOperation");
-        $job->beforePerform();
+        $this->performJob($job);
     }
 
     public function testApplyViewOperation()

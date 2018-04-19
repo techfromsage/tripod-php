@@ -28,6 +28,12 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
     /** @var \Tripod\Timer */
     protected $timer;
 
+    public function __construct()
+    {
+        \Resque_Event::listen('beforePerform', [$this, 'beforePerform']);
+        \Resque_Event::listen('onFailure', [$this, 'onFailure']);
+    }
+
     /**
      * The main method of the job
      *
@@ -54,7 +60,12 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
      *
      * @return void
      */
-    public function beforePerform()
+    public function beforePerform($job)
+    {
+        $job->getInstance()->validateArgs();
+    }
+
+    public function setUp()
     {
         $this->debugLog(
             '[JOBID ' . $this->job->payload['id'] . '] ' . get_class($this) . '::perform() start'
@@ -62,7 +73,7 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
 
         $this->timer = new \Tripod\Timer();
         $this->timer->start();
-        $this->validateArgs();
+
         $this->setStatsConfig();
 
         if ($this->configRequired) {
@@ -70,12 +81,7 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
         }
     }
 
-    /**
-     * Called in every job after perform() unless failure
-     *
-     * @return void
-     */
-    public function afterPerform()
+    public function tearDown()
     {
         // stat time taken to process item, from time it was created (queued)
         $this->timer->stop();
