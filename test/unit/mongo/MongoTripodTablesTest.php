@@ -44,9 +44,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         $this->getTripodCollection($this->tripod)->drop();
         $this->tripod->setTransactionLog($this->tripodTransactionLog);
-        error_log('start');
         $this->loadResourceDataViaTripod();
-        error_log('eng');
         $this->tablesConstParams = array($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),'http://talisaspire.com/');
 
         $this->tripodTables = new \Tripod\Mongo\Composites\Tables($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),null); // pass null context, should default to http://talisaspire.com

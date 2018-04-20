@@ -2,8 +2,6 @@
 
 namespace Tripod;
 
-use \Tripod\Mongo\Config;
-
 class TripodConfigFactory
 {
     /**
@@ -21,7 +19,7 @@ class TripodConfigFactory
         if (isset($config['class']) && class_exists($config['class'])) {
             $tripodConfig = call_user_func(array($config['class'], 'deserialize'), $config);
         } else {
-            $tripodConfig = Config::deserialize($config);
+            $tripodConfig = \Tripod\Mongo\Config::deserialize($config);
         }
         return $tripodConfig;
     }
