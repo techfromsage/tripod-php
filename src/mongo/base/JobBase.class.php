@@ -205,7 +205,7 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
         // @see https://github.com/chrisboulton/php-resque/issues/228, when this PR is merged we can stop tracking the status in this way
         try {
             if (isset($data[self::TRIPOD_CONFIG_GENERATOR])) {
-                $data[self::TRIPOD_CONFIG_GENERATOR] = $this->cacheConfig($data[self::TRIPOD_CONFIG_KEY]);
+                $data[self::TRIPOD_CONFIG_GENERATOR] = $this->serializeConfig($data[self::TRIPOD_CONFIG_GENERATOR]);
             }
             $token = $this->enqueue($queueName, $class, $data);
             if (!$this->getJobStatus($token)) {
