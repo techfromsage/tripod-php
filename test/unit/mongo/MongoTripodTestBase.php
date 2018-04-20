@@ -70,7 +70,7 @@ abstract class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         foreach ($docs as $d) {
             $g = new \Tripod\Mongo\MongoGraph();
             $g->add_tripod_array($d);
-            $this->tripod->saveChanges(new \Tripod\ExtendedGraph(), $g ,$d['_id'][_ID_CONTEXT]);
+            $this->tripod->saveChanges(new \Tripod\ExtendedGraph(), $g, $d['_id'][_ID_CONTEXT]);
         }
     }
 
