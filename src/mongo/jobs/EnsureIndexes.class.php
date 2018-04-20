@@ -60,20 +60,20 @@ class EnsureIndexes extends JobBase
      */
     public function createJob($storeName, $reindex, $background, $queueName = null)
     {
+        $configInstance = $this->getConfigInstance();
         if (!$queueName) {
-            $queueName = \Tripod\Mongo\Config::getEnsureIndexesQueueName();
-        } elseif (strpos($queueName, \Tripod\Mongo\Config::getEnsureIndexesQueueName()) === false) {
-            $queueName = \Tripod\Mongo\Config::getEnsureIndexesQueueName() . '::' . $queueName;
+            $queueName = $configInstance::getEnsureIndexesQueueName();
+        } elseif (strpos($queueName, $configInstance::getEnsureIndexesQueueName()) === false) {
+            $queueName = $configInstance::getEnsureIndexesQueueName() . '::' . $queueName;
         }
 
-        $data = array(
+        $data = [
             self::STORENAME_KEY => $storeName,
             self::REINDEX_KEY => $reindex,
-            self::BACKGROUND_KEY => $background,
-            self::TRIPOD_CONFIG_KEY => \Tripod\Mongo\Config::getConfig()
-        );
+            self::BACKGROUND_KEY => $background
+        ];
 
-        $this->submitJob($queueName, get_class($this), $data);
+        $this->submitJob($queueName, get_class($this), array_merge($data, $this->generateConfigJobArgs()));
     }
 
     /**

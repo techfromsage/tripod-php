@@ -23,7 +23,7 @@ class MongoTripodNQuadSerializerTest extends MongoTripodTestBase
 <http://example.com/1> <http://purl.org/dc/terms/source> <http://www.google.com> <http://talisaspire.com/> .\n";
 
         $serializer = new NQuadSerializer();
-        $actual = $serializer->getSerializedIndex($g->_index, \Tripod\Mongo\Config::getInstance()->getDefaultContextAlias());
+        $actual = $serializer->getSerializedIndex($g->_index, \Tripod\Config::getInstance()->getDefaultContextAlias());
 
         $this->assertEquals($expected, $actual);
     }
@@ -166,7 +166,7 @@ class MongoTripodNQuadSerializerTest extends MongoTripodTestBase
 <http://basedata.com/b/docWithEmptySeq123> <http://purl.org/dc/terms/title> \"Doc with sequence\" <http://talisaspire.com/> .";
         
         $serializer = new NQuadSerializer();
-        $actual = $serializer->getSerializedIndex($g->_index, \Tripod\Mongo\Config::getInstance()->getDefaultContextAlias());
+        $actual = $serializer->getSerializedIndex($g->_index, \Tripod\Config::getInstance()->getDefaultContextAlias());
 
         // This test initially asserted that $expected was equal to $actual
         //   $this->assertEquals($expected, $actual);

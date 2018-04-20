@@ -2,16 +2,13 @@
 
 use Tripod\Mongo\Jobs\ApplyOperation;
 
-require_once 'MongoTripodTestBase.php';
-require_once 'PerformJob.php';
+require_once 'ResqueJobTestBase.php';
 
 /**
  * Class ApplyOperationTest
  */
-class ApplyOperationTest extends MongoTripodTestBase
+class ApplyOperationTest extends ResqueJobTestBase
 {
-    use PerformJob;
-
     protected $args = array();
 
     public function testMandatoryArgTripodConfig()
@@ -79,7 +76,7 @@ class ApplyOperationTest extends MongoTripodTestBase
             ->setMethods(array('update'))
             ->setConstructorArgs(array(
                 'tripod_php_testing',
-                \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                \Tripod\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
                 'http://talisapire.com/'
             ))->getMock();
 
@@ -170,7 +167,7 @@ class ApplyOperationTest extends MongoTripodTestBase
             ->setConstructorArgs(
                 [
                     'tripod_php_testing',
-                    \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                    \Tripod\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
                     'http://talisapire.com/'
                 ]
             )->getMock();
@@ -272,7 +269,7 @@ class ApplyOperationTest extends MongoTripodTestBase
             ->setConstructorArgs(
                 [
                     'tripod_php_testing',
-                    \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                    \Tripod\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
                     'http://talisapire.com/'
                 ]
             )->getMock();
@@ -378,7 +375,7 @@ class ApplyOperationTest extends MongoTripodTestBase
             ->setMethods(array('update'))
             ->setConstructorArgs(array(
                 'tripod_php_testing',
-                \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                \Tripod\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
                 'http://talisapire.com/'
             ))->getMock();
 
@@ -471,7 +468,7 @@ class ApplyOperationTest extends MongoTripodTestBase
             ->setConstructorArgs(
                 [
                     'tripod_php_testing',
-                    \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                    \Tripod\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
                     'http://talisapire.com/'
                 ]
             )->getMock();
@@ -576,7 +573,7 @@ class ApplyOperationTest extends MongoTripodTestBase
             ->setConstructorArgs(
                 [
                     'tripod_php_testing',
-                    \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                    \Tripod\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
                     'http://talisapire.com/'
                 ]
             )->getMock();
@@ -931,7 +928,7 @@ class ApplyOperationTest extends MongoTripodTestBase
 
         $jobData = array(
             'subjects'=>array($impactedSubject->toArray()),
-            'tripodConfig'=>\Tripod\Mongo\Config::getConfig(),
+            'tripodConfig'=>\Tripod\Config::getConfig(),
         );
 
         /** @var \Tripod\Mongo\Jobs\ApplyOperation|PHPUnit_Framework_MockObject_MockObject $applyOperation */
@@ -1035,7 +1032,7 @@ class ApplyOperationTest extends MongoTripodTestBase
 
         $jobData = array(
             'subjects'=>array($impactedSubject->toArray()),
-            'tripodConfig'=>\Tripod\Mongo\Config::getConfig(),
+            'tripodConfig'=>\Tripod\Config::getConfig(),
         );
 
         /** @var \Tripod\Mongo\Jobs\ApplyOperation|PHPUnit_Framework_MockObject_MockObject $applyOperation */
@@ -1074,7 +1071,7 @@ class ApplyOperationTest extends MongoTripodTestBase
         );
 
         $this->args = array(
-            'tripodConfig' => \Tripod\Mongo\Config::getConfig(),
+            'tripodConfig' => \Tripod\Config::getConfig(),
             'subjects'=> [$subject->toArray()],
             'statsConfig' => $this->getStatsDConfig()
         );

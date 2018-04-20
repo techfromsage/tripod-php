@@ -8,6 +8,7 @@ use Tripod\Exceptions\JobException;
 use \MongoDB\Driver\ReadPreference;
 use Tripod\ITripodConfigSerializer;
 use Tripod\TripodConfigFactory;
+use Tripod\Config;
 
 /**
  * Todo: How to inject correct stat class... :-S
@@ -60,7 +61,7 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
      *
      * @return void
      */
-    public function beforePerform($job)
+    public function beforePerform(\Resque_Job $job)
     {
         $job->getInstance()->validateArgs();
     }
@@ -204,7 +205,7 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
     {
         // @see https://github.com/chrisboulton/php-resque/issues/228, when this PR is merged we can stop tracking the status in this way
         try {
-            if (isset($data[self::TRIPOD_CONFIG_GENERATOR])) {
+            if (isset($data[self::TRIPOD_CONFIG_GENERATOR]) && $data[self::TRIPOD_CONFIG_GENERATOR]) {
                 $data[self::TRIPOD_CONFIG_GENERATOR] = $this->serializeConfig($data[self::TRIPOD_CONFIG_GENERATOR]);
             }
             $token = $this->enqueue($queueName, $class, $data);
@@ -265,12 +266,20 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
     /**
      * Take a Tripod Config Serializer and return a config array
      *
-     * @param ITripodConfigSerializer $configSerializer An object that implements ITripodConfigSerializer
+     * @param ITripodConfigSerializer|array $configSerializer An object that implements ITripodConfigSerializer
      * @return array
      */
-    protected function serializeConfig(ITripodConfigSerializer $configSerializer)
+    protected function serializeConfig($configSerializer)
     {
-        return $configSerializer->serialize();
+        if ($configSerializer instanceof ITripodConfigSerializer) {
+            return $configSerializer->serialize();
+        } elseif (is_array($configSerializer)) {
+            return $configSerializer;
+        } else {
+            throw new \InvalidArgumentException(
+                '$configSerializer must an ITripodConfigSerializer or array'
+            );
+        }
     }
 
     /**
@@ -281,7 +290,8 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
      */
     protected function deserializeConfig(array $config)
     {
-        return TripodConfigFactory::create($config);
+        Config::setConfig($config);
+        return Config::getInstance();
     }
 
     /**
@@ -351,5 +361,27 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
             $options['statsConfig'] = $statsConfig;
         }
         return $options;
+    }
+
+    /**
+     * Convenience method to pass config to job data
+     *
+     * @return array
+     */
+    protected function generateConfigJobArgs()
+    {
+        $configInstance = $this->getConfigInstance();
+        $args = [];
+        if ($configInstance instanceof ITripodConfigSerializer) {
+            $config = $configInstance->serialize();
+        } else {
+            $config = \Tripod\Config::getConfig();
+        }
+        if (isset($config['class'])) {
+            $args[self::TRIPOD_CONFIG_GENERATOR] = $config;
+        } else {
+            $args[self::TRIPOD_CONFIG_KEY] = $config;
+        }
+        return $args;
     }
 }

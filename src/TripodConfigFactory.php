@@ -15,11 +15,13 @@ class TripodConfigFactory
      */
     public static function create(array $config)
     {
+        if (\Tripod\Config::getConfig() !== $config) {
+            \Tripod\Config::setConfig($config);
+        }
         if (isset($config['class']) && class_exists($config['class'])) {
             $tripodConfig = call_user_func(array($config['class'], 'deserialize'), $config);
         } else {
-            Config::setConfig($config);
-            $tripodConfig = Config::getInstance();
+            $tripodConfig = Config::deserialize($config);
         }
         return $tripodConfig;
     }

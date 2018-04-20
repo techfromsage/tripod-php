@@ -31,7 +31,7 @@ Quickstart
 ```php
 require_once("tripod.inc.php");
 
-\Tripod\Mongo\Config::setConfig($conf); // set the config, usually read in as JSON from a file
+\Tripod\Config::setConfig($conf); // set the config, usually read in as JSON from a file
 
 $tripod = new Driver(
   "CBD_users", // pod (read: MongoDB collection) we're working with

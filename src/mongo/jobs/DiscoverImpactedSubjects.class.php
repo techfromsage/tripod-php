@@ -2,7 +2,7 @@
 
 namespace Tripod\Mongo\Jobs;
 
-use \Tripod\Mongo\Config;
+use \Tripod\Config;
 
 /**
  * Class DiscoverImpactedSubjects
@@ -64,13 +64,18 @@ class DiscoverImpactedSubjects extends JobBase
                 $this->args[self::CONTEXT_ALIAS_KEY]
             );
             if (!empty($modifiedSubjects)) {
+                $configInstance = $this->getConfigInstance();
                 /* @var $subject \Tripod\Mongo\ImpactedSubject */
                 foreach ($modifiedSubjects as $subject) {
                     $this->subjectCount++;
                     $subjectTimer = new \Tripod\Timer();
                     $subjectTimer->start();
                     if (isset($this->args[self::QUEUE_KEY]) || count($subject->getSpecTypes()) == 0) {
-                        $queueName = (isset($this->args[self::QUEUE_KEY]) ? $this->args[self::QUEUE_KEY] : Config::getApplyQueueName());
+                        if (isset($this->args[self::QUEUE_KEY])) {
+                            $queueName = $this->args[self::QUEUE_KEY];
+                        } else {
+                            $queueName = $configInstance::getApplyQueueName();
+                        }
                         $this->addSubjectToQueue($subject, $queueName);
                     } else {
                         $specsGroupedByQueue = array();
@@ -78,20 +83,29 @@ class DiscoverImpactedSubjects extends JobBase
                             $spec = null;
                             switch ($subject->getOperation()) {
                                 case OP_VIEWS:
-                                    $spec = Config::getInstance()->getViewSpecification($this->args[self::STORE_NAME_KEY], $specType);
+                                    $spec = $configInstance->getViewSpecification(
+                                        $this->args[self::STORE_NAME_KEY],
+                                        $specType
+                                    );
                                     break;
                                 case OP_TABLES:
-                                    $spec = Config::getInstance()->getTableSpecification($this->args[self::STORE_NAME_KEY], $specType);
+                                    $spec = $configInstance->getTableSpecification(
+                                        $this->args[self::STORE_NAME_KEY],
+                                        $specType
+                                    );
                                     break;
                                 case OP_SEARCH:
-                                    $spec = Config::getInstance()->getSearchDocumentSpecification($this->args[self::STORE_NAME_KEY], $specType);
+                                    $spec = $configInstance->getSearchDocumentSpecification(
+                                        $this->args[self::STORE_NAME_KEY],
+                                        $specType
+                                    );
                                     break;
                             }
                             if (!$spec || !isset($spec['queue'])) {
                                 if (!$spec) {
                                     $spec = array();
                                 }
-                                $spec['queue'] = Config::getApplyQueueName();
+                                $spec['queue'] = $configInstance::getApplyQueueName();
                             }
                             if (!isset($specsGroupedByQueue[$spec['queue']])) {
                                 $specsGroupedByQueue[$spec['queue']] = array();
@@ -157,12 +171,13 @@ class DiscoverImpactedSubjects extends JobBase
      */
     public function createJob(array $data, $queueName = null)
     {
+        $configInstance = $this->getConfigInstance();
         if (!$queueName) {
-            $queueName = Config::getDiscoverQueueName();
-        } elseif (strpos($queueName, \Tripod\Mongo\Config::getDiscoverQueueName()) === false) {
-            $queueName = \Tripod\Mongo\Config::getDiscoverQueueName() . '::' . $queueName;
+            $queueName = $configInstance::getDiscoverQueueName();
+        } elseif (strpos($queueName, $configInstance::getDiscoverQueueName()) === false) {
+            $queueName = $configInstance::getDiscoverQueueName() . '::' . $queueName;
         }
-        $this->submitJob($queueName, get_class($this), $data);
+        $this->submitJob($queueName, get_class($this), array_merge($data, $this->generateConfigJobArgs()));
     }
 
     /**

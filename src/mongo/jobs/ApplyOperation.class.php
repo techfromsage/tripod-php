@@ -4,6 +4,7 @@ namespace Tripod\Mongo\Jobs;
 
 use Tripod\Mongo\JobGroup;
 use Tripod\Mongo\Driver;
+use Tripod\ITripodConfigSerializer;
 
 /**
  * Class ApplyOperation
@@ -104,10 +105,11 @@ class ApplyOperation extends JobBase
      */
     public function createJob(array $subjects, $queueName = null, $otherData = [])
     {
+        $configInstance = $this->getConfigInstance();
         if (!$queueName) {
-            $queueName = \Tripod\Mongo\Config::getApplyQueueName();
-        } elseif (strpos($queueName, \Tripod\Mongo\Config::getApplyQueueName()) === false) {
-            $queueName = \Tripod\Mongo\Config::getApplyQueueName() . '::' . $queueName;
+            $queueName = $configInstance::getApplyQueueName();
+        } elseif (strpos($queueName, $configInstance::getApplyQueueName()) === false) {
+            $queueName = $configInstance::getApplyQueueName() . '::' . $queueName;
         }
 
         $data = [
@@ -117,8 +119,12 @@ class ApplyOperation extends JobBase
                 },
                 $subjects
             ),
-            self::TRIPOD_CONFIG_KEY=>\Tripod\Mongo\Config::getConfig()
         ];
+
+        $data = array_merge(
+            $this->generateConfigJobArgs(),
+            $data
+        );
 
         $this->submitJob($queueName, get_class($this), array_merge($otherData, $data));
     }

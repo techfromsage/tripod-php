@@ -17,4 +17,11 @@ interface ITripodConfig
      * @return void
      */
     public static function setConfig(array $config);
+
+    /**
+     * Returns the Tripod config array
+     *
+     * @return array
+     */
+    public static function getConfig();
 }

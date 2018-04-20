@@ -1,15 +1,12 @@
 <?php
 
-require_once 'MongoTripodTestBase.php';
-require_once 'PerformJob.php';
+require_once 'ResqueJobTestBase.php';
 
 /**
  * Class EnsureIndexes Test
  */
-class EnsureIndexesTest extends MongoTripodTestBase
+class EnsureIndexesTest extends ResqueJobTestBase
 {
-    use PerformJob;
-
     /**
      * @var array
      */
@@ -100,7 +97,7 @@ class EnsureIndexesTest extends MongoTripodTestBase
     {
         $jobData = array(
             'storeName' => 'tripod_php_testing',
-            'tripodConfig' => \Tripod\Mongo\Config::getConfig(),
+            'tripodConfig' => \Tripod\Config::getConfig(),
             'reindex' => false,
             'background' => true
         );
@@ -126,7 +123,7 @@ class EnsureIndexesTest extends MongoTripodTestBase
     {
         $jobData = array(
             'storeName' => 'tripod_php_testing',
-            'tripodConfig' => \Tripod\Mongo\Config::getConfig(),
+            'tripodConfig' => \Tripod\Config::getConfig(),
             'reindex' => false,
             'background' => true
         );
@@ -158,7 +155,7 @@ class EnsureIndexesTest extends MongoTripodTestBase
     {
         $jobData = array(
             'storeName' => 'tripod_php_testing',
-            'tripodConfig' => \Tripod\Mongo\Config::getConfig(),
+            'tripodConfig' => \Tripod\Config::getConfig(),
             'reindex' => false,
             'background' => true
         );
@@ -186,7 +183,7 @@ class EnsureIndexesTest extends MongoTripodTestBase
     {
         $jobData = array(
             'storeName' => 'tripod_php_testing',
-            'tripodConfig' => \Tripod\Mongo\Config::getConfig(),
+            'tripodConfig' => \Tripod\Config::getConfig(),
             'reindex' => false,
             'background' => true
         );
@@ -238,7 +235,7 @@ class EnsureIndexesTest extends MongoTripodTestBase
     protected function createDefaultArguments()
     {
         $arguments = array(
-            'tripodConfig' => \Tripod\Mongo\Config::getConfig(),
+            'tripodConfig' => \Tripod\Config::getConfig(),
             'storeName'    => 'tripod_php_testing',
             'reindex'      => false,
             'background'   => true

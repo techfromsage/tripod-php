@@ -16,17 +16,13 @@ use \Tripod\ITripodConfigSerializer;
 /**
  * Holds the global configuration for Tripod
  */
-class Config implements ITripodConfig, ITripodConfigSerializer
+class Config implements ITripodConfigSerializer
 {
-    /**
-     * @var Config
-     */
-    private static $instance;
 
     /**
      * @var array
      */
-    private static $config;
+    private $config;
 
     /**
      * @var Labeller
@@ -178,8 +174,9 @@ class Config implements ITripodConfig, ITripodConfigSerializer
      * @param array $config
      * @throws \Tripod\Exceptions\ConfigException
      */
-    protected function loadConfig(Array $config)
+    protected function loadConfig(array $config)
     {
+        $this->config = $config;
         if (array_key_exists('namespaces',$config))
         {
             $this->ns = $config['namespaces'];
@@ -1078,20 +1075,6 @@ class Config implements ITripodConfig, ITripodConfigSerializer
         }
     }
 
-    /**
-     * @codeCoverageIgnore
-     * @static
-     * @internal param string $specName
-     * @return Array|null
-     */
-    public static function getConfig()
-    {
-        if(isset(self::$config))
-        {
-            return self::$config;
-        }
-        return null;
-    }
 
     /**
      * Returns an alias curie of the default context (i.e. graph name)
@@ -1105,36 +1088,44 @@ class Config implements ITripodConfig, ITripodConfigSerializer
 
     /**
      * Since this is a singleton class, use this method to create a new config instance.
-     * @uses Config::setConfig() Configuration must be set prior to calling this method. To generate a completely new object, set a new config
      * @codeCoverageIgnore
-     * @static
+     * @deprecated
      * @throws \Tripod\Exceptions\ConfigException
-     * @internal param string $specName
      * @return Config
      */
     public static function getInstance()
     {
-        if (!isset(self::$config))
-        {
-            throw new \Tripod\Exceptions\ConfigException("Call Config::setConfig() first");
-        }
-        if (!isset(self::$instance))
-        {
-            self::$instance = new Config();
-            self::$instance->loadConfig(self::$config);
-        }
-        return self::$instance;
+        self::getLogger()->warn(
+            '\Tripod\Mongo\Config::getInstance deprecated, use \Tripod\Config::getInstance instead'
+        );
+        return \Tripod\Config::getInstance();
     }
 
     /**
-     * set the config
-     * @usedby Config::getInstance()
+     * Sets the tripod configuration
+     * @deprecated
      * @param array $config
      */
-    public static function setConfig(Array $config)
+    public static function setConfig(array $config)
     {
-        self::$config = $config;
-        self::$instance = null; // this will force a reload next time getInstance() is called
+        self::getLogger()->warn(
+            '\Tripod\Mongo\Config::setConfig deprecated, use \Tripod\Config::setConfig instead'
+        );
+        \Tripod\Config::setConfig($config);
+    }
+
+    /**
+     * Returns configuration array
+     *
+     * @deprecated
+     * @return array
+     */
+    public static function getConfig()
+    {
+        self::getLogger()->warn(
+            '\Tripod\Mongo\Config::getConfig deprecated, use \Tripod\Config::getConfig instead'
+        );
+        return \Tripod\Config::getConfig();
     }
 
     /**
@@ -1552,16 +1543,6 @@ class Config implements ITripodConfig, ITripodConfigSerializer
     public function getDbs()
     {
         return array_keys($this->dbConfig);
-    }
-
-    /**
-     * This method was added to allow us to test the getInstance() method
-     * @codeCoverageIgnore
-     */
-    public function destroy()
-    {
-        self::$instance = null;
-        self::$config = null;
     }
 
     /* PROTECTED FUNCTIONS */
@@ -2184,15 +2165,16 @@ class Config implements ITripodConfig, ITripodConfigSerializer
      * Sets the Tripod config
      *
      * @param array $config
-     * @return void
+     * @return Config
      */
     public static function deserialize(array $config)
     {
         if (isset($config['class']) && isset($config['config'])) {
-            self::setConfig($config['config']);
-        } else {
-            self::setConfig($config);
+            $config = $config['config'];
         }
+        $instance = new self();
+        $instance->loadConfig($config);
+        return $instance;
     }
 
     /**
@@ -2202,9 +2184,6 @@ class Config implements ITripodConfig, ITripodConfigSerializer
      */
     public function serialize()
     {
-        return [
-            'class' => get_class(),
-            'config' => self::getConfig()
-        ];
+        return $this->config;
     }
 }

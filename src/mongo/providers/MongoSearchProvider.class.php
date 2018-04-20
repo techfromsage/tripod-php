@@ -2,10 +2,7 @@
 
 namespace Tripod\Mongo;
 
-require_once TRIPOD_DIR.'mongo/MongoTripodConstants.php';
-require_once TRIPOD_DIR . 'mongo/delegates/SearchDocuments.class.php';
-require_once TRIPOD_DIR . 'mongo/providers/ISearchProvider.php';
-require_once TRIPOD_DIR.'classes/Timer.class.php';
+require_once TRIPOD_DIR . 'mongo/MongoTripodConstants.php';
 
 use \MongoDB\BSON\Regex;
 
@@ -45,7 +42,7 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
         $this->tripod = $tripod;
         $this->storeName = $tripod->getStoreName();
         $this->labeller = new Labeller();
-        $this->config = Config::getInstance();
+        $this->config = \Tripod\Config::getInstance();
     }
 
     /**
@@ -369,7 +366,7 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
      */
     protected function getSearchDocumentSpecification($typeId)
     {
-        return Config::getInstance()->getSearchDocumentSpecification($this->storeName, $typeId);
+        return $this->config->getSearchDocumentSpecification($this->storeName, $typeId);
     }
 
     /**

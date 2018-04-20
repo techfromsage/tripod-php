@@ -1,17 +1,14 @@
 <?php
 
-require_once 'MongoTripodTestBase.php';
-require_once 'PerformJob.php';
+require_once 'ResqueJobTestBase.php';
 
 use \Tripod\Mongo\Jobs\DiscoverImpactedSubjects;
 
 /**
  * Class DiscoverImpactedSubjectsTest
  */
-class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
+class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
 {
-    use PerformJob;
-
     protected $args = array();
     public function testMandatoryArgTripodConfig()
     {
@@ -98,7 +95,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
             ->setConstructorArgs(
                 array(
                     'tripod_php_testing',
-                    \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                    \Tripod\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
                     'http://talisaspire.com/'
                 )
             )->getMock();
@@ -108,7 +105,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
             ->setConstructorArgs(
                 array(
                     'tripod_php_testing',
-                    \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                    \Tripod\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
                     'http://talisaspire.com/'
                 )
             )->getMock();
@@ -255,7 +252,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
         $jobData = array(
             'changes'=>$subjectsAndPredicatesOfChange,
             'operations'=>array(OP_SEARCH),
-            'tripodConfig'=>\Tripod\Mongo\Config::getConfig(),
+            'tripodConfig'=>\Tripod\Config::getConfig(),
             'storeName'=>'tripod_php_testing',
             'podName'=>'CBD_testing',
             'contextAlias'=>'http://talisaspire.com/'
@@ -290,7 +287,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
         $jobData = array(
             'changes'=>$subjectsAndPredicatesOfChange,
             'operations'=>array(OP_SEARCH),
-            'tripodConfig'=>\Tripod\Mongo\Config::getConfig(),
+            'tripodConfig'=>\Tripod\Config::getConfig(),
             'storeName'=>'tripod_php_testing',
             'podName'=>'CBD_testing',
             'contextAlias'=>'http://talisaspire.com/'
@@ -332,7 +329,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
             ->setConstructorArgs(
                 array(
                     'tripod_php_testing',
-                    \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                    \Tripod\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
                     'http://talisaspire.com/'
                 )
             )->getMock();
@@ -342,7 +339,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
             ->setConstructorArgs(
                 array(
                     'tripod_php_testing',
-                    \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                    \Tripod\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
                     'http://talisaspire.com/'
                 )
             )->getMock();
@@ -438,7 +435,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
 
     public function testDiscoverOperationWillSubmitApplyOperationForDistinctQueues()
     {
-        $config = \Tripod\Mongo\Config::getConfig();
+        $config = \Tripod\Config::getConfig();
 
         // Create a bunch of specs on various queues
         $tableSpecs = array(
@@ -518,7 +515,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
 
         $config['stores']['tripod_php_testing']['table_specifications'] = $tableSpecs;
 
-        \Tripod\Mongo\Config::setConfig($config);
+        \Tripod\Config::setConfig($config);
 
         /** @var DiscoverImpactedSubjects|PHPUnit_Framework_MockObject_MockObject $discoverImpactedSubjects */
         $discoverImpactedSubjects = $this->getMockBuilder('\Tripod\Mongo\Jobs\DiscoverImpactedSubjects')
@@ -541,7 +538,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
             ->setConstructorArgs(
                 array(
                     'tripod_php_testing',
-                    \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                    \Tripod\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
                     'http://talisaspire.com/'
                 )
             )->getMock();
@@ -672,7 +669,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
 
     public function testManuallySpecifiedQueueWillOverrideQueuesDefinedInConfig()
     {
-        $config = \Tripod\Mongo\Config::getConfig();
+        $config = \Tripod\Config::getConfig();
 
         // Create a bunch of specs on various queues
         $tableSpecs = array(
@@ -752,7 +749,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
 
         $config['stores']['tripod_php_testing']['table_specifications'] = $tableSpecs;
 
-        \Tripod\Mongo\Config::setConfig($config);
+        \Tripod\Config::setConfig($config);
 
         /** @var DiscoverImpactedSubjects|PHPUnit_Framework_MockObject_MockObject $discoverImpactedSubjects */
         $discoverImpactedSubjects = $this->getMockBuilder('\Tripod\Mongo\Jobs\DiscoverImpactedSubjects')
@@ -776,7 +773,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
             ->setConstructorArgs(
                 array(
                     'tripod_php_testing',
-                    \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                    \Tripod\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
                     'http://talisaspire.com/'
                 )
             )->getMock();
@@ -841,7 +838,7 @@ class DiscoverImpactedSubjectsTest extends MongoTripodTestBase
     protected function setArgs()
     {
         $this->args = array(
-            'tripodConfig'=>\Tripod\Mongo\Config::getConfig(),
+            'tripodConfig'=>\Tripod\Config::getConfig(),
             'storeName'=>'tripod_php_testing',
             'podName'=>'CBD_testing',
             'changes'=>array('http://example.com/resources/foo'=>array('rdf:type','dct:title')),

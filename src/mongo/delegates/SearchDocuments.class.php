@@ -203,7 +203,7 @@ class SearchDocuments extends DriverBase
                 );
 
                 $cursor = $collection->find(array('_id'=>array('$in'=>$joinUris)), array(
-                    'maxTimeMS' => \Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout()
+                    'maxTimeMS' => $this->getConfigInstance()->getMongoCursorTimeout()
                 ));
 
                 // add to impact index

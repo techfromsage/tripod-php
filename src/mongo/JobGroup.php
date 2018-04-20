@@ -77,7 +77,7 @@ class JobGroup
     protected function getMongoCollection()
     {
         if (!isset($this->collection)) {
-            $config = Config::getInstance();
+            $config = \Tripod\Config::getInstance();
 
             $this->collection = $config->getCollectionForJobGroups($this->storeName);
         }

@@ -2,7 +2,9 @@
 
 use Tripod\Mongo\Jobs\JobBase;
 
-trait PerformJob
+require_once 'MongoTripodTestBase.php';
+
+class ResqueJobTestBase extends MongoTripodTestBase
 {
     protected function performJob(JobBase $job)
     {

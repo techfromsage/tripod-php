@@ -10,13 +10,13 @@ if ($argc!=2&&$argc!=3&&$argc!=4)
 }
 array_shift($argv);
 
-\Tripod\Mongo\Config::setConfig(json_decode(file_get_contents($argv[0]),true));
+\Tripod\Config::setConfig(json_decode(file_get_contents($argv[0]),true));
 
 $storeName = (isset($argv[1])) ? $argv[1] : null;
 $forceReindex = (isset($argv[2])&&($argv[2]=="true")) ? true : false;
 $background = (isset($argv[3])&&($argv[3]=="false")) ? false : true;
 
-\Tripod\Mongo\Config::getInstance()->setMongoCursorTimeout(-1);
+\Tripod\Config::getInstance()->setMongoCursorTimeout(-1);
 
 $ei = new \Tripod\Mongo\Jobs\EnsureIndexes();
 
