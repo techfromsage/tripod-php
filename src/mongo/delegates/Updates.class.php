@@ -867,7 +867,8 @@ class Updates extends DriverBase
                 $data[OP_QUEUE] = $this->queueName;
                 $queueName = $this->queueName;
             } else {
-                $queueName =  $this->getConfigInstance()::getDiscoverQueueName();
+                $configInstance = $this->getConfigInstance();
+                $queueName =  $configInstance::getDiscoverQueueName();
             }
 
             $this->getDiscoverImpactedSubjects()->createJob($data, $queueName);
