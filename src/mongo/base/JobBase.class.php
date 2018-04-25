@@ -58,10 +58,10 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
 
     /**
      * Called in every job prior to perform()
-     *
+     * @param \Resque_Job The queued job
      * @return void
      */
-    public function beforePerform(\Resque_Job $job)
+    public static function beforePerform(\Resque_Job $job)
     {
         $job->getInstance()->validateArgs();
     }
@@ -96,15 +96,16 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
     /**
      * Resque event when a job failures
      *
-     * @param \Exception $e Exception
+     * @param \Exception  $e   Exception
+     * @param \Resque_Job $job The failed job
      * @return void
      */
-    public function onFailure(\Exception $e)
+    public static function onFailure(\Exception $e, \Resque_Job $job)
     {
-        $this->getStat()->increment($this->getStatFailureIncrementKey());
-        $this->errorLog(
-            'Caught exception in '. get_class($this) . ': ' . $e->getMessage()
-        );
+        /** @var JobBase $failedJob */
+        $failedJob = $job->getInstance();
+        $failedJob->errorLog('Caught exception in '. get_class($this) . ': ' . $e->getMessage());
+        $failedJob->getStat()->increment($failedJob->getStatFailureIncrementKey());
         throw $e;
     }
 
