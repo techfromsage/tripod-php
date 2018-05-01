@@ -104,7 +104,7 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
     {
         /** @var JobBase $failedJob */
         $failedJob = $job->getInstance();
-        $failedJob->errorLog('Caught exception in '. get_class($this) . ': ' . $e->getMessage());
+        $failedJob->errorLog('Caught exception in '. get_class(self) . ': ' . $e->getMessage());
         $failedJob->getStat()->increment($failedJob->getStatFailureIncrementKey());
         throw $e;
     }
