@@ -1,5 +1,10 @@
 <?php
 
+use Tripod\Mongo\Jobs\DiscoverImpactedSubjects;
+use Tripod\Mongo\Jobs\JobBase;
+use Tripod\Mongo\ImpactedSubject;
+use Tripod\Mongo\Jobs\ApplyOperation;
+
 require_once 'MongoTripodTestBase.php';
 require_once 'TestConfigGenerator.php';
 
@@ -95,5 +100,83 @@ class ConfigGeneratorTest extends MongoTripodTestBase
             $originalGraph,
             $newGraph
         );
+    }
+
+    public function testSerializedConfigGeneratorsSentToApplyJobs()
+    {
+        $subjectsAndPredicatesOfChange = ['http://example.com/1' => [RDF_TYPE]];
+        $impactedSubjects = [
+            new ImpactedSubject(
+                [_ID_RESOURCE => 'http://example.com/1', _ID_CONTEXT => 'http://talisaspire.com/'],
+                OP_VIEWS,
+                'tripod_php_testing',
+                'CBD_testing',
+                ['v_resource_full']
+            )
+        ];
+        $jobArgs = [
+            DiscoverImpactedSubjects::STORE_NAME_KEY => 'tripod_php_testing',
+            DiscoverImpactedSubjects::POD_NAME_KEY => 'CBD_testing',
+            DiscoverImpactedSubjects::CHANGES_KEY => $subjectsAndPredicatesOfChange,
+            DiscoverImpactedSubjects::OPERATIONS_KEY => [OP_VIEWS],
+            DiscoverImpactedSubjects::CONTEXT_ALIAS_KEY => 'http://talisaspire.com/',
+            JobBase::TRIPOD_CONFIG_GENERATOR => $this->config
+        ];
+
+        /** @var \Tripod\Mongo\Driver|PHPUnit_Framework_MockObject_MockObject $tripod */
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
+            ->setMethods([])
+            ->setConstructorArgs(['CBD_testing', 'tripod_php_testing'])
+            ->getMock();
+
+        /** @var \Tripod\Mongo\Composites\Views|PHPUnit_Framework_MockObject_MockObject $views */
+        $views = $this->getMockBuilder('\Tripod\Mongo\Composites\Views')
+            ->setMethods(['getImpactedSubjects'])
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $tripod->expects($this->once())->method('getComposite')
+            ->with(OP_VIEWS)
+            ->will($this->returnValue($views));
+
+        $views->expects($this->once())->method('getImpactedSubjects')->will($this->returnValue($impactedSubjects));
+
+        /** @var \Tripod\Mongo\Jobs\DiscoverImpactedSubjects|PHPUnit_Framework_MockObject_MockObject $discoverJob */
+        $discoverJob = $this->getMockBuilder('\Tripod\Mongo\Jobs\DiscoverImpactedSubjects')
+            ->setMethods(['getTripod', 'getApplyOperation'])
+            ->getMock();
+
+        /** @var \Tripod\Mongo\Jobs\ApplyOperation|PHPUnit_Framework_MockObject_MockObject $applyJob */
+        $applyJob = $this->getMockBuilder('\Tripod\Mongo\Jobs\ApplyOperation')
+            ->setMethods(['submitJob'])
+            ->setMockClassName('ApplyOperation_TestConfigGenerator')
+            ->getMock();
+        $discoverJob->args = $jobArgs;
+        $discoverJob->job = (object) ['payload' => ['id' => uniqid()]];
+        $discoverJob->expects($this->once())->method('getTripod')->will($this->returnValue($tripod));
+        $discoverJob->expects($this->once())->method('getApplyOperation')->will($this->returnValue($applyJob));
+        $configInstance = \Tripod\Config::getInstance();
+        $applyJob->expects($this->once())->method('submitJob')
+            ->with(
+                $configInstance::getApplyQueueName(),
+                'ApplyOperation_TestConfigGenerator',
+                [
+                    ApplyOperation::SUBJECTS_KEY => [
+                        [
+                            'resourceId' => [
+                                _ID_RESOURCE => 'http://example.com/1',
+                                _ID_CONTEXT => 'http://talisaspire.com/'
+                            ],
+                            'operation' => OP_VIEWS,
+                            'specTypes' => ['v_resource_full'],
+                            'storeName' => 'tripod_php_testing',
+                            'podName' => 'CBD_testing'
+                        ]
+                    ],
+                    JobBase::TRIPOD_CONFIG_GENERATOR => $this->config
+                ]
+            );
+        $discoverJob->setUp();
+        $discoverJob->perform();
     }
 }
