@@ -16,7 +16,7 @@ use \Tripod\ITripodConfigSerializer;
 /**
  * Holds the global configuration for Tripod
  */
-class Config implements ITripodConfigSerializer
+class Config implements IConfigInstance
 {
 
     /**
@@ -1131,7 +1131,7 @@ class Config implements ITripodConfigSerializer
     /**
      * Returns a list of the configured indexes grouped by collection
      * @param string $storeName
-     * @return mixed
+     * @return array
      */
     public function getIndexesGroupedByCollection($storeName)
     {
@@ -1189,7 +1189,8 @@ class Config implements ITripodConfigSerializer
      * @param string $storeName The database name to use.
      * @param string $collName The collection in the database.
      * @param string $qName Either the qname to get the values for or empty for all cardinality values.
-     * @return mixed If no qname is specified then returns an array of cardinality options, otherwise returns the cardinality value for the given qname.
+     * @return array|int If no qname is specified then returns an array of cardinality options,
+     *                   otherwise returns the cardinality value for the given qname.
      */
     public function getCardinality($storeName,$collName,$qName=null)
     {

@@ -122,7 +122,7 @@ abstract class DriverBase
     protected $labeller;
 
     /**
-     * @var Config
+     * @var IConfigInstance
      */
     protected $config = null;
 
@@ -427,7 +427,7 @@ abstract class DriverBase
 
     /**
      * For mocking
-     * @return Config
+     * @return IConfigInstance
      */
     protected function getConfigInstance()
     {
