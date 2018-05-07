@@ -58,10 +58,10 @@ require_once dirname(dirname(dirname(__FILE__))) . '/src/tripod.inc.php';
  */
 function generateSearchDocuments($id, $specId, $storeName, $stat = null, $queue = null)
 {
-    $spec = \Tripod\Mongo\Config::getInstance()->getSearchDocumentSpecification($storeName, $specId);
+    $spec = \Tripod\Config::getInstance()->getSearchDocumentSpecification($storeName, $specId);
     if (array_key_exists("from",$spec))
     {
-        \Tripod\Mongo\Config::getInstance()->setMongoCursorTimeout(-1);
+        \Tripod\Config::getInstance()->setMongoCursorTimeout(-1);
 
         print "Generating $specId";
         $tripod = new \Tripod\Mongo\Driver($spec['from'], $storeName, array('stat'=>$stat));
@@ -82,7 +82,7 @@ function generateSearchDocuments($id, $specId, $storeName, $stat = null, $queue 
 $t = new \Tripod\Timer();
 $t->start();
 
-\Tripod\Mongo\Config::setConfig(json_decode(file_get_contents($configLocation),true));
+\Tripod\Config::setConfig(json_decode(file_get_contents($configLocation),true));
 
 if(isset($options['s']) || isset($options['storename']))
 {
@@ -120,7 +120,7 @@ if(isset($options['a']) || isset($options['async']))
     }
     else
     {
-        $queue = \Tripod\Mongo\Config::getInstance()->getApplyQueueName();
+        $queue = \Tripod\Config::getInstance()->getApplyQueueName();
     }
 }
 
@@ -137,7 +137,7 @@ if ($specId)
 }
 else
 {
-    foreach(\Tripod\Mongo\Config::getInstance()->getSearchDocumentSpecifications($storeName) as $searchSpec)
+    foreach(\Tripod\Config::getInstance()->getSearchDocumentSpecifications($storeName) as $searchSpec)
     {
         generateSearchDocuments($id, $searchSpec['_id'], $storeName, $stat, $queue);
     }

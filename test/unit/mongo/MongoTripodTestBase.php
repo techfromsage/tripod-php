@@ -10,8 +10,6 @@ set_include_path(
   . PATH_SEPARATOR . dirname(dirname(dirname(dirname(__FILE__)))).'/src');
 
 require_once('tripod.inc.php');
-require_once TRIPOD_DIR . 'mongo/Config.class.php';
-require_once TRIPOD_DIR . 'mongo/base/DriverBase.class.php';
 
 /**
  * Mongo Config For Main DB
@@ -67,13 +65,12 @@ abstract class MongoTripodTestBase extends PHPUnit_Framework_TestCase
     /**
      * @param string $filename
      */
-    private function loadDataViaTripod($filename){
+    private function loadDataViaTripod($filename) {
         $docs = json_decode(file_get_contents(dirname(__FILE__).$filename), true);
-        foreach ($docs as $d)
-        {
+        foreach ($docs as $d) {
             $g = new \Tripod\Mongo\MongoGraph();
             $g->add_tripod_array($d);
-            $this->tripod->saveChanges(new \Tripod\ExtendedGraph(), $g,$d['_id'][_ID_CONTEXT]);
+            $this->tripod->saveChanges(new \Tripod\ExtendedGraph(), $g, $d['_id'][_ID_CONTEXT]);
         }
     }
 
@@ -95,7 +92,7 @@ abstract class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         {
             $config['data_sources']['rs2'] = json_decode(getenv('TRIPOD_DATASOURCE_RS2_CONFIG'), true);
         }
-        \Tripod\Mongo\Config::setConfig($config);
+        \Tripod\Config::setConfig($config);
 
         $className = get_class($this);
         $testName = $this->getName();
@@ -112,7 +109,7 @@ abstract class MongoTripodTestBase extends PHPUnit_Framework_TestCase
 
     protected function addDocument($doc, $toTransactionLog=false)
     {
-        $config = \Tripod\Mongo\Config::getInstance();
+        $config = \Tripod\Config::getInstance();
         if($toTransactionLog == true)
         {
             return $this->getTlogCollection()->insertOne($doc, array("w"=>1));
@@ -129,7 +126,7 @@ abstract class MongoTripodTestBase extends PHPUnit_Framework_TestCase
      */
     protected function getTlogCollection()
     {
-        $config = \Tripod\Mongo\Config::getInstance();
+        $config = \Tripod\Config::getInstance();
         $tLogConfig = $config->getTransactionLogConfig();
         return $config->getTransactionLogDatabase()->selectCollection($tLogConfig['collection']);
     }
@@ -140,7 +137,7 @@ abstract class MongoTripodTestBase extends PHPUnit_Framework_TestCase
      */
     protected function getTripodCollection(\Tripod\Mongo\Driver $tripod)
     {
-        $config = \Tripod\Mongo\Config::getInstance();
+        $config = \Tripod\Config::getInstance();
         $podName = $tripod->getPodName();
         $dataSource = $config->getDataSourceForPod($tripod->getStoreName(), $podName);
         return $config->getDatabase(
@@ -404,10 +401,10 @@ abstract class MongoTripodTestBase extends PHPUnit_Framework_TestCase
      */
     protected function lockDocument($subject, $transaction_id)
     {
-        $collection = \Tripod\Mongo\Config::getInstance()->getCollectionForLocks('tripod_php_testing');
+        $collection = \Tripod\Config::getInstance()->getCollectionForLocks('tripod_php_testing');
         $labeller = new \Tripod\Mongo\Labeller();
         $doc = array(
-            '_id' => array(_ID_RESOURCE => $labeller->uri_to_alias($subject), _ID_CONTEXT => \Tripod\Mongo\Config::getInstance()->getDefaultContextAlias()),
+            '_id' => array(_ID_RESOURCE => $labeller->uri_to_alias($subject), _ID_CONTEXT => \Tripod\Config::getInstance()->getDefaultContextAlias()),
             _LOCKED_FOR_TRANS => $transaction_id,
             _LOCKED_FOR_TRANS_TS => \Tripod\Mongo\DateUtil::getMongoDate()
         );

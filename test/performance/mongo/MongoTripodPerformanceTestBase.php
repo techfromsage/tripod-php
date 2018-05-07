@@ -1,11 +1,6 @@
 <?php
-set_include_path(
-    get_include_path()
-        . PATH_SEPARATOR . dirname(dirname(dirname(dirname(__FILE__))))
-        . PATH_SEPARATOR . dirname(dirname(dirname(dirname(__FILE__)))).'/lib'
-        . PATH_SEPARATOR . dirname(dirname(dirname(dirname(__FILE__)))).'/src');
-
-require_once('tripod.inc.php');
+require_once dirname(__FILE__) . '/../../../vendor/autoload.php';
+require_once dirname(__FILE__) . '/../../../src/tripod.inc.php';
 require_once dirname(__FILE__).'/../../unit/mongo/MongoTripodTestBase.php';
 
 

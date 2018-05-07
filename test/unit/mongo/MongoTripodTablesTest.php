@@ -1,4 +1,6 @@
 <?php
+
+use Monolog\Logger;
 require_once 'MongoTripodTestBase.php';
 require_once 'src/mongo/delegates/Tables.class.php';
 require_once 'src/mongo/Driver.class.php';
@@ -42,16 +44,13 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         $this->getTripodCollection($this->tripod)->drop();
         $this->tripod->setTransactionLog($this->tripodTransactionLog);
-
         $this->loadResourceDataViaTripod();
-
         $this->tablesConstParams = array($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),'http://talisaspire.com/');
 
         $this->tripodTables = new \Tripod\Mongo\Composites\Tables($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),null); // pass null context, should default to http://talisaspire.com
 
         // purge tables
-        foreach(\Tripod\Mongo\Config::getInstance()->getCollectionsForTables($this->tripod->getStoreName()) as $collection)
-        {
+        foreach (\Tripod\Config::getInstance()->getCollectionsForTables($this->tripod->getStoreName()) as $collection) {
             $collection->drop();
         }
     }
@@ -456,8 +455,8 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         // Note that you need some config in order to create the Config object successfully.
         // Once that object has been created, we use our own table specifications to test against.
-        \Tripod\Mongo\Config::setConfig($this->generateMongoTripodTestConfig());
-        $tripodConfig = \Tripod\Mongo\Config::getInstance();
+        \Tripod\Config::setConfig($this->generateMongoTripodTestConfig());
+        $tripodConfig = \Tripod\Config::getInstance();
 
         foreach($tableSpecifications['fields'] as $field)
         {
@@ -493,8 +492,8 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         // Note that you need some config in order to create the Config object successfully.
         // Once that object has been created, we use our own table specifications to test against.
-        \Tripod\Mongo\Config::setConfig($this->generateMongoTripodTestConfig());
-        $tripodConfig = \Tripod\Mongo\Config::getInstance();
+        \Tripod\Config::setConfig($this->generateMongoTripodTestConfig());
+        $tripodConfig = \Tripod\Config::getInstance();
 
         $tripodConfig->checkModifierFunctions($tableSpecifications['predicates'], \Tripod\Mongo\Composites\Tables::$predicateModifiers);
     }
@@ -838,7 +837,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
     public function testTableRowsGenerateWhenDefinedPredicateChanges()
     {
-        foreach(\Tripod\Mongo\Config::getInstance()->getTableSpecifications($this->tripod->getStoreName()) as $specId=>$spec)
+        foreach(\Tripod\Config::getInstance()->getTableSpecifications($this->tripod->getStoreName()) as $specId=>$spec)
         {
             $this->generateTableRows($specId);
         }
@@ -939,7 +938,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         // This should be 0, because we mocked the actual adding of the regenerated table.  If it's zero, however,
         // it means we successfully deleted the views with $uri1 in the impactIndex
-        $collections = \Tripod\Mongo\Config::getInstance()->getCollectionsForTables($this->defaultStoreName);
+        $collections = \Tripod\Config::getInstance()->getCollectionsForTables($this->defaultStoreName);
         foreach($collections as $collection)
         {
             $query = array(
@@ -952,7 +951,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
     public function testTableRowsNotGeneratedWhenUndefinedPredicateChanges()
     {
-        foreach(\Tripod\Mongo\Config::getInstance()->getTableSpecifications($this->tripod->getStoreName()) as $specId=>$spec)
+        foreach(\Tripod\Config::getInstance()->getTableSpecifications($this->tripod->getStoreName()) as $specId=>$spec)
         {
             $this->generateTableRows($specId);
         }
@@ -968,7 +967,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         $table = new \Tripod\Mongo\Composites\Tables(
             $this->defaultStoreName,
-            \Tripod\Mongo\Config::getInstance()->getCollectionForCBD($this->defaultStoreName, $this->defaultPodName),
+            \Tripod\Config::getInstance()->getCollectionForCBD($this->defaultStoreName, $this->defaultPodName),
             $this->defaultContext
         );
 
@@ -1126,7 +1125,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             array('generateTableRowsForType'),
             array(
                 $this->defaultStoreName,
-                \Tripod\Mongo\Config::getInstance()->getCollectionForCBD($this->defaultStoreName, $this->defaultPodName),
+                \Tripod\Config::getInstance()->getCollectionForCBD($this->defaultStoreName, $this->defaultPodName),
                 $this->defaultContext
             )
         );
@@ -1172,7 +1171,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         $tables = new \Tripod\Mongo\Composites\Tables(
             $this->defaultStoreName,
-            \Tripod\Mongo\Config::getInstance()->getCollectionForCBD($this->defaultStoreName, $this->defaultPodName),
+            \Tripod\Config::getInstance()->getCollectionForCBD($this->defaultStoreName, $this->defaultPodName),
             $this->defaultContext
         );
 
@@ -1569,7 +1568,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
     public function testRemoveTableSpecDoesNotAffectInvalidation()
     {
-        foreach(\Tripod\Mongo\Config::getInstance()->getTableSpecifications($this->tripod->getStoreName()) as $specId=>$spec)
+        foreach(\Tripod\Config::getInstance()->getTableSpecifications($this->tripod->getStoreName()) as $specId=>$spec)
         {
             $this->generateTableRows($specId);
         }
@@ -1577,11 +1576,11 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $context = 'http://talisaspire.com/';
         $uri = "http://talisaspire.com/works/4d101f63c10a6";
 
-        $collection = \Tripod\Mongo\Config::getInstance()->getCollectionForTable('tripod_php_testing', 't_resource');
+        $collection = \Tripod\Config::getInstance()->getCollectionForTable('tripod_php_testing', 't_resource');
         $this->assertGreaterThan(0, $collection->count(array('_id.type'=>'t_resource', 'value._impactIndex'=>array(_ID_RESOURCE=>$uri, _ID_CONTEXT=>$context))));
-        $config = \Tripod\Mongo\Config::getConfig();
+        $config = \Tripod\Config::getConfig();
         unset($config['stores']['tripod_php_testing']['table_specifications'][0]);
-        \Tripod\Mongo\Config::setConfig($config);
+        \Tripod\Config::setConfig($config);
 
         /** @var PHPUnit_Framework_MockObject_MockObject|\Tripod\Mongo\Driver $mockTripod */
         $mockTripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
@@ -1607,7 +1606,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             ->setConstructorArgs(
                 array(
                     'tripod_php_testing',
-                    \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                    \Tripod\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
                     $context
                 )
             )

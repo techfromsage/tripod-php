@@ -35,10 +35,10 @@ require_once dirname(dirname(dirname(__FILE__))).'/src/tripod.inc.php';
 
 \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
 
-\Tripod\Mongo\Config::setConfig(json_decode(file_get_contents($configLocation),true));
+\Tripod\Config::setConfig(json_decode(file_get_contents($configLocation),true));
 
 try {
-    \Tripod\Mongo\Config::getInstance();
+    \Tripod\Config::getInstance();
 
     echo "\nConfig OK\n";
 }

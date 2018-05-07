@@ -2,10 +2,7 @@
 
 namespace Tripod\Mongo\Composites;
 
-require_once TRIPOD_DIR . 'mongo/base/DriverBase.class.php';
-
 use \Tripod\Mongo\Jobs\ApplyOperation;
-use \Tripod\Mongo\Config;
 use \Tripod\Mongo\ImpactedSubject;
 use \Tripod\Mongo\Labeller;
 use \MongoDB\Driver\ReadPreference;
@@ -35,7 +32,7 @@ class Views extends CompositeBase
         $this->collection = $collection;
         $this->podName = $collection->getCollectionName();
         $this->defaultContext = $defaultContext;
-        $this->config = Config::getInstance();
+        $this->config = $this->getConfigInstance();
         $this->stat = $stat;
         $this->readPreference = $readPreference;
     }
@@ -194,7 +191,7 @@ class Views extends CompositeBase
         if ($graph->is_empty())
         {
             $this->getStat()->increment(MONGO_VIEW_CACHE_MISS.".$viewType");
-            $viewSpec = Config::getInstance()->getViewSpecification($this->storeName, $viewType);
+            $viewSpec = $this->getConfigInstance()->getViewSpecification($this->storeName, $viewType);
             if($viewSpec == null)
             {
                 return new \Tripod\Mongo\MongoGraph();
@@ -315,10 +312,8 @@ class Views extends CompositeBase
                 ['store' => $this->storeName, '_id' => $resourceAlias]
             );
             // delete any views this resource is involved in. It's type may have changed so it's not enough just to regen it with it's new type below.
-            foreach (Config::getInstance()->getViewSpecifications($this->storeName) as $type=>$spec)
-            {
-                if($spec['from']==$this->podName){
-
+            foreach ($this->getConfigInstance()->getViewSpecifications($this->storeName) as $type => $spec) {
+                if ($spec['from'] == $this->podName) {
                     $this->config->getCollectionForView($this->storeName, $type, $this->readPreference)
                         ->deleteOne(array("_id" => array("r"=>$resourceAlias,"c"=>$contextAlias,"type"=>$type)));
                 }
@@ -367,7 +362,7 @@ class Views extends CompositeBase
         $rdfType = $this->labeller->qname_to_alias($rdfType);
         $rdfTypeAlias = $this->labeller->uri_to_alias($rdfType);
         $foundSpec = false;
-        $viewSpecs = Config::getInstance()->getViewSpecifications($this->storeName);
+        $viewSpecs = $this->getConfigInstance()->getViewSpecifications($this->storeName);
         foreach($viewSpecs as $key=>$viewSpec)
         {
             // check for rdfType and rdfTypeAlias
@@ -395,7 +390,7 @@ class Views extends CompositeBase
      */
     public function deleteViewsByViewId($viewId, $timestamp = null)
     {
-        $viewSpec = Config::getInstance()->getViewSpecification($this->storeName, $viewId);
+        $viewSpec = $this->getConfigInstance()->getViewSpecification($this->storeName, $viewId);
         if ($viewSpec == null) {
             $this->debugLog("Could not find a view specification with viewId '$viewId'");
             return;
@@ -427,7 +422,7 @@ class Views extends CompositeBase
     public function generateView($viewId, $resource = null, $context = null, $queueName = null)
     {
         $contextAlias = $this->getContextAlias($context);
-        $viewSpec = Config::getInstance()->getViewSpecification($this->storeName, $viewId);
+        $viewSpec = $this->getConfigInstance()->getViewSpecification($this->storeName, $viewId);
         if ($viewSpec == null) {
             $this->debugLog("Could not find a view specification for $resource with viewId '$viewId'");
             return null;
@@ -461,7 +456,7 @@ class Views extends CompositeBase
         // @todo Change this to a command when we upgrade MongoDB to 1.1+
         $count = $this->config->getCollectionForCBD($this->storeName, $from)->count($filter);
         $docs = $this->config->getCollectionForCBD($this->storeName, $from)->find($filter, array(
-            'maxTimeMS' => \Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout()
+            'maxTimeMS' => $this->getConfigInstance()->getMongoCursorTimeout()
         ));
 
 
@@ -591,7 +586,7 @@ class Views extends CompositeBase
                 );
 
                 $cursor = $collection->find(array('_id'=>array('$in'=>$joinUris)), array(
-                    'maxTimeMS' => \Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout()
+                    'maxTimeMS' => $this->getConfigInstance()->getMongoCursorTimeout()
                 ));
 
                 $this->addIdToImpactIndex($joinUris, $dest, $buildImpactIndex);

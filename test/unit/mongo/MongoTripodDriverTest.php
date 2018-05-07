@@ -44,7 +44,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $this->getTripodCollection($this->tripod)->drop();
 
         // Lock collection no longer available from Tripod, so drop it manually
-        \Tripod\Mongo\Config::getInstance()->getCollectionForLocks($this->tripod->getStoreName())->drop();
+        \Tripod\Config::getInstance()->getCollectionForLocks($this->tripod->getStoreName())->drop();
 
         $this->tripod->setTransactionLog($this->tripodTransactionLog);
 
@@ -584,21 +584,21 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $subjectOne = "http://talisaspire.com/works/checkReadPreferencesWrite";
         /** @var $tripodMock \Tripod\Mongo\Driver **/
         $tripodMock = $this->getMock(
-            '\Tripod\Mongo\Driver', 
-            array('getDataUpdater'), 
+            '\Tripod\Mongo\Driver',
+            array('getDataUpdater'),
             array(
                 'CBD_testing',
                 'tripod_php_testing',
                 array('defaultContext'=>'http://talisaspire.com/')
             )
         );
-        
+
         $tripodUpdate = $this->getMock(
             '\Tripod\Mongo\Updates',
-            array('addToSearchIndexQueue','setReadPreferenceToPrimary','resetOriginalReadPreference'), 
+            array('addToSearchIndexQueue','setReadPreferenceToPrimary','resetOriginalReadPreference'),
             array($tripodMock)
         );
-        
+
         $tripodUpdate
             ->expects($this->once(0))
             ->method('setReadPreferenceToPrimary');
@@ -606,7 +606,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $tripodUpdate
             ->expects($this->once())
             ->method('resetOriginalReadPreference');
-        
+
         $tripodMock
             ->expects($this->once())
             ->method('getDataUpdater')
@@ -624,8 +624,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $subjectOne = "http://talisaspire.com/works/checkReadPreferencesAreRestoredOnError";
         /** @var $tripodMock \Tripod\Mongo\Driver|PHPUnit_Framework_MockObject_MockObject **/
         $tripodMock = $this->getMock(
-            '\Tripod\Mongo\Driver', 
-            array('getDataUpdater'), 
+            '\Tripod\Mongo\Driver',
+            array('getDataUpdater'),
             array(
                 'CBD_testing',
                 'tripod_php_testing',
@@ -636,7 +636,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         /** @var $tripodUpdate \Tripod\Mongo\Updates|PHPUnit_Framework_MockObject_MockObject **/
         $tripodUpdate = $this->getMock(
             '\Tripod\Mongo\Updates',
-            array('addToSearchIndexQueue','resetOriginalReadPreference','getContextAlias'), 
+            array('addToSearchIndexQueue','resetOriginalReadPreference','getContextAlias'),
             array($tripodMock)
         );
 
@@ -862,7 +862,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $config['queue'] = array("database"=>"queue","collection"=>"q_queue","data_source"=>"db");
 
         // Override the config defined in base test class as we need specific config here.
-        \Tripod\Mongo\Config::setConfig($config);
+        \Tripod\Config::setConfig($config);
 
         $tripod = new \Tripod\Mongo\Driver('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/'));
 
@@ -943,7 +943,6 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $jobData = array(
             'changes'=>$subjectsAndPredicatesOfChange,
             'operations'=>array(OP_TABLES, OP_VIEWS, OP_SEARCH),
-            'tripodConfig'=>\Tripod\Mongo\Config::getConfig(),
             'storeName'=>'tripod_php_testing',
             'podName'=>'CBD_testing',
             'contextAlias'=>'http://talisaspire.com/',
@@ -1019,7 +1018,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
             array('getImpactedSubjects', 'update'),
             array(
                 'tripod_php_testing',
-                \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing','CBD_testing'),
+                \Tripod\Config::getInstance()->getCollectionForCBD('tripod_php_testing','CBD_testing'),
                 'http://talisaspire.com/'
             )
         );
@@ -1029,7 +1028,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
             array('getImpactedSubjects', 'update'),
             array(
                 'tripod_php_testing',
-                \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing','CBD_testing'),
+                \Tripod\Config::getInstance()->getCollectionForCBD('tripod_php_testing','CBD_testing'),
                 'http://talisaspire.com/'
             )
         );
@@ -1049,7 +1048,6 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $jobData = array(
             'changes'=>$subjectsAndPredicatesOfChange,
             'operations'=>array(OP_SEARCH),
-            'tripodConfig'=>\Tripod\Mongo\Config::getConfig(),
             'storeName'=>'tripod_php_testing',
             'podName'=>'CBD_testing',
             'contextAlias'=>'http://talisaspire.com/',
@@ -1234,7 +1232,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
             array('getImpactedSubjects', 'update'),
             array(
                 'tripod_php_testing',
-                \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing','CBD_testing'),
+                \Tripod\Config::getInstance()->getCollectionForCBD('tripod_php_testing','CBD_testing'),
                 'http://talisaspire.com/'
             )
         );
@@ -1284,7 +1282,6 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $jobData = array(
             'changes'=>$subjectsAndPredicatesOfChange,
             'operations'=>array(OP_TABLES, OP_SEARCH),
-            'tripodConfig'=>\Tripod\Mongo\Config::getConfig(),
             'storeName'=>'tripod_php_testing',
             'podName'=>'CBD_testing',
             'contextAlias'=>'http://talisaspire.com/',
@@ -1384,7 +1381,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
             array('getImpactedSubjects', 'update'),
             array(
                 'tripod_php_testing',
-                \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing','CBD_testing'),
+                \Tripod\Config::getInstance()->getCollectionForCBD('tripod_php_testing','CBD_testing'),
                 'http://talisaspire.com/'
             )
         );
@@ -1434,7 +1431,6 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $jobData = array(
             'changes'=>$subjectsAndPredicatesOfChange,
             'operations'=>array(OP_TABLES, OP_SEARCH),
-            'tripodConfig'=>\Tripod\Mongo\Config::getConfig(),
             'storeName'=>'tripod_php_testing',
             'podName'=>'CBD_testing',
             'contextAlias'=>'http://talisaspire.com/',
@@ -1926,7 +1922,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $tripodUpdate = $this->getMock('\Tripod\Mongo\Updates',
             array('unlockAllDocuments', 'generateIdForNewMongoDocument', 'getMongoDate', 'getAuditManualRollbacksCollection'),
             array($tripod));
-        
+
         $tripodUpdate->expects($this->once())
             ->method("generateIdForNewMongoDocument")
             ->will($this->returnValue($mongoDocumentId));
@@ -2004,7 +2000,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $tripodUpdate = $this->getMock('\Tripod\Mongo\Updates',
             array('unlockAllDocuments', 'generateIdForNewMongoDocument', 'getMongoDate', 'getAuditManualRollbacksCollection'),
             array($tripod));
-        
+
         $tripodUpdate->expects($this->once())
             ->method("generateIdForNewMongoDocument")
             ->will($this->returnValue($mongoDocumentId));
@@ -2181,7 +2177,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
     public function testEtagIsMicrotimeFormat() {
 
-        $config = \Tripod\Mongo\Config::getInstance();
+        $config = \Tripod\Config::getInstance();
         $updatedAt = \Tripod\Mongo\DateUtil::getMongoDate();
 
         $_id = array(

@@ -29,7 +29,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
         $this->loadBaseSearchDataViaTripod();
 
-        foreach(\Tripod\Mongo\Config::getInstance()->getCollectionsForSearch($this->tripod->getStoreName()) as $collection)
+        foreach(\Tripod\Config::getInstance()->getCollectionsForSearch($this->tripod->getStoreName()) as $collection)
         {
             $collection->drop();
         }
@@ -172,7 +172,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
         );
 
         // loop through every expected document and assert that it exists, and that each property matches the value we defined above.
-        $searchCollection = \Tripod\Mongo\Config::getInstance()->getCollectionForSearchDocument($this->tripod->getStoreName(), 'i_search_resource');
+        $searchCollection = \Tripod\Config::getInstance()->getCollectionForSearchDocument($this->tripod->getStoreName(), 'i_search_resource');
         foreach($expectedSearchDocs as $expectedSearchDoc){
             $this->assertDocumentExists($expectedSearchDoc["_id"], $searchCollection);
             $this->assertDocumentHasProperty($expectedSearchDoc["_id"], "result", $expectedSearchDoc["result"], $searchCollection);
@@ -196,7 +196,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
         $this->assertEquals(12, $actualSearchDocumentCount, "Should only be 12 search documents now that one of them has had its type changed with no corresponding search doc spec");
 
 
-        foreach(\Tripod\Mongo\Config::getInstance()->getCollectionsForSearch('tripod_php_testing') as $collection)
+        foreach(\Tripod\Config::getInstance()->getCollectionsForSearch('tripod_php_testing') as $collection)
         {
             $this->assertNull(
                 $collection->findOne(array("_id.r"=>"http://talisaspire.com/resources/doc1")),
@@ -227,7 +227,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
         $this->assertEquals(13, $actualSearchDocumentCount, "Should only be 13 search documents");
 
         $result = array();
-        foreach(\Tripod\Mongo\Config::getInstance()->getCollectionsForSearch('tripod_php_testing') as $collection)
+        foreach(\Tripod\Config::getInstance()->getCollectionsForSearch('tripod_php_testing') as $collection)
         {
             $result = $collection->findOne(array("_id.r"=>"http://talisaspire.com/resources/doc1"));
             if($result)
@@ -263,7 +263,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
         $results = array();
         // We don't know where exactly these might have stored
-        foreach(\Tripod\Mongo\Config::getInstance()->getCollectionsForSearch('tripod_php_testing') as $collection)
+        foreach(\Tripod\Config::getInstance()->getCollectionsForSearch('tripod_php_testing') as $collection)
         {
             foreach($collection->find(array("_id.r"=>"http://talisaspire.com/resources/doc1")) as $result)
             {
@@ -310,7 +310,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
         $results = array();
         // We don't know where exactly these might have stored
-        foreach(\Tripod\Mongo\Config::getInstance()->getCollectionsForSearch('tripod_php_testing') as $collection)
+        foreach(\Tripod\Config::getInstance()->getCollectionsForSearch('tripod_php_testing') as $collection)
         {
             foreach($collection->find(array("_id.r"=>"http://talisaspire.com/resources/doc1")) as $result)
             {
@@ -762,12 +762,12 @@ class MongoSearchProviderTest extends MongoTripodTestBase
         $count = 0;
         if(empty($specs))
         {
-            $specs = \Tripod\Mongo\Config::getInstance()->getSearchDocumentSpecifications($tripod->getStoreName(), null, true);
+            $specs = \Tripod\Config::getInstance()->getSearchDocumentSpecifications($tripod->getStoreName(), null, true);
         }
 
         foreach($specs as $spec)
         {
-            $count += \Tripod\Mongo\Config::getInstance()->getCollectionForSearchDocument($tripod->getStoreName(), $spec)->count(array('_id.type'=>$spec));
+            $count += \Tripod\Config::getInstance()->getCollectionForSearchDocument($tripod->getStoreName(), $spec)->count(array('_id.type'=>$spec));
         }
         return $count;
     }

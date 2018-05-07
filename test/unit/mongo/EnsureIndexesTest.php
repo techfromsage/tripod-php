@@ -1,11 +1,11 @@
 <?php
 
-require_once 'MongoTripodTestBase.php';
+require_once 'ResqueJobTestBase.php';
 
 /**
  * Class EnsureIndexes Test
  */
-class EnsureIndexesTest extends MongoTripodTestBase
+class EnsureIndexesTest extends ResqueJobTestBase
 {
     /**
      * @var array
@@ -30,15 +30,21 @@ class EnsureIndexesTest extends MongoTripodTestBase
      * @group ensure-indexes
      * @throws Exception
      */
-    public function testMandatoryArgs($argumentName)
+    public function testMandatoryArgs($argument, $argumentName = null)
     {
+        if (!$argumentName) {
+            $argumentName = $argument;
+        }
         $job = new \Tripod\Mongo\Jobs\EnsureIndexes();
         $job->args = $this->args;
         $job->job->payload['id'] = uniqid();
-        unset($job->args[$argumentName]);
+        unset($job->args[$argument]);
 
-        $this->setExpectedException('Exception', "Argument $argumentName was not present in supplied job args for job Tripod\Mongo\Jobs\EnsureIndexes");
-        $job->perform();
+        $this->setExpectedException(
+            'Exception',
+            "Argument $argumentName was not present in supplied job args for job Tripod\Mongo\Jobs\EnsureIndexes"
+        );
+        $this->performJob($job);
     }
 
     /**
@@ -48,12 +54,12 @@ class EnsureIndexesTest extends MongoTripodTestBase
      */
     public function mandatoryArgDataProvider()
     {
-        return array(
-            array('tripodConfig'),
-            array('storeName'),
-            array('reindex'),
-            array('background')
-        );
+        return [
+            ['tripodConfig', 'tripodConfig or tripodConfigGenerator'],
+            ['storeName'],
+            ['reindex'],
+            ['background']
+        ];
     }
 
     /**
@@ -66,7 +72,7 @@ class EnsureIndexesTest extends MongoTripodTestBase
         $job->args = $this->createDefaultArguments();
         $this->jobSuccessfullyEnsuresIndexes($job);
 
-        $job->perform();
+        $this->performJob($job);
     }
 
     /**
@@ -80,7 +86,7 @@ class EnsureIndexesTest extends MongoTripodTestBase
         $this->jobThrowsExceptionWhenEnsuringIndexes($job);
         $this->setExpectedException('Exception', "Ensuring index failed");
 
-        $job->perform();
+        $this->performJob($job);
     }
 
     /**
@@ -91,7 +97,7 @@ class EnsureIndexesTest extends MongoTripodTestBase
     {
         $jobData = array(
             'storeName' => 'tripod_php_testing',
-            'tripodConfig' => \Tripod\Mongo\Config::getConfig(),
+            'tripodConfig' => \Tripod\Config::getConfig(),
             'reindex' => false,
             'background' => true
         );
@@ -117,7 +123,7 @@ class EnsureIndexesTest extends MongoTripodTestBase
     {
         $jobData = array(
             'storeName' => 'tripod_php_testing',
-            'tripodConfig' => \Tripod\Mongo\Config::getConfig(),
+            'tripodConfig' => \Tripod\Config::getConfig(),
             'reindex' => false,
             'background' => true
         );
@@ -149,7 +155,7 @@ class EnsureIndexesTest extends MongoTripodTestBase
     {
         $jobData = array(
             'storeName' => 'tripod_php_testing',
-            'tripodConfig' => \Tripod\Mongo\Config::getConfig(),
+            'tripodConfig' => \Tripod\Config::getConfig(),
             'reindex' => false,
             'background' => true
         );
@@ -177,7 +183,7 @@ class EnsureIndexesTest extends MongoTripodTestBase
     {
         $jobData = array(
             'storeName' => 'tripod_php_testing',
-            'tripodConfig' => \Tripod\Mongo\Config::getConfig(),
+            'tripodConfig' => \Tripod\Config::getConfig(),
             'reindex' => false,
             'background' => true
         );
@@ -229,7 +235,7 @@ class EnsureIndexesTest extends MongoTripodTestBase
     protected function createDefaultArguments()
     {
         $arguments = array(
-            'tripodConfig' => \Tripod\Mongo\Config::getConfig(),
+            'tripodConfig' => \Tripod\Config::getConfig(),
             'storeName'    => 'tripod_php_testing',
             'reindex'      => false,
             'background'   => true

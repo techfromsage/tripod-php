@@ -34,7 +34,7 @@ $config = array(
     ),
 );
 
-\Tripod\Mongo\Config::setConfig($config);
+\Tripod\Config::setConfig($config);
 
 
 $util = new \Tripod\Mongo\TriplesUtil();
@@ -85,7 +85,7 @@ while (($line = fgets(STDIN)) !== false) {
                 $newNsConfig[$prefix] = $n;
                 echo "\nFound ns $n suggest prefix $prefix";
                 $config["namespaces"] = array_merge($config["namespaces"],$newNsConfig);
-                \Tripod\Mongo\Config::setConfig($config);
+                \Tripod\Config::setConfig($config);
             }
         }
         $ns = $util->extractMissingObjectNs($triples);
@@ -111,7 +111,7 @@ while (($line = fgets(STDIN)) !== false) {
                     $newNsConfig[$prefix] = $n;
                     echo "\nFound object ns $n occurs > 500 times, suggest prefix $prefix";
                     $config["namespaces"] = array_merge($config["namespaces"],$newNsConfig);
-                    \Tripod\Mongo\Config::setConfig($config);
+                    \Tripod\Config::setConfig($config);
                 }
             }
         }

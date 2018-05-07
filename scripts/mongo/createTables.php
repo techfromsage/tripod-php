@@ -59,10 +59,10 @@ require_once dirname(dirname(dirname(__FILE__))) . '/src/tripod.inc.php';
  */
 function generateTables($id, $tableId, $storeName, $stat = null, $queue = null)
 {
-    $tableSpec = \Tripod\Mongo\Config::getInstance()->getTableSpecification($storeName, $tableId);
+    $tableSpec = \Tripod\Config::getInstance()->getTableSpecification($storeName, $tableId);
     if (array_key_exists("from",$tableSpec))
     {
-        \Tripod\Mongo\Config::getInstance()->setMongoCursorTimeout(-1);
+        \Tripod\Config::getInstance()->setMongoCursorTimeout(-1);
 
         print "Generating $tableId";
         $tripod = new \Tripod\Mongo\Driver($tableSpec['from'], $storeName, array('stat'=>$stat));
@@ -83,7 +83,7 @@ function generateTables($id, $tableId, $storeName, $stat = null, $queue = null)
 $t = new \Tripod\Timer();
 $t->start();
 
-\Tripod\Mongo\Config::setConfig(json_decode(file_get_contents($configLocation),true));
+\Tripod\Config::setConfig(json_decode(file_get_contents($configLocation),true));
 
 if(isset($options['s']) || isset($options['storename']))
 {
@@ -121,7 +121,7 @@ if(isset($options['a']) || isset($options['async']))
     }
     else
     {
-        $queue = \Tripod\Mongo\Config::getInstance()->getApplyQueueName();
+        $queue = \Tripod\Config::getInstance()->getApplyQueueName();
     }
 }
 
@@ -138,7 +138,7 @@ if ($tableId)
 }
 else
 {
-    foreach(\Tripod\Mongo\Config::getInstance()->getTableSpecifications($storeName) as $tableSpec)
+    foreach(\Tripod\Config::getInstance()->getTableSpecifications($storeName) as $tableSpec)
     {
         generateTables($id, $tableSpec['_id'], $storeName, $stat, $queue);
     }

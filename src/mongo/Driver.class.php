@@ -74,7 +74,7 @@ class Driver extends DriverBase implements \Tripod\IDriver
 
         $this->podName = $podName;
         $this->storeName = $storeName;
-        $this->config = $this->getTripodConfigInstance();
+        $this->config = $this->getConfigInstance();
 
         $this->labeller = $this->getLabeller();
 
@@ -648,17 +648,6 @@ class Driver extends DriverBase implements \Tripod\IDriver
                 throw new Exception("Unrecognised type $eventType whilst registering event hook");
         }
     }
-
-
-    /**
-     * For mocking
-     * @return Config
-     */
-    protected function getTripodConfigInstance()
-    {
-        return Config::getInstance();
-    }
-
 
     /**
      * Returns the composite that can perform the supported operation

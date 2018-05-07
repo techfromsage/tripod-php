@@ -31,7 +31,7 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         $this->getTripodCollection($this->tripod)->drop();
 
         // Lock collection no longer available from Driver, so drop it manually
-        \Tripod\Mongo\Config::getInstance()->getCollectionForLocks($this->tripod->getStoreName())->drop();
+        \Tripod\Config::getInstance()->getCollectionForLocks($this->tripod->getStoreName())->drop();
 
         $this->loadResourceDataViaTripod();
 

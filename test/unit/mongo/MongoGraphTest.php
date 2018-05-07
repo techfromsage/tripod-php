@@ -46,7 +46,7 @@ class MongoGraphTest extends MongoTripodTestBase
 
         $expected = "<http://example.com/1> <http://purl.org/dc/terms/title> \"some literal title\" <http://talisaspire.com/> .
 <http://example.com/1> <http://purl.org/dc/terms/source> <http://www.google.com> <http://talisaspire.com/> .\n";
-        $this->assertEquals($expected, $g->to_nquads(\Tripod\Mongo\Config::getInstance()->getDefaultContextAlias()));
+        $this->assertEquals($expected, $g->to_nquads(\Tripod\Config::getInstance()->getDefaultContextAlias()));
     }
 
     public function testToNQuadsTwoGraphsWithDifferentContext()

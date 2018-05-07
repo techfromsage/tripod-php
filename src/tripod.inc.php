@@ -2,47 +2,11 @@
 
 //todo: this file is mis-named. It has mongo specifics
 
-if(!defined('TRIPOD_DIR')) define('TRIPOD_DIR', dirname(__FILE__) . '/' );
+if (!defined('TRIPOD_DIR')) {
+    define('TRIPOD_DIR', dirname(__FILE__) . '/' );
+}
 
-require_once TRIPOD_DIR.'classes/Timer.class.php';
-require_once TRIPOD_DIR.'ITripodStat.php';
-require_once TRIPOD_DIR . 'TripodStatFactory.class.php';
-require_once TRIPOD_DIR.'classes/StatsD.class.php';
-require_once TRIPOD_DIR . 'exceptions/Exception.class.php';
-require_once TRIPOD_DIR . 'exceptions/SearchException.class.php';
-require_once TRIPOD_DIR . 'exceptions/CardinalityException.class.php';
-require_once TRIPOD_DIR . 'exceptions/ConfigException.class.php';
-require_once TRIPOD_DIR . 'exceptions/LabellerException.class.php';
-require_once TRIPOD_DIR . 'exceptions/ViewException.class.php';
-require_once TRIPOD_DIR . 'exceptions/JobException.class.php';
-require_once TRIPOD_DIR.'mongo/MongoTripodConstants.php';
-require_once TRIPOD_DIR.'mongo/MongoGraph.class.php';
-require_once TRIPOD_DIR.'mongo/ImpactedSubject.class.php';
-require_once TRIPOD_DIR . 'mongo/base/DriverBase.class.php';
-require_once TRIPOD_DIR.'mongo/IComposite.php';
-require_once TRIPOD_DIR.'mongo/base/CompositeBase.class.php';
-require_once TRIPOD_DIR . 'mongo/delegates/TransactionLog.class.php';
-require_once TRIPOD_DIR . 'mongo/delegates/Updates.class.php';
-require_once TRIPOD_DIR . 'mongo/delegates/Views.class.php';
-require_once TRIPOD_DIR . 'mongo/delegates/Tables.class.php';
-require_once TRIPOD_DIR . 'mongo/delegates/SearchIndexer.class.php';
-require_once TRIPOD_DIR . 'IEventHook.php';
-require_once TRIPOD_DIR . 'IDriver.php';
-require_once TRIPOD_DIR.'classes/ChangeSet.class.php';
-require_once TRIPOD_DIR.'classes/Labeller.class.php';
-require_once TRIPOD_DIR . '/mongo/Driver.class.php';
-require_once TRIPOD_DIR . '/mongo/JobGroup.php';
-
-require_once TRIPOD_DIR.'/mongo/base/JobBase.class.php';
-require_once TRIPOD_DIR . '/mongo/jobs/DiscoverImpactedSubjects.class.php';
-require_once TRIPOD_DIR.'/mongo/jobs/ApplyOperation.class.php';
-require_once TRIPOD_DIR.'/mongo/jobs/EnsureIndexes.class.php';
-
-require_once TRIPOD_DIR . '/mongo/util/IndexUtils.class.php';
-require_once TRIPOD_DIR . '/mongo/util/TriplesUtil.class.php';
-require_once TRIPOD_DIR . '/mongo/util/DateUtil.class.php';
-
-require_once TRIPOD_DIR . '/mongo/serializers/NQuadSerializer.class.php';
+require_once TRIPOD_DIR . '/mongo/MongoTripodConstants.php';
 
 \Resque::setBackend(\Tripod\Mongo\Config::getResqueServer());
 

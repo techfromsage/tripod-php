@@ -18,7 +18,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
         $this->tripod = new \Tripod\Mongo\Driver('CBD_testing', 'tripod_php_testing');
         $this->getTripodCollection($this->tripod)->drop();
         $this->loadBaseSearchDataViaTripod();
-        foreach (\Tripod\Mongo\Config::getInstance()->getCollectionsForSearch($this->tripod->getStoreName()) as $collection)
+        foreach (\Tripod\Config::getInstance()->getCollectionsForSearch($this->tripod->getStoreName()) as $collection)
         {
             $collection->drop();
         }
@@ -132,7 +132,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
             ->setConstructorArgs(
                 array(
                     $this->defaultStoreName,
-                    \Tripod\Mongo\Config::getInstance()->getCollectionForCBD($this->defaultStoreName, $this->defaultPodName),
+                    \Tripod\Config::getInstance()->getCollectionForCBD($this->defaultStoreName, $this->defaultPodName),
                     $this->defaultContext
                 )
             )->getMock();
@@ -218,7 +218,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
             ->setConstructorArgs(
                 array(
                     $this->defaultStoreName,
-                    \Tripod\Mongo\Config::getInstance()->getCollectionForCBD($this->defaultStoreName, $this->defaultPodName),
+                    \Tripod\Config::getInstance()->getCollectionForCBD($this->defaultStoreName, $this->defaultPodName),
                     $this->defaultContext
                 )
             )->getMock();
@@ -340,7 +340,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
             ->setConstructorArgs(
                 array(
                     $this->defaultStoreName,
-                    \Tripod\Mongo\Config::getInstance()->getCollectionForCBD($this->defaultStoreName, $this->defaultPodName),
+                    \Tripod\Config::getInstance()->getCollectionForCBD($this->defaultStoreName, $this->defaultPodName),
                     $this->defaultContext
                 )
             )->getMock();
@@ -552,7 +552,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
 
         $tripod->saveChanges(new \Tripod\ExtendedGraph(), $graph);
 
-        $collection = \Tripod\Mongo\Config::getInstance()->getCollectionForSearchDocument($this->defaultStoreName, 'i_search_resource');
+        $collection = \Tripod\Config::getInstance()->getCollectionForSearchDocument($this->defaultStoreName, 'i_search_resource');
 
         $query = array(
             _ID_KEY => array(

@@ -40,10 +40,10 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
         $tripod->expects($this->any())->method('addToSearchIndexQueue');
 
         /** @var $tripod \Tripod\Mongo\Driver */
-        \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing')->drop();
+        \Tripod\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing')->drop();
 
         // Lock collection no longer available from Driver, so drop it manually
-        \Tripod\Mongo\Config::getInstance()->getCollectionForLocks('tripod_php_testing')->drop();
+        \Tripod\Config::getInstance()->getCollectionForLocks('tripod_php_testing')->drop();
 
         $tripod->setTransactionLog($this->tripodTransactionLog);
 
@@ -429,7 +429,7 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
      */
     public function lockSingleDocumentCallback($s, $transaction_id, $contextAlias)
     {
-        $lCollection = \Tripod\Mongo\Config::getInstance()->getCollectionForLocks($this->tripod->getStoreName());
+        $lCollection = \Tripod\Config::getInstance()->getCollectionForLocks($this->tripod->getStoreName());
         $countEntriesInLocksCollection = $lCollection->count(array('_id' => array(_ID_RESOURCE => $this->labeller->uri_to_alias($s), _ID_CONTEXT => $contextAlias)));
 
         if($countEntriesInLocksCollection > 0) //Subject is already locked

@@ -11,7 +11,7 @@ if ($argc!=2)
 array_shift($argv);
 
 $config = json_decode(file_get_contents($argv[0]), true);
-\Tripod\Mongo\Config::setConfig($config);
+\Tripod\Config::setConfig($config);
 
 $currentSubject = "";
 $triples = array();
@@ -32,7 +32,7 @@ while (($line = fgets(STDIN)) !== false) {
 
     if ($currentSubject!=$subject) // once subject changes, we have all triples for that subject, flush to Mongo
     {
-        print(json_encode($tu->getTArrayAbout($currentSubject,$triples,\Tripod\Mongo\Config::getInstance()->getDefaultContextAlias()))."\n");
+        print(json_encode($tu->getTArrayAbout($currentSubject,$triples,\Tripod\Config::getInstance()->getDefaultContextAlias()))."\n");
         $currentSubject=$subject; // reset current subject to next subject
         $triples = array(); // reset triples
     }
@@ -41,7 +41,7 @@ while (($line = fgets(STDIN)) !== false) {
 }
 
 // last doc
-print(json_encode($tu->getTArrayAbout($currentSubject,$triples,\Tripod\Mongo\Config::getInstance()->getDefaultContextAlias()))."\n");
+print(json_encode($tu->getTArrayAbout($currentSubject,$triples,\Tripod\Config::getInstance()->getDefaultContextAlias()))."\n");
 
 ?>
 
