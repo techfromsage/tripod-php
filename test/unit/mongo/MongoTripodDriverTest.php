@@ -6,6 +6,7 @@ require_once 'src/mongo/Driver.class.php';
 
 use \MongoDB\Driver\ReadPreference;
 use \MongoDB\BSON\ObjectId;
+use \MongoDB\BSON\UTCDateTime;
 
 /**
  * Class MongoTripodDriverTest
@@ -893,6 +894,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
             array(
                 'getDataUpdater',
                 'getComposite',
+                'getMongoDate'
             ),
             array(
                 'CBD_testing',
@@ -916,6 +918,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
             array(
                 'storeChanges',
                 'getDiscoverImpactedSubjects',
+                'getMongoDate'
             ),
             array(
                 $mockTripod,
@@ -929,6 +932,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
             )
         );
 
+        $timestamp = new \MongoDB\BSON\UTCDateTime();
         $mockDiscoverImpactedSubjects = $this->getMockBuilder('\Tripod\Mongo\Jobs\DiscoverImpactedSubjects')
             ->setMethods(array('createJob'))
             ->getMock();
@@ -946,12 +950,14 @@ class MongoTripodDriverTest extends MongoTripodTestBase
             'storeName'=>'tripod_php_testing',
             'podName'=>'CBD_testing',
             'contextAlias'=>'http://talisaspire.com/',
-            'statsConfig'=>$statsConfig
+            'statsConfig'=>$statsConfig,
+            'timestamp' => $timestamp
         );
 
         // getComposite() should only be called if there are synchronous operations
         $mockTripod->expects($this->never())
             ->method('getComposite');
+
         $mockTripodUpdates->expects($this->once())
             ->method('getDiscoverImpactedSubjects')
             ->will($this->returnValue($mockDiscoverImpactedSubjects));
@@ -959,7 +965,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $mockTripodUpdates->expects($this->once())
             ->method('storeChanges')
             ->will($this->returnValue(array("subjectsAndPredicatesOfChange"=>$subjectsAndPredicatesOfChange,"transaction_id"=>"t1234")));
-
+        $mockTripodUpdates->expects($this->atLeastOnce())->method('getMongoDate')->will($this->returnValue($timestamp));
         $mockTripod->expects($this->once())
             ->method('getDataUpdater')
             ->will($this->returnValue($mockTripodUpdates));
@@ -981,6 +987,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $oG = new \Tripod\Mongo\MongoGraph();
         $oG->add_resource_triple($uri_1, $oG->qname_to_uri("rdf:type"), $oG->qname_to_uri("acorn:Resource"));
         $oG->add_resource_triple($uri_2, $oG->qname_to_uri("rdf:type"), $oG->qname_to_uri("acorn:Resource"));
+
+        $timestamp = new UTCDateTime();
 //        // just deletes, search only
         $mockTripod = $this->getMock(
             '\Tripod\Mongo\Driver',
@@ -999,7 +1007,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
             '\Tripod\Mongo\Updates',
             array(
                 'storeChanges',
-                'getDiscoverImpactedSubjects'
+                'getDiscoverImpactedSubjects',
+                'getMongoDate'
             ),
             array(
                 $mockTripod,
@@ -1047,11 +1056,12 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
         $jobData = array(
             'changes'=>$subjectsAndPredicatesOfChange,
-            'operations'=>array(OP_SEARCH),
+            'operations'=>[OP_SEARCH],
             'storeName'=>'tripod_php_testing',
             'podName'=>'CBD_testing',
             'contextAlias'=>'http://talisaspire.com/',
-            'statsConfig'=>array()
+            'statsConfig'=>[],
+            'timestamp'=>$timestamp
         );
 
         $impactedViewSubjects = array(
@@ -1152,6 +1162,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $mockTripodUpdates->expects($this->once())
             ->method('getDiscoverImpactedSubjects')
             ->will($this->returnValue($mockDiscoverImpactedSubjects));
+        $mockTripodUpdates->expects($this->atLeastOnce())->method('getMongoDate')->will($this->returnValue($timestamp));
 
         $mockTripodUpdates->expects($this->once())
             ->method('storeChanges')
@@ -1177,7 +1188,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
                 \Tripod\Mongo\Config::getDiscoverQueueName()
             );
 
-        $mockTripod->saveChanges($oG, new \Tripod\ExtendedGraph(),"http://talisaspire.com/");
+        $mockTripod->saveChanges($oG, new \Tripod\ExtendedGraph(), "http://talisaspire.com/");
     }
 
     public function testDiscoverImpactedSubjectsForDefaultOperationsSetting()
@@ -1193,7 +1204,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $nG->add_graph($oG);
         $nG->add_literal_triple($uri_1, $nG->qname_to_uri("searchterms:title"), "wibble");
         $nG->remove_resource_triple($uri_2, $oG->qname_to_uri("rdf:type"), "http://foo/bar#Class2");
-
+        $timestamp = new UTCDateTime();
         /** @var \Tripod\Mongo\Driver|PHPUnit_Framework_MockObject_MockObject $mockTripod */
         $mockTripod = $this->getMock(
             '\Tripod\Mongo\Driver',
@@ -1212,7 +1223,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
             '\Tripod\Mongo\Updates',
             array(
                 'storeChanges',
-                'getDiscoverImpactedSubjects'
+                'getDiscoverImpactedSubjects',
+                'getMongoDate'
             ),
             array(
                 $mockTripod,
@@ -1281,11 +1293,12 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
         $jobData = array(
             'changes'=>$subjectsAndPredicatesOfChange,
-            'operations'=>array(OP_TABLES, OP_SEARCH),
+            'operations'=>[OP_TABLES, OP_SEARCH],
             'storeName'=>'tripod_php_testing',
             'podName'=>'CBD_testing',
             'contextAlias'=>'http://talisaspire.com/',
-            'statsConfig'=>array()
+            'statsConfig'=>[],
+            'timestamp' => $timestamp
         );
 
         // getComposite() should only be called if there are synchronous operations
@@ -1297,6 +1310,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $mockTripodUpdates->expects($this->once())
             ->method('getDiscoverImpactedSubjects')
             ->will($this->returnValue($mockDiscoverImpactedSubjects));
+
+        $mockTripodUpdates->expects($this->atLeastOnce())->method('getMongoDate')->will($this->returnValue($timestamp));
 
         $mockTripodUpdates->expects($this->once())
             ->method('storeChanges')
@@ -1340,6 +1355,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $nG->add_literal_triple($uri_1, $nG->qname_to_uri("searchterms:title"), "wibble");
         $nG->remove_resource_triple($uri_2, $oG->qname_to_uri("rdf:type"), "http://foo/bar#Class2");
 
+        $timestamp = new UTCDateTime();
+
         /** @var \Tripod\Mongo\Driver|PHPUnit_Framework_MockObject_MockObject $mockTripod */
         $mockTripod = $this->getMock(
             '\Tripod\Mongo\Driver',
@@ -1360,7 +1377,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
             '\Tripod\Mongo\Updates',
             array(
                 'storeChanges',
-                'getDiscoverImpactedSubjects'
+                'getDiscoverImpactedSubjects',
+                'getMongoDate'
             ),
             array(
                 $mockTripod,
@@ -1430,12 +1448,13 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
         $jobData = array(
             'changes'=>$subjectsAndPredicatesOfChange,
-            'operations'=>array(OP_TABLES, OP_SEARCH),
+            'operations'=>[OP_TABLES, OP_SEARCH],
             'storeName'=>'tripod_php_testing',
             'podName'=>'CBD_testing',
             'contextAlias'=>'http://talisaspire.com/',
             'queue'=>$queueName,
-            'statsConfig'=>array()
+            'statsConfig'=>[],
+            'timestamp' => $timestamp
         );
 
         // getComposite() should only be called if there are synchronous operations
@@ -1451,6 +1470,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $mockTripodUpdates->expects($this->once())
             ->method('storeChanges')
             ->will($this->returnValue(array("subjectsAndPredicatesOfChange"=>$subjectsAndPredicatesOfChange,"transaction_id"=>"t1234")));
+
+        $mockTripodUpdates->expects($this->atLeastOnce())->method('getMongoDate')->will($this->returnValue($timestamp));
 
         $mockTripod->expects($this->once())
             ->method('getDataUpdater')

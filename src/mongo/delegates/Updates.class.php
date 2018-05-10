@@ -1233,15 +1233,6 @@ class Updates extends DriverBase
         return new ObjectId();
     }
 
-    /**
-     * @return \MongoDB\BSON\UTCDateTime
-     */
-    protected function getMongoDate()
-    {
-        return \Tripod\Mongo\DateUtil::getMongoDate();
-    }
-
-
     ///////// REPLAY TRANSACTION LOG ///////
 
     /**
