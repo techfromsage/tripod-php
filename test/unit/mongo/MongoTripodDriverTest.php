@@ -932,7 +932,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
             )
         );
 
-        $timestamp = new \MongoDB\BSON\UTCDateTime();
+        $timestamp = new \MongoDB\BSON\UTCDateTime(null);
         $mockDiscoverImpactedSubjects = $this->getMockBuilder('\Tripod\Mongo\Jobs\DiscoverImpactedSubjects')
             ->setMethods(array('createJob'))
             ->getMock();
@@ -988,7 +988,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $oG->add_resource_triple($uri_1, $oG->qname_to_uri("rdf:type"), $oG->qname_to_uri("acorn:Resource"));
         $oG->add_resource_triple($uri_2, $oG->qname_to_uri("rdf:type"), $oG->qname_to_uri("acorn:Resource"));
 
-        $timestamp = new UTCDateTime();
+        $timestamp = new UTCDateTime(null);
 //        // just deletes, search only
         $mockTripod = $this->getMock(
             '\Tripod\Mongo\Driver',
@@ -1204,7 +1204,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $nG->add_graph($oG);
         $nG->add_literal_triple($uri_1, $nG->qname_to_uri("searchterms:title"), "wibble");
         $nG->remove_resource_triple($uri_2, $oG->qname_to_uri("rdf:type"), "http://foo/bar#Class2");
-        $timestamp = new UTCDateTime();
+        $timestamp = new UTCDateTime(null);
         /** @var \Tripod\Mongo\Driver|PHPUnit_Framework_MockObject_MockObject $mockTripod */
         $mockTripod = $this->getMock(
             '\Tripod\Mongo\Driver',
@@ -1355,7 +1355,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $nG->add_literal_triple($uri_1, $nG->qname_to_uri("searchterms:title"), "wibble");
         $nG->remove_resource_triple($uri_2, $oG->qname_to_uri("rdf:type"), "http://foo/bar#Class2");
 
-        $timestamp = new UTCDateTime();
+        $timestamp = new UTCDateTime(null);
 
         /** @var \Tripod\Mongo\Driver|PHPUnit_Framework_MockObject_MockObject $mockTripod */
         $mockTripod = $this->getMock(

@@ -36,7 +36,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
      */
     public function testSingleItemIsAddedToQueueForChangeToSingleSubject()
     {
-        $timestamp = new UTCDateTime();
+        $timestamp = new UTCDateTime(null);
         // create a tripod instance that will send all operations to the queue
         $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
             ->setMethods(array('getDataUpdater', 'getComposite'))
@@ -117,7 +117,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
      */
     public function testSingleItemWithViewsOpIsAddedToQueueForChangeToSingleSubject()
     {
-        $timestamp = new UTCDateTime();
+        $timestamp = new UTCDateTime(null);
         // create a tripod instance that will send all operations to the queue
         $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
             ->setMethods(array('getDataUpdater', 'getComposite'))
@@ -257,7 +257,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
      */
     public function testSingleJobSubmittedToQueueForChangeToSeveralSubjects()
     {
-        $timestamp = new UTCDateTime();
+        $timestamp = new UTCDateTime(null);
         $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
             ->setMethods(array('getDataUpdater', 'getComposite'))
             ->setConstructorArgs(

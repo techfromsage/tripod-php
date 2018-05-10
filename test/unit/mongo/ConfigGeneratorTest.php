@@ -42,7 +42,7 @@ class ConfigGeneratorTest extends MongoTripodTestBase
 
     public function testConfigGeneratorsSerializedInDiscoverJobs()
     {
-        $timestamp = new \MongoDB\BSON\UTCDateTime();
+        $timestamp = new \MongoDB\BSON\UTCDateTime(null);
         $originalGraph = new \Tripod\ExtendedGraph();
         $originalGraph->add_resource_triple('http://example.com/1', RDF_TYPE, RDFS_CLASS);
 
