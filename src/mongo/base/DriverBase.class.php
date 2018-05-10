@@ -2,8 +2,6 @@
 
 namespace Tripod\Mongo;
 
-require_once TRIPOD_DIR.'ITripodStat.php';
-
 $TOTAL_TIME=0;
 
 use Monolog\Logger;
@@ -474,7 +472,7 @@ abstract class DriverBase
         return $this->collection;
     }
 
-    protected function applyHooks($fn,$hooks,$args=array())
+    protected function applyHooks($fn, $hooks, $args = [])
     {
         switch ($fn) {
             case $this::HOOK_FN_PRE:
@@ -484,81 +482,25 @@ abstract class DriverBase
             default:
                 throw new Exception("Invalid hook function $fn requested");
         }
-        foreach ($hooks as $hook)
-        {
-            try
-            {
+        foreach ($hooks as $hook) {
+            try {
                 /* @var $hook IEventHook */
                 $hook->$fn($args);
-            }
-            catch (\Exception $e)
-            {
+            } catch (\Exception $e) {
                 // don't let rabid hooks stop tripod
                 $this->getLogger()->error("Hook ".get_class($hook)." threw exception {$e->getMessage()}, continuing");
             }
         }
     }
 
-}
-
-/**
- * Class NoStat
- * @package Tripod\Mongo
- */
-final class NoStat implements \Tripod\ITripodStat
-{
     /**
-     * @var self
+     * For mocking
+     *
+     * @param integer|float|string|DateTimeInterface|null $time Time to generate UTCDateTime object for
+     * @return \MongoDB\BSON\UTCDateTime
      */
-    public static $instance = null;
-
-    /**
-     * @param string $operation
-     * @param int|number $inc
-     * @return void
-     */
-    public function increment($operation, $inc = 1)
+    protected function getMongoDate($time = null)
     {
-        // do nothing
-    }
-
-    /**
-     * @param string $operation
-     * @param number $duration
-     * @return void
-     */
-    public function timer($operation, $duration)
-    {
-        // do nothing
-    }
-
-    /**
-     * @return array
-     */
-    public function getConfig()
-    {
-        return array();
-    }
-
-    /**
-     * @return self
-     */
-    public static function getInstance()
-    {
-        if (self::$instance == null)
-        {
-            self::$instance = new NoStat();
-        }
-        return self::$instance;
-    }
-
-    /**
-     * @param array $config
-     * @return NoStat
-     */
-    public static function createFromConfig(array $config = array())
-    {
-        return self::getInstance();
+        return DateUtil::getMongoDate($time);
     }
 }
-

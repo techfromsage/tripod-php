@@ -167,59 +167,72 @@ class Updates extends DriverBase {
         ));
 
         $this->setReadPreferenceToPrimary();
-        try{
+        try {
             $contextAlias = $this->getContextAlias($context);
 
-            if (!Config::getInstance()->isPodWithinStore($this->getStoreName(),$this->getPodName()))
-            {
-                throw new \Tripod\Exceptions\Exception("database:collection " . $this->getStoreName() . ":" . $this->getPodName(). " is not referenced within config, so cannot be written to");
+            if (!Config::getInstance()->isPodWithinStore($this->getStoreName(), $this->getPodName())) {
+                throw new \Tripod\Exceptions\Exception(
+                    'database:collection ' . $this->getStoreName() . ':' . $this->getPodName() .
+                    ' is not referenced within config, so cannot be written to'
+                );
             }
 
             $this->validateGraphCardinality($newGraph);
 
             $oldIndex = $oldGraph->get_index();
             $newIndex = $newGraph->get_index();
-            $args = array('before' => $oldIndex, 'after' => $newIndex, 'changeReason' => $description);
+            $args = ['before' => $oldIndex, 'after' => $newIndex, 'changeReason' => $description];
             $cs = new \Tripod\ChangeSet($args);
 
-            $subjectsAndPredicatesOfChange = array();
+            $subjectsAndPredicatesOfChange = [];
             $transaction_id = null;
-            if ($cs->has_changes())
-            {
+            if ($cs->has_changes()) {
                 // store the actual CBDs
                 $result = $this->storeChanges($cs, $contextAlias);
-                if (!isset($result['subjectsAndPredicatesOfChange'])|| !isset($result['transaction_id'])) {
-                    $this->errorLog("Result of storeChanges malformed, should have transaction_id and subjectsAndPredicatesOfChange array keys",array("result"=>$result));
-                    throw new Exception("Result of storeChanges malformed, should have transaction_id and subjectsAndPredicatesOfChange array keys");
+                if (!isset($result['subjectsAndPredicatesOfChange']) || !isset($result['transaction_id'])) {
+                    $this->errorLog(
+                        'Result of storeChanges malformed, should have transaction_id and subjectsAndPredicatesOfChange array keys',
+                        ['result' => $result]
+                    );
+                    throw new Exception(
+                        'Result of storeChanges malformed, should have transaction_id and subjectsAndPredicatesOfChange array keys'
+                    );
                 }
                 extract($result); // will unpack into $subjectsAndPredicatesOfChange
 
                 // Process any syncronous operations
-                $this->processSyncOperations($subjectsAndPredicatesOfChange,$contextAlias);
+                $this->processSyncOperations($subjectsAndPredicatesOfChange, $contextAlias);
 
                 // Schedule calculation of any async activity
-                $this->queueAsyncOperations($subjectsAndPredicatesOfChange,$contextAlias);
+                $this->queueAsyncOperations($subjectsAndPredicatesOfChange, $contextAlias);
             }
 
-            $this->applyHooks($this::HOOK_FN_SUCCESS,$this->saveChangesHooks,array(
-                "pod"=>$this->getPodName(),
-                "oldGraph"=>$oldGraph,
-                "newGraph"=>$newGraph,
-                "context"=>$context,
-                "changeSet"=>$cs,
-                "subjectsAndPredicatesOfChange"=>$subjectsAndPredicatesOfChange,
-                "transaction_id"=>$transaction_id
-            ));
-        }
-        catch(\Exception $e){
+            $this->applyHooks(
+                $this::HOOK_FN_SUCCESS,
+                $this->saveChangesHooks,
+                [
+                    'pod' => $this->getPodName(),
+                    'oldGraph' => $oldGraph,
+                    'newGraph' => $newGraph,
+                    'context' => $context,
+                    'changeSet' => $cs,
+                    'subjectsAndPredicatesOfChange' => $subjectsAndPredicatesOfChange,
+                    'transaction_id' => $transaction_id
+                ]
+            );
+        } catch (\Exception $e) {
             // ensure we reset the original read preference in the event of an exception
             $this->resetOriginalReadPreference();
-            $this->applyHooks($this::HOOK_FN_FAILURE,$this->saveChangesHooks,array(
-                "pod"=>$this->getPodName(),
-                "oldGraph"=>$oldGraph,
-                "newGraph"=>$newGraph,
-                "context"=>$context
-            ));
+            $this->applyHooks(
+                $this::HOOK_FN_FAILURE,
+                $this->saveChangesHooks,
+                [
+                    'pod' => $this->getPodName(),
+                    'oldGraph' => $oldGraph,
+                    'newGraph' => $newGraph,
+                    'context' => $context
+                ]
+            );
             throw $e;
         }
 
@@ -851,28 +864,25 @@ class Updates extends DriverBase {
      * @param array $subjectsAndPredicatesOfChange
      * @param string $contextAlias
      */
-    protected function queueASyncOperations(Array $subjectsAndPredicatesOfChange,$contextAlias)
+    protected function queueASyncOperations(array $subjectsAndPredicatesOfChange,$contextAlias)
     {
         $operations = $this->getAsyncOperations();
         if (!empty($operations)) {
-            $data = array(
-                "changes" => $subjectsAndPredicatesOfChange,
-                "operations" => $operations,
-                "tripodConfig" => Config::getConfig(),
-                "storeName" => $this->storeName,
-                "podName" => $this->podName,
-                "contextAlias" => $contextAlias,
-                "statsConfig"=>$this->getStatsConfig()
-            );
+            $data = [
+                'changes' => $subjectsAndPredicatesOfChange,
+                'operations' => $operations,
+                'tripodConfig' => Config::getConfig(),
+                'storeName' => $this->storeName,
+                'podName' => $this->podName,
+                'contextAlias' => $contextAlias,
+                'statsConfig' => $this->getStatsConfig(),
+                'timestamp' => $this->getMongoDate()
+            ];
 
-
-            if(isset($this->queueName))
-            {
+            if (isset($this->queueName)) {
                 $data[OP_QUEUE] = $this->queueName;
                 $queueName = $this->queueName;
-            }
-            else
-            {
+            } else {
                 $queueName =  Config::getDiscoverQueueName();
             }
 
@@ -886,8 +896,7 @@ class Updates extends DriverBase {
      */
     protected function getDiscoverImpactedSubjects()
     {
-        if(!isset($this->discoverImpactedSubjects))
-        {
+        if (!isset($this->discoverImpactedSubjects)) {
             $this->discoverImpactedSubjects = new \Tripod\Mongo\Jobs\DiscoverImpactedSubjects();
         }
         return $this->discoverImpactedSubjects;

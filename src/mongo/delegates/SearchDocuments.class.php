@@ -20,8 +20,13 @@ class SearchDocuments extends DriverBase
      * @param \Tripod\ITripodStat|null $stat
      * @param string $readPreference
      */
-    public function __construct($storeName, Collection $collection, $defaultContext, $stat=null , $readPreference = ReadPreference::RP_PRIMARY)
-    {
+    public function __construct(
+        $storeName,
+        Collection $collection,
+        $defaultContext,
+        $stat = null,
+        $readPreference = ReadPreference::RP_PRIMARY
+    ) {
         $this->labeller = new Labeller();
         $this->storeName = $storeName;
         $this->collection = $collection;
@@ -40,90 +45,85 @@ class SearchDocuments extends DriverBase
      */
     public function generateSearchDocumentBasedOnSpecId($specId, $resource, $context)
     {
-        if (empty($resource))
-        {
-            throw new \Exception("Resource must be specified");
+        if (empty($resource)) {
+            throw new \Exception('Resource must be specified');
         }
-        if (empty($context))
-        {
-            throw new \Exception("Context must be specified");
+        if (empty($context)) {
+            throw new \Exception('Context must be specified');
         }
 
         $searchSpec = $this->getSearchDocumentSpecification($specId);
-        if(empty($searchSpec)){
+        if (empty($searchSpec)) {
             $this->debugLog("Could not find Search Document Specification for $specId");
             return null;
         }
 
-        if (isset($searchSpec["from"]))
-        {
-            $from = $searchSpec["from"];
-        }
-        else
-        {
+        if (isset($searchSpec['from'])) {
+            $from = $searchSpec['from'];
+        } else {
             $from = $this->podName;
         }
 
         // work out whether or not to index at all
         $proceedWithGeneration = false;
 
-        foreach ($searchSpec['filter'] as $indexRules)
-        {
+        foreach ($searchSpec['filter'] as $indexRules) {
             // run a query to work out
-            if (!empty($indexRules['condition']))
-            {
+            if (!empty($indexRules['condition'])) {
                 $irFrom = (!empty($indexRules['from'])) ? $indexRules['from'] : $this->podName;
                 // add id of current record to rules..
-                $indexRules['condition']['_id'] = array(
+                $indexRules['condition']['_id'] = [
                     'r'=>$this->labeller->uri_to_alias($resource),
-                    'c'=>$this->labeller->uri_to_alias($context));
+                    'c'=>$this->labeller->uri_to_alias($context)
+                ];
 
-                if (Config::getInstance()->getCollectionForCBD($this->storeName, $irFrom)->findOne($indexRules['condition']))
-                {
+                if (Config::getInstance()->getCollectionForCBD($this->storeName, $irFrom)->findOne($indexRules['condition'])) {
                     // match found, add this spec id to those that should be generated
-                   $proceedWithGeneration = true;
+                    $proceedWithGeneration = true;
                 }
-            }
-            else
-            {
+            } else {
                 // no restriction rules, so just add to generate
                 $proceedWithGeneration = true;
             }
         }
 
-        if($proceedWithGeneration == false){
-            $this->debugLog("Unable to proceed with generating $specId search document for $resource, does not satisfy rules");
+        if ($proceedWithGeneration == false) {
+            $this->debugLog(
+                "Unable to proceed with generating $specId search document for $resource, does not satisfy rules"
+            );
             return null;
         }
 
-        $_id = array(
+        $_id = [
             'r'=>$this->labeller->uri_to_alias($resource),
             'c'=>$this->labeller->uri_to_alias($context)
-        );
+        ];
 
-        $sourceDocument = Config::getInstance()->getCollectionForCBD($this->storeName, $from)->findOne(array('_id'=>$_id));
+        // build the document, set the timestamp before we fetch the source document
+        $generatedDocument = [\_CREATED_TS => DateUtil::getMongoDate()];
+        $sourceDocument = Config::getInstance()->getCollectionForCBD($this->storeName, $from)->findOne(['_id' => $_id]);
 
-        if(empty($sourceDocument)){
-            $this->debugLog("Source document not found for $resource, cannot proceed generating $specId search document");
+        if (empty($sourceDocument)) {
+            $this->debugLog(
+                "Source document not found for $resource, cannot proceed generating $specId search document"
+            );
             return null;
         }
 
         $this->debugLog("Processing {$specId}");
 
-        // build the document
-        $generatedDocument = [\_CREATED_TS => DateUtil::getMongoDate()];
         $this->addIdToImpactIndex($_id, $generatedDocument);
 
         $_id['type'] = $specId;
         $generatedDocument['_id'] = $_id;
 
-        if(isset($searchSpec['fields'])){
+        if (isset($searchSpec['fields'])) {
             $this->addFields($sourceDocument, $searchSpec['fields'], $generatedDocument);
         }
-        if(isset($searchSpec['indices'])){
+        if (isset($searchSpec['indices'])) {
             $this->addFields($sourceDocument, $searchSpec['indices'], $generatedDocument, true);
         }
-        if(isset($searchSpec['joins'])){
+        if (isset($searchSpec['joins'])) {
             $this->doJoin($sourceDocument, $searchSpec['joins'], $generatedDocument, $from);
         }
 
@@ -131,42 +131,43 @@ class SearchDocuments extends DriverBase
     }
 
     /**
-     * @param array $rdfTypes
-     * @param string $resource
-     * @param string $context
+     * @param array $rdfTypes  Array of RDF type URIs
+     * @param string $resource Resource ID
+     * @param string $context  Resource context
      * @return array
      * @throws \Exception
      */
-    public function generateSearchDocumentsBasedOnRdfTypes(Array $rdfTypes, $resource, $context)
+    public function generateSearchDocumentsBasedOnRdfTypes(array $rdfTypes, $resource, $context)
     {
-        if (empty($resource))
-        {
-            throw new \Exception("Resource must be specified");
+        if (empty($resource)) {
+            throw new \Exception('Resource must be specified');
         }
-        if (empty($context))
-        {
-            throw new \Exception("Context must be specified");
+        if (empty($context)) {
+            throw new \Exception('Context must be specified');
         }
 
         // this is what is returned
-        $generatedSearchDocuments = array();
+        $generatedSearchDocuments = [];
 
-        $timer =new \Tripod\Timer();
+        $timer = new \Tripod\Timer();
         $timer->start();
 
-        foreach($rdfTypes as $rdfType)
-        {
+        foreach ($rdfTypes as $rdfType) {
             $specs = Config::getInstance()->getSearchDocumentSpecifications($this->storeName, $rdfType);
 
-            if(empty($specs)) continue; // no point doing anything else if there is no spec for the type
+            if (empty($specs)) {
+                continue; // no point doing anything else if there is no spec for the type
+            }
 
-            foreach($specs as $searchSpec)
-            {
-                $generatedSearchDocuments[] = $this->generateSearchDocumentBasedOnSpecId($searchSpec['_id'], $resource, $context);
+            foreach ($specs as $searchSpec) {
+                $generatedSearchDocuments[] = $this->generateSearchDocumentBasedOnSpecId(
+                    $searchSpec['_id'],
+                    $resource,
+                    $context
+                );
             }
         }
         $timer->stop();
-        //echo "\n\tTook " . $timer->result() . " ms to generate search documents\n";
         return $generatedSearchDocuments;
     }
 

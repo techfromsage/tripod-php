@@ -534,6 +534,9 @@ class Tables extends CompositeBase
         if (isset($resource)) {
             $filter["_id"] = array(_ID_RESOURCE=>$this->labeller->uri_to_alias($resource),_ID_CONTEXT=>$contextAlias);
         }
+
+        // Get the timestamp before we gather the source documents for invalidation
+        $timestamp = $this->getMongoDate();
         // @todo Change this to a command when we upgrade MongoDB to 1.1+
         $count = $this->config->getCollectionForCBD($this->storeName, $from)->count($filter);
         $docs = $this->config->getCollectionForCBD($this->storeName, $from)->find($filter, array(
@@ -567,17 +570,17 @@ class Tables extends CompositeBase
                         _ID_CONTEXT => $doc['_id'][_ID_CONTEXT],
                         _ID_TYPE=>$tableSpec['_id']
                     ],
-                    \_CREATED_TS => \Tripod\Mongo\DateUtil::getMongoDate()
+                    \_CREATED_TS => $timestamp
                 ];
                 // everything must go in the value object todo: this is a hang over from map reduce days, engineer out once we have stability on new PHP method for M/R
                 $value = ['_id' => $doc['_id']];
                 $this->addIdToImpactIndex($doc['_id'], $value); // need to add the doc to the impact index to be consistent with views/search etc. this is needed for discovering impacted operations
-                $this->addFields($doc,$tableSpec,$value);
+                $this->addFields($doc, $tableSpec, $value);
                 if (isset($tableSpec['joins'])) {
-                    $this->doJoins($doc,$tableSpec['joins'],$value,$from,$contextAlias);
+                    $this->doJoins($doc, $tableSpec['joins'], $value, $from, $contextAlias);
                 }
                 if (isset($tableSpec['counts'])) {
-                    $this->doCounts($doc,$tableSpec['counts'],$value);
+                    $this->doCounts($doc, $tableSpec['counts'], $value);
                 }
 
                 if (isset($tableSpec['computed_fields'])) {

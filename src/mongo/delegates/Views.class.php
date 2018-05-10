@@ -458,6 +458,8 @@ class Views extends CompositeBase
             $filter["_id"] = array(_ID_RESOURCE=>$resourceAlias,_ID_CONTEXT=>$contextAlias);
         }
 
+        // Get the timestamp before we gather the source documents for invalidation
+        $timestamp = $this->getMongoDate();
         // @todo Change this to a command when we upgrade MongoDB to 1.1+
         $count = $this->config->getCollectionForCBD($this->storeName, $from)->count($filter);
         $docs = $this->config->getCollectionForCBD($this->storeName, $from)->find($filter, array(
@@ -492,7 +494,7 @@ class Views extends CompositeBase
                         _ID_CONTEXT => $doc['_id'][_ID_CONTEXT],
                         _ID_TYPE=>$viewSpec['_id']
                     ],
-                    \_CREATED_TS => \Tripod\Mongo\DateUtil::getMongoDate()
+                    \_CREATED_TS => $timestamp
                 ];
                 $value = array(); // everything must go in the value object todo: this is a hang over from map reduce days, engineer out once we have stability on new PHP method for M/R
 

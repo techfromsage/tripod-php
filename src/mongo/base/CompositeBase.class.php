@@ -16,41 +16,41 @@ abstract class CompositeBase extends \Tripod\Mongo\DriverBase implements \Tripod
      * Returns an array of ImpactedSubjects based on the subjects and predicates of change
      * @param array $subjectsAndPredicatesOfChange
      * @param string $contextAlias
+     * @param \MongoDB\BSON\UTCDateTime|null Optional timestamp to filter on composites created on or before
      * @return \Tripod\Mongo\ImpactedSubject[]
      */
-    public function getImpactedSubjects(Array $subjectsAndPredicatesOfChange,$contextAlias)
+    public function getImpactedSubjects(array $subjectsAndPredicatesOfChange, $contextAlias, $timestamp = null)
     {
-        $candidates = array();
-        $filter = array();
-        $subjectsToAlias = array();
-        foreach(array_keys($subjectsAndPredicatesOfChange) as $s){
+        $candidates = [];
+        $filter = [];
+        $subjectsToAlias = [];
+        foreach (array_keys($subjectsAndPredicatesOfChange) as $s) {
             $resourceAlias = $this->labeller->uri_to_alias($s);
             $subjectsToAlias[$s] = $resourceAlias;
             // build $filter for queries to impact index
-            $filter[] = array(_ID_RESOURCE=>$resourceAlias,_ID_CONTEXT=>$contextAlias);
+            $filter[] = [_ID_RESOURCE => $resourceAlias, _ID_CONTEXT => $contextAlias];
         }
-        $query = array(_ID_KEY=>array('$in'=>$filter));
-        $docs = $this->getCollection()->find($query, array(
-            'projection' => array(_ID_KEY=>true, 'rdf:type'=>true)
-        ));
+        $query = [_ID_KEY => ['$in' => $filter]];
+        $docs = $this->getCollection()->find(
+            $query,
+            ['projection' => [_ID_KEY=>true, 'rdf:type'=>true]]
+        );
 
         $types = $this->getTypesInSpecifications();
 
-        if($this->getCollection()->count($query) !== 0 ) {
-            foreach($docs as $doc)
-            {
+        if ($this->getCollection()->count($query) !== 0) {
+            foreach ($docs as $doc) {
                 $docResource = $doc[_ID_KEY][_ID_RESOURCE];
                 $docContext  = $doc[_ID_KEY][_ID_CONTEXT];
                 $docHash     = md5($docResource.$docContext);
 
                 $docTypes = array();
-                if(isset($doc["rdf:type"])) {
-                    if(isset($doc["rdf:type"][VALUE_URI])){
+                if (isset($doc["rdf:type"])) {
+                    if (isset($doc["rdf:type"][VALUE_URI])) {
                         $docTypes[] = $doc["rdf:type"][VALUE_URI];
                     } else {
-                        foreach($doc["rdf:type"] as $t){
-                            if(isset($t[VALUE_URI]))
-                            {
+                        foreach ($doc["rdf:type"] as $t) {
+                            if (isset($t[VALUE_URI])) {
                                 $docTypes[] = $t[VALUE_URI];
                             }
                         }
@@ -175,7 +175,7 @@ abstract class CompositeBase extends \Tripod\Mongo\DriverBase implements \Tripod
 
     /**
      * For mocking
-     * 
+     *
      * @return \Tripod\Mongo\Jobs\ApplyOperation
      */
     protected function getApplyOperation()
