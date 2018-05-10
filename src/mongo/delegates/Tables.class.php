@@ -3,10 +3,8 @@
 namespace Tripod\Mongo\Composites;
 
 require_once TRIPOD_DIR . 'mongo/MongoTripodConstants.php';
-require_once TRIPOD_DIR . 'mongo/base/DriverBase.class.php';
 
 use \Tripod\Mongo\Jobs\ApplyOperation;
-use \Tripod\Mongo\Config;
 use \Tripod\Mongo\ImpactedSubject;
 use \Tripod\Mongo\Labeller;
 use \Tripod\Mongo\JobGroup;
@@ -78,13 +76,18 @@ class Tables extends CompositeBase
      * @param string $readPreference
      * todo: MongoCollection -> podName
      */
-    public function __construct($storeName, Collection $collection,$defaultContext,$stat=null,$readPreference = ReadPreference::RP_PRIMARY)
-    {
+    public function __construct(
+        $storeName,
+        Collection $collection,
+        $defaultContext,
+        $stat = null,
+        $readPreference = ReadPreference::RP_PRIMARY
+    ) {
         $this->labeller = new Labeller();
         $this->storeName = $storeName;
         $this->collection = $collection;
         $this->podName = $collection->getCollectionName();
-        $this->config = Config::getInstance();
+        $this->config = $this->getConfigInstance();
         $this->defaultContext = $this->labeller->uri_to_alias($defaultContext); // make sure default context is qnamed if applicable
         $this->stat = $stat;
         $this->readPreference = $readPreference;
@@ -119,38 +122,32 @@ class Tables extends CompositeBase
      * @param string $contextAlias
      * @return array
      */
-    public function findImpactedComposites(Array $resourcesAndPredicates, $contextAlias)
+    public function findImpactedComposites(array $resourcesAndPredicates, $contextAlias)
     {
         $contextAlias = $this->getContextAlias($contextAlias); // belt and braces
 
         $tablePredicates = array();
 
-        foreach(Config::getInstance()->getTableSpecifications($this->storeName) as $tableSpec)
-        {
-            if(isset($tableSpec[_ID_KEY]))
-            {
-                $tablePredicates[$tableSpec[_ID_KEY]] = Config::getInstance()->getDefinedPredicatesInSpec($this->storeName, $tableSpec[_ID_KEY]);
+        foreach ($this->getConfigInstance()->getTableSpecifications($this->storeName) as $tableSpec) {
+            if (isset($tableSpec[_ID_KEY])) {
+                $tablePredicates[$tableSpec[_ID_KEY]] = $this->getConfigInstance()
+                    ->getDefinedPredicatesInSpec($this->storeName, $tableSpec[_ID_KEY]);
             }
         }
 
         // build a filter - will be used for impactIndex detection and finding direct tables to re-gen
         $tableFilters = array();
         $resourceFilters = array();
-        foreach ($resourcesAndPredicates as $resource=>$resourcePredicates)
-        {
+        foreach ($resourcesAndPredicates as $resource => $resourcePredicates) {
             $resourceAlias = $this->labeller->uri_to_alias($resource);
             $id = array(_ID_RESOURCE=>$resourceAlias,_ID_CONTEXT=>$contextAlias);
             // If we don't have a working config or there are no predicates listed, remove all
             // rows associated with the resource in all tables
-            if(empty($tablePredicates) || empty($resourcePredicates))
-            {
+            if (empty($tablePredicates) || empty($resourcePredicates)) {
                 // build $filter for queries to impact index
                 $resourceFilters[] = $id;
-            }
-            else
-            {
-                foreach($tablePredicates as $tableType=>$predicates)
-                {
+            } else {
+                foreach ($tablePredicates as $tableType => $predicates) {
                     // Only look for table rows if the changed predicates are actually defined in the tablespec
                     if(array_intersect($resourcePredicates, $predicates))
                     {
@@ -367,7 +364,7 @@ class Tables extends CompositeBase
     public function deleteTableRowsByTableId($tableId, $timestamp = null) {
         $t = new \Tripod\Timer();
         $t->start();
-        $tableSpec = Config::getInstance()->getTableSpecification($this->storeName, $tableId);
+        $tableSpec = $this->getConfigInstance()->getTableSpecification($this->storeName, $tableId);
         if ($tableSpec == null) {
             $this->debugLog("Could not find a table specification for $tableId");
             return;
@@ -455,14 +452,14 @@ class Tables extends CompositeBase
 
         if(empty($specTypes))
         {
-            $tableSpecs = Config::getInstance()->getTableSpecifications($this->storeName);
+            $tableSpecs = $this->getConfigInstance()->getTableSpecifications($this->storeName);
         }
         else
         {
             $tableSpecs = array();
             foreach($specTypes as $specType)
             {
-                $spec = Config::getInstance()->getTableSpecification($this->storeName, $specType);
+                $spec = $this->getConfigInstance()->getTableSpecification($this->storeName, $specType);
                 if($spec)
                 {
                     $tableSpecs[$specType] = $spec;
@@ -506,7 +503,7 @@ class Tables extends CompositeBase
         $t = new \Tripod\Timer();
         $t->start();
         $this->temporaryFields = array();
-        $tableSpec = Config::getInstance()->getTableSpecification($this->storeName, $tableType);
+        $tableSpec = $this->getConfigInstance()->getTableSpecification($this->storeName, $tableType);
         $collection = $this->config->getCollectionForTable($this->storeName, $tableType);
 
         if ($tableSpec==null) {

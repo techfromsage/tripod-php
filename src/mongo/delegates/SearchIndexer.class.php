@@ -7,7 +7,6 @@ require_once TRIPOD_DIR . 'mongo/delegates/SearchDocuments.class.php';
 require_once TRIPOD_DIR . 'mongo/providers/MongoSearchProvider.class.php';
 require_once TRIPOD_DIR . 'exceptions/SearchException.class.php';
 
-use Tripod\Mongo\Config;
 use Tripod\Mongo\ImpactedSubject;
 use Tripod\Mongo\Labeller;
 use Tripod\Mongo\Jobs\ApplyOperation;
@@ -44,10 +43,10 @@ class SearchIndexer extends CompositeBase
         $this->podName = $tripod->podName;
         $this->labeller = new Labeller();
         $this->stat = $tripod->getStat();
-        $this->config = Config::getInstance();
+        $this->config = $this->getConfigInstance();
         $provider = $this->config->getSearchProviderClassName($this->tripod->getStoreName());
 
-        if(class_exists($provider)){
+        if (class_exists($provider)) {
             $this->configuredProvider = new $provider($this->tripod);
         } else {
             throw new \Tripod\Exceptions\SearchException("Did not recognise Search Provider, or could not find class: $provider");
@@ -158,8 +157,10 @@ class SearchIndexer extends CompositeBase
             }
         }
 
-        foreach($documentsToIndex as $document) {
-            if(!empty($document)) $searchProvider->indexDocument($document);
+        foreach ($documentsToIndex as $document) {
+            if (!empty($document)) {
+                $searchProvider->indexDocument($document);
+            }
         }
     }
 
@@ -170,16 +171,19 @@ class SearchIndexer extends CompositeBase
      * @param string|null $queueName
      * @return array|null Will return an array with a count and group id, if $queueName is sent and $resourceUri is null
      */
-    public function generateSearchDocuments($searchDocumentType, $resourceUri=null, $context=null, $queueName=null)
-    {
+    public function generateSearchDocuments(
+        $searchDocumentType,
+        $resourceUri = null,
+        $context = null,
+        $queueName = null
+    ) {
         $t = new \Tripod\Timer();
         $t->start();
         // default the context
         $contextAlias = $this->getContextAlias($context);
-        $spec = \Tripod\Mongo\Config::getInstance()->getSearchDocumentSpecification($this->getStoreName(), $searchDocumentType);
+        $spec = $this->getConfigInstance()->getSearchDocumentSpecification($this->getStoreName(), $searchDocumentType);
 
-        if($resourceUri)
-        {
+        if ($resourceUri) {
             $this->generateAndIndexSearchDocuments($resourceUri, $contextAlias, $spec['from'], $searchDocumentType);
             return;
         }

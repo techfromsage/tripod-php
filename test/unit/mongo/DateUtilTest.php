@@ -7,7 +7,7 @@ class DateUtilTest extends MongoTripodTestBase
 {
     public function testGetMongoDateWithNoParam()
     {
-        $config = \Tripod\Mongo\Config::getInstance();
+        $config = \Tripod\Config::getInstance();
         $updatedAt = (new \Tripod\Mongo\DateUtil())->getMongoDate();
 
         $_id = array(
@@ -32,7 +32,7 @@ class DateUtilTest extends MongoTripodTestBase
     }
     public function testGetMongoDateWithParam()
     {
-        $config = \Tripod\Mongo\Config::getInstance();
+        $config = \Tripod\Config::getInstance();
         $updatedAt = (new \Tripod\Mongo\DateUtil())->getMongoDate();
 
         $_id = array(

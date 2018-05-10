@@ -77,7 +77,7 @@ class SearchDocuments extends DriverBase
                     'c'=>$this->labeller->uri_to_alias($context)
                 ];
 
-                if (Config::getInstance()->getCollectionForCBD($this->storeName, $irFrom)->findOne($indexRules['condition'])) {
+                if ($this->getConfigInstance()->getCollectionForCBD($this->storeName, $irFrom)->findOne($indexRules['condition'])) {
                     // match found, add this spec id to those that should be generated
                     $proceedWithGeneration = true;
                 }
@@ -101,7 +101,8 @@ class SearchDocuments extends DriverBase
 
         // build the document, set the timestamp before we fetch the source document
         $generatedDocument = [\_CREATED_TS => DateUtil::getMongoDate()];
-        $sourceDocument = Config::getInstance()->getCollectionForCBD($this->storeName, $from)->findOne(['_id' => $_id]);
+        $sourceDocument = $this->getConfigInstance()->getCollectionForCBD($this->storeName, $from)
+            ->findOne(['_id' => $_id]);
 
         if (empty($sourceDocument)) {
             $this->debugLog(
@@ -153,7 +154,7 @@ class SearchDocuments extends DriverBase
         $timer->start();
 
         foreach ($rdfTypes as $rdfType) {
-            $specs = Config::getInstance()->getSearchDocumentSpecifications($this->storeName, $rdfType);
+            $specs = $this->getConfigInstance()->getSearchDocumentSpecifications($this->storeName, $rdfType);
 
             if (empty($specs)) {
                 continue; // no point doing anything else if there is no spec for the type
@@ -181,7 +182,7 @@ class SearchDocuments extends DriverBase
     {
         // expand sequences before proceeding
         $this->expandSequence($joins, $source);
-        $config = Config::getInstance();
+        $config = $this->getConfigInstance();
         foreach($joins as $predicate=>$rules){
             if(isset($source[$predicate])){
                 $joinUris = array();
@@ -204,7 +205,7 @@ class SearchDocuments extends DriverBase
                 );
 
                 $cursor = $collection->find(array('_id'=>array('$in'=>$joinUris)), array(
-                    'maxTimeMS' => \Tripod\Mongo\Config::getInstance()->getMongoCursorTimeout()
+                    'maxTimeMS' => $this->getConfigInstance()->getMongoCursorTimeout()
                 ));
 
                 // add to impact index
@@ -290,7 +291,7 @@ class SearchDocuments extends DriverBase
      */
     protected function getSearchDocumentSpecification($specId)
     {
-        return Config::getInstance()->getSearchDocumentSpecification($this->storeName, $specId);
+        return $this->getConfigInstance()->getSearchDocumentSpecification($this->storeName, $specId);
     }
 
     /**

@@ -13,7 +13,7 @@ if ($argc!=2)
 
 array_shift($argv);
 $config = json_decode(file_get_contents($argv[0]), true);
-\Tripod\Mongo\Config::setConfig($config);
+\Tripod\Config::setConfig($config);
 
 $tu = new \Tripod\Mongo\TriplesUtil();
 

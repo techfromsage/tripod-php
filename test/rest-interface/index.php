@@ -31,11 +31,11 @@ $app->group('/1', function() use ($app, $tripodOptions) {
     {
         $app->get('/views/:viewId/:encodedFqUri', function($storeName, $viewSpecId, $encodedFqUri) use ($app, $tripodOptions)
         {
-            \Tripod\Mongo\Config::setConfig(json_decode(file_get_contents('./config/tripod-config-'.$storeName .'.json'), true));
+            \Tripod\Config::setConfig(json_decode(file_get_contents('./config/tripod-config-'.$storeName .'.json'), true));
             $i = 0;
             do
             {
-                $viewSpec = \Tripod\Mongo\Config::getInstance()->getViewSpecification($storeName, $viewSpecId);
+                $viewSpec = \Tripod\Config::getInstance()->getViewSpecification($storeName, $viewSpecId);
                 $podName = isset($viewSpec['from']) ? $viewSpec['from'] : null;
                 $tripodOptions['statsConfig'] = getStat($app, $tripodOptions);
                 $tripod = new \Tripod\Mongo\Driver($podName, $storeName, $tripodOptions);
@@ -71,7 +71,7 @@ $app->group('/1', function() use ($app, $tripodOptions) {
         {
             $app->group('/graph', function() use ($app, $tripodOptions) {
                 $app->get('/:encodedFqUri', function($storeName, $podName, $encodedFqUri) use ($app, $tripodOptions) {
-                    \Tripod\Mongo\Config::setConfig(json_decode(file_get_contents('./config/tripod-config-'.$storeName .'.json'), true));
+                    \Tripod\Config::setConfig(json_decode(file_get_contents('./config/tripod-config-'.$storeName .'.json'), true));
                     $tripodOptions['statsConfig'] = getStat($app, $tripodOptions);
 
                     $contentType = $app->request()->getMediaType();
@@ -129,7 +129,7 @@ $app->group('/1', function() use ($app, $tripodOptions) {
 
             $app->group('/change', function() use ($app, $tripodOptions) {
                 $app->post('/', function($storeName, $podName) use ($app, $tripodOptions) {
-                  \Tripod\Mongo\Config::setConfig(json_decode(file_get_contents('./config/tripod-config-'.$storeName .'.json'), true));
+                  \Tripod\Config::setConfig(json_decode(file_get_contents('./config/tripod-config-'.$storeName .'.json'), true));
                     $app->response()->setStatus(500);
                     $tripodOptions['statsConfig'] = getStat($app, $tripodOptions);
                     $tripod = new \Tripod\Mongo\Driver($podName, $storeName, $tripodOptions);

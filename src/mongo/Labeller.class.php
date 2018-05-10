@@ -2,16 +2,12 @@
 
 namespace Tripod\Mongo;
 
-/** @noinspection PhpIncludeInspection */
-require_once TRIPOD_DIR.'classes/Labeller.class.php';
-require_once TRIPOD_DIR . 'exceptions/LabellerException.class.php';
-
 /**
  * Class Labeller
  * @package Tripod\Mongo
  */
-class Labeller extends \Tripod\Labeller {
-
+class Labeller extends \Tripod\Labeller
+{
     /**
      * Constructor
      */
@@ -24,7 +20,7 @@ class Labeller extends \Tripod\Labeller {
             'owl' => 'http://www.w3.org/2002/07/owl#',
             'cs' => 'http://purl.org/vocab/changeset/schema#',
         );
-        $config = Config::getInstance();
+        $config = \Tripod\Config::getInstance();
         $ns = $config->getNamespaces();
         foreach ($ns as $prefix=>$uri)
         {

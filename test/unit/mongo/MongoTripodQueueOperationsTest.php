@@ -11,7 +11,7 @@ require_once 'src/mongo/Driver.class.php';
  * the results are as we would expect. For that reason this suite is more than just a series of unit tests, feels more like a set of integration tests since we
  * are testing a chained flow of events.
  */
-class MongoTripodQueueOperations extends MongoTripodTestBase
+class MongoTripodQueueOperationsTest extends MongoTripodTestBase
 {
     /**
      * @var \Tripod\Mongo\Driver
@@ -76,7 +76,6 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
         $data = array(
             "changes" => $subjectsAndPredicatesOfChange,
             "operations" => array(OP_VIEWS, OP_TABLES, OP_SEARCH),
-            "tripodConfig" => \Tripod\Mongo\Config::getConfig(),
             "storeName" => 'tripod_php_testing',
             "podName" => 'CBD_testing',
             "contextAlias" => 'http://talisaspire.com/',
@@ -155,7 +154,6 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
         $data = array(
             "changes" => $subjectsAndPredicatesOfChange,
             "operations" => array(OP_VIEWS),
-            "tripodConfig" => \Tripod\Mongo\Config::getConfig(),
             "storeName" => 'tripod_php_testing',
             "podName" => 'CBD_testing',
             "contextAlias" => 'http://talisaspire.com/',
@@ -289,7 +287,6 @@ class MongoTripodQueueOperations extends MongoTripodTestBase
         $data = array(
             "changes" => $subjectsAndPredicatesOfChange,
             "operations" => array(OP_VIEWS, OP_TABLES, OP_SEARCH),
-            "tripodConfig" => \Tripod\Mongo\Config::getConfig(),
             "storeName" => 'tripod_php_testing',
             "podName" => 'CBD_testing',
             "contextAlias" => 'http://talisaspire.com/',

@@ -45,7 +45,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         );
 
 
-        foreach(\Tripod\Mongo\Config::getInstance()->getCollectionsForViews($this->tripod->getStoreName()) as $collection)
+        foreach(\Tripod\Config::getInstance()->getCollectionsForViews($this->tripod->getStoreName()) as $collection)
         {
             $collection->drop();
         }
@@ -103,7 +103,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         // get the view direct from mongo
 //        $result = $this->tripod->getViewForResource("http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA","v_resource_full");
         $mongo = new Client(
-            \Tripod\Mongo\Config::getInstance()->getConnStr('tripod_php_testing'),
+            \Tripod\Config::getInstance()->getConnStr('tripod_php_testing'),
             [],
             ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']]
         );
@@ -176,7 +176,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         );
         // get the view direct from mongo
         $mongo = new Client(
-            \Tripod\Mongo\Config::getInstance()->getConnStr('tripod_php_testing'),
+            \Tripod\Config::getInstance()->getConnStr('tripod_php_testing'),
             [],
             ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']]
         );
@@ -241,7 +241,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         );
         // get the view direct from mongo
         $mongo = new Client(
-            \Tripod\Mongo\Config::getInstance()->getConnStr('tripod_php_testing'),
+            \Tripod\Config::getInstance()->getConnStr('tripod_php_testing'),
             [],
             ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']]
         );
@@ -316,7 +316,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         );
         // get the view direct from mongo
         $mongo = new Client(
-            \Tripod\Mongo\Config::getInstance()->getConnStr('tripod_php_testing'),
+            \Tripod\Config::getInstance()->getConnStr('tripod_php_testing'),
             [],
             ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']]
         );
@@ -462,7 +462,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         );
         // get the view direct from mongo
         $mongo = new Client(
-            \Tripod\Mongo\Config::getInstance()->getConnStr('tripod_php_testing'),
+            \Tripod\Config::getInstance()->getConnStr('tripod_php_testing'),
             [],
             ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']]
         );
@@ -515,7 +515,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             )
         );
         // get the view direct from mongo
-        $actualView = \Tripod\Mongo\Config::getInstance()->getCollectionForView('tripod_php_testing', 'v_resource_full_ttl')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA',"c"=>'http://talisaspire.com/',"type"=>'v_resource_full_ttl')));
+        $actualView = \Tripod\Config::getInstance()->getCollectionForView('tripod_php_testing', 'v_resource_full_ttl')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA',"c"=>'http://talisaspire.com/',"type"=>'v_resource_full_ttl')));
         $this->assertEquals($expectedView['_id'], $actualView['_id']);
         $this->assertEquals($expectedView['value'], $actualView['value']);
         $this->assertInstanceOf('\MongoDB\BSON\UTCDateTime', $actualView['_cts']);
@@ -565,7 +565,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             ]
         ];
         // get the view direct from mongo
-        $actualView = \Tripod\Mongo\Config::getInstance()
+        $actualView = \Tripod\Config::getInstance()
             ->getCollectionForView('tripod_php_testing', 'v_event_no_expiration')
             ->findOne(
                 [
@@ -617,7 +617,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         );
 
         // get the view direct from mongo, it should the same as earlier
-        $actualView2 = \Tripod\Mongo\Config::getInstance()
+        $actualView2 = \Tripod\Config::getInstance()
             ->getCollectionForView('tripod_php_testing', 'v_event_no_expiration')
             ->findOne(
                 [
@@ -732,7 +732,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             )
         );
 
-        $actualView = \Tripod\Mongo\Config::getInstance()->getCollectionForView('tripod_php_testing', 'v_counts')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/works/4d101f63c10a6',"c"=>"http://talisaspire.com/","type"=>'v_counts')));
+        $actualView = \Tripod\Config::getInstance()->getCollectionForView('tripod_php_testing', 'v_counts')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/works/4d101f63c10a6',"c"=>"http://talisaspire.com/","type"=>'v_counts')));
         $this->assertEquals($expectedView['_id'], $actualView['_id']);
         $this->assertEquals($expectedView['value'], $actualView['value']);
         $this->assertInstanceOf('\MongoDB\BSON\UTCDateTime', $actualView['_cts']);
@@ -834,7 +834,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             ->with('tripod_php_testing', $this->anything(), $this->anything())
             ->will($this->returnValue($mockViewColl));
 
-        $mockConfig->loadConfig(\Tripod\Mongo\Config::getConfig());
+        $mockConfig->loadConfig(\Tripod\Config::getConfig());
 
         /* @var $mockTripodViews|PHPUnit_Framework_MockObject_MockObject Views */
         $mockTripodViews = $this->getMock(
@@ -901,7 +901,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             ->with('tripod_php_testing', $this->anything(), $this->anything())
             ->will($this->returnValue($mockViewColl));
 
-        $mockConfig->loadConfig(\Tripod\Mongo\Config::getConfig());
+        $mockConfig->loadConfig(\Tripod\Config::getConfig());
 
 
         /* @var $mockTripodViews \Tripod\Mongo\Composites\Views */
@@ -957,7 +957,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $tripod = new \Tripod\Mongo\Driver('CBD_testing', 'tripod_php_testing', ['defaultContext' => $context]);
         $tripod->saveChanges(new \Tripod\ExtendedGraph(), $originalGraph);
 
-        $collections = \Tripod\Mongo\Config::getInstance()->getCollectionsForViews(
+        $collections = \Tripod\Config::getInstance()->getCollectionsForViews(
             'tripod_php_testing',
             ['v_resource_full', 'v_resource_full_ttl', 'v_resource_to_single_source']
         );
@@ -1013,7 +1013,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             ['generateViewsForResourcesOfType'],
             [
                 'tripod_php_testing',
-                \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                \Tripod\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
                 $context
             ]
         );
@@ -1117,7 +1117,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $tripod = new \Tripod\Mongo\Driver('CBD_testing', 'tripod_php_testing', array('defaultContext'=>$context));
         $tripod->saveChanges(new \Tripod\ExtendedGraph(), $originalGraph);
 
-        $collections = \Tripod\Mongo\Config::getInstance()->getCollectionsForViews('tripod_php_testing', array('v_resource_full', 'v_resource_full_ttl', 'v_resource_to_single_source'));
+        $collections = \Tripod\Config::getInstance()->getCollectionsForViews('tripod_php_testing', array('v_resource_full', 'v_resource_full_ttl', 'v_resource_to_single_source'));
 
         foreach($collections as $collection)
         {
@@ -1172,7 +1172,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             array('generateView'),
             array(
                 'tripod_php_testing',
-                \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                \Tripod\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
                 $context
             )
         );
@@ -1300,7 +1300,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $tripod = new \Tripod\Mongo\Driver('CBD_testing', 'tripod_php_testing', array('defaultContext'=>$context));
         $tripod->saveChanges(new \Tripod\ExtendedGraph(), $originalGraph);
 
-        $collections = \Tripod\Mongo\Config::getInstance()->getCollectionsForViews('tripod_php_testing', array('v_resource_full', 'v_resource_full_ttl', 'v_resource_to_single_source'));
+        $collections = \Tripod\Config::getInstance()->getCollectionsForViews('tripod_php_testing', array('v_resource_full', 'v_resource_full_ttl', 'v_resource_to_single_source'));
 
         foreach($collections as $collection)
         {
@@ -1353,7 +1353,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             array('generateView'),
             array(
                 'tripod_php_testing',
-                \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                \Tripod\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
                 $context
             )
         );
@@ -1482,7 +1482,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $tripod = new \Tripod\Mongo\Driver('CBD_testing', 'tripod_php_testing', array('defaultContext'=>$context));
         $tripod->saveChanges(new \Tripod\ExtendedGraph(), $originalGraph);
 
-        $collections = \Tripod\Mongo\Config::getInstance()->getCollectionsForViews('tripod_php_testing', array('v_resource_full', 'v_resource_full_ttl', 'v_resource_to_single_source'));
+        $collections = \Tripod\Config::getInstance()->getCollectionsForViews('tripod_php_testing', array('v_resource_full', 'v_resource_full_ttl', 'v_resource_to_single_source'));
 
         foreach($collections as $collection)
         {
@@ -1535,7 +1535,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             array('generateView'),
             array(
                 'tripod_php_testing',
-                \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                \Tripod\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
                 $context
             )
         );
@@ -1707,7 +1707,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             array('generateViewsForResourcesOfType'),
             array(
                 'tripod_php_testing',
-                \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                \Tripod\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
                 $context
             )
         );
@@ -1997,7 +1997,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             ->with('tripod_php_testing', $this->anything(), $this->anything())
             ->will($this->returnValue($mockViewColl));
 
-        $mockConfig->loadConfig(\Tripod\Mongo\Config::getConfig());
+        $mockConfig->loadConfig(\Tripod\Config::getConfig());
 
         /* @var $mockTripodViews|PHPUnit_Framework_MockObject_MockObject Views */
         $mockTripodViews = $this->getMock(
@@ -2058,7 +2058,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             ->with('tripod_php_testing', $this->anything(), $this->anything())
             ->will($this->returnValue($mockViewColl));
 
-        $mockConfig->loadConfig(\Tripod\Mongo\Config::getConfig());
+        $mockConfig->loadConfig(\Tripod\Config::getConfig());
 
         /* @var $mockTripodViews|PHPUnit_Framework_MockObject_MockObject Views */
         $mockTripodViews = $this->getMock(
@@ -2132,7 +2132,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             ->with('tripod_php_testing', $this->anything(), $this->anything())
             ->will($this->returnValue($mockViewColl));
 
-        $mockConfig->loadConfig(\Tripod\Mongo\Config::getConfig());
+        $mockConfig->loadConfig(\Tripod\Config::getConfig());
 
         /* @var $mockTripodViews|PHPUnit_Framework_MockObject_MockObject Views */
         $mockTripodViews = $this->getMock(

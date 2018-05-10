@@ -56,8 +56,8 @@ class MongoTripodConfigTest extends MongoTripodPerformanceTestBase
 
         //Let's try to create 1000 objects to see how much time they take.
         for($i =0; $i < self::BENCHMARK_OBJECT_CREATE_ITERATIONS; $i++) {
-            \Tripod\Mongo\Config::setConfig($this->config);
-            $instance = \Tripod\Mongo\Config::getInstance();
+            \Tripod\Config::setConfig($this->config);
+            $instance = \Tripod\Config::getInstance();
         }
 
         $testEndTime = microtime();

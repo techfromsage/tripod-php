@@ -13,7 +13,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
         parent::setUp();
 
         $this->tripod = new \Tripod\Mongo\Driver("CBD_testing", "tripod_php_testing", array("async"=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>false)));
-        foreach(\Tripod\Mongo\Config::getInstance()->getCollectionsForSearch($this->tripod->getStoreName()) as $collection)
+        foreach(\Tripod\Config::getInstance()->getCollectionsForSearch($this->tripod->getStoreName()) as $collection)
         {
             $collection->drop();
         }

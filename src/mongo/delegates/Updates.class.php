@@ -9,14 +9,14 @@ use \MongoDB\Database;
 use \MongoDB\Collection;
 use \MongoDB\Operation\FindOneAndUpdate;
 use \MongoDB\BSON\ObjectId;
-
-require_once TRIPOD_DIR . 'mongo/Config.class.php';
+use Tripod\Mongo\Jobs\DiscoverImpactedSubjects;
 
 /**
  * Class Updates
  * @package Tripod\Mongo
  */
-class Updates extends DriverBase {
+class Updates extends DriverBase
+{
 
     /**
      * $var TransactionLog
@@ -170,7 +170,7 @@ class Updates extends DriverBase {
         try {
             $contextAlias = $this->getContextAlias($context);
 
-            if (!Config::getInstance()->isPodWithinStore($this->getStoreName(), $this->getPodName())) {
+            if (!$this->getConfigInstance()->isPodWithinStore($this->getStoreName(), $this->getPodName())) {
                 throw new \Tripod\Exceptions\Exception(
                     'database:collection ' . $this->getStoreName() . ':' . $this->getPodName() .
                     ' is not referenced within config, so cannot be written to'
@@ -317,7 +317,7 @@ class Updates extends DriverBase {
      */
     protected function validateGraphCardinality(\Tripod\ExtendedGraph $graph)
     {
-        $config = Config::getInstance();
+        $config = $this->getConfigInstance();
         $cardinality = $config->getCardinality($this->getStoreName(), $this->getPodName());
         $namespaces = $config->getNamespaces();
         $graphSubjects = $graph->get_subjects();
@@ -864,14 +864,13 @@ class Updates extends DriverBase {
      * @param array $subjectsAndPredicatesOfChange
      * @param string $contextAlias
      */
-    protected function queueASyncOperations(array $subjectsAndPredicatesOfChange,$contextAlias)
+    protected function queueASyncOperations(array $subjectsAndPredicatesOfChange, $contextAlias)
     {
         $operations = $this->getAsyncOperations();
         if (!empty($operations)) {
             $data = [
                 'changes' => $subjectsAndPredicatesOfChange,
                 'operations' => $operations,
-                'tripodConfig' => Config::getConfig(),
                 'storeName' => $this->storeName,
                 'podName' => $this->podName,
                 'contextAlias' => $contextAlias,
@@ -883,7 +882,8 @@ class Updates extends DriverBase {
                 $data[OP_QUEUE] = $this->queueName;
                 $queueName = $this->queueName;
             } else {
-                $queueName =  Config::getDiscoverQueueName();
+                $configInstance = $this->getConfigInstance();
+                $queueName =  $configInstance::getDiscoverQueueName();
             }
 
             $this->getDiscoverImpactedSubjects()->createJob($data, $queueName);
@@ -1226,15 +1226,6 @@ class Updates extends DriverBase {
     }
 
     /**
-     * For mocking
-     * @return Config
-     */
-    protected function getConfigInstance()
-    {
-        return Config::getInstance();
-    }
-
-    /**
      * @return ObjectId
      */
     protected function generateIdForNewMongoDocument()
@@ -1366,7 +1357,7 @@ class Updates extends DriverBase {
     protected function getContextAlias($context=null)
     {
         $contextAlias = $this->labeller->uri_to_alias((empty($context)) ? $this->defaultContext : $context);
-        return (empty($contextAlias)) ? Config::getInstance()->getDefaultContextAlias() : $contextAlias;
+        return (empty($contextAlias)) ? $this->getConfigInstance()->getDefaultContextAlias() : $contextAlias;
     }
 
     /**

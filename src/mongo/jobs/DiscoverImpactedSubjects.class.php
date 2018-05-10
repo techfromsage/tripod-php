@@ -2,12 +2,14 @@
 
 namespace Tripod\Mongo\Jobs;
 
-use \Tripod\Mongo\Config;
+use \Tripod\Config;
+
 /**
  * Class DiscoverImpactedSubjects
  * @package Tripod\Mongo\Jobs
  */
-class DiscoverImpactedSubjects extends JobBase {
+class DiscoverImpactedSubjects extends JobBase
+{
 
     const STORE_NAME_KEY = 'storeName';
     const POD_NAME_KEY = 'podName';
@@ -23,7 +25,19 @@ class DiscoverImpactedSubjects extends JobBase {
     /**
      * @var array
      */
-    protected $subjectsGroupedByQueue = array();
+    protected $subjectsGroupedByQueue = [];
+
+    protected $configRequired = true;
+
+    protected $subjectCount;
+
+    protected $mandatoryArgs = [
+        self::STORE_NAME_KEY,
+        self::POD_NAME_KEY,
+        self::CHANGES_KEY,
+        self::OPERATIONS_KEY,
+        self::CONTEXT_ALIAS_KEY
+    ];
 
     /**
      * Run the DiscoverImpactedSubjects job
@@ -31,147 +45,140 @@ class DiscoverImpactedSubjects extends JobBase {
      */
     public function perform()
     {
-        try {
+        $tripod = $this->getTripod(
+            $this->args[self::STORE_NAME_KEY],
+            $this->args[self::POD_NAME_KEY],
+            $this->getTripodOptions()
+        );
 
-            $this->debugLog("[JOBID {$this->job->payload['id']}] DiscoverImpactedSubjects::perform() start");
+        $operations = $this->args[self::OPERATIONS_KEY];
 
-            $timer = new \Tripod\Timer();
-            $timer->start();
-
-            $this->validateArgs();
-
-            // set the config to what is received
-            \Tripod\Mongo\Config::setConfig($this->args[self::TRIPOD_CONFIG_KEY]);
-
-            $statsConfig = array();
-            if (isset($this->args['statsConfig'])) {
-                $statsConfig['statsConfig'] = $this->args['statsConfig'];
-            }
-            $tripod = $this->getTripod(
-                $this->args[self::STORE_NAME_KEY],
-                $this->args[self::POD_NAME_KEY],
-                $statsConfig
+        $subjectsAndPredicatesOfChange = $this->args[self::CHANGES_KEY];
+        $timestamp = isset($this->args['timestamp']) ? $this->getMongoDate($this->args['timestamp']) : null;
+        $this->subjectCount = 0;
+        foreach ($operations as $op) {
+            /** @var \Tripod\Mongo\Composites\IComposite $composite */
+            $composite = $tripod->getComposite($op);
+            $modifiedSubjects = $composite->getImpactedSubjects(
+                $subjectsAndPredicatesOfChange,
+                $this->args[self::CONTEXT_ALIAS_KEY],
+                $timestamp
             );
-
-            $operations = $this->args[self::OPERATIONS_KEY];
-
-            $subjectsAndPredicatesOfChange = $this->args[self::CHANGES_KEY];
-            $timestamp = isset($this->args['timestamp']) ? $this->getMongoDate($this->args['timestamp']) : null;
-            $subjectCount = 0;
-            foreach ($operations as $op) {
-                /** @var \Tripod\Mongo\Composites\IComposite $composite */
-                $composite = $tripod->getComposite($op);
-                $modifiedSubjects = $composite->getImpactedSubjects(
-                    $subjectsAndPredicatesOfChange,
-                    $this->args[self::CONTEXT_ALIAS_KEY],
-                    $timestamp
-                );
-                if (!empty($modifiedSubjects)) {
-                    /* @var $subject \Tripod\Mongo\ImpactedSubject */
-                    foreach ($modifiedSubjects as $subject) {
-                        $subjectCount++;
-                        $subjectTimer = new \Tripod\Timer();
-                        $subjectTimer->start();
-                        if (isset($this->args[self::QUEUE_KEY]) || count($subject->getSpecTypes()) == 0) {
-                            $queueName = (isset($this->args[self::QUEUE_KEY]) ? $this->args[self::QUEUE_KEY] : Config::getApplyQueueName());
-                            $this->addSubjectToQueue($subject, $queueName);
+            if (!empty($modifiedSubjects)) {
+                $configInstance = $this->getConfigInstance();
+                /* @var $subject \Tripod\Mongo\ImpactedSubject */
+                foreach ($modifiedSubjects as $subject) {
+                    $this->subjectCount++;
+                    $subjectTimer = new \Tripod\Timer();
+                    $subjectTimer->start();
+                    if (isset($this->args[self::QUEUE_KEY]) || count($subject->getSpecTypes()) == 0) {
+                        if (isset($this->args[self::QUEUE_KEY])) {
+                            $queueName = $this->args[self::QUEUE_KEY];
                         } else {
-                            $specsGroupedByQueue = array();
-                            foreach ($subject->getSpecTypes() as $specType) {
-                                $spec = null;
-                                switch ($subject->getOperation()) {
-                                    case OP_VIEWS:
-                                        $spec = Config::getInstance()->getViewSpecification($this->args[self::STORE_NAME_KEY], $specType);
-                                        break;
-                                    case OP_TABLES:
-                                        $spec = Config::getInstance()->getTableSpecification($this->args[self::STORE_NAME_KEY], $specType);
-                                        break;
-                                    case OP_SEARCH:
-                                        $spec = Config::getInstance()->getSearchDocumentSpecification($this->args[self::STORE_NAME_KEY], $specType);
-                                        break;
-                                }
-                                if (!$spec || !isset($spec['queue'])) {
-                                    if (!$spec) {
-                                        $spec = array();
-                                    }
-                                    $spec['queue'] = Config::getApplyQueueName();
-                                }
-                                if (!isset($specsGroupedByQueue[$spec['queue']])) {
-                                    $specsGroupedByQueue[$spec['queue']] = array();
-                                }
-                                $specsGroupedByQueue[$spec['queue']][] = $specType;
-                            }
-
-                            foreach ($specsGroupedByQueue as $queueName => $specs) {
-                                $queuedSubject = new \Tripod\Mongo\ImpactedSubject(
-                                    $subject->getResourceId(),
-                                    $subject->getOperation(),
-                                    $subject->getStoreName(),
-                                    $subject->getPodName(),
-                                    $specs
-                                );
-
-                                $this->addSubjectToQueue($queuedSubject, $queueName);
-                            }
+                            $queueName = $configInstance::getApplyQueueName();
                         }
-                        $subjectTimer->stop();
-                        // stat time taken to discover impacted subjects for the given subject of change
-                        $this->getStat()->timer(MONGO_QUEUE_DISCOVER_SUBJECT, $subjectTimer->result());
-                    }
-                    if (!empty($this->subjectsGroupedByQueue)) {
-                        foreach ($this->subjectsGroupedByQueue as $queueName => $subjects) {
-                            $this->getApplyOperation()->createJob($subjects, $queueName, $statsConfig);
+                        $this->addSubjectToQueue($subject, $queueName);
+                    } else {
+                        $specsGroupedByQueue = array();
+                        foreach ($subject->getSpecTypes() as $specType) {
+                            $spec = null;
+                            switch ($subject->getOperation()) {
+                                case OP_VIEWS:
+                                    $spec = $configInstance->getViewSpecification(
+                                        $this->args[self::STORE_NAME_KEY],
+                                        $specType
+                                    );
+                                    break;
+                                case OP_TABLES:
+                                    $spec = $configInstance->getTableSpecification(
+                                        $this->args[self::STORE_NAME_KEY],
+                                        $specType
+                                    );
+                                    break;
+                                case OP_SEARCH:
+                                    $spec = $configInstance->getSearchDocumentSpecification(
+                                        $this->args[self::STORE_NAME_KEY],
+                                        $specType
+                                    );
+                                    break;
+                            }
+                            if (!$spec || !isset($spec['queue'])) {
+                                if (!$spec) {
+                                    $spec = array();
+                                }
+                                $spec['queue'] = $configInstance::getApplyQueueName();
+                            }
+                            if (!isset($specsGroupedByQueue[$spec['queue']])) {
+                                $specsGroupedByQueue[$spec['queue']] = array();
+                            }
+                            $specsGroupedByQueue[$spec['queue']][] = $specType;
                         }
-                        $this->subjectsGroupedByQueue = array();
+
+                        foreach ($specsGroupedByQueue as $queueName => $specs) {
+                            $queuedSubject = new \Tripod\Mongo\ImpactedSubject(
+                                $subject->getResourceId(),
+                                $subject->getOperation(),
+                                $subject->getStoreName(),
+                                $subject->getPodName(),
+                                $specs
+                            );
+
+                            $this->addSubjectToQueue($queuedSubject, $queueName);
+                        }
                     }
+                    $subjectTimer->stop();
+                    // stat time taken to discover impacted subjects for the given subject of change
+                    $this->getStat()->timer(MONGO_QUEUE_DISCOVER_SUBJECT, $subjectTimer->result());
+                }
+                if (!empty($this->subjectsGroupedByQueue)) {
+                    foreach ($this->subjectsGroupedByQueue as $queueName => $subjects) {
+                        $this->getApplyOperation()->createJob($subjects, $queueName, $this->getTripodOptions());
+                    }
+                    $this->subjectsGroupedByQueue = array();
                 }
             }
-
-            // stat time taken to process item, from time it was created (queued)
-            $timer->stop();
-            $this->getStat()->timer(MONGO_QUEUE_DISCOVER_SUCCESS, $timer->result());
-            $this->debugLog(
-                "[JOBID {$this->job->payload['id']}] DiscoverImpactedSubjects::perform() done in {$timer->result()}ms"
-            );
-            $this->getStat()->increment(MONGO_QUEUE_DISCOVER_JOB . '.' . SUBJECT_COUNT, $subjectCount);
-        } catch (\Exception $e) {
-            $this->getStat()->increment(MONGO_QUEUE_DISCOVER_FAIL);
-            $this->errorLog('Caught exception in ' . get_class($this) . ': ' . $e->getMessage());
-            throw $e;
         }
+    }
+
+    public function tearDown()
+    {
+        parent::tearDown();
+        $this->getStat()->increment(MONGO_QUEUE_DISCOVER_JOB . '.' . SUBJECT_COUNT, $this->subjectCount);
+    }
+
+    /**
+     * Stat string for successful job timer
+     *
+     * @return string
+     */
+    protected function getStatTimerSuccessKey()
+    {
+        return MONGO_QUEUE_DISCOVER_SUCCESS;
+    }
+
+    /**
+     * Stat string for failed job increment
+     *
+     * @return string
+     */
+    protected function getStatFailureIncrementKey()
+    {
+        return MONGO_QUEUE_DISCOVER_FAIL;
     }
 
     /**
      * @param array $data
      * @param string|null $queueName
      */
-    public function createJob(Array $data, $queueName=null)
+    public function createJob(array $data, $queueName = null)
     {
-        if(!$queueName)
-        {
-            $queueName = Config::getDiscoverQueueName();
+        $configInstance = $this->getConfigInstance();
+        if (!$queueName) {
+            $queueName = $configInstance::getDiscoverQueueName();
+        } elseif (strpos($queueName, $configInstance::getDiscoverQueueName()) === false) {
+            $queueName = $configInstance::getDiscoverQueueName() . '::' . $queueName;
         }
-        elseif(strpos($queueName, \Tripod\Mongo\Config::getDiscoverQueueName()) === false)
-        {
-            $queueName = \Tripod\Mongo\Config::getDiscoverQueueName() . '::' . $queueName;
-        }
-        $this->submitJob($queueName,get_class($this),$data);
-    }
-
-    /**
-     * Validate args for DiscoverImpactedSubjects
-     * @return array
-     */
-    protected function getMandatoryArgs()
-    {
-        return array(
-            self::TRIPOD_CONFIG_KEY,
-            self::STORE_NAME_KEY,
-            self::POD_NAME_KEY,
-            self::CHANGES_KEY,
-            self::OPERATIONS_KEY,
-            self::CONTEXT_ALIAS_KEY
-        );
+        $this->submitJob($queueName, get_class($this), array_merge($data, $this->generateConfigJobArgs()));
     }
 
     /**
@@ -180,8 +187,7 @@ class DiscoverImpactedSubjects extends JobBase {
      */
     protected function addSubjectToQueue(\Tripod\Mongo\ImpactedSubject $subject, $queueName)
     {
-        if(!array_key_exists($queueName, $this->subjectsGroupedByQueue))
-        {
+        if (!array_key_exists($queueName, $this->subjectsGroupedByQueue)) {
             $this->subjectsGroupedByQueue[$queueName] = array();
         }
         $this->subjectsGroupedByQueue[$queueName][] = $subject;
@@ -193,12 +199,9 @@ class DiscoverImpactedSubjects extends JobBase {
      */
     protected function getApplyOperation()
     {
-        if(!isset($this->applyOperation))
-        {
+        if (!isset($this->applyOperation)) {
             $this->applyOperation = new ApplyOperation();
         }
         return $this->applyOperation;
     }
-
-
 }

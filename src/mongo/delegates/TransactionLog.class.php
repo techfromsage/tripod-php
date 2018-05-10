@@ -1,7 +1,6 @@
 <?php
 
 namespace Tripod\Mongo;
-require_once TRIPOD_DIR . 'mongo/Config.class.php';
 
 use \MongoDB\InsertOneResult;
 use \MongoDB\UpdateOneResult;
@@ -22,7 +21,7 @@ class TransactionLog
      */
     public function __construct()
     {
-        $config = Config::getInstance();
+        $config = \Tripod\Config::getInstance();
         $this->config = $config->getTransactionLogConfig();
         $this->transaction_db = $config->getTransactionLogDatabase();
         $this->transaction_collection = $this->transaction_db->selectCollection($this->config['collection']);

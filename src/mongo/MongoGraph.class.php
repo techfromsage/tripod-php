@@ -2,11 +2,7 @@
 
 namespace Tripod\Mongo;
 
-require_once TRIPOD_DIR.'classes/ExtendedGraph.class.php';
 require_once TRIPOD_DIR.'mongo/MongoTripodConstants.php';
-require_once TRIPOD_DIR . 'mongo/Config.class.php';
-require_once TRIPOD_DIR . 'mongo/Labeller.class.php';
-require_once TRIPOD_DIR . 'mongo/serializers/NQuadSerializer.class.php';
 
 /**
  * Class MongoGraph

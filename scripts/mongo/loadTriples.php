@@ -36,7 +36,7 @@ array_shift($argv);
 
 $storeName = $argv[0];
 $podName = $argv[1];
-\Tripod\Mongo\Config::setConfig(json_decode(file_get_contents($argv[2]),true));
+\Tripod\Config::setConfig(json_decode(file_get_contents($argv[2]),true));
 
 $i=0;
 $currentSubject = "";

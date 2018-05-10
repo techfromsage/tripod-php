@@ -12,8 +12,6 @@ use \MongoDB\Collection;
  * Class to help working with triples and Tripod
  */
 
-require_once(TRIPOD_DIR.'mongo/MongoGraph.class.php');
-
 /**
  * Class TriplesUtil
  * @package Tripod\Mongo
@@ -95,15 +93,12 @@ class TriplesUtil
      */
     public function loadTriplesAbout($subject,Array $triples,$storeName,$podName,$context=null,$allowableTypes=null)
     {
-        $context = ($context==null) ? Config::getInstance()->getDefaultContextAlias() : $this->labeller->uri_to_alias($context);
-        if (array_key_exists($podName,$this->collections))
-        {
+        $context = ($context==null) ? \Tripod\Config::getInstance()->getDefaultContextAlias() : $this->labeller->uri_to_alias($context);
+        if (array_key_exists($podName, $this->collections)) {
             $collection = $this->collections[$podName];
-        }
-        else
-        {
+        } else {
             $m = new Client(
-                Config::getInstance()->getConnStr($storeName),
+                \Tripod\Config::getInstance()->getConnStr($storeName),
                 [],
                 ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']]
             );
@@ -162,7 +157,7 @@ class TriplesUtil
      */
     public function bsonizeTriplesAbout($subject,Array $triples,$context=null)
     {
-        $context = ($context==null) ? Config::getInstance()->getDefaultContextAlias() : $this->labeller->uri_to_alias($context);
+        $context = ($context==null) ? \Tripod\Config::getInstance()->getDefaultContextAlias() : $this->labeller->uri_to_alias($context);
         $graph = new MongoGraph();
         foreach ($triples as $triple)
         {

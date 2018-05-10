@@ -120,7 +120,7 @@ abstract class DriverBase
     protected $labeller;
 
     /**
-     * @var Config
+     * @var IConfigInstance
      */
     protected $config = null;
 
@@ -137,10 +137,10 @@ abstract class DriverBase
      * @param string|null $context
      * @return mixed
      */
-    protected function getContextAlias($context=null)
+    protected function getContextAlias($context = null)
     {
         $contextAlias = $this->labeller->uri_to_alias((empty($context)) ? $this->defaultContext : $context);
-        return (empty($contextAlias)) ? Config::getInstance()->getDefaultContextAlias() : $contextAlias;
+        return (empty($contextAlias)) ? $this->getConfigInstance()->getDefaultContextAlias() : $contextAlias;
     }
 
     /**
@@ -425,11 +425,11 @@ abstract class DriverBase
 
     /**
      * For mocking
-     * @return Config
+     * @return IConfigInstance
      */
     protected function getConfigInstance()
     {
-        return Config::getInstance();
+        return \Tripod\Config::getInstance();
     }
 
     /**

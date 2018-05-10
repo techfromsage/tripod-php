@@ -2,8 +2,6 @@
 
 namespace Tripod\Mongo;
 
-require_once(TRIPOD_DIR . "mongo/Config.class.php");
-
 /**
  * Class IndexUtils
  * @package Tripod\Mongo
@@ -164,6 +162,6 @@ class IndexUtils
      */
     protected function getConfig()
     {
-        return Config::getInstance();
+        return \Tripod\Config::getInstance();
     }
 }

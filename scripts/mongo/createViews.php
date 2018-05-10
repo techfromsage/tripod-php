@@ -59,10 +59,10 @@ require_once dirname(dirname(dirname(__FILE__))) . '/src/tripod.inc.php';
  */
 function generateViews($id, $viewId, $storeName, $stat, $queue)
 {
-    $viewSpec = \Tripod\Mongo\Config::getInstance()->getViewSpecification($storeName, $viewId);
+    $viewSpec = \Tripod\Config::getInstance()->getViewSpecification($storeName, $viewId);
     if (array_key_exists("from",$viewSpec))
     {
-        \Tripod\Mongo\Config::getInstance()->setMongoCursorTimeout(-1);
+        \Tripod\Config::getInstance()->setMongoCursorTimeout(-1);
 
         print "Generating $viewId";
         $tripod = new \Tripod\Mongo\Driver($viewSpec['from'], $storeName, array('stat'=>$stat));
@@ -83,7 +83,7 @@ function generateViews($id, $viewId, $storeName, $stat, $queue)
 $t = new \Tripod\Timer();
 $t->start();
 
-\Tripod\Mongo\Config::setConfig(json_decode(file_get_contents($configLocation),true));
+\Tripod\Config::setConfig(json_decode(file_get_contents($configLocation),true));
 
 if(isset($options['s']) || isset($options['storename']))
 {
@@ -121,7 +121,7 @@ if(isset($options['a']) || isset($options['async']))
     }
     else
     {
-        $queue = \Tripod\Mongo\Config::getInstance()->getApplyQueueName();
+        $queue = \Tripod\Config::getInstance()->getApplyQueueName();
     }
 }
 
@@ -138,7 +138,7 @@ if ($viewId)
 }
 else
 {
-    foreach(\Tripod\Mongo\Config::getInstance()->getViewSpecifications($storeName) as $viewSpec)
+    foreach(\Tripod\Config::getInstance()->getViewSpecifications($storeName) as $viewSpec)
     {
         generateViews($id, $viewSpec['_id'], $storeName, $stat, $queue);
     }

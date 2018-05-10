@@ -2,12 +2,12 @@
 
 use Tripod\Mongo\Jobs\ApplyOperation;
 
-require_once 'MongoTripodTestBase.php';
+require_once 'ResqueJobTestBase.php';
 
 /**
  * Class ApplyOperationTest
  */
-class ApplyOperationTest extends MongoTripodTestBase
+class ApplyOperationTest extends ResqueJobTestBase
 {
     protected $args = array();
 
@@ -18,8 +18,11 @@ class ApplyOperationTest extends MongoTripodTestBase
         $job = new \Tripod\Mongo\Jobs\ApplyOperation();
         $job->args = $this->args;
         $job->job->payload['id'] = uniqid();
-        $this->setExpectedException('Exception', "Argument tripodConfig was not present in supplied job args for job Tripod\Mongo\Jobs\ApplyOperation");
-        $job->perform();
+        $this->setExpectedException(
+            'Exception',
+            'Argument tripodConfig or tripodConfigGenerator was not present in supplied job args for job Tripod\Mongo\Jobs\ApplyOperation'
+        );
+        $this->performJob($job);
     }
 
     public function testMandatoryArgSubject()
@@ -30,7 +33,7 @@ class ApplyOperationTest extends MongoTripodTestBase
         $job->args = $this->args;
         $job->job->payload['id'] = uniqid();
         $this->setExpectedException('Exception', "Argument subjects was not present in supplied job args for job Tripod\Mongo\Jobs\ApplyOperation");
-        $job->perform();
+        $this->performJob($job);
     }
 
     public function testApplyViewOperation()
@@ -73,7 +76,7 @@ class ApplyOperationTest extends MongoTripodTestBase
             ->setMethods(array('update'))
             ->setConstructorArgs(array(
                 'tripod_php_testing',
-                \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                \Tripod\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
                 'http://talisapire.com/'
             ))->getMock();
 
@@ -108,7 +111,7 @@ class ApplyOperationTest extends MongoTripodTestBase
             ->method('update')
             ->with($subject);
 
-        $applyOperation->perform();
+        $this->performJob($applyOperation);
     }
 
     public function testApplyViewOperationDecrementsJobGroupForBatchOperations()
@@ -164,7 +167,7 @@ class ApplyOperationTest extends MongoTripodTestBase
             ->setConstructorArgs(
                 [
                     'tripod_php_testing',
-                    \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                    \Tripod\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
                     'http://talisapire.com/'
                 ]
             )->getMock();
@@ -209,7 +212,7 @@ class ApplyOperationTest extends MongoTripodTestBase
             ->with($subject);
 
         $views->expects($this->never())->method('deleteViewsByViewId');
-        $applyOperation->perform();
+        $this->performJob($applyOperation);
     }
 
     public function testApplyViewOperationCleanupIfAllGroupJobsComplete()
@@ -266,7 +269,7 @@ class ApplyOperationTest extends MongoTripodTestBase
             ->setConstructorArgs(
                 [
                     'tripod_php_testing',
-                    \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                    \Tripod\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
                     'http://talisapire.com/'
                 ]
             )->getMock();
@@ -317,7 +320,7 @@ class ApplyOperationTest extends MongoTripodTestBase
             ->with('v_foo_bar', $timestamp)
             ->will($this->returnValue(3));
 
-        $applyOperation->perform();
+        $this->performJob($applyOperation);
     }
 
     public function testApplyTableOperation()
@@ -372,7 +375,7 @@ class ApplyOperationTest extends MongoTripodTestBase
             ->setMethods(array('update'))
             ->setConstructorArgs(array(
                 'tripod_php_testing',
-                \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                \Tripod\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
                 'http://talisapire.com/'
             ))->getMock();
 
@@ -408,7 +411,7 @@ class ApplyOperationTest extends MongoTripodTestBase
             ->method('update')
             ->with($subject);
 
-        $applyOperation->perform();
+        $this->performJob($applyOperation);
     }
 
     public function testApplyTableOperationDecrementsJobGroupForBatchOperations()
@@ -465,7 +468,7 @@ class ApplyOperationTest extends MongoTripodTestBase
             ->setConstructorArgs(
                 [
                     'tripod_php_testing',
-                    \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                    \Tripod\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
                     'http://talisapire.com/'
                 ]
             )->getMock();
@@ -512,7 +515,7 @@ class ApplyOperationTest extends MongoTripodTestBase
         $tables->expects($this->never())
             ->method('deleteTableRowsByTableId');
 
-        $applyOperation->perform();
+        $this->performJob($applyOperation);
     }
 
     public function testApplyTableOperationCleanupIfAllGroupJobsComplete()
@@ -570,7 +573,7 @@ class ApplyOperationTest extends MongoTripodTestBase
             ->setConstructorArgs(
                 [
                     'tripod_php_testing',
-                    \Tripod\Mongo\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
+                    \Tripod\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing'),
                     'http://talisapire.com/'
                 ]
             )->getMock();
@@ -621,7 +624,7 @@ class ApplyOperationTest extends MongoTripodTestBase
             ->with('t_resource', $timestamp)
             ->will($this->returnValue(4));
 
-        $applyOperation->perform();
+        $this->performJob($applyOperation);
     }
 
     public function testApplySearchOperation()
@@ -697,7 +700,7 @@ class ApplyOperationTest extends MongoTripodTestBase
             ->method('update')
             ->with($subject);
 
-        $applyOperation->perform();
+        $this->performJob($applyOperation);
     }
 
     public function testApplySearchOperationDecrementsJobGroupForBatchOperations()
@@ -794,7 +797,7 @@ class ApplyOperationTest extends MongoTripodTestBase
             ->method('update')
             ->with($subject);
 
-        $applyOperation->perform();
+        $this->performJob($applyOperation);
     }
 
     public function testApplySearchOperationCleanupIfAllGroupJobsComplete()
@@ -910,7 +913,7 @@ class ApplyOperationTest extends MongoTripodTestBase
             ->with('i_search_resource', $timestamp)
             ->will($this->returnValue(8));
 
-        $applyOperation->perform();
+        $this->performJob($applyOperation);
     }
 
     public function testCreateJobDefaultQueue()
@@ -925,7 +928,7 @@ class ApplyOperationTest extends MongoTripodTestBase
 
         $jobData = array(
             'subjects'=>array($impactedSubject->toArray()),
-            'tripodConfig'=>\Tripod\Mongo\Config::getConfig(),
+            'tripodConfig'=>\Tripod\Config::getConfig(),
         );
 
         /** @var \Tripod\Mongo\Jobs\ApplyOperation|PHPUnit_Framework_MockObject_MockObject $applyOperation */
@@ -1029,7 +1032,7 @@ class ApplyOperationTest extends MongoTripodTestBase
 
         $jobData = array(
             'subjects'=>array($impactedSubject->toArray()),
-            'tripodConfig'=>\Tripod\Mongo\Config::getConfig(),
+            'tripodConfig'=>\Tripod\Config::getConfig(),
         );
 
         /** @var \Tripod\Mongo\Jobs\ApplyOperation|PHPUnit_Framework_MockObject_MockObject $applyOperation */
@@ -1068,7 +1071,7 @@ class ApplyOperationTest extends MongoTripodTestBase
         );
 
         $this->args = array(
-            'tripodConfig' => \Tripod\Mongo\Config::getConfig(),
+            'tripodConfig' => \Tripod\Config::getConfig(),
             'subjects'=> [$subject->toArray()],
             'statsConfig' => $this->getStatsDConfig()
         );
