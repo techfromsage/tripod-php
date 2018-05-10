@@ -42,6 +42,7 @@ class ConfigGeneratorTest extends MongoTripodTestBase
 
     public function testConfigGeneratorsSerializedInDiscoverJobs()
     {
+        $timestamp = new \MongoDB\BSON\UTCDateTime();
         $originalGraph = new \Tripod\ExtendedGraph();
         $originalGraph->add_resource_triple('http://example.com/1', RDF_TYPE, RDFS_CLASS);
 
@@ -66,7 +67,8 @@ class ConfigGeneratorTest extends MongoTripodTestBase
                     'setReadPreferenceToPrimary',
                     'processSyncOperations',
                     'getDiscoverImpactedSubjects',
-                    'resetOriginalReadPreference'
+                    'resetOriginalReadPreference',
+                    'getMongoDate'
                 ]
             )
             ->setConstructorArgs([$tripod])
@@ -79,6 +81,7 @@ class ConfigGeneratorTest extends MongoTripodTestBase
 
         $tripod->expects($this->once())->method('getDataUpdater')->will($this->returnValue($updates));
         $updates->expects($this->once())->method('getDiscoverImpactedSubjects')->will($this->returnValue($discoverJob));
+        $updates->expects($this->atLeastOnce())->method('getMongoDate')->will($this->returnValue($timestamp));
 
         $updates->expects($this->once())->method('storeChanges')->will(
             $this->returnValue(
@@ -93,7 +96,8 @@ class ConfigGeneratorTest extends MongoTripodTestBase
                 'storeName' => 'tripod_php_testing',
                 'podName' => 'CBD_testing',
                 'contextAlias' => 'http://talisaspire.com/',
-                'statsConfig' => []
+                'statsConfig' => [],
+                'timestamp' => $timestamp
             ]);
 
         $tripod->saveChanges(
