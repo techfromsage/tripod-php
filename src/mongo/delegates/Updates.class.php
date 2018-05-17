@@ -875,7 +875,7 @@ class Updates extends DriverBase
                 'podName' => $this->podName,
                 'contextAlias' => $contextAlias,
                 'statsConfig' => $this->getStatsConfig(),
-                'timestamp' => $this->getMongoDate()
+                'timestamp' => $this->getMongoDate()->__toString()
             ];
 
             if (isset($this->queueName)) {

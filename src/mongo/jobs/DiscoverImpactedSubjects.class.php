@@ -178,6 +178,9 @@ class DiscoverImpactedSubjects extends JobBase
         } elseif (strpos($queueName, $configInstance::getDiscoverQueueName()) === false) {
             $queueName = $configInstance::getDiscoverQueueName() . '::' . $queueName;
         }
+        if (isset($data['timestamp']) && $data['timestamp'] instanceof \MongoDB\BSON\UTCDateTime) {
+            $data['timestamp'] = $data['timestamp']->__toString();
+        }
         $this->submitJob($queueName, get_class($this), array_merge($data, $this->generateConfigJobArgs()));
     }
 
