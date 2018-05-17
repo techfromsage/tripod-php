@@ -181,6 +181,10 @@ class Tables extends CompositeBase
             }
         }
 
+        if (empty($query)) {
+            return [];
+        }
+
         if ($timestamp) {
             if (!$timestamp instanceof \MongoDB\BSON\UTCDateTime) {
                 $timestamp = $this->getMongoDate($timestamp);
@@ -191,10 +195,6 @@ class Tables extends CompositeBase
             } else {
                 $query['$or'] = $tsClause['$or'];
             }
-        }
-
-        if (empty($query)) {
-            return [];
         }
 
         $affectedTableRows = [];

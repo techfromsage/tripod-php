@@ -188,6 +188,9 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
             }
         }
 
+        if (empty($query)) {
+            return [];
+        }
         if ($timestamp) {
             if (!$timestamp instanceof \MongoDB\BSON\UTCDateTime) {
                 $timestamp = $this->getMongoDate($timestamp);
@@ -198,10 +201,6 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
             } else {
                 $query['$or'] = $tsClause['$or'];
             }
-        }
-
-        if (empty($query)) {
-            return [];
         }
 
         $searchDocs = [];
