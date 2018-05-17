@@ -185,7 +185,12 @@ class Tables extends CompositeBase
             if (!$timestamp instanceof \MongoDB\BSON\UTCDateTime) {
                 $timestamp = $this->getMongoDate($timestamp);
             }
-            $query[_CREATED_TS] = ['$or' => ['$exists' => false], ['$lte' => $timestamp]];
+            $tsClause = ['$or' => [[_CREATED_TS => ['$exists' => false]], [_CREATED_TS => ['$lte' => $timestamp]]]];
+            if (isset($query['$or'])) {
+                $query = ['$and' => [$query, $tsClause]];
+            } else {
+                $query['$or'] = $tsClause['$or'];
+            }
         }
 
         if (empty($query)) {

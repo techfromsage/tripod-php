@@ -98,13 +98,6 @@ class Views extends CompositeBase
         // first re-gen views where resources appear in the impact index
         $query = ['value.' . _IMPACT_INDEX => ['$in' => $filter]];
 
-        if ($timestamp) {
-            if (!$timestamp instanceof \MongoDB\BSON\UTCDateTime) {
-                $timestamp = $this->getMongoDate($timestamp);
-            }
-            $query[_CREATED_TS] = ['$or' => ['$exists' => false], ['$lte' => $timestamp]];
-        }
-
         if (!empty($changedTypes)) {
             $query = ['$or' => [$query]];
             foreach ($changedTypes as $resourceAlias) {
@@ -112,6 +105,18 @@ class Views extends CompositeBase
                     _ID_KEY . '.' . _ID_RESOURCE => $resourceAlias,
                     _ID_KEY . '.' . _ID_CONTEXT => $contextAlias
                 ];
+            }
+        }
+
+        if ($timestamp) {
+            if (!$timestamp instanceof \MongoDB\BSON\UTCDateTime) {
+                $timestamp = $this->getMongoDate($timestamp);
+            }
+            $tsClause = ['$or' => [[_CREATED_TS => ['$exists' => false]], [_CREATED_TS => ['$lte' => $timestamp]]]];
+            if (isset($query['$or'])) {
+                $query = ['$and' => [$query, $tsClause]];
+            } else {
+                $query['$or'] = $tsClause['$or'];
             }
         }
 

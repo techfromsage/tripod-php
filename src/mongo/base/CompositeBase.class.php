@@ -35,7 +35,7 @@ abstract class CompositeBase extends \Tripod\Mongo\DriverBase implements \Tripod
             if (!$timestamp instanceof \MongoDB\BSON\UTCDateTime) {
                 $timestamp = $this->getMongoDate($timestamp);
             }
-            $query[_CREATED_TS] = ['$or' => ['$exists' => false], ['$lte' => $timestamp]];
+            $query['$or'] = [[_CREATED_TS => ['$exists' => false]], [_CREATED_TS => ['$lte' => $timestamp]]];
         }
         $docs = $this->getCollection()->find(
             $query,
