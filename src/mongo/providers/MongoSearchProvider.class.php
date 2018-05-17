@@ -125,44 +125,38 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
      * @param string $context
      * @return array the ids of search documents that had matching entries in their impact index
      */
-    public function findImpactedDocuments(array $resourcesAndPredicates, $context)
+    public function findImpactedDocuments(array $resourcesAndPredicates, $context, $timestamp = null)
     {
         $contextAlias = $this->labeller->uri_to_alias($context);
 
-        $specPredicates = array();
+        $specPredicates = [];
 
-        foreach($this->config->getSearchDocumentSpecifications($this->storeName) as $spec)
-        {
-            if(isset($spec[_ID_KEY]))
-            {
-                $specPredicates[$spec[_ID_KEY]] = $this->config->getDefinedPredicatesInSpec($this->storeName, $spec[_ID_KEY]);
+        foreach ($this->config->getSearchDocumentSpecifications($this->storeName) as $spec) {
+            if (isset($spec[_ID_KEY])) {
+                $specPredicates[$spec[_ID_KEY]] = $this->config->getDefinedPredicatesInSpec(
+                    $this->storeName,
+                    $spec[_ID_KEY]
+                );
             }
         }
 
         // build a filter - will be used for impactIndex detection and finding search types to re-gen
-        $searchDocFilters = array();
-        $resourceFilters = array();
-        foreach ($resourcesAndPredicates as $resource=>$resourcePredicates)
-        {
+        $searchDocFilters = [];
+        $resourceFilters = [];
+        foreach ($resourcesAndPredicates as $resource => $resourcePredicates) {
             $resourceAlias = $this->labeller->uri_to_alias($resource);
-            $id = array(_ID_RESOURCE=>$resourceAlias,_ID_CONTEXT=>$contextAlias);
+            $id = [_ID_RESOURCE => $resourceAlias, _ID_CONTEXT => $contextAlias];
             // If we don't have a working config or there are no predicates listed, remove all
             // rows associated with the resource in all search types
-            if(empty($specPredicates) || empty($resourcePredicates))
-            {
+            if (empty($specPredicates) || empty($resourcePredicates)) {
                 // build $filter for queries to impact index
                 $resourceFilters[] = $id;
-            }
-            else
-            {
-                foreach($specPredicates as $searchDocType=>$predicates)
-                {
+            } else {
+                foreach ($specPredicates as $searchDocType => $predicates) {
                     // Only look for search rows if the changed predicates are actually defined in the searchDocspec
-                    if(array_intersect($resourcePredicates, $predicates))
-                    {
-                        if(!isset($searchDocFilters[$searchDocType]))
-                        {
-                            $searchDocFilters[$searchDocType] = array();
+                    if (array_intersect($resourcePredicates, $predicates)) {
+                        if (!isset($searchDocFilters[$searchDocType])) {
+                            $searchDocFilters[$searchDocType] = [];
                         }
                         // build $filter for queries to impact index
                         $searchDocFilters[$searchDocType][] = $id;
@@ -172,46 +166,43 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
 
         }
 
-        $searchTypes = array();
-        if(empty($searchDocFilters) && !empty($resourceFilters))
-        {
-            $query = array(_IMPACT_INDEX=>array('$in'=>$resourceFilters));
-        }
-        else
-        {
-            $query = array();
-            foreach($searchDocFilters as $searchDocType=>$filters)
-            {
+        $searchTypes = [];
+        if (empty($searchDocFilters) && !empty($resourceFilters)) {
+            $query = [_IMPACT_INDEX => ['$in' => $resourceFilters]];
+        } else {
+            $query = [];
+            foreach ($searchDocFilters as $searchDocType => $filters) {
                 // first re-gen views where resources appear in the impact index
-                $query[] = array(_IMPACT_INDEX=>array('$in'=>$filters), '_id.'._ID_TYPE=>$searchDocType);
+                $query[] = [_IMPACT_INDEX => ['$in'=>$filters], '_id.' . _ID_TYPE => $searchDocType];
                 $searchTypes[] = $searchDocType;
             }
 
-            if(!empty($resourceFilters))
-            {
-                $query[] = array(_IMPACT_INDEX=>array('$in'=>$resourceFilters));
+            if (!empty($resourceFilters)) {
+                $query[] = [_IMPACT_INDEX => ['$in' => $resourceFilters]];
             }
 
-            if(count($query) === 1)
-            {
+            if (count($query) === 1) {
                 $query = $query[0];
+            } elseif (count($query) > 1) {
+                $query = ['$or' => $query];
             }
-            elseif(count($query) > 1)
-            {
-                $query = array('$or'=>$query);
-            }
-        }
-        if(empty($query))
-        {
-            return array();
         }
 
-        $searchDocs = array();
-        foreach($this->config->getCollectionsForSearch($this->storeName, $searchTypes) as $collection)
-        {
-            $cursor = $collection->find($query, array('projection' => array('_id'=>true)));
-            foreach($cursor as $d)
-            {
+        if ($timestamp) {
+            if (!$timestamp instanceof \MongoDB\BSON\UTCDateTime) {
+                $timestamp = $this->getMongoDate($timestamp);
+            }
+            $query[_CREATED_TS] = ['$or' => ['$exists' => false], ['$lte' => $timestamp]];
+        }
+
+        if (empty($query)) {
+            return [];
+        }
+
+        $searchDocs = [];
+        foreach ($this->config->getCollectionsForSearch($this->storeName, $searchTypes) as $collection) {
+            $cursor = $collection->find($query, ['projection' => ['_id' => true]]);
+            foreach ($cursor as $d) {
                 $searchDocs[] = $d;
             }
         }

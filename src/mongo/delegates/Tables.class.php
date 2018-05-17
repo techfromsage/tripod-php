@@ -122,11 +122,11 @@ class Tables extends CompositeBase
      * @param string $contextAlias
      * @return array
      */
-    public function findImpactedComposites(array $resourcesAndPredicates, $contextAlias)
+    public function findImpactedComposites(array $resourcesAndPredicates, $contextAlias, $timestamp = null)
     {
         $contextAlias = $this->getContextAlias($contextAlias); // belt and braces
 
-        $tablePredicates = array();
+        $tablePredicates = [];
 
         foreach ($this->getConfigInstance()->getTableSpecifications($this->storeName) as $tableSpec) {
             if (isset($tableSpec[_ID_KEY])) {
@@ -136,8 +136,8 @@ class Tables extends CompositeBase
         }
 
         // build a filter - will be used for impactIndex detection and finding direct tables to re-gen
-        $tableFilters = array();
-        $resourceFilters = array();
+        $tableFilters = [];
+        $resourceFilters = [];
         foreach ($resourcesAndPredicates as $resource => $resourcePredicates) {
             $resourceAlias = $this->labeller->uri_to_alias($resource);
             $id = array(_ID_RESOURCE=>$resourceAlias,_ID_CONTEXT=>$contextAlias);
@@ -149,10 +149,8 @@ class Tables extends CompositeBase
             } else {
                 foreach ($tablePredicates as $tableType => $predicates) {
                     // Only look for table rows if the changed predicates are actually defined in the tablespec
-                    if(array_intersect($resourcePredicates, $predicates))
-                    {
-                        if(!isset($tableFilters[$tableType]))
-                        {
+                    if (array_intersect($resourcePredicates, $predicates)) {
+                        if (!isset($tableFilters[$tableType])) {
                             $tableFilters[$tableType] = array();
                         }
                         // build $filter for queries to impact index
@@ -163,50 +161,49 @@ class Tables extends CompositeBase
 
         }
 
-        if(empty($tableFilters) && !empty($resourceFilters))
-        {
-            $query = array("value."._IMPACT_INDEX=>array('$in'=>$resourceFilters));
-        }
-        else
-        {
-            $query = array();
-            foreach($tableFilters as $tableType=>$filters)
-            {
+        if (empty($tableFilters) && !empty($resourceFilters)) {
+            $query = ['value.' . _IMPACT_INDEX => ['$in'=>$resourceFilters]];
+        } else {
+            $query = [];
+            foreach ($tableFilters as $tableType => $filters) {
                 // first re-gen table rows where resources appear in the impact index
-                $query[] = array("value."._IMPACT_INDEX=>array('$in'=>$filters), '_id.'._ID_TYPE=>$tableType);
+                $query[] = ['value.' . _IMPACT_INDEX => ['$in' => $filters], '_id.' . _ID_TYPE => $tableType];
             }
 
-            if(!empty($resourceFilters))
-            {
-                $query[] = array("value."._IMPACT_INDEX=>array('$in'=>$resourceFilters));
+            if (!empty($resourceFilters)) {
+                $query[] = ['value.' . _IMPACT_INDEX => ['$in' => $resourceFilters]];
             }
 
-            if(count($query) === 1)
-            {
+            if (count($query) === 1) {
                 $query = $query[0];
-            }
-            elseif(count($query) > 1)
-            {
-                $query = array('$or'=>$query);
+            } elseif (count($query) > 1) {
+                $query = ['$or' => $query];
             }
         }
 
-        if(empty($query))
-        {
-            return array();
+        if ($timestamp) {
+            if (!$timestamp instanceof \MongoDB\BSON\UTCDateTime) {
+                $timestamp = $this->getMongoDate($timestamp);
+            }
+            $query[_CREATED_TS] = ['$or' => ['$exists' => false], ['$lte' => $timestamp]];
         }
 
-        $affectedTableRows = array();
+        if (empty($query)) {
+            return [];
+        }
 
-        foreach($this->config->getCollectionsForTables($this->storeName) as $collection)
-        {
+        $affectedTableRows = [];
+
+        foreach ($this->config->getCollectionsForTables($this->storeName) as $collection) {
             $t = new \Tripod\Timer();
             $t->start();
-            $tableRows = $collection->find($query, array('projection' => array("_id"=>true)));
+            $tableRows = $collection->find($query, ['projection' => ['_id' => true]]);
             $t->stop();
-            $this->timingLog(MONGO_FIND_IMPACTED, array('duration'=>$t->result(), 'query'=>$query, 'storeName'=>$this->storeName, 'collection'=>$collection));
-            foreach($tableRows as $t)
-            {
+            $this->timingLog(
+                MONGO_FIND_IMPACTED,
+                ['duration'=>$t->result(), 'query'=>$query, 'storeName'=>$this->storeName, 'collection'=>$collection]
+            );
+            foreach ($tableRows as $t) {
                 $affectedTableRows[] = $t;
             }
         }

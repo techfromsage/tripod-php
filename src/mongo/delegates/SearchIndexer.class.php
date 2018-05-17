@@ -265,9 +265,9 @@ class SearchIndexer extends CompositeBase
      * @param string $context
      * @return array|mixed
      */
-    public function findImpactedComposites(Array $resourcesAndPredicates, $context)
+    public function findImpactedComposites(array $resourcesAndPredicates, $context, $timestamp = null)
     {
-        return $this->getSearchProvider()->findImpactedDocuments($resourcesAndPredicates, $context);
+        return $this->getSearchProvider()->findImpactedDocuments($resourcesAndPredicates, $context, $timestamp);
     }
 
     /**

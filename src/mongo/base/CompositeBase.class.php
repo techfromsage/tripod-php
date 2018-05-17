@@ -35,7 +35,7 @@ abstract class CompositeBase extends \Tripod\Mongo\DriverBase implements \Tripod
             if (!$timestamp instanceof \MongoDB\BSON\UTCDateTime) {
                 $timestamp = $this->getMongoDate($timestamp);
             }
-            $query[_CREATED_TS] = ['$lte' => $timestamp];
+            $query[_CREATED_TS] = ['$or' => ['$exists' => false], ['$lte' => $timestamp]];
         }
         $docs = $this->getCollection()->find(
             $query,
@@ -84,7 +84,7 @@ abstract class CompositeBase extends \Tripod\Mongo\DriverBase implements \Tripod
         }
 
         // add to this any composites
-        foreach ($this->findImpactedComposites($subjectsAndPredicatesOfChange, $contextAlias) as $doc) {
+        foreach ($this->findImpactedComposites($subjectsAndPredicatesOfChange, $contextAlias, $timestamp) as $doc) {
             $spec = $this->getSpecification($this->storeName, $doc[_ID_KEY]['type']);
             if (is_array($spec) && array_key_exists('from', $spec)) {
                 if (!array_key_exists($spec['from'], $candidates)) {

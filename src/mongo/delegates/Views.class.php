@@ -72,7 +72,7 @@ class Views extends CompositeBase
      * @param string $contextAlias
      * @return array|mixed
      */
-    public function findImpactedComposites(array $resourcesAndPredicates, $contextAlias)
+    public function findImpactedComposites(array $resourcesAndPredicates, $contextAlias, $timestamp = null)
     {
         // This should never happen, but in the event that we have been passed an empty array or something
         if (empty($resourcesAndPredicates)) {
@@ -97,6 +97,13 @@ class Views extends CompositeBase
 
         // first re-gen views where resources appear in the impact index
         $query = ['value.' . _IMPACT_INDEX => ['$in' => $filter]];
+
+        if ($timestamp) {
+            if (!$timestamp instanceof \MongoDB\BSON\UTCDateTime) {
+                $timestamp = $this->getMongoDate($timestamp);
+            }
+            $query[_CREATED_TS] = ['$or' => ['$exists' => false], ['$lte' => $timestamp]];
+        }
 
         if (!empty($changedTypes)) {
             $query = ['$or' => [$query]];
