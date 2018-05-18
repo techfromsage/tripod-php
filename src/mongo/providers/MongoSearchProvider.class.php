@@ -123,6 +123,8 @@ class MongoSearchProvider implements \Tripod\ISearchProvider
      * matching the resource and context specified
      * @param array $resourcesAndPredicates
      * @param string $context
+     * @param \MongoDB\BSON\UTCDateTime|string|null $timestamp Optional timestamp to filter search documents that are
+     *                                                         older than to prevent repeated regeneration
      * @return array the ids of search documents that had matching entries in their impact index
      */
     public function findImpactedDocuments(array $resourcesAndPredicates, $context, $timestamp = null)

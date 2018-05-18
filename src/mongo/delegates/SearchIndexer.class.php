@@ -263,6 +263,8 @@ class SearchIndexer extends CompositeBase
     /**
      * @param array $resourcesAndPredicates
      * @param string $context
+     * @param \MongoDB\BSON\UTCDateTime|string|null $timestamp Optional timestamp to filter search documents that are
+     *                                                         older than to prevent repeated regeneration
      * @return array|mixed
      */
     public function findImpactedComposites(array $resourcesAndPredicates, $context, $timestamp = null)

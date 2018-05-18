@@ -120,6 +120,8 @@ class Tables extends CompositeBase
      * Returns an array of table rows that are impacted by the changes
      * @param array $resourcesAndPredicates
      * @param string $contextAlias
+     * @param \MongoDB\BSON\UTCDateTime|string|null $timestamp Optional timestamp to filter table rows that are older
+     *                                                         than to prevent repeated regeneration
      * @return array
      */
     public function findImpactedComposites(array $resourcesAndPredicates, $contextAlias, $timestamp = null)
@@ -363,7 +365,8 @@ class Tables extends CompositeBase
      * @param \MongoDB\BSON\UTCDateTime|null $timestamp Optional timestamp to delete all table rows that are older than
      * @return integer                                  The number of table rows deleted
      */
-    public function deleteTableRowsByTableId($tableId, $timestamp = null) {
+    public function deleteTableRowsByTableId($tableId, $timestamp = null)
+    {
         $t = new \Tripod\Timer();
         $t->start();
         $tableSpec = $this->getConfigInstance()->getTableSpecification($this->storeName, $tableId);

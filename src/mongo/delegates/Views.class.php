@@ -70,6 +70,8 @@ class Views extends CompositeBase
     /**
      * @param array $resourcesAndPredicates
      * @param string $contextAlias
+     * @param \MongoDB\BSON\UTCDateTime|string|null $timestamp Optional timestamp to filter views that are older
+     *                                                         than to prevent repeated regeneration
      * @return array|mixed
      */
     public function findImpactedComposites(array $resourcesAndPredicates, $contextAlias, $timestamp = null)
