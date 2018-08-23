@@ -97,7 +97,7 @@ class SearchIndexer extends CompositeBase
      */
     public function getSpecification($storeName, $specId)
     {
-        return $this->config->getSearchDocumentSpecification($storeName,$specId);
+        return $this->config->getSearchDocumentSpecification($storeName, $specId);
     }
 
     /**
@@ -107,7 +107,7 @@ class SearchIndexer extends CompositeBase
      * @param string $podName
      * @param array | string | null $specType
      */
-    public function generateAndIndexSearchDocuments($resourceUri, $context, $podName, $specType = array())
+    public function generateAndIndexSearchDocuments($resourceUri, $context, $podName, $specType = [])
     {
         $mongoCollection    = $this->config->getCollectionForCBD($this->storeName, $podName);
 
@@ -118,42 +118,37 @@ class SearchIndexer extends CompositeBase
         $searchProvider->deleteDocument($resourceUri, $context, $specType); // null means delete all documents for this resource
 
         //2. regenerate search documents for this resource
-        $documentsToIndex   = array();
+        $documentsToIndex   = [];
         // first work out what its type is
         $query = array("_id"=>array(
             'r'=>$this->labeller->uri_to_alias($resourceUri),
             'c'=>$this->getContextAlias($context)
         ));
 
-        $resourceAndType = $mongoCollection->find($query,array(
-            'projection' => array("_id"=>1,"rdf:type"=>1),
-            'maxTimeMS' => $this->config->getMongoCursorTimeout()
-        ));
-        foreach ($resourceAndType as $rt)
-        {
-            if (array_key_exists("rdf:type",$rt))
-            {
+        $resourceAndType = $mongoCollection->find(
+            $query,
+            [
+                'projection' => ["_id" => 1, "rdf:type" => 1],
+                'maxTimeMS' => $this->config->getMongoCursorTimeout()
+            ]
+        );
+        foreach ($resourceAndType as $rt) {
+            if (array_key_exists("rdf:type", $rt)) {
+                $rdfTypes = [];
 
-                $rdfTypes = array();
-
-                if (array_key_exists('u',$rt["rdf:type"]))
-                {
+                if (array_key_exists('u', $rt["rdf:type"])) {
                     $rdfTypes[] = $rt["rdf:type"]['u'];
-                }
-                else
-                {
+                } else {
                     // an array of types
-                    foreach ($rt["rdf:type"] as $type)
-                    {
+                    foreach ($rt["rdf:type"] as $type) {
                         $rdfTypes[] = $type['u'];
                     }
                 }
 
                 $docs = $searchDocGenerator->generateSearchDocumentsBasedOnRdfTypes($rdfTypes, $resourceUri, $context);
-                foreach($docs as $d){
+                foreach ($docs as $d) {
                     $documentsToIndex[] = $d;
                 }
-
             }
         }
 
@@ -192,23 +187,18 @@ class SearchIndexer extends CompositeBase
         // default collection
         $from = (isset($spec["from"])) ? $spec["from"] : $this->podName;
 
-        $types = array();
-        if (is_array($spec["type"]))
-        {
-            foreach ($spec["type"] as $type)
-            {
+        $types = [];
+        if (is_array($spec["type"])) {
+            foreach ($spec["type"] as $type) {
                 $types[] = array("rdf:type.u"=>$this->labeller->qname_to_alias($type));
                 $types[] = array("rdf:type.u"=>$this->labeller->uri_to_alias($type));
             }
-        }
-        else
-        {
+        } else {
             $types[] = array("rdf:type.u"=>$this->labeller->qname_to_alias($spec["type"]));
             $types[] = array("rdf:type.u"=>$this->labeller->uri_to_alias($spec["type"]));
         }
         $filter = array('$or'=> $types);
-        if (isset($resource))
-        {
+        if (isset($resource)) {
             $filter["_id"] = array(_ID_RESOURCE=>$this->labeller->uri_to_alias($resource),_ID_CONTEXT=>$contextAlias);
         }
 
@@ -218,6 +208,7 @@ class SearchIndexer extends CompositeBase
         ));
 
         $jobOptions = [];
+        $subjects = [];
         if ($queueName && !$resourceUri) {
             $jobOptions['statsConfig'] = $this->getStatsConfig();
             $jobGroup = new JobGroup($this->storeName);
@@ -234,7 +225,11 @@ class SearchIndexer extends CompositeBase
                     array($searchDocumentType)
                 );
 
-                $this->getApplyOperation()->createJob(array($subject), $queueName, $jobOptions);
+                $subjects[] = $subject;
+                if (count($subjects) >= $this->getConfigInstance()->getBatchSize(OP_SEARCH)) {
+                    $this->queueApplyJob($subjects, $queueName, $jobOptions);
+                    $subjects = [];
+                }
             } else {
                 $this->generateAndIndexSearchDocuments(
                     $doc[_ID_KEY][_ID_RESOURCE],
@@ -245,13 +240,17 @@ class SearchIndexer extends CompositeBase
             }
         }
 
+        if (!empty($subjects)) {
+            $this->queueApplyJob($subjects, $queueName, $jobOptions);
+        }
+
         $t->stop();
         $this->timingLog(MONGO_CREATE_TABLE, array(
             'type'=>$spec['type'],
             'duration'=>$t->result(),
             'filter'=>$filter,
             'from'=>$from));
-        $this->getStat()->timer(MONGO_CREATE_SEARCH_DOC.".$searchDocumentType",$t->result());
+        $this->getStat()->timer(MONGO_CREATE_SEARCH_DOC.".$searchDocumentType", $t->result());
 
         $stat = ['count' => $count];
         if (isset($jobOptions[ApplyOperation::TRACKING_KEY])) {
@@ -265,7 +264,7 @@ class SearchIndexer extends CompositeBase
      * @param string $context
      * @return array|mixed
      */
-    public function findImpactedComposites(Array $resourcesAndPredicates, $context)
+    public function findImpactedComposites(array $resourcesAndPredicates, $context)
     {
         return $this->getSearchProvider()->findImpactedDocuments($resourcesAndPredicates, $context);
     }
@@ -276,7 +275,7 @@ class SearchIndexer extends CompositeBase
      */
     public function deleteSearchDocumentsByTypeId($typeId)
     {
-    	return $this->getSearchProvider()->deleteSearchDocumentsByTypeId($typeId);
+        return $this->getSearchProvider()->deleteSearchDocumentsByTypeId($typeId);
     }
 
 
@@ -293,7 +292,7 @@ class SearchIndexer extends CompositeBase
      * @param string $context
      * @return \Tripod\Mongo\SearchDocuments
      */
-    protected function getSearchDocumentGenerator(Collection $collection, $context )
+    protected function getSearchDocumentGenerator(Collection $collection, $context)
     {
         return new \Tripod\Mongo\SearchDocuments($this->storeName, $collection, $context, $this->tripod->getStat());
     }
@@ -302,11 +301,11 @@ class SearchIndexer extends CompositeBase
      * @param array $input
      * @return array
      */
-    protected function deDupe(Array $input)
+    protected function deDupe(array $input)
     {
-        $output = array();
-        foreach($input as $i){
-            if(!in_array($i, $output)){
+        $output = [];
+        foreach ($input as $i) {
+            if (!in_array($i, $output)) {
                 $output[] = $i;
             }
         }

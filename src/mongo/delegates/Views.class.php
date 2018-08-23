@@ -153,7 +153,7 @@ class Views extends CompositeBase
         {
             if (strpos($predicate,'$')===0)
             {
-                $values = array();
+                $values = [];
                 foreach ($object as $obj)
                 {
                     foreach ($obj as $p=>$o) $values[] = array('value.'._GRAPHS.'.'.$p=>$o);
@@ -240,7 +240,7 @@ class Views extends CompositeBase
         $missingSubjects = array_diff($resources,$returnedSubjects);
         if (!empty($missingSubjects))
         {
-            $regrabResources = array();
+            $regrabResources = [];
             foreach($missingSubjects as $missingSubject)
             {
                 $viewSpec = $this->getConfigInstance()->getViewSpecification($this->storeName, $viewType);
@@ -285,7 +285,7 @@ class Views extends CompositeBase
     private function createTripodViewIdsFromResourceUris($resourceUriOrArray,$context,$viewType)
     {
         $contextAlias = $this->getContextAlias($context);
-        $ret = array();
+        $ret = [];
         foreach($resourceUriOrArray as $resource)
         {
             $ret[] = array("r"=>$this->labeller->uri_to_alias($resource),"c"=>$contextAlias,"type"=>$viewType);
@@ -303,7 +303,7 @@ class Views extends CompositeBase
         $contextAlias = $this->getContextAlias($context);
 
         // build a filter - will be used for impactIndex detection and finding direct views to re-gen
-        $filter = array();
+        $filter = [];
         foreach ($resources as $resource)
         {
             $resourceAlias = $this->labeller->uri_to_alias($resource);
@@ -437,7 +437,7 @@ class Views extends CompositeBase
             throw new \Tripod\Exceptions\ViewException('Could not find any joins in view specification - usecase better served with select()');
         }
 
-        $types = array(); // this is used to filter the CBD table to speed up the view creation
+        $types = []; // this is used to filter the CBD table to speed up the view creation
         if (is_array($viewSpec["type"])) {
             foreach ($viewSpec["type"] as $type) {
                 $types[] = array("rdf:type.u"=>$this->labeller->qname_to_alias($type));
@@ -462,6 +462,7 @@ class Views extends CompositeBase
 
 
         $jobOptions = [];
+        $subjects = [];
         if ($queueName && !$resource) {
             $jobOptions['statsConfig'] = $this->getStatsConfig();
             $jobGroup = new JobGroup($this->storeName);
@@ -477,8 +478,11 @@ class Views extends CompositeBase
                     $from,
                     array($viewId)
                 );
-
-                $this->getApplyOperation()->createJob(array($subject), $queueName, $jobOptions);
+                $subjects[] = $subject;
+                if (count($subjects) >= $this->getConfigInstance()->getBatchSize(OP_VIEWS)) {
+                    $this->queueApplyJob($subjects, $queueName, $jobOptions);
+                    $subjects = [];
+                }
             } else {
                 // Set up view meta information
                 $generatedView = [
@@ -489,9 +493,9 @@ class Views extends CompositeBase
                     ],
                     \_CREATED_TS => \Tripod\Mongo\DateUtil::getMongoDate()
                 ];
-                $value = array(); // everything must go in the value object todo: this is a hang over from map reduce days, engineer out once we have stability on new PHP method for M/R
+                $value = []; // everything must go in the value object todo: this is a hang over from map reduce days, engineer out once we have stability on new PHP method for M/R
 
-                $value[_GRAPHS] = array();
+                $value[_GRAPHS] = [];
 
                 $buildImpactIndex=true;
                 if (isset($viewSpec['ttl'])) {
@@ -514,6 +518,10 @@ class Views extends CompositeBase
 
                 $collection->replaceOne(['_id' => $generatedView['_id']], $generatedView, ['upsert' => true]);
             }
+        }
+
+        if (!empty($subjects)) {
+            $this->queueApplyJob($subjects, $queueName, $jobOptions);
         }
 
         $t->stop();
@@ -557,7 +565,7 @@ class Views extends CompositeBase
                 // to join on it. However, we need to think about different combinations of
                 // nested joins in different points of the view spec and see if this would
                 // complicate things. Needs a unit test or two.
-                $joinUris = array();
+                $joinUris = [];
                 if (isset($source[$predicate][VALUE_URI]))
                 {
                     // single value for join
@@ -578,7 +586,7 @@ class Views extends CompositeBase
                     }
                 }
 
-                $recursiveJoins = array();
+                $recursiveJoins = [];
                 $collection = (
                 isset($ruleset['from'])
                     ? $this->config->getCollectionForCBD($this->storeName, $ruleset['from'])
@@ -682,7 +690,7 @@ class Views extends CompositeBase
      */
     protected function extractProperties($source,$viewSpec,$from)
     {
-        $obj = array();
+        $obj = [];
         if (isset($viewSpec['include']))
         {
             $obj['_id'] = $source['_id'];
@@ -742,7 +750,7 @@ class Views extends CompositeBase
                             }
                             if(isset($source[$p]) && isset($source[$p][$i]))
                             {
-                                if (!isset($obj[$p])) $obj[$p] = array();
+                                if (!isset($obj[$p])) $obj[$p] = [];
                                 $obj[$p][] = $source[$p][$i];
                             }
                         }
@@ -770,7 +778,7 @@ class Views extends CompositeBase
                         }
                         if($val && isset($val[$i]))
                         {
-                            if (!$obj[$p]) $obj[$p] = array();
+                            if (!$obj[$p]) $obj[$p] = [];
                             $obj[$p][] = $val[$i];
                         }
                     }
