@@ -64,7 +64,7 @@ class Tables extends CompositeBase
     /**
      * @var array
      */
-    protected $temporaryFields = array();
+    protected $temporaryFields = [];
 
     /**
      * Construct accepts actual objects rather than strings as this class is a delegate of
@@ -104,7 +104,7 @@ class Tables extends CompositeBase
         $resourceUri    = $resource[_ID_RESOURCE];
         $context        = $resource[_ID_CONTEXT];
 
-        $this->generateTableRowsForResource($resourceUri,$context,$subject->getSpecTypes());
+        $this->generateTableRowsForResource($resourceUri, $context, $subject->getSpecTypes());
     }
 
     /**
@@ -126,7 +126,7 @@ class Tables extends CompositeBase
     {
         $contextAlias = $this->getContextAlias($contextAlias); // belt and braces
 
-        $tablePredicates = array();
+        $tablePredicates = [];
 
         foreach ($this->getConfigInstance()->getTableSpecifications($this->storeName) as $tableSpec) {
             if (isset($tableSpec[_ID_KEY])) {
@@ -136,8 +136,8 @@ class Tables extends CompositeBase
         }
 
         // build a filter - will be used for impactIndex detection and finding direct tables to re-gen
-        $tableFilters = array();
-        $resourceFilters = array();
+        $tableFilters = [];
+        $resourceFilters = [];
         foreach ($resourcesAndPredicates as $resource => $resourcePredicates) {
             $resourceAlias = $this->labeller->uri_to_alias($resource);
             $id = array(_ID_RESOURCE=>$resourceAlias,_ID_CONTEXT=>$contextAlias);
@@ -149,11 +149,9 @@ class Tables extends CompositeBase
             } else {
                 foreach ($tablePredicates as $tableType => $predicates) {
                     // Only look for table rows if the changed predicates are actually defined in the tablespec
-                    if(array_intersect($resourcePredicates, $predicates))
-                    {
-                        if(!isset($tableFilters[$tableType]))
-                        {
-                            $tableFilters[$tableType] = array();
+                    if (array_intersect($resourcePredicates, $predicates)) {
+                        if (!isset($tableFilters[$tableType])) {
+                            $tableFilters[$tableType] = [];
                         }
                         // build $filter for queries to impact index
                         $tableFilters[$tableType][] = $id;
@@ -163,15 +161,11 @@ class Tables extends CompositeBase
 
         }
 
-        if(empty($tableFilters) && !empty($resourceFilters))
-        {
+        if (empty($tableFilters) && !empty($resourceFilters)) {
             $query = array("value."._IMPACT_INDEX=>array('$in'=>$resourceFilters));
-        }
-        else
-        {
-            $query = array();
-            foreach($tableFilters as $tableType=>$filters)
-            {
+        } else {
+            $query = [];
+            foreach ($tableFilters as $tableType => $filters) {
                 // first re-gen table rows where resources appear in the impact index
                 $query[] = array("value."._IMPACT_INDEX=>array('$in'=>$filters), '_id.'._ID_TYPE=>$tableType);
             }
@@ -193,10 +187,10 @@ class Tables extends CompositeBase
 
         if(empty($query))
         {
-            return array();
+            return [];
         }
 
-        $affectedTableRows = array();
+        $affectedTableRows = [];
 
         foreach($this->config->getCollectionsForTables($this->storeName) as $collection)
         {
@@ -242,7 +236,7 @@ class Tables extends CompositeBase
      * @param int $limit
      * @return array
      */
-    public function getTableRows($tableSpecId,$filter=array(),$sortBy=array(),$offset=0,$limit=10)
+    public function getTableRows($tableSpecId,$filter=[],$sortBy=[],$offset=0,$limit=10)
     {
         $t = new \Tripod\Timer();
         $t->start();
@@ -251,7 +245,7 @@ class Tables extends CompositeBase
 
         $collection = $this->config->getCollectionForTable($this->storeName, $tableSpecId, $this->readPreference);
 
-        $findOptions = array();
+        $findOptions = [];
         if (!empty($limit)) {
            $findOptions['skip'] = (int) $offset;
            $findOptions['limit'] = (int) $limit;
@@ -261,7 +255,7 @@ class Tables extends CompositeBase
         }
         $results = $collection->find($filter, $findOptions);
 
-        $rows = array();
+        $rows = [];
         foreach ($results as $doc)
         {
             if (array_key_exists(_IMPACT_INDEX,$doc['value'])) unset($doc['value'][_IMPACT_INDEX]); // remove impact index from client
@@ -289,7 +283,7 @@ class Tables extends CompositeBase
      * @param array $filter
      * @return array
      */
-    public function distinct($tableSpecId, $fieldName, array $filter=array())
+    public function distinct($tableSpecId, $fieldName, array $filter=[])
     {
         $t = new \Tripod\Timer();
         $t->start();
@@ -324,7 +318,7 @@ class Tables extends CompositeBase
         $resourceAlias = $this->labeller->uri_to_alias($resource);
         $contextAlias = $this->getContextAlias($context);
         $query = array(_ID_KEY . '.' . _ID_RESOURCE => $resourceAlias,  _ID_KEY . '.' . _ID_CONTEXT => $contextAlias);
-        $specNames = array();
+        $specNames = [];
         $specTypes = $this->config->getTableSpecifications($this->storeName);
         if (empty($specType)) {
             $specNames = array_keys($specTypes);
@@ -395,14 +389,14 @@ class Tables extends CompositeBase
      * @param string|null $context
      * @param array $specTypes
      */
-    protected function generateTableRowsForResource($resource, $context=null, $specTypes=array())
+    protected function generateTableRowsForResource($resource, $context=null, $specTypes=[])
     {
         $resourceAlias = $this->labeller->uri_to_alias($resource);
         $contextAlias = $this->getContextAlias($context);
 
         $this->deleteTableRowsForResource($resource, $context, $specTypes);
 
-        $filter = array();
+        $filter = [];
         $filter[] = array("r"=>$resourceAlias,"c"=>$contextAlias);
 
         // now go through the types
@@ -444,7 +438,7 @@ class Tables extends CompositeBase
      * @param array $specTypes
      * @return mixed
      */
-    public function generateTableRowsForType($rdfType,$subject=null,$context=null, $specTypes = array())
+    public function generateTableRowsForType($rdfType,$subject=null,$context=null, $specTypes = [])
     {
         $rdfType = $this->labeller->qname_to_alias($rdfType);
         $rdfTypeAlias = $this->labeller->uri_to_alias($rdfType);
@@ -456,7 +450,7 @@ class Tables extends CompositeBase
         }
         else
         {
-            $tableSpecs = array();
+            $tableSpecs = [];
             foreach($specTypes as $specType)
             {
                 $spec = $this->getConfigInstance()->getTableSpecification($this->storeName, $specType);
@@ -502,7 +496,7 @@ class Tables extends CompositeBase
     {
         $t = new \Tripod\Timer();
         $t->start();
-        $this->temporaryFields = array();
+        $this->temporaryFields = [];
         $tableSpec = $this->getConfigInstance()->getTableSpecification($this->storeName, $tableType);
         $collection = $this->config->getCollectionForTable($this->storeName, $tableType);
 
@@ -517,7 +511,7 @@ class Tables extends CompositeBase
         // default collection
         $from = (isset($tableSpec["from"])) ? $tableSpec["from"] : $this->podName;
 
-        $types = array();
+        $types = [];
         if (is_array($tableSpec["type"])) {
             foreach ($tableSpec["type"] as $type) {
                 $types[] = array("rdf:type.u"=>$this->labeller->qname_to_alias($type));
@@ -538,6 +532,7 @@ class Tables extends CompositeBase
         ));
 
         $jobOptions = [];
+        $subjects = [];
         if ($queueName && !$resource && ($this->stat || !empty($this->statsConfig))) {
             $jobOptions['statsConfig'] = $this->getStatsConfig();
             $jobGroup = new JobGroup($this->storeName);
@@ -554,8 +549,11 @@ class Tables extends CompositeBase
                     $from,
                     array($tableType)
                 );
-
-                $this->getApplyOperation()->createJob(array($subject), $queueName, $jobOptions);
+                $subjects[] = $subject;
+                if (count($subjects) >= $this->getConfigInstance()->getBatchSize(OP_TABLES)) {
+                    $this->queueApplyJob($subjects, $queueName, $jobOptions);
+                    $subjects = [];
+                }
             } else {
                 // set up ID
                 $generatedRow = [
@@ -569,12 +567,12 @@ class Tables extends CompositeBase
                 // everything must go in the value object todo: this is a hang over from map reduce days, engineer out once we have stability on new PHP method for M/R
                 $value = ['_id' => $doc['_id']];
                 $this->addIdToImpactIndex($doc['_id'], $value); // need to add the doc to the impact index to be consistent with views/search etc. this is needed for discovering impacted operations
-                $this->addFields($doc,$tableSpec,$value);
+                $this->addFields($doc, $tableSpec, $value);
                 if (isset($tableSpec['joins'])) {
-                    $this->doJoins($doc,$tableSpec['joins'],$value,$from,$contextAlias);
+                    $this->doJoins($doc, $tableSpec['joins'], $value, $from, $contextAlias);
                 }
                 if (isset($tableSpec['counts'])) {
-                    $this->doCounts($doc,$tableSpec['counts'],$value);
+                    $this->doCounts($doc, $tableSpec['counts'], $value);
                 }
 
                 if (isset($tableSpec['computed_fields'])) {
@@ -588,13 +586,17 @@ class Tables extends CompositeBase
             }
         }
 
+        if (!empty($subjects)) {
+            $this->queueApplyJob($subjects, $queueName, $jobOptions);
+        }
+
         $t->stop();
         $this->timingLog(MONGO_CREATE_TABLE, array(
             'type'=>$tableSpec['type'],
             'duration'=>$t->result(),
             'filter'=>$filter,
             'from'=>$from));
-        $this->getStat()->timer(MONGO_CREATE_TABLE.".$tableType",$t->result());
+        $this->getStat()->timer(MONGO_CREATE_TABLE.".$tableType", $t->result());
 
         $stat = ['count' => $count];
         if (isset($jobOptions[ApplyOperation::TRACKING_KEY])) {
@@ -641,7 +643,7 @@ class Tables extends CompositeBase
     protected function truncateFields(Collection $collection, array &$generatedRow)
     {
         // Find the name of any indexed fields
-        $indexedFields = array();
+        $indexedFields = [];
         $indexesGroupedByCollection = $this->config->getIndexesGroupedByCollection($this->storeName);
         if (isset($indexesGroupedByCollection) && isset($indexesGroupedByCollection[$collection->getCollectionName()]))
         {
@@ -911,7 +913,7 @@ class Tables extends CompositeBase
                 $function = array_keys($value);
                 return $this->getComputedValue($function[0], $value, $dest);
             }
-            $aryValue = array();
+            $aryValue = [];
             foreach($value as $v)
             {
                 $aryValue[] = $this->rewriteVariableValue($v, $dest);
@@ -1129,7 +1131,7 @@ class Tables extends CompositeBase
      */
     protected function generateValues($source, $f, $predicate, &$dest)
     {
-        $values = array();
+        $values = [];
         if (isset($source[$predicate][VALUE_URI]) && !empty($source[$predicate][VALUE_URI]))
         {
             $values[] = $source[$predicate][VALUE_URI];
@@ -1175,7 +1177,7 @@ class Tables extends CompositeBase
             {
                 // convert from single value to array of values
                 $existingVal = $dest[$f['fieldName']];
-                $dest[$f['fieldName']] = array();
+                $dest[$f['fieldName']] = [];
                 $dest[$f['fieldName']][] = $existingVal;
                 $dest[$f['fieldName']][] = $v;
             }
@@ -1190,7 +1192,7 @@ class Tables extends CompositeBase
      */
     protected function getPredicateFunctions($array)
     {
-        $predicateFunctions = array();
+        $predicateFunctions = [];
         if(is_array($array))
         {
             if(isset($array['predicates']))
@@ -1217,7 +1219,7 @@ class Tables extends CompositeBase
      * @throws \Exception
      * @return mixed
      */
-    private function applyModifier($modifier, $value, $options = array())
+    private function applyModifier($modifier, $value, $options = [])
     {
         try
         {
@@ -1271,7 +1273,7 @@ class Tables extends CompositeBase
                 // to join on it. However, we need to think about different combinations of
                 // nested joins in different points of the view spec and see if this would
                 // complicate things. Needs a unit test or two.
-                $joinUris = array();
+                $joinUris = [];
                 if (isset($source[$predicate][VALUE_URI]))
                 {
                     // single value for join
@@ -1291,7 +1293,7 @@ class Tables extends CompositeBase
                     }
                 }
 
-                $recursiveJoins = array();
+                $recursiveJoins = [];
                 $collection = (isset($ruleset['from'])
                     ? $this->config->getCollectionForCBD($this->storeName, $ruleset['from'])
                     : $this->config->getCollectionForCBD($this->storeName, $from)
