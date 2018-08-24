@@ -2,6 +2,8 @@
 
 namespace Tripod\Mongo\Composites;
 
+use \Tripod\Mongo\JobGroup;
+
 /**
  * Class CompositeBase
  * @package Tripod\Mongo\Composites
@@ -191,5 +193,16 @@ abstract class CompositeBase extends \Tripod\Mongo\DriverBase implements \Tripod
     protected function queueApplyJob(array $subjects, $queueName, array $jobOptions)
     {
         $this->getApplyOperation()->createJob($subjects, $queueName, $jobOptions);
+    }
+
+    /**
+     * For mocking
+     *
+     * @param string $storeName
+     * @return JobGroup
+     */
+    protected function getJobGroup($storeName)
+    {
+        return new JobGroup($storeName);
     }
 }

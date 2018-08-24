@@ -431,7 +431,7 @@ class Views extends CompositeBase
         $t->start();
 
         $from = $this->getFromCollectionForViewSpec($viewSpec);
-        $collection = $this->config->getCollectionForView($this->storeName, $viewId);
+        $collection = $this->getConfigInstance()->getCollectionForView($this->storeName, $viewId);
 
         if (!isset($viewSpec['joins'])) {
             throw new \Tripod\Exceptions\ViewException('Could not find any joins in view specification - usecase better served with select()');
@@ -454,8 +454,8 @@ class Views extends CompositeBase
         }
 
         // @todo Change this to a command when we upgrade MongoDB to 1.1+
-        $count = $this->config->getCollectionForCBD($this->storeName, $from)->count($filter);
-        $docs = $this->config->getCollectionForCBD($this->storeName, $from)->find($filter, array(
+        $count = $this->getConfigInstance()->getCollectionForCBD($this->storeName, $from)->count($filter);
+        $docs = $this->getConfigInstance()->getCollectionForCBD($this->storeName, $from)->find($filter, array(
             'maxTimeMS' => $this->getConfigInstance()->getMongoCursorTimeout()
         ));
 
@@ -465,7 +465,7 @@ class Views extends CompositeBase
         $subjects = [];
         if ($queueName && !$resource) {
             $jobOptions['statsConfig'] = $this->getStatsConfig();
-            $jobGroup = new JobGroup($this->storeName);
+            $jobGroup = $this->getJobGroup($this->storeName);
             $jobOptions[ApplyOperation::TRACKING_KEY] = $jobGroup->getId()->__toString();
             $jobGroup->setJobCount($count);
         }

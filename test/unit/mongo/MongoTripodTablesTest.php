@@ -1,6 +1,7 @@
 <?php
 
 use Monolog\Logger;
+
 require_once 'MongoTripodTestBase.php';
 require_once 'src/mongo/delegates/Tables.class.php';
 require_once 'src/mongo/Driver.class.php';
@@ -40,14 +41,26 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $this->tripodTransactionLog = new \Tripod\Mongo\TransactionLog();
         $this->tripodTransactionLog->purgeAllTransactions();
 
-        $this->tripod = new \Tripod\Mongo\Driver($this->defaultPodName, $this->defaultStoreName, array("async"=>array(OP_VIEWS=>false, OP_TABLES=>false, OP_SEARCH=>false)));
+        $this->tripod = new \Tripod\Mongo\Driver(
+            $this->defaultPodName,
+            $this->defaultStoreName,
+            ["async" => [OP_VIEWS=>false, OP_TABLES => false, OP_SEARCH => false]]
+        );
 
         $this->getTripodCollection($this->tripod)->drop();
         $this->tripod->setTransactionLog($this->tripodTransactionLog);
         $this->loadResourceDataViaTripod();
-        $this->tablesConstParams = array($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),'http://talisaspire.com/');
+        $this->tablesConstParams = [
+            $this->tripod->getStoreName(),
+            $this->getTripodCollection($this->tripod),
+            'http://talisaspire.com/'
+        ];
 
-        $this->tripodTables = new \Tripod\Mongo\Composites\Tables($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),null); // pass null context, should default to http://talisaspire.com
+        $this->tripodTables = new \Tripod\Mongo\Composites\Tables(
+            $this->tripod->getStoreName(),
+            $this->getTripodCollection($this->tripod),
+            null // pass null context, should default to http://talisaspire.com
+        );
 
         // purge tables
         foreach (\Tripod\Config::getInstance()->getCollectionsForTables($this->tripod->getStoreName()) as $collection) {
@@ -301,6 +314,74 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $this->assertTrue(isset($result['type']),"Result does not contain type");
         $this->assertTrue(isset($result['isbn']),"Result does not contain isbn");
         $this->assertTrue(isset($result['isbn13']),"Result does not contain isbn13");
+    }
+
+    public function testBatchTableRowGeneration()
+    {
+        $count = 234;
+        $docs = [];
+
+        $configOptions = json_decode(file_get_contents(__DIR__ . '/data/config.json'), true);
+
+        for ($i = 0; $i < $count; $i++) {
+            $docs[] = ['_id' => ['r' => 'tenantLists:batch' . $i, 'c' => 'tenantContexts:DefaultGraph']];
+        }
+
+        $fakeCursor = new ArrayIterator($docs);
+        /** @var \PHPUnit_Framework_MockObject_MockObject|TripodTestConfig $config */
+        $configInstance = $this->getMockBuilder('TripodTestConfig')
+            ->setMethods(['getCollectionForTable', 'getCollectionForCBD'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $configInstance->loadConfig($configOptions);
+
+        /** @var \PHPUnit_Framework_MockObject_MockObject|\MongoDB\Collection $collection */
+        $collection = $this->getMockBuilder('\MongoDB\Collection')
+            ->setMethods(['count', 'find'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $collection->expects($this->atLeastOnce())->method('count')->willReturn($count);
+        $collection->expects($this->atLeastOnce())->method('find')->willReturn($fakeCursor);
+
+        $configInstance->expects($this->atLeastOnce())->method('getCollectionForCBD')->willReturn($collection);
+
+        /** @var \PHPUnit_Framework_MockObject_MockObject|\Tripod\Mongo\Composites\Tables $tables */
+        $tables = $this->getMockBuilder('\Tripod\Mongo\Composites\Tables')
+            ->setMethods(['getConfigInstance', 'queueApplyJob'])
+            ->setConstructorArgs(['tripod_php_testing', $collection, 'tenantContexts:DefaultGraph'])
+            ->getMock();
+        $tables->expects($this->atLeastOnce())->method('getConfigInstance')->willReturn($configInstance);
+        $tables->expects($this->exactly(3))->method('queueApplyJob')
+            ->withConsecutive(
+                [
+                    $this->logicalAnd(
+                        $this->isType('array'),
+                        $this->containsOnlyInstancesOf('\Tripod\Mongo\ImpactedSubject'),
+                        $this->countOf(100)
+                    ),
+                    'TESTQUEUE',
+                    $this->isType('array')
+                ],
+                [
+                    $this->logicalAnd(
+                        $this->isType('array'),
+                        $this->containsOnlyInstancesOf('\Tripod\Mongo\ImpactedSubject'),
+                        $this->countOf(100)
+                    ),
+                    'TESTQUEUE',
+                    $this->isType('array')
+                ],
+                [
+                    $this->logicalAnd(
+                        $this->isType('array'),
+                        $this->containsOnlyInstancesOf('\Tripod\Mongo\ImpactedSubject'),
+                        $this->countOf(34)
+                    ),
+                    'TESTQUEUE',
+                    $this->isType('array')
+                ]
+            );
+        $tables->generateTableRows('t_resource', null, null, 'TESTQUEUE');
     }
 
     public function testGetTableRowsSort()

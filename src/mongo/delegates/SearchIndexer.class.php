@@ -13,6 +13,8 @@ use Tripod\Mongo\Jobs\ApplyOperation;
 use Tripod\Mongo\JobGroup;
 use \MongoDB\Driver\ReadPreference;
 use \MongoDB\Collection;
+use Tripod\Mongo\Config;
+use Tripod\Mongo\Driver;
 
 /**
  * Class SearchIndexer
@@ -44,13 +46,7 @@ class SearchIndexer extends CompositeBase
         $this->labeller = new Labeller();
         $this->stat = $tripod->getStat();
         $this->config = $this->getConfigInstance();
-        $provider = $this->config->getSearchProviderClassName($this->tripod->getStoreName());
-
-        if (class_exists($provider)) {
-            $this->configuredProvider = new $provider($this->tripod);
-        } else {
-            throw new \Tripod\Exceptions\SearchException("Did not recognise Search Provider, or could not find class: $provider");
-        }
+        $this->setSearchProvider($this->tripod, $this->config);
         $this->readPreference = $readPreference;
     }
 
@@ -202,16 +198,19 @@ class SearchIndexer extends CompositeBase
             $filter["_id"] = array(_ID_RESOURCE=>$this->labeller->uri_to_alias($resource),_ID_CONTEXT=>$contextAlias);
         }
 
-        $count = $this->config->getCollectionForCBD($this->getStoreName(), $from)->count($filter);
-        $docs = $this->config->getCollectionForCBD($this->getStoreName(), $from)->find($filter, array(
-            'maxTimeMS' => $this->config->getMongoCursorTimeout()
-        ));
+        $count = $this->getConfigInstance()->getCollectionForCBD($this->getStoreName(), $from)->count($filter);
+        $docs = $this->getConfigInstance()
+            ->getCollectionForCBD($this->getStoreName(), $from)
+            ->find(
+                $filter,
+                ['maxTimeMS' => $this->getConfigInstance()->getMongoCursorTimeout()]
+            );
 
         $jobOptions = [];
         $subjects = [];
         if ($queueName && !$resourceUri) {
             $jobOptions['statsConfig'] = $this->getStatsConfig();
-            $jobGroup = new JobGroup($this->storeName);
+            $jobGroup = $this->getJobGroup($this->storeName);
             $jobOptions[ApplyOperation::TRACKING_KEY] = $jobGroup->getId()->__toString();
             $jobGroup->setJobCount($count);
         }
@@ -310,5 +309,28 @@ class SearchIndexer extends CompositeBase
             }
         }
         return $output;
+    }
+
+    /**
+     * For mocking
+     *
+     * @param Driver $tripod Mongo Tripod Driver
+     * @param Config $config Mongo Tripod ConfigInstance
+     * @return void
+     */
+    protected function setSearchProvider(Driver $tripod, Config $config = null)
+    {
+        if (is_null($config)) {
+            $config = $this->getConfigInstance();
+        }
+
+        $provider = $config->getSearchProviderClassName($tripod->getStoreName());
+        if (class_exists($provider)) {
+            $this->configuredProvider = new $provider($tripod);
+        } else {
+            throw new \Tripod\Exceptions\SearchException(
+                "Did not recognise Search Provider, or could not find class: $provider"
+            );
+        }
     }
 }

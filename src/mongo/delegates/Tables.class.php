@@ -498,9 +498,9 @@ class Tables extends CompositeBase
         $t->start();
         $this->temporaryFields = [];
         $tableSpec = $this->getConfigInstance()->getTableSpecification($this->storeName, $tableType);
-        $collection = $this->config->getCollectionForTable($this->storeName, $tableType);
+        $collection = $this->getConfigInstance()->getCollectionForTable($this->storeName, $tableType);
 
-        if ($tableSpec==null) {
+        if (empty($tableSpec)) {
             $this->debugLog("Could not find a table specification for $tableType");
             return null;
         }
@@ -509,33 +509,37 @@ class Tables extends CompositeBase
         $contextAlias = $this->getContextAlias($context);
 
         // default collection
-        $from = (isset($tableSpec["from"])) ? $tableSpec["from"] : $this->podName;
+        $from = isset($tableSpec["from"]) ? $tableSpec["from"] : $this->podName;
 
         $types = [];
         if (is_array($tableSpec["type"])) {
             foreach ($tableSpec["type"] as $type) {
-                $types[] = array("rdf:type.u"=>$this->labeller->qname_to_alias($type));
-                $types[] = array("rdf:type.u"=>$this->labeller->uri_to_alias($type));
+                $types[] = ["rdf:type.u" => $this->labeller->qname_to_alias($type)];
+                $types[] = ["rdf:type.u" => $this->labeller->uri_to_alias($type)];
             }
         } else {
-            $types[] = array("rdf:type.u"=>$this->labeller->qname_to_alias($tableSpec["type"]));
-            $types[] = array("rdf:type.u"=>$this->labeller->uri_to_alias($tableSpec["type"]));
+            $types[] = ["rdf:type.u" => $this->labeller->qname_to_alias($tableSpec["type"])];
+            $types[] = ["rdf:type.u" => $this->labeller->uri_to_alias($tableSpec["type"])];
         }
-        $filter = array('$or'=> $types);
+        $filter = ['$or' => $types];
         if (isset($resource)) {
-            $filter["_id"] = array(_ID_RESOURCE=>$this->labeller->uri_to_alias($resource),_ID_CONTEXT=>$contextAlias);
+            $filter["_id"] = [
+                _ID_RESOURCE => $this->labeller->uri_to_alias($resource),
+                _ID_CONTEXT => $contextAlias
+            ];
         }
+
         // @todo Change this to a command when we upgrade MongoDB to 1.1+
-        $count = $this->config->getCollectionForCBD($this->storeName, $from)->count($filter);
-        $docs = $this->config->getCollectionForCBD($this->storeName, $from)->find($filter, array(
-            'maxTimeMS' => 1000000
-        ));
+        $count = $this->getConfigInstance()->getCollectionForCBD($this->storeName, $from)->count($filter);
+        $docs = $this->getConfigInstance()
+            ->getCollectionForCBD($this->storeName, $from)
+            ->find($filter, ['maxTimeMS' => 1000000]);
 
         $jobOptions = [];
         $subjects = [];
         if ($queueName && !$resource && ($this->stat || !empty($this->statsConfig))) {
             $jobOptions['statsConfig'] = $this->getStatsConfig();
-            $jobGroup = new JobGroup($this->storeName);
+            $jobGroup = $this->getJobGroup($this->storeName);
             $jobOptions[ApplyOperation::TRACKING_KEY] = $jobGroup->getId()->__toString();
             $jobGroup->setJobCount($count);
         }
