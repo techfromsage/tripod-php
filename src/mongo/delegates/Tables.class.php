@@ -263,7 +263,10 @@ class Tables extends CompositeBase
         $results = $collection->find($filter, $findOptions);
 
         if ($useCursor) {
-            $results->setTypeMap(['root' => 'array', 'document' => '\Tripod\Mongo\Cursors\Tables', 'array' => 'array']);
+            if (!is_string($useCursor) || !class_exists($useCursor)) {
+                $useCursor = '\Tripod\Mongo\Cursors\Tables';
+            }
+            $results->setTypeMap(['root' => 'array', 'document' => $useCursor, 'array' => 'array']);
             $t->stop();
             $this->timingLog(
                 MONGO_TABLE_ROWS,
