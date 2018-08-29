@@ -242,7 +242,7 @@ class Tables extends CompositeBase
      * @param int $limit
      * @return array
      */
-    public function getTableRows($tableSpecId,$filter=array(),$sortBy=array(),$offset=0,$limit=10)
+    public function getTableRows($tableSpecId, $filter = [], $sortBy = [], $offset = 0, $limit = 10, $useCursor = false)
     {
         $t = new \Tripod\Timer();
         $t->start();
@@ -253,14 +253,25 @@ class Tables extends CompositeBase
 
         $findOptions = array();
         if (!empty($limit)) {
-           $findOptions['skip'] = (int) $offset;
-           $findOptions['limit'] = (int) $limit;
+            $findOptions['skip'] = (int) $offset;
+            $findOptions['limit'] = (int) $limit;
         }
         if (isset($sortBy)) {
             $findOptions['sort'] = $sortBy;
         }
+
         $results = $collection->find($filter, $findOptions);
 
+        if ($useCursor) {
+            $results->setTypeMap(['root' => 'array', 'document' => '\Tripod\Mongo\Cursors\Tables', 'array' => 'array']);
+            $t->stop();
+            $this->timingLog(
+                MONGO_TABLE_ROWS,
+                ['duration' => $t->result(), 'query' => $filter, 'collection' => TABLE_ROWS_COLLECTION]
+            );
+            $this->getStat()->timer(MONGO_TABLE_ROWS . ".$tableSpecId", $t->result());
+            return $results;
+        }
         $rows = array();
         foreach ($results as $doc)
         {
