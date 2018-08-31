@@ -276,8 +276,8 @@ class Config implements IConfigInstance
             }
             if (isset($storeConfig['batch_sizes'])) {
                 foreach ([OP_TABLES, OP_SEARCH, OP_VIEWS] as $op) {
-                    if (isset($searchConfig['batch_sizes'][$op]) && is_numeric($searchConfig['batch_sizes'][$op])) {
-                        $this->batchSize[$op] = intval($searchConfig['batch_sizes'][$op]);
+                    if (isset($storeConfig['batch_sizes'][$op]) && is_numeric($storeConfig['batch_sizes'][$op])) {
+                        $this->batchSize[$op] = intval($storeConfig['batch_sizes'][$op]);
                     }
                 }
             }

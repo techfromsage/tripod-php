@@ -32,9 +32,9 @@ abstract class CompositeBase extends \Tripod\Mongo\DriverBase implements \Tripod
             $resourceAlias = $this->labeller->uri_to_alias($s);
             $subjectsToAlias[$s] = $resourceAlias;
             // build $filter for queries to impact index
-            $filter[] = [_ID_RESOURCE=>$resourceAlias,_ID_CONTEXT=>$contextAlias];
+            $filter[] = [_ID_RESOURCE=>$resourceAlias, _ID_CONTEXT=>$contextAlias];
         }
-        $query = [_ID_KEY=> ['$in' => $filter]];
+        $query = [_ID_KEY => ['$in' => $filter]];
         $docs = $this->getCollection()->find(
             $query,
             ['projection' => [_ID_KEY => true, 'rdf:type' => true]]
