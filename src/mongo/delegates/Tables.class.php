@@ -242,10 +242,25 @@ class Tables extends CompositeBase
      * @param int $limit
      * @return array
      */
-    public function getTableRows($tableSpecId, $filter = [], $sortBy = [], $offset = 0, $limit = 10, $useCursor = false)
-    {
+    public function getTableRows(
+        $tableSpecId,
+        array $filter = [],
+        array $sortBy = [],
+        $offset = 0,
+        $limit = 10,
+        array $options = []
+    ) {
         $t = new \Tripod\Timer();
         $t->start();
+
+        $options = array_merge(
+            [
+                'returnCursor' => false,
+                'includeCount' => true,
+                'documentType' => '\Tripod\Mongo\Documents\Tables'
+            ],
+            $options
+        );
 
         $filter["_id." . _ID_TYPE] = $tableSpecId;
 
@@ -262,37 +277,27 @@ class Tables extends CompositeBase
 
         $results = $collection->find($filter, $findOptions);
 
-        if ($useCursor) {
-            if (!is_string($useCursor) || !class_exists($useCursor)) {
-                $useCursor = '\Tripod\Mongo\Cursors\Tables';
-            }
-            $results->setTypeMap(['root' => 'array', 'document' => $useCursor, 'array' => 'array']);
-            $t->stop();
-            $this->timingLog(
-                MONGO_TABLE_ROWS,
-                ['duration' => $t->result(), 'query' => $filter, 'collection' => TABLE_ROWS_COLLECTION]
-            );
-            $this->getStat()->timer(MONGO_TABLE_ROWS . ".$tableSpecId", $t->result());
-            return $results;
+        if ($options['includeCount']) {
+            $count = $collection->count($filter);
+        } else {
+            $count = -1;
         }
-        $rows = array();
-        foreach ($results as $doc)
-        {
-            if (array_key_exists(_IMPACT_INDEX,$doc['value'])) unset($doc['value'][_IMPACT_INDEX]); // remove impact index from client
-            $rows[] = $doc['value'];
-        }
+
+
+        $results->setTypeMap(['root' => $options['documentType'], 'document' => 'array', 'array' => 'array']);
 
         $t->stop();
         $this->timingLog(MONGO_TABLE_ROWS, array('duration'=>$t->result(), 'query'=>$filter, 'collection'=>TABLE_ROWS_COLLECTION));
-        $this->getStat()->timer(MONGO_TABLE_ROWS.".$tableSpecId",$t->result());
+        $this->getStat()->timer(MONGO_TABLE_ROWS . ".$tableSpecId", $t->result());
 
-        return array(
-            "head"=>array(
-                "count" => $collection->count($filter),
-                "offset"=>$offset,
-                "limit"=>$limit
-            ),
-            "results"=>$rows);
+        return [
+            'head' => [
+                'count' => $count,
+                'offset' => $offset,
+                'limit' => $limit
+            ],
+            'results' => $options['returnCursor'] ? $results : $results->toArray()
+        ];
     }
 
     /**
