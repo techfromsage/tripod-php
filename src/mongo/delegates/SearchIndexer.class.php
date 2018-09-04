@@ -10,9 +10,10 @@ require_once TRIPOD_DIR . 'exceptions/SearchException.class.php';
 use Tripod\Mongo\ImpactedSubject;
 use Tripod\Mongo\Labeller;
 use Tripod\Mongo\Jobs\ApplyOperation;
-use Tripod\Mongo\JobGroup;
 use \MongoDB\Driver\ReadPreference;
 use \MongoDB\Collection;
+use Tripod\Mongo\Config;
+use Tripod\Mongo\Driver;
 
 /**
  * Class SearchIndexer
@@ -44,13 +45,7 @@ class SearchIndexer extends CompositeBase
         $this->labeller = new Labeller();
         $this->stat = $tripod->getStat();
         $this->config = $this->getConfigInstance();
-        $provider = $this->config->getSearchProviderClassName($this->tripod->getStoreName());
-
-        if (class_exists($provider)) {
-            $this->configuredProvider = new $provider($this->tripod);
-        } else {
-            throw new \Tripod\Exceptions\SearchException("Did not recognise Search Provider, or could not find class: $provider");
-        }
+        $this->setSearchProvider($this->tripod, $this->config);
         $this->readPreference = $readPreference;
     }
 
@@ -97,7 +92,7 @@ class SearchIndexer extends CompositeBase
      */
     public function getSpecification($storeName, $specId)
     {
-        return $this->config->getSearchDocumentSpecification($storeName,$specId);
+        return $this->config->getSearchDocumentSpecification($storeName, $specId);
     }
 
     /**
@@ -107,7 +102,7 @@ class SearchIndexer extends CompositeBase
      * @param string $podName
      * @param array | string | null $specType
      */
-    public function generateAndIndexSearchDocuments($resourceUri, $context, $podName, $specType = array())
+    public function generateAndIndexSearchDocuments($resourceUri, $context, $podName, $specType = [])
     {
         $mongoCollection    = $this->config->getCollectionForCBD($this->storeName, $podName);
 
@@ -118,42 +113,37 @@ class SearchIndexer extends CompositeBase
         $searchProvider->deleteDocument($resourceUri, $context, $specType); // null means delete all documents for this resource
 
         //2. regenerate search documents for this resource
-        $documentsToIndex   = array();
+        $documentsToIndex   = [];
         // first work out what its type is
         $query = array("_id"=>array(
             'r'=>$this->labeller->uri_to_alias($resourceUri),
             'c'=>$this->getContextAlias($context)
         ));
 
-        $resourceAndType = $mongoCollection->find($query,array(
-            'projection' => array("_id"=>1,"rdf:type"=>1),
-            'maxTimeMS' => $this->config->getMongoCursorTimeout()
-        ));
-        foreach ($resourceAndType as $rt)
-        {
-            if (array_key_exists("rdf:type",$rt))
-            {
+        $resourceAndType = $mongoCollection->find(
+            $query,
+            [
+                'projection' => ["_id" => 1, "rdf:type" => 1],
+                'maxTimeMS' => $this->config->getMongoCursorTimeout()
+            ]
+        );
+        foreach ($resourceAndType as $rt) {
+            if (array_key_exists("rdf:type", $rt)) {
+                $rdfTypes = [];
 
-                $rdfTypes = array();
-
-                if (array_key_exists('u',$rt["rdf:type"]))
-                {
+                if (array_key_exists('u', $rt["rdf:type"])) {
                     $rdfTypes[] = $rt["rdf:type"]['u'];
-                }
-                else
-                {
+                } else {
                     // an array of types
-                    foreach ($rt["rdf:type"] as $type)
-                    {
+                    foreach ($rt["rdf:type"] as $type) {
                         $rdfTypes[] = $type['u'];
                     }
                 }
 
                 $docs = $searchDocGenerator->generateSearchDocumentsBasedOnRdfTypes($rdfTypes, $resourceUri, $context);
-                foreach($docs as $d){
+                foreach ($docs as $d) {
                     $documentsToIndex[] = $d;
                 }
-
             }
         }
 
@@ -192,35 +182,34 @@ class SearchIndexer extends CompositeBase
         // default collection
         $from = (isset($spec["from"])) ? $spec["from"] : $this->podName;
 
-        $types = array();
-        if (is_array($spec["type"]))
-        {
-            foreach ($spec["type"] as $type)
-            {
+        $types = [];
+        if (is_array($spec["type"])) {
+            foreach ($spec["type"] as $type) {
                 $types[] = array("rdf:type.u"=>$this->labeller->qname_to_alias($type));
                 $types[] = array("rdf:type.u"=>$this->labeller->uri_to_alias($type));
             }
-        }
-        else
-        {
+        } else {
             $types[] = array("rdf:type.u"=>$this->labeller->qname_to_alias($spec["type"]));
             $types[] = array("rdf:type.u"=>$this->labeller->uri_to_alias($spec["type"]));
         }
         $filter = array('$or'=> $types);
-        if (isset($resource))
-        {
+        if (isset($resource)) {
             $filter["_id"] = array(_ID_RESOURCE=>$this->labeller->uri_to_alias($resource),_ID_CONTEXT=>$contextAlias);
         }
 
-        $count = $this->config->getCollectionForCBD($this->getStoreName(), $from)->count($filter);
-        $docs = $this->config->getCollectionForCBD($this->getStoreName(), $from)->find($filter, array(
-            'maxTimeMS' => $this->config->getMongoCursorTimeout()
-        ));
+        $count = $this->getConfigInstance()->getCollectionForCBD($this->getStoreName(), $from)->count($filter);
+        $docs = $this->getConfigInstance()
+            ->getCollectionForCBD($this->getStoreName(), $from)
+            ->find(
+                $filter,
+                ['maxTimeMS' => $this->getConfigInstance()->getMongoCursorTimeout()]
+            );
 
         $jobOptions = [];
+        $subjects = [];
         if ($queueName && !$resourceUri) {
             $jobOptions['statsConfig'] = $this->getStatsConfig();
-            $jobGroup = new JobGroup($this->storeName);
+            $jobGroup = $this->getJobGroup($this->storeName);
             $jobOptions[ApplyOperation::TRACKING_KEY] = $jobGroup->getId()->__toString();
             $jobGroup->setJobCount($count);
         }
@@ -234,7 +223,12 @@ class SearchIndexer extends CompositeBase
                     array($searchDocumentType)
                 );
 
-                $this->getApplyOperation()->createJob(array($subject), $queueName, $jobOptions);
+                $subjects[] = $subject;
+                // Queue ApplyOperations jobs in batches rather than individually
+                if (count($subjects) >= $this->getConfigInstance()->getBatchSize(OP_SEARCH)) {
+                    $this->queueApplyJob($subjects, $queueName, $jobOptions);
+                    $subjects = [];
+                }
             } else {
                 $this->generateAndIndexSearchDocuments(
                     $doc[_ID_KEY][_ID_RESOURCE],
@@ -245,13 +239,17 @@ class SearchIndexer extends CompositeBase
             }
         }
 
+        if (!empty($subjects)) {
+            $this->queueApplyJob($subjects, $queueName, $jobOptions);
+        }
+
         $t->stop();
         $this->timingLog(MONGO_CREATE_TABLE, array(
             'type'=>$spec['type'],
             'duration'=>$t->result(),
             'filter'=>$filter,
             'from'=>$from));
-        $this->getStat()->timer(MONGO_CREATE_SEARCH_DOC.".$searchDocumentType",$t->result());
+        $this->getStat()->timer(MONGO_CREATE_SEARCH_DOC.".$searchDocumentType", $t->result());
 
         $stat = ['count' => $count];
         if (isset($jobOptions[ApplyOperation::TRACKING_KEY])) {
@@ -265,7 +263,7 @@ class SearchIndexer extends CompositeBase
      * @param string $context
      * @return array|mixed
      */
-    public function findImpactedComposites(Array $resourcesAndPredicates, $context)
+    public function findImpactedComposites(array $resourcesAndPredicates, $context)
     {
         return $this->getSearchProvider()->findImpactedDocuments($resourcesAndPredicates, $context);
     }
@@ -276,7 +274,7 @@ class SearchIndexer extends CompositeBase
      */
     public function deleteSearchDocumentsByTypeId($typeId)
     {
-    	return $this->getSearchProvider()->deleteSearchDocumentsByTypeId($typeId);
+        return $this->getSearchProvider()->deleteSearchDocumentsByTypeId($typeId);
     }
 
 
@@ -293,7 +291,7 @@ class SearchIndexer extends CompositeBase
      * @param string $context
      * @return \Tripod\Mongo\SearchDocuments
      */
-    protected function getSearchDocumentGenerator(Collection $collection, $context )
+    protected function getSearchDocumentGenerator(Collection $collection, $context)
     {
         return new \Tripod\Mongo\SearchDocuments($this->storeName, $collection, $context, $this->tripod->getStat());
     }
@@ -302,14 +300,38 @@ class SearchIndexer extends CompositeBase
      * @param array $input
      * @return array
      */
-    protected function deDupe(Array $input)
+    protected function deDupe(array $input)
     {
-        $output = array();
-        foreach($input as $i){
-            if(!in_array($i, $output)){
+        $output = [];
+        foreach ($input as $i) {
+            if (!in_array($i, $output)) {
                 $output[] = $i;
             }
         }
         return $output;
+    }
+
+    /**
+     * For mocking
+     *
+     * @param Driver                        $tripod Mongo Tripod Driver
+     * @param \Tripod\Mongo\IConfigInstance $config Mongo Tripod ConfigInstance
+     * @return void
+     * @throws \Tripod\Exceptions\SearchException If provider class cannot be found
+     */
+    protected function setSearchProvider(Driver $tripod, \Tripod\Mongo\IConfigInstance $config = null)
+    {
+        if (is_null($config)) {
+            $config = $this->getConfigInstance();
+        }
+
+        $provider = $config->getSearchProviderClassName($tripod->getStoreName());
+        if (class_exists($provider)) {
+            $this->configuredProvider = new $provider($tripod);
+        } else {
+            throw new \Tripod\Exceptions\SearchException(
+                "Did not recognise Search Provider, or could not find class: $provider"
+            );
+        }
     }
 }

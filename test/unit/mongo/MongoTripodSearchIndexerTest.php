@@ -13,8 +13,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
         parent::setUp();
 
         $this->tripod = new \Tripod\Mongo\Driver("CBD_testing", "tripod_php_testing", array("async"=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>false)));
-        foreach(\Tripod\Config::getInstance()->getCollectionsForSearch($this->tripod->getStoreName()) as $collection)
-        {
+        foreach (\Tripod\Config::getInstance()->getCollectionsForSearch($this->tripod->getStoreName()) as $collection) {
             $collection->drop();
         }
         $this->loadResourceDataViaTripod();
@@ -499,4 +498,85 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
         $this->assertEquals($expectedImpactedSubjects, $impactedSubjects);
     }
 
+    public function testBatchSearchDocumentsGeneration()
+    {
+        $count = 234;
+        $docs = [];
+
+        $configOptions = json_decode(file_get_contents(__DIR__ . '/data/config.json'), true);
+
+        for ($i = 0; $i < $count; $i++) {
+            $docs[] = ['_id' => ['r' => 'tenantLists:batch' . $i, 'c' => 'tenantContexts:DefaultGraph']];
+        }
+
+        $fakeCursor = new ArrayIterator($docs);
+        /** @var \PHPUnit_Framework_MockObject_MockObject|TripodTestConfig $configInstance */
+        $configInstance = $this->getMockBuilder('TripodTestConfig')
+            ->setMethods(['getCollectionForCBD'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $configInstance->loadConfig($configOptions);
+
+        /** @var \PHPUnit_Framework_MockObject_MockObject|\MongoDB\Collection $collection */
+        $collection = $this->getMockBuilder('\MongoDB\Collection')
+            ->setMethods(['count', 'find'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $collection->expects($this->atLeastOnce())->method('count')->willReturn($count);
+        $collection->expects($this->atLeastOnce())->method('find')->willReturn($fakeCursor);
+
+        /** @var \PHPUnit_Framework_MockObject_MockObject|\Tripod\Mongo\JobGroup $jobGroup */
+        $jobGroup = $this->getMockBuilder('\Tripod\Mongo\JobGroup')
+            ->setMethods(['setJobCount'])
+            ->setConstructorArgs(['tripod_php_testing'])
+            ->getMock();
+        $jobGroup->expects($this->once())->method('setJobCount')->with($count);
+
+        $configInstance->expects($this->atLeastOnce())->method('getCollectionForCBD')->willReturn($collection);
+        /** @var \PHPUnit_Framework_MockObject_MockObject|\Tripod\Mongo\Driver $tripod */
+        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
+            ->setMethods(['getConfigInstance',])
+            ->setConstructorArgs(['tripod_php_testing', 'CBD_testing'])
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        /** @var \PHPUnit_Framework_MockObject_MockObject|\Tripod\Mongo\Composites\SearchIndexer $search */
+        $search = $this->getMockBuilder('\Tripod\Mongo\Composites\SearchIndexer')
+            ->setMethods(['setSearchProvider', 'getConfigInstance', 'queueApplyJob', 'getJobGroup'])
+            ->setConstructorArgs([$tripod])
+            ->getMock();
+        $search->expects($this->atLeastOnce())->method('getConfigInstance')->willReturn($configInstance);
+        $search->expects($this->once())->method('getJobGroup')->willReturn($jobGroup);
+        $search->expects($this->exactly(3))->method('queueApplyJob')
+            ->withConsecutive(
+                [
+                    $this->logicalAnd(
+                        $this->isType('array'),
+                        $this->containsOnlyInstancesOf('\Tripod\Mongo\ImpactedSubject'),
+                        $this->countOf(100)
+                    ),
+                    'TESTQUEUE',
+                    $this->isType('array')
+                ],
+                [
+                    $this->logicalAnd(
+                        $this->isType('array'),
+                        $this->containsOnlyInstancesOf('\Tripod\Mongo\ImpactedSubject'),
+                        $this->countOf(100)
+                    ),
+                    'TESTQUEUE',
+                    $this->isType('array')
+                ],
+                [
+                    $this->logicalAnd(
+                        $this->isType('array'),
+                        $this->containsOnlyInstancesOf('\Tripod\Mongo\ImpactedSubject'),
+                        $this->countOf(34)
+                    ),
+                    'TESTQUEUE',
+                    $this->isType('array')
+                ]
+            );
+        $search->generateSearchDocuments('i_search_list', null, null, 'TESTQUEUE');
+    }
 }

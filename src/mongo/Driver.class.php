@@ -61,7 +61,7 @@ class Driver extends DriverBase implements \Tripod\IDriver
      * <li>readPreference: The Read preference to set for Mongo: Default is ReadPreference::RP_PRIMARY_PREFERRED</li>
      * <li>retriesToGetLock: Retries to do when unable to get lock on a document, default is 20</li></ul>
      */
-    public function __construct($podName, $storeName, $opts=array())
+    public function __construct($podName, $storeName, $opts = [])
     {
 
         $opts = array_merge(array(
