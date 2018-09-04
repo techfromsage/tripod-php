@@ -10,7 +10,6 @@ require_once TRIPOD_DIR . 'exceptions/SearchException.class.php';
 use Tripod\Mongo\ImpactedSubject;
 use Tripod\Mongo\Labeller;
 use Tripod\Mongo\Jobs\ApplyOperation;
-use Tripod\Mongo\JobGroup;
 use \MongoDB\Driver\ReadPreference;
 use \MongoDB\Collection;
 use Tripod\Mongo\Config;
@@ -225,6 +224,7 @@ class SearchIndexer extends CompositeBase
                 );
 
                 $subjects[] = $subject;
+                // Queue ApplyOperations jobs in batches rather than individually
                 if (count($subjects) >= $this->getConfigInstance()->getBatchSize(OP_SEARCH)) {
                     $this->queueApplyJob($subjects, $queueName, $jobOptions);
                     $subjects = [];
@@ -314,11 +314,12 @@ class SearchIndexer extends CompositeBase
     /**
      * For mocking
      *
-     * @param Driver $tripod Mongo Tripod Driver
-     * @param Config $config Mongo Tripod ConfigInstance
+     * @param Driver                        $tripod Mongo Tripod Driver
+     * @param \Tripod\Mongo\IConfigInstance $config Mongo Tripod ConfigInstance
      * @return void
+     * @throws \Tripod\Exceptions\SearchException If provider class cannot be found
      */
-    protected function setSearchProvider(Driver $tripod, Config $config = null)
+    protected function setSearchProvider(Driver $tripod, \Tripod\Mongo\IConfigInstance $config = null)
     {
         if (is_null($config)) {
             $config = $this->getConfigInstance();

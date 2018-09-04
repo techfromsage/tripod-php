@@ -13,8 +13,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
         parent::setUp();
 
         $this->tripod = new \Tripod\Mongo\Driver("CBD_testing", "tripod_php_testing", array("async"=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>false)));
-        foreach(\Tripod\Config::getInstance()->getCollectionsForSearch($this->tripod->getStoreName()) as $collection)
-        {
+        foreach (\Tripod\Config::getInstance()->getCollectionsForSearch($this->tripod->getStoreName()) as $collection) {
             $collection->drop();
         }
         $this->loadResourceDataViaTripod();
@@ -511,7 +510,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
         }
 
         $fakeCursor = new ArrayIterator($docs);
-        /** @var \PHPUnit_Framework_MockObject_MockObject|TripodTestConfig $config */
+        /** @var \PHPUnit_Framework_MockObject_MockObject|TripodTestConfig $configInstance */
         $configInstance = $this->getMockBuilder('TripodTestConfig')
             ->setMethods(['getCollectionForCBD'])
             ->disableOriginalConstructor()

@@ -15,8 +15,6 @@ abstract class CompositeBase extends \Tripod\Mongo\DriverBase implements \Tripod
      */
     protected $applyOperation;
 
-    protected $batchSize = 1;
-
     /**
      * Returns an array of ImpactedSubjects based on the subjects and predicates of change
      * @param array $subjectsAndPredicatesOfChange

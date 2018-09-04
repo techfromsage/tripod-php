@@ -328,7 +328,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         }
 
         $fakeCursor = new ArrayIterator($docs);
-        /** @var \PHPUnit_Framework_MockObject_MockObject|TripodTestConfig $config */
+        /** @var \PHPUnit_Framework_MockObject_MockObject|TripodTestConfig $configInstance */
         $configInstance = $this->getMockBuilder('TripodTestConfig')
             ->setMethods(['getCollectionForTable', 'getCollectionForCBD'])
             ->disableOriginalConstructor()

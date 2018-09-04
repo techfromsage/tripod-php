@@ -7,7 +7,6 @@ require_once TRIPOD_DIR . 'mongo/MongoTripodConstants.php';
 use \Tripod\Mongo\Jobs\ApplyOperation;
 use \Tripod\Mongo\ImpactedSubject;
 use \Tripod\Mongo\Labeller;
-use \Tripod\Mongo\JobGroup;
 use \MongoDB\Driver\ReadPreference;
 use \MongoDB\Collection;
 

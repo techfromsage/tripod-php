@@ -7,7 +7,6 @@ use \Tripod\Mongo\ImpactedSubject;
 use \Tripod\Mongo\Labeller;
 use \MongoDB\Driver\ReadPreference;
 use \MongoDB\Collection;
-use Tripod\Mongo\JobGroup;
 
 /**
  * Class Views
