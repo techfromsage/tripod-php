@@ -282,6 +282,14 @@ interface IConfigInstance extends \Tripod\ITripodConfigSerializer
     public function getTransactionLogDatabase($readPreference = ReadPreference::RP_PRIMARY_PREFERRED);
 
     /**
+     * Return the maximum batch size for async operations
+     *
+     * @param string $operation Async operation, e.g. OP_TABLES, OP_VIEWS
+     * @return integer
+     */
+    public function getBatchSize($operation);
+
+    /**
      * @return string
      */
     public static function getDiscoverQueueName();

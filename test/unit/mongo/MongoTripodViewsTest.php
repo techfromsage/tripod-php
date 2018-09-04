@@ -2276,4 +2276,135 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
 
         $this->assertEquals(30, $views->deleteViewsByViewId('v_resource_full', $timestamp));
     }
+
+    public function testBatchViewGeneration()
+    {
+        $count = 234;
+        $docs = [];
+
+        $configOptions = json_decode(file_get_contents(__DIR__ . '/data/config.json'), true);
+
+        for ($i = 0; $i < $count; $i++) {
+            $docs[] = ['_id' => ['r' => 'tenantLists:batch' . $i, 'c' => 'tenantContexts:DefaultGraph']];
+        }
+
+        $fakeCursor = new ArrayIterator($docs);
+        /** @var \PHPUnit_Framework_MockObject_MockObject|TripodTestConfig $configInstance */
+        $configInstance = $this->getMockBuilder('TripodTestConfig')
+            ->setMethods(['getCollectionForView', 'getCollectionForCBD'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $configInstance->loadConfig($configOptions);
+
+        /** @var \PHPUnit_Framework_MockObject_MockObject|\MongoDB\Collection $collection */
+        $collection = $this->getMockBuilder('\MongoDB\Collection')
+            ->setMethods(['count', 'find'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $collection->expects($this->atLeastOnce())->method('count')->willReturn($count);
+        $collection->expects($this->atLeastOnce())->method('find')->willReturn($fakeCursor);
+
+        $configInstance->expects($this->atLeastOnce())->method('getCollectionForCBD')->willReturn($collection);
+
+        /** @var \PHPUnit_Framework_MockObject_MockObject|\Tripod\Mongo\Composites\Views $views */
+        $views = $this->getMockBuilder('\Tripod\Mongo\Composites\Views')
+            ->setMethods(['getConfigInstance', 'queueApplyJob'])
+            ->setConstructorArgs(['tripod_php_testing', $collection, 'tenantContexts:DefaultGraph'])
+            ->getMock();
+        $views->expects($this->atLeastOnce())->method('getConfigInstance')->willReturn($configInstance);
+        $views->expects($this->exactly(10))->method('queueApplyJob')
+            ->withConsecutive(
+                [
+                    $this->logicalAnd(
+                        $this->isType('array'),
+                        $this->containsOnlyInstancesOf('\Tripod\Mongo\ImpactedSubject'),
+                        $this->countOf(25)
+                    ),
+                    'TESTQUEUE',
+                    $this->isType('array')
+                ],
+                [
+                    $this->logicalAnd(
+                        $this->isType('array'),
+                        $this->containsOnlyInstancesOf('\Tripod\Mongo\ImpactedSubject'),
+                        $this->countOf(25)
+                    ),
+                    'TESTQUEUE',
+                    $this->isType('array')
+                ],
+                [
+                    $this->logicalAnd(
+                        $this->isType('array'),
+                        $this->containsOnlyInstancesOf('\Tripod\Mongo\ImpactedSubject'),
+                        $this->countOf(25)
+                    ),
+                    'TESTQUEUE',
+                    $this->isType('array')
+                ],
+                [
+                    $this->logicalAnd(
+                        $this->isType('array'),
+                        $this->containsOnlyInstancesOf('\Tripod\Mongo\ImpactedSubject'),
+                        $this->countOf(25)
+                    ),
+                    'TESTQUEUE',
+                    $this->isType('array')
+                ],
+                [
+                    $this->logicalAnd(
+                        $this->isType('array'),
+                        $this->containsOnlyInstancesOf('\Tripod\Mongo\ImpactedSubject'),
+                        $this->countOf(25)
+                    ),
+                    'TESTQUEUE',
+                    $this->isType('array')
+                ],
+                [
+                    $this->logicalAnd(
+                        $this->isType('array'),
+                        $this->containsOnlyInstancesOf('\Tripod\Mongo\ImpactedSubject'),
+                        $this->countOf(25)
+                    ),
+                    'TESTQUEUE',
+                    $this->isType('array')
+                ],
+                [
+                    $this->logicalAnd(
+                        $this->isType('array'),
+                        $this->containsOnlyInstancesOf('\Tripod\Mongo\ImpactedSubject'),
+                        $this->countOf(25)
+                    ),
+                    'TESTQUEUE',
+                    $this->isType('array')
+                ],
+                [
+                    $this->logicalAnd(
+                        $this->isType('array'),
+                        $this->containsOnlyInstancesOf('\Tripod\Mongo\ImpactedSubject'),
+                        $this->countOf(25)
+                    ),
+                    'TESTQUEUE',
+                    $this->isType('array')
+                ],
+                [
+                    $this->logicalAnd(
+                        $this->isType('array'),
+                        $this->containsOnlyInstancesOf('\Tripod\Mongo\ImpactedSubject'),
+                        $this->countOf(25)
+                    ),
+                    'TESTQUEUE',
+                    $this->isType('array')
+                ],
+                [
+                    $this->logicalAnd(
+                        $this->isType('array'),
+                        $this->containsOnlyInstancesOf('\Tripod\Mongo\ImpactedSubject'),
+                        $this->countOf(9)
+                    ),
+                    'TESTQUEUE',
+                    $this->isType('array')
+                ]
+            );
+        $views->generateView('v_resource_full', null, null, 'TESTQUEUE');
+    }
 }
