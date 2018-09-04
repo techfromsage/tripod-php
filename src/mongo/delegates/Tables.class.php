@@ -256,9 +256,13 @@ class Tables extends CompositeBase
             $options
         );
 
-        $filter["_id." . _ID_TYPE] = $tableSpecId;
+        $filter['_id.' . _ID_TYPE] = $tableSpecId;
 
-        $collection = $this->config->getCollectionForTable($this->storeName, $tableSpecId, $this->readPreference);
+        $collection = $this->getConfigInstance()->getCollectionForTable(
+            $this->storeName,
+            $tableSpecId,
+            $this->readPreference
+        );
 
         $findOptions = [];
         if (!empty($limit)) {
@@ -281,7 +285,10 @@ class Tables extends CompositeBase
         $results->setTypeMap(['root' => $options['documentType'], 'document' => 'array', 'array' => 'array']);
 
         $t->stop();
-        $this->timingLog(MONGO_TABLE_ROWS, array('duration'=>$t->result(), 'query'=>$filter, 'collection'=>TABLE_ROWS_COLLECTION));
+        $this->timingLog(
+            MONGO_TABLE_ROWS,
+            ['duration' => $t->result(), 'query' => $filter, 'collection' => TABLE_ROWS_COLLECTION]
+        );
         $this->getStat()->timer(MONGO_TABLE_ROWS . ".$tableSpecId", $t->result());
 
         return [
