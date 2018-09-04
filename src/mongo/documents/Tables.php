@@ -4,6 +4,10 @@ namespace Tripod\Mongo\Documents;
 
 class Tables extends \MongoDB\Model\BSONDocument
 {
+    public function __construct(array $input = [])
+    {
+        parent::__construct($this->toTableRow($input));
+    }
     /**
      * Sets the array value to the modeled table row value
      *
