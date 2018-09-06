@@ -1863,7 +1863,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
                 'name' => 'Psychology: Living with The Voices',
                 'description' => 'Professor Deadpool will attempt to give you the ability to embrace your mental disorder and use it to your advantage. Whether you suffer from Schizophrenia, Dissociative Identity Disorder or plain old Comic Awareness, Wade Wilson has probably suffered through it himself. And while Deadpool can\'t solve your problem, he can teach you how to make it one of your most marketable qualities.',
                 'parentCode' => 'XMEN-001',
-                'parentNodeUrl' => 'http://life.ac.uk/schools/xmen-001',
+                'parentNodeUrl' => 'http://talis.com/schools/xmen-001',
                 'listCount' => 0,
                 'type' => 'Module',
                 'hasLinkedLists' => 'false'
