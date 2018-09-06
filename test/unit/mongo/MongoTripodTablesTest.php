@@ -1839,4 +1839,70 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         $this->assertEquals(11, $tables->deleteTableRowsByTableId('t_source_count', $timestamp));
     }
+
+    public function testTablesDocuments()
+    {
+        $dbDoc = [
+            '_id' => [
+                'r' => 'http://talis.com/modules/xmen-004',
+                'c' => 'tenantContexts:DefaultGraph',
+                'type' => 't_report_hierarchy'
+            ],
+            '_cts' => new \MongoDB\BSON\UTCDateTime(1535454036),
+            'value' => [
+                '_id' => [
+                    'r' => 'http://talis.com/modules/xmen-004',
+                    'c' => 'tenantContexts:DefaultGraph'
+                ],
+                '_impactIndex' => [
+                    [ 'r' => 'http://talis.com/modules/xmen-004', 'c' => 'tenantContexts:DefaultGraph' ],
+                    [ 'r' => 'http://talis.com/schools/xmen-001', 'c' => 'tenantContexts:DefaultGraph' ]
+                ],
+                'code' => 'XMEN-004',
+                'nodeUrl' => 'http://talis.com/modules/xmen-004',
+                'name' => 'Psychology: Living with The Voices',
+                'description' => 'Professor Deadpool will attempt to give you the ability to embrace your mental disorder and use it to your advantage. Whether you suffer from Schizophrenia, Dissociative Identity Disorder or plain old Comic Awareness, Wade Wilson has probably suffered through it himself. And while Deadpool can\'t solve your problem, he can teach you how to make it one of your most marketable qualities.',
+                'parentCode' => 'XMEN-001',
+                'parentNodeUrl' => 'http://life.ac.uk/schools/xmen-001',
+                'listCount' => 0,
+                'type' => 'Module',
+                'hasLinkedLists' => 'false'
+            ]
+        ];
+        $doc = new \Tripod\Mongo\Documents\Tables();
+        $this->assertInstanceOf('MongoDB\Model\BSONDocument', $doc);
+        $this->assertEquals([], $doc->getArrayCopy());
+        $doc = new \Tripod\Mongo\Documents\Tables($dbDoc);
+        $this->assertEquals('XMEN-004', $doc['code']);
+        $this->assertEquals('http://talis.com/modules/xmen-004', $doc['_id']['r']);
+        $this->assertArrayNotHasKey('_cts', $doc);
+        $this->assertArrayNotHasKey('_impactIndex', $doc);
+        $this->assertArrayNotHasKey('type', $doc['_id']);
+    }
+
+    public function testGetTableRowsNoCount()
+    {
+        $this->tripodTables->generateTableRows('t_resource');
+
+        $tableRows = $this->tripodTables->getTableRows('t_resource', [], [], 0, 1, ['includeCount' => false]);
+
+        $this->assertCount(1, $tableRows['results']);
+        $this->assertEquals(-1, $tableRows['head']['count']);
+    }
+
+    public function testGetTableRowsReturnCursor()
+    {
+        $this->tripodTables->generateTableRows('t_resource');
+
+        $tableRows = $this->tripodTables->getTableRows('t_resource', [], [], 0, 1, ['returnCursor' => true]);
+
+        $this->assertInstanceOf('\MongoDB\Driver\Cursor', $tableRows['results']);
+        $count = 0;
+        foreach ($tableRows['results'] as $result) {
+            $this->assertInstanceOf('\Tripod\Mongo\Documents\Tables', $result);
+            $count++;
+        }
+        $this->assertEquals(1, $count);
+        $this->assertGreaterThan(1, $tableRows['head']['count']);
+    }
 }

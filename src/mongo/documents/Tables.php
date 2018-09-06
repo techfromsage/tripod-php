@@ -28,8 +28,8 @@ class Tables extends \MongoDB\Model\BSONDocument
     protected function toTableRow(array $doc)
     {
         $result = isset($doc['value']) ? $doc['value'] : [];
-        if (isset($result['value'][_IMPACT_INDEX])) {
-            unset($result['value'][_IMPACT_INDEX]);
+        if (isset($result[_IMPACT_INDEX])) {
+            unset($result[_IMPACT_INDEX]);
         }
         return $result;
     }
