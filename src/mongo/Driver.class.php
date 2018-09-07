@@ -199,9 +199,22 @@ class Driver extends DriverBase implements \Tripod\IDriver
      * @param int $limit
      * @return array
      */
-    public function getTableRows($tableType, $filter = array(), $sortBy = array(), $offset = 0, $limit = 10)
-    {
-        return $this->getTripodTables()->getTableRows($tableType,$filter,$sortBy,$offset,$limit);
+    public function getTableRows(
+        $tableType,
+        array $filter = [],
+        array $sortBy = [],
+        $offset = 0,
+        $limit = 10,
+        array $options = []
+    ) {
+        return $this->getTripodTables()->getTableRows(
+            $tableType,
+            $filter,
+            $sortBy,
+            $offset,
+            $limit,
+            $options
+        );
     }
 
     /**

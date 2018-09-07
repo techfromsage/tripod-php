@@ -82,9 +82,17 @@ interface IDriver
      * @param array $sortBy
      * @param int $offset
      * @param int $limit
+     * @param array $options
      * @return array
      */
-    public function getTableRows($tableType,$filter=array(),$sortBy=array(),$offset=0,$limit=10);
+    public function getTableRows(
+        $tableType,
+        array $filter = [],
+        array $sortBy = [],
+        $offset = 0,
+        $limit = 10,
+        array $options = []
+    );
 
     /**
      * todo: work out what this does

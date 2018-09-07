@@ -233,45 +233,72 @@ class Tables extends CompositeBase
      * @param array $sortBy
      * @param int $offset
      * @param int $limit
+     * @param array $options Table query options
      * @return array
      */
-    public function getTableRows($tableSpecId,$filter=[],$sortBy=[],$offset=0,$limit=10)
-    {
+    public function getTableRows(
+        $tableSpecId,
+        array $filter = [],
+        array $sortBy = [],
+        $offset = 0,
+        $limit = 10,
+        array $options = []
+    ) {
         $t = new \Tripod\Timer();
         $t->start();
 
-        $filter["_id." . _ID_TYPE] = $tableSpecId;
+        $options = array_merge(
+            [
+                'returnCursor' => false,
+                'includeCount' => true,
+                'documentType' => '\Tripod\Mongo\Documents\Tables'
+            ],
+            $options
+        );
 
-        $collection = $this->config->getCollectionForTable($this->storeName, $tableSpecId, $this->readPreference);
+        $filter['_id.' . _ID_TYPE] = $tableSpecId;
+
+        $collection = $this->getConfigInstance()->getCollectionForTable(
+            $this->storeName,
+            $tableSpecId,
+            $this->readPreference
+        );
 
         $findOptions = [];
         if (!empty($limit)) {
-           $findOptions['skip'] = (int) $offset;
-           $findOptions['limit'] = (int) $limit;
+            $findOptions['skip'] = (int) $offset;
+            $findOptions['limit'] = (int) $limit;
         }
         if (isset($sortBy)) {
             $findOptions['sort'] = $sortBy;
         }
+
         $results = $collection->find($filter, $findOptions);
 
-        $rows = [];
-        foreach ($results as $doc)
-        {
-            if (array_key_exists(_IMPACT_INDEX,$doc['value'])) unset($doc['value'][_IMPACT_INDEX]); // remove impact index from client
-            $rows[] = $doc['value'];
+        if ($options['includeCount']) {
+            $count = $collection->count($filter);
+        } else {
+            $count = -1;
         }
 
-        $t->stop();
-        $this->timingLog(MONGO_TABLE_ROWS, array('duration'=>$t->result(), 'query'=>$filter, 'collection'=>TABLE_ROWS_COLLECTION));
-        $this->getStat()->timer(MONGO_TABLE_ROWS.".$tableSpecId",$t->result());
 
-        return array(
-            "head"=>array(
-                "count" => $collection->count($filter),
-                "offset"=>$offset,
-                "limit"=>$limit
-            ),
-            "results"=>$rows);
+        $results->setTypeMap(['root' => $options['documentType'], 'document' => 'array', 'array' => 'array']);
+
+        $t->stop();
+        $this->timingLog(
+            MONGO_TABLE_ROWS,
+            ['duration' => $t->result(), 'query' => $filter, 'collection' => TABLE_ROWS_COLLECTION]
+        );
+        $this->getStat()->timer(MONGO_TABLE_ROWS . ".$tableSpecId", $t->result());
+
+        return [
+            'head' => [
+                'count' => $count,
+                'offset' => $offset,
+                'limit' => $limit
+            ],
+            'results' => $options['returnCursor'] ? $results : $results->toArray()
+        ];
     }
 
     /**
