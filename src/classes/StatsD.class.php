@@ -104,6 +104,8 @@ class StatsD implements ITripodStat
             {
                 $fp = fsockopen("udp://{$this->host}", $this->port);
                 if (! $fp) { return; }
+                // make this a non blocking stream
+                stream_set_blocking($fp, false);
                 foreach ($sampledData as $stat => $value)
                 {
                     if (is_array($value))
