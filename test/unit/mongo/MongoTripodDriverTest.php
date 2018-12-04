@@ -2204,7 +2204,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $resourceUri = "http://talisaspire.com/resources/nadeem";
 
         $nG = new \Tripod\Mongo\MongoGraph();
-        $nG->add_literal_triple($resourceUri, $oG->qname_to_uri("bibo:isbn13"), "9780393929690");
+        $nG->add_literal_triple($resourceUri, $nG->qname_to_uri("bibo:isbn13"), "9780393929690");
         $oG = new \Tripod\Mongo\MongoGraph();
 
         $this->tripod->saveChanges($oG, $nG, "http://talisaspire.com/", 'my changes');
@@ -2212,7 +2212,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $originalEtag = $this->tripod->getETag($resourceUri);
 
         $nG = new \Tripod\Mongo\MongoGraph();
-        $nG->add_literal_triple($resourceUri, $oG->qname_to_uri("bibo:isbn10"), "9780393929690");
+        $nG->add_literal_triple($resourceUri, $nG->qname_to_uri("bibo:isbn10"), "9780393929690");
         $oG = new \Tripod\Mongo\MongoGraph();
 
         $this->tripod->saveChanges($oG, $nG, "http://talisaspire.com/", 'updated changes');
