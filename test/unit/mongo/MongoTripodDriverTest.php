@@ -2219,7 +2219,12 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $updatedEtag = $this->tripod->getETag($resourceUri);
 
         $updatedGraph = $this->tripod->describeResource($resourceUri);
-        echo "Updated Graph: \n" . $updatedGraph->to_rdfxml() . "\n";
+        echo "Updated Graph: \n" . $updatedGraph->to_rdfxml() . "\n\n";
+        echo "Document: \n" . print_r($this->getDocumentForUpdate($resourceUri), true) . "\n";
+        echo "Original ETag: " . $originalEtag . "\n";
+        echo "Updated ETag: " . $updatedEtag . "\n";
+
+
 
         $this->assertNotEquals($updatedEtag, $originalEtag);
     }
