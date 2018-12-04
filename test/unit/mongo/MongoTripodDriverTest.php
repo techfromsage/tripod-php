@@ -2199,6 +2199,31 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $this->assertRegExp('/^0.[0-9]{8} [0-9]{10}/', $tripod->getETag($_id['r']));
     }
 
+    public function testEtagIsUpdatedAfterSave()
+    {
+        $resourceUri = "http://talisaspire.com/resources/nadeem";
+
+        $nG = new \Tripod\Mongo\MongoGraph();
+        $nG->add_literal_triple($resourceUri, $oG->qname_to_uri("bibo:isbn13"), "9780393929690");
+        $oG = new \Tripod\Mongo\MongoGraph();
+
+        $this->tripod->saveChanges($oG, $nG, "http://talisaspire.com/", 'my changes');
+
+        $originalEtag = $this->tripod->getETag($resourceUri);
+
+        $nG = new \Tripod\Mongo\MongoGraph();
+        $nG->add_literal_triple($resourceUri, $oG->qname_to_uri("bibo:isbn10"), "9780393929690");
+        $oG = new \Tripod\Mongo\MongoGraph();
+
+        $this->tripod->saveChanges($oG, $nG, "http://talisaspire.com/", 'updated changes');
+        $updatedEtag = $this->tripod->getETag($resourceUri);
+
+        $updatedGraph = $this->tripod->describeResource($resourceUri);
+        echo "Updated Graph: \n" . $updatedGraph->to_rdfxml() . "\n";
+
+        $this->assertNotEquals($updatedEtag, $originalEtag);
+    }
+
     /** END: getETag tests */
 }
 class TestSaveChangesHookA implements \Tripod\IEventHook
