@@ -96,7 +96,7 @@ abstract class MongoTripodTestBase extends PHPUnit_Framework_TestCase
 
         $className = get_class($this);
         $testName = $this->getName();
-        echo "Test: {$className}->{$testName}\n";
+        echo " Test: {$className}->{$testName}\n";
 
         // make sure log statements don't go to stdout during tests...
         $log = new \Monolog\Logger("unittest");

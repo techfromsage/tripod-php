@@ -20,7 +20,7 @@ class ExtendedGraphTest extends PHPUnit_Framework_TestCase
     {
         $className = get_class($this);
         $testName = $this->getName();
-        echo "\nTest: {$className}->{$testName}\n";
+        echo " Test: {$className}->{$testName}\n";
     }
 
     /**
