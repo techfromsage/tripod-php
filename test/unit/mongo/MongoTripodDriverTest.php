@@ -2223,7 +2223,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         echo "Updated Graph: \n" . $updatedGraph->to_rdfxml() . "\n\n";
         echo "Document: \n" . print_r($this->getDocument($resourceUri), true) . "\n";
         echo "Original ETag: " . $originalEtag . "\n";
-        echo "Updated ETag: " . $updatedEtag . "\n";
+        echo "Updated ETag: " . $updatedEtag . "\n\n";
 
         // this should fail but on travis ci it's so slow it's not working.
         $this->assertNotEquals($updatedEtag, $originalEtag);
@@ -2237,14 +2237,51 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         return $eTag;
     }
 
-    public function testETagAlgorithm()
+    public function testETagAlgorithm10Millis()
     {
         $originalEtag = $this->getETag();
         usleep(10000);
         $secondEtag = $this->getETag();
 
-        echo "First ETag: " . $originalEtag . "\n";
-        echo "Second ETag (10 millisecond later): " . $secondEtag . "\n";
+        echo "First  ETag: " . $originalEtag . "\n";
+        echo "  (10millis)\n";
+        echo "Second ETag: " . $secondEtag . "\n\n";
+        $this->assertNotEquals($originalEtag, $secondEtag);
+    }
+
+    public function testETagAlgorithm100Millis()
+    {
+        $originalEtag = $this->getETag();
+        usleep(100000);
+        $secondEtag = $this->getETag();
+
+        echo "First  ETag: " . $originalEtag . "\n";
+        echo " (100millis)\n";
+        echo "Second ETag: " . $secondEtag . "\n\n";
+        $this->assertNotEquals($originalEtag, $secondEtag);
+    }
+
+    public function testETagAlgorithm250Millis()
+    {
+        $originalEtag = $this->getETag();
+        usleep(250000);
+        $secondEtag = $this->getETag();
+
+        echo "First  ETag: " . $originalEtag . "\n";
+        echo " (250millis)\n";
+        echo "Second ETag: " . $secondEtag . "\n\n";
+        $this->assertNotEquals($originalEtag, $secondEtag);
+    }
+
+    public function testETagAlgorithm500Millis()
+    {
+        $originalEtag = $this->getETag();
+        usleep(500000);
+        $secondEtag = $this->getETag();
+
+        echo "First  ETag: " . $originalEtag . "\n";
+        echo " (500millis)\n";
+        echo "Second ETag: " . $secondEtag . "\n\n";
         $this->assertNotEquals($originalEtag, $secondEtag);
     }
 
