@@ -2240,11 +2240,11 @@ class MongoTripodDriverTest extends MongoTripodTestBase
     public function testETagAlgorithm()
     {
         $originalEtag = $this->getETag();
-        sleep(1);
+        usleep(10000);
         $secondEtag = $this->getETag();
 
         echo "First ETag: " . $originalEtag . "\n";
-        echo "Second ETag (1 second later): " . $secondEtag . "\n";
+        echo "Second ETag (10 millisecond later): " . $secondEtag . "\n";
         $this->assertNotEquals($originalEtag, $secondEtag);
     }
 
