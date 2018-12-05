@@ -6,6 +6,7 @@ require_once 'src/mongo/Driver.class.php';
 
 use \MongoDB\Driver\ReadPreference;
 use \MongoDB\BSON\ObjectId;
+use \MongoDB\BSON\UTCDateTime;
 
 /**
  * Class MongoTripodDriverTest
@@ -2224,9 +2225,27 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         echo "Original ETag: " . $originalEtag . "\n";
         echo "Updated ETag: " . $updatedEtag . "\n";
 
-
-
+        // this should fail but on travis ci it's so slow it's not working.
         $this->assertNotEquals($updatedEtag, $originalEtag);
+    }
+
+    protected function getETag() {
+        $time = microtime(true);
+        $lastUpdatedDate = new UTCDateTime($time);
+        $seconds = $lastUpdatedDate->__toString() / 1000;
+        $eTag = str_pad(number_format(($seconds - floor($seconds)), 6), 10, '0', STR_PAD_RIGHT) . ' ' . floor($seconds);
+        return $eTag;
+    }
+
+    public function testETagAlgorithm()
+    {
+        $originalEtag = $this->getETag();
+        sleep(1);
+        $secondEtag = $this->getETag();
+
+        echo "First ETag: " . $originalEtag . "\n";
+        echo "Second ETag (1 second later): " . $secondEtag . "\n";
+        $this->assertNotEquals($originalEtag, $secondEtag);
     }
 
     /** END: getETag tests */
