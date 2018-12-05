@@ -2285,6 +2285,30 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $this->assertNotEquals($originalEtag, $secondEtag);
     }
 
+    public function testETagAlgorithm1000Millis()
+    {
+        $originalEtag = $this->getETag();
+        usleep(1000000);
+        $secondEtag = $this->getETag();
+
+        echo "First  ETag: " . $originalEtag . "\n";
+        echo "(1000millis)\n";
+        echo "Second ETag: " . $secondEtag . "\n\n";
+        $this->assertNotEquals($originalEtag, $secondEtag);
+    }
+
+    public function testETagAlgorithm1500Millis()
+    {
+        $originalEtag = $this->getETag();
+        usleep(1500000);
+        $secondEtag = $this->getETag();
+
+        echo "First  ETag: " . $originalEtag . "\n";
+        echo "(1500millis)\n";
+        echo "Second ETag: " . $secondEtag . "\n\n";
+        $this->assertNotEquals($originalEtag, $secondEtag);
+    }
+
     /** END: getETag tests */
 }
 class TestSaveChangesHookA implements \Tripod\IEventHook
