@@ -251,24 +251,7 @@ class StatsD implements ITripodStat
      */
     protected function getStatsPaths()
     {
-        return(array_values(array_filter(array($this->getStoreStatPath(), $this->getAggregateStatPath()))));
-    }
-
-    /**
-     * @return null|string
-     */
-    protected function getStoreStatPath()
-    {
-        $path = null;
-        if(isset($this->pivotValue))
-        {
-            if(!empty($this->prefix))
-            {
-                $path = $this->prefix . '.';
-            }
-            $path .= STAT_CLASS . '.' . STAT_PIVOT_FIELD . '.' . $this->pivotValue;
-        }
-        return $path;
+        return(array_values(array_filter(array($this->getAggregateStatPath()))));
     }
 
     /**
