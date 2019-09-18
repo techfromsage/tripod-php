@@ -2048,8 +2048,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
             ->method("send")
             ->with(
                 array(
-                    "myapp.tripod.MONGO_GET_ETAG"=>"1|c",
-                    "myapp.tripod.group_by_db.tripod_php_testing.MONGO_GET_ETAG"=>"1|c"
+                    "myapp.tripod.MONGO_GET_ETAG"=>"1|c"
                 )
             );
 

@@ -76,7 +76,6 @@ class MongoTripodStatTest extends MongoTripodTestBase
             ->method('send')
             ->with(
                 array(
-                    STAT_CLASS.'.'.STAT_PIVOT_FIELD.'.wibble.FOO.BAR'=>'1|c',
                     STAT_CLASS.'.FOO.BAR'=>"1|c"
                 ),
                 1
@@ -112,7 +111,6 @@ class MongoTripodStatTest extends MongoTripodTestBase
             ->method('send')
             ->with(
                 array(
-                    'somePrefix.' . STAT_CLASS . '.' . STAT_PIVOT_FIELD . '.wibble.FOO.BAR'=>"5|c",
                     'somePrefix.' . STAT_CLASS.'.FOO.BAR'=>"5|c"
                 ),
                 1
@@ -147,7 +145,6 @@ class MongoTripodStatTest extends MongoTripodTestBase
             ->method('send')
             ->with(
                 array(
-                    STAT_CLASS . '.' . STAT_PIVOT_FIELD . '.wibble.FOO.BAR'=>array("1|c","1234|ms"),
                     STAT_CLASS . '.FOO.BAR'=>array("1|c","1234|ms")
                 ),
                 1
@@ -181,7 +178,6 @@ class MongoTripodStatTest extends MongoTripodTestBase
             ->method('send')
             ->with(
                 array(
-                    'somePrefix.' . STAT_CLASS . '.' . STAT_PIVOT_FIELD . '.wibble.FOO.BAR'=>array("1|c","4567|ms"),
                     'somePrefix.' . STAT_CLASS . '.FOO.BAR'=>array("1|c","4567|ms")
                 ),
                 1
@@ -216,7 +212,6 @@ class MongoTripodStatTest extends MongoTripodTestBase
             ->method('send')
             ->with(
                 array(
-                    STAT_CLASS. '.' . STAT_PIVOT_FIELD .'.wibble.FOO.BAR'=>"xyz|g",
                     STAT_CLASS.'.FOO.BAR'=>"xyz|g"
                 ),
                 1
@@ -251,7 +246,6 @@ class MongoTripodStatTest extends MongoTripodTestBase
             ->method('send')
             ->with(
                 array(
-                    'somePrefix.' . STAT_CLASS . '.' . STAT_PIVOT_FIELD . '.wibble.FOO.BAR'=>"abc|g",
                     'somePrefix.' . STAT_CLASS . '.FOO.BAR'=>"abc|g"
                 ),
                 1
