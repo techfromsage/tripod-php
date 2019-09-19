@@ -251,7 +251,7 @@ class StatsD implements ITripodStat
      */
     protected function getStatsPaths()
     {
-        return(array_values(array_filter(array($this->getAggregateStatPath()))));
+        return array_values(array_filter([$this->getAggregateStatPath()]));
     }
 
     /**
