@@ -1,6 +1,7 @@
 language: php
 sudo: required
 php:
+- 7.1
 - 7.0
 - 5.6
 - 5.5
@@ -15,7 +16,3 @@ before_install:
 install:
 - composer install
 script: ant
-notifications:
-  hipchat:
-    rooms:
-      secure: ZVAxv+jZawDdIgLyNERg8IkK3EPZNz04OKZeUrVj55clceDXPmpYv3TC/Gw/xuR19i52HGlqFlYDMNlfl689lzJE45rhabTwMNpAch8R7p5QAKUTCZOkIRfBKPTW68dSRndJf/Y6nsf0kSdKEdgSFCced3JchhvZrScPGBoSRaI=
