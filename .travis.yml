@@ -1,3 +1,8 @@
+dist: trusty
+addons:
+  apt:
+    packages:
+      ant
 language: php
 sudo: required
 php:
