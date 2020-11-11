@@ -50,7 +50,7 @@
         <echo>Installing composer...</echo>
         <exec executable="sh">
             <arg value="-c"/>
-            <arg value="curl -sS https://getcomposer.org/installer | php"/>
+            <arg value="curl -sS https://getcomposer.org/installer | php -- --version 1.10.17"/>
         </exec>
     </target>
 

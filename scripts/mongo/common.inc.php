@@ -13,7 +13,7 @@ foreach (array(__DIR__ . '/../../../../autoload.php', __DIR__ . '/../../vendor/a
 if (!defined('TRIPOD_COMPOSER_INSTALL')) {
     die(
         'You need to set up the project dependencies using the following commands:' . PHP_EOL .
-        'curl -sS https://getcomposer.org/installer | php' . PHP_EOL .
+        'curl -sS https://getcomposer.org/installer | php -- --version 1.10.17' . PHP_EOL .
         'php composer.phar install' . PHP_EOL
     );
 }
