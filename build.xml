@@ -28,10 +28,10 @@
         </exec>
 
         <!-- Update dependencies through Composer -->
-        <exec executable="php" failonerror="true">
+        <!-- <exec executable="php" failonerror="true">
             <arg value="composer.phar"/>
             <arg value="update"/>
-        </exec>
+        </exec> -->
 
     </target>
 
