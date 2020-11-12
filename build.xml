@@ -21,12 +21,6 @@
         <delete dir="${output.dir}" />
         <mkdir dir="${output.dir}" />
 
-        <!-- Check for updates to Composer -->
-        <exec executable="php" failonerror="true">
-            <arg value="composer.phar"/>
-            <arg value="self-update"/>
-        </exec>
-
         <!-- Install dependencies through Composer -->
         <exec executable="php" failonerror="true">
             <arg value="composer.phar"/>
