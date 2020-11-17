@@ -21,12 +21,6 @@
         <delete dir="${output.dir}" />
         <mkdir dir="${output.dir}" />
 
-        <!-- Check for updates to Composer -->
-        <exec executable="php" failonerror="true">
-            <arg value="composer.phar"/>
-            <arg value="self-update"/>
-        </exec>
-
         <!-- Install dependencies through Composer -->
         <exec executable="php" failonerror="true">
             <arg value="composer.phar"/>
@@ -50,7 +44,7 @@
         <echo>Installing composer...</echo>
         <exec executable="sh">
             <arg value="-c"/>
-            <arg value="curl -sS https://getcomposer.org/installer | php"/>
+            <arg value="curl -sS https://getcomposer.org/installer | php -- --version 1.10.17"/>
         </exec>
     </target>
 
