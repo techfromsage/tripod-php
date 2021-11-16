@@ -281,7 +281,7 @@ abstract class DriverBase
     public function timingLog($type, $params=null)
     {
         $type = "[PID " . getmypid() ."] " . $type;
-        $this->log(\Psr\Log\LogLevel::INFO,$type,$params); // todo: timing log is a bit weird. Should it infact go in a different channel? Is it just debug?
+        $this->log(\Psr\Log\LogLevel::DEBUG,$type,$params);
     }
 
     /**
