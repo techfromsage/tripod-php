@@ -2,7 +2,7 @@ version: 2.1
 executors:
   php55:
     docker: 
-      - image: php:7.0-cli
+      - image: cimg/php:5.6
       - image: rossfsinger/mongo-2.6.12
       - image: redis:latest
 commands:
