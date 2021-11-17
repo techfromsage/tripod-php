@@ -1,0 +1,41 @@
+version: 2.1
+executors:
+  php55:
+    docker: 
+      - image: php:5.5-cli:latest
+      - image: rossfsinger/mongo-2.6.12
+      - image: redis:latest
+commands:
+  install_composer:
+    description: installs composer
+    steps:
+      - run: php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+      - run: php -r "if (hash_file('sha384', 'composer-setup.php') === '906a84df04cea2aa72f40b5f787e49f22d4c2f19492ac310e8cba5b96ac8b64115ac402c8cd292b8a03482574915d1a8') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+      - run: php composer-setup.php
+      - run: php -r "unlink('composer-setup.php');"
+  install_php_mongo:
+    description: installs mongo pecl library
+    steps:
+      - run:
+        name: "Install php-mongodb"
+        command: pecl install mongodb-1.1.9      
+  install_composer_dependencies:
+    steps:
+      - run:
+        name "Install composer dependencies"
+        command: php composer.phar install     
+  unit_tests:
+    steps:
+      - run: ./vendor/bin/phpunit test/unit  
+      
+jobs:
+  build-55:
+    executor: php55
+    steps:
+      - checkout
+      - install_php_mongo
+      - install_composer
+      - install_composer_dependencies
+      - unit_tests
+
+

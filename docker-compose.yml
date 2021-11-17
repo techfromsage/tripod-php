@@ -1,4 +1,21 @@
-mongo:
-  image: rossfsinger/mongo-2.6.12:latest
-  ports:
-      - "27017:27017"
+version: "3.7"
+
+services:
+  php55:
+    image: php:5.5-cli:latest
+  php56:
+    image: php:5.6-cli:latest    
+  php70:
+    image: php:7.0-cli:latest        
+  php72:
+    image: php:7.2-cli:latest        
+  php74:
+    image: php:7.4-cli:latest        
+  php80:
+    image: php:8.0-cli:latest                    
+  php81:
+    image: php:8.1-cli:latest                        
+  mongo26:
+    image: rossfsinger/mongo-2.6.12:latest
+    ports:
+        - "27017:27017"
