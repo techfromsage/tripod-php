@@ -2,7 +2,7 @@ version: 2.1
 executors:
   linux:       
     docker:
-      - image: php:5.5-cli
+      - image: cimg/base:2020.01
       - image: rossfsinger/mongo-2.6.12
       - image: redis:latest
 commands:
@@ -11,9 +11,9 @@ commands:
     steps:
       - run: php -i
       - run: sudo apt-get update
-      - run: sudo apt-get install -y php-pear
-      - run: sudo pecl channel-update pecl.php.net
-      - run: sudo pecl install mongodb-1.1.9      
+      - run: sudo apt-get install -y php-mongodb
+      # - run: sudo pecl channel-update pecl.php.net
+      # - run: sudo pecl install mongodb-1.1.9      
   unit_tests:
     steps:
       - run: ./vendor/bin/phpunit test/unit  
