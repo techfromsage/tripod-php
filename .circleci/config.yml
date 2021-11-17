@@ -15,7 +15,7 @@ commands:
     steps:
       - run: ./vendor/bin/phpunit test/unit  
 orbs:
-  node: circleci/php@1.1.0
+  php: circleci/php@1.1.0
 
 jobs:
   test:
