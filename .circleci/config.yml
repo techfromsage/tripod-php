@@ -16,6 +16,7 @@ commands:
   install_php_mongo:
     description: installs mongo pecl library
     steps:
+      - run: pecl channel-update pecl.php.net
       - run: pecl install mongodb-1.1.9      
   install_composer_dependencies:
     steps:
