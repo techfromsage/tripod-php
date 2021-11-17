@@ -1,7 +1,8 @@
 version: 2.1
 executors:
-  linux:
+  linux:       
     docker:
+      - image: ubuntu-1604:202104-01 
       - image: cimg/base:2020.01
       - image: rossfsinger/mongo-2.6.12
       - image: redis:latest
@@ -22,7 +23,6 @@ jobs:
     parameters:
       php-version:
         type: string
-    machine: ubuntu-1604:202104-01
     executor: linux
     steps:
       - checkout
