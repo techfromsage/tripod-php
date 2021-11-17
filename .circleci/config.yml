@@ -10,7 +10,7 @@ commands:
     description: installs mongo pecl library
     steps:
       - run: sudo apt-get update
-      - run: sudo apt-get install php-pear
+      - run: sudo apt-get install -y php-pear
       - run: sudo pecl channel-update pecl.php.net
       - run: sudo pecl install mongodb-1.1.9      
   unit_tests:
