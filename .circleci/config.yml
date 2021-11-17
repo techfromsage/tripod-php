@@ -19,14 +19,14 @@ orbs:
 
 jobs:
   test:
-    parameters:
-      php-version:
-        type: string
+    # parameters:
+    #   php-version:
+    #     type: string
     executor: linux
     steps:
       - checkout
       - php/install-php:
-          version: << parameters.php-version >>      
+          version: 5.5
       - install_php_mongo
       - php/install-composer
       - php/install-packages
@@ -35,7 +35,5 @@ jobs:
 workflows:
   build_and_test:
     jobs:
-      - test:
-        php-version: 5.5
-        name: "PHP 5.5"
-
+      - test
+        # php-version: "5.5"
