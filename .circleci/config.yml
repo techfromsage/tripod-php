@@ -2,13 +2,14 @@ version: 2.1
 executors:
   linux:       
     docker:
-      - image: cimg/base:2020.01
+      - image: php:5.5-cli
       - image: rossfsinger/mongo-2.6.12
       - image: redis:latest
 commands:
   install_php_mongo:
     description: installs mongo pecl library
     steps:
+      - run: php -i
       - run: sudo apt-get update
       - run: sudo apt-get install -y php-pear
       - run: sudo pecl channel-update pecl.php.net
