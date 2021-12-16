@@ -4,9 +4,6 @@ executors:
     docker:
       - image: cimg/base:2021.04
 
-orbs: 
-  docker: circleci/docker@2.0.1
-
 commands:
   build:
     steps:
@@ -22,8 +19,6 @@ jobs:
   test:
     executor: linux
     steps:
-      - docker/install-docker-compose:
-        version: '1.29.2'
       - checkout
       - build
       - unit_tests
