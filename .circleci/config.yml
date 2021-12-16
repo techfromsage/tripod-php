@@ -2,7 +2,7 @@ version: 2.1
 executors:
   linux:       
     docker:
-      - image: docker:stable-git
+      - image: cimg/base:2021.04
       
 commands:
   unit_tests:
