@@ -20,6 +20,7 @@ jobs:
     executor: linux
     steps:
       - checkout
+      - setup_remote_docker
       - build
       - unit_tests
       - performance_tests
