@@ -2,7 +2,7 @@ version: 2.1
 executors:
   linux:       
     docker:
-      - image: cimg/base:2021.04
+      - image: cimg/base:2021.01
 
 commands:
   build:
