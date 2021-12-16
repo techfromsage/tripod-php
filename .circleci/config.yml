@@ -5,6 +5,9 @@ executors:
       - image: cimg/base:2021.04
       
 commands:
+  build:
+    steps:
+      - run: docker-compose build --no-cache php55  
   unit_tests:
     steps:
       - run: docker-compose run php55 ./vendor/bin/phpunit test/unit  
@@ -17,6 +20,7 @@ jobs:
     executor: linux
     steps:
       - checkout
+      - build
       - unit_tests
       - performance_tests
 
