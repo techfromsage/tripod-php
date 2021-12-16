@@ -76,7 +76,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
                 "connection"=>"mongodb://tloghost:27017,tloghost:27018/admin",
                 "replicaSet" => "tlogrepset"
             ),
-            "mongo"=>array("type"=>"mongo","connection" => "mongodb://localhost")
+            "mongo"=>array("type"=>"mongo","connection" => "mongodb://mongo26")
         );
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["stores"] = array(
@@ -111,7 +111,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $config["data_sources"] = array(
             "mongo1"=>array(
                 "type"=>"mongo",
-                "connection"=>"mongodb://localhost"
+                "connection"=>"mongodb://mongo26"
             ),
             "rs1"=>array(
                 "type"=>"mongo",
@@ -150,7 +150,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
 
     public function testGetConnectionString()
     {
-        $this->assertEquals("mongodb://localhost:27017/",\Tripod\Config::getInstance()->getConnStr("tripod_php_testing"));
+        $this->assertEquals("mongodb://mongo26:27017/",\Tripod\Config::getInstance()->getConnStr("tripod_php_testing"));
     }
 
     public function testGetConnectionStringThrowsException()
@@ -158,7 +158,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $this->setExpectedException(
             '\Tripod\Exceptions\ConfigException',
             'Database notexists does not exist in configuration');
-        $this->assertEquals("mongodb://localhost:27017/",\Tripod\Config::getInstance()->getConnStr("notexists"));
+        $this->assertEquals("mongodb://mongo26:27017/",\Tripod\Config::getInstance()->getConnStr("notexists"));
     }
 
     public function testGetConnectionStringForReplicaSet(){
@@ -167,7 +167,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $config["data_sources"] = array(
             "rs"=>array(
                 "type"=>"mongo",
-                "connection"=>"mongodb://localhost:27017,localhost:27018/admin",
+                "connection"=>"mongodb://mongo26:27017,localhost:27018/admin",
                 "replicaSet" => "myrepset"
             )
         );
@@ -184,7 +184,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         \Tripod\Config::setConfig($config);
         $mtc = \Tripod\Config::getInstance();
 
-        $this->assertEquals("mongodb://localhost:27017,localhost:27018/admin",$mtc->getConnStr("tripod_php_testing"));
+        $this->assertEquals("mongodb://mongo26:27017,localhost:27018/admin",$mtc->getConnStr("tripod_php_testing"));
     }
 
     public function testGetConnectionStringThrowsExceptionForReplicaSet(){
@@ -196,11 +196,11 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $config["data_sources"] = array(
             "mongo1"=>array(
                 "type"=>"mongo",
-                "connection"=>"mongodb://localhost"
+                "connection"=>"mongodb://mongo26"
             ),
             "rs1"=>array(
                 "type"=>"mongo",
-                "connection" => "mongodb://localhost:27017,localhost:27018",
+                "connection" => "mongodb://mongo26:27017,localhost:27018",
                 "replicaSet" => "myrepset"
             )
         );
@@ -230,7 +230,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $config["data_sources"] = array(
             "db1"=>array(
                 "type"=>"mongo",
-                "connection"=>"mongodb://localhost"
+                "connection"=>"mongodb://mongo26"
             ),
             "db2"=>array(
                 "type"=>"mongo",
@@ -952,7 +952,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $config["data_sources"] = array(
             "mongo1"=>array(
                 "type"=>"mongo",
-                "connection"=>"mongodb://localhost"
+                "connection"=>"mongodb://mongo26"
             )
         );
         $config["stores"] = array(
@@ -1702,7 +1702,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
 
         if(!getenv(MONGO_TRIPOD_RESQUE_SERVER))
         {
-            putenv(MONGO_TRIPOD_RESQUE_SERVER . "=localhost:6379");
+            putenv(MONGO_TRIPOD_RESQUE_SERVER . "=redis");
         }
         $this->assertEquals(getenv(MONGO_TRIPOD_RESQUE_SERVER), \Tripod\Mongo\Config::getResqueServer());
     }
@@ -1714,7 +1714,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $mockConfig->loadConfig(json_decode(file_get_contents(dirname(__FILE__).'/data/config.json'), true));
         $mockConfig->expects($this->exactly(1))
             ->method('getMongoClient')
-            ->with('mongodb://localhost:27017/?connectTimeoutMS=20000')
+            ->with('mongodb://mongo26:27017/?connectTimeoutMS=20000')
             ->will($this->returnCallback(
                 function()
                 {
@@ -1733,7 +1733,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $mockConfig->loadConfig(json_decode(file_get_contents(dirname(__FILE__).'/data/config.json'), true));
         $mockConfig->expects($this->exactly(30))
             ->method('getMongoClient')
-            ->with('mongodb://localhost:27017/?connectTimeoutMS=20000')
+            ->with('mongodb://mongo26:27017/?connectTimeoutMS=20000')
             ->will($this->throwException(new ConnectionTimeoutException('Exception thrown when connecting to Mongo')));
 
         $mockConfig->getDatabase('tripod_php_testing', 'rs1', ReadPreference::RP_SECONDARY_PREFERRED);
@@ -1744,7 +1744,7 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $mockConfig->loadConfig(json_decode(file_get_contents(dirname(__FILE__).'/data/config.json'), true));
         $mockConfig->expects($this->exactly(5))
             ->method('getMongoClient')
-            ->with('mongodb://localhost:27017/?connectTimeoutMS=20000')
+            ->with('mongodb://mongo26:27017/?connectTimeoutMS=20000')
             ->will($this->onConsecutiveCalls(
                 $this->throwException(new ConnectionTimeoutException('Exception thrown when connecting to Mongo')),
                 $this->throwException(new ConnectionTimeoutException('Exception thrown when connecting to Mongo')),

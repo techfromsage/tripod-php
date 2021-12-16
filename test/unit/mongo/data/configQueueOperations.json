@@ -21,7 +21,7 @@
     "data_sources" : {
         "rs1" : {
             "type" : "mongo",
-            "connection": "mongodb:\/\/localhost",
+            "connection": "mongodb:\/\/mongo26",
             "replicaSet": ""
         }
     },

@@ -1,21 +1,41 @@
 version: "3.7"
 
+x-base-config: &base-config
+  volumes:
+    - ./:/var/tripod-php
+    - ./vendor:/var/tripod-php/vendor:delegated
+  links:
+    - mongo26
+    - redis    
+  depends_on:
+    - mongo26
+    - redis    
+  working_dir: /var/tripod-php    
+  env_file: .env
+
 services:
-  php55:
-    image: php:5.5-cli:latest
+  php55: 
+    build: 
+      context: ./docker
+      dockerfile: Dockerfile-php55
+    image: php_55
+    <<: *base-config
+ 
   php56:
-    image: php:5.6-cli:latest    
+    build: 
+      context: ./docker
+      dockerfile: Dockerfile-php56
+    image: php_56
+    <<: *base-config
+
   php70:
-    image: php:7.0-cli:latest        
-  php72:
-    image: php:7.2-cli:latest        
-  php74:
-    image: php:7.4-cli:latest        
-  php80:
-    image: php:8.0-cli:latest                    
-  php81:
-    image: php:8.1-cli:latest                        
+    build: 
+      context: ./docker
+      dockerfile: Dockerfile-php70
+    image: php_70
+    <<: *base-config
+
   mongo26:
     image: rossfsinger/mongo-2.6.12:latest
-    ports:
-        - "27017:27017"
+  redis:
+    image: redis:latest
