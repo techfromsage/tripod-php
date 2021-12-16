@@ -14,9 +14,6 @@ commands:
 
 jobs:
   test:
-    parameters:
-      php-version:
-        type: string
     executor: linux
     steps:
       - checkout
