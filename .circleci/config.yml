@@ -20,7 +20,6 @@ jobs:
     parameters:
       version:
         type: string
-        default: "php55"
     machine:
       image: ubuntu-2004:202010-01
     steps:
@@ -36,6 +35,6 @@ workflows:
   build_and_test:
     jobs:
       - test:
-        matrix:
-          parameters:
-            version: ["php55", "php56", "php70"]
+          matrix:
+            parameters:
+              version: ["php55", "php56", "php70"]
