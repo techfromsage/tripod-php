@@ -1,18 +1,23 @@
 version: 2.1
 
+parameters:
+  version:
+    type: string
+    default: "php55"
+
 commands:
   build:
     steps:
-      - run: docker-compose build --no-cache php55  
+      - run: docker-compose build --no-cache << pipeline.parameters.version >> 
   install_composer_dependencies:
     steps:
-      - run: docker-compose run php55 composer install
+      - run: docker-compose run << pipeline.parameters.version >> composer install
   unit_tests:
     steps:
-      - run: docker-compose run php55 ./vendor/bin/phpunit test/unit  
+      - run: docker-compose run << pipeline.parameters.version >> ./vendor/bin/phpunit test/unit  
   performance_tests:
     steps:
-     - run: docker-compose run php55 ./vendor/bin/phpunit test/performance
+     - run: docker-compose run << pipeline.parameters.version >> ./vendor/bin/phpunit test/performance
 
 jobs:
   test:
@@ -28,4 +33,7 @@ jobs:
 workflows:
   build_and_test:
     jobs:
-      - test
+      - test:
+        matrix:
+          parameters:
+            version: ["php55", "php56", "php70"]
