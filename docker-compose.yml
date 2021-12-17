@@ -22,9 +22,9 @@ services:
     <<: *base-config
  
   php56:
-    build: 
-      context: ./docker
-      dockerfile: Dockerfile-php56
+    # build: 
+    #   context: ./docker
+    #   dockerfile: Dockerfile-php56
     image: talis/tripod-php:php56-latest
     <<: *base-config
 
