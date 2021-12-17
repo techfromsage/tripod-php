@@ -1,9 +1,5 @@
 version: 2.1
 
-parameters:
-  version:
-    type: string
-    default: "php55"
 
 commands:
   build:
@@ -21,14 +17,20 @@ commands:
 
 jobs:
   test:
+    parameters:
+      version:
+        type: string
+        default: "php55"
     machine:
       image: ubuntu-2004:202010-01
     steps:
       - checkout      
-      - build
-      - install_composer_dependencies
-      - unit_tests
-      - performance_tests
+      - run: docker-compose build --no-cache << parameters.version >> 
+      - run: docker-compose run << parameters.version >> composer install
+      - run: docker-compose run << parameters.version >> ./vendor/bin/phpunit test/unit
+      - run: docker-compose run << parameters.version >> ./vendor/bin/phpunit test/performance
+      # - unit_tests
+      # - performance_tests
 
 workflows:
   build_and_test:
