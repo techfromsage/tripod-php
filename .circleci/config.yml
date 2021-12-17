@@ -12,7 +12,7 @@ commands:
       - run: docker-compose run php55 ./vendor/bin/phpunit test/unit  
   performance_tests:
     steps:
-     - run: docker-compose run php55 ./vendor/bin/phpunit
+     - run: docker-compose run php55 ./vendor/bin/phpunit test/performance
 
 jobs:
   test:
