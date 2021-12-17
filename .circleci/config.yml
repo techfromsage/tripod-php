@@ -1,38 +1,39 @@
 version: 2.1
-
-parameters:
+parameters: &version
   version:
-    type: string
-    
+    type: string    
+    default: "php55"
+
 commands:
-  build:
-    steps:
-      - run: docker-compose build --no-cache << pipeline.parameters.version >> 
   install_composer_dependencies:
-    name: Install composer dependencies for << pipeline.parameters.version >>
+    parameters: *version   
+    description: Install composer dependencies for << parameters.version >>
     steps:
-      - run: docker-compose run << pipeline.parameters.version >> composer install
+      - run: docker-compose run << parameters.version >> composer install
   unit_tests:
-    name: Run unit tests for << pipeline.parameters.version >>
+    parameters: *version
+    description: Run unit tests for << parameters.version >>
     steps:
-      - run: docker-compose run << pipeline.parameters.version >> ./vendor/bin/phpunit test/unit  
+      - run: docker-compose run << parameters.version >> ./vendor/bin/phpunit test/unit  
   performance_tests:
-    name: Run performance tests for << pipeline.parameters.version >>
+    parameters: *version
+    description: Run performance tests for << parameters.version >>
     steps:
-     - run: docker-compose run << pipeline.parameters.version >> ./vendor/bin/phpunit test/performance
+     - run: docker-compose run << parameters.version >> ./vendor/bin/phpunit test/performance
 
 jobs:
   test:
+    parameters: *version
     machine:
       image: ubuntu-2004:202010-01
     steps:
       - checkout      
       - install_composer_dependencies:
-        version: << pipeline.parameters.version >>
-      - unit_tests
-        version: << pipeline.parameters.version >>
-      - performance_tests
-        version: << pipeline.parameters.version >>
+          version: << pipeline.parameters.version >>
+      - unit_tests:
+          version: << pipeline.parameters.version >>
+      - performance_tests:
+          version: << pipeline.parameters.version >>
 
 workflows:
   build_and_test:
