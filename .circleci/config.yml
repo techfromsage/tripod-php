@@ -4,6 +4,9 @@ commands:
   build:
     steps:
       - run: docker-compose build --no-cache php55  
+  install_composer_dependencies:
+    steps:
+      - run: docker-compose run php55 composer install
   unit_tests:
     steps:
       - run: docker-compose run php55 ./vendor/bin/phpunit test/unit  
@@ -16,9 +19,9 @@ jobs:
     machine:
       image: ubuntu-2004:202010-01
     steps:
-      - checkout
-      # - setup_remote_docker
+      - checkout      
       - build
+      - install_composer_dependencies
       - unit_tests
       - performance_tests
 
