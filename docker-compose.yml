@@ -18,21 +18,21 @@ services:
     build: 
       context: ./docker
       dockerfile: Dockerfile-php55
-    image: php_55
+    image: talis/tripod-php:php55-latest
     <<: *base-config
  
   php56:
     build: 
       context: ./docker
       dockerfile: Dockerfile-php56
-    image: php_56
+    image: talis/tripod-php:php56-latest
     <<: *base-config
 
   php70:
     build: 
       context: ./docker
       dockerfile: Dockerfile-php70
-    image: php_70
+    image: talis/tripod-php:php70-latest
     <<: *base-config
 
   mongo26:
