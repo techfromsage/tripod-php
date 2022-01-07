@@ -69,7 +69,6 @@ class ExtendedGraph
 
     public function __destruct(){
         unset($this->_index);
-        unset($this);
     }
 
     /**

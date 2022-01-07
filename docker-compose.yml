@@ -35,6 +35,20 @@ services:
     image: talis/tripod-php:php70-latest
     <<: *base-config
 
+  php72:
+    # build: 
+    #   context: ./docker
+    #   dockerfile: Dockerfile-php72
+    image: talis/tripod-php:php72-latest
+    <<: *base-config    
+
+  php74:
+    # build: 
+    #   context: ./docker
+    #   dockerfile: Dockerfile-php74
+    image: talis/tripod-php:php74-latest
+    <<: *base-config        
+
   mongo26:
     image: rossfsinger/mongo-2.6.12:latest
   redis:

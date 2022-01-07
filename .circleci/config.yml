@@ -41,4 +41,4 @@ workflows:
       - test:
           matrix:
             parameters:
-              version: ["php55", "php56", "php70"]
+              version: ["php55", "php56", "php70", "php72"]
