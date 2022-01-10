@@ -8,7 +8,7 @@ x-base-config: &base-config
     - mongodb
     - redis    
   depends_on:
-    - mongodb
+    - mongo26
     - redis    
   working_dir: /var/tripod-php    
   env_file: .env
