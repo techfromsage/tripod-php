@@ -29,11 +29,11 @@ jobs:
     steps:
       - checkout      
       - install_composer_dependencies:
-          version: << pipeline.parameters.version >>
+          version: << parameters.version >>
       - unit_tests:
-          version: << pipeline.parameters.version >>
+          version: << parameters.version >>
       - performance_tests:
-          version: << pipeline.parameters.version >>
+          version: << parameters.version >>
 
 workflows:
   build_and_test:
