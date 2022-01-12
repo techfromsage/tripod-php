@@ -1,0 +1,48 @@
+version: 2.1
+parameters: &version
+  version:
+    type: string    
+    default: "php55"
+
+commands:
+  install_composer_dependencies:
+    parameters: *version   
+    description: Install composer dependencies for << parameters.version >>
+    steps:
+      - run: docker-compose run << parameters.version >> composer install
+  unit_tests:
+    parameters: *version
+    description: Run unit tests for << parameters.version >>
+    steps:
+      - run: docker-compose run << parameters.version >> ./vendor/bin/phpunit test/unit  
+  performance_tests:
+    parameters: *version
+    description: Run performance tests for << parameters.version >>
+    steps:
+     - run: docker-compose run << parameters.version >> ./vendor/bin/phpunit test/performance
+
+jobs:
+  test:
+    parameters: *version
+    machine:
+      image: ubuntu-2004:202010-01
+    steps:
+      - checkout      
+      - install_composer_dependencies:
+          version: << parameters.version >>
+      - unit_tests:
+          version: << parameters.version >>
+      - performance_tests:
+          version: << parameters.version >>
+
+workflows:
+  build_and_test:
+    jobs:
+      - test:
+          matrix:
+            parameters:
+              version: 
+                - php55 
+                - php56
+                - php70
+                - php72
