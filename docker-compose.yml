@@ -1,4 +1,49 @@
-mongo:
-  image: rossfsinger/mongo-2.6.12:latest
-  ports:
-      - "27017:27017"
+version: "3.7"
+
+x-base-config: &base-config
+  volumes:
+    - ./:/var/tripod-php
+    - ./vendor:/var/tripod-php/vendor:delegated
+  links:
+    - "mongo26:mongodb"
+    - redis    
+  depends_on:
+    - mongo26
+    - redis    
+  working_dir: /var/tripod-php    
+  env_file: .env
+
+services:
+  php55: 
+    # build: 
+    #   context: ./docker
+    #   dockerfile: Dockerfile-php55
+    image: talis/tripod-php:php55-latest
+    <<: *base-config
+ 
+  php56:
+    # build: 
+    #   context: ./docker
+    #   dockerfile: Dockerfile-php56
+    image: talis/tripod-php:php56-latest
+    <<: *base-config
+
+  php70:
+    # build: 
+    #   context: ./docker
+    #   dockerfile: Dockerfile-php70
+    image: talis/tripod-php:php70-latest
+    <<: *base-config
+
+  php72:
+    # build: 
+    #   context: ./docker
+    #   dockerfile: Dockerfile-php72
+    image: talis/tripod-php:php72-latest
+    <<: *base-config    
+
+  mongo26:
+    image: rossfsinger/mongo-2.6.12:latest
+
+  redis:
+    image: redis:latest
