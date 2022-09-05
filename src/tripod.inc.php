@@ -8,7 +8,10 @@ if (!defined('TRIPOD_DIR')) {
 
 require_once TRIPOD_DIR . '/mongo/MongoTripodConstants.php';
 
-\Resque::setBackend(\Tripod\Mongo\Config::getResqueServer());
+\Resque::setBackend(
+    \Tripod\Mongo\Config::getResqueServer(),
+    \Tripod\Mongo\Config::getResqueDatabase()
+);
 
 define('RDF_TYPE', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
 define('RDF_SUBJECT', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#subject');

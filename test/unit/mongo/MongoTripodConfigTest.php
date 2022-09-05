@@ -1707,6 +1707,17 @@ class MongoTripodConfigTest extends MongoTripodTestBase
         $this->assertEquals(getenv(MONGO_TRIPOD_RESQUE_SERVER), \Tripod\Mongo\Config::getResqueServer());
     }
 
+    public function testGetResqueDatabase()
+    {
+        \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
+
+        if(!getenv(RESQUE_DATABASE))
+        {
+            putenv(RESQUE_DATABASE . "=0");
+        }
+        $this->assertEquals(getenv(RESQUE_DATABASE), \Tripod\Mongo\Config::getResqueDatabase());
+    }
+
     // MongoClient creation tests
     public function testMongoConnectionNoExceptions()
     {

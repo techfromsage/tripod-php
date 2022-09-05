@@ -2111,6 +2111,14 @@ class Config implements IConfigInstance
     }
 
     /**
+     * @return int|string
+     */
+    public static function getResqueDatabase()
+    {
+        return self::getenv(RESQUE_DATABASE, 0);
+    }
+
+    /**
      * @param string $env
      * @param bool $default
      * @return bool|string

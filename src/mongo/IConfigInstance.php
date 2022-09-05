@@ -310,6 +310,11 @@ interface IConfigInstance extends \Tripod\ITripodConfigSerializer
     public static function getResqueServer();
 
     /**
+     * @return int|string
+     */
+    public static function getResqueDatabase();
+
+    /**
      * @return \Psr\Log\LoggerInterface;
      */
     public static function getLogger();
