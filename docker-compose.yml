@@ -46,4 +46,4 @@ services:
     image: mongo:3.2.21
 
   redis:
-    image: redis:latest
+    image: redis:6.2.6
