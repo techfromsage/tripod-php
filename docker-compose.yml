@@ -5,10 +5,10 @@ x-base-config: &base-config
     - ./:/var/tripod-php
     - ./vendor:/var/tripod-php/vendor:delegated
   links:
-    - "mongo26:mongodb"
+    - "mongo32:mongodb"
     - redis    
   depends_on:
-    - mongo26
+    - mongo32
     - redis    
   working_dir: /var/tripod-php    
   env_file: .env
@@ -42,8 +42,8 @@ services:
     image: talis/tripod-php:php72-latest
     <<: *base-config    
 
-  mongo26:
-    image: rossfsinger/mongo-2.6.12:latest
+  mongo32:
+    image: mongo:3.2.21
 
   redis:
-    image: redis:latest
+    image: redis:6.2.6
