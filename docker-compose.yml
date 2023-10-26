@@ -6,41 +6,27 @@ x-base-config: &base-config
     - ./vendor:/var/tripod-php/vendor:delegated
   links:
     - "mongo32:mongodb"
-    - redis    
+    - redis
   depends_on:
     - mongo32
-    - redis    
-  working_dir: /var/tripod-php    
+    - redis
+  working_dir: /var/tripod-php
   env_file: .env
 
 services:
-  php55: 
-    # build: 
+  php55:
+    # build:
     #   context: ./docker
     #   dockerfile: Dockerfile-php55
     image: talis/tripod-php:php55-latest
     <<: *base-config
- 
-  php56:
-    # build: 
-    #   context: ./docker
-    #   dockerfile: Dockerfile-php56
-    image: talis/tripod-php:php56-latest
-    <<: *base-config
 
-  php70:
-    # build: 
+  php73:
+    # build:
     #   context: ./docker
-    #   dockerfile: Dockerfile-php70
-    image: talis/tripod-php:php70-latest
+    #   dockerfile: Dockerfile-php73
+    image: talis/tripod-php:php73-latest
     <<: *base-config
-
-  php72:
-    # build: 
-    #   context: ./docker
-    #   dockerfile: Dockerfile-php72
-    image: talis/tripod-php:php72-latest
-    <<: *base-config    
 
   mongo32:
     image: mongo:3.2.21

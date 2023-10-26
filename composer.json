@@ -17,14 +17,18 @@
             "homepage": "http://talis.com/"
         }
     ],
+    "suggest": {
+        "mongodb/mongodb": "MongoDB driver library",
+        "resque/php-resque": "Redis backed library for background jobs"
+    },
     "require": {
         "php" : ">=5.5",
-        "semsol/arc2": "v2.2.4",
-        "chrisboulton/php-resque": "dev-master#98fde571db008a8b48e73022599d1d1c07d4a7b5",
-        "monolog/monolog" : "~1.13",
-        "mongodb/mongodb": "1.0.5"
+        "semsol/arc2": "2.2.6",
+        "monolog/monolog" : "~1.13"
     },
     "require-dev": {
+        "resque/php-resque": "v1.3.4",
+        "mongodb/mongodb": "1.4.3",
         "phpunit/phpunit": "^4.8",
         "squizlabs/php_codesniffer": "3.2.*"
     },

@@ -1,39 +1,23 @@
 version: 2.1
-parameters: &version
-  version:
-    type: string
-    default: "php55"
-
-commands:
-  install_composer_dependencies:
-    parameters: *version
-    description: Install composer dependencies for << parameters.version >>
-    steps:
-      - run: docker-compose run << parameters.version >> composer install
-  unit_tests:
-    parameters: *version
-    description: Run unit tests for << parameters.version >>
-    steps:
-      - run: docker-compose run << parameters.version >> ./vendor/bin/phpunit test/unit
-  performance_tests:
-    parameters: *version
-    description: Run performance tests for << parameters.version >>
-    steps:
-     - run: docker-compose run << parameters.version >> ./vendor/bin/phpunit test/performance
 
 jobs:
   test:
-    parameters: *version
-    machine:
-      image: ubuntu-2004:202010-01
+    parameters:
+      php_version:
+        type: string
+    docker:
+      - image: talis/tripod-php:<< parameters.php_version >>-latest
+        environment:
+          RESQUE_SERVER: redis
+      - image: mongo:3.2.21
+        name: mongodb
+      - image: redis:6.2.6
+        name: redis
     steps:
       - checkout
-      - install_composer_dependencies:
-          version: << parameters.version >>
-      - unit_tests:
-          version: << parameters.version >>
-      - performance_tests:
-          version: << parameters.version >>
+      - run: composer install
+      - run: ./vendor/bin/phpunit test/unit
+      - run: ./vendor/bin/phpunit test/performance
 
 workflows:
   build_and_test:
@@ -41,8 +25,6 @@ workflows:
       - test:
           matrix:
             parameters:
-              version:
+              php_version:
                 - php55
-                - php56
-                - php70
-                - php72
+                - php73
