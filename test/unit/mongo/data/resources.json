@@ -125,6 +125,9 @@
             },
             {
                 "u":"http://talisaspire.com/schema#Resource"
+            },
+            {
+                "l":"Testing"
             }
         ],
         "owl:sameAs":

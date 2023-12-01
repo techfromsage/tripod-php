@@ -860,9 +860,9 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $results = $this->tripodTables->distinct($table, "value.type");
         $this->assertArrayHasKey('head', $results);
         $this->assertArrayHasKey('count', $results['head']);
-        $this->assertEquals(6, $results['head']['count']);
+        $this->assertEquals(7, $results['head']['count']);
         $this->assertArrayHasKey('results', $results);
-        $this->assertEquals(6, count($results['results']));
+        $this->assertEquals(7, count($results['results']));
         $this->assertContains('acorn:Resource', $results['results']);
         $this->assertContains('acorn:Work', $results['results']);
         $this->assertContains('bibo:Book', $results['results']);

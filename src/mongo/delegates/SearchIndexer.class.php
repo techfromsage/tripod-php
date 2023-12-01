@@ -128,15 +128,17 @@ class SearchIndexer extends CompositeBase
             ]
         );
         foreach ($resourceAndType as $rt) {
-            if (array_key_exists("rdf:type", $rt)) {
+            if (isset($rt["rdf:type"])) {
                 $rdfTypes = [];
 
-                if (array_key_exists('u', $rt["rdf:type"])) {
-                    $rdfTypes[] = $rt["rdf:type"]['u'];
+                if (isset($rt["rdf:type"][VALUE_URI])) {
+                    $rdfTypes[] = $rt["rdf:type"][VALUE_URI];
                 } else {
                     // an array of types
                     foreach ($rt["rdf:type"] as $type) {
-                        $rdfTypes[] = $type['u'];
+                        if (isset($type[VALUE_URI])) {
+                            $rdfTypes[] = $type[VALUE_URI];
+                        }
                     }
                 }
 

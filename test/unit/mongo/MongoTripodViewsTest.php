@@ -84,7 +84,8 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
                         "_id"=>array("r"=>"http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA","c"=>'http://talisaspire.com/'),
                         "rdf:type"=>array(
                             array(VALUE_URI=>"bibo:Book"),
-                            array(VALUE_URI=>"acorn:Resource")
+                            array(VALUE_URI=>"acorn:Resource"),
+                            array(VALUE_LITERAL=>"Testing")
                         ),
                         "searchterms:topic"=>array(
                             array(VALUE_LITERAL=>"engineering: general"),
@@ -501,7 +502,8 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
                         "_id"=>array("r"=>"http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA","c"=>'http://talisaspire.com/'),
                         "rdf:type"=>array(
                             array("u"=>"bibo:Book"),
-                            array("u"=>"acorn:Resource")
+                            array("u"=>"acorn:Resource"),
+                            array("l"=>"Testing")
                         ),
                         "searchterms:topic"=>array(
                             array("l"=>"engineering: general"),

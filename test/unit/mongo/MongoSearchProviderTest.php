@@ -43,9 +43,11 @@ class MongoSearchProviderTest extends MongoTripodTestBase
             $t = array();
             if(isset($result['rdf:type']['u'])){
                 $t[] = $result['rdf:type']['u'];
-            } else {
+            } elseif (is_array($result['rdf:type'])) {
                 foreach($result['rdf:type'] as $_t){
-                    $t[] = $_t['u'];
+                    if (isset($_t['u'])) {
+                        $t[] = $_t['u'];
+                    }
                 }
             }
             $this->indexer->generateAndIndexSearchDocuments($result['_id']['r'], $result['_id']['c'], $this->tripod->getPodName());
