@@ -248,16 +248,16 @@ class SearchDocuments extends DriverBase
                     $values = array();
 
                     if(isset($source[$p])){
-                        if(isset($source[$p]['u'])){
-                            $values[] = ($isIndex) ? mb_strtolower(trim($source[$p]['u']), 'UTF-8') : trim($source[$p]['u']);
-                        } else if (isset($source[$p]['l'])){
-                            $values[] = ($isIndex) ? mb_strtolower(trim($source[$p]['l']), 'UTF-8') : trim($source[$p]['l']);
-                        } else {
+                        if(isset($source[$p][VALUE_URI])){
+                            $values[] = ($isIndex) ? mb_strtolower(trim($source[$p][VALUE_URI]), 'UTF-8') : trim($source[$p][VALUE_URI]);
+                        } elseif (isset($source[$p][VALUE_LITERAL])){
+                            $values[] = ($isIndex) ? mb_strtolower(trim($source[$p][VALUE_LITERAL]), 'UTF-8') : trim($source[$p][VALUE_LITERAL]);
+                        } elseif (is_array($source[$p])) {
                             foreach($source[$p] as $v){
-                                if(isset($v['u'])){
-                                    $values[] = ($isIndex) ? mb_strtolower(trim($v['u']), 'UTF-8') : trim($v['u']);
-                                } else {
-                                    $values[] = ($isIndex) ? mb_strtolower(trim($v['l']), 'UTF-8') : trim($v['l']);
+                                if(isset($v[VALUE_URI])){
+                                    $values[] = ($isIndex) ? mb_strtolower(trim($v[VALUE_URI]), 'UTF-8') : trim($v[VALUE_URI]);
+                                } elseif(isset($v[VALUE_LITERAL])) {
+                                    $values[] = ($isIndex) ? mb_strtolower(trim($v[VALUE_LITERAL]), 'UTF-8') : trim($v[VALUE_LITERAL]);
                                 }
                             }
                         }

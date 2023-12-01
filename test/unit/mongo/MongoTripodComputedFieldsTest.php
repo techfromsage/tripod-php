@@ -294,7 +294,7 @@ class MongoTripodComputedFieldsTest extends MongoTripodTestBase
         $this->assertArrayNotHasKey('rdfType', $tableDoc['value']);
 
         $tableDoc = $collection->findOne(array('_id.type'=>'t_replace_type', '_id.r'=>'http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA'));
-        $this->assertEquals('Book Resource', $tableDoc['value']['resourceType']);
+        $this->assertEquals('Book Resource Testing', $tableDoc['value']['resourceType']);
         $this->assertArrayNotHasKey('rdfType', $tableDoc['value']);
 
 

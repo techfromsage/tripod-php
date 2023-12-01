@@ -574,7 +574,8 @@ class Updates extends DriverBase
                             $valueIndex = array_search($removal, $valueObject);
                             if($valueIndex === false)
                             {
-                                $v = array_pop(array_values($removal));
+                                $values = array_values($removal);
+                                $v = array_pop($values);
                                 $this->errorLog("Removal value {$subjectOfChange} {$predicate} {$v} does not appear in target document to be updated",array("doc"=>$doc));
                                 throw new \Exception("Removal value {$subjectOfChange} {$predicate} {$v} does not appear in target document to be updated");
                             }

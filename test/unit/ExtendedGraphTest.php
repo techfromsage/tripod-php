@@ -700,5 +700,93 @@ class ExtendedGraphTest extends PHPUnit_Framework_TestCase
         $this->assertFalse($graph->has_literal_triple("http://test/1", 'http://www.w3.org/2000/01/rdf-schema#label', "value1"));
         $this->assertFalse($graph->has_literal_triple("http://test/1", 'http://www.w3.org/2000/01/rdf-schema#label', "value2"));
     }
+
+    public function testFromJson()
+    {
+        $graph = new ExtendedGraph();
+        $graph->from_json('{
+            "http://subject/1": {
+                "http://predicate": [
+                    { "type": "uri", "value": "http://value/1" }
+                ]
+            },
+            "http://subject/2": {
+                "http://predicate": [
+                    { "type": "uri", "value": "http://value/2" }
+                ]
+            },
+            "http://subject/3": {
+                "http://predicate": [
+                    { "type": "uri", "value": "http://value/3" }
+                ]
+            }
+        }');
+
+        $this->assertEquals(3, count($graph->get_subjects()));
+        $this->assertEquals(['http://subject/1', 'http://subject/2', 'http://subject/3'], $graph->get_subjects());
+        $this->assertEquals(['http://value/1', 'http://value/2', 'http://value/3'], $graph->get_resource_properties('http://predicate'));
+    }
+
+    public function testFromInvalidJson()
+    {
+        $graph = new ExtendedGraph();
+        $index = $graph->get_index();
+
+        $graph->from_json('not a valid json');
+
+        // Should not have changed
+        $this->assertEquals($index, $graph->get_index());
+    }
+
+    public function testAddJson()
+    {
+        $graph = new ExtendedGraph();
+        $graph->add_json('{
+            "http://subject/1": {
+                "http://predicate": [
+                    { "type": "uri", "value": "http://value/1" }
+                ]
+            }
+        }');
+
+        $this->assertEquals(1, count($graph->get_subjects()));
+        $this->assertEquals(['http://subject/1'], $graph->get_subjects());
+        $this->assertEquals(['http://value/1'], $graph->get_resource_properties('http://predicate'));
+
+        $graph->add_json('{
+            "http://subject/2": {
+                "http://predicate": [
+                    { "type": "uri", "value": "http://value/2" }
+                ]
+            }
+        }');
+
+        $this->assertEquals(2, count($graph->get_subjects()));
+        $this->assertEquals(['http://subject/1', 'http://subject/2'], $graph->get_subjects());
+        $this->assertEquals(['http://value/1', 'http://value/2'], $graph->get_resource_properties('http://predicate'));
+    }
+
+    public function testAddInvalidJson()
+    {
+        $graph = new ExtendedGraph();
+        $graph->add_json('{
+            "http://subject/1": {
+                "http://predicate": [
+                    { "type": "uri", "value": "http://value/1" }
+                ]
+            }
+        }');
+
+        $this->assertEquals(1, $graph->get_triple_count());
+        $this->assertEquals(1, count($graph->get_subjects()));
+        $this->assertEquals(['http://subject/1'], $graph->get_subjects());
+        $this->assertEquals(['http://value/1'], $graph->get_resource_properties('http://predicate'));
+        $index = $graph->get_index();
+
+        $graph->add_json('not a valid json');
+
+        // Should not have changed
+        $this->assertEquals($index, $graph->get_index());
+        $this->assertEquals(1, $graph->get_triple_count());
+    }
 }
-?>

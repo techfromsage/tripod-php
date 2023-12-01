@@ -29,6 +29,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $this->tripodTransactionLog->purgeAllTransactions();
 
         // Stub ouf 'addToElastic' search to prevent writes into Elastic Search happening by default.
+        /** @var \Tripod\Mongo\Driver | PHPUnit_Framework_MockObject_MockObject */
         $this->tripod = $this->getMock(
             '\Tripod\Mongo\Driver',
             array('validateGraphCardinality'),
@@ -126,6 +127,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://talisaspire.com/searchTerms/schema#usedAt> \"0071\" .
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://purl.org/ontology/bibo/Book> .
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://talisaspire.com/schema#Resource> .
+<http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> \"Testing\" .
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://www.w3.org/2002/07/owl#sameAs> <http://talisaspire.com/isbn/9780393929690> .
 ");
         $actualResult = $this->tripod->graph(array("bibo:isbn13.".VALUE_LITERAL=>"9780393929690"));
@@ -165,6 +167,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://talisaspire.com/searchTerms/schema#usedAt> \"0071\" .
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://purl.org/ontology/bibo/Book> .
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://talisaspire.com/schema#Resource> .
+<http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> \"Testing\" .
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://www.w3.org/2002/07/owl#sameAs> <http://talisaspire.com/isbn/9780393929690> .
 ");
         $actualResult = $this->tripod->describeResource('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA');
@@ -204,6 +207,7 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://talisaspire.com/searchTerms/schema#usedAt> \"0071\" .
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://purl.org/ontology/bibo/Book> .
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://talisaspire.com/schema#Resource> .
+<http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> \"Testing\" .
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://www.w3.org/2002/07/owl#sameAs> <http://talisaspire.com/isbn/9780393929690> .
 <http://talisaspire.com/works/4d101f63c10a6> <http://purl.org/dc/terms/subject> <http://talisaspire.com/disciplines/physics> .
 <http://talisaspire.com/works/4d101f63c10a6> <http://purl.org/ontology/bibo/isbn13> \"9780393929691\" .
@@ -1680,6 +1684,60 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $this->assertEquals($expectedResult,$actualResult);
     }
 
+    public function testSelectDocumentWithSpecialFieldTypes()
+    {
+        $id = [
+            'r' => 'http://talisaspire.com/resources/' . uniqid(),
+            'c' => 'http://talisaspire.com/',
+        ];
+
+        /** @var Tripod\Mongo\IConfigInstance */
+        $config = \Tripod\Config::getInstance();
+        $collection = $config->getCollectionForCBD($this->tripod->getStoreName(), $this->tripod->getPodName());
+        $collection->insertOne([
+            '_id' => $id,
+            '_version' => 42,
+            'rdf:type' => [
+                'u' => 'dctype:Text',
+            ],
+            'dct:created' => [
+                'l' => '2023-11-30T13:30:00Z',
+            ],
+            'dct:title' => [
+                'l' => 'Test title',
+            ],
+            // Timestamps
+            '_cts' => new \MongoDB\BSON\UTCDateTime(1701351000000),
+            '_uts' => new \MongoDB\BSON\UTCDateTime(1701351000000),
+            // Special field types
+            '_oid' => new \MongoDB\BSON\ObjectID(),
+            '_bin' => new \MongoDB\BSON\Binary('foo', \MongoDB\BSON\Binary::TYPE_OLD_BINARY),
+            '_fun' => new \MongoDB\BSON\Javascript('function() { return 42; }'),
+            '_fun' => new \MongoDB\BSON\Regex('foo', 'i'),
+        ]);
+
+        $expectedResult = [
+            'head' => [
+                'count' => 1,
+                'offset' => 0,
+                'limit' => 0,
+            ],
+            'results'=> [
+                [
+                    '_id' => $id,
+                    '_version' => 42,
+                    'rdf:type' => 'dctype:Text',
+                    'dct:created' => '2023-11-30T13:30:00Z',
+                    'dct:title' => 'Test title',
+                ],
+            ],
+        ];
+
+        $actualResult = $this->tripod->select(['_id' => $id], []);
+
+        $this->assertEquals($expectedResult, $actualResult);
+    }
+
     /**
      * Return the distinct values of a table column
      * @access public
@@ -1717,9 +1775,9 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         $results = $this->tripod->getDistinctTableColumnValues($table, "value.type");
         $this->assertArrayHasKey('head', $results);
         $this->assertArrayHasKey('count', $results['head']);
-        $this->assertEquals(6, $results['head']['count']);
+        $this->assertEquals(7, $results['head']['count']);
         $this->assertArrayHasKey('results', $results);
-        $this->assertEquals(6, count($results['results']));
+        $this->assertEquals(7, count($results['results']));
         $this->assertContains('acorn:Resource', $results['results']);
         $this->assertContains('acorn:Work', $results['results']);
         $this->assertContains('bibo:Book', $results['results']);
@@ -2239,3 +2297,19 @@ class TestSaveChangesHookB extends TestSaveChangesHookA
     // empty
 }
 /** END: saveChangesHooks tests */
+
+class TripodDriverTestConfig extends \Tripod\Mongo\Config
+{
+    /**
+     * Constructor
+     */
+    public function __construct(){}
+
+    /**
+     * @param array $config
+     */
+    public function loadConfig(array $config)
+    {
+        parent::loadConfig($config);
+    }
+}

@@ -486,13 +486,13 @@ class Driver extends DriverBase implements \Tripod\IDriver
                 {
                     $row[$key] = $value;
                 }
-                else
+                elseif (is_array($value))
                 {
-                    if (array_key_exists(VALUE_LITERAL,$value))
+                    if (isset($value[VALUE_LITERAL]))
                     {
                         $row[$key] = $value[VALUE_LITERAL];
                     }
-                    else if (array_key_exists(VALUE_URI,$value))
+                    elseif (isset($value[VALUE_URI]))
                     {
                         $row[$key] = $value[VALUE_URI];
                     }
@@ -502,7 +502,14 @@ class Driver extends DriverBase implements \Tripod\IDriver
                         // possible array of values
                         foreach ($value as $v)
                         {
-                            $row[$key][] = array_key_exists(VALUE_LITERAL,$v) ? $v[VALUE_LITERAL] : $v[VALUE_URI];
+                            if (isset($v[VALUE_LITERAL]))
+                            {
+                                $row[$key][] = $v[VALUE_LITERAL];
+                            }
+                            else if (isset($v[VALUE_URI]))
+                            {
+                                $row[$key][] = $v[VALUE_URI];
+                            }
                         }
                     }
                 }

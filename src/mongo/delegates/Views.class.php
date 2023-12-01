@@ -329,19 +329,21 @@ class Views extends CompositeBase
         foreach ($resourceAndType as $rt)
         {
             $id = $rt["_id"];
-            if (array_key_exists("rdf:type",$rt))
+            if (isset($rt["rdf:type"]))
             {
-                if (array_key_exists('u',$rt["rdf:type"]))
+                if (isset($rt["rdf:type"][VALUE_URI]))
                 {
                     // single type, not an array of values
-                    $this->generateViewsForResourcesOfType($rt["rdf:type"]['u'],$id[_ID_RESOURCE],$id[_ID_CONTEXT]);
+                    $this->generateViewsForResourcesOfType($rt["rdf:type"][VALUE_URI],$id[_ID_RESOURCE],$id[_ID_CONTEXT]);
                 }
                 else
                 {
                     // an array of types
                     foreach ($rt["rdf:type"] as $type)
                     {
-                        $this->generateViewsForResourcesOfType($type['u'],$id[_ID_RESOURCE],$id[_ID_CONTEXT]);
+                        if (isset($type[VALUE_URI])) {
+                            $this->generateViewsForResourcesOfType($type[VALUE_URI],$id[_ID_RESOURCE],$id[_ID_CONTEXT]);
+                        }
                     }
                 }
             }

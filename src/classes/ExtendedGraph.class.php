@@ -54,7 +54,7 @@ class ExtendedGraph
     var $_labeller;
 
     /**
-     * @param string|\Tripod\ExtendedGraph $graph
+     * @param string|array $graph
      */
     public function __construct($graph=null){
         $this->_labeller = new Labeller();
@@ -549,7 +549,10 @@ class ExtendedGraph
     public function from_json($json) {
         if ($json) {
             $this->remove_all_triples();
-            $this->_index = json_decode($json, true);
+            $index = json_decode($json, true);
+            if (is_array($index)) {
+                $this->_index = $index;
+            }
         }
     }
 
@@ -562,7 +565,9 @@ class ExtendedGraph
     public function add_json($json) {
         if ($json) {
             $json_index = json_decode($json, true);
-            $this->_index = $this->merge($this->_index, $json_index);
+            if (is_array($json_index)) {
+                $this->_index = $this->merge($this->_index, $json_index);
+            }
         }
     }
 

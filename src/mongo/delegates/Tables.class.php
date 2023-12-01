@@ -433,12 +433,12 @@ class Tables extends CompositeBase
         foreach ($resourceAndType as $rt)
         {
             $id = $rt["_id"];
-            if (array_key_exists("rdf:type",$rt))
+            if (isset($rt["rdf:type"]))
             {
-                if (array_key_exists('u',$rt["rdf:type"]))
+                if (isset($rt["rdf:type"][VALUE_URI]))
                 {
                     // single type, not an array of values
-                    $this->generateTableRowsForType($rt["rdf:type"]['u'],$id[_ID_RESOURCE],$id[_ID_CONTEXT], $specTypes);
+                    $this->generateTableRowsForType($rt["rdf:type"][VALUE_URI],$id[_ID_RESOURCE],$id[_ID_CONTEXT], $specTypes);
                 }
                 else
                 {
@@ -446,9 +446,9 @@ class Tables extends CompositeBase
                     foreach ($rt["rdf:type"] as $type)
                     {
                         // Defensive check in case there is bad data for rdf:type
-                        if(array_key_exists('u', $type))
+                        if (isset($type[VALUE_URI]))
                         {
-                            $this->generateTableRowsForType($type['u'],$id[_ID_RESOURCE],$id[_ID_CONTEXT], $specTypes);
+                            $this->generateTableRowsForType($type[VALUE_URI],$id[_ID_RESOURCE],$id[_ID_CONTEXT], $specTypes);
                         }
                     }
                 }
