@@ -208,6 +208,68 @@ class ExtendedGraphTest extends PHPUnit_Framework_TestCase
         $this->assertFalse($graph->subject_has_property('http://some/subject/3','http://some/predicate/to/remove'), 'should have removed triple about subject 3');
     }
 
+    public function testGetFirstResource()
+    {
+        $graph = new ExtendedGraph();
+
+        $graph->add_literal_triple('http://some/subject/1', 'http://some/predicate', 'value 1');
+        $graph->add_resource_triple('http://some/subject/1', 'http://some/predicate', 'http://value/2');
+
+        $this->assertEquals('http://value/2', $graph->get_first_resource('http://some/subject/1', 'http://some/predicate'), 'should have returned first resource');
+        $this->assertEquals(null, $graph->get_first_resource('http://some/subject/2', 'http://other/predicate'), 'should have returned default value');
+        $this->assertEquals('my default', $graph->get_first_resource('http://some/subject/3', 'http://other/predicate', 'my default'), 'should have returned default value');
+    }
+
+    public function testRemoveResourceTriple()
+    {
+        $graph = new ExtendedGraph();
+
+        // Add some triples
+        $graph->add_resource_triple('http://some/subject/1', 'http://some/predicate', 'http://value/1');
+        $graph->add_resource_triple('http://some/subject/2', 'http://some/predicate', 'http://value/2');
+        $this->assertEquals(2, $graph->get_triple_count(), 'should have 2 triples');
+
+        // Try to remove triples that don't exist
+        $graph->remove_resource_triple('http://some/subject/3', 'http://some/predicate', 'http://value/3');
+        $graph->remove_literal_triple('http://some/subject/3', 'http://some/predicate', 'value 3');
+        $this->assertEquals(2, $graph->get_triple_count(), 'should have 2 triples');
+
+        // Remove a triple that does exist
+        $graph->remove_resource_triple('http://some/subject/1', 'http://some/predicate', 'http://value/1');
+        $this->assertEquals(1, $graph->get_triple_count(), 'should have 1 triple');
+
+        // Remove the last triple
+        $graph->remove_resource_triple('http://some/subject/2', 'http://some/predicate', 'http://value/2');
+        $this->assertEquals(0, $graph->get_triple_count(), 'should have 0 triples');
+        $this->assertTrue($graph->is_empty(), 'should be empty');
+        $this->assertEquals([], $graph->get_index(), 'should have empty index');
+    }
+
+    public function testRemoveLiteralTriple()
+    {
+        $graph = new ExtendedGraph();
+
+        // Add some triples
+        $graph->add_literal_triple('http://some/subject/1', 'http://some/predicate', 'value 1');
+        $graph->add_literal_triple('http://some/subject/2', 'http://some/predicate', 'value 2');
+        $this->assertEquals(2, $graph->get_triple_count(), 'should have 2 triples');
+
+        // Try to remove triples that don't exist
+        $graph->remove_literal_triple('http://some/subject/3', 'http://some/predicate', 'value 3');
+        $graph->remove_resource_triple('http://some/subject/3', 'http://some/predicate', 'http://value/3');
+        $this->assertEquals(2, $graph->get_triple_count(), 'should have 2 triples');
+
+        // Remove a triple that does exist
+        $graph->remove_literal_triple('http://some/subject/1', 'http://some/predicate', 'value 1');
+        $this->assertEquals(1, $graph->get_triple_count(), 'should have 1 triple');
+
+        // Remove the last triple
+        $graph->remove_literal_triple('http://some/subject/2', 'http://some/predicate', 'value 2');
+        $this->assertEquals(0, $graph->get_triple_count(), 'should have 0 triples');
+        $this->assertTrue($graph->is_empty(), 'should be empty');
+        $this->assertEquals([], $graph->get_index(), 'should have empty index');
+    }
+
     public function testGetResourceProperties()
     {
         $graph = new ExtendedGraph();
