@@ -467,7 +467,7 @@ class ExtendedGraph
      * @return string the first resource value found or the supplied default if no values were found
      */
     public function get_first_resource($s, $p, $default = null) {
-        if ( array_key_exists($s, $this->_index) && array_key_exists($p, $this->_index[$s]) ) {
+        if (isset($this->_index[$s][$p])) {
             foreach ($this->_index[$s][$p] as $value) {
                 if ($value['type'] == 'uri' || $value['type'] == 'bnode' ) {
                     return $value['value'];
@@ -483,7 +483,12 @@ class ExtendedGraph
      * @param string $p the predicate URI of the triple
      * @param string $o the object of the triple, either a URI or a blank node in the format _:name
      */
-    public function remove_resource_triple( $s, $p, $o) {
+    public function remove_resource_triple($s, $p, $o) {
+        // Already removed
+        if (!isset($this->_index[$s]) || !isset($this->_index[$s][$p])) {
+            return;
+        }
+
         for ($i = count($this->_index[$s][$p]) - 1; $i >= 0; $i--) {
             if (($this->_index[$s][$p][$i]['type'] == 'uri' || $this->_index[$s][$p][$i]['type'] == 'bnode') && $this->_index[$s][$p][$i]['value'] == $o)  {
                 array_splice($this->_index[$s][$p], $i, 1);
@@ -493,10 +498,10 @@ class ExtendedGraph
         if (count($this->_index[$s][$p]) == 0) {
             unset($this->_index[$s][$p]);
         }
+
         if (count($this->_index[$s]) == 0) {
             unset($this->_index[$s]);
         }
-
     }
 
     /**
@@ -505,6 +510,11 @@ class ExtendedGraph
      * @param string $o
      */
     public function remove_literal_triple($s, $p, $o) {
+        // Already removed
+        if (!isset($this->_index[$s]) || !isset($this->_index[$s][$p])) {
+            return;
+        }
+
         for ($i = count($this->_index[$s][$p]) - 1; $i >= 0; $i--) {
             if ($this->_index[$s][$p][$i]['type'] == 'literal' && $this->_index[$s][$p][$i]['value'] == $o)  {
                 array_splice($this->_index[$s][$p], $i, 1);
@@ -514,10 +524,10 @@ class ExtendedGraph
         if (count($this->_index[$s][$p]) == 0) {
             unset($this->_index[$s][$p]);
         }
+
         if (count($this->_index[$s]) == 0) {
             unset($this->_index[$s]);
         }
-
     }
 
     /**
