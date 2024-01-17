@@ -31,8 +31,8 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
 
     public function __construct()
     {
-        \Resque_Event::listen('beforePerform', [$this, 'beforePerform']);
-        \Resque_Event::listen('onFailure', [$this, 'onFailure']);
+        \Resque_Event::listen('beforePerform', [self::class, 'beforePerform']);
+        \Resque_Event::listen('onFailure', [self::class, 'onFailure']);
     }
 
     /**
@@ -63,7 +63,12 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
      */
     public static function beforePerform(\Resque_Job $job)
     {
-        $job->getInstance()->validateArgs();
+        $instance = $job->getInstance();
+        if (!$instance instanceof self) {
+            return;
+        }
+
+        $instance->validateArgs();
     }
 
     public function setUp()
@@ -96,14 +101,17 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
     /**
      * Resque event when a job failures
      *
-     * @param \Exception  $e   Exception
-     * @param \Resque_Job $job The failed job
+     * @param \Throwable|\Exception $e   Exception or Error
+     * @param \Resque_Job           $job The failed job
      * @return void
      */
-    public static function onFailure(\Exception $e, \Resque_Job $job)
+    public static function onFailure($e, \Resque_Job $job)
     {
-        /** @var JobBase $failedJob */
         $failedJob = $job->getInstance();
+        if (!$failedJob instanceof self) {
+            return;
+        }
+
         $failedJob->errorLog('Caught exception in '. get_called_class() . ': ' . $e->getMessage());
         $failedJob->getStat()->increment($failedJob->getStatFailureIncrementKey());
         throw $e;
