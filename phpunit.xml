@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit bootstrap="./test/bootstrap.php">
+    <php>
+        <ini name="memory_limit" value="512M" />
+    </php>
+
+    <testsuites>
+        <testsuite name="Tripod_Performance_Tests">
+            <directory>test/performance</directory>
+        </testsuite>
+        <testsuite name="Tripod_Unit_Tests">
+            <directory>test/unit</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>

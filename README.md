@@ -30,6 +30,10 @@ Quickstart
 ```php
 require_once("tripod.inc.php");
 
+// Queue worker must register these event listeners
+Resque_Event::listen('beforePerform', [\Tripod\Mongo\Jobs\JobBase::class, 'beforePerform']);
+Resque_Event::listen('onFailure', [\Tripod\Mongo\Jobs\JobBase::class, 'onFailure']);
+
 \Tripod\Config::setConfig($conf); // set the config, usually read in as JSON from a file
 
 $tripod = new Driver(

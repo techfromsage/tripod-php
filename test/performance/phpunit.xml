@@ -1,7 +1,0 @@
-<phpunit bootstrap="../../vendor/autoload.php">
-    <testsuites>
-        <testsuite name="Tripod_Performance_Tests">
-            <directory>.</directory>
-        </testsuite>
-    </testsuites>
-</phpunit>
