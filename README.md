@@ -83,9 +83,9 @@ $tripod->saveChanges(
 Requirements
 ----
 
-PHP >= 5.4.x
+PHP >= 5.5
 
-Mongo 2.6.x and up.
+Mongo 3.2.x and up.
 
 MongoDB PHP driver version. http://mongodb.github.io/mongo-php-driver/#installation
 
