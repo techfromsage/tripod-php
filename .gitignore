@@ -8,6 +8,7 @@ tags
 atlassian-ide-plugin.xml
 
 composer.lock
+test-results
 
 test/performance/rest-interface/.vagrant/
 test/performance/rest-interface/config/tripod-config-*.json

@@ -34,5 +34,8 @@
     },
     "autoload": {
         "classmap": ["src/"]
+    },
+    "scripts": {
+        "test": "phpunit"
     }
 }

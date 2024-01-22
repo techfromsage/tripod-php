@@ -16,8 +16,11 @@ jobs:
     steps:
       - checkout
       - run: composer install
-      - run: ./vendor/bin/phpunit test/unit
-      - run: ./vendor/bin/phpunit test/performance
+      - run: composer test -- --log-junit test-results/junit.xml
+      - store_test_results:
+          path: test-results/junit.xml
+      - store_artifacts:
+          path: test-results/junit.xml
 
 workflows:
   build_and_test:

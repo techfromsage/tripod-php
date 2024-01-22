@@ -6,7 +6,7 @@ use \MongoDB\Driver\ReadPreference;
 use \MongoDB\Client;
 use \MongoDB\Driver\Exception\ConnectionTimeoutException;
 
-class MongoTripodConfigTest extends MongoTripodTestBase
+class MongoTripodConfigUnitTest extends MongoTripodTestBase
 {
     /**
      * @var \Tripod\Mongo\Config

@@ -15,6 +15,24 @@ use Tripod\Config;
  */
 abstract class JobBase extends \Tripod\Mongo\DriverBase
 {
+    /**
+     * Resque Job arguments, set by Resque_Job_Factory
+     * @var array
+     */
+    public $args;
+
+    /**
+     * Resque Job queue, set by Resque_Job_Factory
+     * @var string
+     */
+    public $queue;
+
+    /**
+     * Resque Job
+     * @var \Resque_Job
+     */
+    public $job;
+
     private $tripod;
     const TRIPOD_CONFIG_KEY = 'tripodConfig';
     const TRIPOD_CONFIG_GENERATOR = 'tripodConfigGenerator';
@@ -28,12 +46,6 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
 
     /** @var \Tripod\Timer */
     protected $timer;
-
-    public function __construct()
-    {
-        \Resque_Event::listen('beforePerform', [self::class, 'beforePerform']);
-        \Resque_Event::listen('onFailure', [self::class, 'onFailure']);
-    }
 
     /**
      * The main method of the job
