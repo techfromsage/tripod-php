@@ -27,6 +27,12 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
      */
     public $queue;
 
+    /**
+     * Resque Job
+     * @var \Resque_Job
+     */
+    public $job;
+
     private $tripod;
     const TRIPOD_CONFIG_KEY = 'tripodConfig';
     const TRIPOD_CONFIG_GENERATOR = 'tripodConfigGenerator';
