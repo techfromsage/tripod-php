@@ -69,6 +69,17 @@ interface IConfigInstance extends \Tripod\ITripodConfigSerializer
     public function getPods($storeName);
 
     /**
+     * Returns the name of the data source for the request pod.  This may be the default for the store or the pod may
+     * have overridden it in the config.
+     *
+     * @param string $storeName
+     * @param string $podName
+     * @throws \Tripod\Exceptions\ConfigException
+     * @return string
+     */
+    public function getDataSourceForPod($storeName, $podName);
+
+    /**
      * Return the view specification document for the supplied id, if it exists
      * @param string $storeName Store name
      * @param string $vid       View spec ID
@@ -155,6 +166,12 @@ interface IConfigInstance extends \Tripod\ITripodConfigSerializer
      * @return array
      */
     public function getNamespaces();
+
+    /**
+     * Getter for transaction log connection config
+     * @return array
+     */
+    public function getTransactionLogConfig();
 
     /**
      * @param string $storeName Store name
@@ -256,6 +273,13 @@ interface IConfigInstance extends \Tripod\ITripodConfigSerializer
      * @return Collection
      */
     public function getCollectionForTTLCache($storeName, $readPreference = ReadPreference::RP_PRIMARY_PREFERRED);
+
+    /**
+     * @param string $storeName
+     * @param string $readPreference
+     * @return Collection
+     */
+    public function getCollectionForLocks($storeName, $readPreference = ReadPreference::RP_PRIMARY_PREFERRED);
 
     /**
      * @param string $storeName      Store (database) name
