@@ -102,13 +102,8 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             )
         );
         // get the view direct from mongo
-//        $result = $this->tripod->getViewForResource("http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA","v_resource_full");
-        $mongo = new Client(
-            \Tripod\Config::getInstance()->getConnStr('tripod_php_testing'),
-            [],
-            ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']]
-        );
-        $actualView = $mongo->selectCollection('tripod_php_testing','views')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA',"c"=>'http://talisaspire.com/',"type"=>'v_resource_full')));
+        $collection = \Tripod\Config::getInstance()->getCollectionForView('tripod_php_testing', 'v_resource_full');
+        $actualView = $collection->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA',"c"=>'http://talisaspire.com/',"type"=>'v_resource_full')));
         $this->assertEquals($expectedView['_id'], $actualView['_id']);
         $this->assertEquals($expectedView['value'], $actualView['value']);
         $this->assertInstanceOf('\MongoDB\BSON\UTCDateTime', $actualView['_cts']);
@@ -176,12 +171,8 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             )
         );
         // get the view direct from mongo
-        $mongo = new Client(
-            \Tripod\Config::getInstance()->getConnStr('tripod_php_testing'),
-            [],
-            ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']]
-        );
-        $actualView = $mongo->selectCollection('tripod_php_testing','views')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/filter1',"c"=>'http://talisaspire.com/',"type"=>'v_resource_filter1')));
+        $collection = \Tripod\Config::getInstance()->getCollectionForView('tripod_php_testing', 'v_resource_filter1');
+        $actualView = $collection->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/filter1',"c"=>'http://talisaspire.com/',"type"=>'v_resource_filter1')));
         $this->assertEquals($expectedView['_id'], $actualView['_id']);
         $this->assertEquals($expectedView['value'], $actualView['value']);
         $this->assertInstanceOf('\MongoDB\BSON\UTCDateTime', $actualView['_cts']);
@@ -241,12 +232,8 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             )
         );
         // get the view direct from mongo
-        $mongo = new Client(
-            \Tripod\Config::getInstance()->getConnStr('tripod_php_testing'),
-            [],
-            ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']]
-        );
-        $actualView = $mongo->selectCollection('tripod_php_testing','views')->findOne(
+        $collection = \Tripod\Config::getInstance()->getCollectionForView('tripod_php_testing', 'v_resource_filter2');
+        $actualView = $collection->findOne(
             array('_id'=>array("r"=>'http://talisaspire.com/resources/filter1',"c"=>'http://talisaspire.com/',"type"=>'v_resource_filter2'))
         );
         $this->assertEquals($expectedView['_id'], $actualView['_id']);
@@ -316,12 +303,8 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             )
         );
         // get the view direct from mongo
-        $mongo = new Client(
-            \Tripod\Config::getInstance()->getConnStr('tripod_php_testing'),
-            [],
-            ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']]
-        );
-        $actualView = $mongo->selectCollection('tripod_php_testing','views')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/filter1',"c"=>'http://talisaspire.com/',"type"=>'v_resource_filter1')));
+        $collection = \Tripod\Config::getInstance()->getCollectionForView('tripod_php_testing', 'v_resource_filter1');
+        $actualView = $collection->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/filter1',"c"=>'http://talisaspire.com/',"type"=>'v_resource_filter1')));
         $this->assertEquals($expectedView['_id'], $actualView['_id']);
         $this->assertEquals($expectedView['value'], $actualView['value']);
         $this->assertInstanceOf('\MongoDB\BSON\UTCDateTime', $actualView['_cts']);
@@ -390,7 +373,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             )
         );
 
-        $updatedView = $mongo->selectCollection('tripod_php_testing','views')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/filter1',"c"=>'http://talisaspire.com/',"type"=>'v_resource_filter1')));
+        $updatedView = $collection->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/filter1',"c"=>'http://talisaspire.com/',"type"=>'v_resource_filter1')));
         $this->assertEquals($expectedUpdatedView['_id'], $updatedView['_id']);
         $this->assertEquals($expectedUpdatedView['value'], $updatedView['value']);
         $this->assertInstanceOf('\MongoDB\BSON\UTCDateTime', $updatedView['_cts']);
@@ -462,12 +445,8 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             )
         );
         // get the view direct from mongo
-        $mongo = new Client(
-            \Tripod\Config::getInstance()->getConnStr('tripod_php_testing'),
-            [],
-            ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']]
-        );
-        $actualView = $mongo->selectCollection('tripod_php_testing','views')->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/filter1',"c"=>'http://talisaspire.com/',"type"=>'v_resource_rdfsequence')));
+        $collection = \Tripod\Config::getInstance()->getCollectionForView('tripod_php_testing', 'v_resource_rdfsequence');
+        $actualView = $collection->findOne(array('_id'=>array("r"=>'http://talisaspire.com/resources/filter1',"c"=>'http://talisaspire.com/',"type"=>'v_resource_rdfsequence')));
 
         $this->assertEquals($expectedView['_id'], $actualView['_id']);
         $this->assertEquals($expectedView['value'], $actualView['value']);
