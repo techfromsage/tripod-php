@@ -41,7 +41,7 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
     protected $mandatoryArgs = [];
     protected $configRequired = false;
 
-    /** @var \Tripod\ITripodConfig */
+    /** @var \Tripod\Mongo\IConfigInstance */
     protected $tripodConfig;
 
     /** @var \Tripod\Timer */
@@ -307,7 +307,7 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
      * Deserialize a tripodConfigGenerator argument to a Tripod Config object
      *
      * @param array $config The serialized Tripod config
-     * @return \Tripod\ITripodConfig
+     * @return \Tripod\Mongo\IConfigInstance
      */
     protected function deserializeConfig(array $config)
     {
@@ -333,13 +333,13 @@ abstract class JobBase extends \Tripod\Mongo\DriverBase
     /**
      * Returns the Tripod config required by the job
      *
-     * @return \Tripod\ITripodConfig
+     * @return \Tripod\Mongo\IConfigInstance
      */
     protected function getTripodConfig()
     {
         if (!isset($this->tripodConfig)) {
             $this->ensureConfig();
-            $this->setConfig();
+            $this->setTripodConfig();
         }
         return $this->tripodConfig;
     }

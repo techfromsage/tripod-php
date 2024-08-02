@@ -5,11 +5,11 @@ namespace Tripod;
 class TripodConfigFactory
 {
     /**
-     * Factory method to get a Tripod\ITripodConfig instance from either a config array, or a serialized
+     * Factory method to get a Tripod config instance from either a config array, or a serialized
      * ITripodConfigSerializer instance
      *
      * @param array $config The Tripod config or serialized ITripodConfigSerializer array
-     * @return \Tripod\ITripodConfig
+     * @return \Tripod\Mongo\IConfigInstance
      */
     public static function create(array $config)
     {

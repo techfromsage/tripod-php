@@ -26,7 +26,7 @@ class Config implements ITripodConfig
      * @uses Config::setConfig() Configuration must be set prior to calling this method. To generate a completely new object, set a new config
      * @codeCoverageIgnore
      * @throws \Tripod\Exceptions\ConfigException
-     * @return ITripodConfig
+     * @return \Tripod\Mongo\IConfigInstance
      */
     public static function getInstance()
     {
