@@ -1,0 +1,16 @@
+# An override file to test Tripod on multiple clusters.
+# Usage:
+# docker compose -f docker-compose.yml -f docker-compose.clusters.yml run --rm -it php74 vendor/bin/phpunit
+
+services:
+  php74:
+    depends_on:
+      - mongodb2
+    environment:
+      TRIPOD_DATASOURCE_RS1_CONFIG: |
+        {"type":"mongo", "connection":"mongodb://mongodb:27017/", "replicaSet":""}
+      TRIPOD_DATASOURCE_RS2_CONFIG: |
+        {"type":"mongo", "connection":"mongodb://mongodb2:27017/", "replicaSet":""}
+
+  mongodb2:
+    image: mongo:4.4.29

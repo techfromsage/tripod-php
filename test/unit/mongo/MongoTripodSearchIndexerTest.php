@@ -520,7 +520,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
         /** @var \PHPUnit_Framework_MockObject_MockObject|\MongoDB\Collection $collection */
         $collection = $this->getMockBuilder('\MongoDB\Collection')
             ->setMethods(['count', 'find'])
-            ->disableOriginalConstructor()
+            ->setConstructorArgs([new \MongoDB\Driver\Manager(), 'db', 'coll'])
             ->getMock();
         $collection->expects($this->atLeastOnce())->method('count')->willReturn($count);
         $collection->expects($this->atLeastOnce())->method('find')->willReturn($fakeCursor);

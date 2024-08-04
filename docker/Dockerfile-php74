@@ -1,4 +1,4 @@
-FROM php:7.3.33-cli
+FROM php:7.4.33-cli
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
   ca-certificates \
@@ -15,4 +15,4 @@ RUN curl -sLo /tmp/mongosh.deb https://downloads.mongodb.com/compass/mongodb-mon
 COPY --from=mlocati/php-extension-installer:2.3.2 /usr/bin/install-php-extensions /usr/local/bin/
 COPY --from=composer:2.7.7 /usr/bin/composer /usr/local/bin/
 
-RUN install-php-extensions pcntl mongodb-1.6.1
+RUN install-php-extensions pcntl mongodb-1.19.3

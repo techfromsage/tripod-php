@@ -1239,9 +1239,17 @@ class Config implements IConfigInstance
      */
     public function getReplicaSetName($datasource)
     {
-        if($this->isReplicaSet($datasource))
-        {
+        if (!empty($this->dataSources[$datasource]['replicaSet'])) {
             return $this->dataSources[$datasource]['replicaSet'];
+        }
+
+        if (strpos($this->dataSources[$datasource]['connection'], 'replicaSet=') !== false) {
+            $query = parse_url($this->dataSources[$datasource]['connection'], PHP_URL_QUERY);
+            $params = [];
+            parse_str($query, $params);
+            if (!empty($params['replicaSet'])) {
+                return $params['replicaSet'];
+            }
         }
 
         return null;
@@ -1254,14 +1262,7 @@ class Config implements IConfigInstance
      */
     public function isReplicaSet($datasource)
     {
-        if (array_key_exists($datasource,$this->dataSources))
-        {
-            if(array_key_exists("replicaSet",$this->dataSources[$datasource]) && !empty($this->dataSources[$datasource]["replicaSet"])) {
-                return true;
-            }
-        }
-
-        return false;
+        return $this->getReplicaSetName($datasource) !== null;
     }
 
     /**

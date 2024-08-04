@@ -37,7 +37,7 @@ class EnsureIndexesTest extends ResqueJobTestBase
         }
         $job = new \Tripod\Mongo\Jobs\EnsureIndexes();
         $job->args = $this->args;
-        $job->job->payload['id'] = uniqid();
+        $job->job = new \Resque_Job('queue', ['id' => uniqid()]);
         unset($job->args[$argument]);
 
         $this->setExpectedException(
@@ -224,7 +224,7 @@ class EnsureIndexesTest extends ResqueJobTestBase
             ->setMethods($methodsToStub)
             ->setMockClassName('MockEnsureIndexes')
             ->getMock();
-        $mockEnsureIndexesJob->job->payload['id'] = uniqid();
+        $mockEnsureIndexesJob->job = new \Resque_Job('queue', ['id' => uniqid()]);
         return $mockEnsureIndexesJob;
     }
 

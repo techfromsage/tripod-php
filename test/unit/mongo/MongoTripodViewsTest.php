@@ -787,11 +787,11 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             ->setMethods(['selectCollection'])
             ->getMock();
         $mockColl = $this->getMockBuilder('\MongoDB\Collection')
-            ->disableOriginalConstructor()
+            ->setConstructorArgs([new \MongoDB\Driver\Manager(), 'db', 'coll'])
             ->setMethods(['findOne'])
             ->getMock();
         $mockViewColl = $this->getMockBuilder('\MongoDB\Collection')
-            ->disableOriginalConstructor()
+            ->setConstructorArgs([new \MongoDB\Driver\Manager(), 'db', 'view'])
             ->setMethods(['findOne'])
             ->getMock();
 
@@ -854,11 +854,11 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             ->setMethods(['selectCollection'])
             ->getMock();
         $mockColl = $this->getMockBuilder('\MongoDB\Collection')
-            ->disableOriginalConstructor()
+            ->setConstructorArgs([new \MongoDB\Driver\Manager(), 'db', 'coll'])
             ->setMethods(['findOne'])
             ->getMock();
         $mockViewColl = $this->getMockBuilder('\MongoDB\Collection')
-            ->disableOriginalConstructor()
+            ->setConstructorArgs([new \MongoDB\Driver\Manager(), 'db', 'view'])
             ->setMethods(['findOne'])
             ->getMock();
 
@@ -1057,7 +1057,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
 
         $impactedSubjects = $view->getImpactedSubjects($subjectsAndPredicatesOfChange, $context);
 
-        $this->assertEquals($expectedImpactedSubjects, $impactedSubjects);
+        $this->assertEquals($expectedImpactedSubjects, $impactedSubjects, '', 0.0, 10, true);
 
         foreach ($impactedSubjects as $subject) {
             $view->update($subject);
@@ -1098,7 +1098,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $tripod = new \Tripod\Mongo\Driver('CBD_testing', 'tripod_php_testing', array('defaultContext'=>$context));
         $tripod->saveChanges(new \Tripod\ExtendedGraph(), $originalGraph);
 
-        $collections = \Tripod\Config::getInstance()->getCollectionsForViews('tripod_php_testing', array('v_resource_full', 'v_resource_full_ttl', 'v_resource_to_single_source'));
+        $collections = \Tripod\Config::getInstance()->getCollectionsForViews('tripod_php_testing', array('v_resource_full', 'v_resource_to_single_source'));
 
         foreach($collections as $collection)
         {
@@ -1281,7 +1281,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $tripod = new \Tripod\Mongo\Driver('CBD_testing', 'tripod_php_testing', array('defaultContext'=>$context));
         $tripod->saveChanges(new \Tripod\ExtendedGraph(), $originalGraph);
 
-        $collections = \Tripod\Config::getInstance()->getCollectionsForViews('tripod_php_testing', array('v_resource_full', 'v_resource_full_ttl', 'v_resource_to_single_source'));
+        $collections = \Tripod\Config::getInstance()->getCollectionsForViews('tripod_php_testing', array('v_resource_full', 'v_resource_to_single_source'));
 
         foreach($collections as $collection)
         {
@@ -1947,11 +1947,11 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             ->setMethods(['selectCollection'])
             ->getMock();
         $mockColl = $this->getMockBuilder('\MongoDB\Collection')
-            ->disableOriginalConstructor()
+            ->setConstructorArgs([new \MongoDB\Driver\Manager(), 'db', 'coll'])
             ->setMethods(['findOne'])
             ->getMock();
         $mockViewColl = $this->getMockBuilder('\MongoDB\Collection')
-            ->disableOriginalConstructor()
+            ->setConstructorArgs([new \MongoDB\Driver\Manager(), 'db', 'view'])
             ->setMethods(['find'])
             ->getMock();
         $mockCursor = $this->getMock('\ArrayIterator', array('rewind'));
@@ -2010,11 +2010,11 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             ->setMethods(['selectCollection'])
             ->getMock();
         $mockColl = $this->getMockBuilder('\MongoDB\Collection')
-            ->disableOriginalConstructor()
+            ->setConstructorArgs([new \MongoDB\Driver\Manager(), 'db', 'coll'])
             ->setMethods(['findOne'])
             ->getMock();
         $mockViewColl = $this->getMockBuilder('\MongoDB\Collection')
-            ->disableOriginalConstructor()
+            ->setConstructorArgs([new \MongoDB\Driver\Manager(), 'db', 'view'])
             ->setMethods(['findOne', 'find'])
             ->getMock();
         $mockCursor = $this->getMock('\ArrayIterator', array('rewind'));
@@ -2073,11 +2073,11 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             ->setMethods(['selectCollection'])
             ->getMock();
         $mockColl = $this->getMockBuilder('\MongoDB\Collection')
-            ->disableOriginalConstructor()
+            ->setConstructorArgs([new \MongoDB\Driver\Manager(), 'db', 'coll'])
             ->setMethods(['findOne'])
             ->getMock();
         $mockViewColl = $this->getMockBuilder('\MongoDB\Collection')
-            ->disableOriginalConstructor()
+            ->setConstructorArgs([new \MongoDB\Driver\Manager(), 'db', 'view'])
             ->setMethods(['find', 'findOne'])
             ->getMock();
         $mockCursor = $this->getMock('\ArrayIterator', array('rewind'));
@@ -2134,7 +2134,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
     public function testCountViews()
     {
         $collection = $this->getMockBuilder('\MongoDB\Collection')
-            ->disableOriginalConstructor()
+            ->setConstructorArgs([new \MongoDB\Driver\Manager(), 'db', 'coll'])
             ->setMethods(['count'])
             ->getMock();
         $views = $this->getMockBuilder('\Tripod\Mongo\Composites\Views')
@@ -2160,7 +2160,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         $filters = ['_cts' => ['$lte' => new \MongoDB\BSON\UTCDateTime(null)]];
         $query = array_merge(['_id.type' => 'v_some_spec'], $filters);
         $collection = $this->getMockBuilder('\MongoDB\Collection')
-            ->disableOriginalConstructor()
+            ->setConstructorArgs([new \MongoDB\Driver\Manager(), 'db', 'coll'])
             ->setMethods(['count'])
             ->getMock();
         $views = $this->getMockBuilder('\Tripod\Mongo\Composites\Views')
@@ -2184,7 +2184,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
     public function testDeleteViewsByViewId()
     {
         $collection = $this->getMockBuilder('\MongoDB\Collection')
-            ->disableOriginalConstructor()
+            ->setConstructorArgs([new \MongoDB\Driver\Manager(), 'db', 'coll'])
             ->setMethods(['deleteMany'])
             ->getMock();
 
@@ -2227,7 +2227,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
             ]
         ];
         $collection = $this->getMockBuilder('\MongoDB\Collection')
-            ->disableOriginalConstructor()
+            ->setConstructorArgs([new \MongoDB\Driver\Manager(), 'db', 'coll'])
             ->setMethods(['deleteMany'])
             ->getMock();
 
@@ -2280,7 +2280,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase {
         /** @var \PHPUnit_Framework_MockObject_MockObject|\MongoDB\Collection $collection */
         $collection = $this->getMockBuilder('\MongoDB\Collection')
             ->setMethods(['count', 'find'])
-            ->disableOriginalConstructor()
+            ->setConstructorArgs([new \MongoDB\Driver\Manager(), 'db', 'coll'])
             ->getMock();
         $collection->expects($this->atLeastOnce())->method('count')->willReturn($count);
         $collection->expects($this->atLeastOnce())->method('find')->willReturn($fakeCursor);

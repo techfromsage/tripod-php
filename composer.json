@@ -18,18 +18,17 @@
         }
     ],
     "suggest": {
-        "mongodb/mongodb": "MongoDB driver library",
         "resque/php-resque": "Redis backed library for background jobs"
     },
     "require": {
         "php" : ">=5.5",
-        "semsol/arc2": "2.2.6",
-        "monolog/monolog" : "~1.13"
+        "mongodb/mongodb": "*",
+        "monolog/monolog" : "~1.13",
+        "semsol/arc2": "2.2.6"
     },
     "require-dev": {
-        "resque/php-resque": "v1.3.4",
-        "mongodb/mongodb": "1.4.3",
         "phpunit/phpunit": "^4.8",
+        "resque/php-resque": "v1.3.4",
         "squizlabs/php_codesniffer": "3.2.*"
     },
     "autoload": {

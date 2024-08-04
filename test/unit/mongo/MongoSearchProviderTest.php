@@ -607,7 +607,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
             ->getMock();
 
         $collection = $this->getMockBuilder('\MongoDB\Collection')
-            ->disableOriginalConstructor()
+            ->setConstructorArgs([new \MongoDB\Driver\Manager(), 'db', 'coll'])
             ->setMethods(['count'])
             ->getMock();
         $search = $this->getMockBuilder('\Tripod\Mongo\MongoSearchProvider')
@@ -637,7 +637,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
         $filters = ['_cts' => ['$lte' => new \MongoDB\BSON\UTCDateTime(null)]];
         $query = array_merge(['_id.type' => 'i_search_list'], $filters);
         $collection = $this->getMockBuilder('\MongoDB\Collection')
-            ->disableOriginalConstructor()
+            ->setConstructorArgs([new \MongoDB\Driver\Manager(), 'db', 'coll'])
             ->setMethods(['count'])
             ->getMock();
         $search = $this->getMockBuilder('\Tripod\Mongo\MongoSearchProvider')
@@ -665,7 +665,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
             ->getMock();
 
         $collection = $this->getMockBuilder('\MongoDB\Collection')
-            ->disableOriginalConstructor()
+            ->setConstructorArgs([new \MongoDB\Driver\Manager(), 'db', 'coll'])
             ->setMethods(['deleteMany'])
             ->getMock();
 
@@ -718,7 +718,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
             ->getMock();
 
         $collection = $this->getMockBuilder('\MongoDB\Collection')
-            ->disableOriginalConstructor()
+            ->setConstructorArgs([new \MongoDB\Driver\Manager(), 'db', 'coll'])
             ->setMethods(['deleteMany'])
             ->getMock();
 
