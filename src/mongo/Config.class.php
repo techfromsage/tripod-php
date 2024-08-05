@@ -1650,21 +1650,26 @@ class Config implements IConfigInstance
         {
             throw new \Tripod\Exceptions\ConfigException("Data source '{$dataSource}' not in configuration");
         }
-        $connectionOptions = [];
-        $ds = $this->dataSources[$dataSource];
-        $connectionOptions['connectTimeoutMS'] = (isset($ds['connectTimeoutMS']) ? $ds['connectTimeoutMS'] : DEFAULT_MONGO_CONNECT_TIMEOUT_MS);
-
-        if(isset($ds['replicaSet']) && !empty($ds['replicaSet'])) {
-            $connectionOptions['replicaSet'] = $ds['replicaSet'];
-        }
         if(!isset($this->connections[$dataSource]))
         {
+            $ds = $this->dataSources[$dataSource];
+            $connectionString = $ds['connection'];
+            $connectionOptions = [];
+
+            if (!empty($ds['connectTimeoutMS']) || strpos($connectionString, 'connectTimeoutMS=') === false) {
+                $connectionOptions['connectTimeoutMS'] = isset($ds['connectTimeoutMS']) ? $ds['connectTimeoutMS'] : DEFAULT_MONGO_CONNECT_TIMEOUT_MS;
+            }
+
+            if (!empty($ds['replicaSet'])) {
+                $connectionOptions['replicaSet'] = $ds['replicaSet'];
+            }
+
             $retries = 1;
             $exception = null;
 
             do {
                 try {
-                    $this->connections[$dataSource] = $this->getMongoClient($ds['connection'], $connectionOptions);
+                    $this->connections[$dataSource] = $this->getMongoClient($connectionString, $connectionOptions);
                     break;
                 } catch (ConnectionTimeoutException $e) {
                     self::getLogger()->error("ConnectionTimeoutException attempt ".$retries.". Retrying...:" . $e->getMessage());
