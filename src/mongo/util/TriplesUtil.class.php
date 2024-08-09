@@ -97,12 +97,7 @@ class TriplesUtil
         if (array_key_exists($podName, $this->collections)) {
             $collection = $this->collections[$podName];
         } else {
-            $m = new Client(
-                \Tripod\Config::getInstance()->getConnStr($storeName),
-                [],
-                ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']]
-            );
-            $collection = $m->selectDatabase($storeName)->selectCollection($podName);
+            $collection = \Tripod\Config::getInstance()->getCollectionForCBD($storeName, $podName);
         }
 
         $graph = new MongoGraph();

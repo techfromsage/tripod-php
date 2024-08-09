@@ -17,7 +17,7 @@ class ApplyOperationTest extends ResqueJobTestBase
         unset($this->args['tripodConfig']);
         $job = new \Tripod\Mongo\Jobs\ApplyOperation();
         $job->args = $this->args;
-        $job->job->payload['id'] = uniqid();
+        $job->job = new \Resque_Job('queue', ['id' => uniqid()]);
         $this->setExpectedException(
             'Exception',
             'Argument tripodConfig or tripodConfigGenerator was not present in supplied job args for job Tripod\Mongo\Jobs\ApplyOperation'
@@ -31,7 +31,7 @@ class ApplyOperationTest extends ResqueJobTestBase
         unset($this->args['subjects']);
         $job = new \Tripod\Mongo\Jobs\ApplyOperation();
         $job->args = $this->args;
-        $job->job->payload['id'] = uniqid();
+        $job->job = new \Resque_Job('queue', ['id' => uniqid()]);
         $this->setExpectedException('Exception', "Argument subjects was not present in supplied job args for job Tripod\Mongo\Jobs\ApplyOperation");
         $this->performJob($job);
     }
@@ -44,7 +44,7 @@ class ApplyOperationTest extends ResqueJobTestBase
             ->getMock();
 
         $applyOperation->args = $this->args;
-        $applyOperation->job->payload['id'] = uniqid();
+        $applyOperation->job = new \Resque_Job('queue', ['id' => uniqid()]);
 
         $statMock = $this->getMockStat(
             $this->args['statsConfig']['config']['host'],
@@ -122,7 +122,7 @@ class ApplyOperationTest extends ResqueJobTestBase
             ->getMock();
 
         $applyOperation->args = $this->args;
-        $applyOperation->job->payload['id'] = uniqid();
+        $applyOperation->job = new \Resque_Job('queue', ['id' => uniqid()]);
         $jobTrackerId = new \MongoDB\BSON\ObjectId();
         $applyOperation->args[ApplyOperation::TRACKING_KEY] = $jobTrackerId->__toString();
 
@@ -223,7 +223,7 @@ class ApplyOperationTest extends ResqueJobTestBase
             ->getMock();
 
         $applyOperation->args = $this->args;
-        $applyOperation->job->payload['id'] = uniqid();
+        $applyOperation->job = new \Resque_Job('queue', ['id' => uniqid()]);
         $jobTrackerId = new \MongoDB\BSON\ObjectId();
         $applyOperation->args[ApplyOperation::TRACKING_KEY] = $jobTrackerId->__toString();
         $timestamp = new \MongoDB\BSON\UTCDateTime(hexdec(substr($jobTrackerId, 0, 8)) * 1000);
@@ -350,7 +350,7 @@ class ApplyOperationTest extends ResqueJobTestBase
         $this->args['subjects'] = array($impactedSubject->toArray());
 
         $applyOperation->args = $this->args;
-        $applyOperation->job->payload['id'] = uniqid();
+        $applyOperation->job = new \Resque_Job('queue', ['id' => uniqid()]);
 
         $subject = $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
             ->setMethods(array('getTripod'))
@@ -429,7 +429,7 @@ class ApplyOperationTest extends ResqueJobTestBase
         );
 
         $applyOperation->args = $this->args;
-        $applyOperation->job->payload['id'] = uniqid();
+        $applyOperation->job = new \Resque_Job('queue', ['id' => uniqid()]);
 
         $jobTrackerId = new \MongoDB\BSON\ObjectId();
         $applyOperation->args[ApplyOperation::TRACKING_KEY] = $jobTrackerId->__toString();
@@ -533,7 +533,7 @@ class ApplyOperationTest extends ResqueJobTestBase
         );
 
         $applyOperation->args = $this->args;
-        $applyOperation->job->payload['id'] = uniqid();
+        $applyOperation->job = new \Resque_Job('queue', ['id' => uniqid()]);
 
         $jobTrackerId = new \MongoDB\BSON\ObjectId();
         $applyOperation->args[ApplyOperation::TRACKING_KEY] = $jobTrackerId->__toString();
@@ -642,7 +642,7 @@ class ApplyOperationTest extends ResqueJobTestBase
         );
 
         $applyOperation->args = $this->args;
-        $applyOperation->job->payload['id'] = uniqid();
+        $applyOperation->job = new \Resque_Job('queue', ['id' => uniqid()]);
 
         $subject = $this->getMockBuilder('\Tripod\Mongo\ImpactedSubject')
             ->setMethods(array('getTripod'))
@@ -718,7 +718,7 @@ class ApplyOperationTest extends ResqueJobTestBase
         );
 
         $applyOperation->args = $this->args;
-        $applyOperation->job->payload['id'] = uniqid();
+        $applyOperation->job = new \Resque_Job('queue', ['id' => uniqid()]);
 
         $jobTrackerId = new \MongoDB\BSON\ObjectId();
         $applyOperation->args[ApplyOperation::TRACKING_KEY] = $jobTrackerId->__toString();
@@ -815,7 +815,7 @@ class ApplyOperationTest extends ResqueJobTestBase
         );
 
         $applyOperation->args = $this->args;
-        $applyOperation->job->payload['id'] = uniqid();
+        $applyOperation->job = new \Resque_Job('queue', ['id' => uniqid()]);
 
         $jobTrackerId = new \MongoDB\BSON\ObjectId();
         $applyOperation->args[ApplyOperation::TRACKING_KEY] = $jobTrackerId->__toString();

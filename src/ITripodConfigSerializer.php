@@ -16,7 +16,7 @@ interface ITripodConfigSerializer
      * When given a valid config, returns a Tripod Config object
      *
      * @param array $config
-     * @return \Tripod\ITripodConfig
+     * @return \Tripod\Mongo\IConfigInstance
      */
     public static function deserialize(array $config);
 }

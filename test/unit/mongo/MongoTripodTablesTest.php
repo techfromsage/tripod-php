@@ -338,7 +338,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         /** @var \PHPUnit_Framework_MockObject_MockObject|\MongoDB\Collection $collection */
         $collection = $this->getMockBuilder('\MongoDB\Collection')
             ->setMethods(['count', 'find'])
-            ->disableOriginalConstructor()
+            ->setConstructorArgs([new \MongoDB\Driver\Manager(), 'db', 'coll'])
             ->getMock();
         $collection->expects($this->atLeastOnce())->method('count')->willReturn($count);
         $collection->expects($this->atLeastOnce())->method('find')->willReturn($fakeCursor);
@@ -1716,7 +1716,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
     public function testCountTables()
     {
         $collection = $this->getMockBuilder('\MongoDB\Collection')
-            ->disableOriginalConstructor()
+            ->setConstructorArgs([new \MongoDB\Driver\Manager(), 'db', 'coll'])
             ->setMethods(['count'])
             ->getMock();
         $tables = $this->getMockBuilder('\Tripod\Mongo\Composites\Tables')
@@ -1742,7 +1742,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $filters = ['_cts' => ['$lte' => new \MongoDB\BSON\UTCDateTime(null)]];
         $query = array_merge(['_id.type' => 't_source_count'], $filters);
         $collection = $this->getMockBuilder('\MongoDB\Collection')
-            ->disableOriginalConstructor()
+            ->setConstructorArgs([new \MongoDB\Driver\Manager(), 'db', 'coll'])
             ->setMethods(['count'])
             ->getMock();
         $tables = $this->getMockBuilder('\Tripod\Mongo\Composites\Tables')
@@ -1766,7 +1766,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
     public function testDeleteTableRowsByTableId()
     {
         $collection = $this->getMockBuilder('\MongoDB\Collection')
-            ->disableOriginalConstructor()
+            ->setConstructorArgs([new \MongoDB\Driver\Manager(), 'db', 'coll'])
             ->setMethods(['deleteMany'])
             ->getMock();
 
@@ -1809,7 +1809,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             ]
         ];
         $collection = $this->getMockBuilder('\MongoDB\Collection')
-            ->disableOriginalConstructor()
+            ->setConstructorArgs([new \MongoDB\Driver\Manager(), 'db', 'coll'])
             ->setMethods(['deleteMany'])
             ->getMock();
 

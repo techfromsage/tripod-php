@@ -1,33 +1,155 @@
 version: 2.1
 
-jobs:
-  test:
+commands:
+  setup_replica_set:
     parameters:
-      php_version:
+      set_name:
         type: string
-    docker:
-      - image: talis/tripod-php:<< parameters.php_version >>-latest
-        environment:
-          RESQUE_SERVER: redis
-      - image: mongo:3.2.21
-        name: mongodb
-      - image: redis:6.2.6
-        name: redis
+      member_hosts:
+        type: string
     steps:
-      - checkout
-      - run: composer install
+      - run:
+          name: Setup a replica set
+          no_output_timeout: "2m"
+          environment:
+            RS_NAME: << parameters.set_name >>
+            MEMBERS: << parameters.member_hosts >>
+          command: |
+            IFS=',' read -r -a MEMBERS_ARR \<<<"$MEMBERS"
+            INITIATOR=${MEMBERS_ARR[0]}
+            MEMBERS_JS=''
+            for i in "${!MEMBERS_ARR[@]}"; do
+              MEMBERS_JS="${MEMBERS_JS}$(printf '{ _id: %d, host: "%s" },' $i "${MEMBERS_ARR[$i]}")"
+            done
+
+            MONGO_CLI="$(command -v mongosh mongo | head -n1)"
+            _mongo() { "$MONGO_CLI" --quiet --host "$@"; }
+
+            for member in "${MEMBERS_ARR[@]}"; do
+              echo "Waiting for $member"
+              until _mongo "$member" \<<<'db.adminCommand("ping")' | grep 'ok'; do
+                sleep 1
+              done
+            done
+
+            echo "Initiating replica set $RS_NAME..."
+            _mongo "$INITIATOR" \<<<"$(printf 'rs.initiate({ _id: "%s", members: [%s] })' "$RS_NAME" "$MEMBERS_JS")" | tee /dev/stderr | grep -E 'ok|already initialized'
+            echo "Waiting for primary..."
+            _mongo "$INITIATOR" \<<<'while (true) { if (rs.status().members.some(({ state }) => state === 1)) { break; } sleep(1000); }'
+            echo "Waiting for secondaries..."
+            _mongo "$INITIATOR" \<<<'while (true) { if (rs.status().members.every(({state}) => state == 1 || state == 2)) { break; } sleep(1000); }'
+            echo "Checking status..."
+            _mongo "$INITIATOR" \<<<'rs.status();' | tee /dev/stderr | grep "$RS_NAME"
+            echo "Replica set configured!"
+
+  check_mongodb_lib_version:
+    steps:
+      - run:
+          name: Check mongodb ext+lib parity
+          command: |
+            php -r 'echo phpversion("mongodb"), PHP_EOL;'
+            grep '"name": "mongodb/mongodb",' composer.lock -A1
+
+  run_test:
+    steps:
       - run: composer test -- --log-junit test-results/junit.xml
       - store_test_results:
           path: test-results/junit.xml
       - store_artifacts:
           path: test-results/junit.xml
 
+jobs:
+  test:
+    parameters:
+      php_version: { type: string }
+      mongo_version: { type: string }
+    docker:
+      - image: talis/tripod-php:<< parameters.php_version >>-latest
+      - { name: mongodb, image: mongo:<< parameters.mongo_version >> }
+      - { name: redis, image: redis:6.2.6 }
+    environment:
+      RESQUE_SERVER: redis
+    steps:
+      - checkout
+      - run: composer install
+      - check_mongodb_lib_version
+      - run_test
+
+  test-multiple-stores:
+    docker:
+      - image: talis/tripod-php:php74-latest
+      - { name: mongo1, image: mongo:4.4.29 }
+      - { name: mongo2, image: mongo:5.0.28 }
+      - { name: redis, image: redis:6.2.6 }
+    environment:
+      RESQUE_SERVER: redis
+      TRIPOD_DATASOURCE_RS1_CONFIG: |
+        {"type":"mongo", "connection":"mongodb://mongo1:27017/", "replicaSet":""}
+      TRIPOD_DATASOURCE_RS2_CONFIG: |
+        {"type":"mongo", "connection":"mongodb://mongo2:27017/", "replicaSet":""}
+    steps:
+      - checkout
+      - run: composer install
+      - check_mongodb_lib_version
+      - run_test
+
+  test-replica-set-mmap:
+    docker:
+      - image: talis/tripod-php:php74-latest
+      - { name: mongo1, image: mongo:3.6.23, command: mongod --storageEngine mmapv1 --smallfiles --replSet=tripod-rs }
+      - { name: mongo2, image: mongo:3.6.23, command: mongod --storageEngine mmapv1 --smallfiles --replSet=tripod-rs }
+      - { name: redis, image: redis:6.2.6 }
+    environment:
+      RESQUE_SERVER: redis
+      TRIPOD_DATASOURCE_RS1_CONFIG: |
+        {"type":"mongo", "connection":"mongodb://mongo1,mongo2/?retryWrites=false", "replicaSet":"tripod-rs"}
+      TRIPOD_DATASOURCE_RS2_CONFIG: |
+        {"type":"mongo", "connection":"mongodb://mongo1,mongo2/?retryWrites=false", "replicaSet":"tripod-rs"}
+    steps:
+      - checkout
+      - setup_replica_set:
+          set_name: tripod-rs
+          member_hosts: mongo1,mongo2
+      - run: composer install
+      - check_mongodb_lib_version
+      - run_test
+
+  test-replica-set-wiredtiger:
+    docker:
+      - image: talis/tripod-php:php74-latest
+      - { name: mongo1, image: mongo:5.0.28, command: mongod --replSet=tripod-rs }
+      - { name: mongo2, image: mongo:5.0.28, command: mongod --replSet=tripod-rs }
+      - { name: redis, image: redis:6.2.6 }
+    environment:
+      RESQUE_SERVER: redis
+      TRIPOD_DATASOURCE_RS1_CONFIG: |
+        {"type":"mongo", "connection":"mongodb://mongo1,mongo2/admin?replicaSet=tripod-rs", "replicaSet":""}
+      TRIPOD_DATASOURCE_RS2_CONFIG: |
+        {"type":"mongo", "connection":"mongodb://mongo1,mongo2/admin?replicaSet=tripod-rs", "replicaSet":""}
+    steps:
+      - checkout
+      - setup_replica_set:
+          set_name: tripod-rs
+          member_hosts: mongo1,mongo2
+      - run: composer install
+      - check_mongodb_lib_version
+      - run_test
+
 workflows:
   build_and_test:
     jobs:
       - test:
-          matrix:
-            parameters:
-              php_version:
-                - php55
-                - php73
+          name: test-php55
+          php_version: php55
+          mongo_version: 3.2.21
+      - test:
+          name: test-php73
+          php_version: php73
+          mongo_version: 3.6.23
+      - test:
+          name: test-php74
+          php_version: php74
+          mongo_version: 4.0.28
+      - test-multiple-stores
+      - test-replica-set-mmap
+      - test-replica-set-wiredtiger

@@ -7,7 +7,7 @@ interface ITripodConfig
     /**
      * Tripod Config instances are singletons, this method gets the existing or instantiates a new one.
      *
-     * @return ITripodConfig
+     * @return \Tripod\Mongo\IConfigInstance
      */
     public static function getInstance();
 

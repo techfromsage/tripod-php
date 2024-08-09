@@ -64,79 +64,6 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $tConfig = $config->getTransactionLogConfig();
         $this->assertEquals('tripod_php_testing',$tConfig['database']);
         $this->assertEquals('transaction_log',$tConfig['collection']);
-        $this->assertEquals($cfg['data_sources'][$cfg['transaction_log']['data_source']]['connection'],$config->getTransactionLogConnStr());
-    }
-
-    public function testTConfigRepSetConnStr()
-    {
-        $config=array();
-        $config["data_sources"] = array(
-            "tlog"=>array(
-                "type"=>"mongo",
-                "connection"=>"mongodb://tloghost:27017,tloghost:27018/admin",
-                "replicaSet" => "tlogrepset"
-            ),
-            "mongo"=>array("type"=>"mongo","connection" => "mongodb://mongodb")
-        );
-        $config["defaultContext"] = "http://talisaspire.com/";
-        $config["stores"] = array(
-            "tripod_php_testing" => array(
-                "type"=>"mongo",
-                "data_source"=>"mongo",
-                "pods" => array(
-                    "CBD_testing" => array()
-                ),
-            )
-        );
-        $config["transaction_log"] = array(
-            "database"=>"transactions",
-            "collection"=>"transaction_log",
-            "data_source"=>"tlog"
-
-        );
-
-        \Tripod\Config::setConfig($config);
-        $mtc = \Tripod\Config::getInstance();
-        $this->assertEquals("mongodb://tloghost:27017,tloghost:27018/admin",$mtc->getTransactionLogConnStr());
-    }
-
-    public function testTConfigRepSetConnStrThrowsException()
-    {
-        $this->setExpectedException(
-                   '\Tripod\Exceptions\ConfigException',
-                   'Connection string for \'rs1\' must include /admin database when connecting to Replica Set');
-
-        $config=array();
-        $config["defaultContext"] = "http://talisaspire.com/";
-        $config["data_sources"] = array(
-            "mongo1"=>array(
-                "type"=>"mongo",
-                "connection"=>"mongodb://mongodb"
-            ),
-            "rs1"=>array(
-                "type"=>"mongo",
-                "connection"=>"mongodb://tloghost:27017,tloghost:27018",
-                "replicaSet" => "tlogrepset"
-            )
-        );
-        $config["stores"] = array(
-            "tripod_php_testing" => array(
-                "data_source"=>"mongo1",
-                "pods" => array(
-                    "CBD_testing" => array()
-                )
-            )
-        );
-        $config["transaction_log"] = array(
-            "database"=>"transactions",
-            "collection"=>"transaction_log",
-            "data_source"=>"rs1"
-        );
-
-        \Tripod\Config::setConfig($config);
-        $mtc = \Tripod\Config::getInstance();
-
-        $connStr = $mtc->getTransactionLogConnStr();
     }
 
     public function testCardinality()
@@ -146,78 +73,6 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
 
         $cardinality = $this->tripodConfig->getCardinality("tripod_php_testing","CBD_testing","random:property");
         $this->assertEquals(-1,$cardinality,"Expected cardinality of 1 for random:property");
-    }
-
-    public function testGetConnectionString()
-    {
-        $this->assertEquals("mongodb://mongodb:27017/",\Tripod\Config::getInstance()->getConnStr("tripod_php_testing"));
-    }
-
-    public function testGetConnectionStringThrowsException()
-    {
-        $this->setExpectedException(
-            '\Tripod\Exceptions\ConfigException',
-            'Database notexists does not exist in configuration');
-        $this->assertEquals("mongodb://mongodb:27017/",\Tripod\Config::getInstance()->getConnStr("notexists"));
-    }
-
-    public function testGetConnectionStringForReplicaSet(){
-        $config=array();
-        $config["defaultContext"] = "http://talisaspire.com/";
-        $config["data_sources"] = array(
-            "rs"=>array(
-                "type"=>"mongo",
-                "connection"=>"mongodb://mongodb:27017,localhost:27018/admin",
-                "replicaSet" => "myrepset"
-            )
-        );
-        $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"rs");
-        $config["stores"] = array(
-            "tripod_php_testing" => array(
-                "pods" => array(
-                    "CBD_testing" => array()
-                ),
-                "data_source"=>"rs"
-            )
-        );
-
-        \Tripod\Config::setConfig($config);
-        $mtc = \Tripod\Config::getInstance();
-
-        $this->assertEquals("mongodb://mongodb:27017,localhost:27018/admin",$mtc->getConnStr("tripod_php_testing"));
-    }
-
-    public function testGetConnectionStringThrowsExceptionForReplicaSet(){
-        $this->setExpectedException(
-                   '\Tripod\Exceptions\ConfigException',
-                   'Connection string for \'rs1\' must include /admin database when connecting to Replica Set');
-        $config=array();
-        $config["defaultContext"] = "http://talisaspire.com/";
-        $config["data_sources"] = array(
-            "mongo1"=>array(
-                "type"=>"mongo",
-                "connection"=>"mongodb://mongodb"
-            ),
-            "rs1"=>array(
-                "type"=>"mongo",
-                "connection" => "mongodb://mongodb:27017,localhost:27018",
-                "replicaSet" => "myrepset"
-            )
-        );
-        $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"mongo1");
-        $config["stores"] = array(
-            "tripod_php_testing" => array(
-                "data_source"=>"rs1",
-                "pods" => array(
-                    "CBD_testing" => array()
-                ),
-            )
-        );
-
-        \Tripod\Config::setConfig($config);
-        $mtc = \Tripod\Config::getInstance();
-
-        $mtc->getConnStr("tripod_php_testing");
     }
 
     public function testCompoundIndexAllArraysThrowsException()
@@ -876,6 +731,28 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $this->assertNull($mtc->getReplicaSetName("testing_2"));
     }
 
+    public function testGetReplicaSetNameFromConnectionString()
+    {
+        \Tripod\Config::setConfig([
+            'defaultContext' => 'http://talisaspire.com/',
+            'data_sources' => [
+                'rs1' => [
+                    'type' => 'mongo',
+                    'connection' => 'mongodb://a.foo.com,b.foo.com/?replicaSet=myReplicaSet&authSource=admin',
+                ],
+                'rs2' => [
+                    'type' => 'mongo',
+                    'connection' => 'mongodb://c.foo.com,d.foo.com/?replicaSet=',
+                ],
+            ],
+            'transaction_log' => ['database' => 'transactions', 'collection' => 'transaction_log', 'data_source' => 'rs1'],
+            'stores' => [],
+        ]);
+        $mtc = \Tripod\Config::getInstance();
+        $this->assertEquals('myReplicaSet', $mtc->getReplicaSetName('rs1'));
+        $this->assertEquals(null, $mtc->getReplicaSetName('rs2'));
+    }
+
     public function testGetViewSpecification(){
         $expectedVspec = array(
             "_id"=> "v_resource_full",
@@ -1172,8 +1049,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         // Create some locks so we have a collection
         $lCollection = $config->getCollectionForLocks($storeName);
         $lCollection->drop();
-        $lCollection->insert(array(_ID_KEY=>array(_ID_RESOURCE=>'foo',_ID_CONTEXT=>'bar'), _LOCKED_FOR_TRANS=>'foobar'));
-        $lCollection->insert(array(_ID_KEY=>array(_ID_RESOURCE=>'baz',_ID_CONTEXT=>'bar'), _LOCKED_FOR_TRANS=>'wibble'));
+        $lCollection->insertOne(array(_ID_KEY=>array(_ID_RESOURCE=>'foo',_ID_CONTEXT=>'bar'), _LOCKED_FOR_TRANS=>'foobar'));
+        $lCollection->insertOne(array(_ID_KEY=>array(_ID_RESOURCE=>'baz',_ID_CONTEXT=>'bar'), _LOCKED_FOR_TRANS=>'wibble'));
         $this->tripod->removeInertLocks('foobar', 'reason1');
 
         $collectionsForDataSource = array();
@@ -1206,10 +1083,11 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
 
         foreach($dataSourcesForStore  as $source)
         {
-            /** @var MongoCollection $collection */
-            foreach($config->getDatabase($storeName, $source)->listCollections() as $collection)
+            $db = $config->getDatabase($storeName, $source);
+            foreach($db->listCollections() as $collectionInfo)
             {
-                $name = $collection->getName();
+                $name = $collectionInfo->getName();
+                $collection = $db->selectCollection($name);
                 $foundCollections[] = $name;
                 $this->assertContains($name, $collectionsForDataSource[$source], "Source " . $source . " does not include " . $name);
                 switch($name)
@@ -1710,11 +1588,12 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     // MongoClient creation tests
     public function testMongoConnectionNoExceptions()
     {
+        /** @var PHPUnit_Framework_MockObject_MockObject&TripodTestConfig */
         $mockConfig = $this->getMock('TripodTestConfig', array('getMongoClient'));
         $mockConfig->loadConfig(json_decode(file_get_contents(dirname(__FILE__).'/data/config.json'), true));
         $mockConfig->expects($this->exactly(1))
             ->method('getMongoClient')
-            ->with('mongodb://mongodb:27017/?connectTimeoutMS=20000')
+            ->with('mongodb://mongodb:27017/', ['connectTimeoutMS' => 20000])
             ->will($this->returnCallback(
                 function()
                 {
@@ -1729,22 +1608,24 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     public function testMongoConnectionExceptionThrown()
     {
         $this->setExpectedException('\MongoDB\Driver\Exception\ConnectionTimeoutException', "Exception thrown when connecting to Mongo");
+        /** @var PHPUnit_Framework_MockObject_MockObject&TripodTestConfig */
         $mockConfig = $this->getMock('TripodTestConfig', array('getMongoClient'));
         $mockConfig->loadConfig(json_decode(file_get_contents(dirname(__FILE__).'/data/config.json'), true));
         $mockConfig->expects($this->exactly(30))
             ->method('getMongoClient')
-            ->with('mongodb://mongodb:27017/?connectTimeoutMS=20000')
+            ->with('mongodb://mongodb:27017/', ['connectTimeoutMS' => 20000])
             ->will($this->throwException(new ConnectionTimeoutException('Exception thrown when connecting to Mongo')));
 
         $mockConfig->getDatabase('tripod_php_testing', 'rs1', ReadPreference::RP_SECONDARY_PREFERRED);
     }
     public function testMongoConnectionNoExceptionThrownWhenConnectionThrowsSomeExceptions()
     {
+        /** @var PHPUnit_Framework_MockObject_MockObject&TripodTestConfig */
         $mockConfig = $this->getMock('TripodTestConfig', array('getMongoClient'));
         $mockConfig->loadConfig(json_decode(file_get_contents(dirname(__FILE__).'/data/config.json'), true));
         $mockConfig->expects($this->exactly(5))
             ->method('getMongoClient')
-            ->with('mongodb://mongodb:27017/?connectTimeoutMS=20000')
+            ->with('mongodb://mongodb:27017/', ['connectTimeoutMS' => 20000])
             ->will($this->onConsecutiveCalls(
                 $this->throwException(new ConnectionTimeoutException('Exception thrown when connecting to Mongo')),
                 $this->throwException(new ConnectionTimeoutException('Exception thrown when connecting to Mongo')),

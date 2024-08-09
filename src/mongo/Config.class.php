@@ -6,12 +6,7 @@ use \MongoDB\Client;
 use \MongoDB\Database;
 use \MongoDB\Collection;
 use \MongoDB\Driver\ReadPreference;
-use \MongoDB\Driver\Command;
-use \MongoDB\Driver\Manager;
 use \MongoDB\Driver\Exception\ConnectionTimeoutException;
-
-use \Tripod\ITripodConfig;
-use \Tripod\ITripodConfigSerializer;
 
 /**
  * Holds the global configuration for Tripod
@@ -1238,77 +1233,23 @@ class Config implements IConfigInstance
     }
 
     /**
-     * Returns the connection string for the supplied database name
-     *
-     * @param string $storeName
-     * @param string|null $podName
-     * @throws \Tripod\Exceptions\ConfigException
-     * @return string
-     */
-    public function getConnStr($storeName, $podName = null)
-    {
-        if (array_key_exists($storeName,$this->dbConfig))
-        {
-            if(!$podName)
-            {
-                return $this->getConnStrForDataSource($this->dbConfig[$storeName]['data_source']);
-            }
-            $pods = $this->getPods($storeName);
-            if(array_key_exists($podName, $pods))
-            {
-                return $this->getConnStrForDataSource($pods[$podName]['data_source']);
-            }
-            throw new \Tripod\Exceptions\ConfigException("Collection $podName does not exist for database $storeName");
-        }
-        else
-        {
-            throw new \Tripod\Exceptions\ConfigException("Database $storeName does not exist in configuration");
-        }
-    }
-
-    /**
-     * Returns the transaction log database connection string
-     * @return string
-     * @throws \Tripod\Exceptions\ConfigException
-     */
-    public function getTransactionLogConnStr() {
-        return $this->getConnStrForDataSource($this->tConfig['data_source']);
-    }
-
-    /**
-     * @param $dataSource
-     * @return string
-     * @throws \Tripod\Exceptions\ConfigException
-     */
-    protected function getConnStrForDataSource($dataSource)
-    {
-        if(!array_key_exists($dataSource, $this->dataSources))
-        {
-            throw new \Tripod\Exceptions\ConfigException("Data source '{$dataSource}' not configured");
-        }
-        $ds = $this->dataSources[$dataSource];
-        if(array_key_exists("replicaSet", $ds) && !empty($ds["replicaSet"])) {
-            $connStr = $ds['connection'];
-            if ($this->isConnectionStringValidForRepSet($connStr)){
-                return $connStr;
-            } else {
-                throw new \Tripod\Exceptions\ConfigException("Connection string for '{$dataSource}' must include /admin database when connecting to Replica Set");
-            }
-        } else {
-            return $ds['connection'];
-        }
-    }
-
-    /**
      * Returns a replica set name for the database, if one has been defined
      * @param $datasource
      * @return string|null
      */
     public function getReplicaSetName($datasource)
     {
-        if($this->isReplicaSet($datasource))
-        {
+        if (!empty($this->dataSources[$datasource]['replicaSet'])) {
             return $this->dataSources[$datasource]['replicaSet'];
+        }
+
+        if (strpos($this->dataSources[$datasource]['connection'], 'replicaSet=') !== false) {
+            $query = parse_url($this->dataSources[$datasource]['connection'], PHP_URL_QUERY);
+            $params = [];
+            parse_str($query, $params);
+            if (!empty($params['replicaSet'])) {
+                return $params['replicaSet'];
+            }
         }
 
         return null;
@@ -1321,14 +1262,7 @@ class Config implements IConfigInstance
      */
     public function isReplicaSet($datasource)
     {
-        if (array_key_exists($datasource,$this->dataSources))
-        {
-            if(array_key_exists("replicaSet",$this->dataSources[$datasource]) && !empty($this->dataSources[$datasource]["replicaSet"])) {
-                return true;
-            }
-        }
-
-        return false;
+        return $this->getReplicaSetName($datasource) !== null;
     }
 
     /**
@@ -1625,20 +1559,6 @@ class Config implements IConfigInstance
     }
 
     /**
-     * @param string $connStr
-     * @return bool
-     */
-    private function isConnectionStringValidForRepSet($connStr)
-    {
-        $needle = "/admin";
-        if (substr($connStr, -6) === $needle){
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /**
      * Finds fields in a table specification
      * @param string $fieldName
      * @param array $spec, a part of space ot complete spec
@@ -1730,22 +1650,26 @@ class Config implements IConfigInstance
         {
             throw new \Tripod\Exceptions\ConfigException("Data source '{$dataSource}' not in configuration");
         }
-        $connectionOptions = [];
-        $ds = $this->dataSources[$dataSource];
-        $connectionOptions['connectTimeoutMS'] = (isset($ds['connectTimeoutMS']) ? $ds['connectTimeoutMS'] : DEFAULT_MONGO_CONNECT_TIMEOUT_MS);
-
-        if(isset($ds['replicaSet']) && !empty($ds['replicaSet'])) {
-            $connectionOptions['replicaSet'] = $ds['replicaSet'];
-        }
         if(!isset($this->connections[$dataSource]))
         {
+            $ds = $this->dataSources[$dataSource];
+            $connectionString = $ds['connection'];
+            $connectionOptions = [];
+
+            if (!empty($ds['connectTimeoutMS']) || strpos($connectionString, 'connectTimeoutMS=') === false) {
+                $connectionOptions['connectTimeoutMS'] = isset($ds['connectTimeoutMS']) ? $ds['connectTimeoutMS'] : DEFAULT_MONGO_CONNECT_TIMEOUT_MS;
+            }
+
+            if (!empty($ds['replicaSet'])) {
+                $connectionOptions['replicaSet'] = $ds['replicaSet'];
+            }
+
             $retries = 1;
             $exception = null;
 
             do {
                 try {
-                    $connectionString = $ds['connection'] . '?' . http_build_query($connectionOptions);
-                    $this->connections[$dataSource] = $this->getMongoClient($connectionString);
+                    $this->connections[$dataSource] = $this->getMongoClient($connectionString, $connectionOptions);
                     break;
                 } catch (ConnectionTimeoutException $e) {
                     self::getLogger()->error("ConnectionTimeoutException attempt ".$retries.". Retrying...:" . $e->getMessage());
@@ -1769,10 +1693,11 @@ class Config implements IConfigInstance
      * @param string $connectionString
      * @return Client
      */
-    protected function getMongoClient($connectionString)
+    protected function getMongoClient($connectionString, array $connectionOptions = [])
     {
-        $client = new Client($connectionString,
-            [],
+        $client = new Client(
+            $connectionString,
+            $connectionOptions,
             ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']]
         );
         return $client;

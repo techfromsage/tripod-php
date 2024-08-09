@@ -10,6 +10,11 @@ require_once TRIPOD_DIR.'mongo/MongoTripodConstants.php';
  */
 class MongoGraph extends \Tripod\ExtendedGraph {
     /**
+     * @var Labeller
+     */
+    var $_labeller;
+
+    /**
      * Constructor
      */
     function __construct()
