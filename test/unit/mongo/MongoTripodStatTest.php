@@ -1,9 +1,5 @@
 <?php
-require_once 'MongoTripodTestBase.php';
 
-/**
- * Class MongoTripodStatTest
- */
 class MongoTripodStatTest extends MongoTripodTestBase
 {
 
@@ -11,22 +7,22 @@ class MongoTripodStatTest extends MongoTripodTestBase
     {
         $statConfig = $this->getStatsDConfig();
 
-        /** @var \Tripod\StatsD $stat */
+        /** @var \Tripod\StatsD */
         $stat = \Tripod\TripodStatFactory::create($statConfig);
-        $this->assertInstanceOf('\Tripod\StatsD', $stat);
+        $this->assertInstanceOf(\Tripod\StatsD::class, $stat);
         $this->assertEquals('example.com', $stat->getHost());
         $this->assertEquals(1234, $stat->getPort());
         $this->assertEquals('somePrefix', $stat->getPrefix());
 
         $noStat = \Tripod\TripodStatFactory::create();
-        $this->assertInstanceOf('\Tripod\Mongo\NoStat', $noStat);
+        $this->assertInstanceOf(\Tripod\Mongo\NoStat::class, $noStat);
     }
 
     public function testStatsDSettersAndGetters()
     {
         $stat = \Tripod\StatsD::createFromConfig($this->getStatsDConfig());
 
-        $this->assertInstanceOf('\Tripod\StatsD', $stat);
+        $this->assertInstanceOf(\Tripod\StatsD::class, $stat);
         $this->assertEquals('example.com', $stat->getHost());
         $this->assertEquals(1234, $stat->getPort());
         $this->assertEquals('somePrefix', $stat->getPrefix());
@@ -257,28 +253,32 @@ class MongoTripodStatTest extends MongoTripodTestBase
 
     public function testPrefixCannotStartWithDot()
     {
-        $this->setExpectedException('InvalidArgumentException', 'Invalid prefix supplied');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid prefix supplied');
 
         $stat = new \Tripod\StatsD('foo.bar', 4567, '.some_prefix');
     }
 
     public function testPrefixCannotEndWithDot()
     {
-        $this->setExpectedException('InvalidArgumentException', 'Invalid prefix supplied');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid prefix supplied');
 
         $stat = new \Tripod\StatsD('foo.bar', 4567, 'some_prefix.');
     }
 
     public function testPrefixCannotContainConsecutiveDot()
     {
-        $this->setExpectedException('InvalidArgumentException', 'Invalid prefix supplied');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid prefix supplied');
 
         $stat = new \Tripod\StatsD('foo.bar', 4567, 'some..prefix');
     }
 
     public function testPivotValueCannotStartWithDot()
     {
-        $this->setExpectedException('InvalidArgumentException', 'Invalid pivot value supplied');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid pivot value supplied');
 
         $stat = new \Tripod\StatsD('foo.bar', 4567);
         $stat->setPivotValue('.someValue');
@@ -286,7 +286,8 @@ class MongoTripodStatTest extends MongoTripodTestBase
 
     public function testPivotValueCannotEndWithDot()
     {
-        $this->setExpectedException('InvalidArgumentException', 'Invalid pivot value supplied');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid pivot value supplied');
 
         $stat = new \Tripod\StatsD('foo.bar', 4567);
         $stat->setPivotValue('someValue.');
@@ -294,7 +295,8 @@ class MongoTripodStatTest extends MongoTripodTestBase
 
     public function testPivotValueCannotContainConsecutiveDot()
     {
-        $this->setExpectedException('InvalidArgumentException', 'Invalid pivot value supplied');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid pivot value supplied');
 
         $stat = new \Tripod\StatsD('foo.bar', 4567);
         $stat->setPivotValue('some..value');

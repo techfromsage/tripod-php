@@ -1,22 +1,17 @@
 <?php
 
-require_once 'MongoTripodTestBase.php';
-require_once 'src/mongo/delegates/Tables.class.php';
-require_once 'src/mongo/Driver.class.php';
-require_once 'src/mongo/MongoGraph.class.php';
-
 class MongoTripodComputedFieldsTest extends MongoTripodTestBase
 {
     protected $originalConfig = array();
 
-    public function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         $this->originalConfig = \Tripod\Config::getConfig();
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
     }
 
-    public function tearDown()
+    protected function tearDown(): void
     {
         \Tripod\Config::setConfig($this->originalConfig);
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MIN);

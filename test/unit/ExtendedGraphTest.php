@@ -1,26 +1,16 @@
 <?php
-set_include_path(
-    get_include_path()
-        . PATH_SEPARATOR . dirname(dirname(dirname(__FILE__)))
-        . PATH_SEPARATOR . dirname(dirname(dirname(__FILE__))).'/lib'
-        . PATH_SEPARATOR . dirname(dirname(dirname(__FILE__))).'/src');
 
-require_once('tripod.inc.php');
-require_once 'src/classes/ExtendedGraph.class.php';
-require_once 'src/exceptions/Exception.class.php';
+use PHPUnit\Framework\TestCase;
+use Tripod\ExtendedGraph;
 
-use \Tripod\ExtendedGraph;
-
-class ExtendedGraphTest extends PHPUnit_Framework_TestCase
+class ExtendedGraphTest extends TestCase
 {
     const ONT_foaf = 'http://xmlns.com/foaf/0.1/';
     const ONT_resource = 'http://purl.org/vocab/resourcelist/schema#';
 
-    protected function setUp()
+    protected function setUp(): void
     {
-        $className = get_class($this);
-        $testName = $this->getName();
-        echo "\nTest: {$className}->{$testName}\n";
+        printf(" %s->%s\n", get_class($this), $this->getName());
     }
 
     /**
@@ -69,7 +59,7 @@ class ExtendedGraphTest extends PHPUnit_Framework_TestCase
      */
     public function testAddInvalidSubjectToLiteralThrowsException($value)
     {
-        $this->setExpectedException('\Tripod\Exceptions\Exception');
+        $this->expectException(\Tripod\Exceptions\Exception::class);
 
         $graph = new ExtendedGraph();
         $graph->add_resource_triple($value, 'http://some/predicate', 'http://someplace.com');
@@ -92,7 +82,7 @@ class ExtendedGraphTest extends PHPUnit_Framework_TestCase
      */
     public function testAddInvalidPredicateToLiteralThrowsException($value)
     {
-        $this->setExpectedException('\Tripod\Exceptions\Exception');
+        $this->expectException(\Tripod\Exceptions\Exception::class);
 
         $graph = new ExtendedGraph();
         $graph->add_resource_triple('http://some/subject/1', $value, 'http://someplace.com');
@@ -152,7 +142,7 @@ class ExtendedGraphTest extends PHPUnit_Framework_TestCase
      */
     public function testAddInvalidSubjectToResourceThrowsException($value)
     {
-        $this->setExpectedException('\Tripod\Exceptions\Exception');
+        $this->expectException(\Tripod\Exceptions\Exception::class);
 
         $graph = new ExtendedGraph();
         $graph->add_resource_triple($value, 'http://some/predicate', 'http://someplace.com');
@@ -175,7 +165,7 @@ class ExtendedGraphTest extends PHPUnit_Framework_TestCase
      */
     public function testAddInvalidPredicateToResourceThrowsException($value)
     {
-        $this->setExpectedException('\Tripod\Exceptions\Exception');
+        $this->expectException(\Tripod\Exceptions\Exception::class);
 
         $graph = new ExtendedGraph();
         $graph->add_resource_triple('http://some/subject/1', $value, 'http://someplace.com');
@@ -576,7 +566,8 @@ class ExtendedGraphTest extends PHPUnit_Framework_TestCase
 
     public function testGetLabelForUriLabelPropsNotInitialised(){
     	ExtendedGraph::initProperties(array('labelProperties' => null));
-        $this->setExpectedException('Exception','Please initialise ExtendedGraph::$labelProperties');
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Please initialise ExtendedGraph::$labelProperties');
         $graph = new ExtendedGraph();
 
         $label = "Wuthering Heights";

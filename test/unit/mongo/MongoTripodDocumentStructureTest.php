@@ -1,14 +1,11 @@
 <?php
-require_once 'MongoTripodTestBase.php';
-require_once 'src/mongo/Driver.class.php';
 
-/**
- * Class MongoTripodDocumentStructureTest
- */
+use PHPUnit\Framework\MockObject\MockObject;
+
 class MongoTripodDocumentStructureTest extends MongoTripodTestBase
 {
     /**
-     * @var \Tripod\Mongo\Driver|PHPUnit_Framework_MockObject_MockObject
+     * @var MockObject&\Tripod\Mongo\Driver
      */
     protected $tripod = null;
     /**
@@ -16,7 +13,7 @@ class MongoTripodDocumentStructureTest extends MongoTripodTestBase
      */
     protected $tripodTransactionLog = null;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setup();
         //Mongo::setPoolSize(200);
@@ -25,8 +22,10 @@ class MongoTripodDocumentStructureTest extends MongoTripodTestBase
         $this->tripodTransactionLog->purgeAllTransactions();
 
         // Stub ouf 'addToElastic' search to prevent writes into Elastic Search happening by default.
-        $this->tripod = $this->getMock('\Tripod\Mongo\Driver', array('addToSearchIndexQueue'), array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')));
-        $this->tripod->expects($this->any())->method('addToSearchIndexQueue');
+        $this->tripod = $this->getMockBuilder(\Tripod\Mongo\Driver::class)
+            ->onlyMethods(array())
+            ->setConstructorArgs(array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')))
+            ->getMock();
 
         $this->getTripodCollection($this->tripod)->drop();
         $this->tripod->setTransactionLog($this->tripodTransactionLog);

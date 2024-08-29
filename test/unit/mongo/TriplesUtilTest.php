@@ -1,15 +1,7 @@
 <?php
-require_once 'MongoTripodTestBase.php';
-require_once 'src/mongo/Config.class.php';
-require_once 'src/mongo/util/TriplesUtil.class.php';
 
 class TriplesUtilTest extends MongoTripodTestBase
 {
-    protected function setUp()
-    {
-        parent::setup();
-    }
-
     public function testGetTArrayAbout()
     {
         $tu = new \Tripod\Mongo\TriplesUtil();

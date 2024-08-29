@@ -1,13 +1,8 @@
 <?php
-require_once 'MongoTripodTestBase.php';
-require_once 'src/mongo/MongoGraph.class.php';
 
-/**
- * Class MongoGraphTest
- */
 class MongoGraphTest extends MongoTripodTestBase
 {
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setup();
     }
@@ -20,20 +15,23 @@ class MongoGraphTest extends MongoTripodTestBase
 
     public function testUriToQNameOnUnRegisteredNS()
     {
-        $this->setExpectedException('\Tripod\Exceptions\LabellerException', 'Could not label: http://someunregisteredns/');
+        $this->expectException(\Tripod\Exceptions\LabellerException::class);
+        $this->expectExceptionMessage('Could not label: http://someunregisteredns/');
         $g = new \Tripod\Mongo\MongoGraph();
         $g->uri_to_qname('http://someunregisteredns/title');
     }
 
     public function testQNameToUriOnUnRegisteredNS()
     {
-        $this->setExpectedException('\Tripod\Exceptions\LabellerException', 'Could not label: someunregisteredns:title');
+        $this->expectException(\Tripod\Exceptions\LabellerException::class);
+        $this->expectExceptionMessage('Could not label: someunregisteredns:title');
         $g = new \Tripod\Mongo\MongoGraph();
         $g->qname_to_uri('someunregisteredns:title');
     }
 
     public function testToNQuadsThrowsInvalidArgumentException() {
-        $this->setExpectedException('InvalidArgumentException', 'You must specify the context when serializing to nquads');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('You must specify the context when serializing to nquads');
         $g = new \Tripod\Mongo\MongoGraph();
         $g->to_nquads(null);
     }
@@ -72,7 +70,8 @@ class MongoGraphTest extends MongoTripodTestBase
 
     public function testAddTripodArrayThrowsException()
     {
-        $this->setExpectedException('Exception', 'Value passed to add_tripod_array is not of type array');
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Value passed to add_tripod_array is not of type array');
         $g = new \Tripod\Mongo\MongoGraph();
         $g->add_tripod_array(null);
     }
@@ -176,7 +175,7 @@ class MongoGraphTest extends MongoTripodTestBase
      */
     public function testAddTripodArrayContainingInvalidPredicates($value)
     {
-        $this->setExpectedException('\Tripod\Exceptions\LabellerException');
+        $this->expectException(\Tripod\Exceptions\LabellerException::class);
         $doc = array(
             "_id"=>array("r"=>"http://talisaspire.com/works/4d101f63c10a6-2", "c"=>"http://talisaspire.com/works/4d101f63c10a6-2"),
             "_version"=>0,
@@ -210,7 +209,8 @@ class MongoGraphTest extends MongoTripodTestBase
     public function testAddTripodArrayContainingEmptyPredicate()
     {
         // Should not be able to label ''
-        $this->setExpectedException('\Tripod\Exceptions\Exception','The predicate cannot be an empty string');
+        $this->expectException(\Tripod\Exceptions\Exception::class);
+        $this->expectExceptionMessage('The predicate cannot be an empty string');
         $doc = array(
             "_id"=>array("r"=>"http://talisaspire.com/works/4d101f63c10a6-2", "c"=>"http://talisaspire.com/works/4d101f63c10a6-2"),
             "_version"=>0,
@@ -234,7 +234,7 @@ class MongoGraphTest extends MongoTripodTestBase
      */
     public function testAddTripodArrayContainingInvalidSubject($value)
     {
-        $this->setExpectedException('\Tripod\Exceptions\Exception');
+        $this->expectException(\Tripod\Exceptions\Exception::class);
         $doc = array(
             "_id"=>array("r"=>$value, "c"=>"http://talisaspire.com/works/4d101f63c10a6-2"),
             "_version"=>0,

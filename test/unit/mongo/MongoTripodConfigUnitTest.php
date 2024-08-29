@@ -1,6 +1,4 @@
 <?php
-require_once 'MongoTripodTestBase.php';
-require_once 'src/mongo/Config.class.php';
 
 use \MongoDB\Driver\ReadPreference;
 use \MongoDB\Client;
@@ -13,7 +11,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
      */
     private $tripodConfig = null;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setup();
         $this->tripodConfig = \Tripod\Config::getInstance();
@@ -24,7 +22,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         // to test that the instance throws an exception if it is called before calling setConfig
         // i first have to destroy the instance that is created in the setUp() method of our test suite.
 
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException','Call Config::setConfig() first');
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage('Call Config::setConfig() first');
         unset($this->tripodConfig);
 
         \Tripod\Config::destroy();
@@ -77,9 +76,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
 
     public function testCompoundIndexAllArraysThrowsException()
     {
-        $this->setExpectedException(
-            '\Tripod\Exceptions\ConfigException',
-            'Compound index IllegalCompoundIndex has more than one field with cardinality > 1 - mongo will not be able to build this index');
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage('Compound index IllegalCompoundIndex has more than one field with cardinality > 1 - mongo will not be able to build this index');
         $config = array();
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["data_sources"] = array(
@@ -122,7 +120,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
 
     public function testCardinalityRuleWithNoNamespace()
     {
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException', "Cardinality 'foo:bar' does not have the namespace defined");
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage("Cardinality 'foo:bar' does not have the namespace defined");
 
         $config = array();
         $config["defaultContext"] = "http://talisaspire.com/";
@@ -250,9 +249,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
 
     public function testViewSpecCountWithoutTTLThrowsException()
     {
-        $this->setExpectedException(
-            '\Tripod\Exceptions\ConfigException',
-            'Aggregate function counts exists in spec, but no TTL defined');
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage('Aggregate function counts exists in spec, but no TTL defined');
         $config = array();
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["data_sources"] = array(
@@ -291,9 +289,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
 
     public function testViewSpecCountNestedInJoinWithoutTTLThrowsException()
     {
-        $this->setExpectedException(
-            '\Tripod\Exceptions\ConfigException',
-            'Aggregate function counts exists in spec, but no TTL defined');
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage('Aggregate function counts exists in spec, but no TTL defined');
         $config = array();
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["data_sources"] = array(
@@ -335,9 +332,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
 
     public function testTableSpecNestedCountWithoutPropertyThrowsException()
     {
-        $this->setExpectedException(
-            '\Tripod\Exceptions\ConfigException',
-            'Count spec does not contain property');
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage('Count spec does not contain property');
         $config = array();
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["data_sources"] = array(
@@ -377,9 +373,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
 
     public function testTableSpecNested2ndLevelCountWithoutFieldNameThrowsException()
     {
-        $this->setExpectedException(
-            '\Tripod\Exceptions\ConfigException',
-            'Count spec does not contain fieldName');
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage('Count spec does not contain fieldName');
         $config = array();
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["data_sources"] = array(
@@ -422,9 +417,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
 
     public function testTableSpecFieldWithoutFieldName()
     {
-        $this->setExpectedException(
-            '\Tripod\Exceptions\ConfigException',
-            'Field spec does not contain fieldName');
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage('Field spec does not contain fieldName');
         $config = array();
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["data_sources"] = array(
@@ -461,9 +455,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
 
     public function testTableSpecFieldWithoutPredicates()
     {
-        $this->setExpectedException(
-            '\Tripod\Exceptions\ConfigException',
-            'Field spec does not contain predicates');
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage('Field spec does not contain predicates');
         $config = array();
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["data_sources"] = array(
@@ -500,9 +493,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
 
     public function testTableSpecCountWithoutProperty()
     {
-        $this->setExpectedException(
-            '\Tripod\Exceptions\ConfigException',
-            'Count spec does not contain property');
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage('Count spec does not contain property');
         $config = array();
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["data_sources"] = array(
@@ -539,9 +531,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
 
     public function testTableSpecCountWithoutFieldName()
     {
-        $this->setExpectedException(
-            '\Tripod\Exceptions\ConfigException',
-            'Count spec does not contain fieldName');
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage('Count spec does not contain fieldName');
         $config = array();
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["data_sources"] = array(
@@ -578,9 +569,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
 
     public function testTableSpecCountWithoutPropertyAsAString()
     {
-        $this->setExpectedException(
-            '\Tripod\Exceptions\ConfigException',
-            'Count spec property was not a string');
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage('Count spec property was not a string');
         $config = array();
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["data_sources"] = array(
@@ -618,9 +608,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
 
     public function testConfigWithoutDefaultNamespaceThrowsException()
     {
-        $this->setExpectedException(
-            '\Tripod\Exceptions\ConfigException',
-            'Mandatory config key [defaultContext] is missing from config');
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage('Mandatory config key [defaultContext] is missing from config');
         $config = array();
         $config["data_sources"] = array(
             "db"=>array(
@@ -725,6 +714,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
             )
         );
         \Tripod\Config::setConfig($config);
+        /** @var \Tripod\Mongo\Config */
         $mtc = \Tripod\Config::getInstance();
         $this->assertEquals("myreplicaset", $mtc->getReplicaSetName($mtc->getDefaultDataSourceForStore("tripod_php_testing")));
 
@@ -748,6 +738,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
             'transaction_log' => ['database' => 'transactions', 'collection' => 'transaction_log', 'data_source' => 'rs1'],
             'stores' => [],
         ]);
+        /** @var \Tripod\Mongo\Config */
         $mtc = \Tripod\Config::getInstance();
         $this->assertEquals('myReplicaSet', $mtc->getReplicaSetName('rs1'));
         $this->assertEquals(null, $mtc->getReplicaSetName('rs2'));
@@ -935,8 +926,9 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
 
     public function testCollectionReadPreferencesAreAppliedToDatabase()
     {
-        /** @var PHPUnit_Framework_MockObject_MockObject|TripodTestConfig $mockConfig */
-        $mockConfig = $this->getMock('TripodTestConfig', array('getDatabase'));
+        $mockConfig = $this->getMockBuilder(TripodTestConfig::class)
+            ->onlyMethods(array('getDatabase'))
+            ->getMock();
         $mockConfig->loadConfig(json_decode(file_get_contents(dirname(__FILE__).'/data/config.json'), true));
         $mockConfig->expects($this->exactly(2))
             ->method('getDatabase')
@@ -962,6 +954,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $storeName = 'tripod_php_testing';
 
         $dataSourcesForStore = array();
+        /** @var \Tripod\Mongo\Config */
         $config = \Tripod\Config::getInstance();
         $pods = $config->getPods($storeName);
 
@@ -1218,7 +1211,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $transactionCount = $transactionColletion->count();
         $transactionExampleDocument = $transactionColletion->findOne();
         $this->assertEquals(26, $transactionCount);
-        $this->assertContains('transaction_', $transactionExampleDocument["_id"]);
+        $this->assertStringContainsString('transaction_', $transactionExampleDocument["_id"]);
     }
 
     public function testComputedFieldSpecValidationInvalidFunction()
@@ -1228,7 +1221,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $computedFieldFunction = array('fieldName'=>'fooBar', 'value'=>array('shazzbot'=>array()));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($computedFieldFunction);
         \Tripod\Config::setConfig($newConfig);
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException', "Computed field spec does not contain valid function");
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage("Computed field spec does not contain valid function");
         \Tripod\Config::getInstance();
     }
 
@@ -1239,7 +1233,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $computedFieldFunction = array('fieldName'=>'fooBar', 'value'=>array('conditional'=>array(),'replace'=>array()));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($computedFieldFunction);
         \Tripod\Config::setConfig($newConfig);
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException', "Computed field spec contains more than one function");
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage("Computed field spec contains more than one function");
         \Tripod\Config::getInstance();
     }
 
@@ -1250,7 +1245,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $computedFieldFunction = array('fieldName'=>'fooBar', 'value'=>array('conditional'=>array()));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['joins']['dct:isVersionOf']['computed_fields'] = array($computedFieldFunction);
         \Tripod\Config::setConfig($newConfig);
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException', "Table spec can only contain 'computed_fields' at the base level");
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage("Table spec can only contain 'computed_fields' at the base level");
         \Tripod\Config::getInstance();
     }
 
@@ -1261,7 +1257,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $conditionalFunction = array('fieldName'=>'fooBar', 'value'=>array('conditional'=>array()));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($conditionalFunction);
         \Tripod\Config::setConfig($newConfig);
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException', "Computed conditional spec does not contain an 'if' value");
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage("Computed conditional spec does not contain an 'if' value");
         \Tripod\Config::getInstance();
     }
 
@@ -1272,7 +1269,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $conditionalFunction = array('fieldName'=>'fooBar', 'value'=>array('conditional'=>array('if'=>array())));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($conditionalFunction);
         \Tripod\Config::setConfig($newConfig);
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException', "Computed conditional spec must contain a then or else value");
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage("Computed conditional spec must contain a then or else value");
         \Tripod\Config::getInstance();
     }
 
@@ -1283,7 +1281,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $conditionalFunction = array('fieldName'=>'fooBar', 'value'=>array('conditional'=>array('if'=>array(),'then'=>'wibble')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($conditionalFunction);
         \Tripod\Config::setConfig($newConfig);
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException', "Computed conditional field spec 'if' value array must have 1 or 3 values");
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage("Computed conditional field spec 'if' value array must have 1 or 3 values");
         \Tripod\Config::getInstance();
     }
 
@@ -1294,7 +1293,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $conditionalFunction = array('fieldName'=>'fooBar', 'value'=>array('conditional'=>array('if'=>'foo','then'=>'wibble')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($conditionalFunction);
         \Tripod\Config::setConfig($newConfig);
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException', "Computed conditional field spec 'if' value must be an array");
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage("Computed conditional field spec 'if' value must be an array");
         \Tripod\Config::getInstance();
     }
 
@@ -1305,7 +1305,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $conditionalFunction = array('fieldName'=>'fooBar', 'value'=>array('conditional'=>array('if'=>array('foo','*'),'then'=>'wibble')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($conditionalFunction);
         \Tripod\Config::setConfig($newConfig);
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException', "Computed conditional field spec 'if' value array must have 1 or 3 values");
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage("Computed conditional field spec 'if' value array must have 1 or 3 values");
         \Tripod\Config::getInstance();
     }
 
@@ -1316,7 +1317,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $conditionalFunction = array('fieldName'=>'fooBar', 'value'=>array('conditional'=>array('if'=>array('a','b','c','d'),'then'=>'wibble')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($conditionalFunction);
         \Tripod\Config::setConfig($newConfig);
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException', "Computed conditional field spec 'if' value array must have 1 or 3 values");
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage("Computed conditional field spec 'if' value array must have 1 or 3 values");
         \Tripod\Config::getInstance();
     }
 
@@ -1327,7 +1329,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $conditionalFunction = array('fieldName'=>'fooBar', 'value'=>array('conditional'=>array('if'=>array('a','*','c'),'then'=>'wibble')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($conditionalFunction);
         \Tripod\Config::setConfig($newConfig);
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException', "Invalid conditional operator '*' in conditional spec");
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage("Invalid conditional operator '*' in conditional spec");
         \Tripod\Config::getInstance();
     }
 
@@ -1338,7 +1341,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $conditionalFunction = array('fieldName'=>'fooBar', 'value'=>array('conditional'=>array('if'=>array('$wibble','>=','c'),'then'=>'wibble')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($conditionalFunction);
         \Tripod\Config::setConfig($newConfig);
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException', "Computed spec variable '\$wibble' is not defined in table spec");
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage("Computed spec variable '\$wibble' is not defined in table spec");
         \Tripod\Config::getInstance();
     }
 
@@ -1349,7 +1353,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $conditionalFunction = array('fieldName'=>'fooBar', 'value'=>array('conditional'=>array('if'=>array('a','contains','$wibble'),'then'=>'wibble')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($conditionalFunction);
         \Tripod\Config::setConfig($newConfig);
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException', "Computed spec variable '\$wibble' is not defined in table spec");
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage("Computed spec variable '\$wibble' is not defined in table spec");
         \Tripod\Config::getInstance();
     }
 
@@ -1360,7 +1365,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $conditionalFunction = array('fieldName'=>'fooBar', 'value'=>array('conditional'=>array('if'=>array('a','<','b'),'then'=>'$wibble')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($conditionalFunction);
         \Tripod\Config::setConfig($newConfig);
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException', "Computed spec variable '\$wibble' is not defined in table spec");
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage("Computed spec variable '\$wibble' is not defined in table spec");
         \Tripod\Config::getInstance();
     }
 
@@ -1372,7 +1378,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $conditionalFunction = array('fieldName'=>'fooBar', 'value'=>array('conditional'=>array('if'=>array('a','<','b'),'then'=>true,'else'=>'$wibble')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($conditionalFunction);
         \Tripod\Config::setConfig($newConfig);
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException', "Computed spec variable '\$wibble' is not defined in table spec");
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage("Computed spec variable '\$wibble' is not defined in table spec");
         \Tripod\Config::getInstance();
     }
 
@@ -1383,7 +1390,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $replaceFunction = array('fieldName'=>'fooBar', 'value'=>array('replace'=>array()));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($replaceFunction);
         \Tripod\Config::setConfig($newConfig);
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException', "Computed replace spec does not contain 'search' value");
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage("Computed replace spec does not contain 'search' value");
         \Tripod\Config::getInstance();
     }
 
@@ -1394,7 +1402,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $replaceFunction = array('fieldName'=>'fooBar', 'value'=>array('replace'=>array('search'=>'x')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($replaceFunction);
         \Tripod\Config::setConfig($newConfig);
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException', "Computed replace spec does not contain 'replace' value");
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage("Computed replace spec does not contain 'replace' value");
         \Tripod\Config::getInstance();
     }
 
@@ -1405,7 +1414,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $replaceFunction = array('fieldName'=>'fooBar', 'value'=>array('replace'=>array('search'=>'x', 'replace'=>'y')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($replaceFunction);
         \Tripod\Config::setConfig($newConfig);
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException', "Computed replace spec does not contain 'subject' value");
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage("Computed replace spec does not contain 'subject' value");
         \Tripod\Config::getInstance();
     }
 
@@ -1416,7 +1426,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $replaceFunction = array('fieldName'=>'fooBar', 'value'=>array('replace'=>array('search'=>'$x','replace'=>'y','subject'=>'z')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($replaceFunction);
         \Tripod\Config::setConfig($newConfig);
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException', "Computed spec variable '\$x' is not defined in table spec");
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage("Computed spec variable '\$x' is not defined in table spec");
         \Tripod\Config::getInstance();
     }
 
@@ -1427,7 +1438,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $replaceFunction = array('fieldName'=>'fooBar', 'value'=>array('replace'=>array('search'=>array('a','b','$x'),'replace'=>'y','subject'=>'z')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($replaceFunction);
         \Tripod\Config::setConfig($newConfig);
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException', "Computed spec variable '\$x' is not defined in table spec");
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage("Computed spec variable '\$x' is not defined in table spec");
         \Tripod\Config::getInstance();
     }
 
@@ -1438,7 +1450,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $replaceFunction = array('fieldName'=>'fooBar', 'value'=>array('replace'=>array('search'=>'x','replace'=>'$y','subject'=>'z')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($replaceFunction);
         \Tripod\Config::setConfig($newConfig);
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException', "Computed spec variable '\$y' is not defined in table spec");
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage("Computed spec variable '\$y' is not defined in table spec");
         \Tripod\Config::getInstance();
     }
 
@@ -1449,7 +1462,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $replaceFunction = array('fieldName'=>'fooBar', 'value'=>array('replace'=>array('search'=>'x','replace'=>array('a','$y', 'c'),'subject'=>'z')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($replaceFunction);
         \Tripod\Config::setConfig($newConfig);
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException', "Computed spec variable '\$y' is not defined in table spec");
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage("Computed spec variable '\$y' is not defined in table spec");
         \Tripod\Config::getInstance();
     }
 
@@ -1460,7 +1474,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $replaceFunction = array('fieldName'=>'fooBar', 'value'=>array('replace'=>array('search'=>'x','replace'=>'y','subject'=>'$z')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($replaceFunction);
         \Tripod\Config::setConfig($newConfig);
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException', "Computed spec variable '\$z' is not defined in table spec");
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage("Computed spec variable '\$z' is not defined in table spec");
         \Tripod\Config::getInstance();
     }
 
@@ -1471,7 +1486,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $replaceFunction = array('fieldName'=>'fooBar', 'value'=>array('replace'=>array('search'=>'x','replace'=>'y','subject'=>array('$z','b','c'))));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($replaceFunction);
         \Tripod\Config::setConfig($newConfig);
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException', "Computed spec variable '\$z' is not defined in table spec");
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage("Computed spec variable '\$z' is not defined in table spec");
         \Tripod\Config::getInstance();
     }
 
@@ -1482,7 +1498,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $arithmeticFunction = array('fieldName'=>'fooBar', 'value'=>array('arithmetic'=>array()));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($arithmeticFunction);
         \Tripod\Config::setConfig($newConfig);
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException', "Computed arithmetic spec must contain 3 values");
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage("Computed arithmetic spec must contain 3 values");
         \Tripod\Config::getInstance();
     }
 
@@ -1493,7 +1510,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $arithmeticFunction = array('fieldName'=>'fooBar', 'value'=>array('arithmetic'=>array(1)));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($arithmeticFunction);
         \Tripod\Config::setConfig($newConfig);
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException', "Computed arithmetic spec must contain 3 values");
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage("Computed arithmetic spec must contain 3 values");
         \Tripod\Config::getInstance();
     }
 
@@ -1504,7 +1522,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $arithmeticFunction = array('fieldName'=>'fooBar', 'value'=>array('arithmetic'=>array(1,'+')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($arithmeticFunction);
         \Tripod\Config::setConfig($newConfig);
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException', "Computed arithmetic spec must contain 3 values");
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage("Computed arithmetic spec must contain 3 values");
         \Tripod\Config::getInstance();
     }
 
@@ -1515,7 +1534,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $arithmeticFunction = array('fieldName'=>'fooBar', 'value'=>array('arithmetic'=>array(1,'+',3,4)));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($arithmeticFunction);
         \Tripod\Config::setConfig($newConfig);
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException', "Computed arithmetic spec must contain 3 values");
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage("Computed arithmetic spec must contain 3 values");
         \Tripod\Config::getInstance();
     }
 
@@ -1526,7 +1546,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $arithmeticFunction = array('fieldName'=>'fooBar', 'value'=>array('arithmetic'=>array(1,'x',3)));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($arithmeticFunction);
         \Tripod\Config::setConfig($newConfig);
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException', "Invalid arithmetic operator 'x' in computed arithmetic spec");
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage("Invalid arithmetic operator 'x' in computed arithmetic spec");
         \Tripod\Config::getInstance();
     }
 
@@ -1537,7 +1558,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $arithmeticFunction = array('fieldName'=>'fooBar', 'value'=>array('arithmetic'=>array('$x','*',3)));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($arithmeticFunction);
         \Tripod\Config::setConfig($newConfig);
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException', "Computed spec variable '\$x' is not defined in table spec");
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage("Computed spec variable '\$x' is not defined in table spec");
         \Tripod\Config::getInstance();
     }
 
@@ -1548,7 +1570,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $arithmeticFunction = array('fieldName'=>'fooBar', 'value'=>array('arithmetic'=>array(1,'*','$x')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($arithmeticFunction);
         \Tripod\Config::setConfig($newConfig);
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException', "Computed spec variable '\$x' is not defined in table spec");
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage("Computed spec variable '\$x' is not defined in table spec");
         \Tripod\Config::getInstance();
     }
 
@@ -1559,7 +1582,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $arithmeticFunction = array('fieldName'=>'fooBar', 'value'=>array('arithmetic'=>array(array('$x','-',100),'*',3)));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($arithmeticFunction);
         \Tripod\Config::setConfig($newConfig);
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException', "Computed spec variable '\$x' is not defined in table spec");
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage("Computed spec variable '\$x' is not defined in table spec");
         \Tripod\Config::getInstance();
     }
 
@@ -1570,7 +1594,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $arithmeticFunction = array('fieldName'=>'fooBar', 'value'=>array('arithmetic'=>array(array(101,'#',100),'*',3)));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($arithmeticFunction);
         \Tripod\Config::setConfig($newConfig);
-        $this->setExpectedException('\Tripod\Exceptions\ConfigException', "Invalid arithmetic operator '#' in computed arithmetic spec");
+        $this->expectException(\Tripod\Exceptions\ConfigException::class);
+        $this->expectExceptionMessage("Invalid arithmetic operator '#' in computed arithmetic spec");
         \Tripod\Config::getInstance();
     }
 
@@ -1588,8 +1613,9 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     // MongoClient creation tests
     public function testMongoConnectionNoExceptions()
     {
-        /** @var PHPUnit_Framework_MockObject_MockObject&TripodTestConfig */
-        $mockConfig = $this->getMock('TripodTestConfig', array('getMongoClient'));
+        $mockConfig = $this->getMockBuilder(TripodTestConfig::class)
+            ->onlyMethods(array('getMongoClient'))
+            ->getMock();
         $mockConfig->loadConfig(json_decode(file_get_contents(dirname(__FILE__).'/data/config.json'), true));
         $mockConfig->expects($this->exactly(1))
             ->method('getMongoClient')
@@ -1607,9 +1633,11 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     }
     public function testMongoConnectionExceptionThrown()
     {
-        $this->setExpectedException('\MongoDB\Driver\Exception\ConnectionTimeoutException', "Exception thrown when connecting to Mongo");
-        /** @var PHPUnit_Framework_MockObject_MockObject&TripodTestConfig */
-        $mockConfig = $this->getMock('TripodTestConfig', array('getMongoClient'));
+        $this->expectException(\MongoDB\Driver\Exception\ConnectionTimeoutException::class);
+        $this->expectExceptionMessage("Exception thrown when connecting to Mongo");
+        $mockConfig = $this->getMockBuilder(TripodTestConfig::class)
+            ->onlyMethods(array('getMongoClient'))
+            ->getMock();
         $mockConfig->loadConfig(json_decode(file_get_contents(dirname(__FILE__).'/data/config.json'), true));
         $mockConfig->expects($this->exactly(30))
             ->method('getMongoClient')
@@ -1620,8 +1648,9 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     }
     public function testMongoConnectionNoExceptionThrownWhenConnectionThrowsSomeExceptions()
     {
-        /** @var PHPUnit_Framework_MockObject_MockObject&TripodTestConfig */
-        $mockConfig = $this->getMock('TripodTestConfig', array('getMongoClient'));
+        $mockConfig = $this->getMockBuilder(TripodTestConfig::class)
+            ->onlyMethods(array('getMongoClient'))
+            ->getMock();
         $mockConfig->loadConfig(json_decode(file_get_contents(dirname(__FILE__).'/data/config.json'), true));
         $mockConfig->expects($this->exactly(5))
             ->method('getMongoClient')

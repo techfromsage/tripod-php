@@ -1,7 +1,4 @@
 <?php
-require_once 'MongoTripodTestBase.php';
-require_once 'src/mongo/Config.class.php';
-require_once 'src/mongo/util/DateUtil.class.php';
 
 class DateUtilTest extends MongoTripodTestBase
 {
@@ -27,7 +24,7 @@ class DateUtilTest extends MongoTripodTestBase
 
         $date = \Tripod\Mongo\DateUtil::getMongoDate();
 
-        $this->assertInstanceOf('\MongoDB\BSON\UTCDateTime', $date);
+        $this->assertInstanceOf(\MongoDB\BSON\UTCDateTime::class, $date);
         $this->assertEquals(13, strlen($date->__toString()));
     }
     public function testGetMongoDateWithParam()
@@ -53,7 +50,7 @@ class DateUtilTest extends MongoTripodTestBase
         $time = floor(microtime(true) * 1000);
         $date = \Tripod\Mongo\DateUtil::getMongoDate($time);
 
-        $this->assertInstanceOf('\MongoDB\BSON\UTCDateTime', $date);
+        $this->assertInstanceOf(\MongoDB\BSON\UTCDateTime::class, $date);
         $this->assertEquals(13, strlen($date->__toString()));
         $this->assertEquals($time, $date->__toString());
     }

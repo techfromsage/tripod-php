@@ -1,6 +1,4 @@
 <?php
-require_once 'MongoTripodTestBase.php';
-require_once 'src/mongo/Driver.class.php';
 
 /**
  * Class MongoTripodQueueOperationsTest
@@ -18,7 +16,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
      */
     protected $tripod = null;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setup();
         $this->tripod = new \Tripod\Mongo\Driver(
@@ -35,8 +33,8 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
     public function testSingleItemIsAddedToQueueForChangeToSingleSubject()
     {
         // create a tripod instance that will send all operations to the queue
-        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
-            ->setMethods(array('getDataUpdater', 'getComposite'))
+        $tripod = $this->getMockBuilder(\Tripod\Mongo\Driver::class)
+            ->onlyMethods(array('getDataUpdater', 'getComposite'))
             ->setConstructorArgs(
                 array(
                     'CBD_testing',
@@ -48,8 +46,8 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
                 )
             )->getMock();
 
-        $tripodUpdates = $this->getMockBuilder('\Tripod\Mongo\Updates')
-            ->setMethods(array('processSyncOperations','getDiscoverImpactedSubjects'))
+        $tripodUpdates = $this->getMockBuilder(\Tripod\Mongo\Updates::class)
+            ->onlyMethods(array('processSyncOperations','getDiscoverImpactedSubjects'))
             ->setConstructorArgs(array(
                 $tripod,
                 array(
@@ -58,8 +56,8 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
                 )
             ))->getMock();
 
-        $discoverImpactedSubjects = $this->getMockBuilder('\Tripod\Mongo\Jobs\DiscoverImpactedSubjects')
-            ->setMethods(array('createJob'))
+        $discoverImpactedSubjects = $this->getMockBuilder(\Tripod\Mongo\Jobs\DiscoverImpactedSubjects::class)
+            ->onlyMethods(array('createJob'))
             ->getMock();
 
         $tripod->expects($this->once())
@@ -110,8 +108,8 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
     public function testSingleItemWithViewsOpIsAddedToQueueForChangeToSingleSubject()
     {
         // create a tripod instance that will send all operations to the queue
-        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
-            ->setMethods(array('getDataUpdater', 'getComposite'))
+        $tripod = $this->getMockBuilder(\Tripod\Mongo\Driver::class)
+            ->onlyMethods(array('getDataUpdater', 'getComposite'))
             ->setConstructorArgs(
                 array(
                     'CBD_testing',
@@ -123,8 +121,8 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
                 )
             )->getMock();
 
-        $tripodUpdates = $this->getMockBuilder('\Tripod\Mongo\Updates')
-            ->setMethods(array('processSyncOperations','getDiscoverImpactedSubjects'))
+        $tripodUpdates = $this->getMockBuilder(\Tripod\Mongo\Updates::class)
+            ->onlyMethods(array('processSyncOperations','getDiscoverImpactedSubjects'))
             ->setConstructorArgs(array(
                 $tripod,
                 array(
@@ -133,8 +131,8 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
                 )
             ))->getMock();
 
-        $discoverImpactedSubjects = $this->getMockBuilder('\Tripod\Mongo\Jobs\DiscoverImpactedSubjects')
-            ->setMethods(array('createJob'))
+        $discoverImpactedSubjects = $this->getMockBuilder(\Tripod\Mongo\Jobs\DiscoverImpactedSubjects::class)
+            ->onlyMethods(array('createJob'))
             ->getMock();
 
         $tripod->expects($this->once())
@@ -185,8 +183,8 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
     public function testNoItemIsAddedToQueueForChangeToSingleSubjectWithNoAsyncOps()
     {
         // create a tripod instance that will send all operations to the queue
-        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
-            ->setMethods(array('getDataUpdater', 'getComposite'))
+        $tripod = $this->getMockBuilder(\Tripod\Mongo\Driver::class)
+            ->onlyMethods(array('getDataUpdater', 'getComposite'))
             ->setConstructorArgs(
                 array(
                     'CBD_testing',
@@ -198,8 +196,8 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
                 )
             )->getMock();
 
-        $tripodUpdates = $this->getMockBuilder('\Tripod\Mongo\Updates')
-            ->setMethods(array('processSyncOperations','getDiscoverImpactedSubjects'))
+        $tripodUpdates = $this->getMockBuilder(\Tripod\Mongo\Updates::class)
+            ->onlyMethods(array('processSyncOperations','getDiscoverImpactedSubjects'))
             ->setConstructorArgs(array(
                 $tripod,
                 array(
@@ -243,8 +241,8 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
      */
     public function testSingleJobSubmittedToQueueForChangeToSeveralSubjects()
     {
-        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
-            ->setMethods(array('getDataUpdater', 'getComposite'))
+        $tripod = $this->getMockBuilder(\Tripod\Mongo\Driver::class)
+            ->onlyMethods(array('getDataUpdater', 'getComposite'))
             ->setConstructorArgs(
                 array(
                     'CBD_testing',
@@ -256,8 +254,8 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
                 )
             )->getMock();
 
-        $tripodUpdates = $this->getMockBuilder('\Tripod\Mongo\Updates')
-            ->setMethods(array('processSyncOperations','getDiscoverImpactedSubjects'))
+        $tripodUpdates = $this->getMockBuilder(\Tripod\Mongo\Updates::class)
+            ->onlyMethods(array('processSyncOperations','getDiscoverImpactedSubjects'))
             ->setConstructorArgs(array(
                 $tripod,
                 array(
@@ -266,8 +264,8 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
                 )
             ))->getMock();
 
-        $discoverImpactedSubjects = $this->getMockBuilder('\Tripod\Mongo\Jobs\DiscoverImpactedSubjects')
-            ->setMethods(array('createJob'))
+        $discoverImpactedSubjects = $this->getMockBuilder(\Tripod\Mongo\Jobs\DiscoverImpactedSubjects::class)
+            ->onlyMethods(array('createJob'))
             ->getMock();
 
 

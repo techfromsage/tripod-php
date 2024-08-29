@@ -1,16 +1,11 @@
 <?php
-require_once 'MongoTripodTestBase.php';
-require_once 'src/mongo/Driver.class.php';
-require_once 'src/mongo/delegates/TransactionLog.class.php';
-require_once 'src/mongo/MongoGraph.class.php';
 
-/**
- * Class MongoTransactionLogTest
- */
+use PHPUnit\Framework\MockObject\MockObject;
+
 class MongoTransactionLogTest extends MongoTripodTestBase
 {
     /**
-     * @var \Tripod\Mongo\Driver
+     * @var MockObject&\Tripod\Mongo\Driver
      */
     protected $tripod;
 
@@ -19,14 +14,15 @@ class MongoTransactionLogTest extends MongoTripodTestBase
      */
     protected $tripodTransactionLog = null;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setup();
 
         // Stub ouf 'addToElastic' search to prevent writes into Elastic Search happening by default.
-        /** @var \Tripod\Mongo\Driver|PHPUnit_Framework_MockObject_MockObject $tripod */
-        $this->tripod = $this->getMock('\Tripod\Mongo\Driver', array('addToSearchIndexQueue'), array('CBD_testing','tripod_php_testing'));
-        $this->tripod->expects($this->any())->method('addToSearchIndexQueue');
+        $this->tripod = $this->getMockBuilder(\Tripod\Mongo\Driver::class)
+            ->onlyMethods([])
+            ->setConstructorArgs(array('CBD_testing','tripod_php_testing'))
+            ->getMock();
 
         $this->getTripodCollection($this->tripod)->drop();
 
@@ -466,8 +462,14 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         $g->add_resource_triple($uri, $g->qname_to_uri("rdf:type"), $g->qname_to_uri("acorn:Resource"));
         $g->add_literal_triple($uri, $g->qname_to_uri("dct:title"), "wibble");
 
-        $mTripod = $this->getMock('\Tripod\Mongo\Driver', array('getDataUpdater'), array('CBD_testing', 'tripod_php_testing'));
-        $mTripodUpdate = $this->getMock('\Tripod\Mongo\Updates', array('getUniqId'), array($mTripod));
+        $mTripod = $this->getMockBuilder(\Tripod\Mongo\Driver::class)
+            ->onlyMethods(array('getDataUpdater'))
+            ->setConstructorArgs(array('CBD_testing', 'tripod_php_testing'))
+            ->getMock();
+        $mTripodUpdate = $this->getMockBuilder(\Tripod\Mongo\Updates::class)
+            ->onlyMethods(array('getUniqId'))
+            ->setConstructorArgs(array($mTripod))
+            ->getMock();
 
         $mTripodUpdate->expects($this->atLeastOnce())
             ->method('getUniqId')
@@ -496,8 +498,14 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         // STEP 2
         // update the same entity with an addition
         $mTripod = null;
-        $mTripod = $this->getMock('\Tripod\Mongo\Driver', array('getDataUpdater'), array('CBD_testing', 'tripod_php_testing'));
-        $mTripodUpdate = $this->getMock('\Tripod\Mongo\Updates', array('getUniqId'), array($mTripod));
+        $mTripod = $this->getMockBuilder(\Tripod\Mongo\Driver::class)
+            ->onlyMethods(array('getDataUpdater'))
+            ->setConstructorArgs(array('CBD_testing', 'tripod_php_testing'))
+            ->getMock();
+        $mTripodUpdate = $this->getMockBuilder(\Tripod\Mongo\Updates::class)
+            ->onlyMethods(array('getUniqId'))
+            ->setConstructorArgs(array($mTripod))
+            ->getMock();
 
         $mTripodUpdate->expects($this->atLeastOnce())
             ->method('getUniqId')
@@ -542,8 +550,14 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         // STEP 3
         // update the same entity with a removal
         $mTripod = null;
-        $mTripod = $this->getMock('\Tripod\Mongo\Driver', array('getDataUpdater'), array('CBD_testing', 'tripod_php_testing'));
-        $mTripodUpdate = $this->getMock('\Tripod\Mongo\Updates', array('getUniqId'), array($mTripod));
+        $mTripod = $this->getMockBuilder(\Tripod\Mongo\Driver::class)
+            ->onlyMethods(array('getDataUpdater'))
+            ->setConstructorArgs(array('CBD_testing', 'tripod_php_testing'))
+            ->getMock();
+        $mTripodUpdate = $this->getMockBuilder(\Tripod\Mongo\Updates::class)
+            ->onlyMethods(array('getUniqId'))
+            ->setConstructorArgs(array($mTripod))
+            ->getMock();
 
         $mTripodUpdate->expects($this->atLeastOnce())
             ->method('getUniqId')
@@ -591,8 +605,14 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         $g = new \Tripod\Mongo\MongoGraph();
         $g->add_resource_triple($uri, $g->qname_to_uri("rdf:type"), $g->qname_to_uri("acorn:Resource"));
         $g->add_literal_triple($uri, $g->qname_to_uri("dct:title"), "wibble");
-        $mTripod = $this->getMock('\Tripod\Mongo\Driver', array('getDataUpdater'), array('CBD_testing', 'tripod_php_testing'));
-        $mTripodUpdate = $this->getMock('\Tripod\Mongo\Updates', array('getUniqId'), array($mTripod));
+        $mTripod = $this->getMockBuilder(\Tripod\Mongo\Driver::class)
+            ->onlyMethods(array('getDataUpdater'))
+            ->setConstructorArgs(array('CBD_testing', 'tripod_php_testing'))
+            ->getMock();
+        $mTripodUpdate = $this->getMockBuilder(\Tripod\Mongo\Updates::class)
+            ->onlyMethods(array('getUniqId'))
+            ->setConstructorArgs(array($mTripod))
+            ->getMock();
 
         $mTripodUpdate->expects($this->atLeastOnce())
             ->method('getUniqId')
@@ -608,8 +628,14 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         // now attempt to update the entity but throw an exception in applyChangeset
         // this should cause the save to fail, and this should be reflected in the transaction log
         $mTripod = null;
-        $mTripod = $this->getMock('\Tripod\Mongo\Driver', array('getDataUpdater'), array('CBD_testing', 'tripod_php_testing'));
-        $mTripodUpdate = $this->getMock('\Tripod\Mongo\Updates', array('getUniqId', 'applyChangeSet'), array($mTripod));
+        $mTripod = $this->getMockBuilder(\Tripod\Mongo\Driver::class)
+            ->onlyMethods(array('getDataUpdater'))
+            ->setConstructorArgs(array('CBD_testing', 'tripod_php_testing'))
+            ->getMock();
+        $mTripodUpdate = $this->getMockBuilder(\Tripod\Mongo\Updates::class)
+            ->onlyMethods(array('getUniqId', 'applyChangeSet'))
+            ->setConstructorArgs(array($mTripod))
+            ->getMock();
 
         $mTripodUpdate->expects($this->atLeastOnce())
             ->method('getUniqId')
@@ -671,13 +697,17 @@ class MongoTransactionLogTest extends MongoTripodTestBase
     public function testTransactionsLoggedCorrectlyFromMultipleTripods()
     {
         // Create two tripods onto different collection/dbname and make them use the same transaction log
-        $tripod1 = $this->getMock('\Tripod\Mongo\Driver', array('generateViewsAndSearchDocumentsForResources'), array('CBD_testing','tripod_php_testing'));
-        $tripod1->expects($this->any())->method('generateViewsAndSearchDocumentsForResources');
+        $tripod1 = $this->getMockBuilder(\Tripod\Mongo\Driver::class)
+            ->onlyMethods([])
+            ->setConstructorArgs(array('CBD_testing','tripod_php_testing'))
+            ->getMock();
         $this->getTripodCollection($tripod1)->drop();
         $tripod1->setTransactionLog($this->tripodTransactionLog);
 
-        $tripod2 = $this->getMock('\Tripod\Mongo\Driver', array('generateViewsAndSearchDocumentsForResources'), array('CBD_testing_2','tripod_php_testing'));
-        $tripod2->expects($this->any())->method('generateViewsAndSearchDocumentsForResources');
+        $tripod2 = $this->getMockBuilder(\Tripod\Mongo\Driver::class)
+            ->onlyMethods([])
+            ->setConstructorArgs(array('CBD_testing_2','tripod_php_testing'))
+            ->getMock();
         $this->getTripodCollection($tripod2)->drop();
         $tripod2->setTransactionLog($this->tripodTransactionLog);
 
@@ -715,26 +745,28 @@ class MongoTransactionLogTest extends MongoTripodTestBase
      */
     public function testCreateNewTransactionThrowsExceptionIfInsertFails()
     {
-        $mockInsert = $this->getMockBuilder('\MongoDB\InsertOneResult')
+        $mockInsert = $this->getMockBuilder(\MongoDB\InsertOneResult::class)
             ->disableOriginalConstructor()
-            ->setMethods(['isAcknowledged'])
+            ->onlyMethods(['isAcknowledged'])
             ->getMock();
         $mockInsert
             ->expects($this->once())
             ->method('isAcknowledged')
             ->will($this->returnValue(false));
 
-        $mockTransactionLog = $this->getMock('\Tripod\Mongo\TransactionLog', array('insertTransaction'), array(), '', false, true);
+        $mockTransactionLog = $this->getMockBuilder(\Tripod\Mongo\TransactionLog::class)
+            ->onlyMethods(array('insertTransaction'))
+            ->disableOriginalConstructor()
+            ->getMock();
         $mockTransactionLog->expects($this->once())
             ->method('insertTransaction')
             ->will($this->returnValue($mockInsert));
 
-        /* @var $mockTransactionLog \Tripod\Mongo\TransactionLog */
         try {
             $mockTransactionLog->createNewTransaction('transaction_1', array(), array(), 'mydb', 'mycollection');
             $this->fail("Exception should have been thrown by createNewTransaction");
         } catch ( Exception $e){
-            $this->assertContains('Error creating new transaction:', $e->getMessage());
+            $this->assertStringContainsString('Error creating new transaction:', $e->getMessage());
         }
     }
 }

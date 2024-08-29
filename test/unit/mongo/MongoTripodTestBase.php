@@ -1,45 +1,27 @@
 <?php
 
-use Tripod\ITripodStat;
-use \MongoDB\Collection;
+use MongoDB\Collection;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 
-set_include_path(
-  get_include_path()
-  . PATH_SEPARATOR . dirname(dirname(dirname(dirname(__FILE__))))
-  . PATH_SEPARATOR . dirname(dirname(dirname(dirname(__FILE__)))).'/lib'
-  . PATH_SEPARATOR . dirname(dirname(dirname(dirname(__FILE__)))).'/src');
-
-require_once('tripod.inc.php');
-
-/**
- * Mongo Config For Main DB
- */
-define('MONGO_MAIN_DB', 'acorn');
-define('MONGO_MAIN_COLLECTION', 'CBD_harvest');
-define('MONGO_USER_COLLECTION', 'CBD_user');
-
-/**
- * Class MongoTripodTestBase
- */
-abstract class MongoTripodTestBase extends PHPUnit_Framework_TestCase
+abstract class MongoTripodTestBase extends TestCase
 {
-
     /**
      * @var \Tripod\Mongo\Driver
      */
     protected $tripod = null;
+
     /**
      * @var \Tripod\Mongo\TransactionLog
      */
     protected $tripodTransactionLog = null;
 
-    protected function tearDown()
+    protected function tearDown(): void
     {
         // these are important to keep the Mongo open connection pool size down!
         $this->tripod = null;
         $this->tripodTransactionLog = null;
     }
-
 
     protected function loadResourceData()
     {
@@ -79,7 +61,7 @@ abstract class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         return dirname(__FILE__).'/data/config.json';
     }
 
-    protected function setUp()
+    protected function setUp(): void
     {
         date_default_timezone_set('UTC');
 
@@ -94,14 +76,7 @@ abstract class MongoTripodTestBase extends PHPUnit_Framework_TestCase
         }
         \Tripod\Config::setConfig($config);
 
-        $className = get_class($this);
-        $testName = $this->getName();
-        echo "\nTest: {$className}->{$testName}\n";
-
-        // make sure log statements don't go to stdout during tests...
-        $log = new \Monolog\Logger("unittest");
-        $log->pushHandler(new \Monolog\Handler\NullHandler());
-        \Tripod\Mongo\DriverBase::$logger = $log;
+        printf(" %s->%s\n", get_class($this), $this->getName());
     }
 
 
@@ -233,7 +208,7 @@ abstract class MongoTripodTestBase extends PHPUnit_Framework_TestCase
     protected function assertTransactionDate(Array $doc, $key)
     {
         $this->assertTrue(isset($doc[$key]), 'the date property: {$key} was not present in document');
-        $this->assertInstanceOf('MongoDB\BSON\UTCDateTime', $doc[$key]);
+        $this->assertInstanceOf(\MongoDB\BSON\UTCDateTime::class, $doc[$key]);
         $this->assertNotEmpty($doc[$key]->toDateTime());
     }
 
@@ -415,14 +390,13 @@ abstract class MongoTripodTestBase extends PHPUnit_Framework_TestCase
      * @param string $host
      * @param string|int $port
      * @param string $prefix
-     * @return PHPUnit_Framework_MockObject_MockObject|\Tripod\StatsD
+     * @return MockObject&\Tripod\StatsD
      */
     protected function getMockStat($host, $port, $prefix='', array $mockedMethods = array())
     {
         $mockedMethods = array_merge(array('send'), $mockedMethods);
-        /** @var \Tripod\StatsD|PHPUnit_Framework_MockObject_MockObject $stat */
         $stat = $this->getMockBuilder('\Tripod\StatsD')
-            ->setMethods($mockedMethods)
+            ->onlyMethods($mockedMethods)
             ->setConstructorArgs(array($host, $port, $prefix))
             ->getMock();
 
@@ -445,13 +419,10 @@ abstract class MongoTripodTestBase extends PHPUnit_Framework_TestCase
     }
 }
 
-/**
- * Class TestTripod
- */
 class TestTripod extends \Tripod\Mongo\Driver
 {
     /**
-     * @return array
+     * @return \MongoDB\Driver\ReadPreference
      */
     public function getCollectionReadPreference()
     {
@@ -459,9 +430,6 @@ class TestTripod extends \Tripod\Mongo\Driver
     }
 }
 
-/**
- * Class TripodTestConfig
- */
 class TripodTestConfig extends \Tripod\Mongo\Config
 {
     /**

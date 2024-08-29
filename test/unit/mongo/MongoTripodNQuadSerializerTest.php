@@ -1,14 +1,11 @@
 <?php
-require_once 'MongoTripodTestBase.php';
-require_once 'src/mongo/MongoGraph.class.php';
-require_once 'src/mongo/serializers/NQuadSerializer.class.php';
 
 use \Tripod\Mongo\MongoGraph;
 use \Tripod\Mongo\NQuadSerializer;
 
 class MongoTripodNQuadSerializerTest extends MongoTripodTestBase
 {
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setup();
     }
@@ -164,7 +161,7 @@ class MongoTripodNQuadSerializerTest extends MongoTripodTestBase
 <http://basedata.com/b/docWithEmptySeq123> <http://basedata.com/b/hasSequence> <http://basedata.com/b/sequence123> <http://talisaspire.com/> .
 <http://basedata.com/b/docWithEmptySeq123> <http://purl.org/dc/terms/creator> <http://schemas.talis.com/2005/user/schema#xyz> <http://talisaspire.com/> .
 <http://basedata.com/b/docWithEmptySeq123> <http://purl.org/dc/terms/title> \"Doc with sequence\" <http://talisaspire.com/> .";
-        
+
         $serializer = new NQuadSerializer();
         $actual = $serializer->getSerializedIndex($g->_index, \Tripod\Config::getInstance()->getDefaultContextAlias());
 

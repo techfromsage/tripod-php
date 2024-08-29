@@ -1,8 +1,4 @@
 <?php
-require_once dirname(__FILE__) . '/../../../vendor/autoload.php';
-require_once dirname(__FILE__) . '/../../../src/tripod.inc.php';
-require_once dirname(__FILE__).'/../../unit/mongo/MongoTripodTestBase.php';
-
 
 abstract class MongoTripodPerformanceTestBase extends MongoTripodTestBase
 {

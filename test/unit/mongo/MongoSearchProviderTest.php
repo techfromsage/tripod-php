@@ -1,21 +1,14 @@
 <?php
-require_once 'MongoTripodTestBase.php';
-require_once 'src/mongo/Driver.class.php';
-require_once 'src/mongo/delegates/SearchIndexer.class.php';
-require_once 'src/mongo/providers/MongoSearchProvider.class.php';
 
-/**
- * Class MongoSearchProviderTest
- */
 class MongoSearchProviderTest extends MongoTripodTestBase
 {
-    /** @var $indexer \Tripod\Mongo\Composites\SearchIndexer */
+    /** @var \Tripod\Mongo\Composites\SearchIndexer */
     private $indexer;
 
-    /** @var $indexer \Tripod\Mongo\MongoSearchProvider */
+    /** @var \Tripod\Mongo\MongoSearchProvider */
     private $searchProvider;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -336,38 +329,44 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
     public function testSearchThrowsExceptionIfNoQuery()
     {
-        $this->setExpectedException("\Tripod\Exceptions\SearchException","You must specify a query");
+        $this->expectException(\Tripod\Exceptions\SearchException::class);
+        $this->expectExceptionMessage("You must specify a query");
         $this->searchProvider->search("", "i_search_resource",  array("search_terms"), array("result"), 3, 0);
     }
 
     public function testSearchThrowsExceptionIfNoType()
     {
-        $this->setExpectedException("\Tripod\Exceptions\SearchException","You must specify the search document type to restrict the query to");
+        $this->expectException(\Tripod\Exceptions\SearchException::class);
+        $this->expectExceptionMessage("You must specify the search document type to restrict the query to");
         $this->searchProvider->search("poetry", "",  array("search_terms"), array("result"), 3, 0);
     }
 
     public function testSearchThrowsExceptionIfSearchIndicesEmpty()
     {
-        $this->setExpectedException("\Tripod\Exceptions\SearchException","You must specify at least one index from the search document specification to query against");
+        $this->expectException(\Tripod\Exceptions\SearchException::class);
+        $this->expectExceptionMessage("You must specify at least one index from the search document specification to query against");
         $this->searchProvider->search("poetry", "i_search_resource",  array(), array("result"), 3, 0);
     }
 
     public function testSearchThrowsExceptionIfFieldsToReturnEmpty()
     {
-        $this->setExpectedException("\Tripod\Exceptions\SearchException","You must specify at least one field from the search document specification to return");
+        $this->expectException(\Tripod\Exceptions\SearchException::class);
+        $this->expectExceptionMessage("You must specify at least one field from the search document specification to return");
         $this->searchProvider->search("poetry", "i_search_resource",  array("search_terms"), array(), 3, 0);
     }
 
 
     public function testSearchThrowsExceptionIfLimitIsNegative()
     {
-        $this->setExpectedException("\Tripod\Exceptions\SearchException","Value for limit must be a positive number");
+        $this->expectException(\Tripod\Exceptions\SearchException::class);
+        $this->expectExceptionMessage("Value for limit must be a positive number");
         $this->searchProvider->search("poetry", "i_search_resource",  array("search_terms"), array("result"), -3, 0);
     }
 
     public function testSearchThrowsExceptionIfOffsetIsNegative()
     {
-        $this->setExpectedException("\Tripod\Exceptions\SearchException","Value for offset must be a positive number");
+        $this->expectException(\Tripod\Exceptions\SearchException::class);
+        $this->expectExceptionMessage("Value for offset must be a positive number");
         $this->searchProvider->search("poetry", "i_search_resource",  array("search_terms"), array("result"), 3, -1);
     }
 
@@ -503,13 +502,17 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
     public function testDeleteSearchDocumentsByTypeIdThrowsExceptionForInvalidType()
     {
-    	$mockSearchProvider = $this->getMock("\Tripod\Mongo\MongoSearchProvider", array('getSearchDocumentSpecification'), array($this->tripod));
+    	$mockSearchProvider = $this->getMockBuilder(\Tripod\Mongo\MongoSearchProvider::class)
+            ->onlyMethods(array('getSearchDocumentSpecification'))
+            ->setConstructorArgs(array($this->tripod))
+            ->getMock();
     	$mockSearchProvider->expects($this->once())
     						->method('getSearchDocumentSpecification')
     						->with('i_some_type')
     						->will($this->returnValue(null));
 
-    	$this->setExpectedException("Exception","Could not find a search specification for i_some_type");
+    	$this->expectException(Exception::class);
+        $this->expectExceptionMessage("Could not find a search specification for i_some_type");
     	$mockSearchProvider->deleteSearchDocumentsByTypeId('i_some_type');
     }
 
@@ -520,8 +523,10 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
     	$this->assertEquals(13, $actualSearchDocumentCount, "Should have generated 12 search documents based on searchData.json");
 
-        /** @var \Tripod\Mongo\MongoSearchProvider|PHPUnit_Framework_MockObject_MockObject $mockSearchProvider */
-    	$mockSearchProvider = $this->getMock("\Tripod\Mongo\MongoSearchProvider", array('getSearchDocumentSpecification'), array($this->tripod));
+    	$mockSearchProvider = $this->getMockBuilder(\Tripod\Mongo\MongoSearchProvider::class)
+            ->onlyMethods(array('getSearchDocumentSpecification'))
+            ->setConstructorArgs(array($this->tripod))
+            ->getMock();
     	$mockSearchProvider->expects($this->once())
 				    	->method('getSearchDocumentSpecification')
 				    	->with('i_some_type')
@@ -548,7 +553,10 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
     	$this->assertEquals(13, $actualSearchDocumentCount, "Should have generated 12 search documents based on searchData.json");
 
-    	$mockSearchProvider = $this->getMock("\Tripod\Mongo\MongoSearchProvider", array('getSearchDocumentSpecification'), array($this->tripod));
+    	$mockSearchProvider = $this->getMockBuilder(\Tripod\Mongo\MongoSearchProvider::class)
+            ->onlyMethods(array('getSearchDocumentSpecification'))
+            ->setConstructorArgs(array($this->tripod))
+            ->getMock();
     	$mockSearchProvider->expects($this->once())
     					->method('getSearchDocumentSpecification')
 				    	->with('i_search_resource')
@@ -586,7 +594,10 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
     	$this->assertEquals(14, $updatedSearchDocumentCount, "Should have generated 14 search documents after adding a new document to collection");
 
-    	$mockSearchProvider = $this->getMock("\Tripod\Mongo\MongoSearchProvider", array('getSearchDocumentSpecification'), array($this->tripod));
+    	$mockSearchProvider = $this->getMockBuilder(\Tripod\Mongo\MongoSearchProvider::class)
+            ->onlyMethods(array('getSearchDocumentSpecification'))
+            ->setConstructorArgs(array($this->tripod))
+            ->getMock();
     	$mockSearchProvider->expects($this->once())
 				    	->method('getSearchDocumentSpecification')
 				    	->with('i_search_resource')
@@ -602,16 +613,16 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
     public function testCountSearchDocuments()
     {
-        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
+        $tripod = $this->getMockBuilder(\Tripod\Mongo\Driver::class)
             ->setConstructorArgs(['CBD_testing', 'tripod_php_testing'])
             ->getMock();
 
-        $collection = $this->getMockBuilder('\MongoDB\Collection')
+        $collection = $this->getMockBuilder(\MongoDB\Collection::class)
             ->setConstructorArgs([new \MongoDB\Driver\Manager(), 'db', 'coll'])
-            ->setMethods(['count'])
+            ->onlyMethods(['count'])
             ->getMock();
-        $search = $this->getMockBuilder('\Tripod\Mongo\MongoSearchProvider')
-            ->setMethods(['getCollectionForSearchSpec'])
+        $search = $this->getMockBuilder(\Tripod\Mongo\MongoSearchProvider::class)
+            ->onlyMethods(['getCollectionForSearchSpec'])
             ->setConstructorArgs([$tripod])
             ->getMock();
 
@@ -630,18 +641,18 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
     public function testCountSearchDocumentsWithFilters()
     {
-        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
+        $tripod = $this->getMockBuilder(\Tripod\Mongo\Driver::class)
            ->setConstructorArgs(['CBD_testing', 'tripod_php_testing'])
             ->getMock();
 
         $filters = ['_cts' => ['$lte' => new \MongoDB\BSON\UTCDateTime(null)]];
         $query = array_merge(['_id.type' => 'i_search_list'], $filters);
-        $collection = $this->getMockBuilder('\MongoDB\Collection')
+        $collection = $this->getMockBuilder(\MongoDB\Collection::class)
             ->setConstructorArgs([new \MongoDB\Driver\Manager(), 'db', 'coll'])
-            ->setMethods(['count'])
+            ->onlyMethods(['count'])
             ->getMock();
-        $search = $this->getMockBuilder('\Tripod\Mongo\MongoSearchProvider')
-            ->setMethods(['getCollectionForSearchSpec'])
+        $search = $this->getMockBuilder(\Tripod\Mongo\MongoSearchProvider::class)
+            ->onlyMethods(['getCollectionForSearchSpec'])
             ->setConstructorArgs([$tripod])
             ->getMock();
 
@@ -660,17 +671,17 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
     public function testDeleteSearchDocumentsBySearchId()
     {
-        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
+        $tripod = $this->getMockBuilder(\Tripod\Mongo\Driver::class)
             ->setConstructorArgs(['CBD_testing', 'tripod_php_testing'])
             ->getMock();
 
-        $collection = $this->getMockBuilder('\MongoDB\Collection')
+        $collection = $this->getMockBuilder(\MongoDB\Collection::class)
             ->setConstructorArgs([new \MongoDB\Driver\Manager(), 'db', 'coll'])
-            ->setMethods(['deleteMany'])
+            ->onlyMethods(['deleteMany'])
             ->getMock();
 
-        $deleteResult = $this->getMockBuilder('MongoDB\DeleteResult')
-            ->setMethods(['getDeletedCount'])
+        $deleteResult = $this->getMockBuilder(MongoDB\DeleteResult::class)
+            ->onlyMethods(['getDeletedCount'])
             ->disableOriginalConstructor()
             ->getMock();
 
@@ -678,8 +689,8 @@ class MongoSearchProviderTest extends MongoTripodTestBase
             ->method('getDeletedCount')
             ->will($this->returnValue(9));
 
-        $search = $this->getMockBuilder('\Tripod\Mongo\MongoSearchProvider')
-            ->setMethods(['getCollectionForSearchSpec', 'getSearchDocumentSpecification'])
+        $search = $this->getMockBuilder(\Tripod\Mongo\MongoSearchProvider::class)
+            ->onlyMethods(['getCollectionForSearchSpec', 'getSearchDocumentSpecification'])
             ->setConstructorArgs([$tripod])
             ->getMock();
 
@@ -713,17 +724,17 @@ class MongoSearchProviderTest extends MongoTripodTestBase
             ]
         ];
 
-        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
+        $tripod = $this->getMockBuilder(\Tripod\Mongo\Driver::class)
             ->setConstructorArgs(['CBD_testing', 'tripod_php_testing'])
             ->getMock();
 
-        $collection = $this->getMockBuilder('\MongoDB\Collection')
+        $collection = $this->getMockBuilder(\MongoDB\Collection::class)
             ->setConstructorArgs([new \MongoDB\Driver\Manager(), 'db', 'coll'])
-            ->setMethods(['deleteMany'])
+            ->onlyMethods(['deleteMany'])
             ->getMock();
 
-        $deleteResult = $this->getMockBuilder('MongoDB\DeleteResult')
-            ->setMethods(['getDeletedCount'])
+        $deleteResult = $this->getMockBuilder(MongoDB\DeleteResult::class)
+            ->onlyMethods(['getDeletedCount'])
             ->disableOriginalConstructor()
             ->getMock();
 
@@ -731,8 +742,8 @@ class MongoSearchProviderTest extends MongoTripodTestBase
             ->method('getDeletedCount')
             ->will($this->returnValue(9));
 
-        $search = $this->getMockBuilder('\Tripod\Mongo\MongoSearchProvider')
-            ->setMethods(['getCollectionForSearchSpec', 'getSearchDocumentSpecification'])
+        $search = $this->getMockBuilder(\Tripod\Mongo\MongoSearchProvider::class)
+            ->onlyMethods(['getCollectionForSearchSpec', 'getSearchDocumentSpecification'])
             ->setConstructorArgs([$tripod])
             ->getMock();
 

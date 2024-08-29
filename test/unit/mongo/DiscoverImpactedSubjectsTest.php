@@ -1,12 +1,7 @@
 <?php
 
-require_once 'ResqueJobTestBase.php';
-
 use \Tripod\Mongo\Jobs\DiscoverImpactedSubjects;
 
-/**
- * Class DiscoverImpactedSubjectsTest
- */
 class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
 {
     protected $args = array();
@@ -17,10 +12,8 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
         $job = new DiscoverImpactedSubjects();
         $job->args = $this->args;
         $job->job = new \Resque_Job('queue', ['id' => uniqid()]);
-        $this->setExpectedException(
-            'Exception',
-            'Argument tripodConfig or tripodConfigGenerator was not present in supplied job args for job Tripod\Mongo\Jobs\DiscoverImpactedSubjects'
-        );
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Argument tripodConfig or tripodConfigGenerator was not present in supplied job args for job Tripod\Mongo\Jobs\DiscoverImpactedSubjects');
         $this->performJob($job);
     }
 
@@ -31,7 +24,8 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
         $job = new DiscoverImpactedSubjects();
         $job->args = $this->args;
         $job->job = new \Resque_Job('queue', ['id' => uniqid()]);
-        $this->setExpectedException('Exception', "Argument storeName was not present in supplied job args for job Tripod\Mongo\Jobs\DiscoverImpactedSubjects");
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage("Argument storeName was not present in supplied job args for job Tripod\Mongo\Jobs\DiscoverImpactedSubjects");
         $this->performJob($job);
     }
 
@@ -42,7 +36,8 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
         $job = new DiscoverImpactedSubjects();
         $job->args = $this->args;
         $job->job = new \Resque_Job('queue', ['id' => uniqid()]);
-        $this->setExpectedException('Exception', "Argument podName was not present in supplied job args for job Tripod\Mongo\Jobs\DiscoverImpactedSubjects");
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage("Argument podName was not present in supplied job args for job Tripod\Mongo\Jobs\DiscoverImpactedSubjects");
         $this->performJob($job);
     }
 
@@ -53,7 +48,8 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
         $job = new DiscoverImpactedSubjects();
         $job->args = $this->args;
         $job->job = new \Resque_Job('queue', ['id' => uniqid()]);
-        $this->setExpectedException('Exception', "Argument changes was not present in supplied job args for job Tripod\Mongo\Jobs\DiscoverImpactedSubjects");
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage("Argument changes was not present in supplied job args for job Tripod\Mongo\Jobs\DiscoverImpactedSubjects");
         $this->performJob($job);
     }
 
@@ -64,7 +60,8 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
         $job = new DiscoverImpactedSubjects();
         $job->args = $this->args;
         $job->job = new \Resque_Job('queue', ['id' => uniqid()]);
-        $this->setExpectedException('Exception', "Argument operations was not present in supplied job args for job Tripod\Mongo\Jobs\DiscoverImpactedSubjects");
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage("Argument operations was not present in supplied job args for job Tripod\Mongo\Jobs\DiscoverImpactedSubjects");
         $this->performJob($job);
     }
 
@@ -75,7 +72,8 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
         $job = new DiscoverImpactedSubjects();
         $job->args = $this->args;
         $job->job = new \Resque_Job('queue', ['id' => uniqid()]);
-        $this->setExpectedException('Exception', "Argument contextAlias was not present in supplied job args for job Tripod\Mongo\Jobs\DiscoverImpactedSubjects");
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage("Argument contextAlias was not present in supplied job args for job Tripod\Mongo\Jobs\DiscoverImpactedSubjects");
         $this->performJob($job);
     }
 
@@ -85,13 +83,13 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
 
         $this->args['statsConfig'] = $this->getStatsDConfig();
 
-        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
-            ->setMethods(array('getComposite'))
+        $tripod = $this->getMockBuilder(\Tripod\Mongo\Driver::class)
+            ->onlyMethods(array('getComposite'))
             ->setConstructorArgs(array('CBD_testing', 'tripod_php_testing'))
             ->getMock();
 
-        $views = $this->getMockBuilder('\Tripod\Mongo\Composites\Views')
-            ->setMethods(array('getImpactedSubjects'))
+        $views = $this->getMockBuilder(\Tripod\Mongo\Composites\Views::class)
+            ->onlyMethods(array('getImpactedSubjects'))
             ->setConstructorArgs(
                 array(
                     'tripod_php_testing',
@@ -100,8 +98,8 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
                 )
             )->getMock();
 
-        $tables = $this->getMockBuilder('\Tripod\Mongo\Composites\Tables')
-            ->setMethods(array('getImpactedSubjects'))
+        $tables = $this->getMockBuilder(\Tripod\Mongo\Composites\Tables::class)
+            ->onlyMethods(array('getImpactedSubjects'))
             ->setConstructorArgs(
                 array(
                     'tripod_php_testing',
@@ -110,8 +108,8 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
                 )
             )->getMock();
 
-        $search = $this->getMockBuilder('\Tripod\Mongo\Composites\SearchIndexer')
-            ->setMethods(array('getImpactedSubjects'))
+        $search = $this->getMockBuilder(\Tripod\Mongo\Composites\SearchIndexer::class)
+            ->onlyMethods(array('getImpactedSubjects'))
             ->setConstructorArgs(array($tripod))
             ->getMock();
 
@@ -125,9 +123,8 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
                 )
             ));
 
-        /** @var DiscoverImpactedSubjects|PHPUnit_Framework_MockObject_MockObject $discoverImpactedSubjects  */
-        $discoverImpactedSubjects = $this->getMockBuilder('\Tripod\Mongo\Jobs\DiscoverImpactedSubjects')
-            ->setMethods(array('getTripod', 'getApplyOperation', 'getStat'))
+        $discoverImpactedSubjects = $this->getMockBuilder(\Tripod\Mongo\Jobs\DiscoverImpactedSubjects::class)
+            ->onlyMethods(array('getTripod', 'getApplyOperation', 'getStat'))
             ->getMock();
 
         $statMock = $this->getMockStat(
@@ -144,8 +141,8 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
         $discoverImpactedSubjects->args = $this->args;
         $discoverImpactedSubjects->job = new \Resque_Job('queue', ['id' => uniqid()]);
 
-        $applyOperation = $this->getMockBuilder('\Tripod\Mongo\Jobs\ApplyOperation')
-            ->setMethods(array('createJob'))
+        $applyOperation = $this->getMockBuilder(\Tripod\Mongo\Jobs\ApplyOperation::class)
+            ->onlyMethods(array('createJob'))
             ->getMock();
         $applyOperation->job = new \Resque_Job('queue', ['id' => uniqid()]);
 
@@ -258,9 +255,8 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
             'contextAlias'=>'http://talisaspire.com/'
         );
 
-        /** @var DiscoverImpactedSubjects|PHPUnit_Framework_MockObject_MockObject $discoverImpactedSubjects */
-        $discoverImpactedSubjects = $this->getMockBuilder('\Tripod\Mongo\Jobs\DiscoverImpactedSubjects')
-            ->setMethods(array('submitJob'))
+        $discoverImpactedSubjects = $this->getMockBuilder(\Tripod\Mongo\Jobs\DiscoverImpactedSubjects::class)
+            ->onlyMethods(array('submitJob'))
             ->setMockClassName('MockDiscoverImpactedSubjects')
             ->getMock();
 
@@ -295,9 +291,8 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
 
         $queueName = \Tripod\Mongo\Config::getDiscoverQueueName() . '::TRIPOD_TESTING_QUEUE_' . uniqid();
 
-        /** @var DiscoverImpactedSubjects|PHPUnit_Framework_MockObject_MockObject $discoverImpactedSubjects */
-        $discoverImpactedSubjects = $this->getMockBuilder('\Tripod\Mongo\Jobs\DiscoverImpactedSubjects')
-            ->setMethods(array('submitJob'))
+        $discoverImpactedSubjects = $this->getMockBuilder(\Tripod\Mongo\Jobs\DiscoverImpactedSubjects::class)
+            ->onlyMethods(array('submitJob'))
             ->setMockClassName('MockDiscoverImpactedSubjects')
             ->getMock();
 
@@ -314,18 +309,17 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
 
     public function testManualQueueNamePersistsThroughJob()
     {
-        /** @var DiscoverImpactedSubjects|PHPUnit_Framework_MockObject_MockObject $discoverImpactedSubjects */
-        $discoverImpactedSubjects = $this->getMockBuilder('\Tripod\Mongo\Jobs\DiscoverImpactedSubjects')
-            ->setMethods(array('getTripod', 'getApplyOperation'))
+        $discoverImpactedSubjects = $this->getMockBuilder(\Tripod\Mongo\Jobs\DiscoverImpactedSubjects::class)
+            ->onlyMethods(array('getTripod', 'getApplyOperation'))
             ->getMock();
 
-        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
-            ->setMethods(array('getComposite'))
+        $tripod = $this->getMockBuilder(\Tripod\Mongo\Driver::class)
+            ->onlyMethods(array('getComposite'))
             ->setConstructorArgs(array('CBD_testing', 'tripod_php_testing'))
             ->getMock();
 
-        $views = $this->getMockBuilder('\Tripod\Mongo\Composites\Views')
-            ->setMethods(array('getImpactedSubjects'))
+        $views = $this->getMockBuilder(\Tripod\Mongo\Composites\Views::class)
+            ->onlyMethods(array('getImpactedSubjects'))
             ->setConstructorArgs(
                 array(
                     'tripod_php_testing',
@@ -334,8 +328,8 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
                 )
             )->getMock();
 
-        $tables = $this->getMockBuilder('\Tripod\Mongo\Composites\Tables')
-            ->setMethods(array('getImpactedSubjects'))
+        $tables = $this->getMockBuilder(\Tripod\Mongo\Composites\Tables::class)
+            ->onlyMethods(array('getImpactedSubjects'))
             ->setConstructorArgs(
                 array(
                     'tripod_php_testing',
@@ -344,8 +338,8 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
                 )
             )->getMock();
 
-        $search = $this->getMockBuilder('\Tripod\Mongo\Composites\SearchIndexer')
-            ->setMethods(array('getImpactedSubjects'))
+        $search = $this->getMockBuilder(\Tripod\Mongo\Composites\SearchIndexer::class)
+            ->onlyMethods(array('getImpactedSubjects'))
             ->setConstructorArgs(array($tripod))
             ->getMock();
 
@@ -365,8 +359,8 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
                 )
             ));
 
-        $applyOperation = $this->getMockBuilder('\Tripod\Mongo\Jobs\ApplyOperation')
-            ->setMethods(array('createJob'))
+        $applyOperation = $this->getMockBuilder(\Tripod\Mongo\Jobs\ApplyOperation::class)
+            ->onlyMethods(array('createJob'))
             ->getMock();
 
         $viewSubject = new \Tripod\Mongo\ImpactedSubject(
@@ -517,9 +511,8 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
 
         \Tripod\Config::setConfig($config);
 
-        /** @var DiscoverImpactedSubjects|PHPUnit_Framework_MockObject_MockObject $discoverImpactedSubjects */
-        $discoverImpactedSubjects = $this->getMockBuilder('\Tripod\Mongo\Jobs\DiscoverImpactedSubjects')
-            ->setMethods(array('getTripod', 'getApplyOperation'))
+        $discoverImpactedSubjects = $this->getMockBuilder(\Tripod\Mongo\Jobs\DiscoverImpactedSubjects::class)
+            ->onlyMethods(array('getTripod', 'getApplyOperation'))
             ->getMock();
 
         $this->setArgs();
@@ -528,13 +521,13 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
         $discoverImpactedSubjects->args = $args;
         $discoverImpactedSubjects->job = new \Resque_Job('queue', ['id' => uniqid()]);
 
-        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
-            ->setMethods(array('getComposite'))
+        $tripod = $this->getMockBuilder(\Tripod\Mongo\Driver::class)
+            ->onlyMethods(array('getComposite'))
             ->setConstructorArgs(array('CBD_testing', 'tripod_php_testing'))
             ->getMock();
 
-        $tables = $this->getMockBuilder('\Tripod\Mongo\Composites\Tables')
-            ->setMethods(array('getImpactedSubjects'))
+        $tables = $this->getMockBuilder(\Tripod\Mongo\Composites\Tables::class)
+            ->onlyMethods(array('getImpactedSubjects'))
             ->setConstructorArgs(
                 array(
                     'tripod_php_testing',
@@ -543,8 +536,8 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
                 )
             )->getMock();
 
-        $applyOperation = $this->getMockBuilder('\Tripod\Mongo\Jobs\ApplyOperation')
-            ->setMethods(array('createJob'))
+        $applyOperation = $this->getMockBuilder(\Tripod\Mongo\Jobs\ApplyOperation::class)
+            ->onlyMethods(array('createJob'))
             ->getMock();
 
         $tableSubject1 = new \Tripod\Mongo\ImpactedSubject(
@@ -751,9 +744,8 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
 
         \Tripod\Config::setConfig($config);
 
-        /** @var DiscoverImpactedSubjects|PHPUnit_Framework_MockObject_MockObject $discoverImpactedSubjects */
-        $discoverImpactedSubjects = $this->getMockBuilder('\Tripod\Mongo\Jobs\DiscoverImpactedSubjects')
-            ->setMethods(array('getTripod', 'getApplyOperation'))
+        $discoverImpactedSubjects = $this->getMockBuilder(\Tripod\Mongo\Jobs\DiscoverImpactedSubjects::class)
+            ->onlyMethods(array('getTripod', 'getApplyOperation'))
             ->getMock();
 
         $this->setArgs();
@@ -763,13 +755,13 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
         $discoverImpactedSubjects->args = $args;
         $discoverImpactedSubjects->job = new \Resque_Job('queue', ['id' => uniqid()]);
 
-        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
-            ->setMethods(array('getComposite'))
+        $tripod = $this->getMockBuilder(\Tripod\Mongo\Driver::class)
+            ->onlyMethods(array('getComposite'))
             ->setConstructorArgs(array('CBD_testing', 'tripod_php_testing'))
             ->getMock();
 
-        $tables = $this->getMockBuilder('\Tripod\Mongo\Composites\Tables')
-            ->setMethods(array('getImpactedSubjects'))
+        $tables = $this->getMockBuilder(\Tripod\Mongo\Composites\Tables::class)
+            ->onlyMethods(array('getImpactedSubjects'))
             ->setConstructorArgs(
                 array(
                     'tripod_php_testing',
@@ -778,8 +770,8 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
                 )
             )->getMock();
 
-        $applyOperation = $this->getMockBuilder('\Tripod\Mongo\Jobs\ApplyOperation')
-            ->setMethods(array('createJob'))
+        $applyOperation = $this->getMockBuilder(\Tripod\Mongo\Jobs\ApplyOperation::class)
+            ->onlyMethods(array('createJob'))
             ->getMock();
 
         $tableSubjects = array(

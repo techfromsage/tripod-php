@@ -1,8 +1,5 @@
 <?php
 
-require_once 'MongoTripodTestBase.php';
-require_once 'TestJobBase.php';
-
 class JobBaseTest extends MongoTripodTestBase
 {
     public function testGetTripodConfig()

@@ -1,34 +1,28 @@
 <?php
-set_include_path(
-    get_include_path()
-        . PATH_SEPARATOR . dirname(dirname(dirname(__FILE__)))
-        . PATH_SEPARATOR . dirname(dirname(dirname(__FILE__))).'/lib'
-        . PATH_SEPARATOR . dirname(dirname(dirname(__FILE__))).'/src');
 
-require_once 'src/classes/Timer.class.php';
+use PHPUnit\Framework\TestCase;
+use Tripod\Timer;
 
-use \Tripod\Timer;
-
-class TimerTest extends PHPUnit_Framework_TestCase
+class TimerTest extends TestCase
 {
-    protected function setUp()
+    protected function setUp(): void
     {
-        $className = get_class($this);
-        $testName = $this->getName();
-        echo "\nTest: {$className}->{$testName}\n";
+        printf(" %s->%s\n", get_class($this), $this->getName());
     }
 
     /**  START: result() tests */
     public function testResultWhenStartTimeNotSet(){
         $timer = new Timer();
-        $this->setExpectedException('Exception', 'Timer: start method not called !');
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Timer: start method not called !');
         $timer->result();
     }
 
     public function testResultWhenEndTimeNotSet(){
         $timer = new Timer();
         $timer->start();
-        $this->setExpectedException('Exception', 'Timer: stop method not called !');
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Timer: stop method not called !');
         $timer->result();
     }
 
@@ -45,14 +39,16 @@ class TimerTest extends PHPUnit_Framework_TestCase
     /**  START: microResult() tests */
     public function testMicroResultWhenStartTimeNotSet(){
         $timer = new Timer();
-        $this->setExpectedException('Exception', 'Timer: start method not called !');
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Timer: start method not called !');
         $timer->result();
     }
 
     public function testMicroResultWhenEndTimeNotSet(){
         $timer = new Timer();
         $timer->start();
-        $this->setExpectedException('Exception', 'Timer: stop method not called !');
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Timer: stop method not called !');
         $timer->result();
     }
 

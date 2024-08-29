@@ -5,14 +5,11 @@ use Tripod\Mongo\Jobs\JobBase;
 use Tripod\Mongo\ImpactedSubject;
 use Tripod\Mongo\Jobs\ApplyOperation;
 
-require_once 'MongoTripodTestBase.php';
-require_once 'TestConfigGenerator.php';
-
 class ConfigGeneratorTest extends MongoTripodTestBase
 {
     private $config = [];
 
-    public function setUp()
+    protected function setUp(): void
     {
         $this->config = [
             'class' => 'TestConfigGenerator',
@@ -24,9 +21,9 @@ class ConfigGeneratorTest extends MongoTripodTestBase
     {
         /** @var TestConfigGenerator $instance */
         $instance = \Tripod\Config::getInstance();
-        $this->assertInstanceOf('TestConfigGenerator', $instance);
-        $this->assertInstanceOf('\Tripod\Mongo\Config', $instance);
-        $this->assertInstanceOf('\Tripod\ITripodConfigSerializer', $instance);
+        $this->assertInstanceOf(TestConfigGenerator::class, $instance);
+        $this->assertInstanceOf(\Tripod\Mongo\Config::class, $instance);
+        $this->assertInstanceOf(\Tripod\ITripodConfigSerializer::class, $instance);
         $this->assertEquals(
             ['CBD_testing', 'CBD_testing_2'],
             $instance->getPods('tripod_php_testing')
@@ -49,17 +46,15 @@ class ConfigGeneratorTest extends MongoTripodTestBase
         $newGraph->add_resource_triple('http://example.com/1', RDF_TYPE, OWL_CLASS);
         $subjectsAndPredicatesOfChange = ['http://example.com/1' => [RDF_TYPE]];
 
-        /** @var \Tripod\Mongo\Driver|PHPUnit_Framework_MockObject_MockObject $tripod */
-        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
-            ->setMethods(['getDataUpdater'])
+        $tripod = $this->getMockBuilder(\Tripod\Mongo\Driver::class)
+            ->onlyMethods(['getDataUpdater'])
             ->setConstructorArgs(
                 ['CBD_testing', 'tripod_php_testing']
             )
             ->getMock();
 
-        /** @var \Tripod\Mongo\Updates|PHPUnit_Framework_MockObject_MockObject $updates */
-        $updates = $this->getMockBuilder('\Tripod\Mongo\Updates')
-            ->setMethods(
+        $updates = $this->getMockBuilder(\Tripod\Mongo\Updates::class)
+            ->onlyMethods(
                 [
                     'applyHooks',
                     'storeChanges',
@@ -72,9 +67,8 @@ class ConfigGeneratorTest extends MongoTripodTestBase
             ->setConstructorArgs([$tripod])
             ->getMock();
 
-        /** @var \Tripod\Mongo\Jobs\DiscoverImpactedSubjects|PHPUnit_Framework_MockObject_MockObject $discoverJob */
-        $discoverJob = $this->getMockBuilder('\Tripod\Mongo\Jobs\DiscoverImpactedSubjects')
-            ->setMethods(['createJob'])
+        $discoverJob = $this->getMockBuilder(\Tripod\Mongo\Jobs\DiscoverImpactedSubjects::class)
+            ->onlyMethods(['createJob'])
             ->getMock();
 
         $tripod->expects($this->once())->method('getDataUpdater')->will($this->returnValue($updates));
@@ -123,15 +117,13 @@ class ConfigGeneratorTest extends MongoTripodTestBase
             JobBase::TRIPOD_CONFIG_GENERATOR => $this->config
         ];
 
-        /** @var \Tripod\Mongo\Driver|PHPUnit_Framework_MockObject_MockObject $tripod */
-        $tripod = $this->getMockBuilder('\Tripod\Mongo\Driver')
-            ->setMethods([])
+        $tripod = $this->getMockBuilder(\Tripod\Mongo\Driver::class)
+            ->onlyMethods(['getComposite'])
             ->setConstructorArgs(['CBD_testing', 'tripod_php_testing'])
             ->getMock();
 
-        /** @var \Tripod\Mongo\Composites\Views|PHPUnit_Framework_MockObject_MockObject $views */
-        $views = $this->getMockBuilder('\Tripod\Mongo\Composites\Views')
-            ->setMethods(['getImpactedSubjects'])
+        $views = $this->getMockBuilder(\Tripod\Mongo\Composites\Views::class)
+            ->onlyMethods(['getImpactedSubjects'])
             ->disableOriginalConstructor()
             ->getMock();
 
@@ -141,14 +133,12 @@ class ConfigGeneratorTest extends MongoTripodTestBase
 
         $views->expects($this->once())->method('getImpactedSubjects')->will($this->returnValue($impactedSubjects));
 
-        /** @var \Tripod\Mongo\Jobs\DiscoverImpactedSubjects|PHPUnit_Framework_MockObject_MockObject $discoverJob */
-        $discoverJob = $this->getMockBuilder('\Tripod\Mongo\Jobs\DiscoverImpactedSubjects')
-            ->setMethods(['getTripod', 'getApplyOperation'])
+        $discoverJob = $this->getMockBuilder(\Tripod\Mongo\Jobs\DiscoverImpactedSubjects::class)
+            ->onlyMethods(['getTripod', 'getApplyOperation'])
             ->getMock();
 
-        /** @var \Tripod\Mongo\Jobs\ApplyOperation|PHPUnit_Framework_MockObject_MockObject $applyJob */
-        $applyJob = $this->getMockBuilder('\Tripod\Mongo\Jobs\ApplyOperation')
-            ->setMethods(['submitJob'])
+        $applyJob = $this->getMockBuilder(\Tripod\Mongo\Jobs\ApplyOperation::class)
+            ->onlyMethods(['submitJob'])
             ->setMockClassName('ApplyOperation_TestConfigGenerator')
             ->getMock();
         $discoverJob->args = $jobArgs;

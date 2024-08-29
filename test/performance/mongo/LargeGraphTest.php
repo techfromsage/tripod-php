@@ -1,5 +1,5 @@
 <?php
-require_once('MongoTripodPerformanceTestBase.php');
+
 /**
  * A quick performance test to see what amount of time in consumed in specific methods of Config class
  *
@@ -20,7 +20,7 @@ class LargeGraphTest extends MongoTripodPerformanceTestBase
     /**
      * Do some setup before each test start
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setup();
         $this->tripod = new \Tripod\Mongo\Driver('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/'));

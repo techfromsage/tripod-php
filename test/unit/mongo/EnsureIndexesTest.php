@@ -1,10 +1,8 @@
 <?php
 
-require_once 'ResqueJobTestBase.php';
+use PHPUnit\Framework\MockObject\MockObject;
+use Tripod\Mongo\Jobs\EnsureIndexes;
 
-/**
- * Class EnsureIndexes Test
- */
 class EnsureIndexesTest extends ResqueJobTestBase
 {
     /**
@@ -12,7 +10,7 @@ class EnsureIndexesTest extends ResqueJobTestBase
      */
     protected $args = array();
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->args = array(
             'tripodConfig' => '',
@@ -40,10 +38,8 @@ class EnsureIndexesTest extends ResqueJobTestBase
         $job->job = new \Resque_Job('queue', ['id' => uniqid()]);
         unset($job->args[$argument]);
 
-        $this->setExpectedException(
-            'Exception',
-            "Argument $argumentName was not present in supplied job args for job Tripod\Mongo\Jobs\EnsureIndexes"
-        );
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage("Argument $argumentName was not present in supplied job args for job Tripod\Mongo\Jobs\EnsureIndexes");
         $this->performJob($job);
     }
 
@@ -84,7 +80,8 @@ class EnsureIndexesTest extends ResqueJobTestBase
         $job = $this->createMockJob();
         $job->args = $this->createDefaultArguments();
         $this->jobThrowsExceptionWhenEnsuringIndexes($job);
-        $this->setExpectedException('Exception', "Ensuring index failed");
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage("Ensuring index failed");
 
         $this->performJob($job);
     }
@@ -129,8 +126,8 @@ class EnsureIndexesTest extends ResqueJobTestBase
         );
 
         //create mock job
-        $job = $this->getMockBuilder('\Tripod\Mongo\Jobs\EnsureIndexes')
-            ->setMethods(array('warningLog', 'enqueue'))
+        $job = $this->getMockBuilder(\Tripod\Mongo\Jobs\EnsureIndexes::class)
+            ->onlyMethods(array('warningLog', 'enqueue'))
             ->getMock();
 
         $e = new Exception("Connection to Redis failed after 1 failures.Last Error : (0) php_network_getaddresses: getaddrinfo failed: nodename nor servname provided, or not known");
@@ -142,7 +139,8 @@ class EnsureIndexesTest extends ResqueJobTestBase
         // expect 5 retries. Catch this with call to warning log
         $job->expects($this->exactly(5))->method("warningLog");
 
-        $this->setExpectedException('\Tripod\Exceptions\JobException','Exception queuing job  - Connection to Redis failed after 1 failures.Last Error : (0) php_network_getaddresses: getaddrinfo failed: nodename nor servname provided, or not known');
+        $this->expectException(\Tripod\Exceptions\JobException::class);
+        $this->expectExceptionMessage('Exception queuing job  - Connection to Redis failed after 1 failures.Last Error : (0) php_network_getaddresses: getaddrinfo failed: nodename nor servname provided, or not known');
         $job->createJob('tripod_php_testing', false, true);
 
     }
@@ -160,8 +158,8 @@ class EnsureIndexesTest extends ResqueJobTestBase
             'background' => true
         );
 
-        $job = $this->getMockBuilder('\Tripod\Mongo\Jobs\EnsureIndexes')
-            ->setMethods(array('warningLog', 'enqueue', 'getJobStatus'))
+        $job = $this->getMockBuilder(\Tripod\Mongo\Jobs\EnsureIndexes::class)
+            ->onlyMethods(array('warningLog', 'enqueue', 'getJobStatus'))
             ->getMock();
 
         // both of these methods will be called 6 times because after the first attempt fails it will
@@ -171,7 +169,8 @@ class EnsureIndexesTest extends ResqueJobTestBase
 
         // expect 5 retries. Catch this with call to warning log
         $job->expects($this->exactly(5))->method("warningLog");
-        $this->setExpectedException('\Tripod\Exceptions\JobException', 'Exception queuing job  - Could not retrieve status for queued job - job sometoken failed to tripod::ensureindexes');
+        $this->expectException(\Tripod\Exceptions\JobException::class);
+        $this->expectExceptionMessage('Exception queuing job  - Could not retrieve status for queued job - job sometoken failed to tripod::ensureindexes');
         $job->createJob('tripod_php_testing', false, true);
     }
 
@@ -210,7 +209,7 @@ class EnsureIndexesTest extends ResqueJobTestBase
      *  Creates a simple mock EnsureIndexes Job
      *
      *  @param  array list of methods to stub
-     *  @return PHPUnit_Framework_MockObject_MockObject
+     *  @return MockObject&\Tripod\Mongo\Jobs\EnsureIndexes
      */
     protected function createMockJob($methods=array())
     {
@@ -220,8 +219,8 @@ class EnsureIndexesTest extends ResqueJobTestBase
             $methodsToStub = $methods;
         }
 
-        $mockEnsureIndexesJob = $this->getMockBuilder('\Tripod\Mongo\Jobs\EnsureIndexes')
-            ->setMethods($methodsToStub)
+        $mockEnsureIndexesJob = $this->getMockBuilder(\Tripod\Mongo\Jobs\EnsureIndexes::class)
+            ->onlyMethods($methodsToStub)
             ->setMockClassName('MockEnsureIndexes')
             ->getMock();
         $mockEnsureIndexesJob->job = new \Resque_Job('queue', ['id' => uniqid()]);
@@ -245,12 +244,12 @@ class EnsureIndexesTest extends ResqueJobTestBase
     }
 
     /**
-     * @param PHPUnit_Framework_MockObject_MockObject EnsureIndexes Job
+     * @param MockObject&EnsureIndexes $job EnsureIndexes Job
      */
     protected function jobSuccessfullyEnsuresIndexes($job)
     {
-        $mockIndexUtils = $this->getMockBuilder('\Tripod\Mongo\IndexUtils')
-            ->setMethods(array('ensureIndexes'))
+        $mockIndexUtils = $this->getMockBuilder(\Tripod\Mongo\IndexUtils::class)
+            ->onlyMethods(array('ensureIndexes'))
             ->getMock();
 
         $mockIndexUtils->expects($this->once())
@@ -263,12 +262,12 @@ class EnsureIndexesTest extends ResqueJobTestBase
     }
 
     /**
-     * @param PHPUnit_Framework_MockObject_MockObject EnsureIndexes Job
+     * @param MockObject&EnsureIndexes $job EnsureIndexes Job
      */
     protected function jobThrowsExceptionWhenEnsuringIndexes($job)
     {
-        $mockIndexUtils = $this->getMockBuilder('\Tripod\Mongo\IndexUtils')
-            ->setMethods(array('ensureIndexes'))
+        $mockIndexUtils = $this->getMockBuilder(\Tripod\Mongo\IndexUtils::class)
+            ->onlyMethods(array('ensureIndexes'))
             ->getMock();
 
         $mockIndexUtils->expects($this->once())

@@ -1,5 +1,4 @@
 <?php
-require_once('MongoTripodPerformanceTestBase.php');
 
 /**
  * A quick performance test to see what amount of time in consumed in specific methods of Config class
@@ -28,7 +27,7 @@ class MongoTripodConfigTest extends MongoTripodPerformanceTestBase
     /**
      * Do some setup before each test start
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setup();
 
@@ -38,7 +37,7 @@ class MongoTripodConfigTest extends MongoTripodPerformanceTestBase
     /**
      * Post test completion actions.
      */
-    protected function tearDown()
+    protected function tearDown(): void
     {
         $this->config = array();
         parent::tearDown();
