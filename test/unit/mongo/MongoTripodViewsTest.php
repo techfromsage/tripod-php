@@ -1049,7 +1049,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase
 
         $impactedSubjects = $view->getImpactedSubjects($subjectsAndPredicatesOfChange, $context);
 
-        $this->assertEquals($expectedImpactedSubjects, $impactedSubjects, '', 0.0, 10, true);
+        $this->assertEqualsCanonicalizing($expectedImpactedSubjects, $impactedSubjects);
 
         foreach ($impactedSubjects as $subject) {
             $view->update($subject);
