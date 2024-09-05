@@ -35,7 +35,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $this->tripod = new \Tripod\Mongo\Driver(
             $this->defaultPodName,
             $this->defaultStoreName,
-            ["async" => [OP_VIEWS=>false, OP_TABLES => false, OP_SEARCH => false]]
+            ["async" => [OP_VIEWS => false, OP_TABLES => false, OP_SEARCH => false]]
         );
 
         $this->getTripodCollection($this->tripod)->drop();
@@ -69,28 +69,28 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $config = array();
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["data_sources"] = array(
-            "db"=>array(
-                "type"=>"mongo",
-                "connection"=>"mongodb://localhost"
+            "db" => array(
+                "type" => "mongo",
+                "connection" => "mongodb://localhost"
             ),
-            "tlog"=>array(
-                "type"=>"mongo",
-                "connection"=>"mongodb://tloghost:27017,tloghost:27018"
+            "tlog" => array(
+                "type" => "mongo",
+                "connection" => "mongodb://tloghost:27017,tloghost:27018"
             )
         );
         $config["stores"] = array(
             $this->defaultStoreName => array(
-                "data_source"=>"db",
+                "data_source" => "db",
                 "pods" => array(
                     $this->defaultPodName => array()
                 )
             )
         );
-        $config['queue'] = array("database"=>"queue","collection"=>"q_queue","data_source"=>"db");
+        $config['queue'] = array("database" => "queue","collection" => "q_queue","data_source" => "db");
         $config["transaction_log"] = array(
-            "database"=>"transactions",
-            "collection"=>"transaction_log",
-            "data_source"=>"db"
+            "database" => "transactions",
+            "collection" => "transaction_log",
+            "data_source" => "db"
         );
         return $config;
     }
@@ -111,23 +111,23 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
     public function testTripodSaveChangesUpdatesLiteralTripleInTable()
     {
-        $this->tripodTables->generateTableRows("t_resource",'http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2');
+        $this->tripodTables->generateTableRows("t_resource", 'http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2');
 
-        $t1 = $this->tripodTables->getTableRows("t_resource",array("_id.r"=>"http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2"));
+        $t1 = $this->tripodTables->getTableRows("t_resource", array("_id.r" => "http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2"));
 
         $expectedIsbn13s = array("9780393929691","9780393929691-2");
-        $this->assertEquals($expectedIsbn13s,$t1['results'][0]['isbn13']);
+        $this->assertEquals($expectedIsbn13s, $t1['results'][0]['isbn13']);
 
         $g1 = $this->tripod->describeResource("http://talisaspire.com/works/4d101f63c10a6");
         $g2 = $this->tripod->describeResource("http://talisaspire.com/works/4d101f63c10a6");
 
-        $g2->add_literal_triple("http://talisaspire.com/works/4d101f63c10a6",$g2->qname_to_uri("bibo:isbn13"),"9780393929691-3");
-        $this->tripod->saveChanges($g1,$g2,'http://talisaspire.com/');
+        $g2->add_literal_triple("http://talisaspire.com/works/4d101f63c10a6", $g2->qname_to_uri("bibo:isbn13"), "9780393929691-3");
+        $this->tripod->saveChanges($g1, $g2, 'http://talisaspire.com/');
 
-        $t2 = $this->tripodTables->getTableRows("t_resource",array("_id.r"=>"http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2"));
+        $t2 = $this->tripodTables->getTableRows("t_resource", array("_id.r" => "http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2"));
 
         $expectedIsbn13s = array("9780393929691","9780393929691-2","9780393929691-3");
-        $this->assertEquals($expectedIsbn13s,$t2['results'][0]['isbn13']);
+        $this->assertEquals($expectedIsbn13s, $t2['results'][0]['isbn13']);
     }
 
     public function testGenerateTableRowsWithCounts()
@@ -137,15 +137,15 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $t1 = $this->tripodTables->getTableRows("t_source_count");
 
         // expecting two rows
-        $this->assertEquals(count($t1['results']),3);
+        $this->assertEquals(count($t1['results']), 3);
         $result = $t1['results'][0];
 
         // check out the columns
-        $this->assertArrayHasKey('type',$result,"Result does not contain type");
-        $this->assertArrayHasKey('source_count',$result,"Result does not contain source_count");
-        $this->assertEquals(1,$result['source_count']);
-        $this->assertEquals(0,$result['random_predicate_count']);
-        $this->assertArrayHasKey('isbn13',$result,"Result does not contain isbn13");
+        $this->assertArrayHasKey('type', $result, "Result does not contain type");
+        $this->assertArrayHasKey('source_count', $result, "Result does not contain source_count");
+        $this->assertEquals(1, $result['source_count']);
+        $this->assertEquals(0, $result['random_predicate_count']);
+        $this->assertArrayHasKey('isbn13', $result, "Result does not contain isbn13");
     }
 
     public function testGenerateTableRowsWithCountUpdateAndRequery()
@@ -155,41 +155,40 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $t1 = $this->tripodTables->getTableRows("t_source_count");
 
         // expecting two rows
-        $this->assertEquals(count($t1['results']),3);
+        $this->assertEquals(count($t1['results']), 3);
         $result = $t1['results'][0];
 
         // check out the columns
-        $this->assertArrayHasKey('type',$result,"Result does not contain type");
-        $this->assertArrayHasKey('source_count',$result,"Result does not contain source_count");
-        $this->assertEquals(1,$result['source_count']);
-        $this->assertArrayHasKey('isbn13',$result,"Result does not contain isbn13");
+        $this->assertArrayHasKey('type', $result, "Result does not contain type");
+        $this->assertArrayHasKey('source_count', $result, "Result does not contain source_count");
+        $this->assertEquals(1, $result['source_count']);
+        $this->assertArrayHasKey('isbn13', $result, "Result does not contain isbn13");
 
         $subject = $result['_id']['r'];
 
         $subjectGraph = $this->tripod->describeResource($subject);
         $newGraph = new \Tripod\ExtendedGraph();
         $newGraph->add_graph($subjectGraph);
-        $newGraph->add_resource_triple($subject,'http://purl.org/dc/terms/isVersionOf','http://example.com');
+        $newGraph->add_resource_triple($subject, 'http://purl.org/dc/terms/isVersionOf', 'http://example.com');
 
-        $this->tripod->saveChanges($subjectGraph,$newGraph);
+        $this->tripod->saveChanges($subjectGraph, $newGraph);
 
         $t2 = $this->tripodTables->getTableRows("t_source_count");
 
         $result = null;
-        $this->assertEquals(count($t2['results']),3);
-        foreach ($t2['results'] as $r)
-        {
+        $this->assertEquals(count($t2['results']), 3);
+        foreach ($t2['results'] as $r) {
             if ($r['_id']['r'] == $subject) {
                 $result = $r;
             }
         }
 
-        $this->assertNotNull($result,"Cound not find table row for $subject");
+        $this->assertNotNull($result, "Cound not find table row for $subject");
         // check out the columns
-        $this->assertArrayHasKey('type',$result,"Result does not contain type");
-        $this->assertArrayHasKey('source_count',$result,"Result does not contain source_count");
-        $this->assertEquals(2,$result['source_count']);
-        $this->assertArrayHasKey('isbn13',$result,"Result does not contain isbn13");
+        $this->assertArrayHasKey('type', $result, "Result does not contain type");
+        $this->assertArrayHasKey('source_count', $result, "Result does not contain source_count");
+        $this->assertEquals(2, $result['source_count']);
+        $this->assertArrayHasKey('isbn13', $result, "Result does not contain isbn13");
     }
 
     public function testGenerateTableRowsWithCountAndRegexUpdateAndRequery()
@@ -199,76 +198,75 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $t1 = $this->tripodTables->getTableRows("t_source_count_regex");
 
         // expecting two rows
-        $this->assertEquals(count($t1['results']),3);
+        $this->assertEquals(count($t1['results']), 3);
         $result = $t1['results'][0];
 
         // check out the columns
-        $this->assertArrayHasKey('type',$result,"Result does not contain type");
-        $this->assertArrayHasKey('source_count',$result,"Result does not contain source_count");
-        $this->assertEquals(1,$result['source_count']);
-        $this->assertEquals(0,$result['regex_source_count']);
-        $this->assertArrayHasKey('isbn13',$result,"Result does not contain isbn13");
+        $this->assertArrayHasKey('type', $result, "Result does not contain type");
+        $this->assertArrayHasKey('source_count', $result, "Result does not contain source_count");
+        $this->assertEquals(1, $result['source_count']);
+        $this->assertEquals(0, $result['regex_source_count']);
+        $this->assertArrayHasKey('isbn13', $result, "Result does not contain isbn13");
 
         $subject = $result['_id']['r'];
 
         $subjectGraph = $this->tripod->describeResource($subject);
         $newGraph = new \Tripod\ExtendedGraph();
         $newGraph->add_graph($subjectGraph);
-        $newGraph->add_resource_triple($subject,'http://purl.org/dc/terms/isVersionOf','http://foobarbaz.com');
-        $newGraph->add_resource_triple($subject,'http://purl.org/dc/terms/isVersionOf','http://example.com/foobarbaz');
+        $newGraph->add_resource_triple($subject, 'http://purl.org/dc/terms/isVersionOf', 'http://foobarbaz.com');
+        $newGraph->add_resource_triple($subject, 'http://purl.org/dc/terms/isVersionOf', 'http://example.com/foobarbaz');
 
-        $this->tripod->saveChanges($subjectGraph,$newGraph);
+        $this->tripod->saveChanges($subjectGraph, $newGraph);
 
         $t2 = $this->tripodTables->getTableRows("t_source_count_regex");
 
         $result = null;
-        $this->assertEquals(count($t2['results']),3);
-        foreach ($t2['results'] as $r)
-        {
+        $this->assertEquals(count($t2['results']), 3);
+        foreach ($t2['results'] as $r) {
             if ($r['_id']['r'] == $subject) {
                 $result = $r;
             }
         }
 
-        $this->assertNotNull($result,"Could not find table row for $subject");
+        $this->assertNotNull($result, "Could not find table row for $subject");
         // check out the columns
-        $this->assertArrayHasKey('type',$result,"Result does not contain type");
-        $this->assertArrayHasKey('source_count',$result,"Result does not contain source_count");
-        $this->assertEquals(3,$result['source_count']);
-        $this->assertEquals(2,$result['regex_source_count']);
-        $this->assertArrayHasKey('isbn13',$result,"Result does not contain isbn13");
+        $this->assertArrayHasKey('type', $result, "Result does not contain type");
+        $this->assertArrayHasKey('source_count', $result, "Result does not contain source_count");
+        $this->assertEquals(3, $result['source_count']);
+        $this->assertEquals(2, $result['regex_source_count']);
+        $this->assertArrayHasKey('isbn13', $result, "Result does not contain isbn13");
     }
 
     public function testGenerateTableRowsWithCountOnJoinAndRegexUpdateAndRequery()
     {
         $this->tripodTables->generateTableRows("t_join_source_count_regex");
 
-        $t1 = $this->tripodTables->getTableRows("t_join_source_count_regex",array("_id.r"=>"http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2"));
+        $t1 = $this->tripodTables->getTableRows("t_join_source_count_regex", array("_id.r" => "http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2"));
 
         // expecting two rows
-        $this->assertEquals(count($t1['results']),1);
+        $this->assertEquals(count($t1['results']), 1);
         $result = $t1['results'][0];
 
         // check out the columns
-        $this->assertArrayHasKey('titles_count',$result,"Result does not contain titles_count");
-        $this->assertEquals(3,$result['titles_count']);
+        $this->assertArrayHasKey('titles_count', $result, "Result does not contain titles_count");
+        $this->assertEquals(3, $result['titles_count']);
 
         // add a title to f340...
         $subjectGraph = $this->tripod->describeResource("http://jacs3.dataincubator.org/f340");
         $newGraph = new \Tripod\ExtendedGraph();
         $newGraph->add_graph($subjectGraph);
-        $newGraph->add_resource_triple("http://jacs3.dataincubator.org/f340",'http://purl.org/dc/terms/title','Another title');
+        $newGraph->add_resource_triple("http://jacs3.dataincubator.org/f340", 'http://purl.org/dc/terms/title', 'Another title');
 
-        $this->tripod->saveChanges($subjectGraph,$newGraph);
+        $this->tripod->saveChanges($subjectGraph, $newGraph);
 
-        $t2 = $this->tripodTables->getTableRows("t_join_source_count_regex",array("_id.r"=>"http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2"));
+        $t2 = $this->tripodTables->getTableRows("t_join_source_count_regex", array("_id.r" => "http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2"));
 
-        $this->assertEquals(count($t2['results']),1);
+        $this->assertEquals(count($t2['results']), 1);
         $result = $t2['results'][0];
 
         // check out the columns
-        $this->assertArrayHasKey('titles_count',$result,"Result does not contain titles_count");
-        $this->assertEquals(4,$result['titles_count']);
+        $this->assertArrayHasKey('titles_count', $result, "Result does not contain titles_count");
+        $this->assertEquals(4, $result['titles_count']);
     }
 
     public function testUpdateWillDeleteItem()
@@ -277,10 +275,10 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             ->onlyMethods(array('deleteTableRowsForResource','generateTableRowsForType'))
             ->setConstructorArgs($this->tablesConstParams)
             ->getMock();
-        $mockTables->expects($this->once())->method('deleteTableRowsForResource')->with("http://foo","context");
+        $mockTables->expects($this->once())->method('deleteTableRowsForResource')->with("http://foo", "context");
         $mockTables->expects($this->never())->method('generateTableRowsForType');
 
-        $mockTables->update(new \Tripod\Mongo\ImpactedSubject(array("r"=>"http://foo","c"=>"context"),OP_TABLES,"foo","bar",array("t_table")));
+        $mockTables->update(new \Tripod\Mongo\ImpactedSubject(array("r" => "http://foo","c" => "context"), OP_TABLES, "foo", "bar", array("t_table")));
     }
 
     public function testUpdateWillGenerateRows()
@@ -289,10 +287,10 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             ->onlyMethods(array('deleteTableRowsForResource', 'generateTableRowsForResource'))
             ->setConstructorArgs($this->tablesConstParams)
             ->getMock();
-        $mockTables->expects($this->once())->method('generateTableRowsForResource')->with("http://foo","context");
+        $mockTables->expects($this->once())->method('generateTableRowsForResource')->with("http://foo", "context");
         $mockTables->expects($this->never())->method('deleteTableRowsForResource');
 
-        $mockTables->update(new \Tripod\Mongo\ImpactedSubject(array("r"=>"http://foo","c"=>"context"),OP_TABLES,"foo","bar",array("t_table")));
+        $mockTables->update(new \Tripod\Mongo\ImpactedSubject(array("r" => "http://foo","c" => "context"), OP_TABLES, "foo", "bar", array("t_table")));
     }
 
     public function testGenerateTableRows()
@@ -302,13 +300,13 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $t1 = $this->tripodTables->getTableRows("t_resource");
 
         // expecting two rows
-        $this->assertEquals(count($t1['results']),3);
+        $this->assertEquals(count($t1['results']), 3);
         $result = $t1['results'][0];
 
         // check out the columns
-        $this->assertTrue(isset($result['type']),"Result does not contain type");
-        $this->assertTrue(isset($result['isbn']),"Result does not contain isbn");
-        $this->assertTrue(isset($result['isbn13']),"Result does not contain isbn13");
+        $this->assertTrue(isset($result['type']), "Result does not contain type");
+        $this->assertTrue(isset($result['isbn']), "Result does not contain isbn");
+        $this->assertTrue(isset($result['isbn13']), "Result does not contain isbn13");
     }
 
     public function testBatchTableRowGeneration()
@@ -380,75 +378,75 @@ class MongoTripodTablesTest extends MongoTripodTestBase
     {
         $this->tripodTables->generateTableRows("t_resource");
 
-        $t1 = $this->tripodTables->getTableRows("t_resource",array(),array("value.isbn" => -1, "_id.r" => 1));
+        $t1 = $this->tripodTables->getTableRows("t_resource", array(), array("value.isbn" => -1, "_id.r" => 1));
         // expecting two rows, first row should be one with highest numeric value of ISBN, due to sort DESC
-        $this->assertEquals('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2',$t1['results'][0]['_id']['r']);
+        $this->assertEquals('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2', $t1['results'][0]['_id']['r']);
 
-        $t1 = $this->tripodTables->getTableRows("t_resource",array(),array("value.isbn" => 1, "_id.r" => 1));
+        $t1 = $this->tripodTables->getTableRows("t_resource", array(), array("value.isbn" => 1, "_id.r" => 1));
 
         // expecting two rows, first row should be one with lowest numeric value of ISBN, due to sort ASC
-        $this->assertEquals('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA',$t1['results'][0]['_id']['r']);
+        $this->assertEquals('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA', $t1['results'][0]['_id']['r']);
     }
 
     public function testGetTableRowsFilter()
     {
         $this->tripodTables->generateTableRows("t_resource");
 
-        $t1 = $this->tripodTables->getTableRows("t_resource",array("value.isbn"=>'9780393929690')); // only bring back rows with isbn = 9780393929690
+        $t1 = $this->tripodTables->getTableRows("t_resource", array("value.isbn" => '9780393929690')); // only bring back rows with isbn = 9780393929690
 
         // expecting one row
-        $this->assertTrue(count($t1['results'])==1);
-        $this->assertEquals('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA',$t1['results'][0]['_id']['r']);
+        $this->assertTrue(count($t1['results']) == 1);
+        $this->assertEquals('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA', $t1['results'][0]['_id']['r']);
     }
 
     public function testGetTableRowsLimitOffset()
     {
         $this->tripodTables->generateTableRows("t_resource");
 
-        $t1 = $this->tripodTables->getTableRows("t_resource",array(),array("value.isbn"=>1),0,1);
+        $t1 = $this->tripodTables->getTableRows("t_resource", array(), array("value.isbn" => 1), 0, 1);
 
         // expecting http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA
-        $this->assertTrue(count($t1['results'])==1);
-        $this->assertEquals('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA',$t1['results'][0]['_id']['r']);
+        $this->assertTrue(count($t1['results']) == 1);
+        $this->assertEquals('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA', $t1['results'][0]['_id']['r']);
 
-        $t2 = $this->tripodTables->getTableRows("t_resource",array(),array("value.isbn"=>1),1,1);
+        $t2 = $this->tripodTables->getTableRows("t_resource", array(), array("value.isbn" => 1), 1, 1);
 
         // expecting http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2
-        $this->assertTrue(count($t2['results'])==1);
-        $this->assertEquals('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2',$t2['results'][0]['_id']['r']);
+        $this->assertTrue(count($t2['results']) == 1);
+        $this->assertEquals('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2', $t2['results'][0]['_id']['r']);
     }
 
     public function testGenerateTableRowsForResourceUnnamespaced()
     {
-        $this->tripodTables->update(new \Tripod\Mongo\ImpactedSubject(array("r"=>"http://basedata.com/b/2","c"=>"http://basedata.com/b/DefaultGraph"),OP_TABLES,$this->tripodTables->getStoreName(),$this->tripodTables->getPodName(),array("t_work2")));
+        $this->tripodTables->update(new \Tripod\Mongo\ImpactedSubject(array("r" => "http://basedata.com/b/2","c" => "http://basedata.com/b/DefaultGraph"), OP_TABLES, $this->tripodTables->getStoreName(), $this->tripodTables->getPodName(), array("t_work2")));
 
         $rows = $this->tripodTables->getTableRows("t_work2");
 
-        $this->assertTrue($rows["head"]["count"]==1,"Expected one row");
+        $this->assertTrue($rows["head"]["count"] == 1, "Expected one row");
     }
     public function testGenerateTableRowsForResourceNamespaced()
     {
-        $this->tripodTables->update(new \Tripod\Mongo\ImpactedSubject(array("r"=>"baseData:2","c"=>"baseData:DefaultGraph"),OP_TABLES,$this->tripodTables->getStoreName(),$this->tripodTables->getPodName(),array("t_work2")));
+        $this->tripodTables->update(new \Tripod\Mongo\ImpactedSubject(array("r" => "baseData:2","c" => "baseData:DefaultGraph"), OP_TABLES, $this->tripodTables->getStoreName(), $this->tripodTables->getPodName(), array("t_work2")));
 
         $rows = $this->tripodTables->getTableRows("t_work2");
 
-        $this->assertTrue($rows["head"]["count"]==1,"Expected one row");
+        $this->assertTrue($rows["head"]["count"] == 1, "Expected one row");
     }
     public function testGenerateTableRowsForResourceContextNamespaced()
     {
-        $this->tripodTables->update(new \Tripod\Mongo\ImpactedSubject(array("r"=>"http://basedata.com/b/2","c"=>"baseData:DefaultGraph"),OP_TABLES,$this->tripodTables->getStoreName(),$this->tripodTables->getPodName(),array("t_work2")));
+        $this->tripodTables->update(new \Tripod\Mongo\ImpactedSubject(array("r" => "http://basedata.com/b/2","c" => "baseData:DefaultGraph"), OP_TABLES, $this->tripodTables->getStoreName(), $this->tripodTables->getPodName(), array("t_work2")));
 
         $rows = $this->tripodTables->getTableRows("t_work2");
 
-        $this->assertTrue($rows["head"]["count"]==1,"Expected one row");
+        $this->assertTrue($rows["head"]["count"] == 1, "Expected one row");
     }
     public function testGenerateTableRowsForResourceResourceNamespaced()
     {
-        $this->tripodTables->update(new \Tripod\Mongo\ImpactedSubject(array("r"=>"baseData:2","c"=>"http://basedata.com/b/DefaultGraph"),OP_TABLES,$this->tripodTables->getStoreName(),$this->tripodTables->getPodName(),array("t_work2")));
+        $this->tripodTables->update(new \Tripod\Mongo\ImpactedSubject(array("r" => "baseData:2","c" => "http://basedata.com/b/DefaultGraph"), OP_TABLES, $this->tripodTables->getStoreName(), $this->tripodTables->getPodName(), array("t_work2")));
 
         $rows = $this->tripodTables->getTableRows("t_work2");
 
-        $this->assertTrue($rows["head"]["count"]==1,"Expected one row");
+        $this->assertTrue($rows["head"]["count"] == 1, "Expected one row");
     }
 
     public function testGenerateTableRowsForResourcesOfTypeWithNamespace()
@@ -457,7 +455,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             ->onlyMethods(array('generateTableRows'))
             ->setConstructorArgs(array($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),'http://talisaspire.com/'))
             ->getMock();
-        $mockTripodTables->expects($this->atLeastOnce())->method('generateTableRows')->will($this->returnValue(array("ok"=>true)));
+        $mockTripodTables->expects($this->atLeastOnce())->method('generateTableRows')->will($this->returnValue(array("ok" => true)));
 
         // check where referred to as acorn:Work2 in spec...
         $mockTripodTables->generateTableRowsForType("http://talisaspire.com/schema#Work2");
@@ -466,7 +464,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             ->onlyMethods(array('generateTableRows'))
             ->setConstructorArgs(array($this->tripod->getStoreName(),$this->getTripodCollection($this->tripod),'http://talisaspire.com/'))
             ->getMock();
-        $mockTripodTables->expects($this->atLeastOnce())->method('generateTableRows')->will($this->returnValue(array("ok"=>true)));
+        $mockTripodTables->expects($this->atLeastOnce())->method('generateTableRows')->will($this->returnValue(array("ok" => true)));
 
         // check where referred to as http://talisaspire.com/schema#Resource in spec...
         $mockTripodTables->generateTableRowsForType("acorn:Resource");
@@ -530,8 +528,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         /** @var \Tripod\Mongo\Config */
         $tripodConfig = \Tripod\Config::getInstance();
 
-        foreach($tableSpecifications['fields'] as $field)
-        {
+        foreach ($tableSpecifications['fields'] as $field) {
             // If there is invalid config, an exception will be thrown
             $tripodConfig->checkModifierFunctions($field['predicates'], \Tripod\Mongo\Composites\Tables::$predicateModifiers);
         }
@@ -580,9 +577,9 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $rows = $this->generateTableRows("t_users");
 
         // We should have 1 result and it should have modified fields
-        $this->assertTrue($rows["head"]["count"]==1,"Expected one row");
+        $this->assertTrue($rows["head"]["count"] == 1, "Expected one row");
 
-        $this->assertEquals('Harry Potter',$rows['results'][0]['join']);
+        $this->assertEquals('Harry Potter', $rows['results'][0]['join']);
     }
 
     /**
@@ -596,7 +593,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $rows = $this->generateTableRows("t_users");
 
         // We should have 1 result and it should have modified fields
-        $this->assertTrue($rows["head"]["count"]==1,"Expected one row");
+        $this->assertTrue($rows["head"]["count"] == 1, "Expected one row");
 
         $this->assertEquals('Harry', $rows['results'][0]['joinSingle']);
     }
@@ -612,9 +609,9 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $rows = $this->generateTableRows("t_users");
 
         // We should have 1 result and it should have modified fields
-        $this->assertTrue($rows["head"]["count"]==1,"Expected one row");
+        $this->assertTrue($rows["head"]["count"] == 1, "Expected one row");
 
-        $this->assertEquals('harry potter',$rows['results'][0]['joinLowerCase']);
+        $this->assertEquals('harry potter', $rows['results'][0]['joinLowerCase']);
     }
 
     /**
@@ -628,7 +625,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $rows = $this->generateTableRows("t_users");
 
         // We should have 1 result and it should have modified fields
-        $this->assertTrue($rows["head"]["count"]==1,"Expected one row");
+        $this->assertTrue($rows["head"]["count"] == 1, "Expected one row");
 
         $this->assertInstanceOf(\MongoDB\BSON\UTCDateTime::class, $rows['results'][0]['mongoDate']);
     }
@@ -644,7 +641,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $rows = $this->generateTableRows("t_users");
 
         // We should have 1 result and it should have modified fields
-        $this->assertTrue($rows["head"]["count"]==1,"Expected one row");
+        $this->assertTrue($rows["head"]["count"] == 1, "Expected one row");
 
         // Test for data that doesn't exist
         $this->assertArrayNotHasKey('mongoDateDoesNotExist', $rows['results'][0]);
@@ -662,7 +659,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $rows = $this->generateTableRows("t_users");
 
         // We should have 1 result and it should have modified fields
-        $this->assertTrue($rows["head"]["count"]==1,"Expected one row");
+        $this->assertTrue($rows["head"]["count"] == 1, "Expected one row");
 
         $this->assertArrayHasKey('joinLowerCaseANDExtraField', $rows['results'][0]);
         $this->assertIsArray($rows['results'][0]['joinLowerCaseANDExtraField']);
@@ -681,7 +678,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $rows = $this->generateTableRows("t_users");
 
         // We should have 1 result and it should have modified fields
-        $this->assertTrue($rows["head"]["count"]==1,"Expected one row");
+        $this->assertTrue($rows["head"]["count"] == 1, "Expected one row");
 
         // Check borked data
         // Trying to use date but passed in a string - should default to 0 for sec and usec
@@ -700,7 +697,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $rows = $this->generateTableRows("t_users");
 
         // We should have 1 result and it should have modified fields
-        $this->assertTrue($rows["head"]["count"]==1,"Expected one row");
+        $this->assertTrue($rows["head"]["count"] == 1, "Expected one row");
 
         // Lowercasing a mongodate object should be the same as running a __toString() on the date object
         $this->assertEquals($rows['results'][0]['mongoDate']->__toString(), $rows['results'][0]['lowercaseDate']);
@@ -714,7 +711,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
     public function testGenerateTableRowsTruncatesFieldsTooLargeToIndex()
     {
         $fullTitle = "Mahommah Gardo Baquaqua. Biography of Mahommah G. Baquaqua, a Native of Zoogoo, in the Interior of Africa. (A Convert to Christianity,) With a Description of That Part of the World; Including the Manners and Customs of the Inhabitants, Their Religious Notions, Form of Government, Laws, Appearance of the Country, Buildings, Agriculture, Manufactures, Shepherds and Herdsmen, Domestic Animals, Marriage Ceremonials, Funeral Services, Styles of Dress, Trade and Commerce, Modes of Warfare, System of Slavery, &amp;c., &amp;c. Mahommah&#039;s Early Life, His Education, His Capture and Slavery in Western Africa and Brazil, His Escape to the United States, from Thence to Hayti, (the City of Port Au Prince,) His Reception by the Baptist Missionary There, The Rev. W. L. Judd; His Conversion to Christianity, Baptism, and Return to This Country, His Views, Objects and Aim. Written and Revised from His Own Words, by Samuel Moore, Esq., Late Publisher of the &quot;North of England Shipping Gazette,&quot; Author of Several Popular Works, and Editor of Sundry Reform Papers.";
-        $truncatedTitle = substr($fullTitle,0,1007); // 1007 = 1024 - index name "value_title_1" + Randomness
+        $truncatedTitle = substr($fullTitle, 0, 1007); // 1007 = 1024 - index name "value_title_1" + Randomness
         $fullTitleLength = strlen($fullTitle);
         $truncatedTitleLength = strLen($truncatedTitle);
 
@@ -739,7 +736,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
     public function testJoinLinkValueIsForJoinedResource()
     {
         $this->tripodTables->generateTableRows("t_join_link");
-        $rows = $this->tripodTables->getTableRows("t_join_link",array("_id.r"=>"baseData:foo1234"));
+        $rows = $this->tripodTables->getTableRows("t_join_link", array("_id.r" => "baseData:foo1234"));
         $this->assertEquals(1, $rows['head']['count']);
         $this->assertArrayHasKey('authorLink', $rows['results'][0]);
         $this->assertArrayHasKey('knowsLink', $rows['results'][0]);
@@ -770,7 +767,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
     public function testPreviouslyUnavailableDataBecomesPresentAndTriggersTableRegen()
     {
         $this->tripodTables->generateTableRows("t_join_link");
-        $rows = $this->tripodTables->getTableRows("t_join_link",array("_id.r"=>"baseData:bar1234"));
+        $rows = $this->tripodTables->getTableRows("t_join_link", array("_id.r" => "baseData:bar1234"));
         $this->assertEquals(1, $rows['head']['count']);
         $this->assertEquals("user:10103", $rows['results'][0]['authorUri']);
         // Author link should not appear because resource has not yet been created
@@ -783,14 +780,14 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $g = new \Tripod\Mongo\MongoGraph();
         $g->add_resource_triple($uri, $g->qname_to_uri("rdf:type"), $g->qname_to_uri("foaf:Person"));
         $g->add_literal_triple($uri, $g->qname_to_uri("foaf:name"), "A. Nonymous");
-        $this->tripod->saveChanges(new \Tripod\Mongo\MongoGraph(), $g,"http://talisaspire.com/", "This resource didn't exist at join time");
+        $this->tripod->saveChanges(new \Tripod\Mongo\MongoGraph(), $g, "http://talisaspire.com/", "This resource didn't exist at join time");
 
         $userGraph = $this->tripod->describeResource($uri);
 
         $this->assertTrue($userGraph->has_triples_about($uri), "new entity we created was not saved");
 
         // Get our table rows again
-        $rows = $this->tripodTables->getTableRows("t_join_link",array("_id.r"=>"baseData:bar1234"));
+        $rows = $this->tripodTables->getTableRows("t_join_link", array("_id.r" => "baseData:bar1234"));
         // authorLink should now be populated
         $this->assertArrayHasKey('authorLink', $rows['results'][0]);
         $this->assertEquals($uri, $rows['results'][0]['authorLink']);
@@ -804,7 +801,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
     public function testLinkWorksOnRepeatingPredicatesForResource()
     {
         $this->tripodTables->generateTableRows("t_link_multiple");
-        $rows = $this->tripodTables->getTableRows("t_link_multiple",array("_id.r"=>"baseData:bar1234"));
+        $rows = $this->tripodTables->getTableRows("t_link_multiple", array("_id.r" => "baseData:bar1234"));
         $this->assertEquals(1, $rows['head']['count']);
         $this->assertArrayHasKey('contributorLink', $rows['results'][0]);
         $this->assertTrue(is_array($rows['results'][0]['contributorLink']));
@@ -837,7 +834,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $this->assertContains('Another document title', $results['results']);
 
         // Supply a filter
-        $results = $this->tripodTables->distinct($table, "value.title", array('value.type'=>"bibo:Document"));
+        $results = $this->tripodTables->distinct($table, "value.title", array('value.type' => "bibo:Document"));
         $this->assertArrayHasKey('head', $results);
         $this->assertArrayHasKey('count', $results['head']);
         $this->assertEquals(2, $results['head']['count']);
@@ -898,7 +895,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         // Get table rows
         $table = 't_distinct';
         $this->generateTableRows($table);
-        $results = $this->tripodTables->distinct($table, "value.title", array('value.foo'=>"wibble"));
+        $results = $this->tripodTables->distinct($table, "value.title", array('value.foo' => "wibble"));
         $this->assertEquals(0, $results['head']['count']);
         $this->assertArrayHasKey('results', $results);
         $this->assertEmpty($results['results']);
@@ -906,8 +903,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
     public function testTableRowsGenerateWhenDefinedPredicateChanges()
     {
-        foreach(\Tripod\Config::getInstance()->getTableSpecifications($this->tripod->getStoreName()) as $specId=>$spec)
-        {
+        foreach (\Tripod\Config::getInstance()->getTableSpecifications($this->tripod->getStoreName()) as $specId => $spec) {
             $this->generateTableRows($specId);
         }
 
@@ -919,11 +915,11 @@ class MongoTripodTablesTest extends MongoTripodTestBase
                 $this->defaultPodName,
                 $this->defaultStoreName,
                 array(
-                    'defaultContext'=>$this->defaultContext,
-                    'async'=>array(
-                        OP_VIEWS=>true,
-                        OP_TABLES=>false,
-                        OP_SEARCH=>true
+                    'defaultContext' => $this->defaultContext,
+                    'async' => array(
+                        OP_VIEWS => true,
+                        OP_TABLES => false,
+                        OP_SEARCH => true
                     )
                 )
             ))
@@ -931,7 +927,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         $labeller = new \Tripod\Mongo\Labeller();
         $subjectsAndPredicatesOfChange = array(
-            $labeller->uri_to_alias($uri)=>array("dct:title")
+            $labeller->uri_to_alias($uri) => array("dct:title")
         );
 
         $tables = $this->getMockBuilder(\Tripod\Mongo\Composites\Tables::class)
@@ -971,8 +967,8 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         $expectedImpactedSubject = new \Tripod\Mongo\ImpactedSubject(
             array(
-                _ID_RESOURCE=>$labeller->uri_to_alias($uri),
-                _ID_CONTEXT=>$this->defaultContext
+                _ID_RESOURCE => $labeller->uri_to_alias($uri),
+                _ID_CONTEXT => $this->defaultContext
             ),
             OP_TABLES,
             $this->defaultStoreName,
@@ -997,19 +993,17 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         $this->assertEquals($expectedSpecTypes, $specTypes);
 
-        foreach($impactedSubjects as $subject)
-        {
+        foreach ($impactedSubjects as $subject) {
             $table->update($subject);
         }
 
         // This should be 0, because we mocked the actual adding of the regenerated table.  If it's zero, however,
         // it means we successfully deleted the views with $uri1 in the impactIndex
         $collections = \Tripod\Config::getInstance()->getCollectionsForTables($this->defaultStoreName);
-        foreach($collections as $collection)
-        {
+        foreach ($collections as $collection) {
             $query = array(
-                'value._impactIndex'=>array('r'=>$labeller->uri_to_alias($uri), 'c'=>$this->defaultContext),
-                '_id.type'=>array('$in'=>array("t_distinct", "t_join_source_count_regex", ))
+                'value._impactIndex' => array('r' => $labeller->uri_to_alias($uri), 'c' => $this->defaultContext),
+                '_id.type' => array('$in' => array("t_distinct", "t_join_source_count_regex", ))
             );
             $this->assertEquals(0, $collection->count($query));
         }
@@ -1017,8 +1011,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
     public function testTableRowsNotGeneratedWhenUndefinedPredicateChanges()
     {
-        foreach(\Tripod\Config::getInstance()->getTableSpecifications($this->tripod->getStoreName()) as $specId=>$spec)
-        {
+        foreach (\Tripod\Config::getInstance()->getTableSpecifications($this->tripod->getStoreName()) as $specId => $spec) {
             $this->generateTableRows($specId);
         }
 
@@ -1026,7 +1019,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         $labeller = new \Tripod\Mongo\Labeller();
         $subjectsAndPredicatesOfChange = array(
-            $labeller->uri_to_alias($uri)=>array("dct:description")
+            $labeller->uri_to_alias($uri) => array("dct:description")
         );
 
         // Walk through the processSyncOperations process manually for tables
@@ -1069,7 +1062,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $this->tripodTables->generateTableRows("t_resource");
 
         $subjectsAndPredicatesOfChange = array(
-            $labeller->uri_to_alias("http://talisaspire.com/works/4d101f63c10a6")=>array(
+            $labeller->uri_to_alias("http://talisaspire.com/works/4d101f63c10a6") => array(
                 'bibo:isbn13'
             )
         );
@@ -1077,8 +1070,8 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $expectedImpactedSubjects = array(
             new \Tripod\Mongo\ImpactedSubject(
                 array(
-                    _ID_RESOURCE=>"http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA",
-                    _ID_CONTEXT=>$this->defaultContext
+                    _ID_RESOURCE => "http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA",
+                    _ID_CONTEXT => $this->defaultContext
                 ),
                 OP_TABLES,
                 $this->defaultStoreName,
@@ -1087,8 +1080,8 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             ),
             new \Tripod\Mongo\ImpactedSubject(
                 array(
-                    _ID_RESOURCE=>"http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2",
-                    _ID_CONTEXT=>$this->defaultContext
+                    _ID_RESOURCE => "http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2",
+                    _ID_CONTEXT => $this->defaultContext
                 ),
                 OP_TABLES,
                 $this->defaultStoreName,
@@ -1102,8 +1095,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $this->assertEquals($expectedImpactedSubjects, $impactedSubjects);
 
         // next, trigger regen for work we know is associated with 2x resources. Should trigger view regen for resources
-        foreach($impactedSubjects as $subject)
-        {
+        foreach ($impactedSubjects as $subject) {
             $mockTables->update($subject);
         }
     }
@@ -1132,11 +1124,11 @@ class MongoTripodTablesTest extends MongoTripodTestBase
                 $this->defaultPodName,
                 $this->defaultStoreName,
                 array(
-                    'defaultContext'=>$this->defaultContext,
-                    OP_ASYNC=>array(
-                        OP_TABLES=>false,
-                        OP_VIEWS=>true,
-                        OP_SEARCH=>true
+                    'defaultContext' => $this->defaultContext,
+                    OP_ASYNC => array(
+                        OP_TABLES => false,
+                        OP_VIEWS => true,
+                        OP_SEARCH => true
                     )
                 )
             ))
@@ -1150,10 +1142,10 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             ->setConstructorArgs(array(
                 $mockTripod,
                 array(
-                    OP_ASYNC=>array(
-                        OP_TABLES=>false,
-                        OP_VIEWS=>true,
-                        OP_SEARCH=>true
+                    OP_ASYNC => array(
+                        OP_TABLES => false,
+                        OP_VIEWS => true,
+                        OP_SEARCH => true
                     )
                 )
             ))
@@ -1198,8 +1190,8 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $expectedImpactedSubjects = array(
             new \Tripod\Mongo\ImpactedSubject(
                 array(
-                    _ID_RESOURCE=>$labeller->uri_to_alias($uri),
-                    _ID_CONTEXT=>$this->defaultContext
+                    _ID_RESOURCE => $labeller->uri_to_alias($uri),
+                    _ID_CONTEXT => $this->defaultContext
                 ),
                 OP_TABLES,
                 $this->defaultStoreName,
@@ -1213,8 +1205,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $impactedSubjects = $mockTables->getImpactedSubjects($subjectsAndPredicatesOfChange, $this->defaultContext);
 
         $this->assertEquals($expectedImpactedSubjects, $impactedSubjects);
-        foreach($impactedSubjects as $subject)
-        {
+        foreach ($impactedSubjects as $subject) {
             $mockTables->update($subject);
         }
     }
@@ -1231,17 +1222,17 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             $this->defaultContext
         );
 
-        $subjectsAndPredicatesOfChange = array($uriAlias =>array('dct:subject'));
+        $subjectsAndPredicatesOfChange = array($uriAlias => array('dct:subject'));
 
         $this->assertEmpty($tables->getImpactedSubjects($subjectsAndPredicatesOfChange, $this->defaultContext));
 
-        $subjectsAndPredicatesOfChange = array($uriAlias =>array('dct:subject', 'rdf:type'));
+        $subjectsAndPredicatesOfChange = array($uriAlias => array('dct:subject', 'rdf:type'));
 
         $expectedImpactedSubjects = array(
             new \Tripod\Mongo\ImpactedSubject(
                 array(
-                    _ID_RESOURCE=>$uriAlias,
-                    _ID_CONTEXT=>$this->defaultContext
+                    _ID_RESOURCE => $uriAlias,
+                    _ID_CONTEXT => $this->defaultContext
                 ),
                 OP_TABLES,
                 $this->defaultStoreName,
@@ -1264,7 +1255,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $graph->add_resource_triple($uri, RDF_TYPE, $labeller->qname_to_uri('bibo:Proceedings'));
         $graph->add_literal_triple($uri, $labeller->qname_to_uri('dct:title'), "A title");
 
-        $subjectsAndPredicatesOfChange = array($uriAlias=>array('rdf:type', 'dct:title'));
+        $subjectsAndPredicatesOfChange = array($uriAlias => array('rdf:type', 'dct:title'));
 
         $mockTripod = $this->getMockBuilder(\Tripod\Mongo\Driver::class)
             ->onlyMethods(array(
@@ -1274,11 +1265,11 @@ class MongoTripodTablesTest extends MongoTripodTestBase
                 $this->defaultPodName,
                 $this->defaultStoreName,
                 array(
-                    'defaultContext'=>$this->defaultContext,
-                    OP_ASYNC=>array(
-                        OP_TABLES=>false,
-                        OP_VIEWS=>true,
-                        OP_SEARCH=>true
+                    'defaultContext' => $this->defaultContext,
+                    OP_ASYNC => array(
+                        OP_TABLES => false,
+                        OP_VIEWS => true,
+                        OP_SEARCH => true
                     )
                 )
             ))
@@ -1292,10 +1283,10 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             ->setConstructorArgs(array(
                 $mockTripod,
                 array(
-                    OP_ASYNC=>array(
-                        OP_TABLES=>false,
-                        OP_VIEWS=>true,
-                        OP_SEARCH=>true
+                    OP_ASYNC => array(
+                        OP_TABLES => false,
+                        OP_VIEWS => true,
+                        OP_SEARCH => true
                     )
                 )
             ))
@@ -1374,11 +1365,11 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             $this->defaultPodName,
             $this->defaultStoreName,
             array(
-                'defaultContext'=>$this->defaultContext,
-                OP_ASYNC=>array(
-                    OP_VIEWS=>false,
-                    OP_TABLES=>false,
-                    OP_SEARCH=>false
+                'defaultContext' => $this->defaultContext,
+                OP_ASYNC => array(
+                    OP_VIEWS => false,
+                    OP_TABLES => false,
+                    OP_SEARCH => false
                 )
             )
         );
@@ -1388,8 +1379,8 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $tableRows = $tripod->getTableRows(
             't_users',
             array(
-                _ID_KEY . '.' . _ID_RESOURCE=>$uriAlias,
-                _ID_KEY . '.' . _ID_CONTEXT=>$this->defaultContext
+                _ID_KEY . '.' . _ID_RESOURCE => $uriAlias,
+                _ID_KEY . '.' . _ID_CONTEXT => $this->defaultContext
             )
         );
 
@@ -1400,8 +1391,8 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $tableRows = $tripod->getTableRows(
             't_users',
             array(
-                _ID_KEY . '.' . _ID_RESOURCE=>$uriAlias2,
-                _ID_KEY . '.' . _ID_CONTEXT=>$this->defaultContext
+                _ID_KEY . '.' . _ID_RESOURCE => $uriAlias2,
+                _ID_KEY . '.' . _ID_CONTEXT => $this->defaultContext
             )
         );
 
@@ -1414,11 +1405,11 @@ class MongoTripodTablesTest extends MongoTripodTestBase
                     $this->defaultPodName,
                     $this->defaultStoreName,
                     array(
-                        'defaultContext'=>$this->defaultContext,
-                        OP_ASYNC=>array(
-                            OP_VIEWS=>false,
-                            OP_TABLES=>false,
-                            OP_SEARCH=>false
+                        'defaultContext' => $this->defaultContext,
+                        OP_ASYNC => array(
+                            OP_VIEWS => false,
+                            OP_TABLES => false,
+                            OP_SEARCH => false
                         )
                     )
                 )
@@ -1429,11 +1420,11 @@ class MongoTripodTablesTest extends MongoTripodTestBase
                 array(
                     $mockTripod,
                     array(
-                        'defaultContext'=>$this->defaultContext,
-                        OP_ASYNC=>array(
-                            OP_VIEWS=>false,
-                            OP_TABLES=>false,
-                            OP_SEARCH=>false
+                        'defaultContext' => $this->defaultContext,
+                        OP_ASYNC => array(
+                            OP_VIEWS => false,
+                            OP_TABLES => false,
+                            OP_SEARCH => false
                         )
                     )
                 )
@@ -1445,8 +1436,8 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             ->will($this->returnValue($mockTripodUpdates));
 
         $expectedSubjectsAndPredicatesOfChange = array(
-            $uriAlias=>array('rdf:type','foaf:firstName','foaf:surname'),
-            $uriAlias2=>array('rdf:type','foaf:firstName','foaf:surname'),
+            $uriAlias => array('rdf:type','foaf:firstName','foaf:surname'),
+            $uriAlias2 => array('rdf:type','foaf:firstName','foaf:surname'),
         );
 
         $mockTripodUpdates->expects($this->once())
@@ -1472,8 +1463,8 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $expectedImpactedSubjects = array(
             new \Tripod\Mongo\ImpactedSubject(
                 array(
-                    _ID_RESOURCE=>$uriAlias,
-                    _ID_CONTEXT=>$this->defaultContext
+                    _ID_RESOURCE => $uriAlias,
+                    _ID_CONTEXT => $this->defaultContext
                 ),
                 OP_TABLES,
                 $this->defaultStoreName,
@@ -1482,8 +1473,8 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             ),
             new \Tripod\Mongo\ImpactedSubject(
                 array(
-                    _ID_RESOURCE=>$uriAlias2,
-                    _ID_CONTEXT=>$this->defaultContext
+                    _ID_RESOURCE => $uriAlias2,
+                    _ID_CONTEXT => $this->defaultContext
                 ),
                 OP_TABLES,
                 $this->defaultStoreName,
@@ -1494,16 +1485,15 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         $this->assertEquals($expectedImpactedSubjects, $tables->getImpactedSubjects($expectedSubjectsAndPredicatesOfChange, $this->defaultContext));
 
-        foreach($expectedImpactedSubjects as $subject)
-        {
+        foreach ($expectedImpactedSubjects as $subject) {
             $tables->update($subject);
         }
 
         $tableRows = $tripod->getTableRows(
             't_users',
             array(
-                _ID_KEY . '.' . _ID_RESOURCE=>$uriAlias,
-                _ID_KEY . '.' . _ID_CONTEXT=>$this->defaultContext
+                _ID_KEY . '.' . _ID_RESOURCE => $uriAlias,
+                _ID_KEY . '.' . _ID_CONTEXT => $this->defaultContext
             )
         );
 
@@ -1512,8 +1502,8 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $tableRows = $tripod->getTableRows(
             't_users',
             array(
-                _ID_KEY . '.' . _ID_RESOURCE=>$uriAlias2,
-                _ID_KEY . '.' . _ID_CONTEXT=>$this->defaultContext
+                _ID_KEY . '.' . _ID_RESOURCE => $uriAlias2,
+                _ID_KEY . '.' . _ID_CONTEXT => $this->defaultContext
             )
         );
 
@@ -1533,11 +1523,11 @@ class MongoTripodTablesTest extends MongoTripodTestBase
                     'CBD_testing',
                     'tripod_php_testing',
                     array(
-                        'defaultContext'=>'http://talisaspire.com/',
-                        OP_ASYNC=>array(
-                            OP_VIEWS=>true,
-                            OP_TABLES=>true,
-                            OP_SEARCH=>true
+                        'defaultContext' => 'http://talisaspire.com/',
+                        OP_ASYNC => array(
+                            OP_VIEWS => true,
+                            OP_TABLES => true,
+                            OP_SEARCH => true
                         )
                     )
                 )
@@ -1549,11 +1539,11 @@ class MongoTripodTablesTest extends MongoTripodTestBase
                 array(
                     $tripod,
                     array(
-                        'defaultContext'=>'http://talisaspire.com/',
-                        OP_ASYNC=>array(
-                            OP_VIEWS=>true,
-                            OP_TABLES=>true,
-                            OP_SEARCH=>true
+                        'defaultContext' => 'http://talisaspire.com/',
+                        OP_ASYNC => array(
+                            OP_VIEWS => true,
+                            OP_TABLES => true,
+                            OP_SEARCH => true
                         )
                     )
                 )
@@ -1569,28 +1559,28 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $newSubjectUri2 = "http://talisaspire.com/resources/newdoc2";
         $newSubjectUri3 = "http://talisaspire.com/resources/newdoc3";
 
-        $g->add_resource_triple($newSubjectUri1, $g->qname_to_uri("rdf:type"),    $g->qname_to_uri("bibo:Article")); // there are no specs that are applicable for this type alone
+        $g->add_resource_triple($newSubjectUri1, $g->qname_to_uri("rdf:type"), $g->qname_to_uri("bibo:Article")); // there are no specs that are applicable for this type alone
         $g->add_resource_triple($newSubjectUri1, $g->qname_to_uri("dct:creator"), "http://talisaspire.com/authors/1");
-        $g->add_literal_triple($newSubjectUri1,  $g->qname_to_uri("dct:title"),   "This is a new resource");
-        $g->add_literal_triple($newSubjectUri1,  $g->qname_to_uri("dct:subject"), "history");
-        $g->add_literal_triple($newSubjectUri1,  $g->qname_to_uri("dct:subject"), "philosophy");
+        $g->add_literal_triple($newSubjectUri1, $g->qname_to_uri("dct:title"), "This is a new resource");
+        $g->add_literal_triple($newSubjectUri1, $g->qname_to_uri("dct:subject"), "history");
+        $g->add_literal_triple($newSubjectUri1, $g->qname_to_uri("dct:subject"), "philosophy");
 
-        $g->add_resource_triple($newSubjectUri2, $g->qname_to_uri("rdf:type"),    $g->qname_to_uri("bibo:Book")); // this is the only resource that should be queued
-        $g->add_resource_triple($newSubjectUri2, $g->qname_to_uri("rdf:type"),    $g->qname_to_uri("acorn:Resource"));
+        $g->add_resource_triple($newSubjectUri2, $g->qname_to_uri("rdf:type"), $g->qname_to_uri("bibo:Book")); // this is the only resource that should be queued
+        $g->add_resource_triple($newSubjectUri2, $g->qname_to_uri("rdf:type"), $g->qname_to_uri("acorn:Resource"));
         $g->add_resource_triple($newSubjectUri2, $g->qname_to_uri("dct:creator"), "http://talisaspire.com/authors/1");
-        $g->add_literal_triple($newSubjectUri2,  $g->qname_to_uri("dct:title"),   "This is another new resource");
-        $g->add_literal_triple($newSubjectUri2,  $g->qname_to_uri("dct:subject"), "maths");
-        $g->add_literal_triple($newSubjectUri2,  $g->qname_to_uri("dct:subject"), "science");
+        $g->add_literal_triple($newSubjectUri2, $g->qname_to_uri("dct:title"), "This is another new resource");
+        $g->add_literal_triple($newSubjectUri2, $g->qname_to_uri("dct:subject"), "maths");
+        $g->add_literal_triple($newSubjectUri2, $g->qname_to_uri("dct:subject"), "science");
 
-        $g->add_resource_triple($newSubjectUri3, $g->qname_to_uri("rdf:type"),    $g->qname_to_uri("bibo:Journal")); // there are no specs that are applicable for this type alone
+        $g->add_resource_triple($newSubjectUri3, $g->qname_to_uri("rdf:type"), $g->qname_to_uri("bibo:Journal")); // there are no specs that are applicable for this type alone
         $g->add_resource_triple($newSubjectUri3, $g->qname_to_uri("dct:creator"), "http://talisaspire.com/authors/1");
-        $g->add_literal_triple($newSubjectUri3,  $g->qname_to_uri("dct:title"),   "This is yet another new resource");
-        $g->add_literal_triple($newSubjectUri3,  $g->qname_to_uri("dct:subject"), "art");
-        $g->add_literal_triple($newSubjectUri3,  $g->qname_to_uri("dct:subject"), "design");
+        $g->add_literal_triple($newSubjectUri3, $g->qname_to_uri("dct:title"), "This is yet another new resource");
+        $g->add_literal_triple($newSubjectUri3, $g->qname_to_uri("dct:subject"), "art");
+        $g->add_literal_triple($newSubjectUri3, $g->qname_to_uri("dct:subject"), "design");
         $subjectsAndPredicatesOfChange = array(
-            $newSubjectUri1=>array('rdf:type','dct:creator','dct:title','dct:subject'),
-            $newSubjectUri2=>array('rdf:type','dct:creator','dct:title','dct:subject'),
-            $newSubjectUri3=>array('rdf:type','dct:creator','dct:title','dct:subject')
+            $newSubjectUri1 => array('rdf:type','dct:creator','dct:title','dct:subject'),
+            $newSubjectUri2 => array('rdf:type','dct:creator','dct:title','dct:subject'),
+            $newSubjectUri3 => array('rdf:type','dct:creator','dct:title','dct:subject')
         );
         $tripod->saveChanges(new \Tripod\Mongo\MongoGraph(), $g);
 
@@ -1600,8 +1590,8 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $expectedImpactedSubjects = array(
             new \Tripod\Mongo\ImpactedSubject(
                 array(
-                    _ID_RESOURCE=>$newSubjectUri2,
-                    _ID_CONTEXT=>'http://talisaspire.com/'
+                    _ID_RESOURCE => $newSubjectUri2,
+                    _ID_CONTEXT => 'http://talisaspire.com/'
                 ),
                 OP_TABLES,
                 'tripod_php_testing',
@@ -1616,8 +1606,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
     public function testRemoveTableSpecDoesNotAffectInvalidation()
     {
-        foreach(\Tripod\Config::getInstance()->getTableSpecifications($this->tripod->getStoreName()) as $specId=>$spec)
-        {
+        foreach (\Tripod\Config::getInstance()->getTableSpecifications($this->tripod->getStoreName()) as $specId => $spec) {
             $this->generateTableRows($specId);
         }
 
@@ -1625,7 +1614,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $uri = "http://talisaspire.com/works/4d101f63c10a6";
 
         $collection = \Tripod\Config::getInstance()->getCollectionForTable('tripod_php_testing', 't_resource');
-        $this->assertGreaterThan(0, $collection->count(array('_id.type'=>'t_resource', 'value._impactIndex'=>array(_ID_RESOURCE=>$uri, _ID_CONTEXT=>$context))));
+        $this->assertGreaterThan(0, $collection->count(array('_id.type' => 't_resource', 'value._impactIndex' => array(_ID_RESOURCE => $uri, _ID_CONTEXT => $context))));
         $config = \Tripod\Config::getConfig();
         unset($config['stores']['tripod_php_testing']['table_specifications'][0]);
         \Tripod\Config::setConfig($config);
@@ -1637,11 +1626,11 @@ class MongoTripodTablesTest extends MongoTripodTestBase
                     'CBD_testing',
                     'tripod_php_testing',
                     array(
-                        'defaultContext'=>$context,
-                        OP_ASYNC=>array(
-                            OP_VIEWS=>true,
-                            OP_TABLES=>false,
-                            OP_SEARCH=>true
+                        'defaultContext' => $context,
+                        OP_ASYNC => array(
+                            OP_VIEWS => true,
+                            OP_TABLES => false,
+                            OP_SEARCH => true
                         )
                     )
                 )
@@ -1676,7 +1665,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $mockTripod->saveChanges($originalGraph, $updatedGraph);
 
         // The table row should still be there, even if the tablespec no longer exists
-        $this->assertGreaterThan(0, $collection->count(array('_id.type'=>'t_resource', 'value._impactIndex'=>array(_ID_RESOURCE=>$uri, _ID_CONTEXT=>$context))));
+        $this->assertGreaterThan(0, $collection->count(array('_id.type' => 't_resource', 'value._impactIndex' => array(_ID_RESOURCE => $uri, _ID_CONTEXT => $context))));
     }
 
     public function testCountTables()

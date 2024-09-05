@@ -40,8 +40,8 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
                     'CBD_testing',
                     'tripod_php_testing',
                     array(
-                        'defaultContext'=>'http://talisaspire.com/',
-                        OP_ASYNC=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)
+                        'defaultContext' => 'http://talisaspire.com/',
+                        OP_ASYNC => array(OP_VIEWS => true, OP_TABLES => true, OP_SEARCH => true)
                     )
                 )
             )->getMock();
@@ -51,8 +51,8 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
             ->setConstructorArgs(array(
                 $tripod,
                 array(
-                    'defaultContext'=>'http://talisaspire.com/',
-                    OP_ASYNC=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)
+                    'defaultContext' => 'http://talisaspire.com/',
+                    OP_ASYNC => array(OP_VIEWS => true, OP_TABLES => true, OP_SEARCH => true)
                 )
             ))->getMock();
 
@@ -65,7 +65,7 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
             ->will($this->returnValue($tripodUpdates));
 
         $subjectsAndPredicatesOfChange = array(
-            "http://talisaspire.com/resources/doc1"=>array('dct:subject')
+            "http://talisaspire.com/resources/doc1" => array('dct:subject')
         );
 
         $tripod->expects($this->never())
@@ -115,8 +115,8 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
                     'CBD_testing',
                     'tripod_php_testing',
                     array(
-                        'defaultContext'=>'http://talisaspire.com/',
-                        OP_ASYNC=>array(OP_VIEWS=>true, OP_TABLES=>false, OP_SEARCH=>false)
+                        'defaultContext' => 'http://talisaspire.com/',
+                        OP_ASYNC => array(OP_VIEWS => true, OP_TABLES => false, OP_SEARCH => false)
                     )
                 )
             )->getMock();
@@ -126,8 +126,8 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
             ->setConstructorArgs(array(
                 $tripod,
                 array(
-                    'defaultContext'=>'http://talisaspire.com/',
-                    OP_ASYNC=>array(OP_VIEWS=>true, OP_TABLES=>false, OP_SEARCH=>false)
+                    'defaultContext' => 'http://talisaspire.com/',
+                    OP_ASYNC => array(OP_VIEWS => true, OP_TABLES => false, OP_SEARCH => false)
                 )
             ))->getMock();
 
@@ -140,13 +140,14 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
             ->will($this->returnValue($tripodUpdates));
 
         $subjectsAndPredicatesOfChange = array(
-            "http://talisaspire.com/resources/doc1"=>array('dct:subject')
+            "http://talisaspire.com/resources/doc1" => array('dct:subject')
         );
 
         $tripodUpdates->expects($this->once())
             ->method('processSyncOperations')
             ->with(
-                $subjectsAndPredicatesOfChange, 'http://talisaspire.com/'
+                $subjectsAndPredicatesOfChange,
+                'http://talisaspire.com/'
             );
 
         $data = array(
@@ -190,8 +191,8 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
                     'CBD_testing',
                     'tripod_php_testing',
                     array(
-                        'defaultContext'=>'http://talisaspire.com/',
-                        OP_ASYNC=>array(OP_VIEWS=>false, OP_TABLES=>false, OP_SEARCH=>false)
+                        'defaultContext' => 'http://talisaspire.com/',
+                        OP_ASYNC => array(OP_VIEWS => false, OP_TABLES => false, OP_SEARCH => false)
                     )
                 )
             )->getMock();
@@ -201,8 +202,8 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
             ->setConstructorArgs(array(
                 $tripod,
                 array(
-                    'defaultContext'=>'http://talisaspire.com/',
-                    OP_ASYNC=>array(OP_VIEWS=>false, OP_TABLES=>false, OP_SEARCH=>false)
+                    'defaultContext' => 'http://talisaspire.com/',
+                    OP_ASYNC => array(OP_VIEWS => false, OP_TABLES => false, OP_SEARCH => false)
                 )
             ))->getMock();
 
@@ -211,13 +212,14 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
             ->will($this->returnValue($tripodUpdates));
 
         $subjectsAndPredicatesOfChange = array(
-            "http://talisaspire.com/resources/doc1"=>array('dct:subject')
+            "http://talisaspire.com/resources/doc1" => array('dct:subject')
         );
 
         $tripodUpdates->expects($this->once())
             ->method('processSyncOperations')
             ->with(
-                $subjectsAndPredicatesOfChange, 'http://talisaspire.com/'
+                $subjectsAndPredicatesOfChange,
+                'http://talisaspire.com/'
             );
 
         $tripodUpdates->expects($this->never())
@@ -248,8 +250,8 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
                     'CBD_testing',
                     'tripod_php_testing',
                     array(
-                        'defaultContext'=>'http://talisaspire.com/',
-                        OP_ASYNC=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)
+                        'defaultContext' => 'http://talisaspire.com/',
+                        OP_ASYNC => array(OP_VIEWS => true, OP_TABLES => true, OP_SEARCH => true)
                     )
                 )
             )->getMock();
@@ -259,8 +261,8 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
             ->setConstructorArgs(array(
                 $tripod,
                 array(
-                    'defaultContext'=>'http://talisaspire.com/',
-                    OP_ASYNC=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>true)
+                    'defaultContext' => 'http://talisaspire.com/',
+                    OP_ASYNC => array(OP_VIEWS => true, OP_TABLES => true, OP_SEARCH => true)
                 )
             ))->getMock();
 
@@ -274,9 +276,9 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
             ->will($this->returnValue($tripodUpdates));
 
         $subjectsAndPredicatesOfChange = array(
-            "http://talisaspire.com/resources/doc1"=>array('dct:date'),
-            "http://talisaspire.com/resources/doc2"=>array('dct:date'),
-            "http://talisaspire.com/resources/doc3"=>array('dct:date'),
+            "http://talisaspire.com/resources/doc1" => array('dct:date'),
+            "http://talisaspire.com/resources/doc2" => array('dct:date'),
+            "http://talisaspire.com/resources/doc3" => array('dct:date'),
         );
 
         $tripod->expects($this->never())
@@ -313,10 +315,10 @@ class MongoTripodQueueOperationsTest extends MongoTripodTestBase
             "http://talisaspire.com/resources/doc3"
         ));
 
-        $g2->add_literal_triple("http://talisaspire.com/resources/doc1", $g2->qname_to_uri("dct:date"),"01-01-1970" );
-        $g2->add_literal_triple("http://talisaspire.com/resources/doc2", $g2->qname_to_uri("dct:date"),"01-01-1970" );
-        $g2->add_literal_triple("http://talisaspire.com/resources/doc3", $g2->qname_to_uri("dct:date"),"01-01-1970" );
+        $g2->add_literal_triple("http://talisaspire.com/resources/doc1", $g2->qname_to_uri("dct:date"), "01-01-1970");
+        $g2->add_literal_triple("http://talisaspire.com/resources/doc2", $g2->qname_to_uri("dct:date"), "01-01-1970");
+        $g2->add_literal_triple("http://talisaspire.com/resources/doc3", $g2->qname_to_uri("dct:date"), "01-01-1970");
 
         $tripod->saveChanges($g1, $g2);
-   }
+    }
 }

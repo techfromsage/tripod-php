@@ -1,6 +1,6 @@
 <?php
 
-use \Tripod\Mongo\Jobs\DiscoverImpactedSubjects;
+use Tripod\Mongo\Jobs\DiscoverImpactedSubjects;
 
 class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
 {
@@ -148,8 +148,8 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
 
         $viewSubject = new \Tripod\Mongo\ImpactedSubject(
             array(
-                _ID_RESOURCE=>'http://example.com/resources/foo',
-                _ID_CONTEXT=>$this->args['contextAlias']
+                _ID_RESOURCE => 'http://example.com/resources/foo',
+                _ID_CONTEXT => $this->args['contextAlias']
             ),
             OP_VIEWS,
             $this->args['storeName'],
@@ -166,8 +166,8 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
         $tableSubjects = array(
             new \Tripod\Mongo\ImpactedSubject(
                 array(
-                    _ID_RESOURCE=>'http://example.com/resources/foo2',
-                    _ID_CONTEXT=>$this->args['contextAlias']
+                    _ID_RESOURCE => 'http://example.com/resources/foo2',
+                    _ID_CONTEXT => $this->args['contextAlias']
                 ),
                 OP_TABLES,
                 $this->args['storeName'],
@@ -176,8 +176,8 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
             ),
             new \Tripod\Mongo\ImpactedSubject(
                 array(
-                    _ID_RESOURCE=>'http://example.com/resources/foo3',
-                    _ID_CONTEXT=>$this->args['contextAlias']
+                    _ID_RESOURCE => 'http://example.com/resources/foo3',
+                    _ID_CONTEXT => $this->args['contextAlias']
                 ),
                 OP_TABLES,
                 $this->args['storeName'],
@@ -212,12 +212,12 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
                 array(
                     array($viewSubject),
                     \Tripod\Mongo\Config::getApplyQueueName(),
-                    array('statsConfig'=>$this->args['statsConfig'])
+                    array('statsConfig' => $this->args['statsConfig'])
                 ),
                 array(
                    $tableSubjects,
                     \Tripod\Mongo\Config::getApplyQueueName(),
-                    array('statsConfig'=>$this->args['statsConfig'])
+                    array('statsConfig' => $this->args['statsConfig'])
                 )
             );
 
@@ -242,17 +242,17 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
         $labeller = new \Tripod\Mongo\Labeller();
 
         $subjectsAndPredicatesOfChange = array(
-            $labeller->uri_to_alias('http://example.com/1')=>array('rdf:type','spec:name'),
-            $labeller->uri_to_alias('http://example.com/2')=>array('rdf:type','dct:title','dct:subject')
+            $labeller->uri_to_alias('http://example.com/1') => array('rdf:type','spec:name'),
+            $labeller->uri_to_alias('http://example.com/2') => array('rdf:type','dct:title','dct:subject')
         );
 
         $jobData = array(
-            'changes'=>$subjectsAndPredicatesOfChange,
-            'operations'=>array(OP_SEARCH),
-            'tripodConfig'=>\Tripod\Config::getConfig(),
-            'storeName'=>'tripod_php_testing',
-            'podName'=>'CBD_testing',
-            'contextAlias'=>'http://talisaspire.com/'
+            'changes' => $subjectsAndPredicatesOfChange,
+            'operations' => array(OP_SEARCH),
+            'tripodConfig' => \Tripod\Config::getConfig(),
+            'storeName' => 'tripod_php_testing',
+            'podName' => 'CBD_testing',
+            'contextAlias' => 'http://talisaspire.com/'
         );
 
         $discoverImpactedSubjects = $this->getMockBuilder(\Tripod\Mongo\Jobs\DiscoverImpactedSubjects::class)
@@ -276,17 +276,17 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
         $labeller = new \Tripod\Mongo\Labeller();
 
         $subjectsAndPredicatesOfChange = array(
-            $labeller->uri_to_alias('http://example.com/1')=>array('rdf:type','spec:name'),
-            $labeller->uri_to_alias('http://example.com/2')=>array('rdf:type','dct:title','dct:subject')
+            $labeller->uri_to_alias('http://example.com/1') => array('rdf:type','spec:name'),
+            $labeller->uri_to_alias('http://example.com/2') => array('rdf:type','dct:title','dct:subject')
         );
 
         $jobData = array(
-            'changes'=>$subjectsAndPredicatesOfChange,
-            'operations'=>array(OP_SEARCH),
-            'tripodConfig'=>\Tripod\Config::getConfig(),
-            'storeName'=>'tripod_php_testing',
-            'podName'=>'CBD_testing',
-            'contextAlias'=>'http://talisaspire.com/'
+            'changes' => $subjectsAndPredicatesOfChange,
+            'operations' => array(OP_SEARCH),
+            'tripodConfig' => \Tripod\Config::getConfig(),
+            'storeName' => 'tripod_php_testing',
+            'podName' => 'CBD_testing',
+            'contextAlias' => 'http://talisaspire.com/'
         );
 
         $queueName = \Tripod\Mongo\Config::getDiscoverQueueName() . '::TRIPOD_TESTING_QUEUE_' . uniqid();
@@ -365,8 +365,8 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
 
         $viewSubject = new \Tripod\Mongo\ImpactedSubject(
             array(
-                _ID_RESOURCE=>'http://example.com/resources/foo',
-                _ID_CONTEXT=>$this->args['contextAlias']
+                _ID_RESOURCE => 'http://example.com/resources/foo',
+                _ID_CONTEXT => $this->args['contextAlias']
             ),
             OP_VIEWS,
             $this->args['storeName'],
@@ -382,8 +382,8 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
 
         $tableSubject = new \Tripod\Mongo\ImpactedSubject(
             array(
-                _ID_RESOURCE=>'http://example.com/resources/foo2',
-                _ID_CONTEXT=>$this->args['contextAlias']
+                _ID_RESOURCE => 'http://example.com/resources/foo2',
+                _ID_CONTEXT => $this->args['contextAlias']
             ),
             OP_TABLES,
             $this->args['storeName'],
@@ -434,72 +434,72 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
         // Create a bunch of specs on various queues
         $tableSpecs = array(
             array(
-                "_id"=>"t_resource",
-                "type"=>"acorn:Resource",
-                "from"=>"CBD_testing",
-                "ensureIndexes" => array("value.isbn"=>1),
-                "fields"=>array(
-                    array("fieldName"=>"type","predicates"=>array("rdf:type")),
-                    array("fieldName"=>"isbn","predicates"=>array("bibo:isbn13")),
+                "_id" => "t_resource",
+                "type" => "acorn:Resource",
+                "from" => "CBD_testing",
+                "ensureIndexes" => array("value.isbn" => 1),
+                "fields" => array(
+                    array("fieldName" => "type","predicates" => array("rdf:type")),
+                    array("fieldName" => "isbn","predicates" => array("bibo:isbn13")),
                 ),
-                "joins"=>array(
-                    "dct:isVersionOf"=>array(
-                        "fields"=>array(
-                            array("fieldName"=>"isbn13","predicates"=>array("bibo:isbn13"))
+                "joins" => array(
+                    "dct:isVersionOf" => array(
+                        "fields" => array(
+                            array("fieldName" => "isbn13","predicates" => array("bibo:isbn13"))
                         )
                     )
                 )
             ),
             array(
-                "_id"=>"t_source_count",
-                "type"=>"acorn:Resource",
-                "from"=>"CBD_testing",
-                "to_data_source"=>"rs2",
-                "queue"=>"counts_and_other_non_essentials",
-                "fields"=>array(
-                    array("fieldName"=>"type","predicates"=>array("rdf:type"))
+                "_id" => "t_source_count",
+                "type" => "acorn:Resource",
+                "from" => "CBD_testing",
+                "to_data_source" => "rs2",
+                "queue" => "counts_and_other_non_essentials",
+                "fields" => array(
+                    array("fieldName" => "type","predicates" => array("rdf:type"))
                 ),
-                "joins"=>array(
-                    "dct:isVersionOf"=>array(
-                        "fields"=>array(
-                            array("fieldName"=>"isbn13","predicates"=>array("bibo:isbn13"))
+                "joins" => array(
+                    "dct:isVersionOf" => array(
+                        "fields" => array(
+                            array("fieldName" => "isbn13","predicates" => array("bibo:isbn13"))
                         )
                     )
                 ),
-                "counts"=>array(
-                    array("fieldName"=>"source_count", "property"=>"dct:isVersionOf"),
-                    array("fieldName"=>"random_predicate_count", "property"=>"dct:randomPredicate")
+                "counts" => array(
+                    array("fieldName" => "source_count", "property" => "dct:isVersionOf"),
+                    array("fieldName" => "random_predicate_count", "property" => "dct:randomPredicate")
                 )
             ),
             array(
-                "_id"=>"t_source_count_regex",
-                "type"=>"acorn:Resource",
-                "from"=>"CBD_testing",
-                "queue"=>"counts_and_other_non_essentials",
-                "fields"=>array(
-                    array("fieldName"=>"type","predicates"=>array("rdf:type"))
+                "_id" => "t_source_count_regex",
+                "type" => "acorn:Resource",
+                "from" => "CBD_testing",
+                "queue" => "counts_and_other_non_essentials",
+                "fields" => array(
+                    array("fieldName" => "type","predicates" => array("rdf:type"))
                 ),
-                "joins"=>array(
-                    "dct:isVersionOf"=>array(
-                        "fields"=>array(
-                            array("fieldName"=>"isbn13","predicates"=>array("bibo:isbn13"))
+                "joins" => array(
+                    "dct:isVersionOf" => array(
+                        "fields" => array(
+                            array("fieldName" => "isbn13","predicates" => array("bibo:isbn13"))
                         )
                     )
                 ),
-                "counts"=>array(
-                    array("fieldName"=>"source_count", "property"=>"dct:isVersionOf"),
-                    array("fieldName"=>"regex_source_count", "property"=>"dct:isVersionOf", "regex"=>"/foobar/")
+                "counts" => array(
+                    array("fieldName" => "source_count", "property" => "dct:isVersionOf"),
+                    array("fieldName" => "regex_source_count", "property" => "dct:isVersionOf", "regex" => "/foobar/")
                 )
             ),
             array(
-                "_id"=>"t_join_source_count_regex",
-                "type"=>"acorn:Resource",
-                "from"=>"CBD_testing",
-                "queue"=>"MOST_IMPORTANT_QUEUE_EVER",
-                "joins"=>array(
-                    "acorn:jacsUri"=>array(
-                        "counts"=>array(
-                            array("fieldName"=>"titles_count","property"=>"dct:title")
+                "_id" => "t_join_source_count_regex",
+                "type" => "acorn:Resource",
+                "from" => "CBD_testing",
+                "queue" => "MOST_IMPORTANT_QUEUE_EVER",
+                "joins" => array(
+                    "acorn:jacsUri" => array(
+                        "counts" => array(
+                            array("fieldName" => "titles_count","property" => "dct:title")
                         )
                     )
                 )
@@ -542,8 +542,8 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
 
         $tableSubject1 = new \Tripod\Mongo\ImpactedSubject(
             array(
-                _ID_RESOURCE=>'http://example.com/resources/foo2',
-                _ID_CONTEXT=>$this->args['contextAlias']
+                _ID_RESOURCE => 'http://example.com/resources/foo2',
+                _ID_CONTEXT => $this->args['contextAlias']
             ),
             OP_TABLES,
             $this->args['storeName'],
@@ -553,8 +553,8 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
 
         $tableSubject2 = new \Tripod\Mongo\ImpactedSubject(
             array(
-                _ID_RESOURCE=>'http://example.com/resources/foo3',
-                _ID_CONTEXT=>$this->args['contextAlias']
+                _ID_RESOURCE => 'http://example.com/resources/foo3',
+                _ID_CONTEXT => $this->args['contextAlias']
             ),
             OP_TABLES,
             $this->args['storeName'],
@@ -566,8 +566,8 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
         $queuedTable1 = array(
             new \Tripod\Mongo\ImpactedSubject(
                 array(
-                    _ID_RESOURCE=>'http://example.com/resources/foo2',
-                    _ID_CONTEXT=>$this->args['contextAlias']
+                    _ID_RESOURCE => 'http://example.com/resources/foo2',
+                    _ID_CONTEXT => $this->args['contextAlias']
                 ),
                 OP_TABLES,
                 $this->args['storeName'],
@@ -576,8 +576,8 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
             ),
             new \Tripod\Mongo\ImpactedSubject(
                 array(
-                    _ID_RESOURCE=>'http://example.com/resources/foo3',
-                    _ID_CONTEXT=>$this->args['contextAlias']
+                    _ID_RESOURCE => 'http://example.com/resources/foo3',
+                    _ID_CONTEXT => $this->args['contextAlias']
                 ),
                 OP_TABLES,
                 $this->args['storeName'],
@@ -589,8 +589,8 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
         $queuedTable2 = array(
             new \Tripod\Mongo\ImpactedSubject(
                 array(
-                    _ID_RESOURCE=>'http://example.com/resources/foo2',
-                    _ID_CONTEXT=>$this->args['contextAlias']
+                    _ID_RESOURCE => 'http://example.com/resources/foo2',
+                    _ID_CONTEXT => $this->args['contextAlias']
                 ),
                 OP_TABLES,
                 $this->args['storeName'],
@@ -599,8 +599,8 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
             ),
             new \Tripod\Mongo\ImpactedSubject(
                 array(
-                    _ID_RESOURCE=>'http://example.com/resources/foo3',
-                    _ID_CONTEXT=>$this->args['contextAlias']
+                    _ID_RESOURCE => 'http://example.com/resources/foo3',
+                    _ID_CONTEXT => $this->args['contextAlias']
                 ),
                 OP_TABLES,
                 $this->args['storeName'],
@@ -612,8 +612,8 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
         $queuedTable3 = array(
             new \Tripod\Mongo\ImpactedSubject(
                 array(
-                    _ID_RESOURCE=>'http://example.com/resources/foo2',
-                    _ID_CONTEXT=>$this->args['contextAlias']
+                    _ID_RESOURCE => 'http://example.com/resources/foo2',
+                    _ID_CONTEXT => $this->args['contextAlias']
                 ),
                 OP_TABLES,
                 $this->args['storeName'],
@@ -667,72 +667,72 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
         // Create a bunch of specs on various queues
         $tableSpecs = array(
             array(
-                "_id"=>"t_resource",
-                "type"=>"acorn:Resource",
-                "from"=>"CBD_testing",
-                "ensureIndexes" => array("value.isbn"=>1),
-                "fields"=>array(
-                    array("fieldName"=>"type","predicates"=>array("rdf:type")),
-                    array("fieldName"=>"isbn","predicates"=>array("bibo:isbn13")),
+                "_id" => "t_resource",
+                "type" => "acorn:Resource",
+                "from" => "CBD_testing",
+                "ensureIndexes" => array("value.isbn" => 1),
+                "fields" => array(
+                    array("fieldName" => "type","predicates" => array("rdf:type")),
+                    array("fieldName" => "isbn","predicates" => array("bibo:isbn13")),
                 ),
-                "joins"=>array(
-                    "dct:isVersionOf"=>array(
-                        "fields"=>array(
-                            array("fieldName"=>"isbn13","predicates"=>array("bibo:isbn13"))
+                "joins" => array(
+                    "dct:isVersionOf" => array(
+                        "fields" => array(
+                            array("fieldName" => "isbn13","predicates" => array("bibo:isbn13"))
                         )
                     )
                 )
             ),
             array(
-                "_id"=>"t_source_count",
-                "type"=>"acorn:Resource",
-                "from"=>"CBD_testing",
-                "to_data_source"=>"rs2",
-                "queue"=>"counts_and_other_non_essentials",
-                "fields"=>array(
-                    array("fieldName"=>"type","predicates"=>array("rdf:type"))
+                "_id" => "t_source_count",
+                "type" => "acorn:Resource",
+                "from" => "CBD_testing",
+                "to_data_source" => "rs2",
+                "queue" => "counts_and_other_non_essentials",
+                "fields" => array(
+                    array("fieldName" => "type","predicates" => array("rdf:type"))
                 ),
-                "joins"=>array(
-                    "dct:isVersionOf"=>array(
-                        "fields"=>array(
-                            array("fieldName"=>"isbn13","predicates"=>array("bibo:isbn13"))
+                "joins" => array(
+                    "dct:isVersionOf" => array(
+                        "fields" => array(
+                            array("fieldName" => "isbn13","predicates" => array("bibo:isbn13"))
                         )
                     )
                 ),
-                "counts"=>array(
-                    array("fieldName"=>"source_count", "property"=>"dct:isVersionOf"),
-                    array("fieldName"=>"random_predicate_count", "property"=>"dct:randomPredicate")
+                "counts" => array(
+                    array("fieldName" => "source_count", "property" => "dct:isVersionOf"),
+                    array("fieldName" => "random_predicate_count", "property" => "dct:randomPredicate")
                 )
             ),
             array(
-                "_id"=>"t_source_count_regex",
-                "type"=>"acorn:Resource",
-                "from"=>"CBD_testing",
-                "queue"=>"counts_and_other_non_essentials",
-                "fields"=>array(
-                    array("fieldName"=>"type","predicates"=>array("rdf:type"))
+                "_id" => "t_source_count_regex",
+                "type" => "acorn:Resource",
+                "from" => "CBD_testing",
+                "queue" => "counts_and_other_non_essentials",
+                "fields" => array(
+                    array("fieldName" => "type","predicates" => array("rdf:type"))
                 ),
-                "joins"=>array(
-                    "dct:isVersionOf"=>array(
-                        "fields"=>array(
-                            array("fieldName"=>"isbn13","predicates"=>array("bibo:isbn13"))
+                "joins" => array(
+                    "dct:isVersionOf" => array(
+                        "fields" => array(
+                            array("fieldName" => "isbn13","predicates" => array("bibo:isbn13"))
                         )
                     )
                 ),
-                "counts"=>array(
-                    array("fieldName"=>"source_count", "property"=>"dct:isVersionOf"),
-                    array("fieldName"=>"regex_source_count", "property"=>"dct:isVersionOf", "regex"=>"/foobar/")
+                "counts" => array(
+                    array("fieldName" => "source_count", "property" => "dct:isVersionOf"),
+                    array("fieldName" => "regex_source_count", "property" => "dct:isVersionOf", "regex" => "/foobar/")
                 )
             ),
             array(
-                "_id"=>"t_join_source_count_regex",
-                "type"=>"acorn:Resource",
-                "from"=>"CBD_testing",
-                "queue"=>"MOST_IMPORTANT_QUEUE_EVER",
-                "joins"=>array(
-                    "acorn:jacsUri"=>array(
-                        "counts"=>array(
-                            array("fieldName"=>"titles_count","property"=>"dct:title")
+                "_id" => "t_join_source_count_regex",
+                "type" => "acorn:Resource",
+                "from" => "CBD_testing",
+                "queue" => "MOST_IMPORTANT_QUEUE_EVER",
+                "joins" => array(
+                    "acorn:jacsUri" => array(
+                        "counts" => array(
+                            array("fieldName" => "titles_count","property" => "dct:title")
                         )
                     )
                 )
@@ -777,8 +777,8 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
         $tableSubjects = array(
             new \Tripod\Mongo\ImpactedSubject(
                 array(
-                    _ID_RESOURCE=>'http://example.com/resources/foo2',
-                    _ID_CONTEXT=>$this->args['contextAlias']
+                    _ID_RESOURCE => 'http://example.com/resources/foo2',
+                    _ID_CONTEXT => $this->args['contextAlias']
                 ),
                 OP_TABLES,
                 $this->args['storeName'],
@@ -787,8 +787,8 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
             ),
             new \Tripod\Mongo\ImpactedSubject(
                 array(
-                    _ID_RESOURCE=>'http://example.com/resources/foo3',
-                    _ID_CONTEXT=>$this->args['contextAlias']
+                    _ID_RESOURCE => 'http://example.com/resources/foo3',
+                    _ID_CONTEXT => $this->args['contextAlias']
                 ),
                 OP_TABLES,
                 $this->args['storeName'],
@@ -830,12 +830,12 @@ class DiscoverImpactedSubjectsTest extends ResqueJobTestBase
     protected function setArgs()
     {
         $this->args = array(
-            'tripodConfig'=>\Tripod\Config::getConfig(),
-            'storeName'=>'tripod_php_testing',
-            'podName'=>'CBD_testing',
-            'changes'=>array('http://example.com/resources/foo'=>array('rdf:type','dct:title')),
-            'operations'=>array(OP_VIEWS, OP_TABLES, OP_SEARCH),
-            'contextAlias'=>'http://talisaspire.com/'
+            'tripodConfig' => \Tripod\Config::getConfig(),
+            'storeName' => 'tripod_php_testing',
+            'podName' => 'CBD_testing',
+            'changes' => array('http://example.com/resources/foo' => array('rdf:type','dct:title')),
+            'operations' => array(OP_VIEWS, OP_TABLES, OP_SEARCH),
+            'contextAlias' => 'http://talisaspire.com/'
         );
     }
 }

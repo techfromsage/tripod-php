@@ -10,12 +10,12 @@ class LargeGraphTest extends MongoTripodPerformanceTestBase
     /**
      * time in ms (milli-seconds) anything below which is acceptable.
      */
-    const BENCHMARK_SAVE_TIME = 100;
+    private const BENCHMARK_SAVE_TIME = 100;
 
     /**
      * time in ms (milli-seconds) anything below which is acceptable.
      */
-    const BENCHMARK_DESCRIBE_TIME = 5000;
+    private const BENCHMARK_DESCRIBE_TIME = 5000;
 
     /**
      * Do some setup before each test start
@@ -23,7 +23,7 @@ class LargeGraphTest extends MongoTripodPerformanceTestBase
     protected function setUp(): void
     {
         parent::setup();
-        $this->tripod = new \Tripod\Mongo\Driver('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/'));
+        $this->tripod = new \Tripod\Mongo\Driver('CBD_testing', 'tripod_php_testing', array('defaultContext' => 'http://talisaspire.com/'));
 
         $this->loadLargeGraphData();
     }
@@ -49,8 +49,8 @@ class LargeGraphTest extends MongoTripodPerformanceTestBase
         $testStartTime = microtime();
 
         $graph = new \Tripod\ExtendedGraph();
-        $graph->add_literal_triple($uri,"http://rdfs.org/sioc/spec/name","new name");
-        $this->tripod->saveChanges(new \Tripod\ExtendedGraph(),$graph);
+        $graph->add_literal_triple($uri, "http://rdfs.org/sioc/spec/name", "new name");
+        $this->tripod->saveChanges(new \Tripod\ExtendedGraph(), $graph);
 
         $testEndTime = microtime();
 
@@ -68,7 +68,7 @@ class LargeGraphTest extends MongoTripodPerformanceTestBase
         $testStartTime = microtime();
 
         $graph = new \Tripod\ExtendedGraph();
-        $graph->add_literal_triple($uri,"http://rdfs.org/sioc/spec/name","new name");
+        $graph->add_literal_triple($uri, "http://rdfs.org/sioc/spec/name", "new name");
         $this->tripod->describeResource($uri);
 
         $testEndTime = microtime();

@@ -10,12 +10,12 @@ class MongoTripodConfigTest extends MongoTripodPerformanceTestBase
     /**
      * time in ms (milli-seconds) anything below which is acceptable.
      */
-    const BENCHMARK_OBJECT_CREATE_TIME = 6000;
+    private const BENCHMARK_OBJECT_CREATE_TIME = 6000;
 
     /**
      * Number of iterations should to be ran to test
      */
-    const BENCHMARK_OBJECT_CREATE_ITERATIONS = 1000;
+    private const BENCHMARK_OBJECT_CREATE_ITERATIONS = 1000;
 
     /**
      * Holds tripod config
@@ -54,7 +54,7 @@ class MongoTripodConfigTest extends MongoTripodPerformanceTestBase
         $testStartTime = microtime();
 
         //Let's try to create 1000 objects to see how much time they take.
-        for($i =0; $i < self::BENCHMARK_OBJECT_CREATE_ITERATIONS; $i++) {
+        for ($i = 0; $i < self::BENCHMARK_OBJECT_CREATE_ITERATIONS; $i++) {
             \Tripod\Config::setConfig($this->config);
             $instance = \Tripod\Config::getInstance();
         }

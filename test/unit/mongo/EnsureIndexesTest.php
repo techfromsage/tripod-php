@@ -211,11 +211,11 @@ class EnsureIndexesTest extends ResqueJobTestBase
      *  @param  array list of methods to stub
      *  @return MockObject&\Tripod\Mongo\Jobs\EnsureIndexes
      */
-    protected function createMockJob($methods=array())
+    protected function createMockJob($methods = array())
     {
         $methodsToStub = array('getIndexUtils', 'submitJob', 'warningLog', 'enqueue', 'getJobStatus');
 
-        if(!empty($methods)){
+        if (!empty($methods)) {
             $methodsToStub = $methods;
         }
 

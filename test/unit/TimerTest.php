@@ -11,14 +11,16 @@ class TimerTest extends TestCase
     }
 
     /**  START: result() tests */
-    public function testResultWhenStartTimeNotSet(){
+    public function testResultWhenStartTimeNotSet()
+    {
         $timer = new Timer();
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('Timer: start method not called !');
         $timer->result();
     }
 
-    public function testResultWhenEndTimeNotSet(){
+    public function testResultWhenEndTimeNotSet()
+    {
         $timer = new Timer();
         $timer->start();
         $this->expectException(\Exception::class);
@@ -26,25 +28,28 @@ class TimerTest extends TestCase
         $timer->result();
     }
 
-    public function testResultGetTimeInMilliSeconds(){
+    public function testResultGetTimeInMilliSeconds()
+    {
         $timer = new Timer();
         $timer->start();
         sleep(1); // Let's pause for one seconds otherwise we will get 0 as a result.
         $timer->stop();
-        $status = ($timer->result() >=1000)? true: false;
+        $status = ($timer->result() >= 1000) ? true : false;
         $this->assertTrue($status);
     }
     /**  END: result() tests */
 
     /**  START: microResult() tests */
-    public function testMicroResultWhenStartTimeNotSet(){
+    public function testMicroResultWhenStartTimeNotSet()
+    {
         $timer = new Timer();
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('Timer: start method not called !');
         $timer->result();
     }
 
-    public function testMicroResultWhenEndTimeNotSet(){
+    public function testMicroResultWhenEndTimeNotSet()
+    {
         $timer = new Timer();
         $timer->start();
         $this->expectException(\Exception::class);
@@ -52,12 +57,13 @@ class TimerTest extends TestCase
         $timer->result();
     }
 
-    public function testMicroResultGetTimeInMilliSeconds(){
+    public function testMicroResultGetTimeInMilliSeconds()
+    {
         $timer = new Timer();
         $timer->start();
         sleep(1); // Let's pause for one seconds otherwise we might get 0 as a result.
         $timer->stop();
-        $status = ($timer->microResult() >=1000000)? true: false;
+        $status = ($timer->microResult() >= 1000000) ? true : false;
         $this->assertTrue($status);
     }
     /**  END: microResult() tests */

@@ -35,7 +35,7 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
         // Stub out 'addToElastic' search to prevent writes into Elastic Search happening by default.
         $tripod = $this->getMockBuilder(\Tripod\Mongo\Driver::class)
             ->onlyMethods(array())
-            ->setConstructorArgs(array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')))
+            ->setConstructorArgs(array('CBD_testing','tripod_php_testing',array('defaultContext' => 'http://talisaspire.com/')))
             ->getMock();
 
         \Tripod\Config::getInstance()->getCollectionForCBD('tripod_php_testing', 'CBD_testing')->drop();
@@ -54,28 +54,28 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
         $subjectOne = 'http://example.com/resources/1';
         $subjectTwo = 'http://example.com/resources/2';
         $doc1 = array(
-            '_id'=>array('r'=>$subjectOne, 'c'=>'http://talisaspire.com/'),
-            'rdf:type'=>array('u'=>'acorn:Resource'),
-            'dct:title'=>array(array('l'=>'Title one'),array('l'=>'Title two')),
-            '_version'=>0,
-            '_cts'=> \Tripod\Mongo\DateUtil::getMongoDate(strtotime("2013-03-21 00:00:00")*1000),
-            '_uts'=> \Tripod\Mongo\DateUtil::getMongoDate(strtotime("2013-03-21 00:00:00")*1000)
+            '_id' => array('r' => $subjectOne, 'c' => 'http://talisaspire.com/'),
+            'rdf:type' => array('u' => 'acorn:Resource'),
+            'dct:title' => array(array('l' => 'Title one'),array('l' => 'Title two')),
+            '_version' => 0,
+            '_cts' => \Tripod\Mongo\DateUtil::getMongoDate(strtotime("2013-03-21 00:00:00") * 1000),
+            '_uts' => \Tripod\Mongo\DateUtil::getMongoDate(strtotime("2013-03-21 00:00:00") * 1000)
         );
 
         $doc2 = array(
-            '_id'=>array('r'=>$subjectTwo, 'c'=>'http://talisaspire.com/'),
-            'rdf:type'=>array('u'=>'acorn:Book'),
-            'dct:title'=>array(array('l'=>'Title three'),array('l'=>'Title four')),
-            '_version'=>0,
-            '_cts'=> \Tripod\Mongo\DateUtil::getMongoDate(strtotime("2013-03-21 00:00:00")*1000),
-            '_uts'=> \Tripod\Mongo\DateUtil::getMongoDate(strtotime("2013-03-21 00:00:00")*1000)
+            '_id' => array('r' => $subjectTwo, 'c' => 'http://talisaspire.com/'),
+            'rdf:type' => array('u' => 'acorn:Book'),
+            'dct:title' => array(array('l' => 'Title three'),array('l' => 'Title four')),
+            '_version' => 0,
+            '_cts' => \Tripod\Mongo\DateUtil::getMongoDate(strtotime("2013-03-21 00:00:00") * 1000),
+            '_uts' => \Tripod\Mongo\DateUtil::getMongoDate(strtotime("2013-03-21 00:00:00") * 1000)
         );
         $this->addDocument($doc1);
         $this->addDocument($doc2);
 
         // now lets modify the data using tripod
-        $g1 = $this->tripod->describeResources(array($subjectOne),'http://talisaspire.com/');
-        $g2 = $this->tripod->describeResources(array($subjectTwo),'http://talisaspire.com/');
+        $g1 = $this->tripod->describeResources(array($subjectOne), 'http://talisaspire.com/');
+        $g2 = $this->tripod->describeResources(array($subjectTwo), 'http://talisaspire.com/');
 
         $oG = new \Tripod\Mongo\MongoGraph();
         $oG->add_graph($g1);
@@ -92,7 +92,7 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
         $mockTransactionId = 'transaction_1';
         $mockTripod = $this->getMockBuilder(\Tripod\Mongo\Driver::class)
             ->onlyMethods(array('getDataUpdater'))
-            ->setConstructorArgs(array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')))
+            ->setConstructorArgs(array('CBD_testing','tripod_php_testing',array('defaultContext' => 'http://talisaspire.com/')))
             ->getMock();
         $mockTripodUpdate = $this->getMockBuilder(\Tripod\Mongo\Updates::class)
             ->onlyMethods(array('generateTransactionId','lockSingleDocument'))
@@ -102,7 +102,7 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
         $mockTripodUpdate->expects($this->exactly(1))
             ->method('generateTransactionId')
             ->will($this->returnValue($mockTransactionId));
-        $mockTripodUpdate->expects($this->exactly(2*20)) //20 retries for 2 subjects
+        $mockTripodUpdate->expects($this->exactly(2 * 20)) //20 retries for 2 subjects
             ->method('lockSingleDocument')
             ->will($this->returnCallback(array($this, 'lockSingleDocumentCauseFailureCallback')));
 
@@ -112,13 +112,10 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
 
         $mockTripod->setTransactionLog($this->tripodTransactionLog);
 
-        try
-        {
-            $mockTripod->saveChanges($oG, $nG,"http://talisaspire.com/");
+        try {
+            $mockTripod->saveChanges($oG, $nG, "http://talisaspire.com/");
             $this->fail('Exception should have been thrown');
-        }
-        catch (\Tripod\Exceptions\Exception $e)
-        {
+        } catch (\Tripod\Exceptions\Exception $e) {
             // Squash the exception here as we need to continue running the assertions.
         }
 
@@ -133,10 +130,10 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
         $this->assertTrue($uG->has_literal_triple($subjectTwo, $uG->qname_to_uri("dct:title"), 'Title four'));
         $this->assertFalse($uG->has_literal_triple($subjectTwo, $uG->qname_to_uri("dct:title"), 'Updated Title three'));
 
-        $this->assertDocumentDoesNotHaveProperty(array('r'=>$subjectOne, 'c'=>'http://talisaspire.com/'), _LOCKED_FOR_TRANS, $this->tripod);
-        $this->assertDocumentDoesNotHaveProperty(array('r'=>$subjectOne, 'c'=>'http://talisaspire.com/'), _LOCKED_FOR_TRANS_TS, $this->tripod);
-        $this->assertDocumentDoesNotHaveProperty(array('r'=>$subjectTwo, 'c'=>'http://talisaspire.com/'), _LOCKED_FOR_TRANS, $this->tripod);
-        $this->assertDocumentDoesNotHaveProperty(array('r'=>$subjectTwo, 'c'=>'http://talisaspire.com/'), _LOCKED_FOR_TRANS_TS, $this->tripod);
+        $this->assertDocumentDoesNotHaveProperty(array('r' => $subjectOne, 'c' => 'http://talisaspire.com/'), _LOCKED_FOR_TRANS, $this->tripod);
+        $this->assertDocumentDoesNotHaveProperty(array('r' => $subjectOne, 'c' => 'http://talisaspire.com/'), _LOCKED_FOR_TRANS_TS, $this->tripod);
+        $this->assertDocumentDoesNotHaveProperty(array('r' => $subjectTwo, 'c' => 'http://talisaspire.com/'), _LOCKED_FOR_TRANS, $this->tripod);
+        $this->assertDocumentDoesNotHaveProperty(array('r' => $subjectTwo, 'c' => 'http://talisaspire.com/'), _LOCKED_FOR_TRANS_TS, $this->tripod);
 
         $transaction = $mockTripodUpdate->getTransactionLog()->getTransaction($mockTransactionId);
         $this->assertNotNull($transaction);
@@ -163,7 +160,7 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
         $mockTransactionId = 'transaction_1';
         $mockTripod = $this->getMockBuilder(\Tripod\Mongo\Driver::class)
             ->onlyMethods(array('getDataUpdater'))
-            ->setConstructorArgs(array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')))
+            ->setConstructorArgs(array('CBD_testing','tripod_php_testing',array('defaultContext' => 'http://talisaspire.com/')))
             ->getMock();
         $mockTripodUpdate = $this->getMockBuilder(\Tripod\Mongo\Updates::class)
             ->onlyMethods(array('generateTransactionId','lockSingleDocument'))
@@ -173,7 +170,7 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
         $mockTripodUpdate->expects($this->exactly(1))
             ->method('generateTransactionId')
             ->will($this->returnValue($mockTransactionId));
-        $mockTripodUpdate->expects($this->exactly(2*20)) //20 retries for 2 subjects
+        $mockTripodUpdate->expects($this->exactly(2 * 20)) //20 retries for 2 subjects
             ->method('lockSingleDocument')
             ->will($this->returnCallback(array($this, 'lockSingleDocumentCauseFailureCallback')));
 
@@ -183,13 +180,10 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
 
         $mockTripod->setTransactionLog($this->tripodTransactionLog);
 
-        try
-        {
-            $mockTripod->saveChanges($oG, $nG,"http://talisaspire.com/");
+        try {
+            $mockTripod->saveChanges($oG, $nG, "http://talisaspire.com/");
             $this->fail('Exception should have been thrown');
-        }
-        catch (\Tripod\Exceptions\Exception $e)
-        {
+        } catch (\Tripod\Exceptions\Exception $e) {
             // Squash the exception here as we need to continue running the assertions.
         }
 
@@ -197,10 +191,10 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
         $uG = $this->tripod->describeResources(array($subjectOne, $subjectTwo));
         $this->assertTrue($uG->is_empty());
 
-        $this->assertDocumentDoesNotHaveProperty(array('r'=>$subjectOne, 'c'=>'http://talisaspire.com/'), _LOCKED_FOR_TRANS, $this->tripod);
-        $this->assertDocumentDoesNotHaveProperty(array('r'=>$subjectOne, 'c'=>'http://talisaspire.com/'), _LOCKED_FOR_TRANS_TS, $this->tripod);
-        $this->assertDocumentDoesNotHaveProperty(array('r'=>$subjectTwo, 'c'=>'http://talisaspire.com/'), _LOCKED_FOR_TRANS, $this->tripod);
-        $this->assertDocumentDoesNotHaveProperty(array('r'=>$subjectTwo, 'c'=>'http://talisaspire.com/'), _LOCKED_FOR_TRANS_TS, $this->tripod);
+        $this->assertDocumentDoesNotHaveProperty(array('r' => $subjectOne, 'c' => 'http://talisaspire.com/'), _LOCKED_FOR_TRANS, $this->tripod);
+        $this->assertDocumentDoesNotHaveProperty(array('r' => $subjectOne, 'c' => 'http://talisaspire.com/'), _LOCKED_FOR_TRANS_TS, $this->tripod);
+        $this->assertDocumentDoesNotHaveProperty(array('r' => $subjectTwo, 'c' => 'http://talisaspire.com/'), _LOCKED_FOR_TRANS, $this->tripod);
+        $this->assertDocumentDoesNotHaveProperty(array('r' => $subjectTwo, 'c' => 'http://talisaspire.com/'), _LOCKED_FOR_TRANS_TS, $this->tripod);
 
         $transaction = $mockTripodUpdate->getTransactionLog()->getTransaction($mockTransactionId);
         $this->assertNotNull($transaction);
@@ -215,28 +209,28 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
         $subjectOne = 'http://example.com/resources/1';
         $subjectTwo = 'http://example.com/resources/2';
         $doc1 = array(
-            '_id'=>array('r'=>$subjectOne, 'c'=>'http://talisaspire.com/'),
-            'rdf:type'=>array('u'=>'acorn:Resource'),
-            'dct:title'=>array(array('l'=>'Title one'),array('l'=>'Title two')),
-            '_version'=>0,
-            '_cts'=> \Tripod\Mongo\DateUtil::getMongoDate(strtotime("2013-03-21 00:00:00")*1000),
-            '_uts'=> \Tripod\Mongo\DateUtil::getMongoDate(strtotime("2013-03-21 00:00:00")*1000)
+            '_id' => array('r' => $subjectOne, 'c' => 'http://talisaspire.com/'),
+            'rdf:type' => array('u' => 'acorn:Resource'),
+            'dct:title' => array(array('l' => 'Title one'),array('l' => 'Title two')),
+            '_version' => 0,
+            '_cts' => \Tripod\Mongo\DateUtil::getMongoDate(strtotime("2013-03-21 00:00:00") * 1000),
+            '_uts' => \Tripod\Mongo\DateUtil::getMongoDate(strtotime("2013-03-21 00:00:00") * 1000)
         );
 
         $doc2 = array(
-            '_id'=>array('r'=>$subjectTwo, 'c'=>'http://talisaspire.com/'),
-            'rdf:type'=>array('u'=>'acorn:Book'),
-            'dct:title'=>array(array('l'=>'Title three'),array('l'=>'Title four')),
-            '_version'=>0,
-            '_cts'=> \Tripod\Mongo\DateUtil::getMongoDate(strtotime("2013-03-21 00:00:00")*100),
-            '_uts'=> \Tripod\Mongo\DateUtil::getMongoDate(strtotime("2013-03-21 00:00:00")*1000)
+            '_id' => array('r' => $subjectTwo, 'c' => 'http://talisaspire.com/'),
+            'rdf:type' => array('u' => 'acorn:Book'),
+            'dct:title' => array(array('l' => 'Title three'),array('l' => 'Title four')),
+            '_version' => 0,
+            '_cts' => \Tripod\Mongo\DateUtil::getMongoDate(strtotime("2013-03-21 00:00:00") * 100),
+            '_uts' => \Tripod\Mongo\DateUtil::getMongoDate(strtotime("2013-03-21 00:00:00") * 1000)
         );
         $this->addDocument($doc1);
         $this->addDocument($doc2);
 
         // now lets modify the data using tripod
-        $g1 = $this->tripod->describeResources(array($subjectOne),'http://talisaspire.com/');
-        $g2 = $this->tripod->describeResources(array($subjectTwo),'http://talisaspire.com/');
+        $g1 = $this->tripod->describeResources(array($subjectOne), 'http://talisaspire.com/');
+        $g2 = $this->tripod->describeResources(array($subjectTwo), 'http://talisaspire.com/');
 
         $oG = new \Tripod\Mongo\MongoGraph();
         $oG->add_graph($g1);
@@ -271,7 +265,7 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
 
         $mockTripod = $this->getMockBuilder(\Tripod\Mongo\Driver::class)
             ->onlyMethods(array('getDataUpdater'))
-            ->setConstructorArgs(array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')))
+            ->setConstructorArgs(array('CBD_testing','tripod_php_testing',array('defaultContext' => 'http://talisaspire.com/')))
             ->getMock();
         $mockTripodUpdate = $this->getMockBuilder(\Tripod\Mongo\Updates::class)
             ->onlyMethods(array('generateTransactionId','lockSingleDocument', 'getTransactionLog'))
@@ -291,13 +285,10 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
             ->method('getDataUpdater')
             ->will($this->returnValue($mockTripodUpdate));
 
-        try
-        {
-            $mockTripod->saveChanges($oG, $nG,"http://talisaspire.com/");
+        try {
+            $mockTripod->saveChanges($oG, $nG, "http://talisaspire.com/");
             $this->fail('Exception should have been thrown');
-        }
-        catch (\Tripod\Exceptions\Exception $e)
-        {
+        } catch (\Tripod\Exceptions\Exception $e) {
             // Squash the exception here as we need to continue running the assertions.
         }
 
@@ -313,10 +304,10 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
         $this->assertFalse($uG->has_literal_triple($subjectTwo, $uG->qname_to_uri("dct:title"), 'Updated Title three'));
 
         // make sure the documents are not polluted with locks
-        $this->assertDocumentDoesNotHaveProperty(array('r'=>$subjectOne, 'c'=>'http://talisaspire.com/'), _LOCKED_FOR_TRANS, $this->tripod);
-        $this->assertDocumentDoesNotHaveProperty(array('r'=>$subjectOne, 'c'=>'http://talisaspire.com/'), _LOCKED_FOR_TRANS_TS, $this->tripod);
-        $this->assertDocumentDoesNotHaveProperty(array('r'=>$subjectTwo, 'c'=>'http://talisaspire.com/'), _LOCKED_FOR_TRANS, $this->tripod);
-        $this->assertDocumentDoesNotHaveProperty(array('r'=>$subjectTwo, 'c'=>'http://talisaspire.com/'), _LOCKED_FOR_TRANS_TS, $this->tripod);
+        $this->assertDocumentDoesNotHaveProperty(array('r' => $subjectOne, 'c' => 'http://talisaspire.com/'), _LOCKED_FOR_TRANS, $this->tripod);
+        $this->assertDocumentDoesNotHaveProperty(array('r' => $subjectOne, 'c' => 'http://talisaspire.com/'), _LOCKED_FOR_TRANS_TS, $this->tripod);
+        $this->assertDocumentDoesNotHaveProperty(array('r' => $subjectTwo, 'c' => 'http://talisaspire.com/'), _LOCKED_FOR_TRANS, $this->tripod);
+        $this->assertDocumentDoesNotHaveProperty(array('r' => $subjectTwo, 'c' => 'http://talisaspire.com/'), _LOCKED_FOR_TRANS_TS, $this->tripod);
     }
 
     public function testTransactionRollbackDuringApplyChanges()
@@ -325,28 +316,28 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
         $subjectOne = 'http://example.com/resources/1';
         $subjectTwo = 'http://example.com/resources/2';
         $doc1 = array(
-            '_id'=>array('r'=>$subjectOne, 'c'=>'http://talisaspire.com/'),
-            'rdf:type'=>array('u'=>'acorn:Resource'),
-            'dct:title'=>array(array('l'=>'Title one'),array('l'=>'Title two')),
-            '_version'=>0,
-            '_cts'=> \Tripod\Mongo\DateUtil::getMongoDate(),
-            '_uts'=> \Tripod\Mongo\DateUtil::getMongoDate()
+            '_id' => array('r' => $subjectOne, 'c' => 'http://talisaspire.com/'),
+            'rdf:type' => array('u' => 'acorn:Resource'),
+            'dct:title' => array(array('l' => 'Title one'),array('l' => 'Title two')),
+            '_version' => 0,
+            '_cts' => \Tripod\Mongo\DateUtil::getMongoDate(),
+            '_uts' => \Tripod\Mongo\DateUtil::getMongoDate()
         );
 
         $doc2 = array(
-            '_id'=>array('r'=>$subjectTwo, 'c'=>'http://talisaspire.com/'),
-            'rdf:type'=>array('u'=>'acorn:Book'),
-            'dct:title'=>array(array('l'=>'Title three'),array('l'=>'Title four')),
-            '_version'=>0,
-            '_cts'=> \Tripod\Mongo\DateUtil::getMongoDate(),
-            '_uts'=> \Tripod\Mongo\DateUtil::getMongoDate()
+            '_id' => array('r' => $subjectTwo, 'c' => 'http://talisaspire.com/'),
+            'rdf:type' => array('u' => 'acorn:Book'),
+            'dct:title' => array(array('l' => 'Title three'),array('l' => 'Title four')),
+            '_version' => 0,
+            '_cts' => \Tripod\Mongo\DateUtil::getMongoDate(),
+            '_uts' => \Tripod\Mongo\DateUtil::getMongoDate()
         );
         $this->addDocument($doc1);
         $this->addDocument($doc2);
 
         // now lets modify the data using tripod
-        $g1 = $this->tripod->describeResources(array($subjectOne),'http://talisaspire.com/');
-        $g2 = $this->tripod->describeResources(array($subjectTwo),'http://talisaspire.com/');
+        $g1 = $this->tripod->describeResources(array($subjectOne), 'http://talisaspire.com/');
+        $g2 = $this->tripod->describeResources(array($subjectTwo), 'http://talisaspire.com/');
 
         $oG = new \Tripod\Mongo\MongoGraph();
         $oG->add_graph($g1);
@@ -363,7 +354,7 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
         $mockTransactionId = 'transaction_1';
         $mockTripod = $this->getMockBuilder(\Tripod\Mongo\Driver::class)
             ->onlyMethods(array('getDataUpdater'))
-            ->setConstructorArgs(array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')))
+            ->setConstructorArgs(array('CBD_testing','tripod_php_testing',array('defaultContext' => 'http://talisaspire.com/')))
             ->getMock();
         $mockTripodUpdate = $this->getMockBuilder(\Tripod\Mongo\Updates::class)
             ->onlyMethods(array('generateTransactionId','lockSingleDocument','applyChangeSet'))
@@ -382,13 +373,10 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
 
         $mockTripod->setTransactionLog($this->tripodTransactionLog);
 
-        try
-        {
-            $mockTripod->saveChanges($oG, $nG,"http://talisaspire.com/");
+        try {
+            $mockTripod->saveChanges($oG, $nG, "http://talisaspire.com/");
             $this->fail('Exception should have been thrown');
-        }
-        catch (\Tripod\Exceptions\Exception $e)
-        {
+        } catch (\Tripod\Exceptions\Exception $e) {
             // Squash the exception here as we need to continue running the assertions.
         }
 
@@ -403,10 +391,10 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
         $this->assertTrue($uG->has_literal_triple($subjectTwo, $uG->qname_to_uri("dct:title"), 'Title four'));
         $this->assertFalse($uG->has_literal_triple($subjectTwo, $uG->qname_to_uri("dct:title"), 'Updated Title three'));
 
-        $this->assertDocumentDoesNotHaveProperty(array('r'=>$subjectOne, 'c'=>'http://talisaspire.com/'), _LOCKED_FOR_TRANS, $this->tripod);
-        $this->assertDocumentDoesNotHaveProperty(array('r'=>$subjectOne, 'c'=>'http://talisaspire.com/'), _LOCKED_FOR_TRANS_TS, $this->tripod);
-        $this->assertDocumentDoesNotHaveProperty(array('r'=>$subjectTwo, 'c'=>'http://talisaspire.com/'), _LOCKED_FOR_TRANS, $this->tripod);
-        $this->assertDocumentDoesNotHaveProperty(array('r'=>$subjectTwo, 'c'=>'http://talisaspire.com/'), _LOCKED_FOR_TRANS_TS, $this->tripod);
+        $this->assertDocumentDoesNotHaveProperty(array('r' => $subjectOne, 'c' => 'http://talisaspire.com/'), _LOCKED_FOR_TRANS, $this->tripod);
+        $this->assertDocumentDoesNotHaveProperty(array('r' => $subjectOne, 'c' => 'http://talisaspire.com/'), _LOCKED_FOR_TRANS_TS, $this->tripod);
+        $this->assertDocumentDoesNotHaveProperty(array('r' => $subjectTwo, 'c' => 'http://talisaspire.com/'), _LOCKED_FOR_TRANS, $this->tripod);
+        $this->assertDocumentDoesNotHaveProperty(array('r' => $subjectTwo, 'c' => 'http://talisaspire.com/'), _LOCKED_FOR_TRANS_TS, $this->tripod);
 
         $transaction = $mockTripodUpdate->getTransactionLog()->getTransaction($mockTransactionId);
         $this->assertNotNull($transaction);
@@ -430,8 +418,7 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
      */
     public function lockSingleDocumentCauseFailureCallback($s, $transactionId, $context)
     {
-        if($s=='http://example.com/resources/1')
-        {
+        if ($s == 'http://example.com/resources/1') {
             return $this->lockSingleDocumentCallback($s, $transactionId, $context);
         } else {
             return array();
@@ -451,10 +438,10 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
         $lCollection = \Tripod\Config::getInstance()->getCollectionForLocks($this->tripod->getStoreName());
         $countEntriesInLocksCollection = $lCollection->count(array('_id' => array(_ID_RESOURCE => $this->labeller->uri_to_alias($s), _ID_CONTEXT => $contextAlias)));
 
-        if($countEntriesInLocksCollection > 0) //Subject is already locked
+        if ($countEntriesInLocksCollection > 0) { //Subject is already locked
             return false;
-        else{
-            try{ //Add a entry to locks collection for this subject, will throws exception if an entry already there
+        } else {
+            try { //Add a entry to locks collection for this subject, will throws exception if an entry already there
                 $result = $lCollection->insertOne(
                     array(
                         '_id' => array(_ID_RESOURCE => $this->labeller->uri_to_alias($s), _ID_CONTEXT => $contextAlias),
@@ -464,18 +451,17 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
                     array("w" => 1)
                 );
 
-                if(!$result->isAcknowledged()){
+                if (!$result->isAcknowledged()) {
                     throw new Exception("Failed to lock document with error message");
                 }
-            }
-            catch(Exception $e) { //Subject is already locked or unable to lock
+            } catch (Exception $e) { //Subject is already locked or unable to lock
                 return false;
             }
 
             //Let's get original document for processing.
             $document  = $this->getTripodCollection($this->tripod)->findOne(array('_id' => array(_ID_RESOURCE => $this->labeller->uri_to_alias($s), _ID_CONTEXT => $contextAlias)));
-            if(empty($document)){ //if document is not there, create it
-                try{
+            if (empty($document)) { //if document is not there, create it
+                try {
                     $result = $this->getTripodCollection($this->tripod)->insertOne(
                         array(
                             '_id' => array(_ID_RESOURCE => $this->labeller->uri_to_alias($s), _ID_CONTEXT => $contextAlias)
@@ -483,12 +469,11 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
                         array("w" => 1)
                     );
 
-                    if(!$result->isAcknowledged()){
+                    if (!$result->isAcknowledged()) {
                         throw new Exception("Failed to create new document with error message");
                     }
                     $document  = $this->getTripodCollection($this->tripod)->findOne(array('_id' => array(_ID_RESOURCE => $this->labeller->uri_to_alias($s), _ID_CONTEXT => $contextAlias)));
-                }
-                catch(\Exception $e){
+                } catch (\Exception $e) {
                     return false;
                 }
             }
@@ -496,4 +481,3 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
         }
     }
 }
-

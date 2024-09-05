@@ -24,7 +24,7 @@ class MongoTripodDocumentStructureTest extends MongoTripodTestBase
         // Stub ouf 'addToElastic' search to prevent writes into Elastic Search happening by default.
         $this->tripod = $this->getMockBuilder(\Tripod\Mongo\Driver::class)
             ->onlyMethods(array())
-            ->setConstructorArgs(array('CBD_testing','tripod_php_testing',array('defaultContext'=>'http://talisaspire.com/')))
+            ->setConstructorArgs(array('CBD_testing','tripod_php_testing',array('defaultContext' => 'http://talisaspire.com/')))
             ->getMock();
 
         $this->getTripodCollection($this->tripod)->drop();
@@ -35,7 +35,7 @@ class MongoTripodDocumentStructureTest extends MongoTripodTestBase
 
     public function testDocumentContainsDefaultProperties()
     {
-        $id = array("r"=>"http://talisaspire.com/resources/testDocument", "c"=>"http://talisaspire.com/");
+        $id = array("r" => "http://talisaspire.com/resources/testDocument", "c" => "http://talisaspire.com/");
 
         $graph = new \Tripod\Mongo\MongoGraph();
         $graph->add_literal_triple($id['r'], $graph->qname_to_uri('searchterms:title'), 'TEST TITLE');
@@ -50,7 +50,7 @@ class MongoTripodDocumentStructureTest extends MongoTripodTestBase
     public function testDocumentTimeStampsAreUpdatedCorrectlyAfterMultipleWritesAndDelete()
     {
         // create an initial document
-        $id = array("r"=>"http://talisaspire.com/resources/testDocument", "c"=>"http://talisaspire.com/");
+        $id = array("r" => "http://talisaspire.com/resources/testDocument", "c" => "http://talisaspire.com/");
 
         $graph = new \Tripod\Mongo\MongoGraph();
         $graph->add_literal_triple($id['r'], $graph->qname_to_uri('searchterms:title'), 'TEST TITLE');
@@ -90,7 +90,7 @@ class MongoTripodDocumentStructureTest extends MongoTripodTestBase
         $finalGraph->add_literal_triple($id['r'], $graph->qname_to_uri('searchterms:title'), 'CHANGED TITLE AGAIN');
         $this->tripod->saveChanges($newGraph, $finalGraph);
 
-       // assert that it is at version 2
+        // assert that it is at version 2
         $this->assertDocumentExists($id);
         $this->assertDocumentHasProperty($id, _VERSION, 2);
 
@@ -126,10 +126,10 @@ class MongoTripodDocumentStructureTest extends MongoTripodTestBase
     public function testOnlyDocumentUpdatedTimestampIsAddedToDocumentThatDidntHaveTimestampsToBeginWith()
     {
         // add the initial document, but not through Driver!
-        $_id = array("r"=>"http://talisaspire.com/resources/testDocument2","c"=>"http://talisaspire.com/");
+        $_id = array("r" => "http://talisaspire.com/resources/testDocument2","c" => "http://talisaspire.com/");
         $document = array(
             '_id' => $_id,
-            'dct:title' => array('l'=>'some title'),
+            'dct:title' => array('l' => 'some title'),
             '_version' => 0
         );
 
@@ -138,7 +138,7 @@ class MongoTripodDocumentStructureTest extends MongoTripodTestBase
         $this->addDocument($document);
         $this->assertDocumentExists($_id);
         $this->assertDocumentHasProperty($_id, _VERSION, 0);
-        $this->assertDocumentHasProperty($_id, "dct:title", array("l"=>"some title"));
+        $this->assertDocumentHasProperty($_id, "dct:title", array("l" => "some title"));
         $this->assertDocumentDoesNotHaveProperty($_id, _UPDATED_TS);
         $this->assertDocumentDoesNotHaveProperty($_id, _CREATED_TS);
 
@@ -152,8 +152,8 @@ class MongoTripodDocumentStructureTest extends MongoTripodTestBase
         $this->assertDocumentExists($_id);
         $this->assertDocumentHasProperty($_id, _VERSION, 1);
         $this->assertDocumentHasProperty($_id, _UPDATED_TS);
-        $this->assertDocumentHasProperty($_id, "dct:title", array("l"=>"some title"));
-        $this->assertDocumentHasProperty($_id, "searchterms:title", array("l"=>"a new property"));
+        $this->assertDocumentHasProperty($_id, "dct:title", array("l" => "some title"));
+        $this->assertDocumentHasProperty($_id, "searchterms:title", array("l" => "a new property"));
         $this->assertDocumentDoesNotHaveProperty($_id, _CREATED_TS);
     }
 }

@@ -52,8 +52,8 @@ class ApplyOperationTest extends ResqueJobTestBase
             ->setConstructorArgs(
                 array(
                     array(
-                        _ID_RESOURCE=>'http://example.com/resources/foo',
-                        _ID_CONTEXT=>'http://talisaspire.com'
+                        _ID_RESOURCE => 'http://example.com/resources/foo',
+                        _ID_CONTEXT => 'http://talisaspire.com'
                     ),
                     OP_VIEWS,
                     'tripod_php_testing',
@@ -142,8 +142,8 @@ class ApplyOperationTest extends ResqueJobTestBase
             ->setConstructorArgs(
                 [
                     [
-                        _ID_RESOURCE=>'http://example.com/resources/foo',
-                        _ID_CONTEXT=>'http://talisaspire.com'
+                        _ID_RESOURCE => 'http://example.com/resources/foo',
+                        _ID_CONTEXT => 'http://talisaspire.com'
                     ],
                     OP_VIEWS,
                     'tripod_php_testing',
@@ -244,8 +244,8 @@ class ApplyOperationTest extends ResqueJobTestBase
             ->setConstructorArgs(
                 [
                     [
-                        _ID_RESOURCE=>'http://example.com/resources/foo',
-                        _ID_CONTEXT=>'http://talisaspire.com'
+                        _ID_RESOURCE => 'http://example.com/resources/foo',
+                        _ID_CONTEXT => 'http://talisaspire.com'
                     ],
                     OP_VIEWS,
                     'tripod_php_testing',
@@ -333,8 +333,8 @@ class ApplyOperationTest extends ResqueJobTestBase
 
         $impactedSubject = new \Tripod\Mongo\ImpactedSubject(
             array(
-                _ID_RESOURCE=>'http://example.com/resources/foo',
-                _ID_CONTEXT=>'http://talisaspire.com/'
+                _ID_RESOURCE => 'http://example.com/resources/foo',
+                _ID_CONTEXT => 'http://talisaspire.com/'
             ),
             OP_TABLES,
             'tripod_php_testing',
@@ -351,8 +351,8 @@ class ApplyOperationTest extends ResqueJobTestBase
             ->setConstructorArgs(
                 array(
                     array(
-                        _ID_RESOURCE=>'http://example.com/resources/foo',
-                        _ID_CONTEXT=>'http://talisaspire.com'
+                        _ID_RESOURCE => 'http://example.com/resources/foo',
+                        _ID_CONTEXT => 'http://talisaspire.com'
                     ),
                     OP_TABLES,
                     'tripod_php_testing',
@@ -443,8 +443,8 @@ class ApplyOperationTest extends ResqueJobTestBase
             ->setConstructorArgs(
                 [
                     [
-                        _ID_RESOURCE=>'http://example.com/resources/foo',
-                        _ID_CONTEXT=>'http://talisaspire.com'
+                        _ID_RESOURCE => 'http://example.com/resources/foo',
+                        _ID_CONTEXT => 'http://talisaspire.com'
                     ],
                     OP_TABLES,
                     'tripod_php_testing',
@@ -548,8 +548,8 @@ class ApplyOperationTest extends ResqueJobTestBase
             ->setConstructorArgs(
                 [
                     [
-                        _ID_RESOURCE=>'http://example.com/resources/foo',
-                        _ID_CONTEXT=>'http://talisaspire.com'
+                        _ID_RESOURCE => 'http://example.com/resources/foo',
+                        _ID_CONTEXT => 'http://talisaspire.com'
                     ],
                     OP_TABLES,
                     'tripod_php_testing',
@@ -643,8 +643,8 @@ class ApplyOperationTest extends ResqueJobTestBase
             ->setConstructorArgs(
                 array(
                     array(
-                        _ID_RESOURCE=>'http://example.com/resources/foo',
-                        _ID_CONTEXT=>'http://talisaspire.com'
+                        _ID_RESOURCE => 'http://example.com/resources/foo',
+                        _ID_CONTEXT => 'http://talisaspire.com'
                     ),
                     OP_SEARCH,
                     'tripod_php_testing',
@@ -732,8 +732,8 @@ class ApplyOperationTest extends ResqueJobTestBase
             ->setConstructorArgs(
                 [
                     [
-                        _ID_RESOURCE=>'http://example.com/resources/foo',
-                        _ID_CONTEXT=>'http://talisaspire.com'
+                        _ID_RESOURCE => 'http://example.com/resources/foo',
+                        _ID_CONTEXT => 'http://talisaspire.com'
                     ],
                     OP_SEARCH,
                     'tripod_php_testing',
@@ -830,8 +830,8 @@ class ApplyOperationTest extends ResqueJobTestBase
             ->setConstructorArgs(
                 [
                     [
-                        _ID_RESOURCE=>'http://example.com/resources/foo',
-                        _ID_CONTEXT=>'http://talisaspire.com'
+                        _ID_RESOURCE => 'http://example.com/resources/foo',
+                        _ID_CONTEXT => 'http://talisaspire.com'
                     ],
                     OP_SEARCH,
                     'tripod_php_testing',
@@ -913,7 +913,7 @@ class ApplyOperationTest extends ResqueJobTestBase
     public function testCreateJobDefaultQueue()
     {
         $impactedSubject = new \Tripod\Mongo\ImpactedSubject(
-            array(_ID_RESOURCE=>"http://example.com/1",_ID_CONTEXT=>"http://talisaspire.com/"),
+            array(_ID_RESOURCE => "http://example.com/1",_ID_CONTEXT => "http://talisaspire.com/"),
             OP_TABLES,
             'tripod_php_testing',
             'CBD_testing',
@@ -921,8 +921,8 @@ class ApplyOperationTest extends ResqueJobTestBase
         );
 
         $jobData = array(
-            'subjects'=>array($impactedSubject->toArray()),
-            'tripodConfig'=>\Tripod\Config::getConfig(),
+            'subjects' => array($impactedSubject->toArray()),
+            'tripodConfig' => \Tripod\Config::getConfig(),
         );
 
         $applyOperation = $this->getMockBuilder(\Tripod\Mongo\Jobs\ApplyOperation::class)
@@ -944,7 +944,7 @@ class ApplyOperationTest extends ResqueJobTestBase
     public function testCreateJobUnreachableRedis()
     {
         $impactedSubject = new \Tripod\Mongo\ImpactedSubject(
-            array(_ID_RESOURCE=>"http://example.com/1",_ID_CONTEXT=>"http://talisaspire.com/"),
+            array(_ID_RESOURCE => "http://example.com/1",_ID_CONTEXT => "http://talisaspire.com/"),
             OP_TABLES,
             'tripod_php_testing',
             'CBD_testing',
@@ -962,13 +962,10 @@ class ApplyOperationTest extends ResqueJobTestBase
         $applyOperation->expects($this->exactly(5))->method("warningLog");
 
         $exceptionThrown = false;
-        try
-        {
+        try {
             $applyOperation->createJob(array($impactedSubject));
-        }
-        catch (\Tripod\Exceptions\JobException $e)
-        {
-            $this->assertEquals('Exception queuing job  - Connection to Redis failed after 1 failures.Last Error : (0) php_network_getaddresses: getaddrinfo failed: nodename nor servname provided, or not known',$e->getMessage());
+        } catch (\Tripod\Exceptions\JobException $e) {
+            $this->assertEquals('Exception queuing job  - Connection to Redis failed after 1 failures.Last Error : (0) php_network_getaddresses: getaddrinfo failed: nodename nor servname provided, or not known', $e->getMessage());
             $exceptionThrown = true;
         }
         if (!$exceptionThrown) {
@@ -979,7 +976,7 @@ class ApplyOperationTest extends ResqueJobTestBase
     public function testCreateJobStatusFalse()
     {
         $impactedSubject = new \Tripod\Mongo\ImpactedSubject(
-            array(_ID_RESOURCE=>"http://example.com/1",_ID_CONTEXT=>"http://talisaspire.com/"),
+            array(_ID_RESOURCE => "http://example.com/1",_ID_CONTEXT => "http://talisaspire.com/"),
             OP_TABLES,
             'tripod_php_testing',
             'CBD_testing',
@@ -997,13 +994,10 @@ class ApplyOperationTest extends ResqueJobTestBase
         $applyOperation->expects($this->exactly(5))->method("warningLog");
 
         $exceptionThrown = false;
-        try
-        {
+        try {
             $applyOperation->createJob(array($impactedSubject));
-        }
-        catch (\Tripod\Exceptions\JobException $e)
-        {
-            $this->assertEquals('Exception queuing job  - Could not retrieve status for queued job - job sometoken failed to tripod::apply',$e->getMessage());
+        } catch (\Tripod\Exceptions\JobException $e) {
+            $this->assertEquals('Exception queuing job  - Could not retrieve status for queued job - job sometoken failed to tripod::apply', $e->getMessage());
             $exceptionThrown = true;
         }
         if (!$exceptionThrown) {
@@ -1014,7 +1008,7 @@ class ApplyOperationTest extends ResqueJobTestBase
     public function testCreateJobSpecifyQueue()
     {
         $impactedSubject = new \Tripod\Mongo\ImpactedSubject(
-            array(_ID_RESOURCE=>"http://example.com/1",_ID_CONTEXT=>"http://talisaspire.com/"),
+            array(_ID_RESOURCE => "http://example.com/1",_ID_CONTEXT => "http://talisaspire.com/"),
             OP_VIEWS,
             'tripod_php_testing',
             'CBD_testing',
@@ -1022,8 +1016,8 @@ class ApplyOperationTest extends ResqueJobTestBase
         );
 
         $jobData = array(
-            'subjects'=>array($impactedSubject->toArray()),
-            'tripodConfig'=>\Tripod\Config::getConfig(),
+            'subjects' => array($impactedSubject->toArray()),
+            'tripodConfig' => \Tripod\Config::getConfig(),
         );
 
         $applyOperation = $this->getMockBuilder(\Tripod\Mongo\Jobs\ApplyOperation::class)
@@ -1051,8 +1045,8 @@ class ApplyOperationTest extends ResqueJobTestBase
     {
         $subject = new \Tripod\Mongo\ImpactedSubject(
             [
-                _ID_RESOURCE=>'http://example.com/resources/foo',
-                _ID_CONTEXT=>'http://talisaspire.com/'
+                _ID_RESOURCE => 'http://example.com/resources/foo',
+                _ID_CONTEXT => 'http://talisaspire.com/'
             ],
             $operation,
             'tripod_php_testing',
@@ -1062,7 +1056,7 @@ class ApplyOperationTest extends ResqueJobTestBase
 
         $this->args = array(
             'tripodConfig' => \Tripod\Config::getConfig(),
-            'subjects'=> [$subject->toArray()],
+            'subjects' => [$subject->toArray()],
             'statsConfig' => $this->getStatsDConfig()
         );
     }

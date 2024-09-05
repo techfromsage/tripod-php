@@ -2,7 +2,6 @@
 
 class MongoTripodStatTest extends MongoTripodTestBase
 {
-
     public function testStatFactory()
     {
         $statConfig = $this->getStatsDConfig();
@@ -33,7 +32,7 @@ class MongoTripodStatTest extends MongoTripodTestBase
         $this->assertEquals('foo.bar', $stat->getHost());
         $this->assertEquals(9876, $stat->getPort());
         $this->assertEquals('', $stat->getPrefix());
-        $this->assertEquals(array('class'=>'Tripod\StatsD', 'config'=>array('host'=>'foo.bar','port'=>9876,'prefix'=>'')), $stat->getConfig());
+        $this->assertEquals(array('class' => 'Tripod\StatsD', 'config' => array('host' => 'foo.bar','port' => 9876,'prefix' => '')), $stat->getConfig());
 
         $stat->setHost('bar.baz');
         $this->assertEquals('bar.baz', $stat->getHost());
@@ -43,7 +42,7 @@ class MongoTripodStatTest extends MongoTripodTestBase
         $stat->setPrefix('FOO_BAR');
         $this->assertEquals('FOO_BAR', $stat->getPrefix());
 
-        $this->assertEquals(array('class'=>'Tripod\StatsD', 'config'=>array('host'=>'bar.baz','port'=>4567,'prefix'=>'FOO_BAR')), $stat->getConfig());
+        $this->assertEquals(array('class' => 'Tripod\StatsD', 'config' => array('host' => 'bar.baz','port' => 4567,'prefix' => 'FOO_BAR')), $stat->getConfig());
     }
 
     public function testStatsDIncrementNoPrefix()
@@ -54,7 +53,7 @@ class MongoTripodStatTest extends MongoTripodTestBase
         $stat->expects($this->once())
             ->method('send')
             ->with(
-                array(STAT_CLASS.'.FOO.BAR'=>"1|c"),
+                array(STAT_CLASS.'.FOO.BAR' => "1|c"),
                 1
             );
 
@@ -72,7 +71,7 @@ class MongoTripodStatTest extends MongoTripodTestBase
             ->method('send')
             ->with(
                 array(
-                    STAT_CLASS.'.FOO.BAR'=>"1|c"
+                    STAT_CLASS.'.FOO.BAR' => "1|c"
                 ),
                 1
             );
@@ -90,7 +89,7 @@ class MongoTripodStatTest extends MongoTripodTestBase
         $stat->expects($this->once())
             ->method('send')
             ->with(
-                array('somePrefix.' . STAT_CLASS. '.FOO.BAR'=>"1|c"),
+                array('somePrefix.' . STAT_CLASS. '.FOO.BAR' => "1|c"),
                 1
             );
 
@@ -107,7 +106,7 @@ class MongoTripodStatTest extends MongoTripodTestBase
             ->method('send')
             ->with(
                 array(
-                    'somePrefix.' . STAT_CLASS.'.FOO.BAR'=>"5|c"
+                    'somePrefix.' . STAT_CLASS.'.FOO.BAR' => "5|c"
                 ),
                 1
             );
@@ -124,7 +123,7 @@ class MongoTripodStatTest extends MongoTripodTestBase
         $stat->expects($this->once())
             ->method('send')
             ->with(
-                array(STAT_CLASS . '.FOO.BAR'=>array("1|c","1234|ms")),
+                array(STAT_CLASS . '.FOO.BAR' => array("1|c","1234|ms")),
                 1
             );
 
@@ -141,7 +140,7 @@ class MongoTripodStatTest extends MongoTripodTestBase
             ->method('send')
             ->with(
                 array(
-                    STAT_CLASS . '.FOO.BAR'=>array("1|c","1234|ms")
+                    STAT_CLASS . '.FOO.BAR' => array("1|c","1234|ms")
                 ),
                 1
             );
@@ -157,12 +156,12 @@ class MongoTripodStatTest extends MongoTripodTestBase
         $stat->expects($this->once())
             ->method('send')
             ->with(
-                array('somePrefix.' . STAT_CLASS. '.FOO.BAR'=>array("1|c","4567|ms")),
+                array('somePrefix.' . STAT_CLASS. '.FOO.BAR' => array("1|c","4567|ms")),
                 1
             );
 
 
-        $stat->timer('FOO.BAR',4567);
+        $stat->timer('FOO.BAR', 4567);
     }
 
     public function testStatsDTimerWithPrefixAndPivotValue()
@@ -174,13 +173,13 @@ class MongoTripodStatTest extends MongoTripodTestBase
             ->method('send')
             ->with(
                 array(
-                    'somePrefix.' . STAT_CLASS . '.FOO.BAR'=>array("1|c","4567|ms")
+                    'somePrefix.' . STAT_CLASS . '.FOO.BAR' => array("1|c","4567|ms")
                 ),
                 1
             );
 
         $stat->setPivotValue('wibble');
-        $stat->timer('FOO.BAR',4567);
+        $stat->timer('FOO.BAR', 4567);
     }
 
     public function testStatsDGaugeNoPrefix()
@@ -191,7 +190,7 @@ class MongoTripodStatTest extends MongoTripodTestBase
         $stat->expects($this->once())
             ->method('send')
             ->with(
-                array(STAT_CLASS.'.FOO.BAR'=>"xyz|g"),
+                array(STAT_CLASS.'.FOO.BAR' => "xyz|g"),
                 1
             );
 
@@ -208,7 +207,7 @@ class MongoTripodStatTest extends MongoTripodTestBase
             ->method('send')
             ->with(
                 array(
-                    STAT_CLASS.'.FOO.BAR'=>"xyz|g"
+                    STAT_CLASS.'.FOO.BAR' => "xyz|g"
                 ),
                 1
             );
@@ -225,7 +224,7 @@ class MongoTripodStatTest extends MongoTripodTestBase
         $stat->expects($this->once())
             ->method('send')
             ->with(
-                array('somePrefix.' . STAT_CLASS . '.FOO.BAR'=>"abc|g"),
+                array('somePrefix.' . STAT_CLASS . '.FOO.BAR' => "abc|g"),
                 1
             );
 
@@ -242,7 +241,7 @@ class MongoTripodStatTest extends MongoTripodTestBase
             ->method('send')
             ->with(
                 array(
-                    'somePrefix.' . STAT_CLASS . '.FOO.BAR'=>"abc|g"
+                    'somePrefix.' . STAT_CLASS . '.FOO.BAR' => "abc|g"
                 ),
                 1
             );

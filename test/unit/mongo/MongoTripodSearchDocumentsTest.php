@@ -1,6 +1,6 @@
 <?php
 
-use \Tripod\Mongo\SearchDocuments;
+use Tripod\Mongo\SearchDocuments;
 
 class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
 {
@@ -17,8 +17,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
         $this->tripod = new \Tripod\Mongo\Driver('CBD_testing', 'tripod_php_testing');
         $this->getTripodCollection($this->tripod)->drop();
         $this->loadBaseSearchDataViaTripod();
-        foreach (\Tripod\Config::getInstance()->getCollectionsForSearch($this->tripod->getStoreName()) as $collection)
-        {
+        foreach (\Tripod\Config::getInstance()->getCollectionsForSearch($this->tripod->getStoreName()) as $collection) {
             $collection->drop();
         }
     }
@@ -160,8 +159,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
 
         $this->assertEquals($expectedImpactedSubjects, $impactedSubjects);
 
-        foreach ($impactedSubjects as $subject)
-        {
+        foreach ($impactedSubjects as $subject) {
             $searchIndexer->update($subject);
         }
     }
@@ -245,8 +243,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
 
         $this->assertEquals($expectedImpactedSubjects, $impactedSubjects);
 
-        foreach ($impactedSubjects as $subject)
-        {
+        foreach ($impactedSubjects as $subject) {
             $searchIndexer->update($subject);
         }
     }
@@ -363,8 +360,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
 
         $this->assertEquals($expectedImpactedSubjects, $impactedSubjects);
 
-        foreach ($impactedSubjects as $subject)
-        {
+        foreach ($impactedSubjects as $subject) {
             $searchIndexer->update($subject);
         }
 
@@ -648,8 +644,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
 
         $this->assertEquals($expectedImpactedSubjects, $search->getImpactedSubjects($expectedSubjectsAndPredicatesOfChange, $this->defaultContext));
 
-        foreach ($expectedImpactedSubjects as $subject)
-        {
+        foreach ($expectedImpactedSubjects as $subject) {
             $search->update($subject);
         }
 

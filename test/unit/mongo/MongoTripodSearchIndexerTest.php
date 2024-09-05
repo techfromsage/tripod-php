@@ -1,12 +1,12 @@
 <?php
 
-class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
-
+class MongoTripodSearchIndexerTest extends MongoTripodTestBase
+{
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->tripod = new \Tripod\Mongo\Driver("CBD_testing", "tripod_php_testing", array("async"=>array(OP_VIEWS=>true, OP_TABLES=>true, OP_SEARCH=>false)));
+        $this->tripod = new \Tripod\Mongo\Driver("CBD_testing", "tripod_php_testing", array("async" => array(OP_VIEWS => true, OP_TABLES => true, OP_SEARCH => false)));
         foreach (\Tripod\Config::getInstance()->getCollectionsForSearch($this->tripod->getStoreName()) as $collection) {
             $collection->drop();
         }
@@ -23,11 +23,11 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
                 'CBD_testing',
                 'tripod_php_testing',
                 array(
-                    'defaultContext'=>'http://talisaspire.com/',
-                    'async'=>array(
-                        OP_VIEWS=>true,
-                        OP_TABLES=>true,
-                        OP_SEARCH=>false
+                    'defaultContext' => 'http://talisaspire.com/',
+                    'async' => array(
+                        OP_VIEWS => true,
+                        OP_TABLES => true,
+                        OP_SEARCH => false
                     )
                 )
             ))
@@ -38,11 +38,11 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             ->setConstructorArgs(array(
                 $tripod,
                 array(
-                    'defaultContext'=>'http://talisaspire.com/',
-                    'async'=>array(
-                        OP_VIEWS=>true,
-                        OP_TABLES=>true,
-                        OP_SEARCH=>false
+                    'defaultContext' => 'http://talisaspire.com/',
+                    'async' => array(
+                        OP_VIEWS => true,
+                        OP_TABLES => true,
+                        OP_SEARCH => false
                     )
                 )
             ))
@@ -50,12 +50,12 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
 
         $labeller = new \Tripod\Mongo\Labeller();
         $subjectsAndPredicatesOfChange = array(
-            $labeller->uri_to_alias("http://talisaspire.com/authors/1")=>array("foaf:name")
+            $labeller->uri_to_alias("http://talisaspire.com/authors/1") => array("foaf:name")
         );
 
         $tripodUpdate->expects($this->atLeastOnce())
             ->method('storeChanges')
-            ->will($this->returnValue(array("subjectsAndPredicatesOfChange"=>$subjectsAndPredicatesOfChange,"transaction_id"=>"t1234")));
+            ->will($this->returnValue(array("subjectsAndPredicatesOfChange" => $subjectsAndPredicatesOfChange,"transaction_id" => "t1234")));
 
         $tripod->expects($this->atLeastOnce())
             ->method('getDataUpdater')
@@ -76,7 +76,8 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             ->with(
                 $this->matchesRegularExpression("/http:\/\/talisaspire\.com\/resources\/doc(1|2|3)$/"),
                 'http://talisaspire.com/',
-                $this->equalTo(array('i_search_resource')))
+                $this->equalTo(array('i_search_resource'))
+            )
         ;
 
         $searchProvider->expects($this->exactly(3))
@@ -91,8 +92,8 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
                 ->setConstructorArgs(
                     array(
                         array(
-                            _ID_RESOURCE=>'http://talisaspire.com/resources/doc1',
-                            _ID_CONTEXT=>'http://talisaspire.com/',
+                            _ID_RESOURCE => 'http://talisaspire.com/resources/doc1',
+                            _ID_CONTEXT => 'http://talisaspire.com/',
                         ),
                         OP_SEARCH,
                         'tripod_php_testing',
@@ -106,8 +107,8 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
                 ->setConstructorArgs(
                     array(
                         array(
-                            _ID_RESOURCE=>'http://talisaspire.com/resources/doc2',
-                            _ID_CONTEXT=>'http://talisaspire.com/',
+                            _ID_RESOURCE => 'http://talisaspire.com/resources/doc2',
+                            _ID_CONTEXT => 'http://talisaspire.com/',
                         ),
                         OP_SEARCH,
                         'tripod_php_testing',
@@ -121,8 +122,8 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
                 ->setConstructorArgs(
                     array(
                         array(
-                            _ID_RESOURCE=>'http://talisaspire.com/resources/doc3',
-                            _ID_CONTEXT=>'http://talisaspire.com/',
+                            _ID_RESOURCE => 'http://talisaspire.com/resources/doc3',
+                            _ID_CONTEXT => 'http://talisaspire.com/',
                         ),
                         OP_SEARCH,
                         'tripod_php_testing',
@@ -150,7 +151,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
 
         $g1 = $tripod->describeResource("http://talisaspire.com/authors/1");
         $g2 = $tripod->describeResource("http://talisaspire.com/authors/1");
-        $g2->add_literal_triple("http://talisaspire.com/authors/1", $g2->qname_to_uri("foaf:name"),"Bill Shakespeare" );
+        $g2->add_literal_triple("http://talisaspire.com/authors/1", $g2->qname_to_uri("foaf:name"), "Bill Shakespeare");
 
         $tripod->saveChanges($g1, $g2);
 
@@ -161,11 +162,11 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
                 'CBD_testing',
                 'tripod_php_testing',
                 array(
-                    'defaultContext'=>'http://talisaspire.com/',
-                    'async'=>array(
-                        OP_VIEWS=>true,
-                        OP_TABLES=>true,
-                        OP_SEARCH=>false
+                    'defaultContext' => 'http://talisaspire.com/',
+                    'async' => array(
+                        OP_VIEWS => true,
+                        OP_TABLES => true,
+                        OP_SEARCH => false
                     )
                 )
             ))
@@ -186,7 +187,8 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             ->with(
                 $this->equalTo("http://talisaspire.com/lists/1234"),
                 'http://talisaspire.com/',
-                $this->isEmpty())
+                $this->isEmpty()
+            )
         ;
 
         $searchProvider->expects($this->exactly(1))
@@ -200,8 +202,8 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             ->setConstructorArgs(
                 array(
                     array(
-                        _ID_RESOURCE=>'http://talisaspire.com/lists/1234',
-                        _ID_CONTEXT=>'http://talisaspire.com/',
+                        _ID_RESOURCE => 'http://talisaspire.com/lists/1234',
+                        _ID_CONTEXT => 'http://talisaspire.com/',
                     ),
                     OP_SEARCH,
                     'tripod_php_testing',
@@ -240,11 +242,11 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
                 'CBD_testing',
                 'tripod_php_testing',
                 array(
-                    'defaultContext'=>'http://talisaspire.com/',
-                    'async'=>array(
-                        OP_VIEWS=>true,
-                        OP_TABLES=>true,
-                        OP_SEARCH=>false
+                    'defaultContext' => 'http://talisaspire.com/',
+                    'async' => array(
+                        OP_VIEWS => true,
+                        OP_TABLES => true,
+                        OP_SEARCH => false
                     )
                 )
             ))
@@ -264,8 +266,8 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             ->setConstructorArgs(
                 array(
                     array(
-                        _ID_RESOURCE=>'http://talisaspire.com/lists/1234',
-                        _ID_CONTEXT=>'http://talisaspire.com/',
+                        _ID_RESOURCE => 'http://talisaspire.com/lists/1234',
+                        _ID_CONTEXT => 'http://talisaspire.com/',
                     ),
                     OP_SEARCH,
                     'tripod_php_testing',
@@ -314,7 +316,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
         );
     }
 
-    function testSearchDocumentsNotRegeneratedIfChangeIsNotInSearchSpec()
+    public function testSearchDocumentsNotRegeneratedIfChangeIsNotInSearchSpec()
     {
 
         // Now make a change that shouldn't affect any search docs
@@ -324,11 +326,11 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
                 'CBD_testing',
                 'tripod_php_testing',
                 array(
-                    'defaultContext'=>'http://talisaspire.com/',
-                    'async'=>array(
-                        OP_VIEWS=>true,
-                        OP_TABLES=>true,
-                        OP_SEARCH=>false
+                    'defaultContext' => 'http://talisaspire.com/',
+                    'async' => array(
+                        OP_VIEWS => true,
+                        OP_TABLES => true,
+                        OP_SEARCH => false
                     )
                 )
             ))
@@ -339,18 +341,18 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
             ->setConstructorArgs(array(
                 $tripod,
                 array(
-                    'defaultContext'=>'http://talisaspire.com/',
-                    'async'=>array(
-                        OP_VIEWS=>true,
-                        OP_TABLES=>true,
-                        OP_SEARCH=>false
+                    'defaultContext' => 'http://talisaspire.com/',
+                    'async' => array(
+                        OP_VIEWS => true,
+                        OP_TABLES => true,
+                        OP_SEARCH => false
                     )
                 )
             ))
             ->getMock();
         $tripodUpdate->expects($this->atLeastOnce())
             ->method('storeChanges')
-            ->will($this->returnValue(array('deletedSubjects'=>array(),"subjectsAndPredicatesOfChange"=>array(),"transaction_id"=>'t1234')));
+            ->will($this->returnValue(array('deletedSubjects' => array(),"subjectsAndPredicatesOfChange" => array(),"transaction_id" => 't1234')));
 
         $tripod->expects($this->atLeastOnce())
             ->method('getDataUpdater')
@@ -387,7 +389,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
 
         $g1 = $tripod->describeResource("http://talisaspire.com/authors/1");
         $g2 = $tripod->describeResource("http://talisaspire.com/authors/1");
-        $g2->add_literal_triple("http://talisaspire.com/authors/1", $g2->qname_to_uri("foaf:dob"),"1564-04-26" );
+        $g2->add_literal_triple("http://talisaspire.com/authors/1", $g2->qname_to_uri("foaf:dob"), "1564-04-26");
         $tripod->saveChanges($g1, $g2);
     }
 
@@ -404,11 +406,11 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
                     'CBD_testing',
                     'tripod_php_testing',
                     array(
-                        'defaultContext'=>'http://talisaspire.com/',
-                        OP_ASYNC=>array(
-                            OP_VIEWS=>true,
-                            OP_TABLES=>true,
-                            OP_SEARCH=>true
+                        'defaultContext' => 'http://talisaspire.com/',
+                        OP_ASYNC => array(
+                            OP_VIEWS => true,
+                            OP_TABLES => true,
+                            OP_SEARCH => true
                         )
                     )
                 )
@@ -420,11 +422,11 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
                 array(
                     $tripod,
                     array(
-                        'defaultContext'=>'http://talisaspire.com/',
-                        OP_ASYNC=>array(
-                            OP_VIEWS=>true,
-                            OP_TABLES=>true,
-                            OP_SEARCH=>true
+                        'defaultContext' => 'http://talisaspire.com/',
+                        OP_ASYNC => array(
+                            OP_VIEWS => true,
+                            OP_TABLES => true,
+                            OP_SEARCH => true
                         )
                     )
                 )
@@ -440,28 +442,28 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
         $newSubjectUri2 = "http://talisaspire.com/resources/newdoc2";
         $newSubjectUri3 = "http://talisaspire.com/resources/newdoc3";
 
-        $g->add_resource_triple($newSubjectUri1, $g->qname_to_uri("rdf:type"),    $g->qname_to_uri("bibo:Article")); // there are no specs that are applicable for this type alone
+        $g->add_resource_triple($newSubjectUri1, $g->qname_to_uri("rdf:type"), $g->qname_to_uri("bibo:Article")); // there are no specs that are applicable for this type alone
         $g->add_resource_triple($newSubjectUri1, $g->qname_to_uri("dct:creator"), "http://talisaspire.com/authors/1");
-        $g->add_literal_triple($newSubjectUri1,  $g->qname_to_uri("dct:title"),   "This is a new resource");
-        $g->add_literal_triple($newSubjectUri1,  $g->qname_to_uri("dct:subject"), "history");
-        $g->add_literal_triple($newSubjectUri1,  $g->qname_to_uri("dct:subject"), "philosophy");
+        $g->add_literal_triple($newSubjectUri1, $g->qname_to_uri("dct:title"), "This is a new resource");
+        $g->add_literal_triple($newSubjectUri1, $g->qname_to_uri("dct:subject"), "history");
+        $g->add_literal_triple($newSubjectUri1, $g->qname_to_uri("dct:subject"), "philosophy");
 
-        $g->add_resource_triple($newSubjectUri2, $g->qname_to_uri("rdf:type"),    $g->qname_to_uri("bibo:Book")); // this is the only resource that should be queued
-        $g->add_resource_triple($newSubjectUri2, $g->qname_to_uri("rdf:type"),    $g->qname_to_uri("acorn:Resource"));
+        $g->add_resource_triple($newSubjectUri2, $g->qname_to_uri("rdf:type"), $g->qname_to_uri("bibo:Book")); // this is the only resource that should be queued
+        $g->add_resource_triple($newSubjectUri2, $g->qname_to_uri("rdf:type"), $g->qname_to_uri("acorn:Resource"));
         $g->add_resource_triple($newSubjectUri2, $g->qname_to_uri("dct:creator"), "http://talisaspire.com/authors/1");
-        $g->add_literal_triple($newSubjectUri2,  $g->qname_to_uri("dct:title"),   "This is another new resource");
-        $g->add_literal_triple($newSubjectUri2,  $g->qname_to_uri("dct:subject"), "maths");
-        $g->add_literal_triple($newSubjectUri2,  $g->qname_to_uri("dct:subject"), "science");
+        $g->add_literal_triple($newSubjectUri2, $g->qname_to_uri("dct:title"), "This is another new resource");
+        $g->add_literal_triple($newSubjectUri2, $g->qname_to_uri("dct:subject"), "maths");
+        $g->add_literal_triple($newSubjectUri2, $g->qname_to_uri("dct:subject"), "science");
 
-        $g->add_resource_triple($newSubjectUri3, $g->qname_to_uri("rdf:type"),    $g->qname_to_uri("bibo:Journal")); // there are no specs that are applicable for this type alone
+        $g->add_resource_triple($newSubjectUri3, $g->qname_to_uri("rdf:type"), $g->qname_to_uri("bibo:Journal")); // there are no specs that are applicable for this type alone
         $g->add_resource_triple($newSubjectUri3, $g->qname_to_uri("dct:creator"), "http://talisaspire.com/authors/1");
-        $g->add_literal_triple($newSubjectUri3,  $g->qname_to_uri("dct:title"),   "This is yet another new resource");
-        $g->add_literal_triple($newSubjectUri3,  $g->qname_to_uri("dct:subject"), "art");
-        $g->add_literal_triple($newSubjectUri3,  $g->qname_to_uri("dct:subject"), "design");
+        $g->add_literal_triple($newSubjectUri3, $g->qname_to_uri("dct:title"), "This is yet another new resource");
+        $g->add_literal_triple($newSubjectUri3, $g->qname_to_uri("dct:subject"), "art");
+        $g->add_literal_triple($newSubjectUri3, $g->qname_to_uri("dct:subject"), "design");
         $subjectsAndPredicatesOfChange = array(
-            $newSubjectUri1=>array('rdf:type','dct:creator','dct:title','dct:subject'),
-            $newSubjectUri2=>array('rdf:type','dct:creator','dct:title','dct:subject'),
-            $newSubjectUri3=>array('rdf:type','dct:creator','dct:title','dct:subject')
+            $newSubjectUri1 => array('rdf:type','dct:creator','dct:title','dct:subject'),
+            $newSubjectUri2 => array('rdf:type','dct:creator','dct:title','dct:subject'),
+            $newSubjectUri3 => array('rdf:type','dct:creator','dct:title','dct:subject')
         );
         $tripod->saveChanges(new \Tripod\Mongo\MongoGraph(), $g);
 
@@ -470,8 +472,8 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase {
         $expectedImpactedSubjects = array(
             new \Tripod\Mongo\ImpactedSubject(
                 array(
-                    _ID_RESOURCE=>$newSubjectUri2,
-                    _ID_CONTEXT=>'http://talisaspire.com/'
+                    _ID_RESOURCE => $newSubjectUri2,
+                    _ID_CONTEXT => 'http://talisaspire.com/'
                 ),
                 OP_SEARCH,
                 'tripod_php_testing',

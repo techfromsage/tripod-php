@@ -1,8 +1,8 @@
 <?php
 
-use \MongoDB\Driver\ReadPreference;
-use \MongoDB\Client;
-use \MongoDB\Driver\Exception\ConnectionTimeoutException;
+use MongoDB\Driver\ReadPreference;
+use MongoDB\Client;
+use MongoDB\Driver\Exception\ConnectionTimeoutException;
 
 class MongoTripodConfigUnitTest extends MongoTripodTestBase
 {
@@ -33,7 +33,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     public function testNamespaces()
     {
         $ns = $this->tripodConfig->getNamespaces();
-        $this->assertEquals(16,count($ns),"Incorrect number of namespaces");
+        $this->assertEquals(16, count($ns), "Incorrect number of namespaces");
 
         $expectedNs = array();
 
@@ -53,7 +53,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $expectedNs['bibo'] = 'http://purl.org/ontology/bibo/';
         $expectedNs['foaf'] = 'http://xmlns.com/foaf/0.1/';
         $expectedNs['baseData'] = 'http://basedata.com/b/';
-        $this->assertEquals($expectedNs,$ns,"Incorrect namespaces");
+        $this->assertEquals($expectedNs, $ns, "Incorrect namespaces");
     }
 
     public function testTConfig()
@@ -61,17 +61,17 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $config = \Tripod\Config::getInstance();
         $cfg = \Tripod\Config::getConfig();
         $tConfig = $config->getTransactionLogConfig();
-        $this->assertEquals('tripod_php_testing',$tConfig['database']);
-        $this->assertEquals('transaction_log',$tConfig['collection']);
+        $this->assertEquals('tripod_php_testing', $tConfig['database']);
+        $this->assertEquals('transaction_log', $tConfig['collection']);
     }
 
     public function testCardinality()
     {
-        $cardinality = $this->tripodConfig->getCardinality("tripod_php_testing","CBD_testing","dct:created");
-        $this->assertEquals(1,$cardinality,"Expected cardinality of 1 for dct:created");
+        $cardinality = $this->tripodConfig->getCardinality("tripod_php_testing", "CBD_testing", "dct:created");
+        $this->assertEquals(1, $cardinality, "Expected cardinality of 1 for dct:created");
 
-        $cardinality = $this->tripodConfig->getCardinality("tripod_php_testing","CBD_testing","random:property");
-        $this->assertEquals(-1,$cardinality,"Expected cardinality of 1 for random:property");
+        $cardinality = $this->tripodConfig->getCardinality("tripod_php_testing", "CBD_testing", "random:property");
+        $this->assertEquals(-1, $cardinality, "Expected cardinality of 1 for random:property");
     }
 
     public function testCompoundIndexAllArraysThrowsException()
@@ -81,25 +81,25 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $config = array();
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["data_sources"] = array(
-            "db1"=>array(
-                "type"=>"mongo",
-                "connection"=>"mongodb://mongodb"
+            "db1" => array(
+                "type" => "mongo",
+                "connection" => "mongodb://mongodb"
             ),
-            "db2"=>array(
-                "type"=>"mongo",
-                "connection"=>"sometestval"
+            "db2" => array(
+                "type" => "mongo",
+                "connection" => "sometestval"
             )
         );
-        $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db1");
+        $config["transaction_log"] = array("database" => "transactions","collection" => "transaction_log","data_source" => "db1");
         $config["stores"] = array(
-            "tripod_php_testing"=>array(
-                "data_source"=>"db2",
-                "pods"=>array(
-                    "CBD_testing"=>array(
-                        "indexes"=>array(
-                            "IllegalCompoundIndex"=>array(
-                                "rdf:type.value"=>1,
-                                "dct:subject.value"=>1)
+            "tripod_php_testing" => array(
+                "data_source" => "db2",
+                "pods" => array(
+                    "CBD_testing" => array(
+                        "indexes" => array(
+                            "IllegalCompoundIndex" => array(
+                                "rdf:type.value" => 1,
+                                "dct:subject.value" => 1)
                         )
                     )
                 )
@@ -126,19 +126,19 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $config = array();
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["data_sources"] = array(
-            "db"=>array(
-                "type"=>"mongo",
-                "connection"=>"sometestval"
+            "db" => array(
+                "type" => "mongo",
+                "connection" => "sometestval"
             )
         );
-        $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");
+        $config["transaction_log"] = array("database" => "transactions","collection" => "transaction_log","data_source" => "db");
         $config["stores"] = array(
-            "tripod_php_testing"=>array(
-                "data_source"=>"db",
-                "pods"=>array(
-                    "CBD_testing"=>array(
-                        "cardinality"=>array(
-                            "foo:bar"=>1
+            "tripod_php_testing" => array(
+                "data_source" => "db",
+                "pods" => array(
+                    "CBD_testing" => array(
+                        "cardinality" => array(
+                            "foo:bar" => 1
                         )
                     )
                 )
@@ -152,38 +152,38 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $expectedSpec = array(
             array(
-                "_id"=>"i_search_list",
-                "type"=>array("resourcelist:List"),
-                "from"=>"CBD_testing",
-                "to_data_source"=>"rs1", // This should be added automatically
-                "filter"=>array(
-                    array("condition"=>array(
-                        "spec:name.l"=>array('$exists'=>true)
+                "_id" => "i_search_list",
+                "type" => array("resourcelist:List"),
+                "from" => "CBD_testing",
+                "to_data_source" => "rs1", // This should be added automatically
+                "filter" => array(
+                    array("condition" => array(
+                        "spec:name.l" => array('$exists' => true)
                     ))
                 ),
-                "indices"=>array(
+                "indices" => array(
                     array(
-                        "fieldName"=>"search_terms",
-                        "predicates"=>array("spec:name","resourcelist:description")
+                        "fieldName" => "search_terms",
+                        "predicates" => array("spec:name","resourcelist:description")
                     )
                 ),
-                "fields"=>array(
+                "fields" => array(
                     array(
-                        "fieldName"=>"result.title",
-                        "predicates"=>array("spec:name"),
-                        "limit"=>1
+                        "fieldName" => "result.title",
+                        "predicates" => array("spec:name"),
+                        "limit" => 1
                     ),
                     array(
-                        "fieldName"=>"result.link",
-                        "value"=>"link",
+                        "fieldName" => "result.link",
+                        "value" => "link",
                     )
                 ),
-                "joins"=>array(
-                    "resourcelist:usedBy"=>array(
-                        "indices"=>array(
+                "joins" => array(
+                    "resourcelist:usedBy" => array(
+                        "indices" => array(
                             array(
-                                "fieldName"=>"search_terms",
-                                "predicates"=>array("aiiso:name","aiiso:code")
+                                "fieldName" => "search_terms",
+                                "predicates" => array("aiiso:name","aiiso:code")
                             )
                         )
                     )
@@ -191,52 +191,52 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
             )
         );
         $actualSpec = \Tripod\Config::getInstance()->getSearchDocumentSpecifications("tripod_php_testing", "resourcelist:List");
-        $this->assertEquals($expectedSpec,$actualSpec);
+        $this->assertEquals($expectedSpec, $actualSpec);
     }
 
     public function testGetSearchDocumentSpecificationsById()
     {
         $expectedSpec =
             array(
-                "_id"=>"i_search_list",
-                "type"=>array("resourcelist:List"),
-                "from"=>"CBD_testing",
-                "to_data_source"=>"rs1", // this is added automatically
-                "filter"=>array(
-                    array("condition"=>array(
-                        "spec:name.l"=>array('$exists'=>true)
+                "_id" => "i_search_list",
+                "type" => array("resourcelist:List"),
+                "from" => "CBD_testing",
+                "to_data_source" => "rs1", // this is added automatically
+                "filter" => array(
+                    array("condition" => array(
+                        "spec:name.l" => array('$exists' => true)
                     ))
                 ),
-                "indices"=>array(
+                "indices" => array(
                     array(
-                        "fieldName"=>"search_terms",
-                        "predicates"=>array("spec:name","resourcelist:description")
+                        "fieldName" => "search_terms",
+                        "predicates" => array("spec:name","resourcelist:description")
                     )
                 ),
-                "fields"=>array(
+                "fields" => array(
                     array(
-                        "fieldName"=>"result.title",
-                        "predicates"=>array("spec:name"),
-                        "limit"=>1
+                        "fieldName" => "result.title",
+                        "predicates" => array("spec:name"),
+                        "limit" => 1
                     ),
                     array(
-                        "fieldName"=>"result.link",
-                        "value"=>"link",
+                        "fieldName" => "result.link",
+                        "value" => "link",
                     )
                 ),
-                "joins"=>array(
-                    "resourcelist:usedBy"=>array(
-                        "indices"=>array(
+                "joins" => array(
+                    "resourcelist:usedBy" => array(
+                        "indices" => array(
                             array(
-                                "fieldName"=>"search_terms",
-                                "predicates"=>array("aiiso:name","aiiso:code")
+                                "fieldName" => "search_terms",
+                                "predicates" => array("aiiso:name","aiiso:code")
                             )
                         )
                     )
                 )
             );
         $actualSpec = \Tripod\Config::getInstance()->getSearchDocumentSpecification('tripod_php_testing', "i_search_list");
-        $this->assertEquals($expectedSpec,$actualSpec);
+        $this->assertEquals($expectedSpec, $actualSpec);
     }
 
 
@@ -244,7 +244,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $expectedSpec = array();
         $actualSpec = \Tripod\Config::getInstance()->getSearchDocumentSpecifications("something:doesntexist");
-        $this->assertEquals($expectedSpec,$actualSpec);
+        $this->assertEquals($expectedSpec, $actualSpec);
     }
 
     public function testViewSpecCountWithoutTTLThrowsException()
@@ -254,33 +254,33 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $config = array();
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["data_sources"] = array(
-            "db"=>array(
-                "type"=>"mongo",
-                "connection"=>"sometestval"
+            "db" => array(
+                "type" => "mongo",
+                "connection" => "sometestval"
             )
         );
-        $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");
+        $config["transaction_log"] = array("database" => "transactions","collection" => "transaction_log","data_source" => "db");
         $config["stores"] = array(
-            "tripod_php_testing"=>array(
-                "data_source"=>"db",
-                "pods"=>array(
-                    "CBD_testing"=>array(
+            "tripod_php_testing" => array(
+                "data_source" => "db",
+                "pods" => array(
+                    "CBD_testing" => array(
                     )
                 )
             )
         );
         $config["stores"]["tripod_php_testing"]["view_specifications"] = array(
             array(
-                "_id"=>"v_illegal_counts",
-                "type"=>"http://talisaspire.com/schema#Work",
-                "from"=>"CBD_testing",
-                "counts"=>array(
-                    "acorn:resourceCount"=>array(
-                        "filter"=>array("rdf:type.value"=>"http://talisaspire.com/schema#Resource"),
-                        "property"=>"dct:isVersionOf"
+                "_id" => "v_illegal_counts",
+                "type" => "http://talisaspire.com/schema#Work",
+                "from" => "CBD_testing",
+                "counts" => array(
+                    "acorn:resourceCount" => array(
+                        "filter" => array("rdf:type.value" => "http://talisaspire.com/schema#Resource"),
+                        "property" => "dct:isVersionOf"
                     )
                 ),
-                "joins"=>array("dct:hasVersion"=>array())
+                "joins" => array("dct:hasVersion" => array())
             )
         );
         \Tripod\Config::setConfig($config);
@@ -294,32 +294,32 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $config = array();
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["data_sources"] = array(
-            "db"=>array(
-                "type"=>"mongo",
-                "connection"=>"sometestval"
+            "db" => array(
+                "type" => "mongo",
+                "connection" => "sometestval"
             )
         );
-        $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");
+        $config["transaction_log"] = array("database" => "transactions","collection" => "transaction_log","data_source" => "db");
         $config["stores"] = array(
-            "tripod_php_testing"=>array(
-                "data_source"=>"db",
-                "pods"=>array(
-                    "CBD_testing"=>array(
+            "tripod_php_testing" => array(
+                "data_source" => "db",
+                "pods" => array(
+                    "CBD_testing" => array(
                     )
                 )
             )
         );
         $config["stores"]["tripod_php_testing"]["view_specifications"] = array(
             array(
-                "_id"=>"v_illegal_counts",
-                "type"=>"http://talisaspire.com/schema#Work",
-                "from"=>"CBD_testing",
-                "joins"=>array(
-                    "acorn:seeAlso"=>array(
-                        "counts"=>array(
-                            "acorn:resourceCount"=>array(
-                                "filter"=>array("rdf:type.value"=>"http://talisaspire.com/schema#Resource"),
-                                "property"=>"dct:isVersionOf"
+                "_id" => "v_illegal_counts",
+                "type" => "http://talisaspire.com/schema#Work",
+                "from" => "CBD_testing",
+                "joins" => array(
+                    "acorn:seeAlso" => array(
+                        "counts" => array(
+                            "acorn:resourceCount" => array(
+                                "filter" => array("rdf:type.value" => "http://talisaspire.com/schema#Resource"),
+                                "property" => "dct:isVersionOf"
                             )
                         )
                     )
@@ -337,17 +337,17 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $config = array();
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["data_sources"] = array(
-            "db"=>array(
-                "type"=>"mongo",
-                "connection"=>"sometestval"
+            "db" => array(
+                "type" => "mongo",
+                "connection" => "sometestval"
             )
         );
-        $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");
+        $config["transaction_log"] = array("database" => "transactions","collection" => "transaction_log","data_source" => "db");
         $config["stores"] = array(
-            "tripod_php_testing"=>array(
-                "data_source"=>"db",
-                "pods"=>array(
-                    "CBD_testing"=>array(
+            "tripod_php_testing" => array(
+                "data_source" => "db",
+                "pods" => array(
+                    "CBD_testing" => array(
                     )
                 )
             )
@@ -355,14 +355,14 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
 
         $config["stores"]["tripod_php_testing"]["table_specifications"] = array(
             array(
-                "_id"=>"t_illegal_counts",
-                "type"=>"http://talisaspire.com/schema#Work",
-                "from"=>"CBD_testing",
-                "joins"=>array(
-                    "acorn:resourceCount"=>array(
-                        "filter"=>array("rdf:type.value"=>"http://talisaspire.com/schema#Resource"),
-                        "property"=>"dct:isVersionOf",
-                        "counts"=>array(array("fieldName"=>"someField"))
+                "_id" => "t_illegal_counts",
+                "type" => "http://talisaspire.com/schema#Work",
+                "from" => "CBD_testing",
+                "joins" => array(
+                    "acorn:resourceCount" => array(
+                        "filter" => array("rdf:type.value" => "http://talisaspire.com/schema#Resource"),
+                        "property" => "dct:isVersionOf",
+                        "counts" => array(array("fieldName" => "someField"))
                     )
                 )
             )
@@ -378,33 +378,33 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $config = array();
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["data_sources"] = array(
-            "db"=>array(
-                "type"=>"mongo",
-                "connection"=>"sometestval"
+            "db" => array(
+                "type" => "mongo",
+                "connection" => "sometestval"
             )
         );
-        $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");
+        $config["transaction_log"] = array("database" => "transactions","collection" => "transaction_log","data_source" => "db");
         $config["stores"] = array(
-            "tripod_php_testing"=>array(
-                "data_source"=>"db",
-                "pods"=>array(
-                    "CBD_testing"=>array()
+            "tripod_php_testing" => array(
+                "data_source" => "db",
+                "pods" => array(
+                    "CBD_testing" => array()
                 )
             )
         );
 
         $config["stores"]["tripod_php_testing"]["table_specifications"] = array(
             array(
-                "_id"=>"t_illegal_counts",
-                "from"=>"CBD_testing",
-                "type"=>"http://talisaspire.com/schema#Work",
-                "joins"=>array(
-                     "acorn:resourceCount"=>array(
-                         "filter"=>array("rdf:type.value"=>"http://talisaspire.com/schema#Resource"),
-                         "property"=>"dct:isVersionOf",
-                         "joins"=>array(
-                             "another:property"=>array(
-                                 "counts"=>array(array("property"=>"value"))
+                "_id" => "t_illegal_counts",
+                "from" => "CBD_testing",
+                "type" => "http://talisaspire.com/schema#Work",
+                "joins" => array(
+                     "acorn:resourceCount" => array(
+                         "filter" => array("rdf:type.value" => "http://talisaspire.com/schema#Resource"),
+                         "property" => "dct:isVersionOf",
+                         "joins" => array(
+                             "another:property" => array(
+                                 "counts" => array(array("property" => "value"))
                              )
                          )
                      )
@@ -422,29 +422,29 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $config = array();
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["data_sources"] = array(
-            "db"=>array(
-                "type"=>"mongo",
-                "connection"=>"sometestval"
+            "db" => array(
+                "type" => "mongo",
+                "connection" => "sometestval"
             )
         );
-        $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");
+        $config["transaction_log"] = array("database" => "transactions","collection" => "transaction_log","data_source" => "db");
         $config["stores"] = array(
-            "tripod_php_testing"=>array(
-                "data_source"=>"db",
-                "pods"=>array(
-                    "CBD_testing"=>array()
+            "tripod_php_testing" => array(
+                "data_source" => "db",
+                "pods" => array(
+                    "CBD_testing" => array()
                 )
             )
         );
 
         $config["stores"]["tripod_php_testing"]["table_specifications"] = array(
             array(
-                "_id"=>"t_illegal_spec",
-                "type"=>"http://talisaspire.com/schema#Work",
-                "from"=>"CBD_testing",
-                "fields"=>array(
+                "_id" => "t_illegal_spec",
+                "type" => "http://talisaspire.com/schema#Work",
+                "from" => "CBD_testing",
+                "fields" => array(
                      array(
-                         "predicates"=>array("rdf:type"),
+                         "predicates" => array("rdf:type"),
                      )
                 )
             )
@@ -460,29 +460,29 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $config = array();
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["data_sources"] = array(
-            "db"=>array(
-                "type"=>"mongo",
-                "connection"=>"sometestval"
+            "db" => array(
+                "type" => "mongo",
+                "connection" => "sometestval"
             )
         );
-        $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");
+        $config["transaction_log"] = array("database" => "transactions","collection" => "transaction_log","data_source" => "db");
         $config["stores"] = array(
-            "tripod_php_testing"=>array(
-                "data_source"=>"db",
-                "pods"=>array(
-                    "CBD_testing"=>array()
+            "tripod_php_testing" => array(
+                "data_source" => "db",
+                "pods" => array(
+                    "CBD_testing" => array()
                 )
             )
         );
 
         $config["stores"]["tripod_php_testing"]["table_specifications"] = array(
             array(
-                "_id"=>"t_illegal_spec",
-                "type"=>"http://talisaspire.com/schema#Work",
-                "from"=>"CBD_testing",
-                "fields"=>array(
+                "_id" => "t_illegal_spec",
+                "type" => "http://talisaspire.com/schema#Work",
+                "from" => "CBD_testing",
+                "fields" => array(
                      array(
-                         "fieldName"=>"some_field",
+                         "fieldName" => "some_field",
                      )
                 )
             )
@@ -498,29 +498,29 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $config = array();
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["data_sources"] = array(
-            "db"=>array(
-                "type"=>"mongo",
-                "connection"=>"sometestval"
+            "db" => array(
+                "type" => "mongo",
+                "connection" => "sometestval"
             )
         );
-        $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");
+        $config["transaction_log"] = array("database" => "transactions","collection" => "transaction_log","data_source" => "db");
         $config["stores"] = array(
-            "tripod_php_testing"=>array(
-                "data_source"=>"db",
-                "pods"=>array(
-                    "CBD_testing"=>array()
+            "tripod_php_testing" => array(
+                "data_source" => "db",
+                "pods" => array(
+                    "CBD_testing" => array()
                 )
             )
         );
 
         $config["stores"]["tripod_php_testing"]["table_specifications"] = array(
             array(
-                "_id"=>"t_illegal_spec",
-                "type"=>"http://talisaspire.com/schema#Work",
-                "from"=>"CBD_testing",
-                "counts"=>array(
+                "_id" => "t_illegal_spec",
+                "type" => "http://talisaspire.com/schema#Work",
+                "from" => "CBD_testing",
+                "counts" => array(
                      array(
-                         "fieldName"=>"some_field",
+                         "fieldName" => "some_field",
                      )
                 )
             )
@@ -536,29 +536,29 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $config = array();
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["data_sources"] = array(
-            "db"=>array(
-                "type"=>"mongo",
-                "connection"=>"sometestval"
+            "db" => array(
+                "type" => "mongo",
+                "connection" => "sometestval"
             )
         );
-        $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");
+        $config["transaction_log"] = array("database" => "transactions","collection" => "transaction_log","data_source" => "db");
         $config["stores"] = array(
-            "tripod_php_testing"=>array(
-            "data_source"=>"db",
-                "pods"=>array(
-                    "CBD_testing"=>array()
+            "tripod_php_testing" => array(
+            "data_source" => "db",
+                "pods" => array(
+                    "CBD_testing" => array()
                 )
             )
         );
 
         $config["stores"]["tripod_php_testing"]["table_specifications"] = array(
             array(
-                "_id"=>"t_illegal_spec",
-                "type"=>"http://talisaspire.com/schema#Work",
-                "from"=>"CBD_testing",
-                "counts"=>array(
+                "_id" => "t_illegal_spec",
+                "type" => "http://talisaspire.com/schema#Work",
+                "from" => "CBD_testing",
+                "counts" => array(
                      array(
-                         "property"=>"some:property",
+                         "property" => "some:property",
                      )
                 )
             )
@@ -574,30 +574,30 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $config = array();
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["data_sources"] = array(
-            "db"=>array(
-                "type"=>"mongo",
-                "connection"=>"sometestval"
+            "db" => array(
+                "type" => "mongo",
+                "connection" => "sometestval"
             )
         );
-        $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");
+        $config["transaction_log"] = array("database" => "transactions","collection" => "transaction_log","data_source" => "db");
         $config["stores"] = array(
-            "tripod_php_testing"=>array(
-            "data_source"=>"db",
-                "pods"=>array(
-                    "CBD_testing"=>array()
+            "tripod_php_testing" => array(
+            "data_source" => "db",
+                "pods" => array(
+                    "CBD_testing" => array()
                 )
             )
         );
 
         $config["stores"]["tripod_php_testing"]["table_specifications"] = array(
             array(
-                "_id"=>"t_illegal_spec",
-                "type"=>"http://talisaspire.com/schema#Work",
-                "from"=>"CBD_testing",
-                "counts"=>array(
+                "_id" => "t_illegal_spec",
+                "type" => "http://talisaspire.com/schema#Work",
+                "from" => "CBD_testing",
+                "counts" => array(
                      array(
-                         "fieldName"=>"someField",
-                         "property"=>array("some:property"),
+                         "fieldName" => "someField",
+                         "property" => array("some:property"),
                      )
                 )
             )
@@ -612,31 +612,31 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $this->expectExceptionMessage('Mandatory config key [defaultContext] is missing from config');
         $config = array();
         $config["data_sources"] = array(
-            "db"=>array(
-                "type"=>"mongo",
-                "connection"=>"sometestval"
+            "db" => array(
+                "type" => "mongo",
+                "connection" => "sometestval"
             )
         );
-        $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"db");
+        $config["transaction_log"] = array("database" => "transactions","collection" => "transaction_log","data_source" => "db");
         $config["stores"] = array(
-            "tripod_php_testing"=>array(
-                "data_source"=>"db",
-                "pods"=>array(
-                    "CBD_testing"=>array(
+            "tripod_php_testing" => array(
+                "data_source" => "db",
+                "pods" => array(
+                    "CBD_testing" => array(
                     )
                 )
             )
         );
         $config["stores"]["tripod_php_testing"]["view_specifications"] = array(
             array(
-                "_id"=>"v_illegal_counts",
-                "type"=>"http://talisaspire.com/schema#Work",
-                "joins"=>array(
-                    "acorn:seeAlso"=>array(
-                        "counts"=>array(
-                            "acorn:resourceCount"=>array(
-                                "filter"=>array("rdf:type.value"=>"http://talisaspire.com/schema#Resource"),
-                                "property"=>"dct:isVersionOf"
+                "_id" => "v_illegal_counts",
+                "type" => "http://talisaspire.com/schema#Work",
+                "joins" => array(
+                    "acorn:seeAlso" => array(
+                        "counts" => array(
+                            "acorn:resourceCount" => array(
+                                "filter" => array("rdf:type.value" => "http://talisaspire.com/schema#Resource"),
+                                "property" => "dct:isVersionOf"
                             )
                         )
                     )
@@ -673,8 +673,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $this->assertArrayHasKey("_id", $indexSpecs["CBD_testing_2"][_LOCKED_FOR_TRANS_INDEX]);
         $this->assertArrayHasKey(_LOCKED_FOR_TRANS, $indexSpecs["CBD_testing_2"][_LOCKED_FOR_TRANS_INDEX]);
 
-        $this->assertEquals(array("value.isbn"=>1), $indexSpecs[TABLE_ROWS_COLLECTION]["rs1"][0]);
-        $this->assertEquals(array("value._graphs.sioc:has_container.u"=>1,"value._graphs.sioc:topic.u"=>1), $indexSpecs[VIEWS_COLLECTION]["rs1"][0]);
+        $this->assertEquals(array("value.isbn" => 1), $indexSpecs[TABLE_ROWS_COLLECTION]["rs1"][0]);
+        $this->assertEquals(array("value._graphs.sioc:has_container.u" => 1,"value._graphs.sioc:topic.u" => 1), $indexSpecs[VIEWS_COLLECTION]["rs1"][0]);
     }
 
     public function testGetReplicaSetName()
@@ -682,33 +682,33 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $config = array();
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["data_sources"] = array(
-            "rs1"=>array(
-                "type"=>"mongo",
-                "replicaSet"=>"myreplicaset",
-                "connection"=>"sometestval",
+            "rs1" => array(
+                "type" => "mongo",
+                "replicaSet" => "myreplicaset",
+                "connection" => "sometestval",
             ),
-            "mongo1"=>array(
-                "type"=>"mongo",
-                "connection"=>"sometestval",
+            "mongo1" => array(
+                "type" => "mongo",
+                "connection" => "sometestval",
             ),
-            "tlog"=>array(
-                "type"=>"mongo",
-                "connection"=>"mongodb://abc:zyx@localhost:27018"
+            "tlog" => array(
+                "type" => "mongo",
+                "connection" => "mongodb://abc:zyx@localhost:27018"
             )
         );
-        $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log", "data_source"=>"tlog");
+        $config["transaction_log"] = array("database" => "transactions","collection" => "transaction_log", "data_source" => "tlog");
         $config["stores"] = array(
-            "tripod_php_testing"=>array(
+            "tripod_php_testing" => array(
                 "data_source" => "rs1",
-                "pods"=>array(
-                    "CBD_testing"=>array(
+                "pods" => array(
+                    "CBD_testing" => array(
                     )
                 )
             ),
-            "testing_2"=>array(
+            "testing_2" => array(
                 "data_source" => "mongo1",
-                "pods"=>array(
-                    "CBD_testing"=>array(
+                "pods" => array(
+                    "CBD_testing" => array(
                     )
                 )
             )
@@ -744,23 +744,24 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $this->assertEquals(null, $mtc->getReplicaSetName('rs2'));
     }
 
-    public function testGetViewSpecification(){
+    public function testGetViewSpecification()
+    {
         $expectedVspec = array(
-            "_id"=> "v_resource_full",
+            "_id" => "v_resource_full",
             "_version" => "0.1",
-            "from"=>"CBD_testing",
-            "to_data_source"=>"rs1", // This should get added automatically
-            "ensureIndexes" =>array(
+            "from" => "CBD_testing",
+            "to_data_source" => "rs1", // This should get added automatically
+            "ensureIndexes" => array(
                 array(
-                    "value._graphs.sioc:has_container.u"=>1,
-                    "value._graphs.sioc:topic.u"=>1
+                    "value._graphs.sioc:has_container.u" => 1,
+                    "value._graphs.sioc:topic.u" => 1
                 )
             ),
-            "type"=>"acorn:Resource",
-            "include"=>array("rdf:type","searchterms:topic"),
-            "joins"=>array(
-                "dct:isVersionOf"=>array(
-                    "include"=>array(
+            "type" => "acorn:Resource",
+            "include" => array("rdf:type","searchterms:topic"),
+            "joins" => array(
+                "dct:isVersionOf" => array(
+                    "include" => array(
                         "dct:subject",
                         "rdf:type"
                     )
@@ -778,27 +779,27 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     public function testGetTableSpecification()
     {
         $expectedTspec = array(
-            "_id"=>"t_resource",
-            "type"=>"acorn:Resource",
-            "from"=>"CBD_testing",
-            "to_data_source"=>"rs1", // This should be added automatically
-            "ensureIndexes" => array(array("value.isbn"=>1)),
-            "fields"=>array(
+            "_id" => "t_resource",
+            "type" => "acorn:Resource",
+            "from" => "CBD_testing",
+            "to_data_source" => "rs1", // This should be added automatically
+            "ensureIndexes" => array(array("value.isbn" => 1)),
+            "fields" => array(
                 array(
-                    "fieldName"=>"type",
-                    "predicates"=>array("rdf:type")
+                    "fieldName" => "type",
+                    "predicates" => array("rdf:type")
                 ),
                 array(
-                    "fieldName"=>"isbn",
-                    "predicates"=>array("bibo:isbn13")
+                    "fieldName" => "isbn",
+                    "predicates" => array("bibo:isbn13")
                 ),
             ),
-            "joins"=>array(
-                "dct:isVersionOf"=>array(
-                    "fields"=>array(
+            "joins" => array(
+                "dct:isVersionOf" => array(
+                    "fields" => array(
                         array(
-                            "fieldName"=>"isbn13",
-                            "predicates"=>array("bibo:isbn13")
+                            "fieldName" => "isbn13",
+                            "predicates" => array("bibo:isbn13")
                         )
                     )
                 )
@@ -815,23 +816,23 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
 
     public function testSearchConfigNotPresent()
     {
-        $config=array();
+        $config = array();
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["data_sources"] = array(
-            "mongo1"=>array(
-                "type"=>"mongo",
-                "connection"=>"mongodb://mongodb"
+            "mongo1" => array(
+                "type" => "mongo",
+                "connection" => "mongodb://mongodb"
             )
         );
         $config["stores"] = array(
             "tripod_php_testing" => array(
-                "data_source"=>"mongo1",
+                "data_source" => "mongo1",
                 "pods" => array(
                     "CBD_testing" => array()
                 )
             )
         );
-        $config["transaction_log"] = array("database"=>"transactions","collection"=>"transaction_log","data_source"=>"mongo1");
+        $config["transaction_log"] = array("database" => "transactions","collection" => "transaction_log","data_source" => "mongo1");
 
         \Tripod\Config::setConfig($config);
         $mtc = \Tripod\Config::getInstance();
@@ -880,7 +881,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
             'temp:last_login_DOES_NOT_EXIST'
         );
 
-        foreach($expectedValues as $expected){
+        foreach ($expectedValues as $expected) {
             $this->assertContains($expected, $predicates, "List of predicates should have contained $expected");
         }
     }
@@ -899,7 +900,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
             'aiiso:code'
         );
 
-        foreach($expectedValues as $expected){
+        foreach ($expectedValues as $expected) {
             $this->assertContains($expected, $predicates, "List of predicates should have contained $expected");
         }
     }
@@ -919,7 +920,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
             'temp:amountOfTimeSpent' // defined only in the filter
         );
 
-        foreach($expectedValues as $expected){
+        foreach ($expectedValues as $expected) {
             $this->assertContains($expected, $predicates, "List of predicates should have contained $expected");
         }
     }
@@ -933,12 +934,11 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $mockConfig->expects($this->exactly(2))
             ->method('getDatabase')
             ->withConsecutive(
-                  array('tripod_php_testing', 'rs1', ReadPreference::RP_SECONDARY_PREFERRED),
-                  array('tripod_php_testing', 'rs1', ReadPreference::RP_NEAREST)
+                array('tripod_php_testing', 'rs1', ReadPreference::RP_SECONDARY_PREFERRED),
+                array('tripod_php_testing', 'rs1', ReadPreference::RP_NEAREST)
             )
             ->will($this->returnCallback(
-                function()
-                {
+                function () {
                     $mongo = new Client();
                     return $mongo->selectDatabase('tripod_php_testing');
                 }
@@ -958,40 +958,31 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $config = \Tripod\Config::getInstance();
         $pods = $config->getPods($storeName);
 
-        foreach($pods as $pod)
-        {
-            if(!in_array($config->getDataSourceForPod($storeName, $pod), $dataSourcesForStore))
-            {
+        foreach ($pods as $pod) {
+            if (!in_array($config->getDataSourceForPod($storeName, $pod), $dataSourcesForStore)) {
                 $dataSourcesForStore[] = $config->getDataSourceForPod($storeName, $pod);
             }
         }
 
-        foreach($config->getViewSpecifications($storeName) as $id=>$spec)
-        {
-            if(!in_array($spec['to_data_source'], $dataSourcesForStore))
-            {
+        foreach ($config->getViewSpecifications($storeName) as $id => $spec) {
+            if (!in_array($spec['to_data_source'], $dataSourcesForStore)) {
                 $dataSourcesForStore[] = $spec['to_data_source'];
             }
         }
 
-        foreach($config->getTableSpecifications($storeName) as $id=>$spec)
-        {
-            if(!in_array($spec['to_data_source'], $dataSourcesForStore))
-            {
+        foreach ($config->getTableSpecifications($storeName) as $id => $spec) {
+            if (!in_array($spec['to_data_source'], $dataSourcesForStore)) {
                 $dataSourcesForStore[] = $spec['to_data_source'];
             }
         }
 
-        foreach($config->getSearchDocumentSpecifications($storeName) as $id=>$spec)
-        {
-            if(!in_array($spec['to_data_source'], $dataSourcesForStore))
-            {
+        foreach ($config->getSearchDocumentSpecifications($storeName) as $id => $spec) {
+            if (!in_array($spec['to_data_source'], $dataSourcesForStore)) {
                 $dataSourcesForStore[] = $spec['to_data_source'];
             }
         }
 
-        if(count($dataSourcesForStore) < 2)
-        {
+        if (count($dataSourcesForStore) < 2) {
             $this->markTestSkipped("Less than two datasources configured for store, nothing to test");
         }
 
@@ -1000,22 +991,19 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $cfg = \Tripod\Config::getConfig();
         $defaultDataSource = $cfg["data_sources"][$config->getDefaultDataSourceForStore($storeName)];
 
-        foreach($dataSourcesForStore as $source)
-        {
-            if($cfg['data_sources'][$source] != $defaultDataSource)
-            {
+        foreach ($dataSourcesForStore as $source) {
+            if ($cfg['data_sources'][$source] != $defaultDataSource) {
                 $diff = true;
                 break;
             }
             $config->getDatabase($storeName, $source)->drop();
         }
 
-        if($diff == false)
-        {
+        if ($diff == false) {
             $this->markTestSkipped("All datasources configured for store use same configuration, nothing to test");
         }
 
-        $this->tripod = new \Tripod\Mongo\Driver('CBD_testing', $storeName, array(OP_ASYNC=>array(OP_VIEWS=>true,OP_TABLES=>false,OP_SEARCH=>false)));
+        $this->tripod = new \Tripod\Mongo\Driver('CBD_testing', $storeName, array(OP_ASYNC => array(OP_VIEWS => true,OP_TABLES => false,OP_SEARCH => false)));
         $this->loadResourceDataViaTripod();
 
         $graph = new \Tripod\Mongo\MongoGraph();
@@ -1030,20 +1018,18 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $this->tripod->saveChanges($graph, $newGraph);
 
         // Generate views and tables
-        foreach($config->getViewSpecifications($storeName) as $viewId=>$viewSpec)
-        {
+        foreach ($config->getViewSpecifications($storeName) as $viewId => $viewSpec) {
             $this->tripod->getTripodViews()->generateView($viewId);
         }
-        foreach($config->getTableSpecifications($storeName) as $tableId=>$tableSpec)
-        {
+        foreach ($config->getTableSpecifications($storeName) as $tableId => $tableSpec) {
             $this->tripod->generateTableRows($tableId);
         }
 
         // Create some locks so we have a collection
         $lCollection = $config->getCollectionForLocks($storeName);
         $lCollection->drop();
-        $lCollection->insertOne(array(_ID_KEY=>array(_ID_RESOURCE=>'foo',_ID_CONTEXT=>'bar'), _LOCKED_FOR_TRANS=>'foobar'));
-        $lCollection->insertOne(array(_ID_KEY=>array(_ID_RESOURCE=>'baz',_ID_CONTEXT=>'bar'), _LOCKED_FOR_TRANS=>'wibble'));
+        $lCollection->insertOne(array(_ID_KEY => array(_ID_RESOURCE => 'foo',_ID_CONTEXT => 'bar'), _LOCKED_FOR_TRANS => 'foobar'));
+        $lCollection->insertOne(array(_ID_KEY => array(_ID_RESOURCE => 'baz',_ID_CONTEXT => 'bar'), _LOCKED_FOR_TRANS => 'wibble'));
         $this->tripod->removeInertLocks('foobar', 'reason1');
 
         $collectionsForDataSource = array();
@@ -1059,12 +1045,9 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $specs['table_rows'] = \Tripod\Config::getInstance()->getTableSpecifications($storeName);
         $specsForDataSource = array();
 
-        foreach(array('views', 'search', 'table_rows') as $type)
-        {
-            foreach($specs[$type] as $spec)
-            {
-                if(!isset($specsForDataSource[$spec['to_data_source']][$type]))
-                {
+        foreach (array('views', 'search', 'table_rows') as $type) {
+            foreach ($specs[$type] as $spec) {
+                if (!isset($specsForDataSource[$spec['to_data_source']][$type])) {
                     $specsForDataSource[$spec['to_data_source']][$type] = array();
                 }
                 $specsForDataSource[$spec['to_data_source']][$type][] = $spec['_id'];
@@ -1074,30 +1057,24 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
 
         $foundCollections = array();
 
-        foreach($dataSourcesForStore  as $source)
-        {
+        foreach ($dataSourcesForStore as $source) {
             $db = $config->getDatabase($storeName, $source);
-            foreach($db->listCollections() as $collectionInfo)
-            {
+            foreach ($db->listCollections() as $collectionInfo) {
                 $name = $collectionInfo->getName();
                 $collection = $db->selectCollection($name);
                 $foundCollections[] = $name;
                 $this->assertContains($name, $collectionsForDataSource[$source], "Source " . $source . " does not include " . $name);
-                switch($name)
-                {
+                switch ($name) {
                     case 'views':
                         $this->assertGreaterThan(0, count($specsForDataSource[$source]['views']));
 
                         $this->assertGreaterThan(0, $collection->count(array()), "views collection did not have at least 1 document in data source " . $source);
-                        foreach($dataSourcesForStore as $otherSource)
-                        {
-                            if($otherSource == $source)
-                            {
+                        foreach ($dataSourcesForStore as $otherSource) {
+                            if ($otherSource == $source) {
                                 continue;
                             }
-                            foreach($specsForDataSource[$otherSource]['views'] as $view)
-                            {
-                                $this->assertEquals(0, $collection->count(array('_id.type'=>$view)), $view . " had at least 1 document in data source " . $source);
+                            foreach ($specsForDataSource[$otherSource]['views'] as $view) {
+                                $this->assertEquals(0, $collection->count(array('_id.type' => $view)), $view . " had at least 1 document in data source " . $source);
                             }
                         }
 
@@ -1107,15 +1084,12 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
 
                         $this->assertGreaterThan(0, $collection->count(array()), "search collection did not have at least 1 document in data source " . $source);
 
-                        foreach($dataSourcesForStore as $otherSource)
-                        {
-                            if($otherSource == $source)
-                            {
+                        foreach ($dataSourcesForStore as $otherSource) {
+                            if ($otherSource == $source) {
                                 continue;
                             }
-                            foreach($specsForDataSource[$otherSource]['search'] as $search)
-                            {
-                                $this->assertEquals(0, $collection->count(array('_id.type'=>$search)), $search . " had at least 1 document in data source " . $source);
+                            foreach ($specsForDataSource[$otherSource]['search'] as $search) {
+                                $this->assertEquals(0, $collection->count(array('_id.type' => $search)), $search . " had at least 1 document in data source " . $source);
                             }
                         }
                         break;
@@ -1123,15 +1097,12 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
                         $this->assertGreaterThan(0, count($specsForDataSource[$source]['table_rows']));
 
                         $this->assertGreaterThan(0, $collection->count(array()), "table_rows collection did not have at least 1 document in data source " . $source);
-                        foreach($dataSourcesForStore as $otherSource)
-                        {
-                            if($otherSource == $source)
-                            {
+                        foreach ($dataSourcesForStore as $otherSource) {
+                            if ($otherSource == $source) {
                                 continue;
                             }
-                            foreach($specsForDataSource[$otherSource]['table_rows'] as $t)
-                            {
-                                $this->assertEquals(0, $collection->count(array('_id.type'=>$t)), $t . " had at least 1 document in data source " . $source);
+                            foreach ($specsForDataSource[$otherSource]['table_rows'] as $t) {
+                                $this->assertEquals(0, $collection->count(array('_id.type' => $t)), $t . " had at least 1 document in data source " . $source);
                             }
                         }
                         break;
@@ -1165,24 +1136,24 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
 
         // Make sure the dbs do not exist
         $transactionConnInfo = $newConfig['data_sources'][$newConfig['transaction_log']['data_source']];
-        $options = isset($transactionConnInfo['replicaSet']) && !empty($transactionConnInfo['replicaSet']) ? array('replicaSet' => $transactionConnInfo['replicaSet']): array();
+        $options = isset($transactionConnInfo['replicaSet']) && !empty($transactionConnInfo['replicaSet']) ? array('replicaSet' => $transactionConnInfo['replicaSet']) : array();
         $transactionMongo = new Client($transactionConnInfo['connection'], $options);
         $transactionDbInfo = $transactionMongo->listDatabases();
 
-        foreach($transactionDbInfo as $db){
+        foreach ($transactionDbInfo as $db) {
             $this->assertNotEquals($db->getName(), $newConfig['transaction_log']['database']);
         }
 
         $tqueuesConnInfo = $newConfig['data_sources'][$newConfig['transaction_log']['data_source']];
-        $options = isset($tqueuesConnInfo['replicaSet']) && !empty($tqueuesConnInfo['replicaSet']) ? array('replicaSet' => $tqueuesConnInfo['replicaSet']): array();
+        $options = isset($tqueuesConnInfo['replicaSet']) && !empty($tqueuesConnInfo['replicaSet']) ? array('replicaSet' => $tqueuesConnInfo['replicaSet']) : array();
         $queuesMongo = new Client($tqueuesConnInfo['connection'], $options);
         $queuesDbInfo = $queuesMongo->listDatabases();
-        foreach($queuesDbInfo as $db){
+        foreach ($queuesDbInfo as $db) {
             $this->assertNotEquals($db->getName(), $newConfig['transaction_log']['database']);
         }
 
         // Start adding some data
-        $this->tripod = new \Tripod\Mongo\Driver('CBD_testing', $storeName, array(OP_ASYNC=>array(OP_VIEWS=>true,OP_TABLES=>false,OP_SEARCH=>false)));
+        $this->tripod = new \Tripod\Mongo\Driver('CBD_testing', $storeName, array(OP_ASYNC => array(OP_VIEWS => true,OP_TABLES => false,OP_SEARCH => false)));
         $this->loadResourceDataViaTripod();
 
         $graph = new \Tripod\Mongo\MongoGraph();
@@ -1199,8 +1170,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         // Make sure the dbs do now exist
         $transactionDbInfo = $transactionMongo->listDatabases();
         $transactionDbExists = false;
-        foreach($transactionDbInfo as $db){
-            if($db->getName() === $newConfig['transaction_log']['database']){
+        foreach ($transactionDbInfo as $db) {
+            if ($db->getName() === $newConfig['transaction_log']['database']) {
                 $transactionDbExists = true;
             }
         }
@@ -1218,7 +1189,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $newConfig = \Tripod\Config::getConfig();
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
-        $computedFieldFunction = array('fieldName'=>'fooBar', 'value'=>array('shazzbot'=>array()));
+        $computedFieldFunction = array('fieldName' => 'fooBar', 'value' => array('shazzbot' => array()));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($computedFieldFunction);
         \Tripod\Config::setConfig($newConfig);
         $this->expectException(\Tripod\Exceptions\ConfigException::class);
@@ -1230,7 +1201,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $newConfig = \Tripod\Config::getConfig();
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
-        $computedFieldFunction = array('fieldName'=>'fooBar', 'value'=>array('conditional'=>array(),'replace'=>array()));
+        $computedFieldFunction = array('fieldName' => 'fooBar', 'value' => array('conditional' => array(),'replace' => array()));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($computedFieldFunction);
         \Tripod\Config::setConfig($newConfig);
         $this->expectException(\Tripod\Exceptions\ConfigException::class);
@@ -1242,7 +1213,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $newConfig = \Tripod\Config::getConfig();
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
-        $computedFieldFunction = array('fieldName'=>'fooBar', 'value'=>array('conditional'=>array()));
+        $computedFieldFunction = array('fieldName' => 'fooBar', 'value' => array('conditional' => array()));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['joins']['dct:isVersionOf']['computed_fields'] = array($computedFieldFunction);
         \Tripod\Config::setConfig($newConfig);
         $this->expectException(\Tripod\Exceptions\ConfigException::class);
@@ -1254,7 +1225,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $newConfig = \Tripod\Config::getConfig();
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
-        $conditionalFunction = array('fieldName'=>'fooBar', 'value'=>array('conditional'=>array()));
+        $conditionalFunction = array('fieldName' => 'fooBar', 'value' => array('conditional' => array()));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($conditionalFunction);
         \Tripod\Config::setConfig($newConfig);
         $this->expectException(\Tripod\Exceptions\ConfigException::class);
@@ -1266,7 +1237,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $newConfig = \Tripod\Config::getConfig();
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
-        $conditionalFunction = array('fieldName'=>'fooBar', 'value'=>array('conditional'=>array('if'=>array())));
+        $conditionalFunction = array('fieldName' => 'fooBar', 'value' => array('conditional' => array('if' => array())));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($conditionalFunction);
         \Tripod\Config::setConfig($newConfig);
         $this->expectException(\Tripod\Exceptions\ConfigException::class);
@@ -1278,7 +1249,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $newConfig = \Tripod\Config::getConfig();
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
-        $conditionalFunction = array('fieldName'=>'fooBar', 'value'=>array('conditional'=>array('if'=>array(),'then'=>'wibble')));
+        $conditionalFunction = array('fieldName' => 'fooBar', 'value' => array('conditional' => array('if' => array(),'then' => 'wibble')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($conditionalFunction);
         \Tripod\Config::setConfig($newConfig);
         $this->expectException(\Tripod\Exceptions\ConfigException::class);
@@ -1290,7 +1261,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $newConfig = \Tripod\Config::getConfig();
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
-        $conditionalFunction = array('fieldName'=>'fooBar', 'value'=>array('conditional'=>array('if'=>'foo','then'=>'wibble')));
+        $conditionalFunction = array('fieldName' => 'fooBar', 'value' => array('conditional' => array('if' => 'foo','then' => 'wibble')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($conditionalFunction);
         \Tripod\Config::setConfig($newConfig);
         $this->expectException(\Tripod\Exceptions\ConfigException::class);
@@ -1302,7 +1273,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $newConfig = \Tripod\Config::getConfig();
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
-        $conditionalFunction = array('fieldName'=>'fooBar', 'value'=>array('conditional'=>array('if'=>array('foo','*'),'then'=>'wibble')));
+        $conditionalFunction = array('fieldName' => 'fooBar', 'value' => array('conditional' => array('if' => array('foo','*'),'then' => 'wibble')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($conditionalFunction);
         \Tripod\Config::setConfig($newConfig);
         $this->expectException(\Tripod\Exceptions\ConfigException::class);
@@ -1314,7 +1285,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $newConfig = \Tripod\Config::getConfig();
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
-        $conditionalFunction = array('fieldName'=>'fooBar', 'value'=>array('conditional'=>array('if'=>array('a','b','c','d'),'then'=>'wibble')));
+        $conditionalFunction = array('fieldName' => 'fooBar', 'value' => array('conditional' => array('if' => array('a','b','c','d'),'then' => 'wibble')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($conditionalFunction);
         \Tripod\Config::setConfig($newConfig);
         $this->expectException(\Tripod\Exceptions\ConfigException::class);
@@ -1326,7 +1297,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $newConfig = \Tripod\Config::getConfig();
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
-        $conditionalFunction = array('fieldName'=>'fooBar', 'value'=>array('conditional'=>array('if'=>array('a','*','c'),'then'=>'wibble')));
+        $conditionalFunction = array('fieldName' => 'fooBar', 'value' => array('conditional' => array('if' => array('a','*','c'),'then' => 'wibble')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($conditionalFunction);
         \Tripod\Config::setConfig($newConfig);
         $this->expectException(\Tripod\Exceptions\ConfigException::class);
@@ -1338,7 +1309,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $newConfig = \Tripod\Config::getConfig();
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
-        $conditionalFunction = array('fieldName'=>'fooBar', 'value'=>array('conditional'=>array('if'=>array('$wibble','>=','c'),'then'=>'wibble')));
+        $conditionalFunction = array('fieldName' => 'fooBar', 'value' => array('conditional' => array('if' => array('$wibble','>=','c'),'then' => 'wibble')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($conditionalFunction);
         \Tripod\Config::setConfig($newConfig);
         $this->expectException(\Tripod\Exceptions\ConfigException::class);
@@ -1350,7 +1321,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $newConfig = \Tripod\Config::getConfig();
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
-        $conditionalFunction = array('fieldName'=>'fooBar', 'value'=>array('conditional'=>array('if'=>array('a','contains','$wibble'),'then'=>'wibble')));
+        $conditionalFunction = array('fieldName' => 'fooBar', 'value' => array('conditional' => array('if' => array('a','contains','$wibble'),'then' => 'wibble')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($conditionalFunction);
         \Tripod\Config::setConfig($newConfig);
         $this->expectException(\Tripod\Exceptions\ConfigException::class);
@@ -1362,7 +1333,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $newConfig = \Tripod\Config::getConfig();
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
-        $conditionalFunction = array('fieldName'=>'fooBar', 'value'=>array('conditional'=>array('if'=>array('a','<','b'),'then'=>'$wibble')));
+        $conditionalFunction = array('fieldName' => 'fooBar', 'value' => array('conditional' => array('if' => array('a','<','b'),'then' => '$wibble')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($conditionalFunction);
         \Tripod\Config::setConfig($newConfig);
         $this->expectException(\Tripod\Exceptions\ConfigException::class);
@@ -1375,7 +1346,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $newConfig = \Tripod\Config::getConfig();
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
-        $conditionalFunction = array('fieldName'=>'fooBar', 'value'=>array('conditional'=>array('if'=>array('a','<','b'),'then'=>true,'else'=>'$wibble')));
+        $conditionalFunction = array('fieldName' => 'fooBar', 'value' => array('conditional' => array('if' => array('a','<','b'),'then' => true,'else' => '$wibble')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($conditionalFunction);
         \Tripod\Config::setConfig($newConfig);
         $this->expectException(\Tripod\Exceptions\ConfigException::class);
@@ -1387,7 +1358,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $newConfig = \Tripod\Config::getConfig();
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
-        $replaceFunction = array('fieldName'=>'fooBar', 'value'=>array('replace'=>array()));
+        $replaceFunction = array('fieldName' => 'fooBar', 'value' => array('replace' => array()));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($replaceFunction);
         \Tripod\Config::setConfig($newConfig);
         $this->expectException(\Tripod\Exceptions\ConfigException::class);
@@ -1399,7 +1370,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $newConfig = \Tripod\Config::getConfig();
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
-        $replaceFunction = array('fieldName'=>'fooBar', 'value'=>array('replace'=>array('search'=>'x')));
+        $replaceFunction = array('fieldName' => 'fooBar', 'value' => array('replace' => array('search' => 'x')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($replaceFunction);
         \Tripod\Config::setConfig($newConfig);
         $this->expectException(\Tripod\Exceptions\ConfigException::class);
@@ -1411,7 +1382,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $newConfig = \Tripod\Config::getConfig();
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
-        $replaceFunction = array('fieldName'=>'fooBar', 'value'=>array('replace'=>array('search'=>'x', 'replace'=>'y')));
+        $replaceFunction = array('fieldName' => 'fooBar', 'value' => array('replace' => array('search' => 'x', 'replace' => 'y')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($replaceFunction);
         \Tripod\Config::setConfig($newConfig);
         $this->expectException(\Tripod\Exceptions\ConfigException::class);
@@ -1423,7 +1394,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $newConfig = \Tripod\Config::getConfig();
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
-        $replaceFunction = array('fieldName'=>'fooBar', 'value'=>array('replace'=>array('search'=>'$x','replace'=>'y','subject'=>'z')));
+        $replaceFunction = array('fieldName' => 'fooBar', 'value' => array('replace' => array('search' => '$x','replace' => 'y','subject' => 'z')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($replaceFunction);
         \Tripod\Config::setConfig($newConfig);
         $this->expectException(\Tripod\Exceptions\ConfigException::class);
@@ -1435,7 +1406,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $newConfig = \Tripod\Config::getConfig();
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
-        $replaceFunction = array('fieldName'=>'fooBar', 'value'=>array('replace'=>array('search'=>array('a','b','$x'),'replace'=>'y','subject'=>'z')));
+        $replaceFunction = array('fieldName' => 'fooBar', 'value' => array('replace' => array('search' => array('a','b','$x'),'replace' => 'y','subject' => 'z')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($replaceFunction);
         \Tripod\Config::setConfig($newConfig);
         $this->expectException(\Tripod\Exceptions\ConfigException::class);
@@ -1447,7 +1418,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $newConfig = \Tripod\Config::getConfig();
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
-        $replaceFunction = array('fieldName'=>'fooBar', 'value'=>array('replace'=>array('search'=>'x','replace'=>'$y','subject'=>'z')));
+        $replaceFunction = array('fieldName' => 'fooBar', 'value' => array('replace' => array('search' => 'x','replace' => '$y','subject' => 'z')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($replaceFunction);
         \Tripod\Config::setConfig($newConfig);
         $this->expectException(\Tripod\Exceptions\ConfigException::class);
@@ -1459,7 +1430,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $newConfig = \Tripod\Config::getConfig();
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
-        $replaceFunction = array('fieldName'=>'fooBar', 'value'=>array('replace'=>array('search'=>'x','replace'=>array('a','$y', 'c'),'subject'=>'z')));
+        $replaceFunction = array('fieldName' => 'fooBar', 'value' => array('replace' => array('search' => 'x','replace' => array('a','$y', 'c'),'subject' => 'z')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($replaceFunction);
         \Tripod\Config::setConfig($newConfig);
         $this->expectException(\Tripod\Exceptions\ConfigException::class);
@@ -1471,7 +1442,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $newConfig = \Tripod\Config::getConfig();
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
-        $replaceFunction = array('fieldName'=>'fooBar', 'value'=>array('replace'=>array('search'=>'x','replace'=>'y','subject'=>'$z')));
+        $replaceFunction = array('fieldName' => 'fooBar', 'value' => array('replace' => array('search' => 'x','replace' => 'y','subject' => '$z')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($replaceFunction);
         \Tripod\Config::setConfig($newConfig);
         $this->expectException(\Tripod\Exceptions\ConfigException::class);
@@ -1483,7 +1454,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $newConfig = \Tripod\Config::getConfig();
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
-        $replaceFunction = array('fieldName'=>'fooBar', 'value'=>array('replace'=>array('search'=>'x','replace'=>'y','subject'=>array('$z','b','c'))));
+        $replaceFunction = array('fieldName' => 'fooBar', 'value' => array('replace' => array('search' => 'x','replace' => 'y','subject' => array('$z','b','c'))));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($replaceFunction);
         \Tripod\Config::setConfig($newConfig);
         $this->expectException(\Tripod\Exceptions\ConfigException::class);
@@ -1495,7 +1466,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $newConfig = \Tripod\Config::getConfig();
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
-        $arithmeticFunction = array('fieldName'=>'fooBar', 'value'=>array('arithmetic'=>array()));
+        $arithmeticFunction = array('fieldName' => 'fooBar', 'value' => array('arithmetic' => array()));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($arithmeticFunction);
         \Tripod\Config::setConfig($newConfig);
         $this->expectException(\Tripod\Exceptions\ConfigException::class);
@@ -1507,7 +1478,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $newConfig = \Tripod\Config::getConfig();
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
-        $arithmeticFunction = array('fieldName'=>'fooBar', 'value'=>array('arithmetic'=>array(1)));
+        $arithmeticFunction = array('fieldName' => 'fooBar', 'value' => array('arithmetic' => array(1)));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($arithmeticFunction);
         \Tripod\Config::setConfig($newConfig);
         $this->expectException(\Tripod\Exceptions\ConfigException::class);
@@ -1519,7 +1490,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $newConfig = \Tripod\Config::getConfig();
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
-        $arithmeticFunction = array('fieldName'=>'fooBar', 'value'=>array('arithmetic'=>array(1,'+')));
+        $arithmeticFunction = array('fieldName' => 'fooBar', 'value' => array('arithmetic' => array(1,'+')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($arithmeticFunction);
         \Tripod\Config::setConfig($newConfig);
         $this->expectException(\Tripod\Exceptions\ConfigException::class);
@@ -1531,7 +1502,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $newConfig = \Tripod\Config::getConfig();
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
-        $arithmeticFunction = array('fieldName'=>'fooBar', 'value'=>array('arithmetic'=>array(1,'+',3,4)));
+        $arithmeticFunction = array('fieldName' => 'fooBar', 'value' => array('arithmetic' => array(1,'+',3,4)));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($arithmeticFunction);
         \Tripod\Config::setConfig($newConfig);
         $this->expectException(\Tripod\Exceptions\ConfigException::class);
@@ -1543,7 +1514,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $newConfig = \Tripod\Config::getConfig();
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
-        $arithmeticFunction = array('fieldName'=>'fooBar', 'value'=>array('arithmetic'=>array(1,'x',3)));
+        $arithmeticFunction = array('fieldName' => 'fooBar', 'value' => array('arithmetic' => array(1,'x',3)));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($arithmeticFunction);
         \Tripod\Config::setConfig($newConfig);
         $this->expectException(\Tripod\Exceptions\ConfigException::class);
@@ -1555,7 +1526,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $newConfig = \Tripod\Config::getConfig();
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
-        $arithmeticFunction = array('fieldName'=>'fooBar', 'value'=>array('arithmetic'=>array('$x','*',3)));
+        $arithmeticFunction = array('fieldName' => 'fooBar', 'value' => array('arithmetic' => array('$x','*',3)));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($arithmeticFunction);
         \Tripod\Config::setConfig($newConfig);
         $this->expectException(\Tripod\Exceptions\ConfigException::class);
@@ -1567,7 +1538,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $newConfig = \Tripod\Config::getConfig();
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
-        $arithmeticFunction = array('fieldName'=>'fooBar', 'value'=>array('arithmetic'=>array(1,'*','$x')));
+        $arithmeticFunction = array('fieldName' => 'fooBar', 'value' => array('arithmetic' => array(1,'*','$x')));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($arithmeticFunction);
         \Tripod\Config::setConfig($newConfig);
         $this->expectException(\Tripod\Exceptions\ConfigException::class);
@@ -1579,7 +1550,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $newConfig = \Tripod\Config::getConfig();
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
-        $arithmeticFunction = array('fieldName'=>'fooBar', 'value'=>array('arithmetic'=>array(array('$x','-',100),'*',3)));
+        $arithmeticFunction = array('fieldName' => 'fooBar', 'value' => array('arithmetic' => array(array('$x','-',100),'*',3)));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($arithmeticFunction);
         \Tripod\Config::setConfig($newConfig);
         $this->expectException(\Tripod\Exceptions\ConfigException::class);
@@ -1591,7 +1562,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         $newConfig = \Tripod\Config::getConfig();
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
-        $arithmeticFunction = array('fieldName'=>'fooBar', 'value'=>array('arithmetic'=>array(array(101,'#',100),'*',3)));
+        $arithmeticFunction = array('fieldName' => 'fooBar', 'value' => array('arithmetic' => array(array(101,'#',100),'*',3)));
         $newConfig['stores']['tripod_php_testing']['table_specifications'][0]['computed_fields'] = array($arithmeticFunction);
         \Tripod\Config::setConfig($newConfig);
         $this->expectException(\Tripod\Exceptions\ConfigException::class);
@@ -1603,8 +1574,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
     {
         \Tripod\Mongo\Config::setValidationLevel(\Tripod\Mongo\Config::VALIDATE_MAX);
 
-        if(!getenv(MONGO_TRIPOD_RESQUE_SERVER))
-        {
+        if (!getenv(MONGO_TRIPOD_RESQUE_SERVER)) {
             putenv(MONGO_TRIPOD_RESQUE_SERVER . "=redis");
         }
         $this->assertEquals(getenv(MONGO_TRIPOD_RESQUE_SERVER), \Tripod\Mongo\Config::getResqueServer());
@@ -1621,8 +1591,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
             ->method('getMongoClient')
             ->with('mongodb://mongodb:27017/', ['connectTimeoutMS' => 20000])
             ->will($this->returnCallback(
-                function()
-                {
+                function () {
                     $mongo = new Client();
                     return $mongo;
                 }
@@ -1661,8 +1630,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
                 $this->throwException(new ConnectionTimeoutException('Exception thrown when connecting to Mongo')),
                 $this->throwException(new ConnectionTimeoutException('Exception thrown when connecting to Mongo')),
                 $this->returnCallback(
-                    function()
-                    {
+                    function () {
                         $mongo = new Client();
                         return $mongo;
                     }

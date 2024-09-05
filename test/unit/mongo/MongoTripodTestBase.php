@@ -31,7 +31,8 @@ abstract class MongoTripodTestBase extends TestCase
         }
     }
 
-    protected function loadDatesDataViaTripod() {
+    protected function loadDatesDataViaTripod()
+    {
         $this->loadDataViaTripod('/data/dates.json');
     }
     protected function loadResourceDataViaTripod()
@@ -47,7 +48,8 @@ abstract class MongoTripodTestBase extends TestCase
     /**
      * @param string $filename
      */
-    private function loadDataViaTripod($filename) {
+    private function loadDataViaTripod($filename)
+    {
         $docs = json_decode(file_get_contents(dirname(__FILE__).$filename), true);
         foreach ($docs as $d) {
             $g = new \Tripod\Mongo\MongoGraph();
@@ -66,12 +68,10 @@ abstract class MongoTripodTestBase extends TestCase
         date_default_timezone_set('UTC');
 
         $config = json_decode(file_get_contents($this->getConfigLocation()), true);
-        if(getenv('TRIPOD_DATASOURCE_RS1_CONFIG'))
-        {
+        if (getenv('TRIPOD_DATASOURCE_RS1_CONFIG')) {
             $config['data_sources']['rs1'] = json_decode(getenv('TRIPOD_DATASOURCE_RS1_CONFIG'), true);
         }
-        if(getenv('TRIPOD_DATASOURCE_RS2_CONFIG'))
-        {
+        if (getenv('TRIPOD_DATASOURCE_RS2_CONFIG')) {
             $config['data_sources']['rs2'] = json_decode(getenv('TRIPOD_DATASOURCE_RS2_CONFIG'), true);
         }
         \Tripod\Config::setConfig($config);
@@ -82,17 +82,16 @@ abstract class MongoTripodTestBase extends TestCase
 
     /****************** HELPERS BELOW HERE ********************************/
 
-    protected function addDocument($doc, $toTransactionLog=false)
+    protected function addDocument($doc, $toTransactionLog = false)
     {
         $config = \Tripod\Config::getInstance();
-        if($toTransactionLog == true)
-        {
-            return $this->getTlogCollection()->insertOne($doc, array("w"=>1));
+        if ($toTransactionLog == true) {
+            return $this->getTlogCollection()->insertOne($doc, array("w" => 1));
         } else {
             return $config->getCollectionForCBD(
                 $this->tripod->getStoreName(),
                 $this->tripod->getPodName()
-            )->insertOne($doc, array("w"=>1));
+            )->insertOne($doc, array("w" => 1));
         }
     }
 
@@ -127,24 +126,18 @@ abstract class MongoTripodTestBase extends TestCase
      * @param bool $fromTransactionLog
      * @return array|null
      */
-    protected function getDocument($_id, $collection=null, $fromTransactionLog=false)
+    protected function getDocument($_id, $collection = null, $fromTransactionLog = false)
     {
-        if($fromTransactionLog==true)
-        {
+        if ($fromTransactionLog == true) {
             return $this->tripodTransactionLog->getTransaction($_id);
         }
 
-        if($collection==NULL)
-        {
-            return $this->getTripodCollection($this->tripod)->findOne(array("_id"=>$_id));
-        }
-        elseif($collection instanceof \Tripod\Mongo\Driver)
-        {
-            return $this->getTripodCollection($collection)->findOne(array("_id"=>$_id));
-        }
-        else
-        {
-            return $collection->findOne(array("_id"=>$_id));
+        if ($collection == null) {
+            return $this->getTripodCollection($this->tripod)->findOne(array("_id" => $_id));
+        } elseif ($collection instanceof \Tripod\Mongo\Driver) {
+            return $this->getTripodCollection($collection)->findOne(array("_id" => $_id));
+        } else {
+            return $collection->findOne(array("_id" => $_id));
         }
     }
 
@@ -154,16 +147,13 @@ abstract class MongoTripodTestBase extends TestCase
      * @param int $expectedNumberOfAdditions
      * @param int $expectedNumberOfRemovals
      */
-    protected function assertChangesForGivenSubject(Array $changes, $subjectOfChange, $expectedNumberOfAdditions, $expectedNumberOfRemovals)
+    protected function assertChangesForGivenSubject(array $changes, $subjectOfChange, $expectedNumberOfAdditions, $expectedNumberOfRemovals)
     {
         $changeSet = null;
 
-        foreach($changes as $c)
-        {
-            if(strpos($c['_id']["r"], '_:cs') !== FALSE)
-            {
-                if($c['cs:subjectOfChange']['u'] == $subjectOfChange)
-                {
+        foreach ($changes as $c) {
+            if (strpos($c['_id']["r"], '_:cs') !== false) {
+                if ($c['cs:subjectOfChange']['u'] == $subjectOfChange) {
                     $changeSet = $c;
                 }
             }
@@ -172,28 +162,20 @@ abstract class MongoTripodTestBase extends TestCase
         $this->assertNotNull($changeSet, "No change set found for the specified subject of change");
 
         $actualAdditions = 0;
-        if(isset($changeSet['cs:addition']))
-        {
-            if (isset($changeSet['cs:addition']['u']))
-            {
+        if (isset($changeSet['cs:addition'])) {
+            if (isset($changeSet['cs:addition']['u'])) {
                 $actualAdditions = 1; // mongo tripod document optimisation for one value...
-            }
-            else
-            {
+            } else {
                 $actualAdditions = count($changeSet['cs:addition']);
             }
         }
         $this->assertEquals($expectedNumberOfAdditions, $actualAdditions, "Number of additions did not match expectd value");
 
         $actualRemovals = 0;
-        if(isset($changeSet['cs:removal']))
-        {
-            if (isset($changeSet['cs:removal']['value']))
-            {
+        if (isset($changeSet['cs:removal'])) {
+            if (isset($changeSet['cs:removal']['value'])) {
                 $actualRemovals = 1; // mongo tripod document optimisation for one value...
-            }
-            else
-            {
+            } else {
                 $actualRemovals = count($changeSet['cs:removal']);
             }
         }
@@ -205,7 +187,7 @@ abstract class MongoTripodTestBase extends TestCase
      * @param array $doc
      * @param string $key
      */
-    protected function assertTransactionDate(Array $doc, $key)
+    protected function assertTransactionDate(array $doc, $key)
     {
         $this->assertTrue(isset($doc[$key]), 'the date property: {$key} was not present in document');
         $this->assertInstanceOf(\MongoDB\BSON\UTCDateTime::class, $doc[$key]);
@@ -219,28 +201,23 @@ abstract class MongoTripodTestBase extends TestCase
      * @param \Tripod\Mongo\Driver|null $tripod
      * @param bool $fromTransactionLog
      */
-    protected function assertDocumentVersion($_id, $expectedValue=null, $hasVersion=true, $tripod=null, $fromTransactionLog=false)
+    protected function assertDocumentVersion($_id, $expectedValue = null, $hasVersion = true, $tripod = null, $fromTransactionLog = false)
     {
         // just make sure $_id is aliased
         $labeller = new \Tripod\Mongo\Labeller();
-        foreach ($_id as $key=>$value)
-        {
+        foreach ($_id as $key => $value) {
             $_id[$key] = $labeller->uri_to_alias($value);
         }
 
         $doc = $this->getDocument($_id, $tripod, $fromTransactionLog);
-        if($hasVersion==true)
-        {
-            $this->assertTrue(isset($doc['_version']), "Document for ".var_export($_id,true)." should have a version, but none found");
+        if ($hasVersion == true) {
+            $this->assertTrue(isset($doc['_version']), "Document for ".var_export($_id, true)." should have a version, but none found");
 
-            if($expectedValue!==NULL)
-            {
+            if ($expectedValue !== null) {
                 //echo $expectedValue.":".$doc['_version'];
-                $this->assertEquals($expectedValue, $doc['_version'],  "Document version does not match expected version");
+                $this->assertEquals($expectedValue, $doc['_version'], "Document version does not match expected version");
             }
-        }
-        else
-        {
+        } else {
             $this->assertFalse(isset($doc['_version']), "Was not expecting document to have a version");
         }
     }
@@ -252,20 +229,19 @@ abstract class MongoTripodTestBase extends TestCase
      * @param null $tripod = optional tripod object, defaults to this->tripod
      * @param bool $fromTransactionLog = true if you want to retrieve the document from transaction log
      */
-    protected function assertDocumentHasProperty($_id, $property, $expectedValue=null, $tripod=null, $fromTransactionLog=false)
+    protected function assertDocumentHasProperty($_id, $property, $expectedValue = null, $tripod = null, $fromTransactionLog = false)
     {
         // just make sure $_id is aliased
         $labeller = new \Tripod\Mongo\Labeller();
-        foreach ($_id as $key=>$value)
-        {
+        foreach ($_id as $key => $value) {
             $_id[$key] = $labeller->uri_to_alias($value);
         }
 
         $doc = $this->getDocument($_id, $tripod, $fromTransactionLog);
 
-        $this->assertTrue(isset($doc[$property]), "Document for ".var_export($_id,true)." should have property [$property], but none found");
-        if($expectedValue !== NULL){
-            $this->assertEquals($expectedValue, $doc[$property],  "Document property [$property] actual value [".print_r($doc[$property], true)."] does not match expected value [" . print_r($expectedValue, true) . "]");
+        $this->assertTrue(isset($doc[$property]), "Document for ".var_export($_id, true)." should have property [$property], but none found");
+        if ($expectedValue !== null) {
+            $this->assertEquals($expectedValue, $doc[$property], "Document property [$property] actual value [".print_r($doc[$property], true)."] does not match expected value [" . print_r($expectedValue, true) . "]");
         }
     }
 
@@ -275,18 +251,17 @@ abstract class MongoTripodTestBase extends TestCase
      * @param null $tripod = optional tripod object, defaults to this->tripod
      * @param bool $fromTransactionLog = true if you want to retrieve the document from transaction log
      */
-    protected function assertDocumentDoesNotHaveProperty($_id, $property, $tripod=null, $fromTransactionLog=false)
+    protected function assertDocumentDoesNotHaveProperty($_id, $property, $tripod = null, $fromTransactionLog = false)
     {
         // just make sure $_id is aliased
         $labeller = new \Tripod\Mongo\Labeller();
-        foreach ($_id as $key=>$value)
-        {
+        foreach ($_id as $key => $value) {
             $_id[$key] = $labeller->uri_to_alias($value);
         }
 
         $doc = $this->getDocument($_id, $tripod, $fromTransactionLog);
 
-        $this->assertFalse(isset($doc[$property]), "Document for ".var_export($_id,true)." should not have property [$property], but propert was found");
+        $this->assertFalse(isset($doc[$property]), "Document for ".var_export($_id, true)." should not have property [$property], but propert was found");
     }
 
 
@@ -295,7 +270,7 @@ abstract class MongoTripodTestBase extends TestCase
      * @param \Tripod\Mongo\Driver|null $tripod
      * @param bool $fromTransactionLog
      */
-    protected function assertDocumentExists($_id, $tripod=null, $fromTransactionLog=false)
+    protected function assertDocumentExists($_id, $tripod = null, $fromTransactionLog = false)
     {
         $doc = $this->getDocument($_id, $tripod, $fromTransactionLog);
         $this->assertNotNull($doc);
@@ -307,16 +282,13 @@ abstract class MongoTripodTestBase extends TestCase
      * @param \Tripod\Mongo\Driver|null $tripod
      * @param bool $useTransactionTripod
      */
-    protected function assertDocumentHasBeenDeleted($_id, $tripod=null, $useTransactionTripod=false)
+    protected function assertDocumentHasBeenDeleted($_id, $tripod = null, $useTransactionTripod = false)
     {
         $doc = $this->getDocument($_id, $tripod, $useTransactionTripod);
-        if($useTransactionTripod)
-        {
+        if ($useTransactionTripod) {
             $this->assertNull($doc, "Document with _id:[{$_id}] exists, but it should not");
-        }
-        else
-        {
-            $this->assertTrue(is_array($doc),"Document should be array");
+        } else {
+            $this->assertTrue(is_array($doc), "Document should be array");
             $keys = array_keys($doc);
             $this->assertEquals(4, count($keys));
             $this->assertArrayHasKey('_id', $doc);
@@ -392,7 +364,7 @@ abstract class MongoTripodTestBase extends TestCase
      * @param string $prefix
      * @return MockObject&\Tripod\StatsD
      */
-    protected function getMockStat($host, $port, $prefix='', array $mockedMethods = array())
+    protected function getMockStat($host, $port, $prefix = '', array $mockedMethods = array())
     {
         $mockedMethods = array_merge(array('send'), $mockedMethods);
         $stat = $this->getMockBuilder('\Tripod\StatsD')
@@ -409,11 +381,11 @@ abstract class MongoTripodTestBase extends TestCase
     protected function getStatsDConfig()
     {
         return array(
-            'class'=>'Tripod\StatsD',
-            'config'=>array(
-                'host'=>'example.com',
-                'port'=>1234,
-                'prefix'=>'somePrefix'
+            'class' => 'Tripod\StatsD',
+            'config' => array(
+                'host' => 'example.com',
+                'port' => 1234,
+                'prefix' => 'somePrefix'
             )
         );
     }
@@ -435,7 +407,9 @@ class TripodTestConfig extends \Tripod\Mongo\Config
     /**
      * Constructor
      */
-    public function __construct(){}
+    public function __construct()
+    {
+    }
 
     /**
      * @param array $config

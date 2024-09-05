@@ -12,7 +12,7 @@ class DateUtilTest extends MongoTripodTestBase
             'c' => 'http://talisaspire.com/');
         $doc = array(
             '_id' => $_id,
-            'dct:title' => array('l'=>'etag'),
+            'dct:title' => array('l' => 'etag'),
             '_version' => 0,
             '_cts' => $updatedAt,
             '_uts' => $updatedAt
@@ -20,7 +20,7 @@ class DateUtilTest extends MongoTripodTestBase
         $config->getCollectionForCBD(
             'tripod_php_testing',
             'CBD_testing'
-        )->insertOne($doc, array("w"=>1));
+        )->insertOne($doc, array("w" => 1));
 
         $date = \Tripod\Mongo\DateUtil::getMongoDate();
 
@@ -37,7 +37,7 @@ class DateUtilTest extends MongoTripodTestBase
             'c' => 'http://talisaspire.com/');
         $doc = array(
             '_id' => $_id,
-            'dct:title' => array('l'=>'etag'),
+            'dct:title' => array('l' => 'etag'),
             '_version' => 0,
             '_cts' => $updatedAt,
             '_uts' => $updatedAt
@@ -45,7 +45,7 @@ class DateUtilTest extends MongoTripodTestBase
         $config->getCollectionForCBD(
             'tripod_php_testing',
             'CBD_testing'
-        )->insertOne($doc, array("w"=>1));
+        )->insertOne($doc, array("w" => 1));
 
         $time = floor(microtime(true) * 1000);
         $date = \Tripod\Mongo\DateUtil::getMongoDate($time);

@@ -22,22 +22,20 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
         $this->loadBaseSearchDataViaTripod();
 
-        foreach(\Tripod\Config::getInstance()->getCollectionsForSearch($this->tripod->getStoreName()) as $collection)
-        {
+        foreach (\Tripod\Config::getInstance()->getCollectionsForSearch($this->tripod->getStoreName()) as $collection) {
             $collection->drop();
         }
 
 
         // index all the documents
         $cursor = $this->getTripodCollection($this->tripod)
-            ->find(array("rdf:type.u"=>array('$in'=>array("bibo:Book"))),array('_id'=>1,'rdf:type'=>1));//->limit(20);
-        foreach($cursor as $result)
-        {
+            ->find(array("rdf:type.u" => array('$in' => array("bibo:Book"))), array('_id' => 1,'rdf:type' => 1));//->limit(20);
+        foreach ($cursor as $result) {
             $t = array();
-            if(isset($result['rdf:type']['u'])){
+            if (isset($result['rdf:type']['u'])) {
                 $t[] = $result['rdf:type']['u'];
             } elseif (is_array($result['rdf:type'])) {
-                foreach($result['rdf:type'] as $_t){
+                foreach ($result['rdf:type'] as $_t) {
                     if (isset($_t['u'])) {
                         $t[] = $_t['u'];
                     }
@@ -47,7 +45,8 @@ class MongoSearchProviderTest extends MongoTripodTestBase
         }
     }
 
-    public function testSearchIndexing() {
+    public function testSearchIndexing()
+    {
 
         // assert that there are only 12 based on the data we loaded into tripod
         $actualSearchDocumentCount = $this->getCountForSearchSpecs($this->tripod);
@@ -57,110 +56,110 @@ class MongoSearchProviderTest extends MongoTripodTestBase
         // define the expected search documents, this is what each of them should look like
         $expectedSearchDocs = array(
             array(
-                "_id" => array("r"=>"http://talisaspire.com/resources/doc1","c"=>"http://talisaspire.com/","type"=>"i_search_resource"),
-                "result" => array("title"=>"Physics for Engineers and Scientists", "link"=>"http://talisaspire.com/resources/doc1", "author"=>"Sayid Jarrah" ),
-                "search_terms"=>array( "physics for engineers and scientists", "physics", "science", "sayid jarrah"),
-                "_impactIndex"=>array(
-                    array("r"=>"http://talisaspire.com/resources/doc1","c"=>"http://talisaspire.com/" ),
+                "_id" => array("r" => "http://talisaspire.com/resources/doc1","c" => "http://talisaspire.com/","type" => "i_search_resource"),
+                "result" => array("title" => "Physics for Engineers and Scientists", "link" => "http://talisaspire.com/resources/doc1", "author" => "Sayid Jarrah" ),
+                "search_terms" => array( "physics for engineers and scientists", "physics", "science", "sayid jarrah"),
+                "_impactIndex" => array(
+                    array("r" => "http://talisaspire.com/resources/doc1","c" => "http://talisaspire.com/" ),
                     array("r" => "http://talisaspire.com/authors/1", "c" => "http://talisaspire.com/" )
                 )
             ),
             array(
-                "_id" => array("r"=>"http://talisaspire.com/resources/doc2","c"=>"http://talisaspire.com/","type"=>"i_search_resource"),
-                "result" => array("title"=>"Astrophysics for Beginners", "link"=>"http://talisaspire.com/resources/doc2", "author"=>"Sayid Jarrah" ),
-                "search_terms"=>array( "astrophysics for beginners", "astrophysics", "science", "sayid jarrah"),
-                "_impactIndex"=>array(
-                    array("r"=>"http://talisaspire.com/resources/doc2","c"=>"http://talisaspire.com/" ),
+                "_id" => array("r" => "http://talisaspire.com/resources/doc2","c" => "http://talisaspire.com/","type" => "i_search_resource"),
+                "result" => array("title" => "Astrophysics for Beginners", "link" => "http://talisaspire.com/resources/doc2", "author" => "Sayid Jarrah" ),
+                "search_terms" => array( "astrophysics for beginners", "astrophysics", "science", "sayid jarrah"),
+                "_impactIndex" => array(
+                    array("r" => "http://talisaspire.com/resources/doc2","c" => "http://talisaspire.com/" ),
                     array("r" => "http://talisaspire.com/authors/1", "c" => "http://talisaspire.com/" )
                 )
             ),
             array(
-                "_id" => array("r"=>"http://talisaspire.com/resources/doc3","c"=>"http://talisaspire.com/","type"=>"i_search_resource"),
-                "result" => array("title"=>"Fundementals of Heat and Mass Transfers", "link"=>"http://talisaspire.com/resources/doc3", "author"=>"Sayid Jarrah" ),
-                "search_terms"=>array( "fundementals of heat and mass transfers", "engineering", "science", "sayid jarrah"),
-                "_impactIndex"=>array(
-                    array("r"=>"http://talisaspire.com/resources/doc3","c"=>"http://talisaspire.com/" ),
+                "_id" => array("r" => "http://talisaspire.com/resources/doc3","c" => "http://talisaspire.com/","type" => "i_search_resource"),
+                "result" => array("title" => "Fundementals of Heat and Mass Transfers", "link" => "http://talisaspire.com/resources/doc3", "author" => "Sayid Jarrah" ),
+                "search_terms" => array( "fundementals of heat and mass transfers", "engineering", "science", "sayid jarrah"),
+                "_impactIndex" => array(
+                    array("r" => "http://talisaspire.com/resources/doc3","c" => "http://talisaspire.com/" ),
                     array("r" => "http://talisaspire.com/authors/1", "c" => "http://talisaspire.com/" )
                 )
             ),
             array(
-                "_id" => array("r"=>"http://talisaspire.com/resources/doc4","c"=>"http://talisaspire.com/","type"=>"i_search_resource"),
-                "result" => array("title"=>"Paradise Lost", "link"=>"http://talisaspire.com/resources/doc4", "author"=>"John Locke" ),
-                "search_terms"=>array( "paradise lost", "english literature", "poetry", "classics", "john locke"),
-                "_impactIndex"=>array(
-                    array("r"=>"http://talisaspire.com/resources/doc4","c"=>"http://talisaspire.com/" ),
+                "_id" => array("r" => "http://talisaspire.com/resources/doc4","c" => "http://talisaspire.com/","type" => "i_search_resource"),
+                "result" => array("title" => "Paradise Lost", "link" => "http://talisaspire.com/resources/doc4", "author" => "John Locke" ),
+                "search_terms" => array( "paradise lost", "english literature", "poetry", "classics", "john locke"),
+                "_impactIndex" => array(
+                    array("r" => "http://talisaspire.com/resources/doc4","c" => "http://talisaspire.com/" ),
                     array("r" => "http://talisaspire.com/authors/2", "c" => "http://talisaspire.com/" )
                 )
             ),
             array(
-                "_id" => array("r"=>"http://talisaspire.com/resources/doc5","c"=>"http://talisaspire.com/","type"=>"i_search_resource"),
-                "result" => array("title"=>"The Divine Comedy", "link"=>"http://talisaspire.com/resources/doc5", "author"=>"John Locke" ),
-                "search_terms"=>array( "the divine comedy", "dante's the divine comedy", "english literature", "poetry", "classics", "john locke"),
-                "_impactIndex"=>array(
-                    array("r"=>"http://talisaspire.com/resources/doc5","c"=>"http://talisaspire.com/" ),
+                "_id" => array("r" => "http://talisaspire.com/resources/doc5","c" => "http://talisaspire.com/","type" => "i_search_resource"),
+                "result" => array("title" => "The Divine Comedy", "link" => "http://talisaspire.com/resources/doc5", "author" => "John Locke" ),
+                "search_terms" => array( "the divine comedy", "dante's the divine comedy", "english literature", "poetry", "classics", "john locke"),
+                "_impactIndex" => array(
+                    array("r" => "http://talisaspire.com/resources/doc5","c" => "http://talisaspire.com/" ),
                     array("r" => "http://talisaspire.com/authors/2", "c" => "http://talisaspire.com/" )
                 )
             ),
             array(
-                "_id" => array("r"=>"http://talisaspire.com/resources/doc6","c"=>"http://talisaspire.com/","type"=>"i_search_resource"),
-                "result" => array("title"=>"A Light in the Attic", "link"=>"http://talisaspire.com/resources/doc6", "author"=>"John Locke" ),
-                "search_terms"=>array( "a light in the attic", "english literature", "poetry", "john locke"),
-                "_impactIndex"=>array(
-                    array("r"=>"http://talisaspire.com/resources/doc6","c"=>"http://talisaspire.com/" ),
+                "_id" => array("r" => "http://talisaspire.com/resources/doc6","c" => "http://talisaspire.com/","type" => "i_search_resource"),
+                "result" => array("title" => "A Light in the Attic", "link" => "http://talisaspire.com/resources/doc6", "author" => "John Locke" ),
+                "search_terms" => array( "a light in the attic", "english literature", "poetry", "john locke"),
+                "_impactIndex" => array(
+                    array("r" => "http://talisaspire.com/resources/doc6","c" => "http://talisaspire.com/" ),
                     array("r" => "http://talisaspire.com/authors/2", "c" => "http://talisaspire.com/" )
                 )
             ),
             array(
-                "_id" => array("r"=>"http://talisaspire.com/resources/doc7","c"=>"http://talisaspire.com/","type"=>"i_search_resource"),
-                "result" => array("title"=>"Revolting Rhymes", "link"=>"http://talisaspire.com/resources/doc7", "author"=>"John Locke" ),
-                "search_terms"=>array( "revolting rhymes", "poetry", "john locke"),
-                "_impactIndex"=>array(
-                    array("r"=>"http://talisaspire.com/resources/doc7","c"=>"http://talisaspire.com/" ),
+                "_id" => array("r" => "http://talisaspire.com/resources/doc7","c" => "http://talisaspire.com/","type" => "i_search_resource"),
+                "result" => array("title" => "Revolting Rhymes", "link" => "http://talisaspire.com/resources/doc7", "author" => "John Locke" ),
+                "search_terms" => array( "revolting rhymes", "poetry", "john locke"),
+                "_impactIndex" => array(
+                    array("r" => "http://talisaspire.com/resources/doc7","c" => "http://talisaspire.com/" ),
                     array("r" => "http://talisaspire.com/authors/2", "c" => "http://talisaspire.com/" )
                 )
             ),
             array(
-                "_id" => array("r"=>"http://talisaspire.com/resources/doc8","c"=>"http://talisaspire.com/","type"=>"i_search_resource"),
-                "result" => array("title"=>"The Owl and the Pussycat", "link"=>"http://talisaspire.com/resources/doc8", "author"=>"John Locke" ),
-                "search_terms"=>array( "the owl and the pussycat", "poetry", "john locke"),
-                "_impactIndex"=>array(
-                    array("r"=>"http://talisaspire.com/resources/doc8","c"=>"http://talisaspire.com/" ),
+                "_id" => array("r" => "http://talisaspire.com/resources/doc8","c" => "http://talisaspire.com/","type" => "i_search_resource"),
+                "result" => array("title" => "The Owl and the Pussycat", "link" => "http://talisaspire.com/resources/doc8", "author" => "John Locke" ),
+                "search_terms" => array( "the owl and the pussycat", "poetry", "john locke"),
+                "_impactIndex" => array(
+                    array("r" => "http://talisaspire.com/resources/doc8","c" => "http://talisaspire.com/" ),
                     array("r" => "http://talisaspire.com/authors/2", "c" => "http://talisaspire.com/" )
                 )
             ),
             array(
-                "_id" => array("r"=>"http://talisaspire.com/resources/doc9","c"=>"http://talisaspire.com/","type"=>"i_search_resource"),
-                "result" => array("title"=>"When We Were Very Young", "link"=>"http://talisaspire.com/resources/doc9", "author"=>"John Locke" ),
-                "search_terms"=>array( "when we were very young", "poetry", "john locke"),
-                "_impactIndex"=>array(
-                    array("r"=>"http://talisaspire.com/resources/doc9","c"=>"http://talisaspire.com/" ),
+                "_id" => array("r" => "http://talisaspire.com/resources/doc9","c" => "http://talisaspire.com/","type" => "i_search_resource"),
+                "result" => array("title" => "When We Were Very Young", "link" => "http://talisaspire.com/resources/doc9", "author" => "John Locke" ),
+                "search_terms" => array( "when we were very young", "poetry", "john locke"),
+                "_impactIndex" => array(
+                    array("r" => "http://talisaspire.com/resources/doc9","c" => "http://talisaspire.com/" ),
                     array("r" => "http://talisaspire.com/authors/2", "c" => "http://talisaspire.com/" )
                 )
             ),
             array(
-                "_id" => array("r"=>"http://talisaspire.com/resources/doc10","c"=>"http://talisaspire.com/","type"=>"i_search_resource"),
-                "result" => array("title"=>"Love That Dog", "link"=>"http://talisaspire.com/resources/doc10", "author"=>"Jack Shephard" ),
-                "search_terms"=>array( "love that dog", "poetry", "jack shephard"),
-                "_impactIndex"=>array(
-                    array("r"=>"http://talisaspire.com/resources/doc10","c"=>"http://talisaspire.com/" ),
+                "_id" => array("r" => "http://talisaspire.com/resources/doc10","c" => "http://talisaspire.com/","type" => "i_search_resource"),
+                "result" => array("title" => "Love That Dog", "link" => "http://talisaspire.com/resources/doc10", "author" => "Jack Shephard" ),
+                "search_terms" => array( "love that dog", "poetry", "jack shephard"),
+                "_impactIndex" => array(
+                    array("r" => "http://talisaspire.com/resources/doc10","c" => "http://talisaspire.com/" ),
                     array("r" => "http://talisaspire.com/authors/3", "c" => "http://talisaspire.com/" )
                 )
             ),
             array(
-                "_id" => array("r"=>"http://talisaspire.com/resources/doc11","c"=>"http://talisaspire.com/","type"=>"i_search_resource"),
-                "result" => array("title"=>"Where the Sidewalk Ends", "link"=>"http://talisaspire.com/resources/doc11", "author"=>"Jack Shephard" ),
-                "search_terms"=>array( "where the sidewalk ends", "poetry", "jack shephard"),
-                "_impactIndex"=>array(
-                    array("r"=>"http://talisaspire.com/resources/doc11","c"=>"http://talisaspire.com/" ),
+                "_id" => array("r" => "http://talisaspire.com/resources/doc11","c" => "http://talisaspire.com/","type" => "i_search_resource"),
+                "result" => array("title" => "Where the Sidewalk Ends", "link" => "http://talisaspire.com/resources/doc11", "author" => "Jack Shephard" ),
+                "search_terms" => array( "where the sidewalk ends", "poetry", "jack shephard"),
+                "_impactIndex" => array(
+                    array("r" => "http://talisaspire.com/resources/doc11","c" => "http://talisaspire.com/" ),
                     array("r" => "http://talisaspire.com/authors/3", "c" => "http://talisaspire.com/" )
                 )
             ),
             array(
-                "_id" => array("r"=>"http://talisaspire.com/resources/doc12","c"=>"http://talisaspire.com/","type"=>"i_search_resource"),
-                "result" => array("title"=>"The Rime of the Ancient Mariner", "link"=>"http://talisaspire.com/resources/doc12", "author"=>"Jack Shephard" ),
-                "search_terms"=>array( "the rime of the ancient mariner", "poetry", "jack shephard"),
-                "_impactIndex"=>array(
-                    array("r"=>"http://talisaspire.com/resources/doc12","c"=>"http://talisaspire.com/" ),
+                "_id" => array("r" => "http://talisaspire.com/resources/doc12","c" => "http://talisaspire.com/","type" => "i_search_resource"),
+                "result" => array("title" => "The Rime of the Ancient Mariner", "link" => "http://talisaspire.com/resources/doc12", "author" => "Jack Shephard" ),
+                "search_terms" => array( "the rime of the ancient mariner", "poetry", "jack shephard"),
+                "_impactIndex" => array(
+                    array("r" => "http://talisaspire.com/resources/doc12","c" => "http://talisaspire.com/" ),
                     array("r" => "http://talisaspire.com/authors/3", "c" => "http://talisaspire.com/" )
                 )
             )
@@ -168,7 +167,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
         // loop through every expected document and assert that it exists, and that each property matches the value we defined above.
         $searchCollection = \Tripod\Config::getInstance()->getCollectionForSearchDocument($this->tripod->getStoreName(), 'i_search_resource');
-        foreach($expectedSearchDocs as $expectedSearchDoc){
+        foreach ($expectedSearchDocs as $expectedSearchDoc) {
             $this->assertDocumentExists($expectedSearchDoc["_id"], $searchCollection);
             $this->assertDocumentHasProperty($expectedSearchDoc["_id"], "result", $expectedSearchDoc["result"], $searchCollection);
             $this->assertDocumentHasProperty($expectedSearchDoc["_id"], "search_terms", $expectedSearchDoc["search_terms"], $searchCollection);
@@ -179,9 +178,9 @@ class MongoSearchProviderTest extends MongoTripodTestBase
     public function testSearchIndexingRemovesDocWhenTypeHasNoCorrespondingSearchdocSpec()
     {
         // update a document
-        $id = array('_id.r'=>'http://talisaspire.com/resources/doc1');
+        $id = array('_id.r' => 'http://talisaspire.com/resources/doc1');
         $this->getTripodCollection($this->tripod)
-            ->updateOne($id, array('$set'=>array("rdf:type"=>array("u"=>"bibo:Article"))));
+            ->updateOne($id, array('$set' => array("rdf:type" => array("u" => "bibo:Article"))));
 
         // reindex
         $this->indexer->generateAndIndexSearchDocuments('http://talisaspire.com/resources/doc1', 'http://talisaspire.com/', $this->tripod->getPodName());
@@ -191,10 +190,9 @@ class MongoSearchProviderTest extends MongoTripodTestBase
         $this->assertEquals(12, $actualSearchDocumentCount, "Should only be 12 search documents now that one of them has had its type changed with no corresponding search doc spec");
 
 
-        foreach(\Tripod\Config::getInstance()->getCollectionsForSearch('tripod_php_testing') as $collection)
-        {
+        foreach (\Tripod\Config::getInstance()->getCollectionsForSearch('tripod_php_testing') as $collection) {
             $this->assertNull(
-                $collection->findOne(array("_id.r"=>"http://talisaspire.com/resources/doc1")),
+                $collection->findOne(array("_id.r" => "http://talisaspire.com/resources/doc1")),
                 "No search document should be found, because it should have been deleted"
             );
         }
@@ -204,15 +202,15 @@ class MongoSearchProviderTest extends MongoTripodTestBase
     public function testSearchIndexingGeneratesNewDocForChangedTypeThatHasACorrespondingSearchdocSpec()
     {
         // update a document
-        $id = array('_id.r'=>'http://talisaspire.com/resources/doc1');
+        $id = array('_id.r' => 'http://talisaspire.com/resources/doc1');
 
         $newData = array(
-            "rdf:type"=>array("u"=>"resourcelist:List"),
-            "spec:name"=>array("l"=>"my list title"),
-            "resourcelists:description"=>array("l"=>"foo bar baz"),
+            "rdf:type" => array("u" => "resourcelist:List"),
+            "spec:name" => array("l" => "my list title"),
+            "resourcelists:description" => array("l" => "foo bar baz"),
 
         );
-        $this->getTripodCollection($this->tripod)->updateOne($id, array('$set'=> $newData));
+        $this->getTripodCollection($this->tripod)->updateOne($id, array('$set' => $newData));
 
         // reindex
         $this->indexer->generateAndIndexSearchDocuments('http://talisaspire.com/resources/doc1', 'http://talisaspire.com/', $this->tripod->getPodName());
@@ -222,32 +220,30 @@ class MongoSearchProviderTest extends MongoTripodTestBase
         $this->assertEquals(13, $actualSearchDocumentCount, "Should only be 13 search documents");
 
         $result = array();
-        foreach(\Tripod\Config::getInstance()->getCollectionsForSearch('tripod_php_testing') as $collection)
-        {
-            $result = $collection->findOne(array("_id.r"=>"http://talisaspire.com/resources/doc1"));
-            if($result)
-            {
+        foreach (\Tripod\Config::getInstance()->getCollectionsForSearch('tripod_php_testing') as $collection) {
+            $result = $collection->findOne(array("_id.r" => "http://talisaspire.com/resources/doc1"));
+            if ($result) {
                 break;
             }
         }
         $this->assertEquals($result['_id'], array(
-            'r'=>'http://talisaspire.com/resources/doc1',
-            'c'=>'http://talisaspire.com/',
-            'type'=>'i_search_list'
+            'r' => 'http://talisaspire.com/resources/doc1',
+            'c' => 'http://talisaspire.com/',
+            'type' => 'i_search_list'
         ));
     }
 
     public function testSearchIndexingGeneratesTwoDocumentsForGivenResourceTheDeletesOneAfterFurtherUpdate()
     {
         // update a document
-        $id = array('_id.r'=>'http://talisaspire.com/resources/doc1');
+        $id = array('_id.r' => 'http://talisaspire.com/resources/doc1');
 
         $newData = array(
-            "rdf:type"=>array(array("u"=>"resourcelist:List"),array("u"=>"bibo:Book")),
-            "spec:name"=>array("l"=>"my list title"),
-            "resourcelist:description"=>array("l"=>"foo bar baz"),
+            "rdf:type" => array(array("u" => "resourcelist:List"),array("u" => "bibo:Book")),
+            "spec:name" => array("l" => "my list title"),
+            "resourcelist:description" => array("l" => "foo bar baz"),
         );
-        $this->getTripodCollection($this->tripod)->updateOne($id, array('$set'=> $newData));
+        $this->getTripodCollection($this->tripod)->updateOne($id, array('$set' => $newData));
 
         // reindex
         $this->indexer->generateAndIndexSearchDocuments('http://talisaspire.com/resources/doc1', 'http://talisaspire.com/', $this->tripod->getPodName());
@@ -258,12 +254,9 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
         $results = array();
         // We don't know where exactly these might have stored
-        foreach(\Tripod\Config::getInstance()->getCollectionsForSearch('tripod_php_testing') as $collection)
-        {
-            foreach($collection->find(array("_id.r"=>"http://talisaspire.com/resources/doc1")) as $result)
-            {
-                if(!in_array($result, $results))
-                {
+        foreach (\Tripod\Config::getInstance()->getCollectionsForSearch('tripod_php_testing') as $collection) {
+            foreach ($collection->find(array("_id.r" => "http://talisaspire.com/resources/doc1")) as $result) {
+                if (!in_array($result, $results)) {
                     $results[] = $result;
                 }
             }
@@ -271,30 +264,29 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
         $this->assertEquals(2, count($results));
         $expected = array(
-            array
-            (
-                'r'=>'http://talisaspire.com/resources/doc1',
-                'c'=>'http://talisaspire.com/',
-                'type'=>'i_search_list'
+            array(
+                'r' => 'http://talisaspire.com/resources/doc1',
+                'c' => 'http://talisaspire.com/',
+                'type' => 'i_search_list'
             ),
-            array
-            (
-                'r'=>'http://talisaspire.com/resources/doc1',
-                'c'=>'http://talisaspire.com/',
-                'type'=>'i_search_resource'
+            array(
+                'r' => 'http://talisaspire.com/resources/doc1',
+                'c' => 'http://talisaspire.com/',
+                'type' => 'i_search_resource'
             )
         );
-        foreach($results as $result){
+        foreach ($results as $result) {
             $this->assertTrue(in_array(
-                $result['_id'], $expected
+                $result['_id'],
+                $expected
             ));
         }
 
         // now update it again removing the resourcelist:List type
         $newData = array(
-            "rdf:type"=>array("u"=>"bibo:Book")
+            "rdf:type" => array("u" => "bibo:Book")
         );
-        $this->getTripodCollection($this->tripod)->updateOne($id, array('$set'=> $newData));
+        $this->getTripodCollection($this->tripod)->updateOne($id, array('$set' => $newData));
 
         // reindex
         $this->indexer->generateAndIndexSearchDocuments('http://talisaspire.com/resources/doc1', 'http://talisaspire.com/', $this->tripod->getPodName());
@@ -305,12 +297,9 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
         $results = array();
         // We don't know where exactly these might have stored
-        foreach(\Tripod\Config::getInstance()->getCollectionsForSearch('tripod_php_testing') as $collection)
-        {
-            foreach($collection->find(array("_id.r"=>"http://talisaspire.com/resources/doc1")) as $result)
-            {
-                if(!in_array($result, $results))
-                {
+        foreach (\Tripod\Config::getInstance()->getCollectionsForSearch('tripod_php_testing') as $collection) {
+            foreach ($collection->find(array("_id.r" => "http://talisaspire.com/resources/doc1")) as $result) {
+                if (!in_array($result, $results)) {
                     $results[] = $result;
                 }
             }
@@ -320,9 +309,9 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
         $result = array_pop($results);
         $this->assertEquals($result['_id'], array(
-            'r'=>'http://talisaspire.com/resources/doc1',
-            'c'=>'http://talisaspire.com/',
-            'type'=>'i_search_resource'
+            'r' => 'http://talisaspire.com/resources/doc1',
+            'c' => 'http://talisaspire.com/',
+            'type' => 'i_search_resource'
         ));
 
     }
@@ -331,28 +320,28 @@ class MongoSearchProviderTest extends MongoTripodTestBase
     {
         $this->expectException(\Tripod\Exceptions\SearchException::class);
         $this->expectExceptionMessage("You must specify a query");
-        $this->searchProvider->search("", "i_search_resource",  array("search_terms"), array("result"), 3, 0);
+        $this->searchProvider->search("", "i_search_resource", array("search_terms"), array("result"), 3, 0);
     }
 
     public function testSearchThrowsExceptionIfNoType()
     {
         $this->expectException(\Tripod\Exceptions\SearchException::class);
         $this->expectExceptionMessage("You must specify the search document type to restrict the query to");
-        $this->searchProvider->search("poetry", "",  array("search_terms"), array("result"), 3, 0);
+        $this->searchProvider->search("poetry", "", array("search_terms"), array("result"), 3, 0);
     }
 
     public function testSearchThrowsExceptionIfSearchIndicesEmpty()
     {
         $this->expectException(\Tripod\Exceptions\SearchException::class);
         $this->expectExceptionMessage("You must specify at least one index from the search document specification to query against");
-        $this->searchProvider->search("poetry", "i_search_resource",  array(), array("result"), 3, 0);
+        $this->searchProvider->search("poetry", "i_search_resource", array(), array("result"), 3, 0);
     }
 
     public function testSearchThrowsExceptionIfFieldsToReturnEmpty()
     {
         $this->expectException(\Tripod\Exceptions\SearchException::class);
         $this->expectExceptionMessage("You must specify at least one field from the search document specification to return");
-        $this->searchProvider->search("poetry", "i_search_resource",  array("search_terms"), array(), 3, 0);
+        $this->searchProvider->search("poetry", "i_search_resource", array("search_terms"), array(), 3, 0);
     }
 
 
@@ -360,14 +349,14 @@ class MongoSearchProviderTest extends MongoTripodTestBase
     {
         $this->expectException(\Tripod\Exceptions\SearchException::class);
         $this->expectExceptionMessage("Value for limit must be a positive number");
-        $this->searchProvider->search("poetry", "i_search_resource",  array("search_terms"), array("result"), -3, 0);
+        $this->searchProvider->search("poetry", "i_search_resource", array("search_terms"), array("result"), -3, 0);
     }
 
     public function testSearchThrowsExceptionIfOffsetIsNegative()
     {
         $this->expectException(\Tripod\Exceptions\SearchException::class);
         $this->expectExceptionMessage("Value for offset must be a positive number");
-        $this->searchProvider->search("poetry", "i_search_resource",  array("search_terms"), array("result"), 3, -1);
+        $this->searchProvider->search("poetry", "i_search_resource", array("search_terms"), array("result"), 3, -1);
     }
 
     public function testSearchLimitAndOffset()
@@ -398,15 +387,15 @@ class MongoSearchProviderTest extends MongoTripodTestBase
         $this->assertEquals(4, $results['head']['limit']);
         $this->assertEquals(4, count($results['results']));
         $this->assertEquals(0, $results['head']['offset']);
-        $this->assertEquals("john locke poetry",$results['head']["query"]);
+        $this->assertEquals("john locke poetry", $results['head']["query"]);
         $this->assertEquals(array("john","locke","poetry"), $results['head']["query_terms_used"]);
         $this->assertArrayHasKey("duration", $results['head']);
 
         $expectedResults = array(
-            array("title"=>"Paradise Lost" , "link"=>"http://talisaspire.com/resources/doc4" , "author"=>"John Locke"),
-            array("title"=>"The Divine Comedy" , "link"=>"http://talisaspire.com/resources/doc5" , "author"=>"John Locke"),
-            array("title"=>"A Light in the Attic" , "link"=>"http://talisaspire.com/resources/doc6" , "author"=>"John Locke"),
-            array("title"=>"Revolting Rhymes" , "link"=>"http://talisaspire.com/resources/doc7" , "author"=>"John Locke"),
+            array("title" => "Paradise Lost" , "link" => "http://talisaspire.com/resources/doc4" , "author" => "John Locke"),
+            array("title" => "The Divine Comedy" , "link" => "http://talisaspire.com/resources/doc5" , "author" => "John Locke"),
+            array("title" => "A Light in the Attic" , "link" => "http://talisaspire.com/resources/doc6" , "author" => "John Locke"),
+            array("title" => "Revolting Rhymes" , "link" => "http://talisaspire.com/resources/doc7" , "author" => "John Locke"),
         );
 
         $this->assertEquals($expectedResults, $results['results']);
@@ -417,7 +406,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
         $this->assertEquals(3, $results['head']['limit']);
         $this->assertEquals(1, count($results['results']));
         $this->assertEquals(0, $results['head']['offset']);
-        $this->assertEquals("the owl and the pussycat",$results['head']["query"]);
+        $this->assertEquals("the owl and the pussycat", $results['head']["query"]);
         $this->assertEquals(array("owl","pussycat"), $results['head']["query_terms_used"]);
         $this->assertArrayHasKey("duration", $results['head']);
 
@@ -427,7 +416,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
         $this->assertEquals(3, $results['head']['limit']);
         $this->assertEquals(0, count($results['results']));
         $this->assertEquals(0, $results['head']['offset']);
-        $this->assertEquals("october",$results['head']["query"]);
+        $this->assertEquals("october", $results['head']["query"]);
         $this->assertEquals(array("october"), $results['head']["query_terms_used"]);
         $this->assertArrayHasKey("duration", $results['head']);
         $this->assertEquals(array(), $results['results']);
@@ -438,14 +427,14 @@ class MongoSearchProviderTest extends MongoTripodTestBase
         $this->assertEquals(3, $results['head']['limit']);
         $this->assertEquals(3, count($results['results']));
         $this->assertEquals(0, $results['head']['offset']);
-        $this->assertEquals("john locke poetry",$results['head']["query"]);
+        $this->assertEquals("john locke poetry", $results['head']["query"]);
         $this->assertEquals(array("john","locke","poetry"), $results['head']["query_terms_used"]);
         $this->assertArrayHasKey("duration", $results['head']);
 
         $expectedResults = array(
-            array("result"=>array("title"=>"Paradise Lost" , "link"=>"http://talisaspire.com/resources/doc4" , "author"=>"John Locke"), "rdftype"=>"bibo:Book"),
-            array("result"=>array("title"=>"The Divine Comedy" , "link"=>"http://talisaspire.com/resources/doc5" , "author"=>"John Locke"),"rdftype"=>"bibo:Book"),
-            array("result"=>array("title"=>"A Light in the Attic" , "link"=>"http://talisaspire.com/resources/doc6" , "author"=>"John Locke"),"rdftype"=>"bibo:Book")
+            array("result" => array("title" => "Paradise Lost" , "link" => "http://talisaspire.com/resources/doc4" , "author" => "John Locke"), "rdftype" => "bibo:Book"),
+            array("result" => array("title" => "The Divine Comedy" , "link" => "http://talisaspire.com/resources/doc5" , "author" => "John Locke"),"rdftype" => "bibo:Book"),
+            array("result" => array("title" => "A Light in the Attic" , "link" => "http://talisaspire.com/resources/doc6" , "author" => "John Locke"),"rdftype" => "bibo:Book")
         );
         $this->assertEquals($expectedResults, $results['results']);
 
@@ -458,14 +447,14 @@ class MongoSearchProviderTest extends MongoTripodTestBase
         $this->assertEquals(3, $results['head']['limit']);
         $this->assertEquals(3, count($results['results']));
         $this->assertEquals(0, $results['head']['offset']);
-        $this->assertEquals("bibo:Book",$results['head']["query"]);
+        $this->assertEquals("bibo:Book", $results['head']["query"]);
         $this->assertEquals(array("bibo:book"), $results['head']["query_terms_used"]);
         $this->assertArrayHasKey("duration", $results['head']);
 
         $expectedResults = array(
-            array("result"=>array("title"=>"Physics for Engineers and Scientists" , "link"=>"http://talisaspire.com/resources/doc1" , "author"=>"Sayid Jarrah"), "rdftype"=>"bibo:Book"),
-            array("result"=>array("title"=>"Astrophysics for Beginners" , "link"=>"http://talisaspire.com/resources/doc2" , "author"=>"Sayid Jarrah"), "rdftype"=>"bibo:Book"),
-            array("result"=>array("title"=>"Fundementals of Heat and Mass Transfers" , "link"=>"http://talisaspire.com/resources/doc3" , "author"=>"Sayid Jarrah"), "rdftype"=>"bibo:Book")
+            array("result" => array("title" => "Physics for Engineers and Scientists" , "link" => "http://talisaspire.com/resources/doc1" , "author" => "Sayid Jarrah"), "rdftype" => "bibo:Book"),
+            array("result" => array("title" => "Astrophysics for Beginners" , "link" => "http://talisaspire.com/resources/doc2" , "author" => "Sayid Jarrah"), "rdftype" => "bibo:Book"),
+            array("result" => array("title" => "Fundementals of Heat and Mass Transfers" , "link" => "http://talisaspire.com/resources/doc3" , "author" => "Sayid Jarrah"), "rdftype" => "bibo:Book")
         );
 
         $this->assertEquals($expectedResults, $results['results']);
@@ -473,27 +462,27 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
     public function testSearchWorksDirectlyFromTripod()
     {
-       $results =  $this->tripod->search(array(
-            'q'=>'john locke poetry',
-            'type'=>'i_search_resource',
-            'indices'=>array("search_terms"),
-            "fields"=>array("result"),
-            "limit"=>3,
-            "offset"=>0
-        ));
+        $results =  $this->tripod->search(array(
+             'q' => 'john locke poetry',
+             'type' => 'i_search_resource',
+             'indices' => array("search_terms"),
+             "fields" => array("result"),
+             "limit" => 3,
+             "offset" => 0
+         ));
 
         $this->assertEquals(6, $results['head']['count']);
         $this->assertEquals(3, $results['head']['limit']);
         $this->assertEquals(3, count($results['results']));
         $this->assertEquals(0, $results['head']['offset']);
-        $this->assertEquals("john locke poetry",$results['head']["query"]);
+        $this->assertEquals("john locke poetry", $results['head']["query"]);
         $this->assertEquals(array("john","locke","poetry"), $results['head']["query_terms_used"]);
         $this->assertArrayHasKey("duration", $results['head']);
 
         $expectedResults = array(
-            array("title"=>"Paradise Lost" , "link"=>"http://talisaspire.com/resources/doc4" , "author"=>"John Locke"),
-            array("title"=>"The Divine Comedy" , "link"=>"http://talisaspire.com/resources/doc5" , "author"=>"John Locke"),
-            array("title"=>"A Light in the Attic" , "link"=>"http://talisaspire.com/resources/doc6" , "author"=>"John Locke"),
+            array("title" => "Paradise Lost" , "link" => "http://talisaspire.com/resources/doc4" , "author" => "John Locke"),
+            array("title" => "The Divine Comedy" , "link" => "http://talisaspire.com/resources/doc5" , "author" => "John Locke"),
+            array("title" => "A Light in the Attic" , "link" => "http://talisaspire.com/resources/doc6" , "author" => "John Locke"),
         );
 
         $this->assertEquals($expectedResults, $results['results']);
@@ -502,113 +491,110 @@ class MongoSearchProviderTest extends MongoTripodTestBase
 
     public function testDeleteSearchDocumentsByTypeIdThrowsExceptionForInvalidType()
     {
-    	$mockSearchProvider = $this->getMockBuilder(\Tripod\Mongo\MongoSearchProvider::class)
+        $mockSearchProvider = $this->getMockBuilder(\Tripod\Mongo\MongoSearchProvider::class)
             ->onlyMethods(array('getSearchDocumentSpecification'))
             ->setConstructorArgs(array($this->tripod))
             ->getMock();
-    	$mockSearchProvider->expects($this->once())
-    						->method('getSearchDocumentSpecification')
-    						->with('i_some_type')
-    						->will($this->returnValue(null));
+        $mockSearchProvider->expects($this->once())
+                            ->method('getSearchDocumentSpecification')
+                            ->with('i_some_type')
+                            ->will($this->returnValue(null));
 
-    	$this->expectException(Exception::class);
+        $this->expectException(Exception::class);
         $this->expectExceptionMessage("Could not find a search specification for i_some_type");
-    	$mockSearchProvider->deleteSearchDocumentsByTypeId('i_some_type');
+        $mockSearchProvider->deleteSearchDocumentsByTypeId('i_some_type');
     }
 
     public function testDeleteSearchDocumentsByTypeIdDeletesNothingWhenNoMatchFound()
     {
-    	// first, assert that there are only 12 based on the data we loaded into tripod
+        // first, assert that there are only 12 based on the data we loaded into tripod
         $actualSearchDocumentCount = $this->getCountForSearchSpecs($this->tripod);
 
-    	$this->assertEquals(13, $actualSearchDocumentCount, "Should have generated 12 search documents based on searchData.json");
+        $this->assertEquals(13, $actualSearchDocumentCount, "Should have generated 12 search documents based on searchData.json");
 
-    	$mockSearchProvider = $this->getMockBuilder(\Tripod\Mongo\MongoSearchProvider::class)
+        $mockSearchProvider = $this->getMockBuilder(\Tripod\Mongo\MongoSearchProvider::class)
             ->onlyMethods(array('getSearchDocumentSpecification'))
             ->setConstructorArgs(array($this->tripod))
             ->getMock();
-    	$mockSearchProvider->expects($this->once())
-				    	->method('getSearchDocumentSpecification')
-				    	->with('i_some_type')
-				    	->will($this->returnValue(array('i_some_type' => array())));
-        try
-        {
-    	    $mockSearchProvider->deleteSearchDocumentsByTypeId('i_some_type');
-        }
-        catch(\Tripod\Exceptions\ConfigException $e)
-        {
+        $mockSearchProvider->expects($this->once())
+                        ->method('getSearchDocumentSpecification')
+                        ->with('i_some_type')
+                        ->will($this->returnValue(array('i_some_type' => array())));
+        try {
+            $mockSearchProvider->deleteSearchDocumentsByTypeId('i_some_type');
+        } catch (\Tripod\Exceptions\ConfigException $e) {
             $this->assertEquals("Search document id 'i_some_type' not in configuration for store 'tripod_php_testing'", $e->getMessage());
         }
 
-    	//search document count should remain same, because we expect that there was nothing to delete
+        //search document count should remain same, because we expect that there was nothing to delete
         $newSearchDocumentCount = $this->getCountForSearchSpecs($this->tripod);
 
-    	$this->assertEquals(13, $newSearchDocumentCount, "Should have generated 12 search documents, because there was no match to remove");
+        $this->assertEquals(13, $newSearchDocumentCount, "Should have generated 12 search documents, because there was no match to remove");
     }
 
     public function testDeleteSearchDocumentsByTypeIdDeleteAllMatchingDocuments()
     {
-    	// first, assert that there are only 12 based on the data we loaded into tripod
+        // first, assert that there are only 12 based on the data we loaded into tripod
         $actualSearchDocumentCount = $this->getCountForSearchSpecs($this->tripod);
 
-    	$this->assertEquals(13, $actualSearchDocumentCount, "Should have generated 12 search documents based on searchData.json");
+        $this->assertEquals(13, $actualSearchDocumentCount, "Should have generated 12 search documents based on searchData.json");
 
-    	$mockSearchProvider = $this->getMockBuilder(\Tripod\Mongo\MongoSearchProvider::class)
+        $mockSearchProvider = $this->getMockBuilder(\Tripod\Mongo\MongoSearchProvider::class)
             ->onlyMethods(array('getSearchDocumentSpecification'))
             ->setConstructorArgs(array($this->tripod))
             ->getMock();
-    	$mockSearchProvider->expects($this->once())
-    					->method('getSearchDocumentSpecification')
-				    	->with('i_search_resource')
-				    	->will($this->returnValue(array('i_search_resource' => array())));
+        $mockSearchProvider->expects($this->once())
+                        ->method('getSearchDocumentSpecification')
+                        ->with('i_search_resource')
+                        ->will($this->returnValue(array('i_search_resource' => array())));
 
-    	$mockSearchProvider->deleteSearchDocumentsByTypeId('i_search_resource');
+        $mockSearchProvider->deleteSearchDocumentsByTypeId('i_search_resource');
 
-    	//search document count should be 0, because we expect that everything should be deleted
+        //search document count should be 0, because we expect that everything should be deleted
         $newSearchDocumentCount = $this->getCountForSearchSpecs($this->tripod);
 
-    	$this->assertEquals(0, $newSearchDocumentCount, "Should have 0 search documents after removing all matching documents");
+        $this->assertEquals(0, $newSearchDocumentCount, "Should have 0 search documents after removing all matching documents");
     }
 
     public function testDeleteSearchDocumentsByTypeIdDoNotDeleteNonMatchingDocuments()
     {
-    	// first, assert that there are only 12 based on the data we loaded into tripod
+        // first, assert that there are only 12 based on the data we loaded into tripod
         $actualSearchDocumentCount = $this->getCountForSearchSpecs($this->tripod);
 
-    	$this->assertEquals(13, $actualSearchDocumentCount, "Should have generated 13 search documents based on searchData.json");
+        $this->assertEquals(13, $actualSearchDocumentCount, "Should have generated 13 search documents based on searchData.json");
 
-    	$id = array('_id.r'=>'http://talisaspire.com/resources/doc1');
+        $id = array('_id.r' => 'http://talisaspire.com/resources/doc1');
 
-    	$newData = array(
-    			"rdf:type"=>array(array("u"=>"resourcelist:List"),array("u"=>"bibo:Book")),
-    			"spec:name"=>array("l"=>"my list title"),
-    			"resourcelist:description"=>array("l"=>"foo bar baz"),
-    	);
-    	$this->getTripodCollection($this->tripod)->updateOne($id, array('$set'=> $newData));
+        $newData = array(
+                "rdf:type" => array(array("u" => "resourcelist:List"),array("u" => "bibo:Book")),
+                "spec:name" => array("l" => "my list title"),
+                "resourcelist:description" => array("l" => "foo bar baz"),
+        );
+        $this->getTripodCollection($this->tripod)->updateOne($id, array('$set' => $newData));
 
-    	// reindex
-    	$this->indexer->generateAndIndexSearchDocuments('http://talisaspire.com/resources/doc1', 'http://talisaspire.com/', $this->tripod->getPodName());
+        // reindex
+        $this->indexer->generateAndIndexSearchDocuments('http://talisaspire.com/resources/doc1', 'http://talisaspire.com/', $this->tripod->getPodName());
 
-    	//assert that there are now 13 documents after adding new document to collection
+        //assert that there are now 13 documents after adding new document to collection
         $updatedSearchDocumentCount = $this->getCountForSearchSpecs($this->tripod);
 
-    	$this->assertEquals(14, $updatedSearchDocumentCount, "Should have generated 14 search documents after adding a new document to collection");
+        $this->assertEquals(14, $updatedSearchDocumentCount, "Should have generated 14 search documents after adding a new document to collection");
 
-    	$mockSearchProvider = $this->getMockBuilder(\Tripod\Mongo\MongoSearchProvider::class)
+        $mockSearchProvider = $this->getMockBuilder(\Tripod\Mongo\MongoSearchProvider::class)
             ->onlyMethods(array('getSearchDocumentSpecification'))
             ->setConstructorArgs(array($this->tripod))
             ->getMock();
-    	$mockSearchProvider->expects($this->once())
-				    	->method('getSearchDocumentSpecification')
-				    	->with('i_search_resource')
-				    	->will($this->returnValue(array('i_search_resource' => array())));
+        $mockSearchProvider->expects($this->once())
+                        ->method('getSearchDocumentSpecification')
+                        ->with('i_search_resource')
+                        ->will($this->returnValue(array('i_search_resource' => array())));
 
-    	$mockSearchProvider->deleteSearchDocumentsByTypeId('i_search_resource');
+        $mockSearchProvider->deleteSearchDocumentsByTypeId('i_search_resource');
 
-    	//search document count should be 1, since there is one document not matching the type id provided for delete
+        //search document count should be 1, since there is one document not matching the type id provided for delete
         $newSearchDocumentCount = $this->getCountForSearchSpecs($this->tripod);
 
-    	$this->assertEquals(1, $newSearchDocumentCount, "Should have 1 search documents since there is one search document with 'i_search_list' type that does not match delete type.");
+        $this->assertEquals(1, $newSearchDocumentCount, "Should have 1 search documents since there is one search document with 'i_search_list' type that does not match delete type.");
     }
 
     public function testCountSearchDocuments()
@@ -773,14 +759,12 @@ class MongoSearchProviderTest extends MongoTripodTestBase
     protected function getCountForSearchSpecs(\Tripod\Mongo\Driver $tripod, $specs = array())
     {
         $count = 0;
-        if(empty($specs))
-        {
+        if (empty($specs)) {
             $specs = \Tripod\Config::getInstance()->getSearchDocumentSpecifications($tripod->getStoreName(), null, true);
         }
 
-        foreach($specs as $spec)
-        {
-            $count += \Tripod\Config::getInstance()->getCollectionForSearchDocument($tripod->getStoreName(), $spec)->count(array('_id.type'=>$spec));
+        foreach ($specs as $spec) {
+            $count += \Tripod\Config::getInstance()->getCollectionForSearchDocument($tripod->getStoreName(), $spec)->count(array('_id.type' => $spec));
         }
         return $count;
     }

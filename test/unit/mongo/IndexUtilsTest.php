@@ -413,7 +413,7 @@ class IndexUtilsTest extends MongoTripodTestBase
      * @param bool $background create indexes in the background
      * @return void
      */
-    protected function oneCustomAndThreeInternalTripodCBDIndexesShouldBeCreated($mockCollection, $background=true)
+    protected function oneCustomAndThreeInternalTripodCBDIndexesShouldBeCreated($mockCollection, $background = true)
     {
         // create index is called 4 times, each time with a different set of
         // params that we know.
@@ -434,7 +434,7 @@ class IndexUtilsTest extends MongoTripodTestBase
      * @param bool $background create indexes in the background
      * @return void
      */
-    protected function oneCustomAndThreeInternalTripodViewIndexesShouldBeCreated($mockCollection, $background=true)
+    protected function oneCustomAndThreeInternalTripodViewIndexesShouldBeCreated($mockCollection, $background = true)
     {
         // create index is called 4 times, each time with a different set of
         // params that we know.
@@ -443,7 +443,7 @@ class IndexUtilsTest extends MongoTripodTestBase
         $mockCollection->expects($this->exactly(5))
             ->method('createIndex')
             ->withConsecutive(
-                array(array(_ID_KEY.'.'._ID_RESOURCE => 1, _ID_KEY.'.'._ID_CONTEXT => 1, _ID_KEY.'.'._ID_TYPE => 1), array('background'=>$background)),
+                array(array(_ID_KEY.'.'._ID_RESOURCE => 1, _ID_KEY.'.'._ID_CONTEXT => 1, _ID_KEY.'.'._ID_TYPE => 1), array('background' => $background)),
                 array(array(_ID_KEY.'.'._ID_TYPE => 1), array('background' => $background)),
                 array(array('value.'._IMPACT_INDEX => 1), array('background' => $background)),
                 [['_cts' => 1], ['background' => $background]],
@@ -456,7 +456,7 @@ class IndexUtilsTest extends MongoTripodTestBase
      * @param bool $background create indexes in the background
      * @return void
      */
-    protected function oneCustomAndThreeInternalTripodTableIndexesShouldBeCreated($mockCollection, $background=true)
+    protected function oneCustomAndThreeInternalTripodTableIndexesShouldBeCreated($mockCollection, $background = true)
     {
         // create index is called 4 times, each time with a different set of
         // params that we know.
@@ -465,7 +465,7 @@ class IndexUtilsTest extends MongoTripodTestBase
         $mockCollection->expects($this->exactly(5))
             ->method('createIndex')
             ->withConsecutive(
-                array(array(_ID_KEY.'.'._ID_RESOURCE => 1, _ID_KEY.'.'._ID_CONTEXT => 1, _ID_KEY.'.'._ID_TYPE => 1), array('background'=>$background)),
+                array(array(_ID_KEY.'.'._ID_RESOURCE => 1, _ID_KEY.'.'._ID_CONTEXT => 1, _ID_KEY.'.'._ID_TYPE => 1), array('background' => $background)),
                 array(array(_ID_KEY.'.'._ID_TYPE => 1), array('background' => $background)),
                 array(array('value.'._IMPACT_INDEX => 1), array('background' => $background)),
                 [['_cts' => 1], ['background' => $background]],
@@ -478,7 +478,7 @@ class IndexUtilsTest extends MongoTripodTestBase
      * @param bool $background create indexes in the background
      * @return void
      */
-    protected function threeInternalTripodSearchDocIndexesShouldBeCreated($mockCollection, $background=true)
+    protected function threeInternalTripodSearchDocIndexesShouldBeCreated($mockCollection, $background = true)
     {
         // create index is called 3 times, each time with a different set of
         // params that we know.
@@ -505,20 +505,20 @@ class IndexUtilsTest extends MongoTripodTestBase
     protected function setConfigForCBDIndexes($mockConfig)
     {
         // minimal config to verify that
-        $config=array();
+        $config = array();
         $config["data_sources"] = array(
-            "tlog"=>array(
-                "type"=>"mongo",
-                "connection"=>"mongodb://tloghost:27017,tloghost:27018/admin",
+            "tlog" => array(
+                "type" => "mongo",
+                "connection" => "mongodb://tloghost:27017,tloghost:27018/admin",
                 "replicaSet" => "tlogrepset"
             ),
-            "mongo"=>array("type"=>"mongo","connection" => "mongodb://localhost")
+            "mongo" => array("type" => "mongo","connection" => "mongodb://localhost")
         );
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["stores"] = array(
             "tripod_php_testing" => array(
-                "type"=>"mongo",
-                "data_source"=>"mongo",
+                "type" => "mongo",
+                "data_source" => "mongo",
                 "pods" => array(
                     "CBD_testing" => array(
                         "indexes" => array(
@@ -532,9 +532,9 @@ class IndexUtilsTest extends MongoTripodTestBase
         );
 
         $config["transaction_log"] = array(
-            "database"=>"transactions",
-            "collection"=>"transaction_log",
-            "data_source"=>"tlog"
+            "database" => "transactions",
+            "collection" => "transaction_log",
+            "data_source" => "tlog"
         );
 
         $mockConfig->loadConfig($config);
@@ -547,26 +547,26 @@ class IndexUtilsTest extends MongoTripodTestBase
     protected function setConfigForViewIndexes($mockConfig)
     {
         // minimal config to verify that
-        $config=array();
+        $config = array();
         $config["data_sources"] = array(
-            "tlog"=>array(
-                "type"=>"mongo",
-                "connection"=>"mongodb://tloghost:27017,tloghost:27018/admin",
+            "tlog" => array(
+                "type" => "mongo",
+                "connection" => "mongodb://tloghost:27017,tloghost:27018/admin",
                 "replicaSet" => "tlogrepset"
             ),
-            "mongo"=>array("type"=>"mongo","connection" => "mongodb://localhost")
+            "mongo" => array("type" => "mongo","connection" => "mongodb://localhost")
         );
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["stores"] = array(
             "tripod_php_testing" => array(
-                "type"=>"mongo",
-                "data_source"=>"mongo",
+                "type" => "mongo",
+                "data_source" => "mongo",
                 "pods" => array("CBD_testing" => array()),
                 "view_specifications" => array(
                     array(
                         "_id" => "v_testview",
                         "ensureIndexes" => array(
-                            array("rdf:type.u"=>1, '_cts' => 1)
+                            array("rdf:type.u" => 1, '_cts' => 1)
                         ),
                         "from" => "CBD_testing",
                         "type" => "temp:TestType",
@@ -579,9 +579,9 @@ class IndexUtilsTest extends MongoTripodTestBase
         );
 
         $config["transaction_log"] = array(
-            "database"=>"transactions",
-            "collection"=>"transaction_log",
-            "data_source"=>"tlog"
+            "database" => "transactions",
+            "collection" => "transaction_log",
+            "data_source" => "tlog"
         );
 
         $mockConfig->loadConfig($config);
@@ -594,26 +594,26 @@ class IndexUtilsTest extends MongoTripodTestBase
     protected function setConfigForTableIndexes($mockConfig)
     {
         // minimal config to verify that
-        $config=array();
+        $config = array();
         $config["data_sources"] = array(
-            "tlog"=>array(
-                "type"=>"mongo",
-                "connection"=>"mongodb://tloghost:27017,tloghost:27018/admin",
+            "tlog" => array(
+                "type" => "mongo",
+                "connection" => "mongodb://tloghost:27017,tloghost:27018/admin",
                 "replicaSet" => "tlogrepset"
             ),
-            "mongo"=>array("type"=>"mongo","connection" => "mongodb://localhost")
+            "mongo" => array("type" => "mongo","connection" => "mongodb://localhost")
         );
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["stores"] = array(
             "tripod_php_testing" => array(
-                "type"=>"mongo",
-                "data_source"=>"mongo",
+                "type" => "mongo",
+                "data_source" => "mongo",
                 "pods" => array("CBD_testing" => array()),
                 "table_specifications" => array(
                     array(
                         "_id" => "t_testtable",
                         "ensureIndexes" => array(
-                            array("rdf:type.u"=>1)
+                            array("rdf:type.u" => 1)
                         ),
                         "from" => "CBD_testing",
                         "type" => "temp:TestType",
@@ -629,9 +629,9 @@ class IndexUtilsTest extends MongoTripodTestBase
         );
 
         $config["transaction_log"] = array(
-            "database"=>"transactions",
-            "collection"=>"transaction_log",
-            "data_source"=>"tlog"
+            "database" => "transactions",
+            "collection" => "transaction_log",
+            "data_source" => "tlog"
         );
 
         $mockConfig->loadConfig($config);
@@ -644,20 +644,20 @@ class IndexUtilsTest extends MongoTripodTestBase
     protected function setConfigForSearchDocIndexes($mockConfig)
     {
         // minimal config to verify that
-        $config=array();
+        $config = array();
         $config["data_sources"] = array(
-            "tlog"=>array(
-                "type"=>"mongo",
-                "connection"=>"mongodb://tloghost:27017,tloghost:27018/admin",
+            "tlog" => array(
+                "type" => "mongo",
+                "connection" => "mongodb://tloghost:27017,tloghost:27018/admin",
                 "replicaSet" => "tlogrepset"
             ),
-            "mongo"=>array("type"=>"mongo","connection" => "mongodb://localhost")
+            "mongo" => array("type" => "mongo","connection" => "mongodb://localhost")
         );
         $config["defaultContext"] = "http://talisaspire.com/";
         $config["stores"] = array(
             "tripod_php_testing" => array(
-                "type"=>"mongo",
-                "data_source"=>"mongo",
+                "type" => "mongo",
+                "data_source" => "mongo",
                 "pods" => array("CBD_testing" => array()),
                 "search_config" => array(
                     "search_provider" => "MongoSearchProvider",
@@ -688,9 +688,9 @@ class IndexUtilsTest extends MongoTripodTestBase
         );
 
         $config["transaction_log"] = array(
-            "database"=>"transactions",
-            "collection"=>"transaction_log",
-            "data_source"=>"tlog"
+            "database" => "transactions",
+            "collection" => "transaction_log",
+            "data_source" => "tlog"
         );
 
         $mockConfig->loadConfig($config);
