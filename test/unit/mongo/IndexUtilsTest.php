@@ -14,7 +14,7 @@ class IndexUtilsTest extends MongoTripodTestBase
         $indexUtils = $this->createMockIndexUtils($config);
 
         $this->setConfigForCBDIndexes($config);
-        $this->deleteIndexesShouldNeverBeCalled($collection);
+        $this->dropIndexesShouldNeverBeCalled($collection);
         $this->oneCustomAndThreeInternalTripodCBDIndexesShouldBeCreated($collection, true);
         $this->getCollectionForCBDShouldBeCalled_n_Times(4, $config, $collection);
         $this->getCollectionForViewShouldNeverBeCalled($config);
@@ -31,7 +31,7 @@ class IndexUtilsTest extends MongoTripodTestBase
         $indexUtils = $this->createMockIndexUtils($config);
 
         $this->setConfigForCBDIndexes($config);
-        $this->deleteIndexesShouldNeverBeCalled($collection);
+        $this->dropIndexesShouldNeverBeCalled($collection);
         $this->oneCustomAndThreeInternalTripodCBDIndexesShouldBeCreated($collection, false);
         $this->getCollectionForCBDShouldBeCalled_n_Times(4, $config, $collection);
         $this->getCollectionForViewShouldNeverBeCalled($config);
@@ -48,7 +48,7 @@ class IndexUtilsTest extends MongoTripodTestBase
         $indexUtils = $this->createMockIndexUtils($config);
 
         $this->setConfigForCBDIndexes($config);
-        $this->deleteIndexesShouldBeCalled($collection);
+        $this->dropIndexesShouldBeCalled($collection);
         $this->oneCustomAndThreeInternalTripodCBDIndexesShouldBeCreated($collection, true);
         $this->getCollectionForCBDShouldBeCalled_n_Times(5, $config, $collection);
         $this->getCollectionForViewShouldNeverBeCalled($config);
@@ -65,7 +65,7 @@ class IndexUtilsTest extends MongoTripodTestBase
         $indexUtils = $this->createMockIndexUtils($config);
 
         $this->setConfigForViewIndexes($config);
-        $this->deleteIndexesShouldNeverBeCalled($collection);
+        $this->dropIndexesShouldNeverBeCalled($collection);
         $this->oneCustomAndThreeInternalTripodViewIndexesShouldBeCreated($collection, true);
         $this->getCollectionForViewShouldBeCalled_n_Times(1, $config, $collection);
         $this->getCollectionForCBDShouldNeverBeCalled($collection);
@@ -82,7 +82,7 @@ class IndexUtilsTest extends MongoTripodTestBase
         $indexUtils = $this->createMockIndexUtils($config);
 
         $this->setConfigForViewIndexes($config);
-        $this->deleteIndexesShouldNeverBeCalled($collection);
+        $this->dropIndexesShouldNeverBeCalled($collection);
         $this->oneCustomAndThreeInternalTripodViewIndexesShouldBeCreated($collection, false);
         $this->getCollectionForViewShouldBeCalled_n_Times(1, $config, $collection);
         $this->getCollectionForCBDShouldNeverBeCalled($collection);
@@ -99,7 +99,7 @@ class IndexUtilsTest extends MongoTripodTestBase
         $indexUtils = $this->createMockIndexUtils($config);
 
         $this->setConfigForViewIndexes($config);
-        $this->deleteIndexesShouldBeCalled($collection);
+        $this->dropIndexesShouldBeCalled($collection);
         $this->oneCustomAndThreeInternalTripodViewIndexesShouldBeCreated($collection, true);
         $this->getCollectionForViewShouldBeCalled_n_Times(1, $config, $collection);
         $this->getCollectionForCBDShouldNeverBeCalled($collection);
@@ -116,7 +116,7 @@ class IndexUtilsTest extends MongoTripodTestBase
         $indexUtils = $this->createMockIndexUtils($config);
 
         $this->setConfigForTableIndexes($config);
-        $this->deleteIndexesShouldNeverBeCalled($collection);
+        $this->dropIndexesShouldNeverBeCalled($collection);
         $this->oneCustomAndThreeInternalTripodTableIndexesShouldBeCreated($collection, true);
         $this->getCollectionForTableShouldBeCalled_n_Times(1, $config, $collection);
         $this->getCollectionForCBDShouldNeverBeCalled($collection);
@@ -133,7 +133,7 @@ class IndexUtilsTest extends MongoTripodTestBase
         $indexUtils = $this->createMockIndexUtils($config);
 
         $this->setConfigForTableIndexes($config);
-        $this->deleteIndexesShouldNeverBeCalled($collection);
+        $this->dropIndexesShouldNeverBeCalled($collection);
         $this->oneCustomAndThreeInternalTripodTableIndexesShouldBeCreated($collection, false);
         $this->getCollectionForTableShouldBeCalled_n_Times(1, $config, $collection);
         $this->getCollectionForCBDShouldNeverBeCalled($collection);
@@ -150,7 +150,7 @@ class IndexUtilsTest extends MongoTripodTestBase
         $indexUtils = $this->createMockIndexUtils($config);
 
         $this->setConfigForTableIndexes($config);
-        $this->deleteIndexesShouldBeCalled($collection);
+        $this->dropIndexesShouldBeCalled($collection);
         $this->oneCustomAndThreeInternalTripodTableIndexesShouldBeCreated($collection, true);
         $this->getCollectionForTableShouldBeCalled_n_Times(1, $config, $collection);
         $this->getCollectionForCBDShouldNeverBeCalled($collection);
@@ -167,7 +167,7 @@ class IndexUtilsTest extends MongoTripodTestBase
         $indexUtils = $this->createMockIndexUtils($config);
 
         $this->setConfigForSearchDocIndexes($config);
-        $this->deleteIndexesShouldNeverBeCalled($collection);
+        $this->dropIndexesShouldNeverBeCalled($collection);
         $this->threeInternalTripodSearchDocIndexesShouldBeCreated($collection, true);
         $this->getCollectionForSearchDocShouldBeCalled_n_Times(1, $config, $collection);
         $this->getCollectionForCBDShouldNeverBeCalled($collection);
@@ -184,7 +184,7 @@ class IndexUtilsTest extends MongoTripodTestBase
         $indexUtils = $this->createMockIndexUtils($config);
 
         $this->setConfigForSearchDocIndexes($config);
-        $this->deleteIndexesShouldNeverBeCalled($collection);
+        $this->dropIndexesShouldNeverBeCalled($collection);
         $this->threeInternalTripodSearchDocIndexesShouldBeCreated($collection, false);
         $this->getCollectionForSearchDocShouldBeCalled_n_Times(1, $config, $collection);
         $this->getCollectionForCBDShouldNeverBeCalled($collection);
@@ -201,12 +201,28 @@ class IndexUtilsTest extends MongoTripodTestBase
         $indexUtils = $this->createMockIndexUtils($config);
 
         $this->setConfigForSearchDocIndexes($config);
-        $this->deleteIndexesShouldBeCalled($collection);
+        $this->dropIndexesShouldBeCalled($collection);
         $this->threeInternalTripodSearchDocIndexesShouldBeCreated($collection, true);
         $this->getCollectionForSearchDocShouldBeCalled_n_Times(1, $config, $collection);
         $this->getCollectionForCBDShouldNeverBeCalled($collection);
         $this->getCollectionForViewShouldNeverBeCalled($config);
         $this->getCollectionForTableShouldNeverBeCalled($config);
+
+        $indexUtils->ensureIndexes(true, 'tripod_php_testing', true);
+    }
+
+    public function testIndexesAreDroppedOnlyOncePerCollectionWhenReindexed()
+    {
+        $config = $this->createMockConfig();
+        $collection = $this->createMockCollection();
+        $indexUtils = $this->createMockIndexUtils($config);
+
+        $this->setConfigForCBDViewTableAndSearchDocIndexes($config);
+        $this->dropIndexesShouldBeCalled($collection);
+        $this->getCollectionForCBDShouldBeCalled_n_Times(5, $config, $collection);
+        $this->getCollectionForViewShouldBeCalled_n_Times(1, $config, $collection);
+        $this->getCollectionForTableShouldBeCalled_n_Times(1, $config, $collection);
+        $this->getCollectionForSearchDocShouldBeCalled_n_Times(1, $config, $collection);
 
         $indexUtils->ensureIndexes(true, 'tripod_php_testing', true);
     }
@@ -241,8 +257,13 @@ class IndexUtilsTest extends MongoTripodTestBase
      */
     protected function createMockCollection()
     {
-        $mockCollection = $this->getMockBuilder('Collection')
-            ->setMethods(array('createIndex', 'deleteIndexes'))
+        $mockCollection = $this->getMockBuilder('\MongoDB\Collection')
+            ->setMethods(array('createIndex', 'dropIndexes'))
+            ->setConstructorArgs([
+                new \MongoDB\Driver\Manager('mongodb://fake:27017'),
+                'tripod_php_testing',
+                'CBD_testing',
+            ])
             ->getMock();
 
         return $mockCollection;
@@ -322,19 +343,19 @@ class IndexUtilsTest extends MongoTripodTestBase
     /**
      * @param PHPUnit_Framework_MockObject_MockObject mock Collection object
      */
-    protected function deleteIndexesShouldNeverBeCalled($mockCollection)
+    protected function dropIndexesShouldNeverBeCalled($mockCollection)
     {
         $mockCollection->expects($this->never())
-            ->method('deleteIndexes');
+            ->method('dropIndexes');
     }
 
     /**
      * @param PHPUnit_Framework_MockObject_MockObject mock Collection object
      */
-    protected function deleteIndexesShouldBeCalled($mockCollection)
+    protected function dropIndexesShouldBeCalled($mockCollection)
     {
         $mockCollection->expects($this->once())
-            ->method('deleteIndexes');
+            ->method('dropIndexes');
     }
 
     /**
@@ -649,5 +670,95 @@ class IndexUtilsTest extends MongoTripodTestBase
         );
 
         $mockConfig->loadConfig($config);
+    }
+
+    /**
+     * @param MockObject&\TripodTestConfig $mockConfig mock Config object
+     */
+    protected function setConfigForCBDViewTableAndSearchDocIndexes($mockConfig)
+    {
+        $mockConfig->loadConfig([
+            'defaultContext' => 'http://talisaspire.com/',
+            'data_sources' => [
+                'tlog' => [
+                    'type' => 'mongo',
+                    'connection' => 'mongodb://tloghost',
+                ],
+                'mongo' => [
+                    'type' => 'mongo',
+                    'connection' => 'mongodb://mongo',
+                ],
+            ],
+            'stores' => [
+                'tripod_php_testing' => [
+                    'type' => 'mongo',
+                    'data_source' => 'mongo',
+                    'pods' => [
+                        'CBD_testing' => [
+                            'indexes' => [
+                                'rdf_type' => ['rdf:type.u' => 1],
+                            ],
+                        ],
+                    ],
+                    'view_specifications' => [
+                        [
+                            '_id' => 'v_testview',
+                            'ensureIndexes' => [
+                                ['rdf:type.u' => 1, '_cts' => 1],
+                            ],
+                            'from' => 'CBD_testing',
+                            'type' => 'temp:TestType',
+                            'joins' => [
+                                'dct:partOf' => [],
+                            ],
+                        ],
+                    ],
+                    'table_specifications' => [
+                        [
+                            '_id' => 't_testtable',
+                            'ensureIndexes' => [
+                                ['rdf:type.u' => 1],
+                            ],
+                            'from' => 'CBD_testing',
+                            'type' => 'temp:TestType',
+                            'fields' => [
+                                [
+                                    'fieldName' => 'fieldA',
+                                    'predicates' => ['spec:note'],
+                                ],
+                            ],
+                        ],
+                    ],
+                    'search_config' => [
+                        'search_provider' => 'MongoSearchProvider',
+                        'search_specifications' => [
+                            [
+                                '_id' => 'i_search_something',
+                                'type' => 'temp:TestType',
+                                'from' => 'CBD_testing',
+                                'filter' => [
+                                    'from' => 'CBD_testing',
+                                    'condition' => [
+                                        'spec:name' => ['$exists' => true],
+                                    ],
+                                ],
+                                'fields' => [
+                                    [
+                                        'fieldName' => 'result.title',
+                                        'predicates' => ['spec:note'],
+                                        'limit' => 1,
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            'transaction_log' => [
+                'database' => 'transactions',
+                'collection' => 'transaction_log',
+                'data_source' => 'tlog',
+            ],
+        ]);
     }
 }
