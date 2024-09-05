@@ -13,9 +13,8 @@ abstract class MongoTripodPerformanceTestBase extends MongoTripodTestBase
         list($endTimeMicroSeconds, $endTimeSeconds) = explode(' ', $microTime2);
         list($startTimeMicroSeconds, $startTimeSeconds) = explode(' ', $microTime1);
 
-        $differenceInMilliSeconds =  ((float)$endTimeSeconds - (float)$startTimeSeconds) * 1000;
+        $differenceInMilliSeconds = ((float) $endTimeSeconds - (float) $startTimeSeconds) * 1000;
 
-        return round(($differenceInMilliSeconds + ((float)$endTimeMicroSeconds * 1000)) -  (float)$startTimeMicroSeconds * 1000);
+        return round(($differenceInMilliSeconds + ((float) $endTimeMicroSeconds * 1000)) - (float) $startTimeMicroSeconds * 1000);
     }
-
 }

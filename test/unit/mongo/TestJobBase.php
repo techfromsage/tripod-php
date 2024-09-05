@@ -1,6 +1,6 @@
 <?php
 
-class TestJobBase extends \Tripod\Mongo\Jobs\JobBase
+class TestJobBase extends Tripod\Mongo\Jobs\JobBase
 {
     /**
      * Expose this method for testing
@@ -11,9 +11,7 @@ class TestJobBase extends \Tripod\Mongo\Jobs\JobBase
         return parent::getTripodConfig();
     }
 
-    public function perform()
-    {
-    }
+    public function perform() {}
 
     protected function getStatTimerSuccessKey()
     {

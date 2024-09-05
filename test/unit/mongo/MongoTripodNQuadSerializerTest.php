@@ -13,14 +13,14 @@ class MongoTripodNQuadSerializerTest extends MongoTripodTestBase
     public function testSerializerSimple()
     {
         $g = new MongoGraph();
-        $g->add_literal_triple("http://example.com/1", $g->qname_to_uri("dct:title"), "some literal title");
-        $g->add_resource_triple("http://example.com/1", $g->qname_to_uri("dct:source"), "http://www.google.com");
+        $g->add_literal_triple('http://example.com/1', $g->qname_to_uri('dct:title'), 'some literal title');
+        $g->add_resource_triple('http://example.com/1', $g->qname_to_uri('dct:source'), 'http://www.google.com');
 
         $expected = "<http://example.com/1> <http://purl.org/dc/terms/title> \"some literal title\" <http://talisaspire.com/> .
 <http://example.com/1> <http://purl.org/dc/terms/source> <http://www.google.com> <http://talisaspire.com/> .\n";
 
         $serializer = new NQuadSerializer();
-        $actual = $serializer->getSerializedIndex($g->_index, \Tripod\Config::getInstance()->getDefaultContextAlias());
+        $actual = $serializer->getSerializedIndex($g->_index, Tripod\Config::getInstance()->getDefaultContextAlias());
 
         $this->assertEquals($expected, $actual);
     }
@@ -28,7 +28,7 @@ class MongoTripodNQuadSerializerTest extends MongoTripodTestBase
     public function testSerializerWithMultipleSubjects()
     {
         $g = new MongoGraph();
-        $docs = json_decode(file_get_contents(dirname(__FILE__).'/data/resources.json'), true);
+        $docs = json_decode(file_get_contents(dirname(__FILE__) . '/data/resources.json'), true);
         foreach ($docs as $d) {
             $g->add_tripod_array($d);
         }
@@ -162,7 +162,7 @@ class MongoTripodNQuadSerializerTest extends MongoTripodTestBase
 <http://basedata.com/b/docWithEmptySeq123> <http://purl.org/dc/terms/title> \"Doc with sequence\" <http://talisaspire.com/> .";
 
         $serializer = new NQuadSerializer();
-        $actual = $serializer->getSerializedIndex($g->_index, \Tripod\Config::getInstance()->getDefaultContextAlias());
+        $actual = $serializer->getSerializedIndex($g->_index, Tripod\Config::getInstance()->getDefaultContextAlias());
 
         // This test initially asserted that $expected was equal to $actual
         //   $this->assertEquals($expected, $actual);
@@ -171,9 +171,8 @@ class MongoTripodNQuadSerializerTest extends MongoTripodTestBase
         // this test now asserts that each line in $expected has been serialised correctly, without failing
         // due to new test data.
         foreach (preg_split("/((\r?\n)|(\r\n?))/", $expected) as $expectedLine) {
-            $this->assertTrue(strpos($actual, rtrim($expectedLine)) !== false, "Failed checking for line: " . rtrim($expectedLine));
+            $this->assertTrue(strpos($actual, rtrim($expectedLine)) !== false, 'Failed checking for line: ' . rtrim($expectedLine));
         }
-
 
     }
 }

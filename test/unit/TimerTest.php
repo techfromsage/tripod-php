@@ -14,7 +14,7 @@ class TimerTest extends TestCase
     public function testResultWhenStartTimeNotSet()
     {
         $timer = new Timer();
-        $this->expectException(\Exception::class);
+        $this->expectException(Exception::class);
         $this->expectExceptionMessage('Timer: start method not called !');
         $timer->result();
     }
@@ -23,7 +23,7 @@ class TimerTest extends TestCase
     {
         $timer = new Timer();
         $timer->start();
-        $this->expectException(\Exception::class);
+        $this->expectException(Exception::class);
         $this->expectExceptionMessage('Timer: stop method not called !');
         $timer->result();
     }
@@ -43,7 +43,7 @@ class TimerTest extends TestCase
     public function testMicroResultWhenStartTimeNotSet()
     {
         $timer = new Timer();
-        $this->expectException(\Exception::class);
+        $this->expectException(Exception::class);
         $this->expectExceptionMessage('Timer: start method not called !');
         $timer->result();
     }
@@ -52,7 +52,7 @@ class TimerTest extends TestCase
     {
         $timer = new Timer();
         $timer->start();
-        $this->expectException(\Exception::class);
+        $this->expectException(Exception::class);
         $this->expectExceptionMessage('Timer: stop method not called !');
         $timer->result();
     }
@@ -66,5 +66,5 @@ class TimerTest extends TestCase
         $status = ($timer->microResult() >= 1000000) ? true : false;
         $this->assertTrue($status);
     }
-    /**  END: microResult() tests */
+    /*  END: microResult() tests */
 }

@@ -6,13 +6,13 @@ define('FORMAT_RDF_XML', 'rdfxml');
 define('FORMAT_NTRIPLES', 'ntriples');
 define('FORMAT_TURTLE', 'turtle');
 define('FORMAT_RDF_JSON', 'rdfjson');
-$app = new \Slim\Slim(array(
-    'log.level' => \Slim\Log::DEBUG
-));
+$app = new Slim\Slim([
+    'log.level' => Slim\Log::DEBUG,
+]);
 
 $appConfig = json_decode(file_get_contents('./config/config.json'), true);
 
-$tripodOptions = array();
+$tripodOptions = [];
 if (isset($appConfig['tripod'])) {
     $tripodOptions = $appConfig['tripod'];
 }
@@ -21,20 +21,20 @@ if (isset($appConfig['statsConfig'])) {
     $tripodOptions['statsConfig'] = $appConfig['statsConfig'];
 }
 
-$readRepeat = isset($appConfig['read-repeat']) ? (int)$appConfig['read-repeat'] : 0;
+$readRepeat = isset($appConfig['read-repeat']) ? (int) $appConfig['read-repeat'] : 0;
 
 define('READ_REPEAT_NUM', $readRepeat);
 
 $app->group('/1', function () use ($app, $tripodOptions) {
     $app->group('/:storeName', function () use ($app, $tripodOptions) {
         $app->get('/views/:viewId/:encodedFqUri', function ($storeName, $viewSpecId, $encodedFqUri) use ($app, $tripodOptions) {
-            \Tripod\Config::setConfig(json_decode(file_get_contents('./config/tripod-config-'.$storeName .'.json'), true));
+            Tripod\Config::setConfig(json_decode(file_get_contents('./config/tripod-config-' . $storeName . '.json'), true));
             $i = 0;
             do {
-                $viewSpec = \Tripod\Config::getInstance()->getViewSpecification($storeName, $viewSpecId);
+                $viewSpec = Tripod\Config::getInstance()->getViewSpecification($storeName, $viewSpecId);
                 $podName = isset($viewSpec['from']) ? $viewSpec['from'] : null;
                 $tripodOptions['statsConfig'] = getStat($app, $tripodOptions);
-                $tripod = new \Tripod\Mongo\Driver($podName, $storeName, $tripodOptions);
+                $tripod = new Tripod\Mongo\Driver($podName, $storeName, $tripodOptions);
                 $contentType = $app->request()->getMediaType();
                 switch ($contentType) {
                     case 'application/rdf+xml':
@@ -49,7 +49,7 @@ $app->group('/1', function () use ($app, $tripodOptions) {
                     default:
                         $format = FORMAT_RDF_JSON;
                 }
-                $graph =  $tripod->getViewForResource(base64_decode($encodedFqUri), $viewSpecId);
+                $graph = $tripod->getViewForResource(base64_decode($encodedFqUri), $viewSpecId);
             } while (++$i < READ_REPEAT_NUM);
             if ($graph->is_empty()) {
                 $app->response()->setStatus(404);
@@ -62,13 +62,13 @@ $app->group('/1', function () use ($app, $tripodOptions) {
         $app->group('/:podName', function () use ($app, $tripodOptions) {
             $app->group('/graph', function () use ($app, $tripodOptions) {
                 $app->get('/:encodedFqUri', function ($storeName, $podName, $encodedFqUri) use ($app, $tripodOptions) {
-                    \Tripod\Config::setConfig(json_decode(file_get_contents('./config/tripod-config-'.$storeName .'.json'), true));
+                    Tripod\Config::setConfig(json_decode(file_get_contents('./config/tripod-config-' . $storeName . '.json'), true));
                     $tripodOptions['statsConfig'] = getStat($app, $tripodOptions);
 
                     $contentType = $app->request()->getMediaType();
                     $i = 0;
                     do {
-                        $tripod = new \Tripod\Mongo\Driver($podName, $storeName, $tripodOptions);
+                        $tripod = new Tripod\Mongo\Driver($podName, $storeName, $tripodOptions);
 
                         switch ($contentType) {
                             case 'application/rdf+xml':
@@ -83,7 +83,7 @@ $app->group('/1', function () use ($app, $tripodOptions) {
                             default:
                                 $format = FORMAT_RDF_JSON;
                         }
-                        $graph =  $tripod->describeResource(base64_decode($encodedFqUri));
+                        $graph = $tripod->describeResource(base64_decode($encodedFqUri));
                     } while (++$i < READ_REPEAT_NUM);
 
                     if ($graph->is_empty()) {
@@ -98,32 +98,32 @@ $app->group('/1', function () use ($app, $tripodOptions) {
 
                 $app->delete('/:encodedFqUri', function ($storeName, $podName, $encodedFqUri) use ($app, $tripodOptions) {
                     $tripodOptions['statsConfig'] = getStat($app, $tripodOptions);
-                    $tripod = new \Tripod\Mongo\Driver($podName, $storeName, $tripodOptions);
+                    $tripod = new Tripod\Mongo\Driver($podName, $storeName, $tripodOptions);
                     $oldGraph = $tripod->describeResource(base64_decode($encodedFqUri));
-                    $tripod->saveChanges($oldGraph, new \Tripod\ExtendedGraph());
+                    $tripod->saveChanges($oldGraph, new Tripod\ExtendedGraph());
                 });
 
                 $app->post('/', function ($storeName, $podName) use ($app, $tripodOptions) {
                     $tripodOptions['statsConfig'] = getStat($app, $tripodOptions);
-                    $tripod = new \Tripod\Mongo\Driver($podName, $storeName, $tripodOptions);
+                    $tripod = new Tripod\Mongo\Driver($podName, $storeName, $tripodOptions);
                     $rawGraphData = $app->request()->getBody();
-                    $graph = new \Tripod\Mongo\MongoGraph();
+                    $graph = new Tripod\Mongo\MongoGraph();
                     $graph->add_rdf($rawGraphData);
-                    $tripod->saveChanges(new \Tripod\ExtendedGraph(), $graph);
+                    $tripod->saveChanges(new Tripod\ExtendedGraph(), $graph);
                 });
             });
 
             $app->group('/change', function () use ($app, $tripodOptions) {
                 $app->post('/', function ($storeName, $podName) use ($app, $tripodOptions) {
-                    \Tripod\Config::setConfig(json_decode(file_get_contents('./config/tripod-config-'.$storeName .'.json'), true));
+                    Tripod\Config::setConfig(json_decode(file_get_contents('./config/tripod-config-' . $storeName . '.json'), true));
                     $app->response()->setStatus(500);
                     $tripodOptions['statsConfig'] = getStat($app, $tripodOptions);
-                    $tripod = new \Tripod\Mongo\Driver($podName, $storeName, $tripodOptions);
+                    $tripod = new Tripod\Mongo\Driver($podName, $storeName, $tripodOptions);
                     $rawChangeData = $app->request()->post('data');
                     if ($rawChangeData) {
                         $changeData = json_decode($rawChangeData, true);
-                        $from = new \Tripod\Mongo\MongoGraph();
-                        $to = new \Tripod\Mongo\MongoGraph();
+                        $from = new Tripod\Mongo\MongoGraph();
+                        $to = new Tripod\Mongo\MongoGraph();
                         if (isset($changeData['originalCBDs'])) {
                             foreach ($changeData['originalCBDs'] as $change) {
                                 if (is_array($change) && isset($change[_ID_KEY])) {
@@ -142,7 +142,7 @@ $app->group('/1', function () use ($app, $tripodOptions) {
                             $tripod->saveChanges($from, $to);
                             $app->response()->setStatus(202);
                         } catch (Exception $e) {
-                            error_log("POST failed: " . $e->getMessage());
+                            error_log('POST failed: ' . $e->getMessage());
                             $app->response()->setStatus(400);
                         }
                     }
@@ -176,11 +176,11 @@ function getContentType($format)
 }
 
 /**
- * @param \Tripod\ExtendedGraph $graph
+ * @param Tripod\ExtendedGraph $graph
  * @param string $format
  * @return string
  */
-function getFormattedGraph(\Tripod\ExtendedGraph $graph, $format)
+function getFormattedGraph(Tripod\ExtendedGraph $graph, $format)
 {
     switch ($format) {
         case FORMAT_RDF_XML:
@@ -199,13 +199,13 @@ function getFormattedGraph(\Tripod\ExtendedGraph $graph, $format)
 }
 
 /**
- * @param \Slim\Slim $app
+ * @param Slim\Slim $app
  * @param array $tripodOptions
  * @return null|Stat
  */
 function getStat(Slim\Slim $app, array $tripodOptions)
 {
-    $statConfig = isset($tripodOptions['statsConfig']) ? $tripodOptions['statsConfig'] : array();
+    $statConfig = isset($tripodOptions['statsConfig']) ? $tripodOptions['statsConfig'] : [];
     $statEnv = $app->request()->headers('X-TRIPOD-TEST-ENV');
     if ($statEnv && isset($statConfig['config'])) {
         $statConfig['config']['prefix'] = $statEnv;

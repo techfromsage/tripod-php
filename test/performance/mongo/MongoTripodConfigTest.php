@@ -21,8 +21,7 @@ class MongoTripodConfigTest extends MongoTripodPerformanceTestBase
      * Holds tripod config
      * @var array
      */
-    private $config = array();
-
+    private $config = [];
 
     /**
      * Do some setup before each test start
@@ -39,7 +38,7 @@ class MongoTripodConfigTest extends MongoTripodPerformanceTestBase
      */
     protected function tearDown(): void
     {
-        $this->config = array();
+        $this->config = [];
         parent::tearDown();
     }
 
@@ -53,18 +52,17 @@ class MongoTripodConfigTest extends MongoTripodPerformanceTestBase
     {
         $testStartTime = microtime();
 
-        //Let's try to create 1000 objects to see how much time they take.
+        // Let's try to create 1000 objects to see how much time they take.
         for ($i = 0; $i < self::BENCHMARK_OBJECT_CREATE_ITERATIONS; $i++) {
-            \Tripod\Config::setConfig($this->config);
-            $instance = \Tripod\Config::getInstance();
+            Tripod\Config::setConfig($this->config);
+            $instance = Tripod\Config::getInstance();
         }
 
         $testEndTime = microtime();
         $this->assertLessThan(
             self::BENCHMARK_OBJECT_CREATE_TIME,
             $this->getTimeDifference($testStartTime, $testEndTime),
-            "It should always take less than " . self::BENCHMARK_OBJECT_CREATE_TIME . "ms to create " . self::BENCHMARK_OBJECT_CREATE_ITERATIONS . " objects of Config class"
+            'It should always take less than ' . self::BENCHMARK_OBJECT_CREATE_TIME . 'ms to create ' . self::BENCHMARK_OBJECT_CREATE_ITERATIONS . ' objects of Config class'
         );
     }
-
 }

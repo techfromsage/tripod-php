@@ -13,17 +13,18 @@ class ConfigGeneratorTest extends MongoTripodTestBase
     {
         $this->config = [
             'class' => 'TestConfigGenerator',
-            'filename' => dirname(__FILE__) . '/data/config.json'
+            'filename' => dirname(__FILE__) . '/data/config.json',
         ];
-        \Tripod\Config::setConfig($this->config);
+        Tripod\Config::setConfig($this->config);
     }
+
     public function testCreateFromConfig()
     {
         /** @var TestConfigGenerator $instance */
-        $instance = \Tripod\Config::getInstance();
+        $instance = Tripod\Config::getInstance();
         $this->assertInstanceOf(TestConfigGenerator::class, $instance);
-        $this->assertInstanceOf(\Tripod\Mongo\Config::class, $instance);
-        $this->assertInstanceOf(\Tripod\ITripodConfigSerializer::class, $instance);
+        $this->assertInstanceOf(Tripod\Mongo\Config::class, $instance);
+        $this->assertInstanceOf(Tripod\ITripodConfigSerializer::class, $instance);
         $this->assertEquals(
             ['CBD_testing', 'CBD_testing_2'],
             $instance->getPods('tripod_php_testing')
@@ -33,27 +34,27 @@ class ConfigGeneratorTest extends MongoTripodTestBase
     public function testSerializeConfig()
     {
         /** @var TestConfigGenerator $instance */
-        $instance = \Tripod\Config::getInstance();
+        $instance = Tripod\Config::getInstance();
         $this->assertEquals($this->config, $instance->serialize());
     }
 
     public function testConfigGeneratorsSerializedInDiscoverJobs()
     {
-        $originalGraph = new \Tripod\ExtendedGraph();
+        $originalGraph = new Tripod\ExtendedGraph();
         $originalGraph->add_resource_triple('http://example.com/1', RDF_TYPE, RDFS_CLASS);
 
-        $newGraph = new \Tripod\ExtendedGraph();
+        $newGraph = new Tripod\ExtendedGraph();
         $newGraph->add_resource_triple('http://example.com/1', RDF_TYPE, OWL_CLASS);
         $subjectsAndPredicatesOfChange = ['http://example.com/1' => [RDF_TYPE]];
 
-        $tripod = $this->getMockBuilder(\Tripod\Mongo\Driver::class)
+        $tripod = $this->getMockBuilder(Tripod\Mongo\Driver::class)
             ->onlyMethods(['getDataUpdater'])
             ->setConstructorArgs(
                 ['CBD_testing', 'tripod_php_testing']
             )
             ->getMock();
 
-        $updates = $this->getMockBuilder(\Tripod\Mongo\Updates::class)
+        $updates = $this->getMockBuilder(Tripod\Mongo\Updates::class)
             ->onlyMethods(
                 [
                     'applyHooks',
@@ -61,13 +62,13 @@ class ConfigGeneratorTest extends MongoTripodTestBase
                     'setReadPreferenceToPrimary',
                     'processSyncOperations',
                     'getDiscoverImpactedSubjects',
-                    'resetOriginalReadPreference'
+                    'resetOriginalReadPreference',
                 ]
             )
             ->setConstructorArgs([$tripod])
             ->getMock();
 
-        $discoverJob = $this->getMockBuilder(\Tripod\Mongo\Jobs\DiscoverImpactedSubjects::class)
+        $discoverJob = $this->getMockBuilder(DiscoverImpactedSubjects::class)
             ->onlyMethods(['createJob'])
             ->getMock();
 
@@ -87,7 +88,7 @@ class ConfigGeneratorTest extends MongoTripodTestBase
                 'storeName' => 'tripod_php_testing',
                 'podName' => 'CBD_testing',
                 'contextAlias' => 'http://talisaspire.com/',
-                'statsConfig' => []
+                'statsConfig' => [],
             ]);
 
         $tripod->saveChanges(
@@ -106,7 +107,7 @@ class ConfigGeneratorTest extends MongoTripodTestBase
                 'tripod_php_testing',
                 'CBD_testing',
                 ['v_resource_full']
-            )
+            ),
         ];
         $jobArgs = [
             DiscoverImpactedSubjects::STORE_NAME_KEY => 'tripod_php_testing',
@@ -114,15 +115,15 @@ class ConfigGeneratorTest extends MongoTripodTestBase
             DiscoverImpactedSubjects::CHANGES_KEY => $subjectsAndPredicatesOfChange,
             DiscoverImpactedSubjects::OPERATIONS_KEY => [OP_VIEWS],
             DiscoverImpactedSubjects::CONTEXT_ALIAS_KEY => 'http://talisaspire.com/',
-            JobBase::TRIPOD_CONFIG_GENERATOR => $this->config
+            JobBase::TRIPOD_CONFIG_GENERATOR => $this->config,
         ];
 
-        $tripod = $this->getMockBuilder(\Tripod\Mongo\Driver::class)
+        $tripod = $this->getMockBuilder(Tripod\Mongo\Driver::class)
             ->onlyMethods(['getComposite'])
             ->setConstructorArgs(['CBD_testing', 'tripod_php_testing'])
             ->getMock();
 
-        $views = $this->getMockBuilder(\Tripod\Mongo\Composites\Views::class)
+        $views = $this->getMockBuilder(Tripod\Mongo\Composites\Views::class)
             ->onlyMethods(['getImpactedSubjects'])
             ->disableOriginalConstructor()
             ->getMock();
@@ -133,11 +134,11 @@ class ConfigGeneratorTest extends MongoTripodTestBase
 
         $views->expects($this->once())->method('getImpactedSubjects')->will($this->returnValue($impactedSubjects));
 
-        $discoverJob = $this->getMockBuilder(\Tripod\Mongo\Jobs\DiscoverImpactedSubjects::class)
+        $discoverJob = $this->getMockBuilder(DiscoverImpactedSubjects::class)
             ->onlyMethods(['getTripod', 'getApplyOperation'])
             ->getMock();
 
-        $applyJob = $this->getMockBuilder(\Tripod\Mongo\Jobs\ApplyOperation::class)
+        $applyJob = $this->getMockBuilder(ApplyOperation::class)
             ->onlyMethods(['submitJob'])
             ->setMockClassName('ApplyOperation_TestConfigGenerator')
             ->getMock();
@@ -145,7 +146,7 @@ class ConfigGeneratorTest extends MongoTripodTestBase
         $discoverJob->job = (object) ['payload' => ['id' => uniqid()]];
         $discoverJob->expects($this->once())->method('getTripod')->will($this->returnValue($tripod));
         $discoverJob->expects($this->once())->method('getApplyOperation')->will($this->returnValue($applyJob));
-        $configInstance = \Tripod\Config::getInstance();
+        $configInstance = Tripod\Config::getInstance();
         $applyJob->expects($this->once())->method('submitJob')
             ->with(
                 $configInstance::getApplyQueueName(),
@@ -155,15 +156,15 @@ class ConfigGeneratorTest extends MongoTripodTestBase
                         [
                             'resourceId' => [
                                 _ID_RESOURCE => 'http://example.com/1',
-                                _ID_CONTEXT => 'http://talisaspire.com/'
+                                _ID_CONTEXT => 'http://talisaspire.com/',
                             ],
                             'operation' => OP_VIEWS,
                             'specTypes' => ['v_resource_full'],
                             'storeName' => 'tripod_php_testing',
-                            'podName' => 'CBD_testing'
-                        ]
+                            'podName' => 'CBD_testing',
+                        ],
                     ],
-                    JobBase::TRIPOD_CONFIG_GENERATOR => $this->config
+                    JobBase::TRIPOD_CONFIG_GENERATOR => $this->config,
                 ]
             );
         $discoverJob->setUp();
