@@ -18,6 +18,7 @@ class IndexUtils
     {
         $config = $this->getConfig();
         $dbs = ($storeName==null) ? $config->getDbs() : array($storeName);
+        $reindexedCollections = [];
         foreach ($dbs as $storeName)
         {
             $collections = $config->getIndexesGroupedByCollection($storeName);
@@ -30,7 +31,11 @@ class IndexUtils
                 }
                 if ($reindex)
                 {
-                    $config->getCollectionForCBD($storeName, $collectionName)->deleteIndexes();
+                    $collection = $config->getCollectionForCBD($storeName, $collectionName);
+                    if (!in_array($collection->getNamespace(), $reindexedCollections)) {
+                        $collection->dropIndexes();
+                        $reindexedCollections[] = $collection->getNamespace();
+                    }
                 }
                 foreach ($indexes as $indexName=>$fields)
                 {
@@ -78,7 +83,10 @@ class IndexUtils
                     }
                     if ($reindex)
                     {
-                        $collection->deleteIndexes();
+                        if (!in_array($collection->getNamespace(), $reindexedCollections)) {
+                            $collection->dropIndexes();
+                            $reindexedCollections[] = $collection->getNamespace();
+                        }
                     }
                     foreach($indexes as $index)
                     {
@@ -110,7 +118,10 @@ class IndexUtils
                     }
                     if ($reindex)
                     {
-                        $collection->deleteIndexes();
+                        if (!in_array($collection->getNamespace(), $reindexedCollections)) {
+                            $collection->dropIndexes();
+                            $reindexedCollections[] = $collection->getNamespace();
+                        }
                     }
                     foreach($indexes as $index)
                     {
@@ -139,7 +150,10 @@ class IndexUtils
 
                     if($reindex)
                     {
-                        $collection->deleteIndexes();
+                        if (!in_array($collection->getNamespace(), $reindexedCollections)) {
+                            $collection->dropIndexes();
+                            $reindexedCollections[] = $collection->getNamespace();
+                        }
                     }
                     foreach($indexes as $index)
                     {
