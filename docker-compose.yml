@@ -8,13 +8,6 @@ x-base-config: &base-config
   env_file: .env
 
 services:
-  php55:
-    build:
-      context: ./docker
-      dockerfile: Dockerfile-php55
-    image: talis/tripod-php:php55-latest
-    <<: *base-config
-
   php73:
     build:
       context: ./docker

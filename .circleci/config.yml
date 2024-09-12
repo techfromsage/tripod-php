@@ -139,10 +139,6 @@ workflows:
   build_and_test:
     jobs:
       - test:
-          name: test-php55
-          php_version: php55
-          mongo_version: 3.2.21
-      - test:
           name: test-php73
           php_version: php73
           mongo_version: 3.6.23

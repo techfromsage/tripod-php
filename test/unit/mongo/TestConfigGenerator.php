@@ -1,12 +1,10 @@
 <?php
 
-class TestConfigGenerator extends \Tripod\Mongo\Config
+class TestConfigGenerator extends Tripod\Mongo\Config
 {
     protected $fileName;
 
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 
     public function serialize()
     {

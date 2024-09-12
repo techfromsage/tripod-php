@@ -1,14 +1,11 @@
 <?php
-require_once 'MongoTripodTestBase.php';
-require_once 'src/mongo/MongoGraph.class.php';
-require_once 'src/mongo/serializers/NQuadSerializer.class.php';
 
-use \Tripod\Mongo\MongoGraph;
-use \Tripod\Mongo\NQuadSerializer;
+use Tripod\Mongo\MongoGraph;
+use Tripod\Mongo\NQuadSerializer;
 
 class MongoTripodNQuadSerializerTest extends MongoTripodTestBase
 {
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setup();
     }
@@ -16,14 +13,14 @@ class MongoTripodNQuadSerializerTest extends MongoTripodTestBase
     public function testSerializerSimple()
     {
         $g = new MongoGraph();
-        $g->add_literal_triple("http://example.com/1", $g->qname_to_uri("dct:title"),"some literal title");
-        $g->add_resource_triple("http://example.com/1", $g->qname_to_uri("dct:source"),"http://www.google.com");
+        $g->add_literal_triple('http://example.com/1', $g->qname_to_uri('dct:title'), 'some literal title');
+        $g->add_resource_triple('http://example.com/1', $g->qname_to_uri('dct:source'), 'http://www.google.com');
 
         $expected = "<http://example.com/1> <http://purl.org/dc/terms/title> \"some literal title\" <http://talisaspire.com/> .
 <http://example.com/1> <http://purl.org/dc/terms/source> <http://www.google.com> <http://talisaspire.com/> .\n";
 
         $serializer = new NQuadSerializer();
-        $actual = $serializer->getSerializedIndex($g->_index, \Tripod\Config::getInstance()->getDefaultContextAlias());
+        $actual = $serializer->getSerializedIndex($g->_index, Tripod\Config::getInstance()->getDefaultContextAlias());
 
         $this->assertEquals($expected, $actual);
     }
@@ -31,13 +28,12 @@ class MongoTripodNQuadSerializerTest extends MongoTripodTestBase
     public function testSerializerWithMultipleSubjects()
     {
         $g = new MongoGraph();
-        $docs = json_decode(file_get_contents(dirname(__FILE__).'/data/resources.json'), true);
-        foreach ($docs as $d)
-        {
+        $docs = json_decode(file_get_contents(dirname(__FILE__) . '/data/resources.json'), true);
+        foreach ($docs as $d) {
             $g->add_tripod_array($d);
         }
 
-        $expected ="<http://life.ac.uk/resources/BFBC6A06-A8B0-DED8-53AA-8E80DB44CC53> <http://purl.org/dc/terms/title> \"Title of resource 2\" <http://talisaspire.com/> .
+        $expected = "<http://life.ac.uk/resources/BFBC6A06-A8B0-DED8-53AA-8E80DB44CC53> <http://purl.org/dc/terms/title> \"Title of resource 2\" <http://talisaspire.com/> .
 <http://life.ac.uk/resources/836E7CAD-63D2-63A0-B1CB-AA6A7E54A5C9> <http://purl.org/dc/terms/title> \"Title of resource 1\" <http://talisaspire.com/> .
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://purl.org/dc/terms/isVersionOf> <http://talisaspire.com/works/4d101f63c10a6> <http://talisaspire.com/> .
 <http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://purl.org/dc/terms/source> <http://life.ac.uk/resources/BFBC6A06-A8B0-DED8-53AA-8E80DB44CC53> <http://talisaspire.com/> .
@@ -164,9 +160,9 @@ class MongoTripodNQuadSerializerTest extends MongoTripodTestBase
 <http://basedata.com/b/docWithEmptySeq123> <http://basedata.com/b/hasSequence> <http://basedata.com/b/sequence123> <http://talisaspire.com/> .
 <http://basedata.com/b/docWithEmptySeq123> <http://purl.org/dc/terms/creator> <http://schemas.talis.com/2005/user/schema#xyz> <http://talisaspire.com/> .
 <http://basedata.com/b/docWithEmptySeq123> <http://purl.org/dc/terms/title> \"Doc with sequence\" <http://talisaspire.com/> .";
-        
+
         $serializer = new NQuadSerializer();
-        $actual = $serializer->getSerializedIndex($g->_index, \Tripod\Config::getInstance()->getDefaultContextAlias());
+        $actual = $serializer->getSerializedIndex($g->_index, Tripod\Config::getInstance()->getDefaultContextAlias());
 
         // This test initially asserted that $expected was equal to $actual
         //   $this->assertEquals($expected, $actual);
@@ -174,10 +170,9 @@ class MongoTripodNQuadSerializerTest extends MongoTripodTestBase
         // Rather than increasing the size of $expected further when adding new test data
         // this test now asserts that each line in $expected has been serialised correctly, without failing
         // due to new test data.
-        foreach(preg_split("/((\r?\n)|(\r\n?))/", $expected) as $expectedLine){
-            $this->assertTrue(strpos($actual, rtrim($expectedLine)) !== false, "Failed checking for line: " . rtrim($expectedLine));
+        foreach (preg_split("/((\r?\n)|(\r\n?))/", $expected) as $expectedLine) {
+            $this->assertTrue(strpos($actual, rtrim($expectedLine)) !== false, 'Failed checking for line: ' . rtrim($expectedLine));
         }
-
 
     }
 }

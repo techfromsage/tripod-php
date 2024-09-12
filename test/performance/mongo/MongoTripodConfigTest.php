@@ -1,5 +1,4 @@
 <?php
-require_once('MongoTripodPerformanceTestBase.php');
 
 /**
  * A quick performance test to see what amount of time in consumed in specific methods of Config class
@@ -11,24 +10,23 @@ class MongoTripodConfigTest extends MongoTripodPerformanceTestBase
     /**
      * time in ms (milli-seconds) anything below which is acceptable.
      */
-    const BENCHMARK_OBJECT_CREATE_TIME = 6000;
+    private const BENCHMARK_OBJECT_CREATE_TIME = 6000;
 
     /**
      * Number of iterations should to be ran to test
      */
-    const BENCHMARK_OBJECT_CREATE_ITERATIONS = 1000;
+    private const BENCHMARK_OBJECT_CREATE_ITERATIONS = 1000;
 
     /**
      * Holds tripod config
      * @var array
      */
-    private $config = array();
-
+    private $config = [];
 
     /**
      * Do some setup before each test start
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setup();
 
@@ -38,9 +36,9 @@ class MongoTripodConfigTest extends MongoTripodPerformanceTestBase
     /**
      * Post test completion actions.
      */
-    protected function tearDown()
+    protected function tearDown(): void
     {
-        $this->config = array();
+        $this->config = [];
         parent::tearDown();
     }
 
@@ -54,18 +52,17 @@ class MongoTripodConfigTest extends MongoTripodPerformanceTestBase
     {
         $testStartTime = microtime();
 
-        //Let's try to create 1000 objects to see how much time they take.
-        for($i =0; $i < self::BENCHMARK_OBJECT_CREATE_ITERATIONS; $i++) {
-            \Tripod\Config::setConfig($this->config);
-            $instance = \Tripod\Config::getInstance();
+        // Let's try to create 1000 objects to see how much time they take.
+        for ($i = 0; $i < self::BENCHMARK_OBJECT_CREATE_ITERATIONS; $i++) {
+            Tripod\Config::setConfig($this->config);
+            $instance = Tripod\Config::getInstance();
         }
 
         $testEndTime = microtime();
         $this->assertLessThan(
             self::BENCHMARK_OBJECT_CREATE_TIME,
             $this->getTimeDifference($testStartTime, $testEndTime),
-            "It should always take less than " . self::BENCHMARK_OBJECT_CREATE_TIME . "ms to create " . self::BENCHMARK_OBJECT_CREATE_ITERATIONS . " objects of Config class"
+            'It should always take less than ' . self::BENCHMARK_OBJECT_CREATE_TIME . 'ms to create ' . self::BENCHMARK_OBJECT_CREATE_ITERATIONS . ' objects of Config class'
         );
     }
-
 }
