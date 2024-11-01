@@ -765,7 +765,12 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
                         'rdf:type',
                     ],
                 ],
-            ],
+                '_id' => [
+                    'from' => 'CBD_test_related_content',
+                    'include' => ['dct:title']
+
+                ]
+            ]
         ];
 
         $vspec = Tripod\Config::getInstance()->getViewSpecification('tripod_php_testing', 'v_resource_full');

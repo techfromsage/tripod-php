@@ -26,7 +26,7 @@ class ConfigGeneratorTest extends MongoTripodTestBase
         $this->assertInstanceOf(Tripod\Mongo\Config::class, $instance);
         $this->assertInstanceOf(Tripod\ITripodConfigSerializer::class, $instance);
         $this->assertEquals(
-            ['CBD_testing', 'CBD_testing_2'],
+            ['CBD_testing', 'CBD_test_related_content', 'CBD_testing_2'],
             $instance->getPods('tripod_php_testing')
         );
     }
