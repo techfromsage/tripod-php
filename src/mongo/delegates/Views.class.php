@@ -571,9 +571,9 @@ class Views extends CompositeBase
                 {
                     // single value for join
                     $joinUris[] = array(_ID_RESOURCE=>$source[$predicate][VALUE_URI],_ID_CONTEXT=>$contextAlias);
-                }
-                else
-                {
+                } else if($predicate == '_id') {
+                    $joinUris[] = array(_ID_RESOURCE => $source[$predicate][_ID_RESOURCE], _ID_CONTEXT => $contextAlias);
+                } else {
                     // multiple values for join
                     $joinsPushed = 0;
                     foreach ($source[$predicate] as $v)

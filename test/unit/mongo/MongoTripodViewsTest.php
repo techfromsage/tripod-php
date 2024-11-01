@@ -53,6 +53,24 @@ class MongoTripodViewsTest extends MongoTripodTestBase
 
         // load base data
         $this->loadResourceDataViaTripod();
+
+        $relatedContentTripod = $this->getMockBuilder(Tripod\Mongo\Driver::class)
+            ->onlyMethods([])
+            ->setConstructorArgs([
+                'CBD_test_related_content',
+                'tripod_php_testing',
+                [
+                    'defaultContext' => 'http://talisaspire.com/',
+                    'async' => [OP_VIEWS => true], // don't generate views syncronously when saving automatically - let unit tests deal with this)
+                ],
+            ])
+            ->getMock();
+        $docs = json_decode(file_get_contents(dirname(__FILE__) . '/data/relatedContent.json'), true);
+        foreach ($docs as $d) {
+            $g = new Tripod\Mongo\MongoGraph();
+            $g->add_tripod_array($d);
+            $relatedContentTripod->saveChanges(new Tripod\ExtendedGraph(), $g, $d['_id'][_ID_CONTEXT]);
+        }
     }
 
     /**
@@ -77,6 +95,10 @@ class MongoTripodViewsTest extends MongoTripodTestBase
                             [VALUE_URI => 'bibo:Book'],
                             [VALUE_URI => 'acorn:Work'],
                         ],
+                    ],
+                    [
+                        '_id' => ['r' => 'http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA', 'c' => 'http://talisaspire.com/'],
+                        'dct:title' => ['l' => 'Title of the related resource content joined by id']
                     ],
                     [
                         '_id' => ['r' => 'http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA', 'c' => 'http://talisaspire.com/'],
@@ -105,6 +127,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase
         $this->assertEquals($expectedView['_id'], $actualView['_id']);
         $this->assertEquals($expectedView['value'], $actualView['value']);
         $this->assertInstanceOf(MongoDB\BSON\UTCDateTime::class, $actualView['_cts']);
+
     }
 
     /**

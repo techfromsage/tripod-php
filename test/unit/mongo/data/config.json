@@ -46,6 +46,11 @@
                         }
                     }
                 },
+                "CBD_test_related_content": {
+                    "cardinality": {
+                        "dct:created": 1
+                    }
+                },
                 "CBD_testing_2": {
                     "data_source" : "rs2",
                     "cardinality": {
@@ -75,6 +80,12 @@
                     "joins": {
                         "dct:isVersionOf": {
                             "include": ["dct:subject", "rdf:type"]
+                        },
+                        "_id": {
+                            "from": "CBD_test_related_content",
+                            "include": [
+                                "dct:title"
+                            ]
                         }
                     }
                 },
