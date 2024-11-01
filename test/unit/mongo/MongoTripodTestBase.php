@@ -33,29 +33,43 @@ abstract class MongoTripodTestBase extends TestCase
 
     protected function loadDatesDataViaTripod()
     {
-        $this->loadDataViaTripod('/data/dates.json');
+        $this->loadDataViaTripod($this->tripod, '/data/dates.json');
     }
 
     protected function loadResourceDataViaTripod()
     {
-        $this->loadDataViaTripod('/data/resources.json');
+        $this->loadDataViaTripod($this->tripod,'/data/resources.json');
     }
 
     protected function loadBaseSearchDataViaTripod()
     {
-        $this->loadDataViaTripod('/data/searchData.json');
+        $this->loadDataViaTripod($this->tripod,'/data/searchData.json');
+    }
+
+    protected function loadRelatedContentIntoTripod()
+    {
+        $relatedContentTripod = new Tripod\Mongo\Driver(
+            'CBD_test_related_content',
+            'tripod_php_testing',
+            [
+                'defaultContext' => 'http://talisaspire.com/',
+                'async' => [OP_VIEWS => true], // don't generate views syncronously when saving automatically - let unit tests deal with this)
+            ],
+        );
+
+        $this->loadDataViaTripod($relatedContentTripod,'/data/relatedContent.json');
     }
 
     /**
      * @param string $filename
      */
-    private function loadDataViaTripod($filename)
+    private function loadDataViaTripod(Tripod\Mongo\Driver $tripod, $filename)
     {
         $docs = json_decode(file_get_contents(dirname(__FILE__) . $filename), true);
         foreach ($docs as $d) {
             $g = new Tripod\Mongo\MongoGraph();
             $g->add_tripod_array($d);
-            $this->tripod->saveChanges(new Tripod\ExtendedGraph(), $g, $d['_id'][_ID_CONTEXT]);
+            $tripod->saveChanges(new Tripod\ExtendedGraph(), $g, $d['_id'][_ID_CONTEXT]);
         }
     }
 

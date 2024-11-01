@@ -54,23 +54,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase
         // load base data
         $this->loadResourceDataViaTripod();
 
-        $relatedContentTripod = $this->getMockBuilder(Tripod\Mongo\Driver::class)
-            ->onlyMethods([])
-            ->setConstructorArgs([
-                'CBD_test_related_content',
-                'tripod_php_testing',
-                [
-                    'defaultContext' => 'http://talisaspire.com/',
-                    'async' => [OP_VIEWS => true], // don't generate views syncronously when saving automatically - let unit tests deal with this)
-                ],
-            ])
-            ->getMock();
-        $docs = json_decode(file_get_contents(dirname(__FILE__) . '/data/relatedContent.json'), true);
-        foreach ($docs as $d) {
-            $g = new Tripod\Mongo\MongoGraph();
-            $g->add_tripod_array($d);
-            $relatedContentTripod->saveChanges(new Tripod\ExtendedGraph(), $g, $d['_id'][_ID_CONTEXT]);
-        }
+        $this->loadRelatedContentIntoTripod();
     }
 
     /**
