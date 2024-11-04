@@ -53,6 +53,8 @@ class MongoTripodViewsTest extends MongoTripodTestBase
 
         // load base data
         $this->loadResourceDataViaTripod();
+
+        $this->loadRelatedContentIntoTripod();
     }
 
     /**
@@ -77,6 +79,10 @@ class MongoTripodViewsTest extends MongoTripodTestBase
                             [VALUE_URI => 'bibo:Book'],
                             [VALUE_URI => 'acorn:Work'],
                         ],
+                    ],
+                    [
+                        '_id' => ['r' => 'http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA', 'c' => 'http://talisaspire.com/'],
+                        'dct:title' => ['l' => 'Title of the related resource content joined by id']
                     ],
                     [
                         '_id' => ['r' => 'http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA', 'c' => 'http://talisaspire.com/'],
@@ -105,6 +111,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase
         $this->assertEquals($expectedView['_id'], $actualView['_id']);
         $this->assertEquals($expectedView['value'], $actualView['value']);
         $this->assertInstanceOf(MongoDB\BSON\UTCDateTime::class, $actualView['_cts']);
+
     }
 
     /**

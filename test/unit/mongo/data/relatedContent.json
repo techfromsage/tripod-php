@@ -1,0 +1,18 @@
+[
+  {
+    "_id": {
+      "r":"http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA",
+      "c":"http://talisaspire.com/"
+    },
+    "_version": 0,
+    "rdf:type":[
+      {
+        "u":"http://talisaspire.com/schema#ResourceContent"
+      }
+    ],
+    "dct:title":
+    {
+      "l":"Title of the related resource content joined by id"
+    }
+  }
+]
