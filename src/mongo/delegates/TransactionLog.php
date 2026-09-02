@@ -144,7 +144,7 @@ class TransactionLog
      * @param string|null $fromDate only transactions after this specified date. This must be a datetime string i.e. '2010-01-15 00:00:00'
      * @param string|null $toDate   only transactions before this specified date. This must be a datetime string i.e. '2010-01-15 00:00:00'
      *
-     * @return CursorInterface<int, array<string, mixed>>&\Iterator<int, array<string, mixed>>
+     * @return CursorInterface<int, array>&\Iterator<int, array>
      *
      * @throws \InvalidArgumentException
      */

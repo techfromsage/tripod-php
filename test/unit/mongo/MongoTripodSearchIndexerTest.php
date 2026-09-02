@@ -503,7 +503,7 @@ class MongoTripodSearchIndexerTest extends MongoTripodTestBase
         $count = 234;
         $docs = [];
 
-        $configOptions = json_decode((string) file_get_contents(__DIR__ . '/data/config.json'), true);
+        $configOptions = $this->decodeJsonFile(__DIR__ . '/data/config.json');
 
         for ($i = 0; $i < $count; $i++) {
             $docs[] = ['_id' => ['r' => 'tenantLists:batch' . $i, 'c' => 'tenantContexts:DefaultGraph']];

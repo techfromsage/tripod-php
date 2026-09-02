@@ -240,10 +240,10 @@ abstract class JobBase extends Job
     }
 
     /**
-     * @param string               $queueName     Queue name
-     * @param string               $class         Class name
-     * @param array<string, mixed> $data          Job arguments
-     * @param int                  $retryAttempts If queue fails, retry x times before throwing an exception
+     * @param string $queueName     Queue name
+     * @param string $class         Class name
+     * @param array  $data          Job arguments
+     * @param int    $retryAttempts If queue fails, retry x times before throwing an exception
      *
      * @return string A tracking token for the submitted job
      *
@@ -283,8 +283,6 @@ abstract class JobBase extends Job
 
     /**
      * Actually enqueues the job with Resque. Returns a tracking token. For mocking.
-     *
-     * @param array<string, mixed> $data
      *
      * @return false|string
      */
@@ -381,8 +379,6 @@ abstract class JobBase extends Job
 
     /**
      * Tripod options to pass between jobs.
-     *
-     * @return array<string, mixed>
      */
     protected function getTripodOptions(): array
     {
@@ -397,8 +393,6 @@ abstract class JobBase extends Job
 
     /**
      * Convenience method to pass config to job data.
-     *
-     * @return array<string, mixed>
      */
     protected function generateConfigJobArgs(): array
     {

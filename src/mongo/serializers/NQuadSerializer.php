@@ -88,6 +88,9 @@ class NQuadSerializer
                 }
 
                 foreach ($os as $o) {
+                    if (!is_array($o) && !is_string($o)) { // scalar literal
+                        $o = ['value' => $o, _ID_TYPE => 'literal'];
+                    }
                     $o = $this->getTerm($o);
                     $r .= $r !== '' && $r !== '0' ? $nl : '';
                     $r .= $s . ' ' . $p . ' ' . $o;

@@ -14,7 +14,7 @@ class ExtendedGraphTest extends TestCase
     /**
      * @dataProvider addValidValueToLiteralResultsInTriple_Provider
      *
-     * @param mixed $value
+     * @param bool|float|int|string $value
      */
     public function testAddValidValueToLiteralResultsInTriple($value): void
     {
@@ -44,6 +44,7 @@ class ExtendedGraphTest extends TestCase
     public function testAddInvalidValueToLiteralResultsInNoTriple($value): void
     {
         $graph = new ExtendedGraph();
+        // @phpstan-ignore argument.type (deliberately invalid input; the graph must reject it)
         $addResult = $graph->add_literal_triple('http://some/subject/1', 'http://some/predicate', $value);
         $this->assertFalse($addResult, 'The triple should not have been added for this value');
 
@@ -68,6 +69,7 @@ class ExtendedGraphTest extends TestCase
         $this->expectExceptionMessageMatches('/^The subject is invalid$|Argument #?1.+must be of (the )?type string.+/');
 
         $graph = new ExtendedGraph();
+        // @phpstan-ignore argument.type (deliberately invalid input; a TypeError or Tripod exception is expected)
         $graph->add_resource_triple($value, 'http://some/predicate', 'http://someplace.com');
     }
 
@@ -94,6 +96,7 @@ class ExtendedGraphTest extends TestCase
         $this->expectExceptionMessageMatches('/^The predicate is invalid$|Argument #?2.+must be of (the )?type string.+/');
 
         $graph = new ExtendedGraph();
+        // @phpstan-ignore argument.type (deliberately invalid input; a TypeError or Tripod exception is expected)
         $graph->add_resource_triple('http://some/subject/1', $value, 'http://someplace.com');
     }
 
@@ -131,6 +134,7 @@ class ExtendedGraphTest extends TestCase
         $graph = new ExtendedGraph();
 
         try {
+            // @phpstan-ignore argument.type (deliberately invalid input; a TypeError is expected and handled)
             $addResult = $graph->add_resource_triple('http://some/subject/1', 'http://some/predicate', $value);
         } catch (TypeError $typeError) {
             $addResult = false;
@@ -165,6 +169,7 @@ class ExtendedGraphTest extends TestCase
         $this->expectExceptionMessageMatches('/^The subject is invalid$|Argument #?1.+must be of (the )?type string.+/');
 
         $graph = new ExtendedGraph();
+        // @phpstan-ignore argument.type (deliberately invalid input; a TypeError or Tripod exception is expected)
         $graph->add_resource_triple($value, 'http://some/predicate', 'http://someplace.com');
     }
 
@@ -191,6 +196,7 @@ class ExtendedGraphTest extends TestCase
         $this->expectExceptionMessageMatches('/^The predicate is invalid$|Argument #?2.+must be of (the )?type string.+/');
 
         $graph = new ExtendedGraph();
+        // @phpstan-ignore argument.type (deliberately invalid input; a TypeError or Tripod exception is expected)
         $graph->add_resource_triple('http://some/subject/1', $value, 'http://someplace.com');
     }
 

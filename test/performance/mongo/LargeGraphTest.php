@@ -77,7 +77,7 @@ class LargeGraphTest extends MongoTripodPerformanceTestBase
 
     private function loadLargeGraphData(): void
     {
-        $docs = json_decode((string) file_get_contents(__DIR__ . '/data/largeGraph.json'), true);
+        $docs = $this->decodeJsonFile(__DIR__ . '/data/largeGraph.json');
         foreach ($docs as $d) {
             $this->addDocument($d);
         }

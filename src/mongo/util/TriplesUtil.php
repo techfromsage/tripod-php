@@ -237,7 +237,7 @@ class TriplesUtil
 
         $json_string = '{"string":"' . str_replace('\u', '\u', $str) . '"}';
         $json = json_decode($json_string, true);
-        if (!empty($json)) {
+        if (is_array($json) && isset($json['string']) && is_string($json['string'])) {
             return $json['string'];
         }
 

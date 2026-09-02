@@ -261,7 +261,7 @@ class MongoSearchProvider implements ISearchProvider
                     $searchTypes[] = $specId;
                 } elseif (is_array($specId)) {
                     // Only filter on search document spec types
-                    $specId = array_intersect($specTypes, $specId);
+                    $specId = array_intersect($specTypes, array_filter($specId, 'is_string'));
                     if ($specId === []) {
                         return;
                     }
@@ -514,8 +514,8 @@ class MongoSearchProvider implements ISearchProvider
     /**
      * Count the number of documents in the spec that match $filters.
      *
-     * @param string               $searchSpec Search spec ID
-     * @param array<string, mixed> $filters    Query filters to get count on
+     * @param string $searchSpec Search spec ID
+     * @param array  $filters    Query filters to get count on
      *
      * @return int
      */

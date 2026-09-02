@@ -126,9 +126,6 @@ abstract class CompositeBase extends DriverBase implements IComposite
      */
     abstract public function getTypesInSpecifications(): array;
 
-    /**
-     * @return mixed[]
-     */
     abstract public function findImpactedComposites(array $resourcesAndPredicates, string $contextAlias): array;
 
     /**

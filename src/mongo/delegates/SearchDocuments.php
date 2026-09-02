@@ -215,6 +215,9 @@ class SearchDocuments extends DriverBase
                             $values[] = $this->normalizeSearchValue($sourceValue[VALUE_LITERAL], $isIndex);
                         } elseif (is_array($sourceValue)) {
                             foreach ($sourceValue as $v) {
+                                if (!is_array($v)) {
+                                    continue;
+                                }
                                 if (isset($v[VALUE_URI])) {
                                     $values[] = $this->normalizeSearchValue($v[VALUE_URI], $isIndex);
                                 } elseif (isset($v[VALUE_LITERAL])) {
@@ -251,21 +254,17 @@ class SearchDocuments extends DriverBase
     }
 
     /**
-     * @param bool|float|int|string $value
+     * @param mixed $value
      *
      * @return string
      */
     private function normalizeSearchValue($value, bool $isIndex)
     {
-        $value = trim((string) $value);
+        $value = trim(is_scalar($value) ? (string) $value : '');
 
         return $isIndex ? mb_strtolower($value, 'UTF-8') : $value;
     }
 
-    /**
-     * @param array<string, mixed> $field
-     * @param array<int, mixed>    $values
-     */
     private function addValuesToTarget(array $values, array $field, array &$target): void
     {
         $objName = null;

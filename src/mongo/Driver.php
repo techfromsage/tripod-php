@@ -37,12 +37,12 @@ class Driver extends DriverBase implements IDriver
     /**
      * Constructor for Driver.
      *
-     * @param array<string, mixed> $opts an Array of options: <ul>
-     *                                   <li>defaultContext: (string) to use where a specific default context is not defined. Default is Null</li>
-     *                                   <li>async: (array) determines the async behaviour of views, tables and search. For each of these array keys, if set to true, generation of these elements will be done asyncronously on save. Default is array(OP_VIEWS=>false,OP_TABLES=>true,OP_SEARCH=>true)</li>
-     *                                   <li>stat: this sets the stats object to use to record statistics around operations performed by Driver. Default is null</li>
-     *                                   <li>readPreference: The Read preference to set for Mongo: Default is ReadPreference::PRIMARY_PREFERRED</li>
-     *                                   <li>retriesToGetLock: Retries to do when unable to get lock on a document, default is 20</li></ul>
+     * @param array $opts an Array of options: <ul>
+     *                    <li>defaultContext: (string) to use where a specific default context is not defined. Default is Null</li>
+     *                    <li>async: (array) determines the async behaviour of views, tables and search. For each of these array keys, if set to true, generation of these elements will be done asyncronously on save. Default is array(OP_VIEWS=>false,OP_TABLES=>true,OP_SEARCH=>true)</li>
+     *                    <li>stat: this sets the stats object to use to record statistics around operations performed by Driver. Default is null</li>
+     *                    <li>readPreference: The Read preference to set for Mongo: Default is ReadPreference::PRIMARY_PREFERRED</li>
+     *                    <li>retriesToGetLock: Retries to do when unable to get lock on a document, default is 20</li></ul>
      */
     public function __construct(string $podName, string $storeName, array $opts = [])
     {
@@ -324,7 +324,7 @@ class Driver extends DriverBase implements IDriver
                     if (!is_array($doc[_ID_KEY])) {
                         $results[$doc[_ID_KEY] ?? ''] = $doc['total'];
                     } else {
-                        $results[implode(';', $doc[_ID_KEY])] = $doc['total'];
+                        $results[implode(';', array_map('strval', array_filter($doc[_ID_KEY], 'is_scalar')))] = $doc['total'];
                     }
                 }
             } else {
@@ -357,9 +357,7 @@ class Driver extends DriverBase implements IDriver
      * Selects $fields from the result set determined by $query.
      * Returns an array of all results, each array element is a CBD graph, keyed by r.
      *
-     * @param array<string, mixed> $fields array of fields, in the same format as prescribed by MongoPHP
-     *
-     * @return array<string, array<int|string, int|mixed[]|null>>
+     * @param array $fields array of fields, in the same format as prescribed by MongoPHP
      */
     public function select(array $query, array $fields, ?array $sortBy = null, ?int $limit = null, ?int $offset = 0, ?string $context = null): array
     {
@@ -426,6 +424,9 @@ class Driver extends DriverBase implements IDriver
                         $row[$key] = [];
                         // possible array of values
                         foreach ($value as $v) {
+                            if (!is_array($v)) {
+                                continue;
+                            }
                             if (isset($v[VALUE_LITERAL])) {
                                 $row[$key][] = $v[VALUE_LITERAL];
                             } elseif (isset($v[VALUE_URI])) {

@@ -628,7 +628,7 @@ class Updates extends DriverBase
     /**
      * Adds/updates/deletes the graph in the database.
      *
-     * @return array{newCBDs: list<array<string, mixed>>, subjectsAndPredicatesOfChange: array<string, list<string>>, transaction_id: string}
+     * @return array{newCBDs: list<array>, subjectsAndPredicatesOfChange: array<string, list<string>>, transaction_id: string}
      *
      * @throws \Exception
      */
@@ -1100,8 +1100,6 @@ class Updates extends DriverBase
 
     /**
      * Saves a transaction.
-     *
-     * @param array<string, mixed> $transaction
      */
     protected function applyTransaction(array $transaction): void
     {
@@ -1128,8 +1126,6 @@ class Updates extends DriverBase
 
     /**
      * Creates a new Driver instance.
-     *
-     * @param array<string, mixed> $data
      */
     protected function getTripod(array $data): Driver
     {
@@ -1143,9 +1139,8 @@ class Updates extends DriverBase
     /**
      * This proxy method allows us to mock updates against $this->collection.
      *
-     * @param array|object         $query
-     * @param array|object         $update
-     * @param array<string, mixed> $options
+     * @param array|object $query
+     * @param array|object $update
      */
     protected function updateCollection($query, $update, array $options): UpdateResult
     {
@@ -1237,9 +1232,6 @@ class Updates extends DriverBase
 
     /**
      * Helper method to add operator to a set of existing changes ready to be sent to Mongo.
-     *
-     * @param array<string, mixed>                          $changes
-     * @param array<string, int>|array<string, UTCDateTime> $kvp
      */
     private function addOperatorToChange(array &$changes, string $operator, array $kvp): void
     {

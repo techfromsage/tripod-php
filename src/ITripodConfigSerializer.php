@@ -10,8 +10,6 @@ interface ITripodConfigSerializer
 {
     /**
      * This should return an array that self::deserialize() can roundtrip into an Tripod Config object.
-     *
-     * @return array<string, mixed>
      */
     public function serialize(): array;
 
