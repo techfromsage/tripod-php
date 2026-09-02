@@ -402,9 +402,9 @@ class Updates extends DriverBase
         $dbPref = $dbReadPref->getModeString();
         $dbTagsets = $dbReadPref->getTagsets();
 
-        $this->originalDbReadPreference = $this->db->getReadPreference()->getModeString();
+        $this->originalDbReadPreference = $dbPref;
         if ($dbPref !== ReadPreference::PRIMARY) {
-            $this->db = $this->db->withOptions(['readPreference' => new ReadPreference(ReadPreference::PRIMARY, $dbTagsets)]);
+            $this->db = $this->getDatabase()->withOptions(['readPreference' => new ReadPreference(ReadPreference::PRIMARY, $dbTagsets)]);
         }
 
         /** @var ReadPreference $collReadPref */
@@ -415,7 +415,7 @@ class Updates extends DriverBase
         // Set collection preference
         $this->originalCollectionReadPreference = $collPref;
         if ($collPref !== ReadPreference::PRIMARY) {
-            $this->collection = $this->collection->withOptions(['readPreference' => new ReadPreference(ReadPreference::PRIMARY, $collTagsets)]);
+            $this->collection = $this->getCollection()->withOptions(['readPreference' => new ReadPreference(ReadPreference::PRIMARY, $collTagsets)]);
         }
     }
 
@@ -424,12 +424,12 @@ class Updates extends DriverBase
      */
     protected function resetOriginalReadPreference(): void
     {
-        $dbReadPref = $this->db->getReadPreference();
+        $dbReadPref = $this->getDatabase()->getReadPreference();
         if ($this->originalDbReadPreference !== $dbReadPref->getModeString()) {
             $pref = $this->originalDbReadPreference ?: $this->readPreference;
             $dbTagsets = $dbReadPref->getTagsets();
 
-            $this->db = $this->db->withOptions([
+            $this->db = $this->getDatabase()->withOptions([
                 'readPreference' => new ReadPreference($pref, $dbTagsets),
             ]);
         }
@@ -439,7 +439,7 @@ class Updates extends DriverBase
         if ($this->originalCollectionReadPreference !== $collReadPref->getModeString()) {
             $pref = $this->originalCollectionReadPreference ?: $this->readPreference;
             $collTagsets = $collReadPref->getTagsets();
-            $this->collection = $this->collection->withOptions([
+            $this->collection = $this->getCollection()->withOptions([
                 'readPreference' => new ReadPreference($pref, $collTagsets),
             ]);
         }
@@ -637,7 +637,6 @@ class Updates extends DriverBase
         $subjectsAndPredicatesOfChange = [];
         if (in_array($this->getCollection()->getCollectionName(), $this->getConfigInstance()->getPods($this->getStoreName()))) {
             // how many subjects of change?
-            /** @noinspection PhpParamsInspection */
             $changes = $cs->get_subjects_of_type($this->labeller->qname_to_uri('cs:ChangeSet'));
 
             // gather together all the updates (we'll apply them later)....
@@ -647,6 +646,9 @@ class Updates extends DriverBase
 
             foreach ($changes as $changeUri) {
                 $subjectOfChange = $cs->get_first_resource($changeUri, $this->labeller->qname_to_uri('cs:subjectOfChange'));
+                if ($subjectOfChange === null) {
+                    throw new Exception('ChangeSet ' . $changeUri . ' has no cs:subjectOfChange');
+                }
                 if (!array_key_exists($subjectOfChange, $subjectsAndPredicatesOfChange)) {
                     $subjectsAndPredicatesOfChange[$subjectOfChange] = [];
                 }
@@ -1211,7 +1213,7 @@ class Updates extends DriverBase
         foreach ($changes as $c) {
             $changeNode = (string) $c['value'];
             $predicate = $cs->get_first_resource($changeNode, $this->labeller->qname_to_uri('rdf:predicate'));
-            $nsPredicate = $this->labeller->uri_to_qname($predicate);
+            $nsPredicate = (string) $this->labeller->uri_to_qname($predicate);
 
             if (!array_key_exists($nsPredicate, $changesGroupedByNsPredicate)) {
                 $changesGroupedByNsPredicate[$nsPredicate] = [];

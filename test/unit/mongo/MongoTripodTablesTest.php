@@ -8,7 +8,6 @@ use MongoDB\DeleteResult;
 use MongoDB\Driver\Cursor;
 use MongoDB\Driver\Exception\BulkWriteException;
 use MongoDB\Driver\Manager;
-use MongoDB\Model\BSONDocument;
 use MongoDB\UpdateResult;
 use Tripod\Config;
 use Tripod\Exceptions\ConfigException;
@@ -955,7 +954,6 @@ class MongoTripodTablesTest extends MongoTripodTestBase
 
         // Walk through the processSyncOperations process manually for tables
 
-        /** @var Tripod\Mongo\Composites\Tables $table */
         $table = $tripod->getComposite(OP_TABLES);
         $this->assertInstanceOf(Tripod\Mongo\Composites\Tables::class, $table);
 
@@ -1821,7 +1819,6 @@ class MongoTripodTablesTest extends MongoTripodTestBase
             ],
         ];
         $doc = new Tables();
-        $this->assertInstanceOf(BSONDocument::class, $doc);
         $this->assertEquals([], $doc->getArrayCopy());
         $doc = new Tables($dbDoc);
         $this->assertEquals('XMEN-004', $doc['code']);

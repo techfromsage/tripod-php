@@ -5,7 +5,6 @@ declare(strict_types=1);
 use Resque\JobHandler;
 use Tripod\Config;
 use Tripod\Mongo\DriverBase;
-use Tripod\Mongo\IConfigInstance;
 
 class JobBaseTest extends MongoTripodTestBase
 {
@@ -24,7 +23,7 @@ class JobBaseTest extends MongoTripodTestBase
         $job->args = $this->getArgs();
         $job->job = new JobHandler('queue', ['id' => uniqid()]);
 
-        $this->assertInstanceOf(IConfigInstance::class, $job->getTripodConfig());
+        $this->assertInstanceOf(Tripod\Mongo\Config::class, $job->getTripodConfig());
     }
 
     /**

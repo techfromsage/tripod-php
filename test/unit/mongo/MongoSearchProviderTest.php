@@ -232,6 +232,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
         $result = [];
         foreach (Config::getInstance()->getCollectionsForSearch('tripod_php_testing') as $collection) {
             $result = $collection->findOne(['_id.r' => 'http://talisaspire.com/resources/doc1']);
+            $this->assertNotNull($result);
             if ($result) {
                 break;
             }

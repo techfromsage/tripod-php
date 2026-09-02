@@ -434,6 +434,7 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         // assert that the transaction in the transaction log is correct
         $transactionId = 'transaction_1';
         $transactionDocument = $this->getDocument($transactionId, $this->tripod, true);
+        $this->assertNotNull($transactionDocument);
         $this->assertEquals($transactionId, $transactionDocument['_id'], 'transtion should have the mocked id we injected');
         $this->assertEquals('completed', $transactionDocument['status'], 'status of the transaction should be completed');
         $this->assertCount(1, $transactionDocument['originalCBDs'], 'There should only be on CBD in the originalCBs collection');
@@ -469,6 +470,7 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         // assert this transaction is correct
         $transactionId = 'transaction_2';
         $transactionDocument = $this->getDocument($transactionId, $this->tripod, true);
+        $this->assertNotNull($transactionDocument);
         $this->assertEquals($transactionId, $transactionDocument['_id'], 'transtion should have the mocked id we injected');
         $this->assertEquals('completed', $transactionDocument['status'], 'status of the transaction should be completed');
         $this->assertCount(1, $transactionDocument['originalCBDs'], 'There should only be on CBD in the originalCBs collection');
@@ -518,6 +520,7 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         // assert this transaction
         $transactionId = 'transaction_3';
         $transactionDocument = $this->getDocument($transactionId, $this->tripod, true);
+        $this->assertNotNull($transactionDocument);
         $this->assertEquals($transactionId, $transactionDocument['_id'], 'transtion should have the mocked id we injected');
         $this->assertEquals('completed', $transactionDocument['status'], 'status of the transaction should be completed');
         $this->assertCount(1, $transactionDocument['originalCBDs'], 'There should only be on CBD in the originalCBs collection');
@@ -603,6 +606,7 @@ class MongoTransactionLogTest extends MongoTripodTestBase
         // Now assert that the transaction logged the failure
         $transactionId = 'transaction_2';
         $transactionDocument = $this->getDocument($transactionId, $this->tripod, true);
+        $this->assertNotNull($transactionDocument);
         $this->assertEquals($transactionId, $transactionDocument['_id'], 'transtion should have the mocked id we injected');
         $this->assertEquals('failed', $transactionDocument['status'], 'status of the transaction should be failed');
         $this->assertCount(1, $transactionDocument['originalCBDs'], 'There should only be on CBD in the originalCBs collection');

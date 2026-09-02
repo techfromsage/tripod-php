@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use MongoDB\BSON\UTCDateTime;
 use Tripod\Config;
 use Tripod\Mongo\DateUtil;
 
@@ -31,7 +30,6 @@ class DateUtilTest extends MongoTripodTestBase
 
         $date = DateUtil::getMongoDate();
 
-        $this->assertInstanceOf(UTCDateTime::class, $date);
         $this->assertSame(13, strlen($date->__toString()));
     }
 
@@ -59,7 +57,6 @@ class DateUtilTest extends MongoTripodTestBase
         $time = floor(microtime(true) * 1000);
         $date = DateUtil::getMongoDate($time);
 
-        $this->assertInstanceOf(UTCDateTime::class, $date);
         $this->assertSame(13, strlen($date->__toString()));
         $this->assertEquals($time, $date->__toString());
     }

@@ -5,7 +5,6 @@ declare(strict_types=1);
 use Resque\JobHandler;
 use Tripod\Config;
 use Tripod\ExtendedGraph;
-use Tripod\ITripodConfigSerializer;
 use Tripod\Mongo\Composites\Views;
 use Tripod\Mongo\Driver;
 use Tripod\Mongo\DriverBase;
@@ -30,11 +29,8 @@ class ConfigGeneratorTest extends MongoTripodTestBase
 
     public function testCreateFromConfig(): void
     {
-        /** @var TestConfigGenerator $instance */
         $instance = Config::getInstance();
         $this->assertInstanceOf(TestConfigGenerator::class, $instance);
-        $this->assertInstanceOf(Tripod\Mongo\Config::class, $instance);
-        $this->assertInstanceOf(ITripodConfigSerializer::class, $instance);
         $this->assertSame(
             ['CBD_testing', 'CBD_test_related_content', 'CBD_testing_2'],
             $instance->getPods('tripod_php_testing')

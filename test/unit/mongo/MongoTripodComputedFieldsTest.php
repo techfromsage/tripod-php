@@ -73,9 +73,11 @@ class MongoTripodComputedFieldsTest extends MongoTripodTestBase
         $collection = Config::getInstance()->getCollectionForTable('tripod_php_testing', 't_conditional_creators');
 
         $tableDoc = $collection->findOne(['_id.type' => 't_conditional_creators', '_id.r' => 'baseData:foo1234']);
+        $this->assertNotNull($tableDoc);
         $this->assertEquals('Updated', $tableDoc['value']['status']);
 
         $tableDoc = $collection->findOne(['_id.type' => 't_conditional_creators', '_id.r' => 'baseData:foo12345']);
+        $this->assertNotNull($tableDoc);
         $this->assertEquals('Published', $tableDoc['value']['status']);
 
         Config::setConfig($oldConfig);
@@ -134,11 +136,13 @@ class MongoTripodComputedFieldsTest extends MongoTripodTestBase
         $collection = Config::getInstance()->getCollectionForTable('tripod_php_testing', 't_conditional_creators');
 
         $tableDoc = $collection->findOne(['_id.type' => 't_conditional_creators', '_id.r' => 'baseData:foo1234']);
+        $this->assertNotNull($tableDoc);
 
         $this->assertEquals(1, $tableDoc['value']['creatorCount']);
         $this->assertEquals(1234, $tableDoc['value']['contributorCount']);
 
         $tableDoc = $collection->findOne(['_id.type' => 't_conditional_creators', '_id.r' => 'baseData:bar1234']);
+        $this->assertNotNull($tableDoc);
         $this->assertEquals(1, $tableDoc['value']['creatorCount']);
         $this->assertEquals(2, $tableDoc['value']['contributorCount']);
 
@@ -196,32 +200,38 @@ class MongoTripodComputedFieldsTest extends MongoTripodTestBase
         $collection = Config::getInstance()->getCollectionForTable('tripod_php_testing', 't_conditional_creators');
 
         $tableDoc = $collection->findOne(['_id.type' => 't_conditional_creators', '_id.r' => 'baseData:foo1234']);
+        $this->assertNotNull($tableDoc);
 
         $this->assertEquals(1, $tableDoc['value']['normalizedCreatorCount']);
         $this->assertArrayNotHasKey('contributorCount', $tableDoc['value']);
         $this->assertArrayNotHasKey('creatorCount', $tableDoc['value']);
 
         $tableDoc = $collection->findOne(['_id.type' => 't_conditional_creators', '_id.r' => 'baseData:bar1234']);
+        $this->assertNotNull($tableDoc);
         $this->assertEquals(2, $tableDoc['value']['normalizedCreatorCount']);
         $this->assertArrayNotHasKey('contributorCount', $tableDoc['value']);
         $this->assertArrayNotHasKey('creatorCount', $tableDoc['value']);
 
         $tableDoc = $collection->findOne(['_id.type' => 't_conditional_creators', '_id.r' => 'http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA']);
+        $this->assertNotNull($tableDoc);
         $this->assertEquals('NO CONTRIBUTORS FOUND', $tableDoc['value']['normalizedCreatorCount']);
         $this->assertArrayNotHasKey('contributorCount', $tableDoc['value']);
         $this->assertArrayNotHasKey('creatorCount', $tableDoc['value']);
 
         $tableDoc = $collection->findOne(['_id.type' => 't_conditional_creators', '_id.r' => 'http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2']);
+        $this->assertNotNull($tableDoc);
         $this->assertEquals('NO CONTRIBUTORS FOUND', $tableDoc['value']['normalizedCreatorCount']);
         $this->assertArrayNotHasKey('contributorCount', $tableDoc['value']);
         $this->assertArrayNotHasKey('creatorCount', $tableDoc['value']);
 
         $tableDoc = $collection->findOne(['_id.type' => 't_conditional_creators', '_id.r' => 'http://talisaspire.com/works/4d101f63c10a6']);
+        $this->assertNotNull($tableDoc);
         $this->assertEquals('NO CONTRIBUTORS FOUND', $tableDoc['value']['normalizedCreatorCount']);
         $this->assertArrayNotHasKey('contributorCount', $tableDoc['value']);
         $this->assertArrayNotHasKey('creatorCount', $tableDoc['value']);
 
         $tableDoc = $collection->findOne(['_id.type' => 't_conditional_creators', '_id.r' => 'http://talisaspire.com/works/4d101f63c10a6-2']);
+        $this->assertNotNull($tableDoc);
         $this->assertEquals('NO CONTRIBUTORS FOUND', $tableDoc['value']['normalizedCreatorCount']);
         $this->assertArrayNotHasKey('contributorCount', $tableDoc['value']);
         $this->assertArrayNotHasKey('creatorCount', $tableDoc['value']);
@@ -281,27 +291,33 @@ class MongoTripodComputedFieldsTest extends MongoTripodTestBase
         $collection = Config::getInstance()->getCollectionForTable('tripod_php_testing', 't_replace_type');
 
         $tableDoc = $collection->findOne(['_id.type' => 't_replace_type', '_id.r' => 'baseData:foo1234']);
+        $this->assertNotNull($tableDoc);
 
         $this->assertEquals('Document', $tableDoc['value']['resourceType']);
         $this->assertArrayNotHasKey('rdfType', $tableDoc['value']);
 
         $tableDoc = $collection->findOne(['_id.type' => 't_replace_type', '_id.r' => 'baseData:bar1234']);
+        $this->assertNotNull($tableDoc);
         $this->assertEquals('Document', $tableDoc['value']['resourceType']);
         $this->assertArrayNotHasKey('rdfType', $tableDoc['value']);
 
         $tableDoc = $collection->findOne(['_id.type' => 't_replace_type', '_id.r' => 'http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA']);
+        $this->assertNotNull($tableDoc);
         $this->assertEquals('Book Resource Testing', $tableDoc['value']['resourceType']);
         $this->assertArrayNotHasKey('rdfType', $tableDoc['value']);
 
         $tableDoc = $collection->findOne(['_id.type' => 't_replace_type', '_id.r' => 'http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2']);
+        $this->assertNotNull($tableDoc);
         $this->assertEquals('Book Resource', $tableDoc['value']['resourceType']);
         $this->assertArrayNotHasKey('rdfType', $tableDoc['value']);
 
         $tableDoc = $collection->findOne(['_id.type' => 't_replace_type', '_id.r' => 'http://talisaspire.com/works/4d101f63c10a6']);
+        $this->assertNotNull($tableDoc);
         $this->assertEquals('Book Work', $tableDoc['value']['resourceType']);
         $this->assertArrayNotHasKey('rdfType', $tableDoc['value']);
 
         $tableDoc = $collection->findOne(['_id.type' => 't_replace_type', '_id.r' => 'http://talisaspire.com/works/4d101f63c10a6-2']);
+        $this->assertNotNull($tableDoc);
         $this->assertEquals('Book Work', $tableDoc['value']['resourceType']);
         $this->assertArrayNotHasKey('rdfType', $tableDoc['value']);
 
@@ -371,32 +387,38 @@ class MongoTripodComputedFieldsTest extends MongoTripodTestBase
         $collection = Config::getInstance()->getCollectionForTable('tripod_php_testing', 't_creator_count');
 
         $tableDoc = $collection->findOne(['_id.type' => 't_creator_count', '_id.r' => 'baseData:foo1234']);
+        $this->assertNotNull($tableDoc);
 
         $this->assertEquals(1, $tableDoc['value']['totalContributorCount']);
         $this->assertArrayNotHasKey('contributorCount', $tableDoc['value']);
         $this->assertArrayNotHasKey('creatorCount', $tableDoc['value']);
 
         $tableDoc = $collection->findOne(['_id.type' => 't_creator_count', '_id.r' => 'baseData:bar1234']);
+        $this->assertNotNull($tableDoc);
         $this->assertEquals(3, $tableDoc['value']['totalContributorCount']);
         $this->assertArrayNotHasKey('contributorCount', $tableDoc['value']);
         $this->assertArrayNotHasKey('creatorCount', $tableDoc['value']);
 
         $tableDoc = $collection->findOne(['_id.type' => 't_creator_count', '_id.r' => 'http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA']);
+        $this->assertNotNull($tableDoc);
         $this->assertEquals(0, $tableDoc['value']['totalContributorCount']);
         $this->assertArrayNotHasKey('contributorCount', $tableDoc['value']);
         $this->assertArrayNotHasKey('creatorCount', $tableDoc['value']);
 
         $tableDoc = $collection->findOne(['_id.type' => 't_creator_count', '_id.r' => 'http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA-2']);
+        $this->assertNotNull($tableDoc);
         $this->assertEquals(0, $tableDoc['value']['totalContributorCount']);
         $this->assertArrayNotHasKey('contributorCount', $tableDoc['value']);
         $this->assertArrayNotHasKey('creatorCount', $tableDoc['value']);
 
         $tableDoc = $collection->findOne(['_id.type' => 't_creator_count', '_id.r' => 'http://talisaspire.com/works/4d101f63c10a6']);
+        $this->assertNotNull($tableDoc);
         $this->assertEquals(0, $tableDoc['value']['totalContributorCount']);
         $this->assertArrayNotHasKey('contributorCount', $tableDoc['value']);
         $this->assertArrayNotHasKey('creatorCount', $tableDoc['value']);
 
         $tableDoc = $collection->findOne(['_id.type' => 't_creator_count', '_id.r' => 'http://talisaspire.com/works/4d101f63c10a6-2']);
+        $this->assertNotNull($tableDoc);
         $this->assertEquals(0, $tableDoc['value']['totalContributorCount']);
         $this->assertArrayNotHasKey('contributorCount', $tableDoc['value']);
         $this->assertArrayNotHasKey('creatorCount', $tableDoc['value']);
@@ -439,6 +461,7 @@ class MongoTripodComputedFieldsTest extends MongoTripodTestBase
         $this->tripod->generateTableRows('t_conditional_with_nested_arithmetic');
         $collection = Config::getInstance()->getCollectionForTable('tripod_php_testing', 't_conditional_with_nested_arithmetic');
         $tableDoc = $collection->findOne(['_id.type' => 't_conditional_with_nested_arithmetic']);
+        $this->assertNotNull($tableDoc);
 
         $this->assertEquals('b', $tableDoc['value']['foobar']);
         Config::setConfig($oldConfig);
@@ -487,6 +510,7 @@ class MongoTripodComputedFieldsTest extends MongoTripodTestBase
         $this->tripod->generateTableRows('t_arithmetic_with_nested_conditional');
         $collection = Config::getInstance()->getCollectionForTable('tripod_php_testing', 't_arithmetic_with_nested_conditional');
         $tableDoc = $collection->findOne(['_id.type' => 't_arithmetic_with_nested_conditional']);
+        $this->assertNotNull($tableDoc);
 
         $this->assertEquals(300, $tableDoc['value']['foobar']);
         Config::setConfig($oldConfig);

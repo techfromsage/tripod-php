@@ -20,9 +20,9 @@ use Tripod\StatsD;
 
 abstract class MongoTripodTestBase extends TestCase
 {
-    protected ?Driver $tripod;
+    protected Driver $tripod;
 
-    protected ?TransactionLog $tripodTransactionLog;
+    protected TransactionLog $tripodTransactionLog;
 
     protected function setUp(): void
     {
@@ -38,13 +38,6 @@ abstract class MongoTripodTestBase extends TestCase
         }
 
         Config::setConfig($config);
-    }
-
-    protected function tearDown(): void
-    {
-        // these are important to keep the Mongo open connection pool size down!
-        $this->tripod = null;
-        $this->tripodTransactionLog = null;
     }
 
     protected function loadResourceData(): void
@@ -193,7 +186,6 @@ abstract class MongoTripodTestBase extends TestCase
     {
         $this->assertArrayHasKey($key, $doc, 'the date property: {$key} was not present in document');
         $this->assertInstanceOf(UTCDateTime::class, $doc[$key]);
-        $this->assertInstanceOf(DateTimeInterface::class, $doc[$key]->toDateTime());
     }
 
     protected function assertDocumentVersion(array $_id, ?int $expectedValue = null, bool $hasVersion = true, ?Driver $tripod = null): void
@@ -205,6 +197,7 @@ abstract class MongoTripodTestBase extends TestCase
         }
 
         $doc = $this->getDocument($_id, $tripod);
+        $this->assertNotNull($doc);
         if ($hasVersion) {
             $this->assertArrayHasKey('_version', $doc, 'Document for ' . var_export($_id, true) . ' should have a version, but none found');
 
@@ -232,6 +225,7 @@ abstract class MongoTripodTestBase extends TestCase
         }
 
         $doc = $this->getDocument($_id, $tripod);
+        $this->assertNotNull($doc);
 
         $this->assertArrayHasKey($property, $doc, 'Document for ' . var_export($_id, true) . sprintf(' should have property [%s], but none found', $property));
         if ($expectedValue !== null) {
@@ -255,8 +249,6 @@ abstract class MongoTripodTestBase extends TestCase
 
         $doc = $this->getDocument($_id, $tripod, $fromTransactionLog);
         if ($doc === null) {
-            $this->assertNull($doc); // @phpstan-ignore method.alreadyNarrowedType
-
             return; // if document doesn't exist then it doesn't have the property, so assertion is successful
         }
 
@@ -282,7 +274,7 @@ abstract class MongoTripodTestBase extends TestCase
         if ($useTransactionTripod) {
             $this->assertNull($doc, 'Document with _id:[' . print_r($_id, true) . '] exists, but it should not');
         } else {
-            $this->assertTrue(is_array($doc), 'Document should be array');
+            $this->assertNotNull($doc, 'Document should exist');
             $keys = array_keys($doc);
             $this->assertCount(4, $keys);
             $this->assertArrayHasKey('_id', $doc);
@@ -402,7 +394,7 @@ class TestTripod extends Driver
      */
     public function getCollectionReadPreference()
     {
-        return $this->collection->getReadPreference();
+        return $this->getCollection()->getReadPreference();
     }
 }
 

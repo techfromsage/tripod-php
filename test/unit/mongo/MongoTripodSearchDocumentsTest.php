@@ -73,6 +73,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
     {
         $searchDocuments = $this->getSearchDocuments($this->tripod);
         $generatedDocuments = $searchDocuments->generateSearchDocumentBasedOnSpecId('i_search_resource', 'http://talisaspire.com/resources/doc1', 'http://talisaspire.com/');
+        $this->assertNotNull($generatedDocuments);
         $this->assertEquals('http://talisaspire.com/resources/doc1', $generatedDocuments['_id']['r']);
     }
 
@@ -80,6 +81,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
     {
         $searchDocuments = $this->getSearchDocuments($this->tripod);
         $generatedDocuments = $searchDocuments->generateSearchDocumentBasedOnSpecId('i_search_resource', 'http://talisaspire.com/resources/doc13', 'http://talisaspire.com/');
+        $this->assertNotNull($generatedDocuments);
         $this->assertEquals('René Chapus', $generatedDocuments['result']['author']);
         $this->assertContains('rené chapus', $generatedDocuments['search_terms']);
         $this->assertEquals('http://talisaspire.com/resources/doc13', $generatedDocuments['_id']['r']);
@@ -159,6 +161,7 @@ class MongoTripodSearchDocumentsTest extends MongoTripodTestBase
             ->willReturn($searchSpecs);
 
         $generatedDocuments = $mockSearchDocuments->generateSearchDocumentBasedOnSpecId('i_search_resource', 'http://talisaspire.com/resources/typedDoc1', 'http://talisaspire.com/');
+        $this->assertNotNull($generatedDocuments);
         $this->assertEquals([
             'title' => 'Typed PHP: Stronger Types For Cleaner Code',
             'date' => '2016',

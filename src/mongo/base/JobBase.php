@@ -70,13 +70,18 @@ abstract class JobBase extends Job
 
     public function tearDown(): void
     {
+        $timer = $this->timer;
+        if ($timer === null) {
+            return;
+        }
+
         // stat time taken to process item, from time it was created (queued)
-        $this->timer->stop();
+        $timer->stop();
         $this->debugLog(
             '[JOBID ' . $this->job->payload['id'] . '] ' . get_class($this)
-                . sprintf('::perform() done in %sms', $this->timer->result())
+                . sprintf('::perform() done in %sms', $timer->result())
         );
-        $this->getStat()->timer($this->getStatTimerSuccessKey(), $this->timer->result());
+        $this->getStat()->timer($this->getStatTimerSuccessKey(), $timer->result());
     }
 
     /**
@@ -127,11 +132,13 @@ abstract class JobBase extends Job
             $this->getStatsConfig();
         }
 
-        if ($this->stat == null) {
-            $this->setStat($this->getStatFromStatFactory());
+        $stat = $this->stat;
+        if ($stat == null) {
+            $stat = $this->getStatFromStatFactory();
+            $this->setStat($stat);
         }
 
-        return $this->stat;
+        return $stat;
     }
 
     public function setStat(ITripodStat $stat): void
@@ -364,7 +371,12 @@ abstract class JobBase extends Job
             $this->setTripodConfig();
         }
 
-        return $this->tripodConfig;
+        $tripodConfig = $this->tripodConfig;
+        if ($tripodConfig === null) {
+            throw new \RuntimeException('Tripod config could not be initialised for job');
+        }
+
+        return $tripodConfig;
     }
 
     /**

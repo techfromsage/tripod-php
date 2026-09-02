@@ -274,7 +274,7 @@ class Views extends CompositeBase
 
         // now generate view for $resources themselves... Maybe an optimisation down the line to cut out the query here
         $query = [_ID_KEY => ['$in' => $filter]];
-        $resourceAndType = $this->collection->find($query, ['projection' => [_ID_KEY => 1, 'rdf:type' => 1]]);
+        $resourceAndType = $this->getCollection()->find($query, ['projection' => [_ID_KEY => 1, 'rdf:type' => 1]]);
 
         foreach ($resourceAndType as $rt) {
             $id = $rt[_ID_KEY];
