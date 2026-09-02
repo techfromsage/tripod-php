@@ -1579,8 +1579,12 @@ class ExtendedGraph
     }
 
     /**
+     * Replace literal triple, but only if it's matched by the old value.
+     *
      * @param ObjectLiteral $oOldValue
      * @param ObjectLiteral $oNewValue
+     *
+     * @return bool true if the triple was replaced, false otherwise
      */
     public function replace_literal_triple(string $s, string $p, $oOldValue, $oNewValue): bool
     {
