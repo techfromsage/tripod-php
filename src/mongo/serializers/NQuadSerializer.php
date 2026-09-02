@@ -109,9 +109,11 @@ class NQuadSerializer
     public function escape(string $v): string
     {
         $r = '';
-        $v = (strpos(mb_convert_encoding(str_replace('?', '', $v), 'ISO-8859-1', 'UTF-8'), '?') === false)
-            ? mb_convert_encoding($v, 'ISO-8859-1', 'UTF-8')
-            : $v;
+        // '?' fallback: a failed conversion behaves like a non-convertible value
+        $probe = self::convertEncoding(str_replace('?', '', $v), 'ISO-8859-1', 'UTF-8', '?');
+        if (strpos($probe, '?') === false) {
+            $v = self::convertEncoding($v, 'ISO-8859-1', 'UTF-8', $v);
+        }
         if ($this->raw) {
             return $v;
         }
@@ -130,7 +132,7 @@ class NQuadSerializer
 
     public function getCharNo(string $c): int
     {
-        $c_utf = mb_convert_encoding($c, 'UTF-8', 'ISO-8859-1');
+        $c_utf = self::convertEncoding($c, 'UTF-8', 'ISO-8859-1', '');
         $bl = strlen($c_utf); // binary length
         $r = 0;
 
@@ -226,5 +228,19 @@ class NQuadSerializer
         } // #x10000-#x10FFFF (65536-1114111)
 
         return ''; // not defined => ignore
+    }
+
+    /**
+     * Convert a string between encodings, returning $fallback if the conversion
+     * fails. mb_convert_encoding() can return false on PHP 7.4 while the PHP 8
+     * type stubs narrow the return to a plain string, so the result is widened
+     * back to the native signature to keep PHPStan happy on both runtimes.
+     */
+    private static function convertEncoding(string $value, string $toEncoding, string $fromEncoding, string $fallback): string
+    {
+        /** @var array|false|string $converted */
+        $converted = mb_convert_encoding($value, $toEncoding, $fromEncoding);
+
+        return is_string($converted) ? $converted : $fallback;
     }
 }
