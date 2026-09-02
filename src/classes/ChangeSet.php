@@ -246,11 +246,9 @@ class ChangeSet extends ExtendedGraph
     public function get_subjects_of_change(): array
     {
         $subjects = [];
-
-        /** @noinspection PhpParamsInspection */
-        $changes = $this->get_subjects_of_type($this->qname_to_uri('cs:ChangeSet'));
+        $changes = $this->get_subjects_of_type((string) $this->qname_to_uri('cs:ChangeSet'));
         foreach ($changes as $change) {
-            $subjects[] = $this->get_first_resource($change, $this->qname_to_uri('cs:subjectOfChange'));
+            $subjects[] = $this->get_first_resource($change, (string) $this->qname_to_uri('cs:subjectOfChange'));
         }
 
         return array_unique($subjects);

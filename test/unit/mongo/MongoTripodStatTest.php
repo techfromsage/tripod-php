@@ -12,7 +12,6 @@ class MongoTripodStatTest extends MongoTripodTestBase
     {
         $statConfig = $this->getStatsDConfig();
 
-        /** @var StatsD */
         $stat = TripodStatFactory::create($statConfig);
         $this->assertInstanceOf(StatsD::class, $stat);
         $this->assertEquals('example.com', $stat->getHost());
@@ -27,7 +26,6 @@ class MongoTripodStatTest extends MongoTripodTestBase
     {
         $stat = StatsD::createFromConfig($this->getStatsDConfig());
 
-        $this->assertInstanceOf(StatsD::class, $stat);
         $this->assertEquals('example.com', $stat->getHost());
         $this->assertEquals(1234, $stat->getPort());
         $this->assertSame('somePrefix', $stat->getPrefix());

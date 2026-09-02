@@ -30,6 +30,8 @@ class Labeller extends \Tripod\Labeller
 
     /**
      * If labeller can generate a qname for this uri, it will return it. Otherwise just returns the original uri.
+     *
+     * @return ($uri is null ? null : string)
      */
     public function uri_to_alias(?string $uri): ?string
     {
@@ -43,6 +45,8 @@ class Labeller extends \Tripod\Labeller
 
     /**
      * If labeller can generate a uri for this qname, it will return it. Otherwise just returns the original qname.
+     *
+     * @return ($qName is null ? null : string)
      */
     public function qname_to_alias(?string $qName): ?string
     {
@@ -55,6 +59,10 @@ class Labeller extends \Tripod\Labeller
     }
 
     /**
+     * Unlike the base labeller this never returns null: unresolvable qnames (and null input) throw instead.
+     *
+     * @return ($qName is null ? null : string)
+     *
      * @throws LabellerException
      */
     public function qname_to_uri(?string $qName): ?string

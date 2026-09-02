@@ -116,6 +116,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase
             'c' => 'http://talisaspire.com/',
             'type' => 'v_resource_full',
         ]]);
+        $this->assertNotNull($actualView);
         $this->assertEquals($expectedView['_id'], $actualView['_id']);
         $this->assertEquals($expectedView['value'], $actualView['value']);
         $this->assertInstanceOf(UTCDateTime::class, $actualView['_cts']);
@@ -190,6 +191,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase
             'c' => 'http://talisaspire.com/',
             'type' => 'v_resource_filter1',
         ]]);
+        $this->assertNotNull($actualView);
         $this->assertEquals($expectedView['_id'], $actualView['_id']);
         $this->assertEquals($expectedView['value'], $actualView['value']);
         $this->assertInstanceOf(UTCDateTime::class, $actualView['_cts']);
@@ -254,6 +256,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase
         $actualView = $collection->findOne(
             ['_id' => ['r' => 'http://talisaspire.com/resources/filter1', 'c' => 'http://talisaspire.com/', 'type' => 'v_resource_filter2']]
         );
+        $this->assertNotNull($actualView);
         $this->assertEquals($expectedView['_id'], $actualView['_id']);
         $this->assertEquals($expectedView['value'], $actualView['value']);
         $this->assertInstanceOf(UTCDateTime::class, $actualView['_cts']);
@@ -324,6 +327,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase
         // get the view direct from mongo
         $collection = Config::getInstance()->getCollectionForView('tripod_php_testing', 'v_resource_filter1');
         $actualView = $collection->findOne(['_id' => ['r' => 'http://talisaspire.com/resources/filter1', 'c' => 'http://talisaspire.com/', 'type' => 'v_resource_filter1']]);
+        $this->assertNotNull($actualView);
         $this->assertEquals($expectedView['_id'], $actualView['_id']);
         $this->assertEquals($expectedView['value'], $actualView['value']);
         $this->assertInstanceOf(UTCDateTime::class, $actualView['_cts']);
@@ -398,6 +402,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase
             'c' => 'http://talisaspire.com/',
             'type' => 'v_resource_filter1',
         ]]);
+        $this->assertNotNull($updatedView);
         $this->assertEquals($expectedUpdatedView['_id'], $updatedView['_id']);
         $this->assertEquals($expectedUpdatedView['value'], $updatedView['value']);
         $this->assertInstanceOf(UTCDateTime::class, $updatedView['_cts']);
@@ -472,6 +477,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase
         // get the view direct from mongo
         $collection = Config::getInstance()->getCollectionForView('tripod_php_testing', 'v_resource_rdfsequence');
         $actualView = $collection->findOne(['_id' => ['r' => 'http://talisaspire.com/resources/filter1', 'c' => 'http://talisaspire.com/', 'type' => 'v_resource_rdfsequence']]);
+        $this->assertNotNull($actualView);
 
         $this->assertEquals($expectedView['_id'], $actualView['_id']);
         $this->assertEquals($expectedView['value'], $actualView['value']);
@@ -530,6 +536,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase
             'c' => 'http://talisaspire.com/',
             'type' => 'v_resource_full_ttl',
         ]]);
+        $this->assertNotNull($actualView);
         $this->assertEquals($expectedView['_id'], $actualView['_id']);
         $this->assertEquals($expectedView['value'], $actualView['value']);
         $this->assertInstanceOf(UTCDateTime::class, $actualView['_cts']);
@@ -590,6 +597,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase
                     ],
                 ]
             );
+        $this->assertNotNull($actualView);
         $this->assertEqualsCanonicalizing(
             $expectedView['_id'],
             $actualView['_id'],
@@ -755,6 +763,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase
             'c' => 'http://talisaspire.com/',
             'type' => 'v_counts',
         ]]);
+        $this->assertNotNull($actualView);
         $this->assertEquals($expectedView['_id'], $actualView['_id']);
         $this->assertEquals($expectedView['value'], $actualView['value']);
         $this->assertInstanceOf(UTCDateTime::class, $actualView['_cts']);

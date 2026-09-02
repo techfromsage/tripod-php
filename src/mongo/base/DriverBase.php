@@ -56,11 +56,13 @@ abstract class DriverBase
 
     public function getStat(): ITripodStat
     {
-        if ($this->stat == null) {
-            $this->setStat($this->getStatFromStatFactory());
+        $stat = $this->stat;
+        if ($stat == null) {
+            $stat = $this->getStatFromStatFactory();
+            $this->setStat($stat);
         }
 
-        return $this->stat;
+        return $stat;
     }
 
     public function setStat(ITripodStat $stat): void
@@ -114,11 +116,10 @@ abstract class DriverBase
         $t->start();
 
         if ($collection == null) {
-            $collection = $this->collection;
-            $collectionName = $collection->getCollectionName();
-        } else {
-            $collectionName = $collection->getCollectionName();
+            $collection = $this->getCollection();
         }
+
+        $collectionName = $collection->getCollectionName();
 
         if (empty($includeProperties)) {
             $cursor = $collection->find($query);

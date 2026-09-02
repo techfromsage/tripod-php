@@ -33,7 +33,8 @@
         "friendsofphp/php-cs-fixer": "^3.4",
         "perftools/php-profiler": "^1.2",
         "phpstan/phpstan": "^2.1",
-        "monolog/monolog": "^2.11 || ^3.10"
+        "monolog/monolog": "^2.11 || ^3.10",
+        "phpstan/phpstan-phpunit": "^2.0"
     },
     "autoload": {
         "classmap": ["src/"],

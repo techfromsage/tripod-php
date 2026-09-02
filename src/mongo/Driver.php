@@ -259,7 +259,7 @@ class Driver extends DriverBase implements IDriver
 
         $provider = $this->config->getSearchProviderClassName($this->storeName);
 
-        if (class_exists($provider)) {
+        if ($provider !== null && class_exists($provider)) {
             $timer = new Timer();
             $timer->start();
 
@@ -318,7 +318,7 @@ class Driver extends DriverBase implements IDriver
                     ['$match' => $query],
                     ['$group' => [_ID_KEY => '$' . $groupBy, 'total' => ['$sum' => 1]]],
                 ];
-                $cursor = $this->collection->aggregate($ops);
+                $cursor = $this->getCollection()->aggregate($ops);
                 $results = [];
                 foreach ($cursor as $doc) {
                     if (!is_array($doc[_ID_KEY])) {
@@ -328,7 +328,7 @@ class Driver extends DriverBase implements IDriver
                     }
                 }
             } else {
-                $results = $this->collection->count($query);
+                $results = $this->getCollection()->count($query);
             }
 
             if (!empty($ttl)) {
@@ -403,14 +403,14 @@ class Driver extends DriverBase implements IDriver
             $findOptions['sort'] = $sortBy;
         }
 
-        $results = $this->collection->find($query, $findOptions);
+        $results = $this->getCollection()->find($query, $findOptions);
 
         $t->stop();
         $this->timingLog(MONGO_SELECT, ['duration' => $t->result(), 'query' => $query]);
         $this->getStat()->timer(MONGO_SELECT . ('.' . $this->podName), $t->result());
 
         $rows = [];
-        $count = $this->collection->count($query);
+        $count = $this->getCollection()->count($query);
 
         foreach ($results as $doc) {
             $row = [];
@@ -490,7 +490,7 @@ class Driver extends DriverBase implements IDriver
                 _ID_CONTEXT => $this->getContextAlias($context),
             ],
         ];
-        $doc = $this->collection->findOne($query, ['projection' => [_UPDATED_TS => true]]);
+        $doc = $this->getCollection()->findOne($query, ['projection' => [_UPDATED_TS => true]]);
 
         /** @var UTCDateTime|null $lastUpdatedDate */
         $lastUpdatedDate = $doc[_UPDATED_TS] ?? null;
@@ -510,7 +510,7 @@ class Driver extends DriverBase implements IDriver
         if ($this->tripod_views == null) {
             $this->tripod_views = new Views(
                 $this->storeName,
-                $this->collection,
+                $this->getCollection(),
                 $this->defaultContext,
                 $this->stat,
                 $this->readPreference
@@ -525,7 +525,7 @@ class Driver extends DriverBase implements IDriver
         if ($this->tripod_tables == null) {
             $this->tripod_tables = new Tables(
                 $this->storeName,
-                $this->collection,
+                $this->getCollection(),
                 $this->defaultContext,
                 $this->stat,
                 $this->readPreference
@@ -619,7 +619,7 @@ class Driver extends DriverBase implements IDriver
     protected function getDataUpdater(): Updates
     {
         if ($this->updates === null) {
-            $readPreference = $this->collection->getReadPreference()->getModeString();
+            $readPreference = $this->getCollection()->getReadPreference()->getModeString();
 
             $opts = [
                 'defaultContext' => $this->defaultContext,

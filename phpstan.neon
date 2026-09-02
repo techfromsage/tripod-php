@@ -1,5 +1,8 @@
+includes:
+  - vendor/phpstan/phpstan-phpunit/extension.neon
+
 parameters:
-  level: 7
+  level: 8
   bootstrapFiles:
     - src/resque/compat.inc.php
     - test/unit/mongo/mocks/Cursor.php

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tripod\Mongo;
 
 use Tripod\Exceptions\Exception;
+use Tripod\Exceptions\LabellerException;
 use Tripod\ExtendedGraph;
 
 require_once TRIPOD_DIR . 'mongo/MongoTripodConstants.php';
@@ -22,6 +23,20 @@ class MongoGraph extends ExtendedGraph
     public function __construct()
     {
         $this->_labeller = new Labeller();
+    }
+
+    /**
+     * Convert a QName to a URI using registered namespace prefixes. Unlike the base graph
+     * this uses the Mongo labeller, which throws for unresolvable qnames instead of
+     * returning null, so the result is always a string.
+     *
+     * @return ($qName is null ? null : string)
+     *
+     * @throws LabellerException
+     */
+    public function qname_to_uri(?string $qName): ?string
+    {
+        return $this->_labeller->qname_to_uri($qName);
     }
 
     /**

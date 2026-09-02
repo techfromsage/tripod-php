@@ -762,9 +762,9 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
 
         /** @var Tripod\Mongo\Config */
         $mtc = Config::getInstance();
-        $this->assertEquals('myreplicaset', $mtc->getReplicaSetName($mtc->getDefaultDataSourceForStore('tripod_php_testing')));
+        $this->assertEquals('myreplicaset', $mtc->getReplicaSetName((string) $mtc->getDefaultDataSourceForStore('tripod_php_testing')));
 
-        $this->assertNull($mtc->getReplicaSetName($mtc->getDefaultDataSourceForStore('testing_2')));
+        $this->assertNull($mtc->getReplicaSetName((string) $mtc->getDefaultDataSourceForStore('testing_2')));
     }
 
     public function testGetReplicaSetNameNonExistingDatasource(): void
@@ -1294,6 +1294,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $transactionColletion = $transactionMongo->selectCollection($newConfig['transaction_log']['database'], $newConfig['transaction_log']['collection']);
         $transactionCount = $transactionColletion->count();
         $transactionExampleDocument = $transactionColletion->findOne();
+        $this->assertNotNull($transactionExampleDocument);
         $this->assertEquals(26, $transactionCount);
         $this->assertStringContainsString('transaction_', (string) $transactionExampleDocument['_id']);
     }

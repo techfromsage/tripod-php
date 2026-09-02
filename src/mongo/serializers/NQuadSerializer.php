@@ -49,8 +49,8 @@ class NQuadSerializer
                 $quot = '"""';
                 if (preg_match('/\"\"\"/', $v['value']) || preg_match('/\"$/', $v['value']) || preg_match('/^\"/', $v['value'])) {
                     $quot = "'''";
-                    $v['value'] = preg_replace("/'$/", "' ", $v['value']);
-                    $v['value'] = preg_replace("/^'/", " '", $v['value']);
+                    $v['value'] = preg_replace("/'$/", "' ", $v['value']) ?? '';
+                    $v['value'] = preg_replace("/^'/", " '", $v['value']) ?? '';
                     $v['value'] = str_replace("'''", '\\\'\\\'\\\'', $v['value']);
                 }
             }

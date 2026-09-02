@@ -20,7 +20,7 @@ class SearchIndexer extends CompositeBase
 {
     private Driver $tripod;
 
-    private ?ISearchProvider $searchProvider = null;
+    private ISearchProvider $searchProvider;
 
     /**
      * @throws SearchException
@@ -145,6 +145,9 @@ class SearchIndexer extends CompositeBase
         // default the context
         $contextAlias = $this->getContextAlias($context);
         $spec = $this->getConfigInstance()->getSearchDocumentSpecification($this->getStoreName(), $searchDocumentType);
+        if ($spec === null) {
+            throw new SearchException('Could not find a search document specification for ' . $searchDocumentType);
+        }
 
         if ($resourceUri) {
             $this->generateAndIndexSearchDocuments($resourceUri, $contextAlias, $spec['from'], $searchDocumentType);
@@ -247,7 +250,7 @@ class SearchIndexer extends CompositeBase
         return $this->getSearchProvider()->deleteSearchDocumentsByTypeId($typeId);
     }
 
-    protected function getSearchProvider(): ?ISearchProvider
+    protected function getSearchProvider(): ISearchProvider
     {
         return $this->searchProvider;
     }

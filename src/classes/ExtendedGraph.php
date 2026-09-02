@@ -1095,7 +1095,7 @@ class ExtendedGraph
             array_unshift($indices, $this->_index);
         }
 
-        $base = array_shift($indices);
+        $base = array_shift($indices) ?? [];
         if (count($base) === 0) {
             return [];
         }
@@ -1149,7 +1149,7 @@ class ExtendedGraph
             array_unshift($indices, $this->_index);
         }
 
-        $current = array_shift($indices);
+        $current = array_shift($indices) ?? [];
         foreach ($indices as $newGraph) {
             foreach ($newGraph as $uri => $properties) {
                 /* Make sure that bnode ids don't overlap:
@@ -1483,7 +1483,9 @@ class ExtendedGraph
                         $value = $this->get_first_literal($sequenceUri, $property);
                     }
 
-                    $properties[$key] = $value;
+                    if ($value !== null) {
+                        $properties[$key] = $value;
+                    }
                 }
             }
 
@@ -1527,7 +1529,9 @@ class ExtendedGraph
         foreach ($sequenceProperties as $sequenceProperty) {
             if (strpos($sequenceProperty, self::rdf . '_') !== false) {
                 $sequencePropertyValue = $this->get_first_resource($sequenceUri, $sequenceProperty);
-                $this->remove_resource_triple($sequenceUri, $sequenceProperty, $sequencePropertyValue);
+                if ($sequencePropertyValue !== null) {
+                    $this->remove_resource_triple($sequenceUri, $sequenceProperty, $sequencePropertyValue);
+                }
             }
         }
 
@@ -1702,6 +1706,8 @@ class ExtendedGraph
      * Check if a triple value is valid.
      *
      * @param mixed $value
+     *
+     * @phpstan-assert-if-true non-falsy-string $value
      */
     protected function isValidResource($value): bool
     {

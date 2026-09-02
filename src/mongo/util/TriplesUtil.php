@@ -175,8 +175,13 @@ class TriplesUtil
             throw new \Exception(sprintf('graph for %s was null', $cbdSubject));
         }
 
+        $cbdDoc = $cbdGraph->to_tripod_array($cbdSubject, $context);
+        if ($cbdDoc === null) {
+            throw new \Exception(sprintf('graph for %s does not contain the subject', $cbdSubject));
+        }
+
         try {
-            $collection->insertOne($cbdGraph->to_tripod_array($cbdSubject, $context), ['w' => 1]);
+            $collection->insertOne($cbdDoc, ['w' => 1]);
             echo '.';
         } catch (\Exception $e) {
             if (preg_match('/E11000/', $e->getMessage())) {
@@ -184,7 +189,7 @@ class TriplesUtil
                 // key already exists, merge it
                 $criteria = [_ID_KEY => [_ID_RESOURCE => $cbdSubject, _ID_CONTEXT => $context]];
                 $existingGraph = new MongoGraph();
-                $existingGraph->add_tripod_array($collection->findOne($criteria));
+                $existingGraph->add_tripod_array($collection->findOne($criteria) ?? []);
                 $existingGraph->add_graph($cbdGraph);
 
                 $collection->updateOne($criteria, ['$set' => $existingGraph->to_tripod_array($cbdSubject, $context)], ['w' => 1]);
@@ -192,7 +197,7 @@ class TriplesUtil
                 // retry
                 echo 'CursorException on update: ' . $e->getMessage() . ", retrying\n";
 
-                $collection->insertOne($cbdGraph->to_tripod_array($cbdSubject, $context), ['w' => 1]);
+                $collection->insertOne($cbdDoc, ['w' => 1]);
             }
         }
     }
@@ -226,7 +231,7 @@ class TriplesUtil
         $sliced = array_slice($parts, 2);
 
         $str = implode(' ', $sliced);
-        $str = preg_replace('@"[^"]*$@', '', $str); // get rid of xsd typing
+        $str = preg_replace('@"[^"]*$@', '', $str) ?? ''; // get rid of xsd typing
 
         $str = substr($str, 1, strlen($str) - 1); // trim($str, "\"");
 

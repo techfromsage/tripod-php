@@ -16,7 +16,7 @@ use Tripod\ITripodStat;
  */
 class ImpactedSubject
 {
-    private ?string $operation = null;
+    private string $operation;
 
     /**
      * @var ResourceId

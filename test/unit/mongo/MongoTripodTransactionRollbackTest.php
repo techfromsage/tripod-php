@@ -131,6 +131,7 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
         $this->assertDocumentDoesNotHaveProperty(['r' => $subjectTwo, 'c' => 'http://talisaspire.com/'], _LOCKED_FOR_TRANS_TS, $this->tripod);
 
         $transaction = $mockTripodUpdate->getTransactionLog()->getTransaction($mockTransactionId);
+        $this->assertNotNull($transaction);
         $this->assertEquals('Did not obtain locks on documents', $transaction['error']['reason']);
         $this->assertEquals('failed', $transaction['status']);
     }
@@ -190,6 +191,7 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
         $this->assertDocumentDoesNotHaveProperty(['r' => $subjectTwo, 'c' => 'http://talisaspire.com/'], _LOCKED_FOR_TRANS_TS, $this->tripod);
 
         $transaction = $mockTripodUpdate->getTransactionLog()->getTransaction($mockTransactionId);
+        $this->assertNotNull($transaction);
         $this->assertEquals('Did not obtain locks on documents', $transaction['error']['reason']);
         $this->assertEquals('failed', $transaction['status']);
     }
@@ -388,6 +390,7 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
         $this->assertDocumentDoesNotHaveProperty(['r' => $subjectTwo, 'c' => 'http://talisaspire.com/'], _LOCKED_FOR_TRANS_TS, $this->tripod);
 
         $transaction = $mockTripodUpdate->getTransactionLog()->getTransaction($mockTransactionId);
+        $this->assertNotNull($transaction);
         $this->assertEquals('Exception throw by mock test during applychangeset', $transaction['error']['reason']);
         $this->assertEquals('failed', $transaction['status']);
     }

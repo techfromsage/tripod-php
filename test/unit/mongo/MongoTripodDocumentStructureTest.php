@@ -55,6 +55,7 @@ class MongoTripodDocumentStructureTest extends MongoTripodTestBase
 
         // retrieve the document from mongo ( rather than the graph ) capture the updated and created ts
         $document = $this->getDocument($id);
+        $this->assertNotNull($document);
         $_updated_ts = $document[_UPDATED_TS];
         $_created_ts = $document[_CREATED_TS];
 
@@ -72,6 +73,7 @@ class MongoTripodDocumentStructureTest extends MongoTripodTestBase
 
         // assert that the $_updated_ts has changed, but the created_ts is the same
         $updated_document = $this->getDocument($id);
+        $this->assertNotNull($updated_document);
         $this->assertEquals($_created_ts, $updated_document[_CREATED_TS]);
         $this->assertNotEquals($_updated_ts->__toString(), $updated_document[_UPDATED_TS]->__toString());
         // assert that the seconds for the updated document _updated_ts is greated than the first version
@@ -92,6 +94,7 @@ class MongoTripodDocumentStructureTest extends MongoTripodTestBase
 
         // assert that the $_updated_ts has changed, but the created_ts is the same
         $final_document = $this->getDocument($id);
+        $this->assertNotNull($final_document);
         $this->assertEquals($updated_document[_CREATED_TS], $final_document[_CREATED_TS]);
         $this->assertNotEquals($updated_document[_UPDATED_TS]->__toString(), $final_document[_UPDATED_TS]->__toString());
         $this->assertGreaterThan($updated_document[_UPDATED_TS]->__toString(), $final_document[_UPDATED_TS]->__toString());
@@ -104,6 +107,7 @@ class MongoTripodDocumentStructureTest extends MongoTripodTestBase
 
         $this->assertDocumentExists($id);
         $deleted_document = $this->getDocument($id);
+        $this->assertNotNull($deleted_document);
         $this->assertDocumentHasProperty($id, _VERSION);
         $this->assertDocumentHasProperty($id, _UPDATED_TS);
         $this->assertDocumentHasProperty($id, _CREATED_TS);

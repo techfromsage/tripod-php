@@ -861,6 +861,10 @@ class Config implements IConfigInstance
      */
     public function serialize(): array
     {
+        if ($this->config === null) {
+            throw new ConfigException('Config has not been loaded');
+        }
+
         return $this->config;
     }
 
