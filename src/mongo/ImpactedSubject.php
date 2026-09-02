@@ -70,17 +70,11 @@ class ImpactedSubject
         return $this->podName;
     }
 
-    /**
-     * @return mixed[]
-     */
     public function getResourceId(): array
     {
         return $this->resourceId;
     }
 
-    /**
-     * @return mixed[]
-     */
     public function getSpecTypes(): array
     {
         return $this->specTypes;
@@ -93,8 +87,6 @@ class ImpactedSubject
 
     /**
      * Serialises the data as an array.
-     *
-     * @return array<string, mixed[]|string>
      */
     public function toArray(): array
     {

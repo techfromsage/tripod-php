@@ -134,8 +134,6 @@ class Config implements IConfigInstance
     }
 
     /**
-     * @param array<string, mixed> $spec
-     *
      * @throws ConfigException
      */
     public function validateTableSpec(array $spec): void
@@ -881,8 +879,6 @@ class Config implements IConfigInstance
     /**
      * Used to load the config from self::config when new instance is generated.
      *
-     * @param array<string, mixed> $config
-     *
      * @throws ConfigException
      */
     protected function loadConfig(array $config): void
@@ -892,9 +888,12 @@ class Config implements IConfigInstance
             $this->ns = $config['namespaces'];
         }
 
-        $this->defaultContext = $this->getMandatoryKey('defaultContext', $config);
+        $this->defaultContext = $this->getMandatoryStringKey('defaultContext', $config);
 
-        foreach ($this->getMandatoryKey('data_sources', $config) as $source => $c) {
+        foreach ($this->getMandatoryArrayKey('data_sources', $config) as $source => $c) {
+            if (!is_array($c)) {
+                throw new ConfigException('Data source ' . $source . ' must be an array');
+            }
             if (!isset($c['type'])) {
                 throw new ConfigException("No 'type' set for data source " . $source);
             }
@@ -906,17 +905,17 @@ class Config implements IConfigInstance
             $this->dataSources[$source] = $c;
         }
 
-        $transactionConfig = $this->getMandatoryKey('transaction_log', $config);
-        $this->tConfig['data_source'] = $this->getMandatoryKey('data_source', $transactionConfig, 'transaction_log');
+        $transactionConfig = $this->getMandatoryArrayKey('transaction_log', $config);
+        $this->tConfig['data_source'] = $this->getMandatoryStringKey('data_source', $transactionConfig, 'transaction_log');
         if (!isset($this->dataSources[$this->tConfig['data_source']])) {
             throw new ConfigException('Transaction log data source, ' . $this->tConfig['data_source'] . ', was not defined');
         }
 
-        $this->tConfig['database'] = $this->getMandatoryKey('database', $transactionConfig, 'transaction_log');
-        $this->tConfig['collection'] = $this->getMandatoryKey('collection', $transactionConfig, 'transaction_log');
+        $this->tConfig['database'] = $this->getMandatoryStringKey('database', $transactionConfig, 'transaction_log');
+        $this->tConfig['collection'] = $this->getMandatoryStringKey('collection', $transactionConfig, 'transaction_log');
 
         // A 'pod' corresponds to a logical database
-        $this->databases = $this->getMandatoryKey('stores', $config);
+        $this->databases = $this->getMandatoryArrayKey('stores', $config);
         foreach ($this->databases as $storeName => $storeConfig) {
             $this->dbConfig[$storeName] = ['data_source' => $this->getMandatoryKey('data_source', $storeConfig)];
             if (isset($storeConfig['database']) && !empty($storeConfig['database'])) {
@@ -1003,9 +1002,9 @@ class Config implements IConfigInstance
             $searchConfig = $storeConfig['search_config'] ?? [];
             $this->searchDocSpecs[$storeName] = [];
             if (!empty($searchConfig)) {
-                $this->searchProviderClassName[$storeName] = ltrim($this->getMandatoryKey('search_provider', $searchConfig, 'search'), '\\');
+                $this->searchProviderClassName[$storeName] = ltrim($this->getMandatoryStringKey('search_provider', $searchConfig, 'search'), '\\');
                 // Load search doc specs if search_config is set
-                $searchDocSpecs = $this->getMandatoryKey('search_specifications', $searchConfig, 'search');
+                $searchDocSpecs = $this->getMandatoryArrayKey('search_specifications', $searchConfig, 'search');
                 foreach ($searchDocSpecs as $spec) {
                     if (!isset($spec[_ID_KEY])) {
                         throw new ConfigException('Search document spec does not contain ' . _ID_KEY);
@@ -1085,8 +1084,6 @@ class Config implements IConfigInstance
     }
 
     /**
-     * @param array<string, mixed> $spec
-     *
      * @throws ConfigException
      */
     protected function validateTableSpecPart(array $spec, int $depth = 0): void
@@ -1188,8 +1185,7 @@ class Config implements IConfigInstance
     }
 
     /**
-     * @param string[]             $availableFields
-     * @param array<string, mixed> $spec
+     * @param string[] $availableFields
      */
     protected function validateComputedFieldSpec(string $type, array $spec, array $availableFields): void
     {
@@ -1212,8 +1208,7 @@ class Config implements IConfigInstance
     }
 
     /**
-     * @param array<string, mixed> $spec
-     * @param string[]             $availableFields
+     * @param string[] $availableFields
      *
      * @throws ConfigException
      */
@@ -1237,7 +1232,9 @@ class Config implements IConfigInstance
 
         $this->validateSpecVariableReplacement($spec['if'][0], $availableFields);
         if (isset($spec['if'][1]) && !in_array($spec['if'][1], Tables::$conditionalOperators)) {
-            throw new ConfigException("Invalid conditional operator '" . $spec['if'][1] . "' in conditional spec");
+            $operator = is_string($spec['if'][1]) ? $spec['if'][1] : var_export($spec['if'][1], true);
+
+            throw new ConfigException("Invalid conditional operator '" . $operator . "' in conditional spec");
         }
 
         if (isset($spec['if'][2])) {
@@ -1288,8 +1285,8 @@ class Config implements IConfigInstance
     }
 
     /**
-     * @param array|string $value
-     * @param string[]     $availableFields
+     * @param mixed    $value
+     * @param string[] $availableFields
      *
      * @throws ConfigException
      */
@@ -1307,8 +1304,7 @@ class Config implements IConfigInstance
     }
 
     /**
-     * @param array<string, mixed> $spec
-     * @param string[]             $availableFields
+     * @param string[] $availableFields
      *
      * @throws ConfigException
      */
@@ -1332,8 +1328,7 @@ class Config implements IConfigInstance
     }
 
     /**
-     * @param array<int, mixed> $spec
-     * @param string[]          $availableFields
+     * @param string[] $availableFields
      *
      * @throws ConfigException
      */
@@ -1370,9 +1365,6 @@ class Config implements IConfigInstance
         }
     }
 
-    /**
-     * @param array<string, mixed> $spec
-     */
     protected function getFieldNamesInSpec(array $spec): array
     {
         $fieldNames = [];
@@ -1429,8 +1421,6 @@ class Config implements IConfigInstance
 
     /**
      * Recursively crawls a configuration document array (or part of one) and returns any associated predicates/properties.
-     *
-     * @param array<string, mixed> $block
      */
     protected function getDefinedPredicatesInSpecBlock(array $block): array
     {
@@ -1682,8 +1672,6 @@ class Config implements IConfigInstance
      * If we have 'counts' in a view spec, a 'ttl' must be defined.
      * Note: this does not apply to tables or search docs.
      *
-     * @param array<string, mixed> $spec
-     *
      * @throws ConfigException
      */
     private function ifCountExistsWithoutTTLThrowException(array $spec): void
@@ -1707,8 +1695,6 @@ class Config implements IConfigInstance
     /**
      * Returns the value of the supplied key or throws an error, if missing.
      *
-     * @param array<string, mixed> $a
-     *
      * @return mixed
      *
      * @throws ConfigException
@@ -1720,6 +1706,36 @@ class Config implements IConfigInstance
         }
 
         return $a[$key];
+    }
+
+    /**
+     * As getMandatoryKey(), but additionally requires the value to be a string.
+     *
+     * @throws ConfigException
+     */
+    private function getMandatoryStringKey(string $key, array $a, string $configName = 'config'): string
+    {
+        $value = $this->getMandatoryKey($key, $a, $configName);
+        if (!is_string($value)) {
+            throw new ConfigException(sprintf('Mandatory config key [%s] in %s must be a string', $key, $configName));
+        }
+
+        return $value;
+    }
+
+    /**
+     * As getMandatoryKey(), but additionally requires the value to be an array.
+     *
+     * @throws ConfigException
+     */
+    private function getMandatoryArrayKey(string $key, array $a, string $configName = 'config'): array
+    {
+        $value = $this->getMandatoryKey($key, $a, $configName);
+        if (!is_array($value)) {
+            throw new ConfigException(sprintf('Mandatory config key [%s] in %s must be an array', $key, $configName));
+        }
+
+        return $value;
     }
 
     private static function getQueueName(string $envVar, string $type): string

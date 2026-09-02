@@ -26,7 +26,7 @@ class MongoTripodNQuadSerializerTest extends MongoTripodTestBase
     public function testSerializerWithMultipleSubjects(): void
     {
         $g = new MongoGraph();
-        $docs = json_decode((string) file_get_contents(__DIR__ . '/data/resources.json'), true);
+        $docs = $this->decodeJsonFile(__DIR__ . '/data/resources.json');
         foreach ($docs as $d) {
             $g->add_tripod_array($d);
         }

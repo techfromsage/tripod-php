@@ -162,10 +162,13 @@ class SearchIndexer extends CompositeBase
         if (isset($spec[_ID_TYPE])) {
             if (is_array($spec[_ID_TYPE])) {
                 foreach ($spec[_ID_TYPE] as $type) {
+                    if (!is_string($type)) {
+                        continue;
+                    }
                     $types[] = ['rdf:type.u' => $this->labeller->qname_to_alias($type)];
                     $types[] = ['rdf:type.u' => $this->labeller->uri_to_alias($type)];
                 }
-            } else {
+            } elseif (is_string($spec[_ID_TYPE])) {
                 $types[] = ['rdf:type.u' => $this->labeller->qname_to_alias($spec[_ID_TYPE])];
                 $types[] = ['rdf:type.u' => $this->labeller->uri_to_alias($spec[_ID_TYPE])];
             }
@@ -237,9 +240,6 @@ class SearchIndexer extends CompositeBase
         return $stat;
     }
 
-    /**
-     * @return mixed[]
-     */
     public function findImpactedComposites(array $resourcesAndPredicates, string $contextAlias): array
     {
         return $this->getSearchProvider()->findImpactedDocuments($resourcesAndPredicates, $contextAlias);

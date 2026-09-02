@@ -79,7 +79,7 @@ class ChangeSet extends ExtendedGraph
                     $parser->parse(false, $a[$rdf]);
                     $a[$rdf] = $parser->getSimpleIndex(0);
                 } elseif (
-                    is_array($a[$rdf]) && isset($a[$rdf][0]['s'])
+                    is_array($a[$rdf]) && isset($a[$rdf][0]) && is_array($a[$rdf][0]) && isset($a[$rdf][0]['s'])
                 ) { // triples array
                     /** @var \ARC2_RDFSerializer $ser */
                     $ser = \ARC2::getTurtleSerializer();

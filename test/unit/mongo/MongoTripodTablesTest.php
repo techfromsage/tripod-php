@@ -332,7 +332,7 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $count = 234;
         $docs = [];
 
-        $configOptions = json_decode((string) file_get_contents(__DIR__ . '/data/config.json'), true);
+        $configOptions = $this->decodeJsonFile(__DIR__ . '/data/config.json');
 
         for ($i = 0; $i < $count; $i++) {
             $docs[] = ['_id' => ['r' => 'tenantLists:batch' . $i, 'c' => 'tenantContexts:DefaultGraph']];
@@ -1822,10 +1822,12 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $this->assertEquals([], $doc->getArrayCopy());
         $doc = new Tables($dbDoc);
         $this->assertEquals('XMEN-004', $doc['code']);
-        $this->assertEquals('http://talis.com/modules/xmen-004', $doc['_id']['r']);
+        $id = $doc['_id'];
+        $this->assertIsArray($id);
+        $this->assertEquals('http://talis.com/modules/xmen-004', $id['r']);
         $this->assertArrayNotHasKey('_cts', $doc);
         $this->assertArrayNotHasKey('_impactIndex', $doc);
-        $this->assertArrayNotHasKey('type', $doc['_id']);
+        $this->assertArrayNotHasKey('type', $id);
     }
 
     public function testGetTableRowsNoCount(): void

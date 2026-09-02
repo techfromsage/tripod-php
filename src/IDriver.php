@@ -65,7 +65,7 @@ interface IDriver
     /**
      * Select data in a tabular format.
      *
-     * @param array<string, mixed> $fields array of fields, in the same format as prescribed by MongoPHP
+     * @param array $fields array of fields, in the same format as prescribed by MongoPHP
      */
     public function select(
         array $query,

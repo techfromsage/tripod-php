@@ -12,7 +12,7 @@ class TripodConfigFactory
      * Factory method to get a Tripod config instance from either a config array, or a serialized
      * ITripodConfigSerializer instance.
      *
-     * @param array<string, mixed> $config The Tripod config or serialized ITripodConfigSerializer array
+     * @param array $config The Tripod config or serialized ITripodConfigSerializer array
      *
      * @throws Exceptions\ConfigException if the configured class does not provide a callable deserialize() method
      */

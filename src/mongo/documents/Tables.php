@@ -26,7 +26,7 @@ class Tables extends BSONDocument
     /**
      * Models the table row from the source data.
      *
-     * @param array<string, mixed> $doc Database document
+     * @param array $doc Database document
      *
      * @return array
      */

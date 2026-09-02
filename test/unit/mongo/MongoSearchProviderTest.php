@@ -49,7 +49,7 @@ class MongoSearchProviderTest extends MongoTripodTestBase
                 $t[] = $result['rdf:type']['u'];
             } elseif (is_array($result['rdf:type'])) {
                 foreach ($result['rdf:type'] as $_t) {
-                    if (isset($_t['u'])) {
+                    if (is_array($_t) && isset($_t['u'])) {
                         $t[] = $_t['u'];
                     }
                 }

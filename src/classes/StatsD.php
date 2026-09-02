@@ -141,6 +141,8 @@ class StatsD implements ITripodStat
 
     /**
      * Sends the stat(s) using UDP protocol.
+     *
+     * @param array<string, string|string[]> $data
      */
     protected function send(array $data, int $sampleRate = 1): void
     {
@@ -152,7 +154,9 @@ class StatsD implements ITripodStat
         if ($sampleRate < 1) {
             foreach ($data as $stat => $value) {
                 if ((mt_rand() / mt_getrandmax()) <= $sampleRate) {
-                    $sampledData[$stat] = sprintf('%s|@%d', $value, $sampleRate);
+                    foreach ((array) $value as $v) {
+                        $sampledData[$stat][] = sprintf('%s|@%d', $v, $sampleRate);
+                    }
                 }
             }
         } else {
@@ -193,9 +197,9 @@ class StatsD implements ITripodStat
      *  "{prefix}.tripod.{stat}"=>"1|c"
      * }
      *
-     * @param array|string $value
+     * @param string|string[] $value
      *
-     * @return array An associative array of the grouped_by_database and aggregate stats
+     * @return array<string, string|string[]> An associative array of the grouped_by_database and aggregate stats
      */
     protected function generateStatData(string $operation, $value): array
     {

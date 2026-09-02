@@ -7,8 +7,6 @@ namespace Tripod;
 class TripodStatFactory
 {
     /**
-     * @param array<string, mixed> $config
-     *
      * @return ITripodStat
      *
      * @throws Exceptions\ConfigException if the configured class does not provide a callable createFromConfig() method

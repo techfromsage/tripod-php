@@ -590,7 +590,9 @@ class ExtendedGraph
             $this->remove_all_triples();
             $index = json_decode($json, true);
             if (is_array($index)) {
-                $this->_index = $index;
+                /** @var TripleGraph $graphIndex */
+                $graphIndex = $index;
+                $this->_index = $graphIndex;
             }
         }
     }
@@ -607,7 +609,9 @@ class ExtendedGraph
         if ($json !== '' && $json !== '0') {
             $json_index = json_decode($json, true);
             if (is_array($json_index)) {
-                $this->_index = $this->merge($this->_index, $json_index);
+                /** @var TripleGraph $graphIndex */
+                $graphIndex = $json_index;
+                $this->_index = $this->merge($this->_index, $graphIndex);
             }
         }
     }
@@ -1306,9 +1310,6 @@ class ExtendedGraph
         return $array;
     }
 
-    /**
-     * @param array<string, mixed> $properties
-     */
     public static function initProperties(array $properties): void
     {
         if (array_key_exists('labelProperties', $properties)) {

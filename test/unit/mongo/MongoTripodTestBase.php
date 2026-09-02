@@ -26,7 +26,7 @@ abstract class MongoTripodTestBase extends TestCase
 
     protected function setUp(): void
     {
-        $config = json_decode((string) file_get_contents($this->getConfigLocation()), true);
+        $config = $this->decodeJsonFile($this->getConfigLocation());
         $rs1Config = getenv('TRIPOD_DATASOURCE_RS1_CONFIG');
         if ($rs1Config) {
             $config['data_sources']['rs1'] = json_decode($rs1Config, true);
@@ -40,9 +40,22 @@ abstract class MongoTripodTestBase extends TestCase
         Config::setConfig($config);
     }
 
+    /**
+     * Decode a JSON fixture file into an array.
+     */
+    protected function decodeJsonFile(string $path): array
+    {
+        $decoded = json_decode((string) file_get_contents($path), true);
+        if (!is_array($decoded)) {
+            self::fail('Expected JSON fixture to decode to an array: ' . $path);
+        }
+
+        return $decoded;
+    }
+
     protected function loadResourceData(): void
     {
-        $docs = json_decode((string) file_get_contents(__DIR__ . '/data/resources.json'), true);
+        $docs = $this->decodeJsonFile(__DIR__ . '/data/resources.json');
         foreach ($docs as $d) {
             $this->addDocument($d);
         }
@@ -378,7 +391,7 @@ abstract class MongoTripodTestBase extends TestCase
 
     private function loadDataViaTripod(Driver $tripod, string $filename): void
     {
-        $docs = json_decode((string) file_get_contents(__DIR__ . $filename), true);
+        $docs = $this->decodeJsonFile(__DIR__ . $filename);
         foreach ($docs as $d) {
             $g = new MongoGraph();
             $g->add_tripod_array($d);

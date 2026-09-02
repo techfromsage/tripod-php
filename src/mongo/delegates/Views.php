@@ -58,9 +58,6 @@ class Views extends CompositeBase
         return $this->config->getTypesInViewSpecifications($this->storeName, $this->getPodName());
     }
 
-    /**
-     * @return mixed[]
-     */
     public function findImpactedComposites(array $resourcesAndPredicates, string $contextAlias): array
     {
         // This should never happen, but in the event that we have been passed an empty array or something
@@ -389,6 +386,9 @@ class Views extends CompositeBase
         $types = []; // this is used to filter the CBD table to speed up the view creation
         if (is_array($viewSpec[_ID_TYPE])) {
             foreach ($viewSpec[_ID_TYPE] as $type) {
+                if (!is_string($type)) {
+                    continue;
+                }
                 $types[] = ['rdf:type.u' => $this->labeller->qname_to_alias($type)];
                 $types[] = ['rdf:type.u' => $this->labeller->uri_to_alias($type)];
             }
@@ -493,8 +493,8 @@ class Views extends CompositeBase
     /**
      * Count the number of documents in the spec that match $filters.
      *
-     * @param string               $viewSpec View spec ID
-     * @param array<string, mixed> $filters  Query filters to get count on
+     * @param string $viewSpec View spec ID
+     * @param array  $filters  Query filters to get count on
      */
     public function count(string $viewSpec, array $filters = []): int
     {
@@ -621,9 +621,6 @@ class Views extends CompositeBase
     /**
      * Returns a document with properties extracted from $source, according to $viewSpec. Useful for partial representations
      * of CBDs in a view.
-     *
-     * @param array<string, mixed> $source
-     * @param array<string, mixed> $viewSpec
      */
     protected function extractProperties(array $source, array $viewSpec, string $from): array
     {
@@ -754,8 +751,6 @@ class Views extends CompositeBase
     }
 
     /**
-     * @param array<string, mixed>|null $viewSpec
-     *
      * @return string
      */
     private function getFromCollectionForViewSpec(?array $viewSpec)

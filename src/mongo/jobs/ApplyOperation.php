@@ -132,8 +132,6 @@ class ApplyOperation extends JobBase
 
     /**
      * For mocking.
-     *
-     * @param array<string, mixed> $args
      */
     protected function createImpactedSubject(array $args): ImpactedSubject
     {

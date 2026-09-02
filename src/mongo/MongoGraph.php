@@ -101,8 +101,6 @@ class MongoGraph extends ExtendedGraph
 
     /**
      * Returns a mongo-ready doc for views, which can have multiple graphs in the same doc.
-     *
-     * @return array<string, mixed>
      */
     public function to_tripod_view_array(string $docId, ?string $context): array
     {
@@ -124,8 +122,6 @@ class MongoGraph extends ExtendedGraph
     }
 
     /**
-     * @param array<string, mixed> $tarray
-     *
      * @throws Exception
      */
     private function add_tarray_to_index(array $tarray): void
@@ -158,8 +154,6 @@ class MongoGraph extends ExtendedGraph
 
     /**
      * Convert from Tripod value object format (comapct) to ExtendedGraph format (verbose).
-     *
-     * @param array<string, mixed> $mongoValueObject
      */
     private function toGraphValueObject(array $mongoValueObject): array
     {
@@ -216,8 +210,6 @@ class MongoGraph extends ExtendedGraph
 
     /**
      * Convert from ExtendedGraph value object format (verbose) to Tripod format (compact).
-     *
-     * @param array<string, mixed> $simpleGraphValueObject
      */
     private function toMongoTripodValueObject(array $simpleGraphValueObject): array
     {

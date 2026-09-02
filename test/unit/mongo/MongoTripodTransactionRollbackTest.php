@@ -403,9 +403,9 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
      * returns an empty array. Have to do this because I want to mock the behavour of lockSingleDocument so I can throw an error for one subject
      * but allow it go through normally for another which you cant do with a mock, hence this hack!
      *
-     * @param mixed $s
-     * @param mixed $transactionId
-     * @param mixed $context
+     * @param string|null $s
+     * @param string      $transactionId
+     * @param string      $context
      *
      * @return array|false|null
      */

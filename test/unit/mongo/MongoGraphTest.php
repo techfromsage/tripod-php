@@ -102,7 +102,7 @@ class MongoGraphTest extends MongoTripodTestBase
     /**
      * @dataProvider addTripodArrayContainingValidLiteralValues_Provider
      *
-     * @param mixed $value
+     * @param bool|float|int|string $value
      */
     public function testAddTripodArrayContainingValidLiteralValues($value): void
     {
@@ -177,7 +177,7 @@ class MongoGraphTest extends MongoTripodTestBase
     /**
      * @dataProvider addTripodArrayContainingInvalidPredicates_Provider
      *
-     * @param mixed $value
+     * @param bool|int|string $value
      */
     public function testAddTripodArrayContainingInvalidPredicates($value): void
     {
@@ -334,7 +334,7 @@ class MongoGraphTest extends MongoTripodTestBase
     public function testAddTripodArrayWhenAddingViews(): void
     {
         // view contains 4 subgraphs
-        $view = json_decode((string) file_get_contents(__DIR__ . '/data/view.json'), true);
+        $view = $this->decodeJsonFile(__DIR__ . '/data/view.json');
         $g = new MongoGraph();
         $g->add_tripod_array($view);
 

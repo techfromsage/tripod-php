@@ -15,7 +15,7 @@ class Collection
      * @param array<mixed>|object $filter
      * @param array<string, mixed> $options
      *
-     * @return CursorInterface<int, array<string, mixed>>
+     * @return CursorInterface<int, array>
      */
     public function find($filter = [], array $options = []) {}
 
@@ -23,7 +23,7 @@ class Collection
      * @param array<mixed> $pipeline
      * @param array<string, mixed> $options
      *
-     * @return CursorInterface<int, array<string, mixed>>
+     * @return CursorInterface<int, array>
      */
     public function aggregate($pipeline, array $options = []) {}
 }
@@ -34,7 +34,7 @@ class Database
      * @param array<mixed>|object $command
      * @param array<string, mixed> $options
      *
-     * @return CursorInterface<int, array<string, mixed>>
+     * @return CursorInterface<int, array>
      */
     public function command($command, array $options = []) {}
 }
