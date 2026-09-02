@@ -355,7 +355,8 @@ class Views extends CompositeBase
         $deleteResult = $this->getCollectionForViewSpec($viewId)
             ->deleteMany($query);
 
-        return $deleteResult->getDeletedCount();
+        // (int) cast: getDeletedCount() is nullable on mongodb/mongodb 1.x
+        return (int) $deleteResult->getDeletedCount();
     }
 
     /**

@@ -509,7 +509,8 @@ class MongoSearchProvider implements ISearchProvider
         $deleteResponse = $this->getCollectionForSearchSpec($typeId)
             ->deleteMany($query);
 
-        return $deleteResponse->getDeletedCount();
+        // (int) cast: getDeletedCount() is nullable on mongodb/mongodb 1.x
+        return (int) $deleteResponse->getDeletedCount();
     }
 
     /**

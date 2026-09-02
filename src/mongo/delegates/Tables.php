@@ -355,7 +355,8 @@ class Tables extends CompositeBase
         $t->stop();
         $this->timingLog(MONGO_DELETE_TABLE_ROWS, ['duration' => $t->result(), 'query' => $query]);
 
-        return $deleteResult->getDeletedCount();
+        // (int) cast: getDeletedCount() is nullable on mongodb/mongodb 1.x
+        return (int) $deleteResult->getDeletedCount();
     }
 
     /**
