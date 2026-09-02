@@ -23,9 +23,6 @@ class ImpactedSubject
      */
     private array $resourceId;
 
-    /**
-     * @var string[]
-     */
     private array $specTypes;
 
     private string $storeName;
@@ -39,11 +36,13 @@ class ImpactedSubject
      */
     public function __construct(array $resourceId, string $operation, string $storeName, string $podName, array $specTypes = [], ?ITripodStat $stat = null)
     {
-        if (!array_key_exists(_ID_RESOURCE, $resourceId) || !array_key_exists(_ID_CONTEXT, $resourceId)) {
+        if (!isset($resourceId[_ID_RESOURCE], $resourceId[_ID_CONTEXT])
+            || !is_string($resourceId[_ID_RESOURCE]) || !is_string($resourceId[_ID_CONTEXT])
+        ) {
             throw new Exception('Parameter $resourceId needs to be of type array with ' . _ID_RESOURCE . ' and ' . _ID_CONTEXT . ' keys');
         }
 
-        $this->resourceId = $resourceId;
+        $this->resourceId = [_ID_RESOURCE => $resourceId[_ID_RESOURCE], _ID_CONTEXT => $resourceId[_ID_CONTEXT]];
 
         if (in_array($operation, [OP_VIEWS, OP_TABLES, OP_SEARCH])) {
             $this->operation = $operation;
@@ -60,7 +59,7 @@ class ImpactedSubject
         }
     }
 
-    public function getOperation(): ?string
+    public function getOperation(): string
     {
         return $this->operation;
     }

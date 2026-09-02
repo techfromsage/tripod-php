@@ -2,7 +2,7 @@ includes:
   - vendor/phpstan/phpstan-phpunit/extension.neon
 
 parameters:
-  level: 9
+  level: 10
   bootstrapFiles:
     - src/resque/compat.inc.php
     - test/unit/mongo/mocks/Cursor.php
@@ -18,6 +18,32 @@ parameters:
       message: '# Resque_Job\.$#'
       reportUnmatched: false
     - identifier: missingType.iterableValue
+      reportUnmatched: false
+    # Level 10 (checkImplicitMixed) exclusions, limited to the `mixed`-typed
+    # variants only — each rule remains fully active for every other type.
+    # Tripod's core idiom is traversing dynamic BSON documents and JSON
+    # config/spec arrays, so requiring a runtime guard on every offset read,
+    # loop, argument pass, and string interpolation of such data would touch
+    # thousands of call sites for little practical gain. Contract-level rules
+    # (return types, property assignments, method calls, casts) are NOT
+    # excluded and are enforced even for mixed.
+    - identifier: offsetAccess.nonOffsetAccessible
+      message: '# on mixed\.$#'
+      reportUnmatched: false
+    - identifier: offsetAccess.invalidOffset
+      message: '#^Possibly invalid array key type mixed\.$#'
+      reportUnmatched: false
+    - identifier: argument.type
+      message: '#, mixed given\.$#'
+      reportUnmatched: false
+    - identifier: foreach.nonIterable
+      message: '#type mixed supplied for foreach#'
+      reportUnmatched: false
+    - identifier: binaryOp.invalid
+      message: '#and mixed results in an error|between mixed and#'
+      reportUnmatched: false
+    - identifier: assignOp.invalid
+      message: '#and mixed results in an error|between mixed and#'
       reportUnmatched: false
   paths:
     - src

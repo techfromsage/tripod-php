@@ -192,9 +192,6 @@ abstract class MongoTripodTestBase extends TestCase
         $this->assertEquals($expectedNumberOfRemovals, $actualRemovals, 'Number of removals did not match expectd value');
     }
 
-    /**
-     * @param array<string, mixed> $doc
-     */
     protected function assertTransactionDate(array $doc, string $key): void
     {
         $this->assertArrayHasKey($key, $doc, 'the date property: {$key} was not present in document');
@@ -348,6 +345,7 @@ abstract class MongoTripodTestBase extends TestCase
      * @param string     $host
      * @param int|string $port
      * @param string     $prefix
+     * @param string[]   $mockedMethods
      *
      * @return MockObject&StatsD
      */

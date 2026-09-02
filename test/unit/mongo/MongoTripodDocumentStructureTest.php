@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use MongoDB\BSON\UTCDateTime;
 use Tripod\Mongo\Driver;
 use Tripod\Mongo\MongoGraph;
 use Tripod\Mongo\TransactionLog;
@@ -57,6 +58,7 @@ class MongoTripodDocumentStructureTest extends MongoTripodTestBase
         $document = $this->getDocument($id);
         $this->assertNotNull($document);
         $_updated_ts = $document[_UPDATED_TS];
+        $this->assertInstanceOf(UTCDateTime::class, $_updated_ts);
         $_created_ts = $document[_CREATED_TS];
 
         sleep(1); // have to sleep to make sure ->sec will be greater between writes.
@@ -75,10 +77,12 @@ class MongoTripodDocumentStructureTest extends MongoTripodTestBase
         $updated_document = $this->getDocument($id);
         $this->assertNotNull($updated_document);
         $this->assertEquals($_created_ts, $updated_document[_CREATED_TS]);
-        $this->assertNotEquals($_updated_ts->__toString(), $updated_document[_UPDATED_TS]->__toString());
+        $updatedDocUpdatedTs = $updated_document[_UPDATED_TS];
+        $this->assertInstanceOf(UTCDateTime::class, $updatedDocUpdatedTs);
+        $this->assertNotEquals($_updated_ts->__toString(), $updatedDocUpdatedTs->__toString());
         // assert that the seconds for the updated document _updated_ts is greated than the first version
 
-        $this->assertGreaterThan($_updated_ts->__toString(), $updated_document[_UPDATED_TS]->__toString());
+        $this->assertGreaterThan($_updated_ts->__toString(), $updatedDocUpdatedTs->__toString());
 
         sleep(1);
 
@@ -96,8 +100,10 @@ class MongoTripodDocumentStructureTest extends MongoTripodTestBase
         $final_document = $this->getDocument($id);
         $this->assertNotNull($final_document);
         $this->assertEquals($updated_document[_CREATED_TS], $final_document[_CREATED_TS]);
-        $this->assertNotEquals($updated_document[_UPDATED_TS]->__toString(), $final_document[_UPDATED_TS]->__toString());
-        $this->assertGreaterThan($updated_document[_UPDATED_TS]->__toString(), $final_document[_UPDATED_TS]->__toString());
+        $finalDocUpdatedTs = $final_document[_UPDATED_TS];
+        $this->assertInstanceOf(UTCDateTime::class, $finalDocUpdatedTs);
+        $this->assertNotEquals($updatedDocUpdatedTs->__toString(), $finalDocUpdatedTs->__toString());
+        $this->assertGreaterThan($updatedDocUpdatedTs->__toString(), $finalDocUpdatedTs->__toString());
 
         sleep(1);
 
@@ -114,8 +120,10 @@ class MongoTripodDocumentStructureTest extends MongoTripodTestBase
         $this->assertDocumentDoesNotHaveProperty($id, 'searchterms:title');
 
         $this->assertEquals($final_document[_CREATED_TS], $deleted_document[_CREATED_TS]);
-        $this->assertNotEquals($final_document[_UPDATED_TS]->__toString(), $deleted_document[_UPDATED_TS]->__toString());
-        $this->assertGreaterThan($final_document[_UPDATED_TS]->__toString(), $deleted_document[_UPDATED_TS]->__toString());
+        $deletedDocUpdatedTs = $deleted_document[_UPDATED_TS];
+        $this->assertInstanceOf(UTCDateTime::class, $deletedDocUpdatedTs);
+        $this->assertNotEquals($finalDocUpdatedTs->__toString(), $deletedDocUpdatedTs->__toString());
+        $this->assertGreaterThan($finalDocUpdatedTs->__toString(), $deletedDocUpdatedTs->__toString());
     }
 
     /**

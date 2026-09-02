@@ -29,6 +29,8 @@ class Tables extends CompositeBase
      * a json schema we could define the types of attribute and whether they are required or not.
      *
      * @static
+     *
+     * @var array<string, array<string, bool>>
      */
     public static array $predicateModifiers = [
         'join' => [
@@ -47,6 +49,8 @@ class Tables extends CompositeBase
      * Computed field config - A list of valid functions to write dynamic table row field values.
      *
      * @static
+     *
+     * @var string[]
      */
     public static array $computedFieldFunctions = ['conditional', 'replace', 'arithmetic'];
 
@@ -54,6 +58,8 @@ class Tables extends CompositeBase
      * Computed conditional config - list of allowed conditional operators.
      *
      * @static
+     *
+     * @var string[]
      */
     public static array $conditionalOperators = ['>', '<', '>=', '<=', '==', '!=', 'contains', 'not contains', '~=', '!~'];
 
@@ -61,9 +67,12 @@ class Tables extends CompositeBase
      * Computed arithmetic config - list of allowed arithmetic operators.
      *
      * @static
+     *
+     * @var string[]
      */
     public static array $arithmeticOperators = ['+', '-', '*', '/', '%'];
 
+    /** @var string[] */
     protected array $temporaryFields = [];
 
     /**
@@ -255,6 +264,7 @@ class Tables extends CompositeBase
             $findOptions['sort'] = $sortBy;
         }
 
+        /** @var CursorInterface<int, array|BSONDocument> $results rows are hydrated according to the documentType option */
         $results = $collection->find($filter, $findOptions);
 
         $count = $options['includeCount'] ? $collection->count($filter) : -1;
@@ -268,13 +278,16 @@ class Tables extends CompositeBase
         );
         $this->getStat()->timer(MONGO_TABLE_ROWS . ('.' . $tableSpecId), $t->result());
 
+        /** @var list<array|BSONDocument> $resultRows */
+        $resultRows = $options['returnCursor'] ? [] : array_values($results->toArray());
+
         return [
             'head' => [
                 'count' => $count,
                 'offset' => $offset,
                 'limit' => $limit,
             ],
-            'results' => $options['returnCursor'] ? $results : array_values($results->toArray()),
+            'results' => $options['returnCursor'] ? $results : $resultRows,
         ];
     }
 
@@ -693,7 +706,7 @@ class Tables extends CompositeBase
         if (isset($spec['computed_fields'])) {
             foreach ($spec['computed_fields'] as $f) {
                 if (isset($f['fieldName'], $f['value']) && is_array($f['value'])) {
-                    if (isset($f['temporary']) && $f['temporary'] === true && !in_array($f['fieldName'], $this->temporaryFields)) {
+                    if (isset($f['temporary']) && $f['temporary'] === true && is_string($f['fieldName']) && !in_array($f['fieldName'], $this->temporaryFields)) {
                         $this->temporaryFields[] = $f['fieldName'];
                     }
 
@@ -1223,15 +1236,13 @@ class Tables extends CompositeBase
 
     /**
      * Add counts to $dest by counting what is in $source according to $countSpec.
-     *
-     * @param int[] $dest
      */
     protected function doCounts(array $source, array $countSpec, array &$dest): void
     {
         // process count aggregate function
         foreach ($countSpec as $c) {
             $fieldName = $c['fieldName'];
-            if (isset($c['temporary']) && $c['temporary'] === true && !in_array($fieldName, $this->temporaryFields)) {
+            if (isset($c['temporary']) && $c['temporary'] === true && is_string($fieldName) && !in_array($fieldName, $this->temporaryFields)) {
                 $this->temporaryFields[] = $fieldName;
             }
 
@@ -1263,6 +1274,8 @@ class Tables extends CompositeBase
     /**
      * Test if the a particular type appears in the array of types associated with a particular spec and that the changeset
      * includes rdf:type (or is empty, meaning addition or deletion vs. update).
+     *
+     * @param string[] $validTypes
      */
     protected function checkIfTypeShouldTriggerOperation(string $rdfType, array $validTypes, array $subjectPredicates): bool
     {
@@ -1316,12 +1329,21 @@ class Tables extends CompositeBase
      *
      * @param mixed $value
      *
-     * @return array|string
+     * @return string|string[]
      */
     private function asStringOrArray($value)
     {
-        if (is_array($value) || is_string($value)) {
+        if (is_string($value)) {
             return $value;
+        }
+
+        if (is_array($value)) {
+            $strings = [];
+            foreach ($value as $v) {
+                $strings[] = is_scalar($v) ? (string) $v : '';
+            }
+
+            return $strings;
         }
 
         return is_scalar($value) ? (string) $value : '';

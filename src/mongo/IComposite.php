@@ -15,6 +15,8 @@ interface IComposite
 
     /**
      * Returns the subjects that this composite will need to regenerate given changes made to the underlying dataset.
+     *
+     * @return ImpactedSubject[]
      */
     public function getImpactedSubjects(array $subjectsAndPredicatesOfChange, string $contextAlias): array;
 

@@ -705,7 +705,9 @@ class MongoTripodTablesTest extends MongoTripodTestBase
         $this->assertEquals(1, $rows['head']['count'], 'Expected one row');
 
         // Lowercasing a mongodate object should be the same as running a __toString() on the date object
-        $this->assertEquals($rows['results'][0]['mongoDate']->__toString(), $rows['results'][0]['lowercaseDate']);
+        $mongoDate = $rows['results'][0]['mongoDate'];
+        $this->assertInstanceOf(UTCDateTime::class, $mongoDate);
+        $this->assertEquals($mongoDate->__toString(), $rows['results'][0]['lowercaseDate']);
     }
 
     /**

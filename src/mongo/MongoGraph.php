@@ -10,6 +10,9 @@ use Tripod\ExtendedGraph;
 
 require_once TRIPOD_DIR . 'mongo/MongoTripodConstants.php';
 
+/**
+ * @phpstan-import-type TripleObject from ExtendedGraph
+ */
 class MongoGraph extends ExtendedGraph
 {
     /**
@@ -154,6 +157,8 @@ class MongoGraph extends ExtendedGraph
 
     /**
      * Convert from Tripod value object format (comapct) to ExtendedGraph format (verbose).
+     *
+     * @return TripleObject[]
      */
     private function toGraphValueObject(array $mongoValueObject): array
     {
@@ -187,19 +192,14 @@ class MongoGraph extends ExtendedGraph
                             continue;
                         }
 
-                        $valueTypeLabel = 'literal';
+                        $simpleGraphValueObject[] = ['type' => 'literal', 'value' => $value];
                     } else {
                         if (!$this->isValidResource($value)) {
                             continue;
                         }
 
-                        $valueTypeLabel = 'uri';
+                        $simpleGraphValueObject[] = ['type' => 'uri', 'value' => $this->_labeller->qname_to_alias($value)];
                     }
-
-                    $simpleGraphValueObject[] = [
-                        'type' => $valueTypeLabel,
-                        'value' => ($type == VALUE_URI) ? $this->_labeller->qname_to_alias($value) : $value,
-                    ];
                 }
             }
         }

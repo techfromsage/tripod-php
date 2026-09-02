@@ -414,7 +414,7 @@ abstract class JobBase extends Job
      */
     private function setStatsConfig(): void
     {
-        if (isset($this->args['statsConfig'])) {
+        if (isset($this->args['statsConfig']) && is_array($this->args['statsConfig'])) {
             $this->statsConfig = $this->args['statsConfig'];
         }
     }

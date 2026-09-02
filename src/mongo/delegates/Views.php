@@ -194,6 +194,8 @@ class Views extends CompositeBase
 
     /**
      * For given $resources, return the views of type $viewType.
+     *
+     * @param string[] $resources
      */
     public function getViewForResources(array $resources, string $viewType, ?string $context = null): MongoGraph
     {
@@ -575,6 +577,9 @@ class Views extends CompositeBase
                                 foreach ($filter as $filterType => $filterMatch) {
                                     if (isset($linkMatch[$filterPredicate])) {
                                         foreach ($linkMatch[$filterPredicate] as $linkMatchType => $linkMatchValues) {
+                                            if (!is_string($linkMatchType) && !is_int($linkMatchType)) {
+                                                continue;
+                                            }
                                             if (is_array($linkMatchValues) === false) {
                                                 $linkMatchValues = [$linkMatchType => $linkMatchValues];
                                             }
@@ -634,6 +639,9 @@ class Views extends CompositeBase
 
                 if ($p === INCLUDE_RDF_SEQUENCE && $source['rdf:type']) {
                     foreach ($source['rdf:type'] as $u => $t) {
+                        if (!is_string($u) && !is_int($u)) {
+                            continue;
+                        }
                         if (is_array($t) === false) {
                             $t = [$u => $t];
                         }
@@ -755,7 +763,7 @@ class Views extends CompositeBase
      */
     private function getFromCollectionForViewSpec(?array $viewSpec)
     {
-        return $viewSpec['from'] ?? $this->podName;
+        return isset($viewSpec['from']) && is_string($viewSpec['from']) ? $viewSpec['from'] : $this->podName;
     }
 
     private function upsertGeneratedView(Collection $collection, array $generatedView): void

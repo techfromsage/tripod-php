@@ -27,6 +27,8 @@ interface IConfigInstance extends ITripodConfigSerializer
      *
      * @param string $storename Store name
      * @param string $specId    Composite spec id
+     *
+     * @return string[]
      */
     public function getDefinedPredicatesInSpec(string $storename, string $specId): array;
 
@@ -129,6 +131,8 @@ interface IConfigInstance extends ITripodConfigSerializer
      *
      * @param string      $storeName Store name
      * @param string|null $pod       Pod name
+     *
+     * @return string[]
      */
     public function getTypesInViewSpecifications(string $storeName, ?string $pod = null): array;
 
@@ -137,6 +141,8 @@ interface IConfigInstance extends ITripodConfigSerializer
      *
      * @param string      $storeName Store name
      * @param string|null $pod       Pod name
+     *
+     * @return string[]
      */
     public function getTypesInTableSpecifications(string $storeName, ?string $pod = null): array;
 
@@ -145,6 +151,8 @@ interface IConfigInstance extends ITripodConfigSerializer
      *
      * @param string      $storeName Store name
      * @param string|null $pod       Pod name
+     *
+     * @return string[]
      */
     public function getTypesInSearchSpecifications(string $storeName, ?string $pod = null): array;
 

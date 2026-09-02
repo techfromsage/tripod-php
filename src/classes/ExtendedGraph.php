@@ -54,9 +54,6 @@ class ExtendedGraph
         RDF_TYPE,
     ];
 
-    /**
-     * @var string[]
-     */
     public array $parser_errors = [];
 
     /**
@@ -203,7 +200,7 @@ class ExtendedGraph
      *
      * @param TripleSubject   $s    the subject of the triple, either a URI or a blank node in the format _:name
      * @param TriplePredicate $p    the predicate of the triple as a URI
-     * @param ObjectLiteral   $o    the object of the triple as a scalar value
+     * @param mixed           $o    the object of the triple as a scalar value; non-scalar values are rejected
      * @param string|null     $lang the language code of the triple's object (optional)
      * @param string|null     $dt   the datatype URI of the triple's object (optional)
      *
@@ -232,7 +229,9 @@ class ExtendedGraph
      */
     public function get_triples(): array
     {
-        return \ARC2::getTriplesFromIndex($this->_to_arc_index($this->_index));
+        $triples = \ARC2::getTriplesFromIndex($this->_to_arc_index($this->_index));
+
+        return is_array($triples) ? $triples : [];
     }
 
     /**
@@ -261,7 +260,9 @@ class ExtendedGraph
             ]
         );
 
-        return $serializer->getSerializedIndex($this->_to_arc_index($this->_index));
+        $serialized = $serializer->getSerializedIndex($this->_to_arc_index($this->_index));
+
+        return is_string($serialized) ? $serialized : '';
     }
 
     /**
@@ -280,7 +281,9 @@ class ExtendedGraph
             ]
         );
 
-        return $serializer->getSerializedIndex($this->_to_arc_index($this->_index));
+        $serialized = $serializer->getSerializedIndex($this->_to_arc_index($this->_index));
+
+        return is_string($serialized) ? $serialized : '';
     }
 
     /**
@@ -295,7 +298,9 @@ class ExtendedGraph
         /** @var \ARC2_RDFSerializer $serializer */
         $serializer = \ARC2::getComponent('NTriplesSerializer', []);
 
-        return $serializer->getSerializedIndex($this->_to_arc_index($this->_index));
+        $serialized = $serializer->getSerializedIndex($this->_to_arc_index($this->_index));
+
+        return is_string($serialized) ? $serialized : '';
     }
 
     /**
@@ -616,9 +621,6 @@ class ExtendedGraph
         }
     }
 
-    /**
-     * @return string[]
-     */
     public function get_parser_errors(): array
     {
         return $this->parser_errors;
@@ -1058,6 +1060,8 @@ class ExtendedGraph
 
     /**
      * @param TripleGraph $resources
+     *
+     * @return TripleGraph
      */
     public function reify(array $resources, string $nodeID_prefix = 'Statement'): array
     {
@@ -1090,6 +1094,8 @@ class ExtendedGraph
      * returns a simpleIndex consisting of all the statements from the first array that weren't found in any of the subsequent arrays.
      *
      * @param TripleGraph ...$indices If only one array is passed then the diff is taken against the graph's own index, otherwise the diff is taken against the first array passed as a parameter
+     *
+     * @return TripleGraph
      *
      * @author Keith
      */
@@ -1143,6 +1149,8 @@ class ExtendedGraph
      * merges all  rdf/json-style arrays passed as parameters.
      *
      * @param TripleGraph ...$indices If only one array is passed then the merge is done against the graph's own index, otherwise the merge is done against the first array passed as a parameter
+     *
+     * @return TripleGraph
      *
      * @author Keith
      */
@@ -1313,7 +1321,8 @@ class ExtendedGraph
     public static function initProperties(array $properties): void
     {
         if (array_key_exists('labelProperties', $properties)) {
-            self::$labelProperties = $properties['labelProperties'] ?? [];
+            $labelProperties = $properties['labelProperties'] ?? [];
+            self::$labelProperties = is_array($labelProperties) ? array_values(array_filter($labelProperties, 'is_string')) : [];
         }
     }
 
@@ -1697,6 +1706,8 @@ class ExtendedGraph
      * which was not type-checked.
      *
      * @param mixed $value
+     *
+     * @phpstan-assert-if-true bool|float|int|string $value
      */
     protected function isValidLiteral($value): bool
     {
@@ -1805,13 +1816,21 @@ class ExtendedGraph
                 }
             }
 
-            if (!isset($this->_index[$t['s']])) {
-                $this->_index[$t['s']] = [];
-                $this->_index[$t['s']][$t['p']] = [$obj];
-            } elseif (!isset($this->_index[$t['s']][$t['p']])) {
-                $this->_index[$t['s']][$t['p']] = [$obj];
-            } elseif (!in_array($obj, $this->_index[$t['s']][$t['p']])) {
-                $this->_index[$t['s']][$t['p']][] = $obj;
+            $subjectKey = $t['s'];
+            $predicateKey = $t['p'];
+            if (!is_string($subjectKey) || !is_string($predicateKey)) {
+                continue;
+            }
+
+            /** @var TripleObject $tripleObject parsed ARC2 triples always carry type/value */
+            $tripleObject = $obj;
+            if (!isset($this->_index[$subjectKey])) {
+                $this->_index[$subjectKey] = [];
+                $this->_index[$subjectKey][$predicateKey] = [$tripleObject];
+            } elseif (!isset($this->_index[$subjectKey][$predicateKey])) {
+                $this->_index[$subjectKey][$predicateKey] = [$tripleObject];
+            } elseif (!in_array($tripleObject, $this->_index[$subjectKey][$predicateKey])) {
+                $this->_index[$subjectKey][$predicateKey][] = $tripleObject;
             }
         }
     }

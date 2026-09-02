@@ -19,7 +19,12 @@ class TripodStatFactory
                 throw new Exceptions\ConfigException($config['class'] . ' does not provide a callable createFromConfig() method');
             }
 
-            return call_user_func($factory, $config);
+            $stat = call_user_func($factory, $config);
+            if (!$stat instanceof ITripodStat) {
+                throw new Exceptions\ConfigException($config['class'] . '::createFromConfig() did not return an ITripodStat');
+            }
+
+            return $stat;
         }
 
         return NoStat::createFromConfig($config);
