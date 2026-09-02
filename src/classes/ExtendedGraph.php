@@ -17,6 +17,8 @@ use Tripod\Exceptions\Exception;
  * @phpstan-type TriplePredicate string
  * @phpstan-type ResourceTripleObject array{type: 'bnode'|'uri', value: ObjectResource, lang?: string, datatype?: string}
  * @phpstan-type LiteralTripleObject array{type: 'literal', value: ObjectLiteral, lang?: string, datatype?: string}
+ * @phpstan-type SequenceResource array{type: 'resource', value: ObjectResource}
+ * @phpstan-type SequenceLiteral array{type: 'literal', value: ObjectLiteral}
  * @phpstan-type TripleObject ResourceTripleObject|LiteralTripleObject
  * @phpstan-type TripleGraph array<TripleSubject, array<TriplePredicate, TripleObject[]>>
  *
@@ -54,6 +56,9 @@ class ExtendedGraph
         RDF_TYPE,
     ];
 
+    /**
+     * @var string[]
+     */
     public array $parser_errors = [];
 
     /**
@@ -621,6 +626,9 @@ class ExtendedGraph
         }
     }
 
+    /**
+     * @return string[]
+     */
     public function get_parser_errors(): array
     {
         return $this->parser_errors;
@@ -644,9 +652,11 @@ class ExtendedGraph
             /** @var \ARC2_RDFParser $parser */
             $parser = \ARC2::getRDFParser();
             $parser->parse($base, $rdf);
+
+            /** @var string[] */
             $errors = $parser->getErrors();
             if (!empty($errors)) {
-                $this->parser_errors[] = $errors;
+                $this->parser_errors = array_merge($this->parser_errors, $errors);
             }
 
             $triples = $parser->getTriples();
@@ -1480,29 +1490,7 @@ class ExtendedGraph
      */
     public function get_sequence_values(string $sequenceUri): array
     {
-        $triples = $this->get_index();
-        $properties = [];
-
-        if (isset($triples[$sequenceUri])) {
-            foreach ($triples[$sequenceUri] as $property => $objects) {
-                if (strpos($property, self::rdf . '_') !== false) {
-                    $key = substr($property, strpos($property, '_') + 1);
-                    $value = $this->get_first_resource($sequenceUri, $property);
-
-                    if (empty($value)) {
-                        $value = $this->get_first_literal($sequenceUri, $property);
-                    }
-
-                    if ($value !== null) {
-                        $properties[$key] = $value;
-                    }
-                }
-            }
-
-            ksort($properties, SORT_NUMERIC);
-        }
-
-        return array_values($properties);
+        return array_column($this->get_sequence($sequenceUri), 'value');
     }
 
     /**
@@ -1510,7 +1498,7 @@ class ExtendedGraph
      */
     public function get_next_sequence(string $sequenceUri): int
     {
-        $values = $this->get_sequence_values($sequenceUri);
+        $values = $this->get_sequence($sequenceUri);
 
         return count($values) + 1;
     }
@@ -1533,22 +1521,19 @@ class ExtendedGraph
     public function remove_resource_from_sequence(string $sequenceUri, string $resourceValue): void
     {
         $sequenceProperties = $this->get_subject_properties($sequenceUri);
-        $sequenceValues = $this->get_sequence_values($sequenceUri);
+        $sequence = $this->get_sequence($sequenceUri);
 
         // Remove existing data
         foreach ($sequenceProperties as $sequenceProperty) {
             if (strpos($sequenceProperty, self::rdf . '_') !== false) {
-                $sequencePropertyValue = $this->get_first_resource($sequenceUri, $sequenceProperty);
-                if ($sequencePropertyValue !== null) {
-                    $this->remove_resource_triple($sequenceUri, $sequenceProperty, $sequencePropertyValue);
-                }
+                $this->remove_property_values($sequenceUri, $sequenceProperty);
             }
         }
 
         // Recreate the sequence with the correct indexing.
-        foreach ($sequenceValues as $sequenceValue) {
-            if ($sequenceValue != $resourceValue) {
-                $this->add_resource_to_sequence($sequenceUri, (string) $sequenceValue);
+        foreach ($sequence as $sequenceItem) {
+            if ($sequenceItem['value'] !== $resourceValue) {
+                $this->add_to_sequence($sequenceUri, $sequenceItem['value'], $sequenceItem['type']);
             }
         }
     }
@@ -1568,12 +1553,17 @@ class ExtendedGraph
      */
     public function add_resource_to_sequence_in_position(string $s, string $o, int $position): void
     {
-        $sequenceValues = $this->get_sequence_values($s);
+        $sequence = $this->get_sequence($s);
 
-        if ($sequenceValues === [] || $position > count($sequenceValues)) {
+        if ($sequence === [] || $position > count($sequence)) {
             $this->add_resource_to_sequence($s, $o);
         } else {
-            array_splice($sequenceValues, $position - 1, 1, [$o, $sequenceValues[$position - 1]]);
+            array_splice(
+                $sequence,
+                $position - 1,
+                1,
+                [['type' => 'resource', 'value' => $o], $sequence[$position - 1]]
+            );
 
             $properties = $this->get_subject_properties($s);
             foreach ($properties as $p) {
@@ -1582,8 +1572,8 @@ class ExtendedGraph
                 }
             }
 
-            foreach ($sequenceValues as $value) {
-                $this->add_resource_to_sequence($s, (string) $value);
+            foreach ($sequence as $item) {
+                $this->add_to_sequence($s, $item['value'], $item['type']);
             }
         }
     }
@@ -1724,6 +1714,38 @@ class ExtendedGraph
     protected function isValidResource($value): bool
     {
         return is_string($value) && ($value !== '' && $value !== '0');
+    }
+
+    /**
+     * @return list<SequenceLiteral|SequenceResource>
+     */
+    private function get_sequence(string $sequenceUri): array
+    {
+        $triples = $this->get_index();
+        $properties = [];
+
+        if (isset($triples[$sequenceUri])) {
+            foreach ($triples[$sequenceUri] as $property => $objects) {
+                if (strpos($property, self::rdf . '_') !== false) {
+                    $key = substr($property, strpos($property, '_') + 1);
+                    $type = 'resource';
+                    $value = $this->get_first_resource($sequenceUri, $property);
+
+                    if (empty($value)) {
+                        $type = 'literal';
+                        $value = $this->get_first_literal($sequenceUri, $property);
+                    }
+
+                    if ($value !== null) {
+                        $properties[$key] = ['type' => $type, 'value' => $value];
+                    }
+                }
+            }
+
+            ksort($properties, SORT_NUMERIC);
+        }
+
+        return array_values($properties);
     }
 
     /**
