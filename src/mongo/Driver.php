@@ -26,7 +26,7 @@ class Driver extends DriverBase implements IDriver
     private ?SearchIndexer $searchIndexer = null;
 
     /**
-     * @var array{OP_VIEWS: bool, OP_TABLES: bool, OP_SEARCH: bool}
+     * @var array<string, bool> keyed by OP_VIEWS/OP_TABLES/OP_SEARCH; OP_SEARCH is absent when no search provider is configured
      */
     private array $async;
 
@@ -283,7 +283,7 @@ class Driver extends DriverBase implements IDriver
      * @param array    $query Mongo query object
      * @param int|null $ttl   acceptable time to live if you're willing to accept a cached version of this request
      *
-     * @return array|int
+     * @return ($groupBy is null ? int : array<int|string, int>) counts grouped by the $groupBy field, or a total count
      */
     public function getCount(array $query, ?string $groupBy = null, ?int $ttl = null)
     {
@@ -319,6 +319,7 @@ class Driver extends DriverBase implements IDriver
                     ['$group' => [_ID_KEY => '$' . $groupBy, 'total' => ['$sum' => 1]]],
                 ];
                 $cursor = $this->collection->aggregate($ops);
+                $results = [];
                 foreach ($cursor as $doc) {
                     if (!is_array($doc[_ID_KEY])) {
                         $results[$doc[_ID_KEY] ?? ''] = $doc['total'];

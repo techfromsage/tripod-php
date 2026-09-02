@@ -15,7 +15,9 @@ use Tripod\Exceptions\Exception;
  * @phpstan-type ObjectValue ObjectResource|ObjectLiteral
  * @phpstan-type TripleSubject string
  * @phpstan-type TriplePredicate string
- * @phpstan-type TripleObject array{type: ObjectType, value: ObjectValue, lang?: string, datatype?: string}
+ * @phpstan-type ResourceTripleObject array{type: 'bnode'|'uri', value: ObjectResource, lang?: string, datatype?: string}
+ * @phpstan-type LiteralTripleObject array{type: 'literal', value: ObjectLiteral, lang?: string, datatype?: string}
+ * @phpstan-type TripleObject ResourceTripleObject|LiteralTripleObject
  * @phpstan-type TripleGraph array<TripleSubject, array<TriplePredicate, TripleObject[]>>
  *
  * @see https://code.google.com/p/moriarty/source/browse/trunk/labeller.class.php
@@ -302,10 +304,17 @@ class ExtendedGraph
      * @see https://www.easyrdf.org/docs/rdf-formats-json
      *
      * @return string the JSON version of the graph
+     *
+     * @throws Exception if the graph cannot be encoded as JSON
      */
     public function to_json(): string
     {
-        return json_encode($this->_index);
+        $json = json_encode($this->_index);
+        if ($json === false) {
+            throw new Exception('Failed to serialise graph to JSON: ' . json_last_error_msg());
+        }
+
+        return $json;
     }
 
     /**
@@ -481,7 +490,7 @@ class ExtendedGraph
     {
         if (isset($this->_index[$s][$p])) {
             foreach ($this->_index[$s][$p] as $value) {
-                if ($value['type'] == 'uri' || $value['type'] == 'bnode') {
+                if ($this->is_resource_object($value)) {
                     return $value['value'];
                 }
             }
@@ -816,7 +825,7 @@ class ExtendedGraph
         $values = [];
         if (isset($this->_index[$s][$p])) {
             foreach ($this->_index[$s][$p] as $value) {
-                if ($value['type'] == 'uri' || $value['type'] == 'bnode') {
+                if ($this->is_resource_object($value)) {
                     $values[] = $value['value'];
                 }
             }
@@ -943,7 +952,7 @@ class ExtendedGraph
      * Fetch an array of all the subjects where the predicate and object match a ?s $p $o triple in the graph and the object is a literal value.
      *
      * @param TriplePredicate $p the predicate to match
-     * @param ObjectValue     $o the literal object to match
+     * @param ObjectLiteral   $o the literal object to match
      *
      * @return TripleSubject[] list of all the subjects in the graph that have a triple with the given predicate and literal object
      */
@@ -1165,7 +1174,7 @@ class ExtendedGraph
                     foreach ($properties as $property => $objects) {
                         foreach ($objects as $object) {
                             // make sure that the new bnode is being used
-                            if ($object['type'] == 'bnode') {
+                            if ($object['type'] == 'bnode' && is_string($object['value'])) {
                                 $bnode = $object['value'];
 
                                 if (isset($old_bnodeids[$bnode])) {
@@ -1210,7 +1219,7 @@ class ExtendedGraph
                 foreach ($p_list as $p => $o_list) {
                     if ($p == $look_for) {
                         foreach ($o_list as $o_info) {
-                            if ($o_info['type'] == 'literal') {
+                            if (!$this->is_resource_object($o_info)) {
                                 $lang = $o_info['lang'] ?? null;
                                 $dt = $o_info['datatype'] ?? null;
                                 $remove_list_literals[] = [$look_for, $look_for, $o_info['value']];
@@ -1225,7 +1234,7 @@ class ExtendedGraph
                         }
                     } else {
                         foreach ($o_list as $o_info) {
-                            if ($o_info['type'] == 'literal') {
+                            if (!$this->is_resource_object($o_info)) {
                                 $lang = $o_info['lang'] ?? null;
                                 $dt = $o_info['datatype'] ?? null;
                                 $remove_list_literals[] = [$look_for, $p, $o_info['value']];
@@ -1244,7 +1253,7 @@ class ExtendedGraph
                 foreach ($p_list as $p => $o_list) {
                     if ($p == $look_for) {
                         foreach ($o_list as $o_info) {
-                            if ($o_info['type'] == 'literal') {
+                            if (!$this->is_resource_object($o_info)) {
                                 $lang = $o_info['lang'] ?? null;
                                 $dt = $o_info['datatype'] ?? null;
                                 $remove_list_literals[] = [$s, $look_for, $o_info['value']];
@@ -1327,8 +1336,9 @@ class ExtendedGraph
                 }
 
                 foreach ($objects as $i => $object) {
-                    if ($object['value'] == $uri1 && $object['type'] !== 'literal') {
-                        $index[$uri][$property][$i]['value'] = $uri2;
+                    if ($this->is_resource_object($object) && $object['value'] == $uri1) {
+                        $object['value'] = $uri2;
+                        $index[$uri][$property][$i] = $object;
                     }
                 }
             }
@@ -1399,7 +1409,7 @@ class ExtendedGraph
         if (isset($this->_index[$s])) {
             foreach ($this->_index[$s] as $values) {
                 foreach ($values as $value) {
-                    if ($value['type'] == 'uri' || $value['type'] == 'bnode') {
+                    if ($this->is_resource_object($value)) {
                         $resources[] = $value['value'];
                     }
                 }
@@ -1445,7 +1455,7 @@ class ExtendedGraph
     {
         $subjects = [];
         foreach ($this->get_subjects() as $s) {
-            if ($this->has_resource_triple($s, $p, $o) || $this->has_literal_triple($s, $p, $o)) {
+            if ((is_string($o) && $this->has_resource_triple($s, $p, $o)) || $this->has_literal_triple($s, $p, $o)) {
                 $subjects[] = $s;
             }
         }
@@ -1524,7 +1534,7 @@ class ExtendedGraph
         // Recreate the sequence with the correct indexing.
         foreach ($sequenceValues as $sequenceValue) {
             if ($sequenceValue != $resourceValue) {
-                $this->add_resource_to_sequence($sequenceUri, $sequenceValue);
+                $this->add_resource_to_sequence($sequenceUri, (string) $sequenceValue);
             }
         }
     }
@@ -1559,7 +1569,7 @@ class ExtendedGraph
             }
 
             foreach ($sequenceValues as $value) {
-                $this->add_resource_to_sequence($s, $value);
+                $this->add_resource_to_sequence($s, (string) $value);
             }
         }
     }
@@ -1629,7 +1639,7 @@ class ExtendedGraph
 
         foreach (self::$labelProperties as $p) {
             if (isset($this->_index[$uri][$p])) {
-                return $this->_index[$uri][$p][0]['value'];
+                return (string) $this->_index[$uri][$p][0]['value'];
             }
         }
 
@@ -1659,6 +1669,19 @@ class ExtendedGraph
     {
         $this->remove_all_triples();
         $this->add_graph($graph);
+    }
+
+    /**
+     * Whether a triple object represents a resource (URI or blank node) rather than a literal.
+     * Resource objects always carry a string value.
+     *
+     * @param TripleObject $o
+     *
+     * @phpstan-assert-if-true ResourceTripleObject $o
+     */
+    protected function is_resource_object(array $o): bool
+    {
+        return $o['type'] == 'uri' || $o['type'] == 'bnode';
     }
 
     /**
@@ -1855,7 +1878,7 @@ class ExtendedGraph
         if ($type === 'literal') {
             $this->add_literal_triple($s, self::rdf . ('_' . $sequenceValue), $o);
         } else {
-            $this->add_resource_triple($s, self::rdf . ('_' . $sequenceValue), $o);
+            $this->add_resource_triple($s, self::rdf . ('_' . $sequenceValue), (string) $o);
         }
     }
 }

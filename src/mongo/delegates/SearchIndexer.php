@@ -284,7 +284,7 @@ class SearchIndexer extends CompositeBase
         }
 
         $provider = $config->getSearchProviderClassName($tripod->getStoreName());
-        if (class_exists($provider)) {
+        if ($provider !== null && is_a($provider, ISearchProvider::class, true)) {
             $this->searchProvider = new $provider($tripod);
         } else {
             throw new SearchException(

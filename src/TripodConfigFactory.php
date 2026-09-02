@@ -13,6 +13,8 @@ class TripodConfigFactory
      * ITripodConfigSerializer instance.
      *
      * @param array<string, mixed> $config The Tripod config or serialized ITripodConfigSerializer array
+     *
+     * @throws Exceptions\ConfigException if the configured class does not provide a callable deserialize() method
      */
     public static function create(array $config): IConfigInstance
     {
@@ -21,7 +23,12 @@ class TripodConfigFactory
         }
 
         if (isset($config['class']) && class_exists($config['class'])) {
-            return call_user_func([$config['class'], 'deserialize'], $config);
+            $deserializer = [$config['class'], 'deserialize'];
+            if (!is_callable($deserializer)) {
+                throw new Exceptions\ConfigException($config['class'] . ' does not provide a callable deserialize() method');
+            }
+
+            return call_user_func($deserializer, $config);
         }
 
         return Mongo\Config::deserialize($config);

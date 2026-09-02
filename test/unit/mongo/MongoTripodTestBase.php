@@ -26,13 +26,15 @@ abstract class MongoTripodTestBase extends TestCase
 
     protected function setUp(): void
     {
-        $config = json_decode(file_get_contents($this->getConfigLocation()), true);
-        if (getenv('TRIPOD_DATASOURCE_RS1_CONFIG')) {
-            $config['data_sources']['rs1'] = json_decode(getenv('TRIPOD_DATASOURCE_RS1_CONFIG'), true);
+        $config = json_decode((string) file_get_contents($this->getConfigLocation()), true);
+        $rs1Config = getenv('TRIPOD_DATASOURCE_RS1_CONFIG');
+        if ($rs1Config) {
+            $config['data_sources']['rs1'] = json_decode($rs1Config, true);
         }
 
-        if (getenv('TRIPOD_DATASOURCE_RS2_CONFIG')) {
-            $config['data_sources']['rs2'] = json_decode(getenv('TRIPOD_DATASOURCE_RS2_CONFIG'), true);
+        $rs2Config = getenv('TRIPOD_DATASOURCE_RS2_CONFIG');
+        if ($rs2Config) {
+            $config['data_sources']['rs2'] = json_decode($rs2Config, true);
         }
 
         Config::setConfig($config);
@@ -47,7 +49,7 @@ abstract class MongoTripodTestBase extends TestCase
 
     protected function loadResourceData(): void
     {
-        $docs = json_decode(file_get_contents(__DIR__ . '/data/resources.json'), true);
+        $docs = json_decode((string) file_get_contents(__DIR__ . '/data/resources.json'), true);
         foreach ($docs as $d) {
             $this->addDocument($d);
         }
@@ -116,6 +118,10 @@ abstract class MongoTripodTestBase extends TestCase
     protected function getDocument($_id, $collection = null, bool $fromTransactionLog = false): ?array
     {
         if ($fromTransactionLog) {
+            if (!is_string($_id)) {
+                throw new InvalidArgumentException('Transaction log lookups require a string id');
+            }
+
             return $this->tripodTransactionLog->getTransaction($_id);
         }
 
@@ -125,6 +131,10 @@ abstract class MongoTripodTestBase extends TestCase
 
         if ($collection instanceof Driver) {
             return $this->getTripodCollection($collection)->findOne(['_id' => $_id]);
+        }
+
+        if (!$collection instanceof Collection) {
+            throw new InvalidArgumentException('Expected a MongoDB collection or a Driver instance');
         }
 
         return $collection->findOne(['_id' => $_id]);
@@ -347,7 +357,7 @@ abstract class MongoTripodTestBase extends TestCase
     }
 
     /**
-     * @return array<string, array<string, int|string>|class-string<StatsD>>
+     * @return array{class: class-string<StatsD>, config: array{host: string, port: int, prefix: string}}
      */
     protected function getStatsDConfig(): array
     {
@@ -376,7 +386,7 @@ abstract class MongoTripodTestBase extends TestCase
 
     private function loadDataViaTripod(Driver $tripod, string $filename): void
     {
-        $docs = json_decode(file_get_contents(__DIR__ . $filename), true);
+        $docs = json_decode((string) file_get_contents(__DIR__ . $filename), true);
         foreach ($docs as $d) {
             $g = new MongoGraph();
             $g->add_tripod_array($d);

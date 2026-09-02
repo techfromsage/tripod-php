@@ -394,48 +394,48 @@ class Labeller
     public function get_label(string $uri, ?ExtendedGraph $g = null, bool $capitalize = false, bool $use_qnames = false): string
     {
         if ($g instanceof ExtendedGraph) {
-            $label = $g->get_first_literal($uri, 'http://www.w3.org/2004/02/skos/core#prefLabel', '', 'en');
+            $label = (string) $g->get_first_literal($uri, 'http://www.w3.org/2004/02/skos/core#prefLabel', '', 'en');
             if ($label) {
                 return $label;
             }
 
-            $label = $g->get_first_literal($uri, RDFS_LABEL, '', 'en');
+            $label = (string) $g->get_first_literal($uri, RDFS_LABEL, '', 'en');
             if ($label) {
                 return $label;
             }
 
-            $label = $g->get_first_literal($uri, 'http://purl.org/dc/terms/title', '', 'en');
+            $label = (string) $g->get_first_literal($uri, 'http://purl.org/dc/terms/title', '', 'en');
             if ($label) {
                 return $label;
             }
 
-            $label = $g->get_first_literal($uri, DC_TITLE, '', 'en');
+            $label = (string) $g->get_first_literal($uri, DC_TITLE, '', 'en');
             if ($label) {
                 return $label;
             }
 
-            $label = $g->get_first_literal($uri, FOAF_NAME, '', 'en');
+            $label = (string) $g->get_first_literal($uri, FOAF_NAME, '', 'en');
             if ($label) {
                 return $label;
             }
 
-            $label = $g->get_first_literal($uri, 'http://www.geonames.org/ontology#name', '', 'en');
+            $label = (string) $g->get_first_literal($uri, 'http://www.geonames.org/ontology#name', '', 'en');
             if ($label) {
                 return $label;
             }
 
-            $label = $g->get_first_literal($uri, RDF_VALUE, '', 'en');
+            $label = (string) $g->get_first_literal($uri, RDF_VALUE, '', 'en');
             if ($label) {
                 return $label;
             }
 
-            $label = $g->get_first_literal($uri, 'http://purl.org/rss/1.0/title', '', 'en');
+            $label = (string) $g->get_first_literal($uri, 'http://purl.org/rss/1.0/title', '', 'en');
             if ($label) {
                 return $label;
             }
 
             foreach ($this->_label_properties as $p) {
-                $label = $g->get_first_literal($uri, $p, '', 'en');
+                $label = (string) $g->get_first_literal($uri, $p, '', 'en');
                 if ($label) {
                     return $label;
                 }
@@ -494,7 +494,7 @@ class Labeller
     public function get_plural_label(string $uri, ?ExtendedGraph $g = null, bool $capitalize = false, bool $use_qnames = false): string
     {
         if ($g instanceof ExtendedGraph) {
-            $label = $g->get_first_literal($uri, 'http://purl.org/net/vocab/2004/03/label#plural', '', 'en');
+            $label = (string) $g->get_first_literal($uri, 'http://purl.org/net/vocab/2004/03/label#plural', '', 'en');
             if ($label) {
                 return $label;
             }
@@ -525,7 +525,7 @@ class Labeller
     public function get_inverse_label(string $uri, ?ExtendedGraph $g = null, bool $capitalize = false, bool $use_qnames = false): string
     {
         if ($g instanceof ExtendedGraph) {
-            $label = $g->get_first_literal($uri, 'http://purl.org/net/vocab/2004/03/label#inverseSingular', '', 'en');
+            $label = (string) $g->get_first_literal($uri, 'http://purl.org/net/vocab/2004/03/label#inverseSingular', '', 'en');
             if ($label) {
                 return $label;
             }

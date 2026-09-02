@@ -44,8 +44,10 @@ class Config implements IConfigInstance
 
     /**
      * The value should be the name of a class that implement ISearchProvider keyed by storename.
+     * The class name comes straight from config, so it is not guaranteed to reference a real class;
+     * consumers validate with class_exists() before instantiating.
      *
-     * @var array<string, class-string<ISearchProvider>>
+     * @var array<string, string>
      */
     protected array $searchProviderClassName = [];
 
@@ -187,15 +189,13 @@ class Config implements IConfigInstance
                 // Check config
                 // Valid configs can be top level modifiers and their attributes inside - you can have a top level modifier
                 // inside a top level modifier - that's why we also check \Tripod\Mongo\Composites\Tables::$predicatesModifiers direct
-                if (!isset($parent[$k]) && !isset(Tables::$predicateModifiers[$k])) {
-                    throw new ConfigException("Invalid modifier: '" . $k . "' in key '" . $parentKey . "'");
-                }
-
                 // If this config value is a top level modifier, use that as the parent so that we can check the attributes
                 if (isset(Tables::$predicateModifiers[$k])) {
                     $this->checkModifierFunctions($v, Tables::$predicateModifiers[$k], $k);
-                } else {
+                } elseif (is_array($parent) && isset($parent[$k])) {
                     $this->checkModifierFunctions($v, $parent[$k], $k);
+                } else {
+                    throw new ConfigException("Invalid modifier: '" . $k . "' in key '" . $parentKey . "'");
                 }
             } elseif (is_string($k)) {
                 // Check key
@@ -315,8 +315,8 @@ class Config implements IConfigInstance
      * @param string $collName  the collection in the database
      * @param string $qName     either the qname to get the values for or empty for all cardinality values
      *
-     * @return array|int if no qname is specified then returns an array of cardinality options,
-     *                   otherwise returns the cardinality value for the given qname
+     * @return ($qName is null ? array<string, int> : array<string, int>|int) if no qname is specified then returns an array of cardinality options,
+     *                                                                        otherwise returns the cardinality value for the given qname
      */
     public function getCardinality(string $storeName, string $collName, ?string $qName = null)
     {
@@ -375,8 +375,10 @@ class Config implements IConfigInstance
         if (strpos($this->dataSources[$datasource]['connection'], 'replicaSet=') !== false) {
             $query = parse_url($this->dataSources[$datasource]['connection'], PHP_URL_QUERY);
             $params = [];
-            parse_str($query, $params);
-            if (isset($params['replicaSet']) && ($params['replicaSet'] !== [] && ($params['replicaSet'] !== '' && $params['replicaSet'] !== '0'))) {
+            if (is_string($query)) {
+                parse_str($query, $params);
+            }
+            if (isset($params['replicaSet']) && is_string($params['replicaSet']) && ($params['replicaSet'] !== '' && $params['replicaSet'] !== '0')) {
                 return $params['replicaSet'];
             }
         }
@@ -1724,13 +1726,11 @@ class Config implements IConfigInstance
     }
 
     /**
-     * @param bool|string $default
-     *
-     * @return bool|string
+     * @param false|string $default a fallback value, or false to require the environment variable to be set
      *
      * @throws ConfigException
      */
-    private static function getenv(string $env, $default = false)
+    private static function getenv(string $env, $default = false): string
     {
         $var = getenv($env);
         if ($var) {

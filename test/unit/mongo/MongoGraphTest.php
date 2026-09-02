@@ -334,7 +334,7 @@ class MongoGraphTest extends MongoTripodTestBase
     public function testAddTripodArrayWhenAddingViews(): void
     {
         // view contains 4 subgraphs
-        $view = json_decode(file_get_contents(__DIR__ . '/data/view.json'), true);
+        $view = json_decode((string) file_get_contents(__DIR__ . '/data/view.json'), true);
         $g = new MongoGraph();
         $g->add_tripod_array($view);
 

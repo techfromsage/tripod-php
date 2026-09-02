@@ -2318,7 +2318,7 @@ class MongoTripodViewsTest extends MongoTripodTestBase
         $count = 234;
         $docs = [];
 
-        $configOptions = json_decode(file_get_contents(__DIR__ . '/data/config.json'), true);
+        $configOptions = json_decode((string) file_get_contents(__DIR__ . '/data/config.json'), true);
 
         for ($i = 0; $i < $count; $i++) {
             $docs[] = ['_id' => ['r' => 'tenantLists:batch' . $i, 'c' => 'tenantContexts:DefaultGraph']];

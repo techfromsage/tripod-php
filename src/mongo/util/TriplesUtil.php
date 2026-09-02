@@ -35,7 +35,7 @@ class TriplesUtil
         foreach ($triples as $triple) {
             $triple = rtrim($triple);
 
-            $parts = preg_split('/\s/', $triple);
+            $parts = $this->splitTriple($triple);
             $subject = trim($parts[0], '><');
             $predicate = trim($parts[1], '><');
             $object = $this->extract_object($parts);
@@ -75,7 +75,7 @@ class TriplesUtil
         foreach ($triples as $triple) {
             $triple = rtrim($triple);
 
-            $parts = preg_split('/\s/', $triple);
+            $parts = $this->splitTriple($triple);
             $subject = trim($parts[0], '><');
             $predicate = trim($parts[1], '><');
             $object = $this->extract_object($parts);
@@ -97,7 +97,7 @@ class TriplesUtil
         foreach ($triples as $triple) {
             $triple = rtrim($triple);
 
-            $parts = preg_split('/\s/', $triple);
+            $parts = $this->splitTriple($triple);
             $predicate = trim($parts[1], '><');
 
             try {
@@ -117,7 +117,7 @@ class TriplesUtil
         foreach ($triples as $triple) {
             $triple = rtrim($triple);
 
-            $parts = preg_split('/\s/', $triple);
+            $parts = $this->splitTriple($triple);
             $object = $this->extract_object($parts);
 
             if ($this->isUri($object)) {
@@ -134,7 +134,7 @@ class TriplesUtil
 
     public function suggestPrefix(string $ns): string
     {
-        $parts = preg_split('/[\/#]/', $ns);
+        $parts = preg_split('/[\/#]/', $ns) ?: [];
         for ($i = count($parts) - 1; $i >= 0; $i--) {
             if (preg_match('~^[a-zA-Z][a-zA-Z0-9\-]+$~', $parts[$i]) && $parts[$i] != 'schema' && $parts[$i] != 'ontology' && $parts[$i] != 'vocab' && $parts[$i] != 'terms' && $parts[$i] != 'ns' && $parts[$i] != 'core' && strlen($parts[$i]) > 3) {
                 return strtolower($parts[$i]);
@@ -150,7 +150,7 @@ class TriplesUtil
         foreach ($triples as $triple) {
             $triple = rtrim($triple);
 
-            $parts = preg_split('/\s/', $triple);
+            $parts = $this->splitTriple($triple);
             $subject = trim($parts[0], '><');
             $predicate = trim($parts[1], '><');
             $object = $this->extract_object($parts);
@@ -200,6 +200,18 @@ class TriplesUtil
     private function isUri(string $object): bool
     {
         return filter_var($object, FILTER_VALIDATE_URL) !== false;
+    }
+
+    /**
+     * Split an N-Triples line into its whitespace-separated parts.
+     *
+     * @return list<string>
+     */
+    private function splitTriple(string $triple): array
+    {
+        $parts = preg_split('/\s/', $triple);
+
+        return $parts === false ? [] : $parts;
     }
 
     /**

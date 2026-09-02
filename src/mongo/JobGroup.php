@@ -67,7 +67,8 @@ class JobGroup
             return $updateResult['count'];
         }
 
-        return $updateResult->count;
+        // With upsert: true a document is always returned as an array (Tripod's client typeMap)
+        throw new \RuntimeException('Failed to update job count for job group ' . $this->getId());
     }
 
     public function getId(): ObjectId

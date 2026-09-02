@@ -52,7 +52,7 @@ class StatsD implements ITripodStat
     }
 
     /**
-     * @return array<string, array<string, int|string>|class-string<StatsD>>
+     * @return array{class: class-string<StatsD>, config: array{host: string, port: int, prefix: string|null}}
      */
     public function getConfig(): array
     {

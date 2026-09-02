@@ -19,7 +19,7 @@ class TestConfigGenerator extends Config
         $instance = new self();
         $instance->fileName = $config['filename'];
 
-        $cfg = json_decode(file_get_contents($config['filename']), true);
+        $cfg = json_decode((string) file_get_contents($config['filename']), true);
         $instance->loadConfig($cfg);
 
         return $instance;
