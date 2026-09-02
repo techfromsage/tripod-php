@@ -236,6 +236,11 @@ class EnsureIndexesTest extends ResqueJobTestBase
      *
      * @return EnsureIndexes&MockObject
      */
+    /**
+     * @param string[] $methods
+     *
+     * @return EnsureIndexes&MockObject
+     */
     private function createMockJob(array $methods = ['getIndexUtils', 'submitJob', 'warningLog', 'enqueue', 'hasJobStatus']): EnsureIndexes
     {
         $mockEnsureIndexesJob = $this->getMockBuilder(EnsureIndexes::class)

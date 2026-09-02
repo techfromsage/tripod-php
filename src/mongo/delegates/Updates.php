@@ -77,17 +77,19 @@ class Updates extends DriverBase
             'readPreference' => ReadPreference::PRIMARY_PREFERRED,
             'retriesToGetLock' => 20,
         ], $opts);
-        $this->readPreference = $opts['readPreference'];
+        $this->readPreference = is_string($opts['readPreference']) && $opts['readPreference'] !== ''
+            ? $opts['readPreference']
+            : ReadPreference::PRIMARY_PREFERRED;
         $this->config = $this->getConfigInstance();
 
         // default context
-        $this->defaultContext = $opts['defaultContext'];
+        $this->defaultContext = is_string($opts['defaultContext']) ? $opts['defaultContext'] : null;
 
         // max retries to get lock
-        $this->retriesToGetLock = $opts['retriesToGetLock'];
+        $this->retriesToGetLock = is_int($opts['retriesToGetLock']) ? $opts['retriesToGetLock'] : 20;
 
         // fill in and default any missing keys for $async array
-        $async = $opts[OP_ASYNC];
+        $async = is_array($opts[OP_ASYNC]) ? $opts[OP_ASYNC] : [];
         if (!array_key_exists(OP_VIEWS, $async)) {
             $async[OP_VIEWS] = false;
         }
@@ -107,13 +109,20 @@ class Updates extends DriverBase
 
         // If a custom queue name was specified, store it
         if (array_key_exists(OP_QUEUE, $async)) {
-            $this->queueName = $async[OP_QUEUE];
+            $this->queueName = is_string($async[OP_QUEUE]) ? $async[OP_QUEUE] : null;
             unset($async[OP_QUEUE]);
         }
 
-        $this->async = $async;
+        $asyncFlags = [];
+        foreach ($async as $op => $isAsync) {
+            if (is_string($op)) {
+                $asyncFlags[$op] = (bool) $isAsync;
+            }
+        }
 
-        if (isset($opts['statsConfig'])) {
+        $this->async = $asyncFlags;
+
+        if (isset($opts['statsConfig']) && is_array($opts['statsConfig'])) {
             $this->statsConfig = $opts['statsConfig'];
         }
     }
@@ -785,6 +794,8 @@ class Updates extends DriverBase
      * Normalize our subjects and predicates of change to use aliases rather than fq uris.
      *
      * @param array<string, list<string>> $subjectsAndPredicatesOfChange
+     *
+     * @return array<string, list<string>>
      */
     protected function subjectsAndPredicatesOfChangeUrisToAliases(array $subjectsAndPredicatesOfChange): array
     {
@@ -808,7 +819,7 @@ class Updates extends DriverBase
     protected function getDocumentForUpdate(string $subjectOfChange, string $contextAlias, array $cbds): ?array
     {
         foreach ($cbds as $c) {
-            if ($c[_ID_KEY] == [_ID_RESOURCE => $this->labeller->uri_to_alias($subjectOfChange), _ID_CONTEXT => $contextAlias]) {
+            if (is_array($c) && $c[_ID_KEY] == [_ID_RESOURCE => $this->labeller->uri_to_alias($subjectOfChange), _ID_CONTEXT => $contextAlias]) {
                 return $c;
             }
         }
@@ -827,13 +838,12 @@ class Updates extends DriverBase
             $opSubjects = $composite->getImpactedSubjects($subjectsAndPredicatesOfChange, $contextAlias);
             if (!empty($opSubjects)) {
                 foreach ($opSubjects as $subject) {
-                    // @var $subject ImpactedSubject
                     $t = new Timer();
                     $t->start();
 
                     // Call update on the subject, rather than the composite directly, in case the change was to
                     // another pod
-                    $subject->update($subject);
+                    $subject->update();
 
                     $t->stop();
 
@@ -894,8 +904,9 @@ class Updates extends DriverBase
     /**
      * Attempts to lock all subjects of change in a pass, if failed unlocked locked subjects and do a retry of all again.
      *
-     * @param array  $subjectsOfChange array of the subjects that are part of this transaction
-     * @param string $transaction_id   id for this transaction
+     * @param array    $subjectsOfChange array of the subjects that are part of this transaction
+     * @param string   $transaction_id   id for this transaction
+     * @param string[] $subjectsOfChange
      *
      * @return array|null returns an array of CBDs, each CBD is the version at the time at which the lock was attained
      *
@@ -1196,7 +1207,7 @@ class Updates extends DriverBase
     /**
      * Helper method to group changes for $changeUri of a given type by namespaced predicate.
      *
-     * @param array|string $changePredicate
+     * @param string|string[] $changePredicate
      *
      * @throws Exception
      */

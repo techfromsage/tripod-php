@@ -44,7 +44,6 @@ class ExtendedGraphTest extends TestCase
     public function testAddInvalidValueToLiteralResultsInNoTriple($value): void
     {
         $graph = new ExtendedGraph();
-        // @phpstan-ignore argument.type (deliberately invalid input; the graph must reject it)
         $addResult = $graph->add_literal_triple('http://some/subject/1', 'http://some/predicate', $value);
         $this->assertFalse($addResult, 'The triple should not have been added for this value');
 

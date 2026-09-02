@@ -27,6 +27,8 @@ class Config implements IConfigInstance
 
     /**
      * All of the defined searchDocSpecs.
+     *
+     * @var array<string, array<string, array>>
      */
     protected array $searchDocSpecs = [];
 
@@ -53,6 +55,8 @@ class Config implements IConfigInstance
 
     /**
      * All of the predicates associated with a particular spec document.
+     *
+     * @var array<string, array<string, string[]>>
      */
     protected array $specPredicates;
 
@@ -63,14 +67,18 @@ class Config implements IConfigInstance
 
     protected array $activeMongoConnections = [];
 
+    /** @var array<string, array> */
     protected array $dataSources = [];
 
+    /** @var array<string, array<string, string>> */
     protected array $podConnections = [];
 
     protected static string $validationLevel = self::VALIDATE_MIN;
 
     /**
      * Database connections, keyed by datasource, so we're not inadvertently opening many db connections through getDatabase().
+     *
+     * @var array<string, Client>
      */
     protected array $connections = [];
 
@@ -93,30 +101,34 @@ class Config implements IConfigInstance
 
     /**
      * The defined database indexes, keyed by database name.
+     *
+     * @var array<string, array<string, array>>
      */
     private array $indexes = [];
 
+    /** @var array<string, array<string, array>> */
     private array $cardinality = [];
 
     /**
      * The connection strings for each defined database.
+     *
+     * @var array<string, array<string, string>>
      */
     private array $dbConfig = [];
 
     /**
      * All of the defined viewSpecs.
+     *
+     * @var array<string, array<string, array>>
      */
     private array $viewSpecs = [];
 
     /**
      * All of the defined tableSpecs.
+     *
+     * @var array<string, array<string, array>>
      */
     private array $tableSpecs = [];
-
-    /**
-     * Defined database configuration: dbname, collections, etc.
-     */
-    private array $databases = [];
 
     /**
      * Config should not be instantiated directly: use Config::getInstance().
@@ -162,6 +174,8 @@ class Config implements IConfigInstance
     /**
      * Returns an array of associated predicates in a table or search document specification
      * Note: will not return viewSpec predicates.
+     *
+     * @return string[]
      */
     public function getDefinedPredicatesInSpec(string $storename, string $specId): array
     {
@@ -313,17 +327,19 @@ class Config implements IConfigInstance
      * @param string $collName  the collection in the database
      * @param string $qName     either the qname to get the values for or empty for all cardinality values
      *
-     * @return ($qName is null ? array<string, int> : array<string, int>|int) if no qname is specified then returns an array of cardinality options,
-     *                                                                        otherwise returns the cardinality value for the given qname
+     * @return ($qName is null ? array : int) if no qname is specified then returns an array of cardinality options,
+     *                                        otherwise returns the cardinality value for the given qname
      */
     public function getCardinality(string $storeName, string $collName, ?string $qName = null)
     {
         // If no qname specified the return all cardinality rules for this db/collection.
         if (empty($qName)) {
-            return $this->cardinality[$storeName][$collName];
+            return $this->cardinality[$storeName][$collName] ?? [];
         }
 
-        return $this->cardinality[$storeName][$collName][$qName] ?? -1;
+        $value = $this->cardinality[$storeName][$collName][$qName] ?? -1;
+
+        return is_numeric($value) ? (int) $value : -1;
     }
 
     /**
@@ -366,7 +382,7 @@ class Config implements IConfigInstance
             throw new ConfigException(sprintf("Data source '%s' not in configuration", $datasource));
         }
 
-        if (!empty($this->dataSources[$datasource]['replicaSet'])) {
+        if (!empty($this->dataSources[$datasource]['replicaSet']) && is_string($this->dataSources[$datasource]['replicaSet'])) {
             return $this->dataSources[$datasource]['replicaSet'];
         }
 
@@ -674,7 +690,8 @@ class Config implements IConfigInstance
                 throw new ConfigException(sprintf("Table id '%s' not in configuration for store '%s'", $table, $storeName));
             }
 
-            $dataSources[] = $this->tableSpecs[$storeName][$table]['to_data_source'] ?? null;
+            $tableDataSource = $this->tableSpecs[$storeName][$table]['to_data_source'] ?? null;
+            $dataSources[] = is_string($tableDataSource) ? $tableDataSource : null;
         }
 
         $collections = [];
@@ -709,7 +726,8 @@ class Config implements IConfigInstance
                 throw new ConfigException(sprintf("View id '%s' not in configuration for store '%s'", $view, $storeName));
             }
 
-            $dataSources[] = $this->viewSpecs[$storeName][$view]['to_data_source'] ?? null;
+            $viewDataSource = $this->viewSpecs[$storeName][$view]['to_data_source'] ?? null;
+            $dataSources[] = is_string($viewDataSource) ? $viewDataSource : null;
         }
 
         $collections = [];
@@ -744,7 +762,8 @@ class Config implements IConfigInstance
                 throw new ConfigException(sprintf("Search document spec id '%s' not in configuration for store '%s'", $searchSpec, $storeName));
             }
 
-            $dataSources[] = $this->searchDocSpecs[$storeName][$searchSpec]['to_data_source'] ?? null;
+            $searchDataSource = $this->searchDocSpecs[$storeName][$searchSpec]['to_data_source'] ?? null;
+            $dataSources[] = is_string($searchDataSource) ? $searchDataSource : null;
         }
 
         $collections = [];
@@ -884,15 +903,19 @@ class Config implements IConfigInstance
     protected function loadConfig(array $config): void
     {
         $this->config = $config;
-        if (isset($config['namespaces'])) {
-            $this->ns = $config['namespaces'];
+        if (isset($config['namespaces']) && is_array($config['namespaces'])) {
+            foreach ($config['namespaces'] as $prefix => $uri) {
+                if (is_string($prefix) && is_string($uri)) {
+                    $this->ns[$prefix] = $uri;
+                }
+            }
         }
 
         $this->defaultContext = $this->getMandatoryStringKey('defaultContext', $config);
 
         foreach ($this->getMandatoryArrayKey('data_sources', $config) as $source => $c) {
-            if (!is_array($c)) {
-                throw new ConfigException('Data source ' . $source . ' must be an array');
+            if (!is_string($source) || !is_array($c)) {
+                throw new ConfigException('Data sources must be arrays, keyed by data source name');
             }
             if (!isset($c['type'])) {
                 throw new ConfigException("No 'type' set for data source " . $source);
@@ -915,10 +938,12 @@ class Config implements IConfigInstance
         $this->tConfig['collection'] = $this->getMandatoryStringKey('collection', $transactionConfig, 'transaction_log');
 
         // A 'pod' corresponds to a logical database
-        $this->databases = $this->getMandatoryArrayKey('stores', $config);
-        foreach ($this->databases as $storeName => $storeConfig) {
-            $this->dbConfig[$storeName] = ['data_source' => $this->getMandatoryKey('data_source', $storeConfig)];
-            if (isset($storeConfig['database']) && !empty($storeConfig['database'])) {
+        foreach ($this->getMandatoryArrayKey('stores', $config) as $storeName => $storeConfig) {
+            if (!is_string($storeName) || !is_array($storeConfig)) {
+                throw new ConfigException('Store config must be an array of store configurations keyed by store name');
+            }
+            $this->dbConfig[$storeName] = ['data_source' => $this->getMandatoryStringKey('data_source', $storeConfig)];
+            if (isset($storeConfig['database']) && is_string($storeConfig['database']) && $storeConfig['database'] !== '') {
                 $this->dbConfig[$storeName]['database'] = $storeConfig['database'];
             } else {
                 $this->dbConfig[$storeName]['database'] = $storeName;
@@ -930,6 +955,9 @@ class Config implements IConfigInstance
             if (isset($storeConfig['pods'])) {
                 foreach ($storeConfig['pods'] as $podName => $podConfig) {
                     $dataSource = ($podConfig['data_source'] ?? $storeConfig['data_source']);
+                    if (!is_string($podName) || !is_string($dataSource)) {
+                        throw new ConfigException('Pod data sources must be strings, keyed by pod name');
+                    }
                     $this->podConnections[$storeName][$podName] = $dataSource;
 
                     // Set cardinality, also checking against defined namespaces
@@ -951,13 +979,16 @@ class Config implements IConfigInstance
                         $this->cardinality[$storeName][$podName] = [];
                     }
 
-                    $this->cardinality[$storeName][$podName] = $podConfig['cardinality'] ?? [];
+                    $this->cardinality[$storeName][$podName] = (array) ($podConfig['cardinality'] ?? []);
 
                     // Ensure indexes are legal
                     if (isset($podConfig['indexes'])) {
                         $this->indexes[$storeName][$podName] = [];
 
                         foreach ($podConfig['indexes'] as $indexName => $indexFields) {
+                            if (!is_array($indexFields)) {
+                                throw new ConfigException('Index config must be an array of index fields, keyed by index name');
+                            }
                             $this->indexes[$storeName][$podName][$indexName] = $indexFields;
 
                             $indexKeys = array_keys($indexFields);
@@ -1006,9 +1037,13 @@ class Config implements IConfigInstance
                 // Load search doc specs if search_config is set
                 $searchDocSpecs = $this->getMandatoryArrayKey('search_specifications', $searchConfig, 'search');
                 foreach ($searchDocSpecs as $spec) {
-                    if (!isset($spec[_ID_KEY])) {
+                    if (!is_array($spec)) {
+                        throw new ConfigException('Search document specifications must be arrays');
+                    }
+                    if (!isset($spec[_ID_KEY]) || !is_string($spec[_ID_KEY])) {
                         throw new ConfigException('Search document spec does not contain ' . _ID_KEY);
                     }
+                    $searchSpecId = $spec[_ID_KEY];
 
                     if (!isset($spec['from']) || !in_array($spec['from'], $this->getPods($storeName))) {
                         throw new ConfigException("'" . $spec[_ID_KEY] . "[\"from\"]' property not set or references an undefined pod");
@@ -1032,7 +1067,7 @@ class Config implements IConfigInstance
                         }
                     }
 
-                    $this->searchDocSpecs[$storeName][$spec[_ID_KEY]] = $spec;
+                    $this->searchDocSpecs[$storeName][$searchSpecId] = $spec;
                 }
             }
 
@@ -1052,6 +1087,11 @@ class Config implements IConfigInstance
                     throw new ConfigException('Could not find any joins in view specification - usecase better served with select()');
                 }
 
+                if (!is_array($spec) || !isset($spec[_ID_KEY]) || !is_string($spec[_ID_KEY])) {
+                    throw new ConfigException('View spec must be an array containing a string ' . _ID_KEY);
+                }
+                $viewSpecId = $spec[_ID_KEY];
+
                 $this->ifCountExistsWithoutTTLThrowException($spec);
                 if (isset($spec['to_data_source'])) {
                     if (!isset($this->dataSources[$spec['to_data_source']])) {
@@ -1061,7 +1101,7 @@ class Config implements IConfigInstance
                     $spec['to_data_source'] = $storeConfig['data_source'];
                 }
 
-                $this->viewSpecs[$storeName][$spec[_ID_KEY]] = $spec;
+                $this->viewSpecs[$storeName][$viewSpecId] = $spec;
             }
 
             // Load table specs
@@ -1069,6 +1109,10 @@ class Config implements IConfigInstance
             $this->tableSpecs[$storeName] = [];
             foreach ($tableSpecs as $spec) {
                 $this->validateTableSpec($spec);
+                if (!is_array($spec) || !isset($spec[_ID_KEY]) || !is_string($spec[_ID_KEY])) {
+                    throw new ConfigException('Table spec must be an array containing a string ' . _ID_KEY);
+                }
+                $tableSpecId = $spec[_ID_KEY];
 
                 if (isset($spec['to_data_source'])) {
                     if (!isset($this->dataSources[$spec['to_data_source']])) {
@@ -1078,7 +1122,7 @@ class Config implements IConfigInstance
                     $spec['to_data_source'] = $storeConfig['data_source'];
                 }
 
-                $this->tableSpecs[$storeName][$spec[_ID_KEY]] = $spec;
+                $this->tableSpecs[$storeName][$tableSpecId] = $spec;
             }
         }
     }
@@ -1365,12 +1409,15 @@ class Config implements IConfigInstance
         }
     }
 
+    /**
+     * @return string[]
+     */
     protected function getFieldNamesInSpec(array $spec): array
     {
         $fieldNames = [];
         if (isset($spec['fields'])) {
             foreach ($spec['fields'] as $field) {
-                if (isset($field['fieldName'])) {
+                if (isset($field['fieldName']) && is_string($field['fieldName'])) {
                     $fieldNames[] = $field['fieldName'];
                 }
             }
@@ -1378,7 +1425,7 @@ class Config implements IConfigInstance
 
         if (isset($spec['counts'])) {
             foreach ($spec['counts'] as $count) {
-                if (isset($count['fieldName'])) {
+                if (isset($count['fieldName']) && is_string($count['fieldName'])) {
                     $fieldNames[] = $count['fieldName'];
                 }
             }
@@ -1386,7 +1433,7 @@ class Config implements IConfigInstance
 
         if (isset($spec['computed_fields'])) {
             foreach ($spec['computed_fields'] as $field) {
-                if (isset($field['fieldName'])) {
+                if (isset($field['fieldName']) && is_string($field['fieldName'])) {
                     $fieldNames[] = $field['fieldName'];
                 }
             }
@@ -1403,13 +1450,15 @@ class Config implements IConfigInstance
 
     /**
      * Creates an associative array of all predicates/properties associated with all table and search document specifications.
+     *
+     * @return array<string, string[]>
      */
     protected function getDefinedPredicatesInSpecs(string $storename): array
     {
         $predicates = [];
         $specs = array_merge($this->getTableSpecifications($storename), $this->getSearchDocumentSpecifications($storename));
         foreach ($specs as $spec) {
-            if (!isset($spec[_ID_KEY])) {
+            if (!isset($spec[_ID_KEY]) || !is_string($spec[_ID_KEY])) {
                 continue;
             }
 
@@ -1421,6 +1470,8 @@ class Config implements IConfigInstance
 
     /**
      * Recursively crawls a configuration document array (or part of one) and returns any associated predicates/properties.
+     *
+     * @return string[]
      */
     protected function getDefinedPredicatesInSpecBlock(array $block): array
     {
@@ -1456,7 +1507,9 @@ class Config implements IConfigInstance
         if (isset($block['joins'])) {
             foreach ($block['joins'] as $predicate => $join) {
                 // Joins are keyed on the predicate, so save that
-                $predicates[] = $this->getLabeller()->uri_to_alias($predicate);
+                if (is_string($predicate)) {
+                    $predicates[] = $this->getLabeller()->uri_to_alias($predicate);
+                }
                 $predicates = array_merge($predicates, $this->getDefinedPredicatesInSpecBlock($join));
             }
         }
@@ -1465,7 +1518,7 @@ class Config implements IConfigInstance
         if (isset($block['counts'])) {
             foreach ($block['counts'] as $property) {
                 // counts use the redundant property 'property', which behaves exactly like a predicate and needs to be deprecated
-                if (isset($property['property'])) {
+                if (isset($property['property']) && is_string($property['property'])) {
                     $predicates[] = $this->getLabeller()->uri_to_alias($property['property']);
                 }
 
@@ -1501,6 +1554,8 @@ class Config implements IConfigInstance
      * Rewrites any predicate uris to alias curies.
      *
      * @param array|string $predicate
+     *
+     * @return string[]
      */
     protected function getPredicateAliasesFromPredicateProperty($predicate): array
     {
@@ -1518,12 +1573,14 @@ class Config implements IConfigInstance
 
     /**
      * When given an array as input, will traverse any predicate functions and return the predicate strings.
+     *
+     * @return string[]
      */
     protected function getPredicatesFromPredicateFunctions(array $array): array
     {
         $predicates = [];
-        if (isset($array['predicates'])) {
-            $predicates = $array['predicates'];
+        if (isset($array['predicates']) && is_array($array['predicates'])) {
+            $predicates = array_values(array_filter($array['predicates'], 'is_string'));
         } elseif ($array !== []) {
             $function = key($array);
             if (is_array($array[$function])) {
@@ -1659,8 +1716,12 @@ class Config implements IConfigInstance
             }
 
             if (is_array($spec[_ID_TYPE])) {
-                $types = array_merge($spec[_ID_TYPE], $types);
-            } else {
+                foreach ($spec[_ID_TYPE] as $specType) {
+                    if (is_string($specType)) {
+                        $types[] = $specType;
+                    }
+                }
+            } elseif (is_string($spec[_ID_TYPE])) {
                 $types[] = $spec[_ID_TYPE];
             }
         }

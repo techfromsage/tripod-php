@@ -12,6 +12,7 @@ use Tripod\ExtendedGraph;
 use Tripod\IDriver;
 use Tripod\IEventHook;
 use Tripod\ISearchProvider;
+use Tripod\ITripodStat;
 use Tripod\Mongo\Composites\SearchIndexer;
 use Tripod\Mongo\Composites\Tables;
 use Tripod\Mongo\Composites\Views;
@@ -26,7 +27,9 @@ class Driver extends DriverBase implements IDriver
     private ?SearchIndexer $searchIndexer = null;
 
     /**
-     * @var array<string, bool> keyed by OP_VIEWS/OP_TABLES/OP_SEARCH; OP_SEARCH is absent when no search provider is configured
+     * @var array<string, bool|string> keyed by OP_VIEWS/OP_TABLES/OP_SEARCH (OP_SEARCH is absent when no
+     *                                 search provider is configured); may also carry an OP_QUEUE name, which
+     *                                 the Updates delegate extracts
      */
     private array $async;
 
@@ -61,15 +64,28 @@ class Driver extends DriverBase implements IDriver
         $this->labeller = $this->getLabeller();
 
         // default context
-        $this->defaultContext = $opts['defaultContext'];
+        $this->defaultContext = is_string($opts['defaultContext']) ? $opts['defaultContext'] : null;
 
         // max retries to get lock
-        $this->retriesToGetLock = $opts['retriesToGetLock'];
+        $this->retriesToGetLock = is_int($opts['retriesToGetLock']) ? $opts['retriesToGetLock'] : 20;
 
-        $this->collection = $this->config->getCollectionForCBD($storeName, $podName, $opts['readPreference']);
+        $readPreference = is_string($opts['readPreference']) && $opts['readPreference'] !== ''
+            ? $opts['readPreference']
+            : ReadPreference::PRIMARY_PREFERRED;
+
+        $this->collection = $this->config->getCollectionForCBD($storeName, $podName, $readPreference);
 
         // fill in and default any missing keys for $async array. Default is views are sync, tables and search async
-        $async = $opts[OP_ASYNC];
+        $async = [];
+        if (is_array($opts[OP_ASYNC])) {
+            foreach ($opts[OP_ASYNC] as $op => $isAsync) {
+                if (is_string($op)) {
+                    // OP_QUEUE carries a queue name (extracted by the Updates delegate); the rest are flags
+                    $async[$op] = is_string($isAsync) ? $isAsync : (bool) $isAsync;
+                }
+            }
+        }
+
         if (!array_key_exists(OP_VIEWS, $async)) {
             $async[OP_VIEWS] = false;
         }
@@ -89,17 +105,15 @@ class Driver extends DriverBase implements IDriver
 
         $this->async = $async;
 
-        if (isset($opts['stat'])) {
+        if (isset($opts['stat']) && $opts['stat'] instanceof ITripodStat) {
             $this->statsConfig = $opts['stat']->getConfig();
             $this->setStat($opts['stat']);
-        } else {
+        } elseif (is_array($opts['statsConfig'])) {
             $this->statsConfig = $opts['statsConfig'];
         }
 
         // Set the read preference if passed in
-        if ($opts['readPreference']) {
-            $this->readPreference = $opts['readPreference'];
-        }
+        $this->readPreference = $readPreference;
     }
 
     /**
@@ -283,7 +297,7 @@ class Driver extends DriverBase implements IDriver
      * @param array    $query Mongo query object
      * @param int|null $ttl   acceptable time to live if you're willing to accept a cached version of this request
      *
-     * @return ($groupBy is null ? int : array<int|string, int>) counts grouped by the $groupBy field, or a total count
+     * @return ($groupBy is null ? int : array) counts grouped by the $groupBy field, or a total count
      */
     public function getCount(array $query, ?string $groupBy = null, ?int $ttl = null)
     {
@@ -297,14 +311,15 @@ class Driver extends DriverBase implements IDriver
             $id['groupBy'] = $groupBy;
             $this->debugLog('Looking in cache', ['id' => $id]);
             $candidate = $this->config->getCollectionForTTLCache($this->storeName)->findOne([_ID_KEY => $id]);
-            if (!empty($candidate)) {
+            if (!empty($candidate) && $candidate['created'] instanceof UTCDateTime) {
                 $this->debugLog('Found candidate', ['candidate' => $candidate]);
 
                 $ttlTo = DateUtil::getMongoDate((((int) $candidate['created']->__toString() / 1000) + $ttl) * 1000);
-                if ($ttlTo > DateUtil::getMongoDate()) {
+                $cached = $candidate['results'];
+                if ($ttlTo > DateUtil::getMongoDate() && (is_int($cached) || is_array($cached))) {
                     // cache hit!
                     $this->debugLog('Cache hit', ['id' => $id]);
-                    $results = $candidate['results'];
+                    $results = $cached;
                 } else {
                     // cache miss
                     $this->debugLog('Cache miss', ['id' => $id]);

@@ -1296,7 +1296,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $transactionExampleDocument = $transactionColletion->findOne();
         $this->assertNotNull($transactionExampleDocument);
         $this->assertEquals(26, $transactionCount);
-        $this->assertStringContainsString('transaction_', (string) $transactionExampleDocument['_id']);
+        $this->assertIsString($transactionExampleDocument['_id']);
+        $this->assertStringContainsString('transaction_', $transactionExampleDocument['_id']);
     }
 
     public function testComputedFieldSpecValidationInvalidFunction(): void

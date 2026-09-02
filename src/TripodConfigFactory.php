@@ -28,7 +28,12 @@ class TripodConfigFactory
                 throw new Exceptions\ConfigException($config['class'] . ' does not provide a callable deserialize() method');
             }
 
-            return call_user_func($deserializer, $config);
+            $instance = call_user_func($deserializer, $config);
+            if (!$instance instanceof IConfigInstance) {
+                throw new Exceptions\ConfigException($config['class'] . '::deserialize() did not return an IConfigInstance');
+            }
+
+            return $instance;
         }
 
         return Mongo\Config::deserialize($config);

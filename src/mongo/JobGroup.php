@@ -63,8 +63,8 @@ class JobGroup
             ['$inc' => ['count' => $inc]],
             ['upsert' => true, 'returnDocument' => FindOneAndUpdate::RETURN_DOCUMENT_AFTER]
         );
-        if (\is_array($updateResult)) {
-            return $updateResult['count'];
+        if (\is_array($updateResult) && is_numeric($updateResult['count'] ?? null)) {
+            return (int) $updateResult['count'];
         }
 
         // With upsert: true a document is always returned as an array (Tripod's client typeMap)
