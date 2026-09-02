@@ -1,8 +1,10 @@
 parameters:
-  level: 6
+  level: 7
   bootstrapFiles:
     - src/resque/compat.inc.php
     - test/unit/mongo/mocks/Cursor.php
+  stubFiles:
+    - phpstan/mongodb.stub
   tips:
     treatPhpDocTypesAsCertain: false
   ignoreErrors:
@@ -17,6 +19,12 @@ parameters:
   paths:
     - src
     - test
+    - phpstan
   excludePaths:
     - src/resque/compat.inc.php
     - test/unit/mongo/mocks
+services:
+  -
+    class: Tripod\PHPStan\MongoDocumentReturnTypeExtension
+    tags:
+      - phpstan.broker.dynamicMethodReturnTypeExtension

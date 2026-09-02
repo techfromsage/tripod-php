@@ -1,0 +1,40 @@
+<?php
+
+// Tripod always constructs MongoDB\Client with a typeMap of
+// ['root' => 'array', 'document' => 'array', 'array' => 'array']
+// (see \Tripod\Mongo\Config::getMongoClient()), so documents returned by the
+// driver are always plain PHP arrays, never BSON objects.
+
+namespace MongoDB;
+
+use MongoDB\Driver\CursorInterface;
+
+class Collection
+{
+    /**
+     * @param array<mixed>|object $filter
+     * @param array<string, mixed> $options
+     *
+     * @return CursorInterface<int, array<string, mixed>>
+     */
+    public function find($filter = [], array $options = []) {}
+
+    /**
+     * @param array<mixed> $pipeline
+     * @param array<string, mixed> $options
+     *
+     * @return CursorInterface<int, array<string, mixed>>
+     */
+    public function aggregate($pipeline, array $options = []) {}
+}
+
+class Database
+{
+    /**
+     * @param array<mixed>|object $command
+     * @param array<string, mixed> $options
+     *
+     * @return CursorInterface<int, array<string, mixed>>
+     */
+    public function command($command, array $options = []) {}
+}

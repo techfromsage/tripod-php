@@ -404,7 +404,7 @@ class MongoTripodTransactionRollbackTest extends MongoTripodTestBase
      * @param mixed $transactionId
      * @param mixed $context
      *
-     * @return array
+     * @return array|false|null
      */
     public function lockSingleDocumentCauseFailureCallback($s, $transactionId, $context)
     {

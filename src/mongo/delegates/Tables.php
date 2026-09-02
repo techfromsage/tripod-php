@@ -206,10 +206,14 @@ class Tables extends CompositeBase
     /**
      * Query the tables collection and return the results.
      *
+     * By default the matching rows are returned as a list of table documents (ArrayObject
+     * instances, or plain arrays depending on the documentType option); pass
+     * 'returnCursor' => true to receive the underlying cursor instead.
+     *
      * @param array<string, mixed> $options Table query options
      * @param array<string, mixed> $filter
      *
-     * @return array{head: array{count: int, offset: int, limit: int}, results: array|CursorInterface}
+     * @return ($options is array{returnCursor: true} ? array{head: array{count: int, offset: int|null, limit: int|null}, results: CursorInterface<int, array<string, mixed>|\ArrayObject<string, mixed>>} : array{head: array{count: int, offset: int|null, limit: int|null}, results: list<array<string, mixed>|\ArrayObject<string, mixed>>})
      */
     public function getTableRows(
         string $tableSpecId,
@@ -268,7 +272,7 @@ class Tables extends CompositeBase
                 'offset' => $offset,
                 'limit' => $limit,
             ],
-            'results' => $options['returnCursor'] ? $results : $results->toArray(),
+            'results' => $options['returnCursor'] ? $results : array_values($results->toArray()),
         ];
     }
 
@@ -1330,7 +1334,7 @@ class Tables extends CompositeBase
 
             case 'join':
                 if (is_array($value)) {
-                    $value = implode($options['glue'], $value);
+                    $value = implode((string) $options['glue'], $value);
                 }
 
                 break;

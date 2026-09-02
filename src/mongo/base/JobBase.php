@@ -283,7 +283,11 @@ abstract class JobBase extends Job
      */
     protected function enqueue(string $queueName, string $class, array $data)
     {
-        return Resque::enqueue($queueName, $class, $data, true);
+        $token = Resque::enqueue($queueName, $class, $data, true);
+
+        // Resque's docblock claims bool|string, but a job ID string is returned whenever
+        // the job is created; false only when a beforeEnqueue hook cancels creation.
+        return is_string($token) ? $token : false;
     }
 
     /**

@@ -52,7 +52,7 @@ class Updates extends DriverBase
     private int $retriesToGetLock;
 
     /**
-     * @var array{OP_VIEWS: bool, OP_TABLES: bool, OP_SEARCH: bool}
+     * @var array<string, bool> keyed by OP_VIEWS/OP_TABLES/OP_SEARCH; OP_SEARCH is absent when no search provider is configured
      */
     private array $async;
 
@@ -378,7 +378,10 @@ class Updates extends DriverBase
 
         foreach ($hooks as $hook) {
             try {
-                call_user_func([$hook, $fn], $args);
+                $hookFn = [$hook, $fn];
+                if (is_callable($hookFn)) {
+                    call_user_func($hookFn, $args);
+                }
             } catch (\Exception $e) {
                 // don't let rabid hooks stop tripod
                 static::getLogger()->error('Hook ' . get_class($hook) . sprintf(' threw exception %s, continuing', $e->getMessage()));
@@ -625,7 +628,7 @@ class Updates extends DriverBase
     /**
      * Adds/updates/deletes the graph in the database.
      *
-     * @return array<string, mixed[]|string>
+     * @return array{newCBDs: list<array<string, mixed>>, subjectsAndPredicatesOfChange: array<string, list<string>>, transaction_id: string}
      *
      * @throws \Exception
      */
@@ -1206,14 +1209,15 @@ class Updates extends DriverBase
 
         $changesGroupedByNsPredicate = [];
         foreach ($changes as $c) {
-            $predicate = $cs->get_first_resource($c['value'], $this->labeller->qname_to_uri('rdf:predicate'));
+            $changeNode = (string) $c['value'];
+            $predicate = $cs->get_first_resource($changeNode, $this->labeller->qname_to_uri('rdf:predicate'));
             $nsPredicate = $this->labeller->uri_to_qname($predicate);
 
             if (!array_key_exists($nsPredicate, $changesGroupedByNsPredicate)) {
                 $changesGroupedByNsPredicate[$nsPredicate] = [];
             }
 
-            $object = $cs->get_subject_property_values($c['value'], $this->labeller->qname_to_uri('rdf:object'));
+            $object = $cs->get_subject_property_values($changeNode, $this->labeller->qname_to_uri('rdf:object'));
             if (count($object) !== 1) {
                 $this->getLogger()->error('Expecting object array with exactly 1 element', $object);
 
@@ -1221,7 +1225,7 @@ class Updates extends DriverBase
             }
 
             $valueType = ($object[0]['type'] == 'uri') ? VALUE_URI : VALUE_LITERAL;
-            $value = ($valueType === VALUE_URI) ? $this->labeller->uri_to_alias($object[0]['value']) : $object[0]['value'];
+            $value = ($valueType === VALUE_URI) ? $this->labeller->uri_to_alias((string) $object[0]['value']) : $object[0]['value'];
 
             $changesGroupedByNsPredicate[$nsPredicate][] = [$valueType => $value];
         }
@@ -1255,7 +1259,7 @@ class Updates extends DriverBase
     }
 
     /**
-     * @return int[]|string[]
+     * @return string[]
      */
     private function getAsyncOperations(): array
     {
@@ -1270,7 +1274,7 @@ class Updates extends DriverBase
     }
 
     /**
-     * @return int[]|string[]
+     * @return string[]
      */
     private function getSyncOperations(): array
     {

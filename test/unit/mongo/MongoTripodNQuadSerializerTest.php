@@ -26,7 +26,7 @@ class MongoTripodNQuadSerializerTest extends MongoTripodTestBase
     public function testSerializerWithMultipleSubjects(): void
     {
         $g = new MongoGraph();
-        $docs = json_decode(file_get_contents(__DIR__ . '/data/resources.json'), true);
+        $docs = json_decode((string) file_get_contents(__DIR__ . '/data/resources.json'), true);
         foreach ($docs as $d) {
             $g->add_tripod_array($d);
         }
@@ -168,7 +168,7 @@ class MongoTripodNQuadSerializerTest extends MongoTripodTestBase
         // Rather than increasing the size of $expected further when adding new test data
         // this test now asserts that each line in $expected has been serialised correctly, without failing
         // due to new test data.
-        foreach (preg_split("/((\r?\n)|(\r\n?))/", $expected) as $expectedLine) {
+        foreach (preg_split("/((\r?\n)|(\r\n?))/", $expected) ?: [] as $expectedLine) {
             $this->assertStringContainsString(rtrim($expectedLine), $actual, 'Failed checking for line: ' . rtrim($expectedLine));
         }
     }

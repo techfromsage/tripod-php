@@ -9,6 +9,7 @@ namespace Tripod;
  * Adapted from Moriarty's changeset.
  *
  * @phpstan-import-type ObjectType from ExtendedGraph
+ * @phpstan-import-type ObjectValue from ExtendedGraph
  * @phpstan-import-type TripleSubject from ExtendedGraph
  * @phpstan-import-type TriplePredicate from ExtendedGraph
  * @phpstan-import-type TripleObject from ExtendedGraph
@@ -189,10 +190,10 @@ class ChangeSet extends ExtendedGraph
     /**
      * adds a triple to the internal simpleIndex holding all the changesets and statements.
      *
-     * @param TripleSubject                      $s      Subject URI
-     * @param TriplePredicate                    $p      Predicate URI
-     * @param string|TripleObject|TripleObject[] $o      Object URI or literal value
-     * @param ObjectType                         $o_type Object type (bnode, uri, literal)
+     * @param TripleSubject                           $s      Subject URI
+     * @param TriplePredicate                         $p      Predicate URI
+     * @param ObjectValue|TripleObject|TripleObject[] $o      Object URI or literal value, a single triple object, or a list of triple objects
+     * @param ObjectType                              $o_type Object type (bnode, uri, literal)
      *
      * @author Keith
      */
@@ -202,9 +203,14 @@ class ChangeSet extends ExtendedGraph
             foreach ($o as $obj) {
                 $this->addT($s, $p, $obj);
             }
+        } elseif (is_array($o)) {
+            // PHPStan cannot discriminate a single triple object from a list of
+            // triple objects, so assert what the isset() check above ruled out.
+            /** @var TripleObject $tripleObject */
+            $tripleObject = $o;
+            $this->_index[$s][$p][] = $tripleObject;
         } else {
-            $obj = is_array($o) ? $o : ['value' => $o, 'type' => $o_type];
-            $this->_index[$s][$p][] = $obj;
+            $this->_index[$s][$p][] = ['value' => $o, 'type' => $o_type];
         }
     }
 

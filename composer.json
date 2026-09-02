@@ -40,7 +40,7 @@
         "exclude-from-classmap": ["src/resque/compat.inc.php"]
     },
     "autoload-dev": {
-        "classmap": ["test/"]
+        "classmap": ["test/", "phpstan/"]
     },
     "scripts": {
         "lint": "php-cs-fixer check",

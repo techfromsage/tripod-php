@@ -754,7 +754,7 @@ class Views extends CompositeBase
     }
 
     /**
-     * @param array{from: string}|null $viewSpec
+     * @param array<string, mixed>|null $viewSpec
      *
      * @return string
      */
