@@ -48,6 +48,10 @@
         "test": [
             "Composer\\Config::disableProcessTimeout",
             "phpunit"
+        ],
+        "coverage": [
+            "Composer\\Config::disableProcessTimeout",
+            "phpunit --coverage-text --coverage-html coverage --coverage-clover coverage/clover.xml"
         ]
     }
 }

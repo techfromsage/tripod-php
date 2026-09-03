@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit bootstrap="test/bootstrap.php"
+         colors="true"
+         cacheResultFile=".phpunit.cache/test-results"
+         executionOrder="depends,defects"
          convertErrorsToExceptions="true"
          convertNoticesToExceptions="true"
          convertWarningsToExceptions="true"
          failOnWarning="true"
-         failOnRisky="true">
+         failOnRisky="true"
+         verbose="true">
     <php>
         <ini name="error_reporting" value="-1" />
         <ini name="memory_limit" value="-1" />
@@ -19,4 +23,11 @@
             <directory>test/performance</directory>
         </testsuite>
     </testsuites>
+
+    <coverage cacheDirectory=".phpunit.cache/code-coverage"
+              processUncoveredFiles="true">
+        <include>
+            <directory suffix=".php">src</directory>
+        </include>
+    </coverage>
 </phpunit>

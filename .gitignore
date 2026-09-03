@@ -8,9 +8,11 @@ tags
 atlassian-ide-plugin.xml
 
 composer.lock
+coverage
 docker-compose.override.yml
 profiler
 test-results
+.phpunit.cache
 .phpunit.result.cache
 .php-cs-fixer.cache
 

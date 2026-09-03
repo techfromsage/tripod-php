@@ -12,7 +12,7 @@ RUN curl -sLo /tmp/mongosh.deb https://downloads.mongodb.com/compass/mongodb-mon
   && dpkg -i /tmp/mongosh.deb \
   && rm /tmp/mongosh.deb
 
-COPY --from=mlocati/php-extension-installer:2.10.6 /usr/bin/install-php-extensions /usr/local/bin/
-COPY --from=composer:2.9.5 /usr/bin/composer /usr/local/bin/
+COPY --from=mlocati/php-extension-installer:2 /usr/bin/install-php-extensions /usr/local/bin/
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/
 
-RUN IPE_ICU_EN_ONLY=1 install-php-extensions pcntl mongodb-1.19.4 xhprof
+RUN IPE_ICU_EN_ONLY=1 install-php-extensions pcntl pcov xhprof mongodb-1.21.7
