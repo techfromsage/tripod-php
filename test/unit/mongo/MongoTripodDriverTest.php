@@ -47,12 +47,12 @@ class MongoTripodDriverTest extends MongoTripodTestBase
         Config::getInstance()->getCollectionForLocks($this->tripod->getStoreName())->drop();
 
         $this->tripod->setTransactionLog($this->tripodTransactionLog);
-
-        $this->loadResourceDataViaTripod();
     }
 
     public function testSelectMultiValue(): void
     {
+        $this->loadResourceDataViaTripod();
+
         $expectedResult = [
             'head' => [
                 'count' => 1,
@@ -78,6 +78,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
     public function testSelectSingleValue(): void
     {
+        $this->loadResourceDataViaTripod();
+
         $expectedResult = [
             'head' => [
                 'count' => 1,
@@ -100,6 +102,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
     public function testGraph(): void
     {
+        $this->loadResourceDataViaTripod();
+
         $expectedResult = new ExtendedGraph();
         $expectedResult->add_turtle(
             '<http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://purl.org/dc/terms/isVersionOf> <http://talisaspire.com/works/4d101f63c10a6> .
@@ -141,6 +145,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
     public function testDescribeResource(): void
     {
+        $this->loadResourceDataViaTripod();
+
         $expectedResult = new ExtendedGraph();
         $expectedResult->add_turtle(
             '<http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://purl.org/dc/terms/isVersionOf> <http://talisaspire.com/works/4d101f63c10a6> .
@@ -182,6 +188,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
     public function testDescribeResources(): void
     {
+        $this->loadResourceDataViaTripod();
+
         $expectedResult = new ExtendedGraph();
         $expectedResult->add_turtle(
             '<http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA> <http://purl.org/dc/terms/isVersionOf> <http://talisaspire.com/works/4d101f63c10a6> .
@@ -230,12 +238,16 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
     public function testGetCount(): void
     {
+        $this->loadResourceDataViaTripod();
+
         $count = $this->tripod->getCount(['rdf:type.' . VALUE_URI => 'bibo:Book']);
         $this->assertEquals(9, $count);
     }
 
     public function testGetCountWithGroupBy(): void
     {
+        $this->loadResourceDataViaTripod();
+
         $count = $this->tripod->getCount(['rdf:type.' . VALUE_URI => 'bibo:Book'], 'bibo:isbn13.l');
 
         $this->assertCount(5, $count);
@@ -248,6 +260,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
     public function testTripodSaveChangesRemovesLiteralTriple(): void
     {
+        $this->loadResourceDataViaTripod();
+
         $oG = $this->tripod->describeResource('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA');
         $nG = new MongoGraph();
         $nG->add_graph($oG);
@@ -260,6 +274,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
     public function testTripodSaveChangesAddsLiteralTriple(): void
     {
+        $this->loadResourceDataViaTripod();
+
         $oG = $this->tripod->describeResource('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA');
         $nG = new MongoGraph();
         $nG->add_graph($oG);
@@ -277,6 +293,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
      */
     public function testTripodSaveChangesRemovesLiteralTripleUsingEmptyNewGraphAndPartialOldGraph(): void
     {
+        $this->loadResourceDataViaTripod();
+
         $oG = new MongoGraph();
         $oG->add_literal_triple('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA', $oG->qname_to_uri('bibo:isbn13'), '9780393929690');
 
@@ -296,6 +314,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
      */
     public function testTripodSaveChangesAddsLiteralTripleUsingEmptyOldGraph(): void
     {
+        $this->loadResourceDataViaTripod();
+
         $oG = new MongoGraph();
         $nG = new MongoGraph();
         $nG->add_graph($oG);
@@ -308,6 +328,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
     public function testTripodSaveChangesUpdatesLiteralTriple(): void
     {
+        $this->loadResourceDataViaTripod();
+
         $oG = $this->tripod->describeResource('http://talisaspire.com/resources/3SplCtWGPqEyXcDiyhHQpA');
         $nG = new MongoGraph();
         $nG->add_graph($oG);
@@ -1533,6 +1555,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
     public function testDescribeResourceWithNamespace(): void
     {
+        $this->loadResourceDataViaTripod();
+
         $noNsG = $this->tripod->describeResource('http://basedata.com/b/1', 'http://basedata.com/b/DefaultGraph');
         $nsResourceG = $this->tripod->describeResource('baseData:1', 'http://basedata.com/b/DefaultGraph');
         $nsContextG = $this->tripod->describeResource('http://basedata.com/b/1', 'baseData:DefaultGraph');
@@ -1550,6 +1574,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
     public function testDescribeResourcesWithNamespace(): void
     {
+        $this->loadResourceDataViaTripod();
+
         $noNsG = $this->tripod->describeResources(['http://basedata.com/b/1'], 'http://basedata.com/b/DefaultGraph');
         $nsResourceG = $this->tripod->describeResources(['baseData:1'], 'http://basedata.com/b/DefaultGraph');
         $nsContextG = $this->tripod->describeResources(['http://basedata.com/b/1'], 'baseData:DefaultGraph');
@@ -1567,6 +1593,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
     public function testSelectSingleValueWithNamespaceContextQueryDoesntContainID(): void
     {
+        $this->loadResourceDataViaTripod();
+
         $expectedResult = [
             'head' => [
                 'count' => 2,
@@ -1596,6 +1624,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
     public function testSelectSingleValueWithNamespaceContextQueryDoesContainID(): void
     {
+        $this->loadResourceDataViaTripod();
+
         $expectedResult = [
             'head' => [
                 'count' => 1,
@@ -1625,6 +1655,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
     public function testSelectWithOperandWithNamespaceContextQueryContainsID(): void
     {
+        $this->loadResourceDataViaTripod();
+
         $expectedResult = [
             'head' => [
                 'count' => 2,
@@ -1661,6 +1693,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
     public function testSelectWithOperandWithNamespaceContextQueryDoesNotContainID(): void
     {
+        $this->loadResourceDataViaTripod();
+
         $expectedResult = [
             'head' => [
                 'count' => 2,
@@ -1697,6 +1731,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
     public function testSelectDocumentWithSpecialFieldTypes(): void
     {
+        $this->loadResourceDataViaTripod();
+
         $id = [
             'r' => 'http://talisaspire.com/resources/' . uniqid(),
             'c' => 'http://talisaspire.com/',
@@ -1752,8 +1788,13 @@ class MongoTripodDriverTest extends MongoTripodTestBase
      */
     public function testGetDistinctTableValues(): void
     {
-        // Get table rows
         $table = 't_distinct';
+        $collection = Config::getInstance()->getCollectionForTable('tripod_php_testing', $table);
+        $collection->drop();
+
+        $this->loadResourceDataViaTripod();
+
+        // Get table rows
         $this->tripod->generateTableRows($table);
         $rows = $this->tripod->getTableRows($table, [], [], 0, 0);
         $this->assertEquals(11, $rows['head']['count']);
@@ -1822,6 +1863,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
      */
     public function testDistinctForFilterWithNoMatches(): void
     {
+        $this->loadResourceDataViaTripod();
+
         // Get table rows
         $table = 't_distinct';
         $this->tripod->generateTableRows($table);
@@ -1834,6 +1877,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
     /**  START: getLockedDocuments tests */
     public function testGetLockedDocuments(): void
     {
+        $this->loadResourceDataViaTripod();
+
         $subject = 'http://talisaspire.com/works/lockedDoc';
         $this->lockDocument($subject, 'transaction_100');
 
@@ -1845,6 +1890,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
     public function testGetLockedDocumentsWithFromDateOnly(): void
     {
+        $this->loadResourceDataViaTripod();
+
         $subject = 'http://talisaspire.com/works/lockedDoc';
         $this->lockDocument($subject, 'transaction_100');
 
@@ -1857,6 +1904,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
     public function testGetLockedDocumentsWithTillDateOnly(): void
     {
+        $this->loadResourceDataViaTripod();
+
         $subject = 'http://talisaspire.com/works/lockedDoc';
         $this->lockDocument($subject, 'transaction_100');
 
@@ -1869,6 +1918,8 @@ class MongoTripodDriverTest extends MongoTripodTestBase
 
     public function testGetLockedDocumentsWithDateRange(): void
     {
+        $this->loadResourceDataViaTripod();
+
         $subject = 'http://talisaspire.com/works/lockedDoc';
         $this->lockDocument($subject, 'transaction_100');
 
