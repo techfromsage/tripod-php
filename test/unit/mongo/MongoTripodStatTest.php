@@ -301,4 +301,47 @@ class MongoTripodStatTest extends MongoTripodTestBase
         $stat = new StatsD('foo.bar', 4567);
         $stat->setPivotValue('some..value');
     }
+
+    public function testGetPivotValue(): void
+    {
+        $stat = new StatsD('foo.bar', 4567);
+        $this->assertNull($stat->getPivotValue());
+
+        $stat->setPivotValue('someValue');
+        $this->assertSame('someValue', $stat->getPivotValue());
+    }
+
+    public function testSendIsNoOpWhenHostIsEmpty(): void
+    {
+        $stat = new StatsD('', 0);
+        $stat->increment('FOO.BAR');
+        // nothing to assert - send() returns early without attempting a connection
+        $this->assertSame('', $stat->getHost());
+    }
+
+    public function testSendWritesStatsOverUdp(): void
+    {
+        $server = stream_socket_server('udp://127.0.0.1:0', $errno, $errstr, STREAM_SERVER_BIND);
+        $this->assertNotFalse($server, 'Could not bind test UDP socket');
+        stream_set_blocking($server, false);
+        $port = parse_url(stream_socket_get_name($server, false), PHP_URL_PORT);
+
+        $stat = new StatsD('127.0.0.1', $port, 'somePrefix');
+        $stat->increment('FOO.BAR');
+        // timer sends an array of values for the stat
+        $stat->timer('BAZ', 1234);
+
+        // datagrams are sent non-blocking to localhost; allow them to arrive
+        usleep(50000);
+
+        $received = '';
+        while (($datagram = stream_socket_recvfrom($server, 1024)) !== false && $datagram !== '') {
+            $received .= $datagram . "\n";
+        }
+        fclose($server);
+
+        $this->assertStringContainsString('somePrefix.' . STAT_CLASS . '.FOO.BAR:1|c', $received);
+        $this->assertStringContainsString('somePrefix.' . STAT_CLASS . '.BAZ:1|c', $received);
+        $this->assertStringContainsString('somePrefix.' . STAT_CLASS . '.BAZ:1234|ms', $received);
+    }
 }
