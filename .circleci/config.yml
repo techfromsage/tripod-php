@@ -51,8 +51,12 @@ commands:
             grep '"name": "mongodb/mongodb",' composer.lock -A1
 
   run_test:
+    parameters:
+      command:
+        type: string
+        default: composer run test --
     steps:
-      - run: composer test -- --log-junit test-results/junit.xml
+      - run: << parameters.command >> --log-junit test-results/junit.xml
       - store_test_results:
           path: test-results/junit.xml
       - store_artifacts:
@@ -102,7 +106,10 @@ jobs:
       - checkout
       - run: composer install
       - check_mongodb_lib_version
-      - run_test
+      - run_test:
+          command: composer run coverage --
+      - store_artifacts:
+          path: coverage
 
   test-replica-set-mmap:
     docker:
