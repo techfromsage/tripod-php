@@ -886,4 +886,399 @@ class ExtendedGraphTest extends TestCase
         $this->assertEquals($index, $graph->get_index());
         $this->assertSame(1, $graph->get_triple_count());
     }
+
+    public function testMakeResourceArray(): void
+    {
+        $graph = new ExtendedGraph();
+        $this->assertSame(['type' => 'uri', 'value' => 'http://example.com/1'], $graph->make_resource_array('http://example.com/1'));
+        $this->assertSame(['type' => 'bnode', 'value' => '_:b1'], $graph->make_resource_array('_:b1'));
+    }
+
+    public function testGetPrefixAndAddLabellingPropertyDelegateToLabeller(): void
+    {
+        $graph = new ExtendedGraph();
+        $this->assertSame('dct', $graph->get_prefix('http://purl.org/dc/terms/'));
+        // add_labelling_property makes the property considered by get_label
+        $graph->add_labelling_property('http://example.com/vocab#customLabel');
+        $graph->add_literal_triple('http://example.com/1', 'http://example.com/vocab#customLabel', 'Custom', 'en');
+        $this->assertSame('Custom', $graph->get_label('http://example.com/1'));
+    }
+
+    public function testGetLabelAndInverseLabelDelegateToLabeller(): void
+    {
+        $graph = new ExtendedGraph();
+        $this->assertSame('date created', $graph->get_label('http://purl.org/dc/terms/created'));
+        $this->assertSame('is date created of', $graph->get_inverse_label('http://purl.org/dc/terms/created'));
+    }
+
+    public function testGetTriples(): void
+    {
+        $triples = $this->getSimpleGraph()->get_triples();
+
+        $this->assertCount(2, $triples);
+        $literals = array_values(array_filter($triples, function ($t) {
+            return $t['o_type'] === 'literal';
+        }));
+        $this->assertSame('A Title', $literals[0]['o']);
+        $this->assertSame('http://example.com/1', $literals[0]['s']);
+        $this->assertSame('http://purl.org/dc/terms/title', $literals[0]['p']);
+    }
+
+    public function testToRdfXmlAndFromRdfXmlRoundTrip(): void
+    {
+        $graph = $this->getSimpleGraph();
+        $rdfxml = $graph->to_rdfxml();
+        $this->assertStringContainsString('A Title', $rdfxml);
+        $this->assertStringContainsString('http://example.com/1', $rdfxml);
+
+        $newGraph = new ExtendedGraph();
+        $newGraph->add_literal_triple('http://example.com/other', 'http://purl.org/dc/terms/title', 'Removed on parse');
+        $newGraph->from_rdfxml($rdfxml);
+        $this->assertEquals($graph->get_index(), $newGraph->get_index());
+        $this->assertFalse($newGraph->has_triples_about('http://example.com/other'));
+    }
+
+    public function testFromRdfXmlWithEmptyStringLeavesGraphUnchanged(): void
+    {
+        $graph = $this->getSimpleGraph();
+        $index = $graph->get_index();
+        $graph->from_rdfxml('');
+        $this->assertEquals($index, $graph->get_index());
+    }
+
+    public function testToTurtleAndFromTurtleRoundTrip(): void
+    {
+        $graph = $this->getSimpleGraph();
+        $turtle = $graph->to_turtle();
+        $this->assertStringContainsString('A Title', $turtle);
+
+        $newGraph = new ExtendedGraph();
+        $newGraph->from_turtle($turtle);
+        $this->assertEquals($graph->get_index(), $newGraph->get_index());
+    }
+
+    public function testToJsonAndFromJsonRoundTrip(): void
+    {
+        $graph = $this->getSimpleGraph();
+        $json = $graph->to_json();
+        $this->assertSame($graph->get_index(), json_decode($json, true));
+
+        $newGraph = new ExtendedGraph();
+        $newGraph->from_json($json);
+        $this->assertEquals($graph->get_index(), $newGraph->get_index());
+    }
+
+    public function testFromRdfaParsesRdfaMarkup(): void
+    {
+        $html = '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>test</title></head><body>'
+            . '<div about="http://example.com/1"><span property="http://purl.org/dc/terms/title">A Title</span></div>'
+            . '</body></html>';
+
+        $graph = new ExtendedGraph();
+        $graph->add_literal_triple('http://example.com/other', 'http://purl.org/dc/terms/title', 'Removed on parse');
+        $graph->from_rdfa($html);
+
+        $this->assertFalse($graph->has_triples_about('http://example.com/other'));
+        $this->assertSame('A Title', $graph->get_first_literal('http://example.com/1', 'http://purl.org/dc/terms/title'));
+    }
+
+    public function testToHtml(): void
+    {
+        $graph = $this->getSimpleGraph();
+        $graph->add_literal_triple('http://example.com/2', 'http://purl.org/dc/terms/title', 'Second Title');
+
+        $html = $graph->to_html();
+        $this->assertStringContainsString('A Title', $html);
+        $this->assertStringContainsString('Second Title', $html);
+
+        // restricted to a single subject
+        $html = $graph->to_html('http://example.com/1');
+        $this->assertStringContainsString('A Title', $html);
+        $this->assertStringNotContainsString('Second Title', $html);
+
+        // restricted to an array of subjects
+        $html = $graph->to_html(['http://example.com/2']);
+        $this->assertStringContainsString('Second Title', $html);
+
+        // unknown subjects produce no output
+        $this->assertSame('', $graph->to_html('http://example.com/unknown'));
+        $this->assertSame('', $graph->to_html(['http://example.com/unknown']));
+    }
+
+    public function testAddRdfCollectsParserErrors(): void
+    {
+        $graph = new ExtendedGraph();
+        $this->assertSame([], $graph->get_parser_errors());
+        $graph->add_rdf('<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:unclosed</rdf:RDF>');
+        $this->assertNotEmpty($graph->get_parser_errors());
+    }
+
+    public function testGetLiteralTripleValues(): void
+    {
+        $graph = $this->getSimpleGraph();
+        $graph->add_literal_triple('http://example.com/1', 'http://purl.org/dc/terms/description', 'A Description');
+
+        // resource triples with the same subject are excluded
+        $this->assertSame(['A Title'], $graph->get_literal_triple_values('http://example.com/1', 'http://purl.org/dc/terms/title'));
+        $this->assertSame([], $graph->get_literal_triple_values('http://example.com/1', 'http://purl.org/dc/terms/source'));
+
+        // array of predicates
+        $this->assertSame(
+            ['A Title', 'A Description'],
+            $graph->get_literal_triple_values('http://example.com/1', ['http://purl.org/dc/terms/title', 'http://purl.org/dc/terms/description'])
+        );
+
+        // unknown subject
+        $this->assertSame([], $graph->get_literal_triple_values('http://example.com/unknown', 'http://purl.org/dc/terms/title'));
+    }
+
+    public function testGetSubjectsWhereLiteral(): void
+    {
+        $graph = $this->getSimpleGraph();
+        $graph->add_literal_triple('http://example.com/2', 'http://purl.org/dc/terms/title', 'A Title');
+        $graph->add_resource_triple('http://example.com/3', 'http://purl.org/dc/terms/title', 'http://example.com/A_Title');
+
+        $subjects = $graph->get_subjects_where_literal('http://purl.org/dc/terms/title', 'A Title');
+        sort($subjects);
+        $this->assertSame(['http://example.com/1', 'http://example.com/2'], $subjects);
+        $this->assertSame([], $graph->get_subjects_where_literal('http://purl.org/dc/terms/title', 'No Such Title'));
+    }
+
+    public function testReplaceResourceInSubjectPosition(): void
+    {
+        $graph = $this->getSimpleGraph();
+        $graph->add_literal_triple('http://example.com/1', 'http://purl.org/dc/terms/description', 'A Description', 'en');
+
+        $graph->replace_resource('http://example.com/1', 'http://example.com/new');
+
+        $this->assertFalse($graph->has_triples_about('http://example.com/1'));
+        $this->assertSame('A Title', $graph->get_first_literal('http://example.com/new', 'http://purl.org/dc/terms/title'));
+        $this->assertSame('http://example.com/source', $graph->get_first_resource('http://example.com/new', 'http://purl.org/dc/terms/source'));
+
+        // language on literals is preserved
+        $index = $graph->get_index();
+        $this->assertSame('en', $index['http://example.com/new']['http://purl.org/dc/terms/description'][0]['lang']);
+    }
+
+    public function testReplaceResourceInObjectPosition(): void
+    {
+        $graph = new ExtendedGraph();
+        $graph->add_resource_triple('http://example.com/1', 'http://purl.org/dc/terms/source', 'http://example.com/old');
+
+        $graph->replace_resource('http://example.com/old', 'http://example.com/new');
+
+        $this->assertSame('http://example.com/new', $graph->get_first_resource('http://example.com/1', 'http://purl.org/dc/terms/source'));
+    }
+
+    public function testGetListValues(): void
+    {
+        $graph = new ExtendedGraph();
+        $graph->add_resource_triple('http://example.com/list', RDF_FIRST, 'http://example.com/item/1');
+        $graph->add_resource_triple('http://example.com/list', RDF_REST, '_:rest1');
+        $graph->add_resource_triple('_:rest1', RDF_FIRST, 'http://example.com/item/2');
+        $graph->add_resource_triple('_:rest1', RDF_REST, RDF_NIL);
+
+        $this->assertSame(
+            ['http://example.com/item/1', 'http://example.com/item/2'],
+            $graph->get_list_values('http://example.com/list')
+        );
+    }
+
+    public function testConstructorAcceptsIndexArray(): void
+    {
+        $index = [
+            'http://example.com/1' => [
+                'http://purl.org/dc/terms/title' => [['type' => 'literal', 'value' => 'A Title']],
+            ],
+        ];
+        $graph = new ExtendedGraph($index);
+        $this->assertSame($index, $graph->get_index());
+    }
+
+    public function testConstructorAcceptsRdfString(): void
+    {
+        $graph = new ExtendedGraph('{"http://example.com/1":{"http://purl.org/dc/terms/title":[{"type":"literal","value":"A Title"}]}}');
+        $this->assertSame('A Title', $graph->get_first_literal('http://example.com/1', 'http://purl.org/dc/terms/title'));
+    }
+
+    public function testAddLiteralTripleWithDatatype(): void
+    {
+        $graph = new ExtendedGraph();
+        $graph->add_literal_triple('http://example.com/1', 'http://purl.org/dc/terms/extent', '123', null, 'http://www.w3.org/2001/XMLSchema#integer');
+
+        $index = $graph->get_index();
+        $this->assertSame('http://www.w3.org/2001/XMLSchema#integer', $index['http://example.com/1']['http://purl.org/dc/terms/extent'][0]['datatype']);
+        $this->assertTrue($graph->has_literal_triple('http://example.com/1', 'http://purl.org/dc/terms/extent', '123', null, 'http://www.w3.org/2001/XMLSchema#integer'));
+        $this->assertFalse($graph->has_literal_triple('http://example.com/1', 'http://purl.org/dc/terms/extent', '123', null, 'http://www.w3.org/2001/XMLSchema#string'));
+    }
+
+    public function testHasLiteralTripleWithLanguage(): void
+    {
+        $graph = new ExtendedGraph();
+        $graph->add_literal_triple('http://example.com/1', 'http://purl.org/dc/terms/title', 'Bonjour', 'fr');
+        $this->assertTrue($graph->has_literal_triple('http://example.com/1', 'http://purl.org/dc/terms/title', 'Bonjour', 'fr'));
+        $this->assertFalse($graph->has_literal_triple('http://example.com/1', 'http://purl.org/dc/terms/title', 'Bonjour', 'en'));
+    }
+
+    public function testGetFirstLiteralWithArrayOfPredicatesAndPreferredLanguage(): void
+    {
+        $graph = new ExtendedGraph();
+        $graph->add_literal_triple('http://example.com/1', 'http://purl.org/dc/terms/title', 'Bonjour', 'fr');
+        $graph->add_literal_triple('http://example.com/1', 'http://purl.org/dc/terms/title', 'Hello', 'en');
+
+        $predicates = ['http://purl.org/dc/terms/alternative', 'http://purl.org/dc/terms/title'];
+        $this->assertSame('Hello', $graph->get_first_literal('http://example.com/1', $predicates, null, 'en'));
+        // no literal with the preferred language falls back to the last literal found
+        $this->assertSame('Hello', $graph->get_first_literal('http://example.com/1', $predicates, null, 'de'));
+        // no preferred language specified returns the first literal found
+        $this->assertSame('Bonjour', $graph->get_first_literal('http://example.com/1', $predicates, null, null));
+        // no matching predicates returns the default
+        $this->assertSame('default', $graph->get_first_literal('http://example.com/1', ['http://purl.org/dc/terms/description'], 'default'));
+    }
+
+    public function testAddRdfWithJsonInput(): void
+    {
+        $graph = new ExtendedGraph();
+        $graph->add_rdf('{"http://example.com/1":{"http://purl.org/dc/terms/title":[{"type":"literal","value":"From JSON"}]}}');
+        $this->assertSame('From JSON', $graph->get_first_literal('http://example.com/1', 'http://purl.org/dc/terms/title'));
+    }
+
+    public function testGetSubjectPropertiesNonDistinct(): void
+    {
+        $graph = new ExtendedGraph();
+        $graph->add_literal_triple('http://example.com/1', 'http://purl.org/dc/terms/title', 'One');
+        $graph->add_literal_triple('http://example.com/1', 'http://purl.org/dc/terms/title', 'Two');
+
+        $this->assertSame(['http://purl.org/dc/terms/title'], $graph->get_subject_properties('http://example.com/1'));
+        $this->assertSame(
+            ['http://purl.org/dc/terms/title', 'http://purl.org/dc/terms/title'],
+            $graph->get_subject_properties('http://example.com/1', false)
+        );
+    }
+
+    public function testDiffAgainstOwnIndex(): void
+    {
+        $graph = new ExtendedGraph();
+        $graph->add_literal_triple('http://example.com/1', 'http://purl.org/dc/terms/title', 'Kept');
+        $graph->add_literal_triple('http://example.com/1', 'http://purl.org/dc/terms/description', 'Removed');
+
+        $other = new ExtendedGraph();
+        $other->add_literal_triple('http://example.com/1', 'http://purl.org/dc/terms/title', 'Kept');
+
+        // single argument diffs the graph's own index against the supplied one
+        $diff = $graph->diff($other->get_index());
+        $this->assertArrayHasKey('http://purl.org/dc/terms/description', $diff['http://example.com/1']);
+        $this->assertArrayNotHasKey('http://purl.org/dc/terms/title', $diff['http://example.com/1']);
+    }
+
+    public function testMergeRenamesClashingBnodes(): void
+    {
+        $graph = new ExtendedGraph();
+        $graph->add_literal_triple('_:a', 'http://purl.org/dc/terms/title', 'Original bnode');
+
+        $incoming = [
+            '_:a' => [
+                'http://purl.org/dc/terms/title' => [['type' => 'literal', 'value' => 'Incoming bnode']],
+            ],
+            'http://example.com/1' => [
+                'http://purl.org/dc/terms/source' => [['type' => 'bnode', 'value' => '_:a']],
+            ],
+        ];
+
+        $merged = $graph->merge($incoming);
+
+        // the incoming bnode is renamed to avoid clashing with the existing one
+        $this->assertSame('Original bnode', $merged['_:a']['http://purl.org/dc/terms/title'][0]['value']);
+        $this->assertSame('Incoming bnode', $merged['_:a1']['http://purl.org/dc/terms/title'][0]['value']);
+        // references to the renamed bnode are rewritten
+        $this->assertSame('_:a1', $merged['http://example.com/1']['http://purl.org/dc/terms/source'][0]['value']);
+    }
+
+    public function testReplaceResourceInPredicatePosition(): void
+    {
+        $graph = new ExtendedGraph();
+        $graph->add_literal_triple('http://example.com/1', 'http://example.com/oldPredicate', 'A value');
+        $graph->add_resource_triple('http://example.com/1', 'http://example.com/oldPredicate', 'http://example.com/other');
+
+        $graph->replace_resource('http://example.com/oldPredicate', 'http://example.com/newPredicate');
+
+        $this->assertFalse($graph->subject_has_property('http://example.com/1', 'http://example.com/oldPredicate'));
+        $this->assertSame(['A value'], $graph->get_literal_triple_values('http://example.com/1', 'http://example.com/newPredicate'));
+        $this->assertSame(['http://example.com/other'], $graph->get_resource_triple_values('http://example.com/1', 'http://example.com/newPredicate'));
+    }
+
+    public function testReplaceResourceWhenUriIsSubjectPredicateAndObject(): void
+    {
+        $graph = new ExtendedGraph();
+        $uri = 'http://example.com/self';
+        $graph->add_resource_triple($uri, $uri, $uri);
+        $graph->add_literal_triple($uri, $uri, 'self literal');
+
+        $graph->replace_resource($uri, 'http://example.com/new');
+
+        $this->assertFalse($graph->has_triples_about($uri));
+        $this->assertTrue($graph->has_resource_triple('http://example.com/new', 'http://example.com/new', 'http://example.com/new'));
+        $this->assertTrue($graph->has_literal_triple('http://example.com/new', 'http://example.com/new', 'self literal'));
+    }
+
+    public function testToHtmlRendersPropertiesAndBacklinks(): void
+    {
+        $graph = new ExtendedGraph();
+        $graph->add_literal_triple('http://example.com/1', 'http://purl.org/dc/terms/title', 'First Title');
+        $graph->add_literal_triple('http://example.com/1', 'http://purl.org/dc/terms/title', 'Second Title');
+        $graph->add_resource_triple('http://example.com/1', 'http://purl.org/dc/terms/source', 'http://example.com/2');
+        $graph->add_resource_triple('http://example.com/3', 'http://purl.org/dc/terms/source', 'http://example.com/2');
+        $graph->add_literal_triple('http://example.com/2', 'http://purl.org/dc/terms/title', 'Linked Title');
+
+        $html = $graph->to_html('http://example.com/2');
+        // the subject linking here is rendered as a backlink with an inverse label
+        $this->assertStringContainsString('http://example.com/1', $html);
+        $this->assertStringContainsString('Linked Title', $html);
+
+        // multiple values for the same property are separated
+        $html = $graph->to_html('http://example.com/1');
+        $this->assertStringContainsString('First Title', $html);
+        $this->assertStringContainsString('Second Title', $html);
+        $this->assertStringContainsString('<br />', $html);
+
+        // guess_labels=false renders raw URIs instead of labels
+        $html = $graph->to_html(null, false);
+        $this->assertStringContainsString('>http://example.com/2</a>', $html);
+        $this->assertStringContainsString('>http://example.com/3</a>', $html);
+    }
+
+    public function testAddTurtleWithBnodesIntoNonEmptyGraphRenamesBnodes(): void
+    {
+        $graph = new ExtendedGraph();
+        $graph->add_literal_triple('http://example.com/existing', 'http://purl.org/dc/terms/title', 'Existing');
+
+        $turtle = '@prefix dct: <http://purl.org/dc/terms/> .
+<http://example.com/1> dct:contributor _:b1 .
+_:b1 dct:title "A bnode title"@en .
+<http://example.com/1> dct:extent "123"^^<http://www.w3.org/2001/XMLSchema#integer> .';
+
+        $graph->add_turtle($turtle);
+
+        // bnode labels are rewritten to avoid clashes with the non-empty graph
+        $bnode = $graph->get_first_resource('http://example.com/1', 'http://purl.org/dc/terms/contributor');
+        $this->assertStringStartsWith('_:mor', $bnode);
+        $this->assertSame('A bnode title', $graph->get_first_literal($bnode, 'http://purl.org/dc/terms/title'));
+
+        // language and datatype survive parsing
+        $index = $graph->get_index();
+        $this->assertSame('en', $index[$bnode]['http://purl.org/dc/terms/title'][0]['lang']);
+        $this->assertSame(
+            'http://www.w3.org/2001/XMLSchema#integer',
+            $index['http://example.com/1']['http://purl.org/dc/terms/extent'][0]['datatype']
+        );
+    }
+
+    private function getSimpleGraph(): ExtendedGraph
+    {
+        $graph = new ExtendedGraph();
+        $graph->add_literal_triple('http://example.com/1', 'http://purl.org/dc/terms/title', 'A Title');
+        $graph->add_resource_triple('http://example.com/1', 'http://purl.org/dc/terms/source', 'http://example.com/source');
+
+        return $graph;
+    }
 }

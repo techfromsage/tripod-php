@@ -172,4 +172,102 @@ class MongoTripodNQuadSerializerTest extends MongoTripodTestBase
             $this->assertStringContainsString(rtrim($expectedLine), $actual, 'Failed checking for line: ' . rtrim($expectedLine));
         }
     }
+
+    public function testSerializerWithNullContextProducesTriples(): void
+    {
+        $serializer = new NQuadSerializer();
+        $index = [
+            'http://example.com/1' => [
+                'http://purl.org/dc/terms/title' => [['type' => 'literal', 'value' => 'a title']],
+            ],
+        ];
+
+        $this->assertSame(
+            "<http://example.com/1> <http://purl.org/dc/terms/title> \"a title\" .\n",
+            $serializer->getSerializedIndex($index, null)
+        );
+    }
+
+    public function testSerializerSkipsLiteralSubjects(): void
+    {
+        $serializer = new NQuadSerializer();
+        $index = [
+            'not a uri' => [
+                'http://purl.org/dc/terms/title' => [['type' => 'literal', 'value' => 'skipped']],
+            ],
+            'http://example.com/1' => [
+                'http://purl.org/dc/terms/title' => [['type' => 'literal', 'value' => 'kept']],
+            ],
+        ];
+
+        $serialized = $serializer->getSerializedIndex($index, 'http://talisaspire.com/');
+        $this->assertStringNotContainsString('skipped', $serialized);
+        $this->assertStringContainsString('kept', $serialized);
+    }
+
+    public function testSerializerPreservesBlankNodesAndSingleLiteralObjects(): void
+    {
+        $serializer = new NQuadSerializer();
+        $index = [
+            '_:b1' => [
+                'http://purl.org/dc/terms/title' => 'bare literal',
+            ],
+        ];
+
+        $this->assertSame(
+            "_:b1 <http://purl.org/dc/terms/title> \"bare literal\" <http://talisaspire.com/> .\n",
+            $serializer->getSerializedIndex($index, 'http://talisaspire.com/')
+        );
+    }
+
+    public function testSerializerAppendsLanguageTag(): void
+    {
+        $serializer = new NQuadSerializer();
+        $term = $serializer->getTerm(['type' => 'literal', 'value' => 'bonjour', 'lang' => 'fr']);
+        $this->assertSame('"bonjour"@fr', $term);
+    }
+
+    public function testSerializerAppendsDatatype(): void
+    {
+        $serializer = new NQuadSerializer();
+        $term = $serializer->getTerm(['type' => 'literal', 'value' => '123', 'datatype' => 'http://www.w3.org/2001/XMLSchema#integer']);
+        $this->assertSame('"123"^^<http://www.w3.org/2001/XMLSchema#integer>', $term);
+    }
+
+    public function testEscapeControlAndSpecialCharacters(): void
+    {
+        $serializer = new NQuadSerializer();
+        $this->assertSame('\t', $serializer->escape("\t"));
+        $this->assertSame('\n', $serializer->escape("\n"));
+        $this->assertSame('\r', $serializer->escape("\r"));
+        $this->assertSame('\"', $serializer->escape('"'));
+        $this->assertSame('\\\\', $serializer->escape('\\'));
+        $this->assertSame('\u0001', $serializer->escape("\x01"));
+        $this->assertSame('plain text!', $serializer->escape('plain text!'));
+    }
+
+    public function testEscapeMultibyteCharacters(): void
+    {
+        $serializer = new NQuadSerializer();
+        // 2-byte UTF-8 (é = U+00E9) is transcoded to ISO-8859-1 and escaped as a single code point
+        $this->assertSame('\u00E9', $serializer->escape('é'));
+        // 3-byte UTF-8 (€) cannot be transcoded to ISO-8859-1, so each byte is escaped individually
+        $this->assertSame('\u00E2\u0082\u00AC', $serializer->escape('€'));
+    }
+
+    public function testGetCharNoForMultibyteCharacters(): void
+    {
+        $serializer = new NQuadSerializer();
+        $this->assertSame(65, $serializer->getCharNo('A'));
+        $this->assertSame(0xE9, $serializer->getCharNo(mb_convert_encoding('é', 'ISO-8859-1', 'UTF-8')));
+    }
+
+    public function testGetEscapedCharForSupplementaryPlane(): void
+    {
+        $serializer = new NQuadSerializer();
+        // U+1F600 (emoji) is above the BMP so uses the \U form
+        $this->assertSame('\U0001F600', $serializer->getEscapedChar('x', 0x1F600));
+        // above the Unicode range is ignored
+        $this->assertSame('', $serializer->getEscapedChar('x', 0x110000));
+    }
 }
