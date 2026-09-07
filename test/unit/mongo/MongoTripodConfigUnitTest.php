@@ -1083,6 +1083,8 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $this->tripod = new Driver('CBD_testing', $storeName, [OP_ASYNC => [OP_VIEWS => true, OP_TABLES => false, OP_SEARCH => false]]);
         $this->loadResourceDataViaTripod();
 
+        $tripod2 = new Driver('CBD_testing_2', $storeName, [OP_ASYNC => [OP_VIEWS => true, OP_TABLES => false, OP_SEARCH => false]]);
+
         $graph = new MongoGraph();
         $subject = 'http://example.com/' . uniqid();
         $labeller = new Labeller();
@@ -1090,6 +1092,7 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         $graph->add_literal_triple($subject, FOAF_NAME, 'Anne Example');
 
         $this->tripod->saveChanges(new ExtendedGraph(), $graph);
+        $tripod2->saveChanges(new ExtendedGraph(), $graph);
 
         $newGraph = $this->tripod->describeResource($subject);
         $newGraph->add_literal_triple($subject, $labeller->qname_to_uri('foaf:email'), 'anne@example.com');
@@ -1113,21 +1116,29 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
 
         $this->tripod->removeInertLocks('foobar', 'reason1');
 
-        $collectionsForDataSource = [];
-        $collectionsForDataSource['rs1'] = [
-            VIEWS_COLLECTION,
-            SEARCH_INDEX_COLLECTION,
-            TABLE_ROWS_COLLECTION,
-            'CBD_testing',
-            AUDIT_MANUAL_ROLLBACKS_COLLECTION,
-            LOCKS_COLLECTION,
+        $collectionsForDataSource = [
+            'rs1' => [
+                VIEWS_COLLECTION,
+                SEARCH_INDEX_COLLECTION,
+                TABLE_ROWS_COLLECTION,
+                'CBD_testing',
+                AUDIT_MANUAL_ROLLBACKS_COLLECTION,
+                LOCKS_COLLECTION,
+            ],
+            'rs2' => [
+                VIEWS_COLLECTION,
+                SEARCH_INDEX_COLLECTION,
+                TABLE_ROWS_COLLECTION,
+                'CBD_testing_2',
+                'transaction_log',
+            ],
         ];
 
-        $collectionsForDataSource['rs2'] = [VIEWS_COLLECTION, SEARCH_INDEX_COLLECTION, TABLE_ROWS_COLLECTION, 'CBD_testing_2', 'transaction_log'];
-        $specs = [];
-        $specs['views'] = Config::getInstance()->getViewSpecifications($storeName);
-        $specs['search'] = Config::getInstance()->getSearchDocumentSpecifications($storeName);
-        $specs['table_rows'] = Config::getInstance()->getTableSpecifications($storeName);
+        $specs = [
+            'views' => Config::getInstance()->getViewSpecifications($storeName),
+            'search' => Config::getInstance()->getSearchDocumentSpecifications($storeName),
+            'table_rows' => Config::getInstance()->getTableSpecifications($storeName),
+        ];
         $specsForDataSource = [];
 
         foreach (['views', 'search', 'table_rows'] as $type) {
@@ -1145,12 +1156,16 @@ class MongoTripodConfigUnitTest extends MongoTripodTestBase
         foreach ($dataSourcesForStore as $source) {
             $db = $config->getDatabase($storeName, $source);
             foreach ($db->listCollections() as $collectionInfo) {
-                $name = $collectionInfo->getName();
-                $collection = $db->selectCollection($name);
-                $foundCollections[] = $name;
-                $this->assertContains($name, $collectionsForDataSource[$source], 'Source ' . $source . ' does not include ' . $name);
+                $collectionName = $collectionInfo->getName();
+                if (strpos($collectionName, 'system.') === 0) {
+                    continue;
+                }
 
-                switch ($name) {
+                $collection = $db->selectCollection($collectionName);
+                $foundCollections[] = $collectionName;
+                $this->assertContains($collectionName, $collectionsForDataSource[$source], 'Source ' . $source . ' does not include ' . $collectionName);
+
+                switch ($collectionName) {
                     case 'views':
                         $this->assertGreaterThan(0, count($specsForDataSource[$source]['views']));
 
