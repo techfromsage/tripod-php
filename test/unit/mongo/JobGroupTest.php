@@ -10,7 +10,7 @@ class JobGroupTest extends MongoTripodTestBase
     public function testConstructorGeneratesIdWhenNoneSupplied(): void
     {
         $jobGroup = new JobGroup('tripod_php_testing');
-        $this->assertInstanceOf(ObjectId::class, $jobGroup->getId());
+        $this->assertMatchesRegularExpression('/^[0-9a-f]{24}$/', (string) $jobGroup->getId());
     }
 
     public function testConstructorAcceptsObjectId(): void

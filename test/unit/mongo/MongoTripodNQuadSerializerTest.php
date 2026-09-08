@@ -259,7 +259,7 @@ class MongoTripodNQuadSerializerTest extends MongoTripodTestBase
     {
         $serializer = new NQuadSerializer();
         $this->assertSame(65, $serializer->getCharNo('A'));
-        $this->assertSame(0xE9, $serializer->getCharNo(mb_convert_encoding('é', 'ISO-8859-1', 'UTF-8')));
+        $this->assertSame(0xE9, $serializer->getCharNo((string) mb_convert_encoding('é', 'ISO-8859-1', 'UTF-8')));
     }
 
     public function testGetEscapedCharForSupplementaryPlane(): void

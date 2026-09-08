@@ -322,7 +322,10 @@ class MongoTripodStatTest extends MongoTripodTestBase
         $server = stream_socket_server('udp://127.0.0.1:0', $errno, $errstr, STREAM_SERVER_BIND);
         $this->assertNotFalse($server, 'Could not bind test UDP socket');
         stream_set_blocking($server, false);
-        $port = parse_url(stream_socket_get_name($server, false), PHP_URL_PORT);
+        $socketName = stream_socket_get_name($server, false);
+        $this->assertIsString($socketName);
+        $port = parse_url($socketName, PHP_URL_PORT);
+        $this->assertIsInt($port);
 
         $stat = new StatsD('127.0.0.1', $port, 'somePrefix');
         $stat->increment('FOO.BAR');
