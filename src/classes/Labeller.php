@@ -394,50 +394,50 @@ class Labeller
     public function get_label(string $uri, ?ExtendedGraph $g = null, bool $capitalize = false, bool $use_qnames = false): string
     {
         if ($g instanceof ExtendedGraph) {
-            $label = (string) $g->get_first_literal($uri, 'http://www.w3.org/2004/02/skos/core#prefLabel', '', 'en');
+            $label = $g->get_first_literal($uri, 'http://www.w3.org/2004/02/skos/core#prefLabel', '', 'en');
             if ($label) {
-                return $label;
+                return (string) $label;
             }
 
-            $label = (string) $g->get_first_literal($uri, RDFS_LABEL, '', 'en');
+            $label = $g->get_first_literal($uri, RDFS_LABEL, '', 'en');
             if ($label) {
-                return $label;
+                return (string) $label;
             }
 
-            $label = (string) $g->get_first_literal($uri, 'http://purl.org/dc/terms/title', '', 'en');
+            $label = $g->get_first_literal($uri, 'http://purl.org/dc/terms/title', '', 'en');
             if ($label) {
-                return $label;
+                return (string) $label;
             }
 
-            $label = (string) $g->get_first_literal($uri, DC_TITLE, '', 'en');
+            $label = $g->get_first_literal($uri, DC_TITLE, '', 'en');
             if ($label) {
-                return $label;
+                return (string) $label;
             }
 
-            $label = (string) $g->get_first_literal($uri, FOAF_NAME, '', 'en');
+            $label = $g->get_first_literal($uri, FOAF_NAME, '', 'en');
             if ($label) {
-                return $label;
+                return (string) $label;
             }
 
-            $label = (string) $g->get_first_literal($uri, 'http://www.geonames.org/ontology#name', '', 'en');
+            $label = $g->get_first_literal($uri, 'http://www.geonames.org/ontology#name', '', 'en');
             if ($label) {
-                return $label;
+                return (string) $label;
             }
 
-            $label = (string) $g->get_first_literal($uri, RDF_VALUE, '', 'en');
+            $label = $g->get_first_literal($uri, RDF_VALUE, '', 'en');
             if ($label) {
-                return $label;
+                return (string) $label;
             }
 
-            $label = (string) $g->get_first_literal($uri, 'http://purl.org/rss/1.0/title', '', 'en');
+            $label = $g->get_first_literal($uri, 'http://purl.org/rss/1.0/title', '', 'en');
             if ($label) {
-                return $label;
+                return (string) $label;
             }
 
             foreach ($this->_label_properties as $p) {
-                $label = (string) $g->get_first_literal($uri, $p, '', 'en');
+                $label = $g->get_first_literal($uri, $p, '', 'en');
                 if ($label) {
-                    return $label;
+                    return (string) $label;
                 }
             }
         }

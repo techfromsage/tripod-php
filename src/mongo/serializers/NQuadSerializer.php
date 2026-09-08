@@ -10,18 +10,10 @@ namespace Tripod\Mongo;
  */
 class NQuadSerializer
 {
-    private ?int $raw = null;
-
     private ?array $esc_chars = null;
 
-    public function ___construct(): void
-    {
-        $this->esc_chars = [];
-        $this->raw = 0;
-    }
-
     /**
-     * @param array|string $v
+     * @param array|string $v a term array keyed by type/value/lang/datatype, or a bare term
      */
     public function getTerm($v): string
     {
@@ -43,37 +35,28 @@ class NQuadSerializer
 
         // literal
         $quot = '"';
-        if ($this->raw && preg_match('/\"/', $v['value'])) {
-            $quot = "'";
-            if (preg_match("/'/", $v['value'])) {
-                $quot = '"""';
-                if (preg_match('/\"\"\"/', $v['value']) || preg_match('/\"$/', $v['value']) || preg_match('/^\"/', $v['value'])) {
-                    $quot = "'''";
-                    $v['value'] = preg_replace("/'$/", "' ", $v['value']) ?? '';
-                    $v['value'] = preg_replace("/^'/", " '", $v['value']) ?? '';
-                    $v['value'] = str_replace("'''", '\\\'\\\'\\\'', $v['value']);
-                }
-            }
-        }
-
-        if ($this->raw && (strlen($quot) === 1) && preg_match('/[\x0d\x0a]/', $v['value'])) {
-            $quot = $quot . $quot . $quot;
-        }
 
         $suffix = isset($v['lang']) && $v['lang'] ? '@' . $v['lang'] : '';
         $suffix = isset($v['datatype']) && $v['datatype'] ? '^^' . $this->getTerm($v['datatype']) : $suffix;
 
-        $escaped = $this->escape($v['value']);
+        // Literal values reach here straight from a Mongo document or a graph index, so the type is
+        // whatever was stored. Anything that isn't a scalar has no meaningful N-Quads literal form.
+        $value = $v['value'] ?? '';
+        $escaped = $this->escape(is_scalar($value) ? (string) $value : '');
 
         return $quot . $escaped . $quot . $suffix;
     }
 
+    /**
+     * @param array<string, array<string, mixed>> $index a graph index; each predicate holds a list of
+     *                                                   term arrays, or a bare literal value
+     */
     public function getSerializedIndex(array $index, ?string $context): string
     {
         $r = '';
         $nl = "\n";
         foreach ($index as $s => $ps) {
-            $s = $this->getTerm($s);
+            $s = $this->getTerm((string) $s);
 
             // Fix added to ensure we do not serialize to quads
             // any triple where the subject is a literal
@@ -82,7 +65,7 @@ class NQuadSerializer
             }
 
             foreach ($ps as $p => $os) {
-                $p = $this->getTerm($p);
+                $p = $this->getTerm((string) $p);
                 if (!is_array($os)) { // single literal o
                     $os = [['value' => $os, _ID_TYPE => 'literal']];
                 }
@@ -113,9 +96,6 @@ class NQuadSerializer
         $probe = self::convertEncoding(str_replace('?', '', $v), 'ISO-8859-1', 'UTF-8', '?');
         if (strpos($probe, '?') === false) {
             $v = self::convertEncoding($v, 'ISO-8859-1', 'UTF-8', $v);
-        }
-        if ($this->raw) {
-            return $v;
         }
 
         for ($i = 0, $i_max = strlen($v); $i < $i_max; $i++) {

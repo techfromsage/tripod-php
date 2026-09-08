@@ -270,4 +270,43 @@ class MongoTripodNQuadSerializerTest extends MongoTripodTestBase
         // above the Unicode range is ignored
         $this->assertSame('', $serializer->getEscapedChar('x', 0x110000));
     }
+
+    public function testGetEscapedCharCoversControlAndSpecialCharacters(): void
+    {
+        $serializer = new NQuadSerializer();
+        $this->assertSame('\u0005', $serializer->getEscapedChar(chr(5), 5));
+        $this->assertSame('\t', $serializer->getEscapedChar(chr(9), 9));
+        $this->assertSame('\n', $serializer->getEscapedChar(chr(10), 10));
+        $this->assertSame('\u000B', $serializer->getEscapedChar(chr(11), 11));
+        $this->assertSame('\r', $serializer->getEscapedChar(chr(13), 13));
+        $this->assertSame('\u0014', $serializer->getEscapedChar(chr(20), 20));
+        $this->assertSame('!', $serializer->getEscapedChar('!', 33));
+        $this->assertSame('\"', $serializer->getEscapedChar('"', 34));
+        $this->assertSame('A', $serializer->getEscapedChar('A', 65));
+        $this->assertSame('\\\\', $serializer->getEscapedChar('\\', 92));
+        $this->assertSame('a', $serializer->getEscapedChar('a', 97));
+        $this->assertSame('\u00E9', $serializer->getEscapedChar('X', 0xE9));
+        $this->assertSame('\U00010000', $serializer->getEscapedChar('X', 65536));
+        $this->assertSame('', $serializer->getEscapedChar('X', 1114112));
+    }
+
+    public function testSerializerWrapsScalarLiteralValuesInObjectLists(): void
+    {
+        $serializer = new NQuadSerializer();
+        $index = ['http://example.com/1' => ['http://purl.org/dc/terms/extent' => [123]]];
+
+        $serialized = $serializer->getSerializedIndex($index, 'http://talisaspire.com/');
+
+        $this->assertStringContainsString('"123"', $serialized);
+    }
+
+    public function testSerializerRendersNonScalarLiteralValuesAsEmpty(): void
+    {
+        $serializer = new NQuadSerializer();
+
+        // there is no N-Quads literal form for a nested structure, so it serialises as an empty literal
+        $this->assertSame('""', $serializer->getTerm(['type' => 'literal', 'value' => ['nested']]));
+        // a missing value is treated the same way
+        $this->assertSame('""', $serializer->getTerm(['type' => 'literal']));
+    }
 }
