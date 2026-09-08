@@ -371,7 +371,7 @@ class Labeller
         }
 
         $index = 0;
-        while (isset($this->_ns['ns' . $index])) {
+        while (isset($this->_ns['msg' . $index])) {
             $index++;
         }
 
