@@ -43,7 +43,7 @@ class TimerTest extends TestCase
         $timer = new Timer();
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('Timer: start method not called !');
-        $timer->result();
+        $timer->microResult();
     }
 
     public function testMicroResultWhenEndTimeNotSet(): void
@@ -52,7 +52,7 @@ class TimerTest extends TestCase
         $timer->start();
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('Timer: stop method not called !');
-        $timer->result();
+        $timer->microResult();
     }
 
     public function testMicroResultGetTimeInMilliSeconds(): void

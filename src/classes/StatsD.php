@@ -144,7 +144,7 @@ class StatsD implements ITripodStat
      *
      * @param array<string, string|string[]> $data
      */
-    protected function send(array $data, int $sampleRate = 1): void
+    protected function send(array $data, float $sampleRate = 1): void
     {
         if (empty($this->host)) {
             return;
@@ -170,7 +170,7 @@ class StatsD implements ITripodStat
         try {
             $fp = fsockopen('udp://' . $this->host, $this->port);
             if (!$fp) {
-                return;
+                return; // @codeCoverageIgnore
             }
 
             // make this a non blocking stream

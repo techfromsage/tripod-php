@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
+use Tripod\Exceptions\Exception;
 use Tripod\ExtendedGraph;
 
 class ExtendedGraphTest extends TestCase
@@ -1002,6 +1003,14 @@ class ExtendedGraphTest extends TestCase
         $this->assertEquals($graph->get_index(), $newGraph->get_index());
     }
 
+    public function testToJsonThrowsException(): void
+    {
+        $graph = new ExtendedGraph();
+        $graph->add_literal_triple('http://example.com/1', 'http://purl.org/dc/terms/title', "\xB1"); // invalid UTF-8 sequence to trigger json_encode error
+        $this->expectException(Exception::class);
+        $graph->to_json();
+    }
+
     public function testFromRdfaParsesRdfaMarkup(): void
     {
         $html = '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>test</title></head><body>'
@@ -1100,10 +1109,12 @@ class ExtendedGraphTest extends TestCase
     {
         $graph = new ExtendedGraph();
         $graph->add_resource_triple('http://example.com/1', 'http://purl.org/dc/terms/source', 'http://example.com/old');
+        $graph->add_resource_triple('http://example.com/2', 'http://purl.org/dc/terms/source', 'http://example.com/other');
 
         $graph->replace_resource('http://example.com/old', 'http://example.com/new');
 
         $this->assertSame('http://example.com/new', $graph->get_first_resource('http://example.com/1', 'http://purl.org/dc/terms/source'));
+        $this->assertSame('http://example.com/other', $graph->get_first_resource('http://example.com/2', 'http://purl.org/dc/terms/source'));
     }
 
     public function testGetListValues(): void
@@ -1314,6 +1325,242 @@ _:b1 dct:title "A bnode title"@en .
             'http://www.w3.org/2001/XMLSchema#integer',
             $extent['datatype']
         );
+    }
+
+    public function testQnameToUriAndUriToQnameDelegateToLabeller(): void
+    {
+        $graph = new ExtendedGraph();
+
+        $this->assertSame('http://purl.org/dc/terms/title', $graph->qname_to_uri('dct:title'));
+        $this->assertNull($graph->qname_to_uri('unknown:title'));
+        $this->assertNull($graph->qname_to_uri(null));
+
+        $this->assertSame('dct:title', $graph->uri_to_qname('http://purl.org/dc/terms/title'));
+        // nothing that can be split into a namespace and a local name
+        $this->assertNull($graph->uri_to_qname('not-a-uri'));
+        $this->assertNull($graph->uri_to_qname(null));
+
+        // a mapping registered on the graph is visible to both conversions
+        $graph->set_namespace_mapping('ex', 'http://example.com/vocab#');
+        $this->assertSame('http://example.com/vocab#title', $graph->qname_to_uri('ex:title'));
+        $this->assertSame('ex:title', $graph->uri_to_qname('http://example.com/vocab#title'));
+    }
+
+    public function testToNtriples(): void
+    {
+        $ntriples = $this->getSimpleGraph()->to_ntriples();
+
+        $this->assertStringContainsString('<http://example.com/1> <http://purl.org/dc/terms/title> "A Title" .', $ntriples);
+        $this->assertStringContainsString('<http://example.com/1> <http://purl.org/dc/terms/source> <http://example.com/source> .', $ntriples);
+    }
+
+    public function testGetSubjectPropertyValues(): void
+    {
+        $graph = $this->getSimpleGraph();
+        $graph->add_literal_triple('http://example.com/1', 'http://purl.org/dc/terms/description', 'A Description');
+
+        // literals and resources are both returned, with their type information
+        $this->assertSame(
+            [['type' => 'literal', 'value' => 'A Title']],
+            $graph->get_subject_property_values('http://example.com/1', 'http://purl.org/dc/terms/title')
+        );
+
+        // an array of predicates returns the values for each, in the order the predicates were given
+        $this->assertSame(
+            [
+                ['type' => 'literal', 'value' => 'A Description'],
+                ['type' => 'uri', 'value' => 'http://example.com/source'],
+            ],
+            $graph->get_subject_property_values('http://example.com/1', ['http://purl.org/dc/terms/description', 'http://purl.org/dc/terms/source'])
+        );
+
+        $this->assertSame([], $graph->get_subject_property_values('http://example.com/1', 'http://purl.org/dc/terms/subject'));
+        $this->assertSame([], $graph->get_subject_property_values('http://example.com/unknown', 'http://purl.org/dc/terms/title'));
+    }
+
+    public function testGetSubjectSubgraph(): void
+    {
+        $graph = $this->getSimpleGraph();
+        $graph->add_literal_triple('http://example.com/2', 'http://purl.org/dc/terms/title', 'Another Title');
+
+        $subgraph = $graph->get_subject_subgraph('http://example.com/1');
+        $this->assertSame(['http://example.com/1'], $subgraph->get_subjects());
+        $this->assertSame('A Title', $subgraph->get_first_literal('http://example.com/1', 'http://purl.org/dc/terms/title'));
+
+        // unknown subjects produce an empty graph
+        $this->assertTrue($graph->get_subject_subgraph('http://example.com/unknown')->is_empty());
+    }
+
+    public function testReify(): void
+    {
+        $graph = new ExtendedGraph();
+        $rdf = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
+
+        $reified = $graph->reify([
+            'http://example.com/1' => [
+                'http://purl.org/dc/terms/title' => [['type' => 'literal', 'value' => 'A Title']],
+            ],
+            '_:b1' => [
+                'http://purl.org/dc/terms/title' => [['type' => 'literal', 'value' => 'A bnode title']],
+            ],
+        ]);
+
+        $this->assertSame(['_:Statement1', '_:Statement2'], array_keys($reified));
+
+        $first = $reified['_:Statement1'];
+        $this->assertSame([['type' => 'uri', 'value' => $rdf . 'Statement']], $first[$rdf . 'type']);
+        $this->assertSame([['type' => 'uri', 'value' => 'http://example.com/1']], $first[$rdf . 'subject']);
+        $this->assertSame([['type' => 'uri', 'value' => 'http://purl.org/dc/terms/title']], $first[$rdf . 'predicate']);
+        $this->assertSame([['type' => 'literal', 'value' => 'A Title']], $first[$rdf . 'object']);
+
+        // bnode subjects are reified as bnodes rather than URIs
+        $this->assertSame([['type' => 'bnode', 'value' => '_:b1']], $reified['_:Statement2'][$rdf . 'subject']);
+    }
+
+    public function testReifyUsesPrefixAndSkipsNodeIdsAlreadyInUse(): void
+    {
+        $graph = new ExtendedGraph();
+
+        $reified = $graph->reify([
+            '_:S1' => [
+                'http://purl.org/dc/terms/title' => [['type' => 'literal', 'value' => 'A Title']],
+            ],
+        ], 'S');
+
+        // _:S1 is taken by the resource being reified, so the next free node id is used
+        $this->assertSame(['_:S2'], array_keys($reified));
+    }
+
+    public function testDiffWithEmptyBaseIsEmpty(): void
+    {
+        $graph = new ExtendedGraph();
+        $other = new ExtendedGraph();
+        $other->add_literal_triple('http://example.com/1', 'http://purl.org/dc/terms/title', 'A Title');
+
+        // the graph's own index is the base and it is empty
+        $this->assertSame([], $graph->diff($other->get_index()));
+        // an explicitly empty base
+        $this->assertSame([], $graph->diff([], $other->get_index()));
+    }
+
+    public function testMergeRenamesIncomingBnodeReferenceThatClashesWithExistingSubject(): void
+    {
+        $graph = new ExtendedGraph();
+        $graph->add_literal_triple('_:a', 'http://purl.org/dc/terms/title', 'Original bnode');
+
+        // _:a is only referenced as an object here, so it is not renamed by the subject pass
+        $merged = $graph->merge([
+            'http://example.com/1' => [
+                'http://purl.org/dc/terms/source' => [['type' => 'bnode', 'value' => '_:a']],
+            ],
+        ]);
+
+        $this->assertSame('_:a1', $merged['http://example.com/1']['http://purl.org/dc/terms/source'][0]['value']);
+        // the existing bnode is left alone
+        $this->assertSame('Original bnode', $merged['_:a']['http://purl.org/dc/terms/title'][0]['value']);
+    }
+
+    public function testMergeKeepsIncomingBnodeReferenceThatDoesNotClash(): void
+    {
+        $graph = new ExtendedGraph();
+        $graph->add_literal_triple('http://example.com/existing', 'http://purl.org/dc/terms/title', 'Existing');
+
+        $merged = $graph->merge([
+            'http://example.com/1' => [
+                'http://purl.org/dc/terms/source' => [['type' => 'bnode', 'value' => '_:b1']],
+            ],
+        ]);
+
+        $this->assertSame('_:b1', $merged['http://example.com/1']['http://purl.org/dc/terms/source'][0]['value']);
+    }
+
+    public function testReplaceResourceRewritesEveryTriplePositionCombination(): void
+    {
+        $graph = new ExtendedGraph();
+        $uri = 'http://example.com/old';
+        $new = 'http://example.com/new';
+
+        // subject and predicate match, object does not
+        $graph->add_resource_triple($uri, $uri, 'http://example.com/other');
+        // subject and object match, predicate does not
+        $graph->add_resource_triple($uri, 'http://purl.org/dc/terms/source', $uri);
+        // predicate and object match, subject does not
+        $graph->add_resource_triple('http://example.com/1', $uri, $uri);
+
+        $graph->replace_resource($uri, $new);
+
+        $this->assertFalse($graph->has_triples_about($uri));
+        $this->assertTrue($graph->has_resource_triple($new, $new, 'http://example.com/other'));
+        $this->assertTrue($graph->has_resource_triple($new, 'http://purl.org/dc/terms/source', $new));
+        $this->assertTrue($graph->has_resource_triple('http://example.com/1', $new, $new));
+    }
+
+    public function testAddTurtleRenamesBnodeSubjectThatIsNeverAnObject(): void
+    {
+        $graph = new ExtendedGraph();
+        $graph->add_literal_triple('http://example.com/existing', 'http://purl.org/dc/terms/title', 'Existing');
+
+        $graph->add_turtle('@prefix dct: <http://purl.org/dc/terms/> .
+_:standalone dct:title "A standalone bnode" .');
+
+        $subjects = array_values(array_filter($graph->get_subjects(), function (string $s): bool {
+            return strpos($s, '_:') === 0;
+        }));
+
+        $this->assertCount(1, $subjects);
+        $this->assertStringStartsWith('_:mor', $subjects[0]);
+        $this->assertSame('A standalone bnode', $graph->get_first_literal($subjects[0], 'http://purl.org/dc/terms/title'));
+    }
+
+    public function testAddTurtleWithRepeatedPredicateKeepsBothObjects(): void
+    {
+        $graph = new ExtendedGraph();
+        $graph->add_turtle('@prefix dct: <http://purl.org/dc/terms/> .
+<http://example.com/1> dct:title "One", "Two", "One" .');
+
+        // the duplicate is discarded, the distinct value is appended
+        $this->assertSame(['One', 'Two'], $graph->get_literal_triple_values('http://example.com/1', 'http://purl.org/dc/terms/title'));
+    }
+
+    /**
+     * The bundled ARC2 parsers no longer emit these object types, but the normalisation is kept for
+     * RDF parsed by older ARC versions. Drive the private list handler directly to pin the mapping.
+     */
+    public function testArc2TripleListNormalisesLegacyObjectTypes(): void
+    {
+        $graph = new ExtendedGraph();
+
+        $triples = [
+            ['s' => 'http://example.com/1', 'p' => 'http://purl.org/dc/terms/source', 'o' => 'http://example.com/2', 'o_type' => 'iri'],
+            ['s' => 'http://example.com/1', 'p' => 'http://purl.org/dc/terms/title', 'o' => 'Single quoted', 'o_type' => 'literal1'],
+            ['s' => 'http://example.com/1', 'p' => 'http://purl.org/dc/terms/description', 'o' => 'Long quoted', 'o_type' => 'long_literal2'],
+            ['s' => 'http://example.com/1', 'p' => 'http://purl.org/dc/terms/extent', 'o' => '123', 'o_type' => 'literal2', 'o_dt' => 'http://www.w3.org/2001/XMLSchema#integer'],
+            // triples without a string subject or predicate are skipped
+            ['s' => null, 'p' => 'http://purl.org/dc/terms/title', 'o' => 'No subject', 'o_type' => 'literal'],
+            ['s' => 'http://example.com/1', 'p' => null, 'o' => 'No predicate', 'o_type' => 'literal'],
+        ];
+
+        $this->addArc2Triples($graph, $triples);
+
+        $this->assertSame('http://example.com/2', $graph->get_first_resource('http://example.com/1', 'http://purl.org/dc/terms/source'));
+        $this->assertSame('Single quoted', $graph->get_first_literal('http://example.com/1', 'http://purl.org/dc/terms/title'));
+        $this->assertSame('Long quoted', $graph->get_first_literal('http://example.com/1', 'http://purl.org/dc/terms/description'));
+        $this->assertTrue($graph->has_literal_triple('http://example.com/1', 'http://purl.org/dc/terms/extent', '123', null, 'http://www.w3.org/2001/XMLSchema#integer'));
+
+        $this->assertSame(4, $graph->get_triple_count(), 'the two triples with a non-string subject or predicate should have been skipped');
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $triples
+     */
+    private function addArc2Triples(ExtendedGraph $graph, array $triples): void
+    {
+        $add = Closure::bind(function (array &$triples): void {
+            $this->_add_arc2_triple_list($triples);
+        }, $graph, ExtendedGraph::class);
+
+        $this->assertNotNull($add);
+        $add($triples);
     }
 
     private function getSimpleGraph(): ExtendedGraph

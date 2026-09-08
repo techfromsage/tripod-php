@@ -345,4 +345,49 @@ class MongoTripodStatTest extends MongoTripodTestBase
         $this->assertStringContainsString('somePrefix.' . STAT_CLASS . '.BAZ:1|c', $received);
         $this->assertStringContainsString('somePrefix.' . STAT_CLASS . '.BAZ:1234|ms', $received);
     }
+
+    public function testSendWithSampleRateAnnotatesAndSamplesStats(): void
+    {
+        $server = stream_socket_server('udp://127.0.0.1:0', $errno, $errstr, STREAM_SERVER_BIND);
+        $this->assertNotFalse($server, 'Could not bind test UDP socket');
+        stream_set_blocking($server, false);
+        $socketName = stream_socket_get_name($server, false);
+        $this->assertIsString($socketName);
+        $port = parse_url($socketName, PHP_URL_PORT);
+        $this->assertIsInt($port);
+
+        $stat = new ExposedSendStatsD('127.0.0.1', $port, 'somePrefix');
+
+        // a sample rate this close to 1 makes inclusion (mt_rand()/mt_getrandmax() <= rate) a practical certainty
+        $stat->exposeSend(['some.stat' => '1|c'], 0.9999999);
+        usleep(50000);
+        $datagram = stream_socket_recvfrom($server, 1024);
+        $this->assertSame('some.stat:1|c|@0', $datagram);
+
+        // and a rate this close to 0 means nothing is sampled, so nothing is sent
+        $stat->exposeSend(['some.stat' => '1|c'], 0.0000001);
+        usleep(50000);
+        $this->assertSame('', (string) stream_socket_recvfrom($server, 1024));
+
+        fclose($server);
+    }
+
+    public function testSendSwallowsConnectionFailures(): void
+    {
+        // .invalid is guaranteed not to resolve; the resulting warning-turned-exception is caught internally
+        $stat = new StatsD('host.invalid', 1234, 'somePrefix');
+        $stat->increment('FOO.BAR');
+        $this->addToAssertionCount(1); // no exception escaped send()
+    }
+}
+
+class ExposedSendStatsD extends StatsD
+{
+    /**
+     * @param array<string, string|string[]> $data
+     */
+    public function exposeSend(array $data, float $sampleRate): void
+    {
+        $this->send($data, $sampleRate);
+    }
 }

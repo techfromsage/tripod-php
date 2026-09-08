@@ -71,10 +71,15 @@ class LabellerTest extends TestCase
     public function testGetPrefixFallsBackToGeneratedPrefix(): void
     {
         // no eligible URI part (hostname contains a dot, 'ns' is reserved)
-        $prefix = $this->labeller->get_prefix('http://foo.io/ns#');
-        $this->assertSame('msg0', $prefix);
+        $first = $this->labeller->get_prefix('http://foo.io/ns#');
+        $this->assertSame('msg0', $first);
         $ns = $this->labeller->get_ns();
-        $this->assertSame('http://foo.io/ns#', $ns[$prefix]);
+        $this->assertSame('http://foo.io/ns#', $ns[$first]);
+
+        $second = $this->labeller->get_prefix('http://bar.io/ns#');
+        $this->assertSame('msg1', $second);
+        $ns = $this->labeller->get_ns();
+        $this->assertSame('http://bar.io/ns#', $ns[$second]);
     }
 
     public function testGetLabelFromLabelsTable(): void
@@ -90,20 +95,22 @@ class LabellerTest extends TestCase
         $this->assertSame('Item 21', $this->labeller->get_label('http://www.w3.org/1999/02/22-rdf-syntax-ns#_21', null, true));
     }
 
-    public function testGetLabelFromGraph(): void
+    /**
+     * @testWith ["http://www.w3.org/2004/02/skos/core#prefLabel"]
+     *           ["http://www.w3.org/2000/01/rdf-schema#label"]
+     *           ["http://purl.org/dc/terms/title"]
+     *           ["http://purl.org/dc/elements/1.1/title"]
+     *           ["http://xmlns.com/foaf/0.1/name"]
+     *           ["http://www.geonames.org/ontology#name"]
+     *           ["http://www.w3.org/1999/02/22-rdf-syntax-ns#value"]
+     *           ["http://purl.org/rss/1.0/title"]
+     */
+    public function testGetLabelFromGraph(string $predicate): void
     {
         $uri = 'http://example.com/thing';
         $graph = new ExtendedGraph();
-        $graph->add_literal_triple($uri, 'http://www.w3.org/2004/02/skos/core#prefLabel', 'My Thing', 'en');
+        $graph->add_literal_triple($uri, $predicate, 'My Thing', 'en');
         $this->assertSame('My Thing', $this->labeller->get_label($uri, $graph));
-    }
-
-    public function testGetLabelFromGraphFallsBackThroughLabelProperties(): void
-    {
-        $uri = 'http://example.com/thing';
-        $graph = new ExtendedGraph();
-        $graph->add_literal_triple($uri, FOAF_NAME, 'A Name', 'en');
-        $this->assertSame('A Name', $this->labeller->get_label($uri, $graph));
     }
 
     public function testGetLabelUsesCustomLabellingProperty(): void
