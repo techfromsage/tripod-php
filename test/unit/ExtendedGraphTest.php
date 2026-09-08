@@ -1091,7 +1091,9 @@ class ExtendedGraphTest extends TestCase
 
         // language on literals is preserved
         $index = $graph->get_index();
-        $this->assertSame('en', $index['http://example.com/new']['http://purl.org/dc/terms/description'][0]['lang']);
+        $description = $index['http://example.com/new']['http://purl.org/dc/terms/description'][0];
+        $this->assertArrayHasKey('lang', $description);
+        $this->assertSame('en', $description['lang']);
     }
 
     public function testReplaceResourceInObjectPosition(): void
@@ -1141,7 +1143,9 @@ class ExtendedGraphTest extends TestCase
         $graph->add_literal_triple('http://example.com/1', 'http://purl.org/dc/terms/extent', '123', null, 'http://www.w3.org/2001/XMLSchema#integer');
 
         $index = $graph->get_index();
-        $this->assertSame('http://www.w3.org/2001/XMLSchema#integer', $index['http://example.com/1']['http://purl.org/dc/terms/extent'][0]['datatype']);
+        $extent = $index['http://example.com/1']['http://purl.org/dc/terms/extent'][0];
+        $this->assertArrayHasKey('datatype', $extent);
+        $this->assertSame('http://www.w3.org/2001/XMLSchema#integer', $extent['datatype']);
         $this->assertTrue($graph->has_literal_triple('http://example.com/1', 'http://purl.org/dc/terms/extent', '123', null, 'http://www.w3.org/2001/XMLSchema#integer'));
         $this->assertFalse($graph->has_literal_triple('http://example.com/1', 'http://purl.org/dc/terms/extent', '123', null, 'http://www.w3.org/2001/XMLSchema#string'));
     }
@@ -1295,15 +1299,20 @@ _:b1 dct:title "A bnode title"@en .
 
         // bnode labels are rewritten to avoid clashes with the non-empty graph
         $bnode = $graph->get_first_resource('http://example.com/1', 'http://purl.org/dc/terms/contributor');
+        $this->assertNotNull($bnode);
         $this->assertStringStartsWith('_:mor', $bnode);
         $this->assertSame('A bnode title', $graph->get_first_literal($bnode, 'http://purl.org/dc/terms/title'));
 
         // language and datatype survive parsing
         $index = $graph->get_index();
-        $this->assertSame('en', $index[$bnode]['http://purl.org/dc/terms/title'][0]['lang']);
+        $bnodeTitle = $index[$bnode]['http://purl.org/dc/terms/title'][0];
+        $this->assertArrayHasKey('lang', $bnodeTitle);
+        $this->assertSame('en', $bnodeTitle['lang']);
+        $extent = $index['http://example.com/1']['http://purl.org/dc/terms/extent'][0];
+        $this->assertArrayHasKey('datatype', $extent);
         $this->assertSame(
             'http://www.w3.org/2001/XMLSchema#integer',
-            $index['http://example.com/1']['http://purl.org/dc/terms/extent'][0]['datatype']
+            $extent['datatype']
         );
     }
 

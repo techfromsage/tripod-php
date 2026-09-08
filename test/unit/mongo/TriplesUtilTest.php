@@ -22,6 +22,7 @@ class TriplesUtilTest extends MongoTripodTestBase
         $tu = new TriplesUtil();
         $triples = ['<http://example.com/1> <http://purl.org/dc/terms/title> "A title with spaces" . '];
         $doc = $tu->getTArrayAbout('http://example.com/1', $triples, self::CONTEXT);
+        $this->assertNotNull($doc);
         $this->assertSame('A title with spaces', $doc['dct:title']['l']);
     }
 
@@ -30,6 +31,7 @@ class TriplesUtilTest extends MongoTripodTestBase
         $tu = new TriplesUtil();
         $triples = ['<http://example.com/1> <http://purl.org/dc/terms/extent> "123"^^<http://www.w3.org/2001/XMLSchema#integer> . '];
         $doc = $tu->getTArrayAbout('http://example.com/1', $triples, self::CONTEXT);
+        $this->assertNotNull($doc);
         $this->assertSame('123', $doc['dct:extent']['l']);
     }
 
@@ -43,6 +45,7 @@ class TriplesUtilTest extends MongoTripodTestBase
     {
         $tu = new TriplesUtil();
         $doc = $tu->bsonizeTriplesAbout(self::SUBJECT, $this->getTriples());
+        $this->assertNotNull($doc);
         $this->assertSame(Config::getInstance()->getDefaultContextAlias(), $doc['_id']['c']);
     }
 
@@ -109,6 +112,7 @@ class TriplesUtilTest extends MongoTripodTestBase
         );
 
         $doc = $collection->findOne(['_id' => ['r' => self::SUBJECT, 'c' => self::CONTEXT]]);
+        $this->assertNotNull($doc);
         // the original data and the merged-in triple are both present
         $this->assertEquals('1548-774X', $doc['bibo:eissn']['l']);
         $this->assertEquals('0893-0465', $doc['bibo:issn']['l']);

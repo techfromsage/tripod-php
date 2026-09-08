@@ -146,6 +146,7 @@ class ChangeSetTest extends TestCase
 
         $changeSets = $cs->get_subjects_of_type(self::CS . 'ChangeSet');
         $addition = $cs->get_first_resource($changeSets[0], self::CS . 'addition');
+        $this->assertNotNull($addition);
         $this->assertSame(
             'http://example.com/provenance',
             $cs->get_first_resource($addition, 'http://purl.org/dc/terms/source')

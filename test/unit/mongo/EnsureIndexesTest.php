@@ -232,11 +232,6 @@ class EnsureIndexesTest extends ResqueJobTestBase
     // HELPER METHODS BELOW HERE
 
     /**
-     *  Creates a simple mock EnsureIndexes Job.
-     *
-     * @return EnsureIndexes&MockObject
-     */
-    /**
      * @param string[] $methods
      *
      * @return EnsureIndexes&MockObject
