@@ -17,6 +17,13 @@
             "homepage": "http://talis.com/"
         }
     ],
+    "config": {
+        "audit": {
+            "ignore": {
+                "CVE-2026-81525": "User-provided input is never used for database or collection names"
+            }
+        }
+    },
     "suggest": {
         "resque/php-resque": "Redis backed library for background jobs"
     },
