@@ -1,5 +1,4 @@
-Tripod config documentation
-===========================
+# Tripod config documentation
 
 Tripod config is typically defined as a JSON file or stream which is added to the Config class somewhere early in your application, typically in your includes file or front controller:
 
@@ -8,19 +7,18 @@ $conf = json_decode(file_get_contents('tripod_config.json');
 \Tripod\Config::setConfig($conf); // set the config, usually read in as JSON from a file
 ```
 
-Namespaces
----------
+## Namespaces
 
 RDF namespaces are defined by a top level property `namespaces` which defines a simple object, the keys of which are the prefix, the value of which are the namespace.
 
 Example:
 
-```javascript
+```json
 {
-  "namespaces" : {
-    "rdf":"http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-    "dct":"http://purl.org/dc/terms/"
-  }
+    "namespaces": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "dct": "http://purl.org/dc/terms/"
+    }
 }
 ```
 
@@ -28,35 +26,34 @@ Tripod relies on namespaces for subjects so any subject URIs must have a pre-dec
 
 TODO: Future versions will detect non-namespaced subjects and assign a namespace to it in config. For this to happen we must start storing the config in the database rather than as an external file.
 
-Default context
----------
+## Default context
 
 Tripod supports named graphs. The default context property defines the default named graph to use if one is not specified.
 
 Example:
 
-```javascript
+```json
 {
-  "defaultContext" : "http://example.com"
+    "defaultContext": "http://example.com"
 }
 ```
 
-Data sources
-------------
+## Data sources
 
 Defines and names the data connections for Tripod.
 
 Example:
-```javascript
+
+```json
 {
-    "data_sources" : {
-        "rs1" : {
-            "type" : "mongo",
+    "data_sources": {
+        "rs1": {
+            "type": "mongo",
             "connection": "mongodb:\/\/localhost",
             "replicaSet": ""
         },
-        "rs2" : {
-            "type" : "mongo",
+        "rs2": {
+            "type": "mongo",
             "connection": "mongodb:\/\/example.com:27017",
             "replicaSet": "repset1"
         }
@@ -64,8 +61,7 @@ Example:
 }
 ```
 
-Stores
--------
+## Stores
 
 Defines the Tripod stores (for Mongo Tripod, these would be databases) and names the pods (e.g. MongoDB collections) Tripod can work with. Also includes the ability to define indexes and OWL-like cardinality rules on predicates within each collection. Each store must declare a data_source.
 
@@ -73,43 +69,42 @@ Example:
 
 This example defines one store with two `CBD_` pods along with associated indexes and cardinality rules.
 
-```javascript
+```json
 {
-  "stores" : {
-    "my_app_db" : {
-      "pods" : {
-        "CBD_orders" : {
-          "cardinality" : {
-            "dct:created" : 1
-          },
-          "indexes" : {
-            "index1": {
-              "dct:subject.u":1
+    "stores": {
+        "my_app_db": {
+            "pods": {
+                "CBD_orders": {
+                    "cardinality": {
+                        "dct:created": 1
+                    },
+                    "indexes": {
+                        "index1": {
+                            "dct:subject.u": 1
+                        },
+                        "index2": {
+                            "rdf:type.u": 1
+                        }
+                    }
+                },
+                "CBD_users": {
+                    "cardinality": {
+                        "foaf:name.l": 1
+                    },
+                    "indexes": {
+                        "index1": {
+                            "rdf:type.u": 1
+                        }
+                    }
+                }
             },
-            "index2" : {
-              "rdf:type.u":1
-            }
-          }
-        },
-        "CBD_users" : {
-          "cardinality" : {
-            "foaf:name.l" : 1
-          },
-          "indexes" : {
-            "index1": {
-              "rdf:type.u":1
-            }
-          }
+            "data_source": "mongoCluster1"
         }
-      },
-      "data_source" : "mongoCluster1"
     }
-  }
 }
 ```
 
-View specifications
----------------
+## View specifications
 
 View specifications define the shape of the materialised views that Mongo manages. For a full explanation of views, [read the primer](primers/views.md). In short, they mimic the functionality of `DESCRIBE` or `CONSTRUCT`-style SPARQL queries.
 
@@ -117,11 +112,11 @@ The convention for view spec identifiers is to prefix them with `v_`.
 
 Specs are defined as an array in the store level of the config document:
 
-```javascript
+```json
 {
     "stores": {
         "some_store": {
-            "pods" : {},
+            "pods": {},
             "view_specifications": [
                 {
                     "_id": "v_spec_1"
@@ -135,12 +130,11 @@ Specs are defined as an array in the store level of the config document:
 }
 ```
 
-TODO: 
+TODO:
 
-* Implement versioned view specifications to allow automatic migration of data that meets an earlier specification
+- Implement versioned view specifications to allow automatic migration of data that meets an earlier specification
 
-Table specifications
----------------
+## Table specifications
 
 Table specifications define the shape of the tabular data that Mongo manages. For a full explanation of tables, [read the primer](primers/tables.md). In short, they mimic the functionality of `SELECT`-style SPARQL queries.
 
@@ -148,12 +142,12 @@ The convention for table spec identifiers is to prefix them with `t_`.
 
 Specs are defined as an array in the store level of the config document:
 
-```javascript
+```json
 {
     "stores": {
         "some_store": {
-            "pods" : {},
-            "view_specifications" : [],
+            "pods": {},
+            "view_specifications": [],
             "table_specifications": [
                 {
                     "_id": "t_spec_1"
@@ -167,35 +161,32 @@ Specs are defined as an array in the store level of the config document:
 }
 ```
 
-TODO: 
+TODO:
 
-* Implement versioned table specifications to allow automatic migration of data that meets an earlier specification
+- Implement versioned table specifications to allow automatic migration of data that meets an earlier specification
 
+## Search config
 
-Search config
----------------
-
-Previous versions of Tripod integrated with ElasticSearch to provide indexing and full-text search. This was removed early on whilst Tripod was still closed source within Talis, as the complexity was not required. However some primitive regex-style searching is still provided.  For a full explanation of views, [read the primer](primers/search.md).
+Previous versions of Tripod integrated with ElasticSearch to provide indexing and full-text search. This was removed early on whilst Tripod was still closed source within Talis, as the complexity was not required. However some primitive regex-style searching is still provided. For a full explanation of views, [read the primer](primers/search.md).
 
 The search config is defined in the store level and consists of two parts - the `search_provider` and `search_specifications`.
 
-The provider was intended to allow pluggable implementations of search services (ElasticSearch, straight Lucene, Solr perhaps) but today the only option is `MongoSearchProvider`.
+The provider was intended to allow pluggable implementations of search services (ElasticSearch, straight Lucene, Solr perhaps) but today the only option is `Tripod\Mongo\MongoSearchProvider`. The value must be a fully qualified class name.
 
 The search specifications define the shape of the the data that underpins searches.
 
 The convention for search spec identifiers is to prefix them with `i_`.
 
-```javascript
-{
+```json
 {
     "stores": {
         "some_store": {
-            "pods" : {},
-            "view_specifications" : [],
+            "pods": {},
+            "view_specifications": [],
             "table_specifications": [],
             "search_config": {
-                "search_provider" : "MongoSearchProvider",
-                "search_specifications" :   [
+                "search_provider": "Tripod\\Mongo\\MongoSearchProvider",
+                "search_specifications": [
                     {
                         "_id": "i_spec_1"
                     },
@@ -211,20 +202,18 @@ The convention for search spec identifiers is to prefix them with `i_`.
 
 TODO:
 
-* Clean up the search specifications as they are not quite in line with tables and views (notably filter/condition)
-* At some point re-instate full-text capability via ElasticSearch or similar.
+- Clean up the search specifications as they are not quite in line with tables and views (notably filter/condition)
+- At some point re-instate full-text capability via ElasticSearch or similar.
 
-
-Specification keyword reference
----------------
+## Specification keyword reference
 
 Each of the specifications above are built from a specification language defined by the keywords below
 
-### _id
+### \_id
 
 The unique identifier of the spec
 
-### _version
+### \_version
 
 Specifies the version of the spec. Unused until we implement version specification.
 
@@ -232,37 +221,38 @@ Specifies the version of the spec. Unused until we implement version specificati
 
 For the current operation specifies the collection the operation should be performed on. Within `joins` this allows you to join data across collections. It is mandatory at the top level of a specification and gives the starting collection from where the specification should operate. For example, to join from one collection to another:
 
-```javascript
+```json
 {
-  "_id": "v_someview",
-  "from": "CBD_mydata
-  "joins" : {
-    "foaf:knows": {
-      "from":"CBD_myotherdata"
+    "_id": "v_someview",
+    "from": "CBD_mydata",
+    "joins": {
+        "foaf:knows": {
+            "from": "CBD_myotherdata"
+        }
     }
-  }
 }
 ```
 
 ### type
 
-If _type_ is defined, will limit the resources to those that have the specified rdf:type.  The value can be a curie
+If _type_ is defined, will limit the resources to those that have the specified rdf:type. The value can be a curie
 string or array of curie strings. For example:
 
-```javascript
-{
-    "_id" : "v_people",
-    "type" : ["foaf:Agent", "foaf:Person"],
-    "from" : "CBD_people"
-}
-
-{
-    "_id" : "t_books",
-    "type" : "bibo:Books",
-    "from" : "CBD_resources"
-}
-
+```json
+[
+    {
+        "_id": "v_people",
+        "type": ["foaf:Agent", "foaf:Person"],
+        "from": "CBD_people"
+    },
+    {
+        "_id": "t_books",
+        "type": "bibo:Books",
+        "from": "CBD_resources"
+    }
+]
 ```
+
 etc.
 
 ### include
@@ -271,35 +261,34 @@ A property of the `joins` predicate object, is an array of predicate values to p
 
 ### joins
 
-joins the current resource to another.  The keys of the "joins" object correspond with the predicate whose object URI you
- wish to join on.  The "right join" will be on the \_id property in the joined resource.  You can specify the collection
- to join on with the "from" property (defaults to the current collection).
+joins the current resource to another. The keys of the "joins" object correspond with the predicate whose object URI you
+wish to join on. The "right join" will be on the \_id property in the joined resource. You can specify the collection
+to join on with the "from" property (defaults to the current collection).
 
-Note: you can *only* join a URI object (or \_id) to an \_id.
+Note: you can _only_ join a URI object (or \_id) to an \_id.
 
- Example:
-```javascript
+Example:
+
+```json
 {
-    "_id" : "t_people",
-    "type" : "foaf:Person",
-    "from" : "CBD_people",
-    "fields" : [
+    "_id": "t_people",
+    "type": "foaf:Person",
+    "from": "CBD_people",
+    "fields": [
         {
-            "fieldName" : "name",
-            "predicates" : ["foaf:name"]
+            "fieldName": "name",
+            "predicates": ["foaf:name"]
         }
     ],
-    "joins" : {
-        "foaf:knows" : [
+    "joins": {
+        "foaf:knows": [
             {
-                "fieldName" : "knows",
-                "predicates" : ["foaf:name"]
+                "fieldName": "knows",
+                "predicates": ["foaf:name"]
             }
         ]
-
     }
 }
-
 ```
 
 ### maxJoins
@@ -314,12 +303,14 @@ In tripod, when joining to a node which is actually a sequence, you would have t
 
 `followSequence` simplifies this by providing a shortcut for following sequences and joins automatically until either the last sequence element is reached, or `maxJoins` is exceeded. For example:
 
-```javascript
-  "bibo:authorList":{
-    "joins" : {
-      "followSequence":{
-        "maxJoins":50
-      }
+```json
+{
+    "bibo:authorList": {
+        "joins": {
+            "followSequence": {
+                "maxJoins": 50
+            }
+        }
     }
 }
 ```
@@ -328,7 +319,7 @@ The properties of the `followSequence` object are identical in behaviour to thos
 
 ### predicates
 
-An array of predicates to use in the current action.  There are a few functions that work with "predicates", as well,
+An array of predicates to use in the current action. There are a few functions that work with "predicates", as well,
 that do post processing on the results, such as "lowercase" and "join".
 
 ### limit
@@ -369,42 +360,43 @@ This is very useful if you have specific volatile views and the freshest data is
 
 ### "value" : "link"
 
-Creates a fully qualified URI from the alias value of the _current_ resource.  E.g.:
+Creates a fully qualified URI from the alias value of the _current_ resource. E.g.:
 
-```javascript
+```json
 {
-    "id" : "t_foo",
-    "from" : "fooCollection",
-    "fields" : [
-       {
-            "fieldName" : "fooLink",
-            "predicates" : [""],
-            "value" : "link"
-       }
+    "id": "t_foo",
+    "from": "fooCollection",
+    "fields": [
+        {
+            "fieldName": "fooLink",
+            "predicates": [""],
+            "value": "link"
+        }
     ]
 }
 ```
 
-would give the fully qualified URI of the base resource in field ``` fooLink ``` .  In a join:
+would give the fully qualified URI of the base resource in field `fooLink` . In a join:
 
-```javascript
+```json
 {
-    "id" : "t_foo",
-    "from" : "fooCollection",
-    "joins" : {
-        "foo:bar" :  {
-            "from" : "barCollection",
-            "fields" : [
-               {
-                    "fieldName" : "barLink",
-                    "predicates" : [""],
-                    "value" : "link"
-               }]
+    "id": "t_foo",
+    "from": "fooCollection",
+    "joins": {
+        "foo:bar": {
+            "from": "barCollection",
+            "fields": [
+                {
+                    "fieldName": "barLink",
+                    "predicates": [""],
+                    "value": "link"
+                }
+            ]
         }
     }
 }
 ```
-\_link\_ would provide the fully qualified URI of the resource joined at ``` foo:bar ``` in the field ``` barLink ```
+
+\_link\_ would provide the fully qualified URI of the resource joined at `foo:bar` in the field `barLink`
 
 the "predicates" property is required, but ignored, so use an array with a single empty string: [""]
-
