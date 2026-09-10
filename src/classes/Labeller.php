@@ -308,8 +308,10 @@ class Labeller
      *
      * @return string|null the URI corresponding to the QName if a suitable prefix exists, null otherwise
      */
-    public function qname_to_uri(?string $qName): ?string
+    public function qname_to_uri($qName): ?string
     {
+        $qName = TypeUtil::ensureArgIsStringIsOrNull(1, $qName);
+
         if ($qName === null || !preg_match('~^(.+):(.+)$~', $qName, $m)) {
             return null;
         }

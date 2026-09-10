@@ -23,7 +23,7 @@ interface IDriver
      * @param string      $resource uri resource you'd like to describe
      * @param string|null $context  string uri of the context, or named graph, you'd like to describe from
      */
-    public function describeResource(string $resource, ?string $context = null): ExtendedGraph;
+    public function describeResource($resource, $context = null): ExtendedGraph;
 
     /**
      * Return (DESCRIBE) the concise bound descriptions of a bunch of resources.
@@ -31,7 +31,7 @@ interface IDriver
      * @param array       $resources uris of resources you'd like to describe
      * @param string|null $context   string uri of the context, or named graph, you'd like to describe from
      */
-    public function describeResources(array $resources, ?string $context = null): ExtendedGraph;
+    public function describeResources(array $resources, $context = null): ExtendedGraph;
 
     /**
      * Get a view of a given type for a given resource.
@@ -39,7 +39,7 @@ interface IDriver
      * @param string|null $resource uri of the resource you'd like the view for
      * @param string      $viewType string type of view
      */
-    public function getViewForResource(?string $resource, string $viewType): ExtendedGraph;
+    public function getViewForResource($resource, $viewType): ExtendedGraph;
 
     /**
      * Get views for multiple resources in one graph.
@@ -47,7 +47,7 @@ interface IDriver
      * @param string[] $resources uris of resources you'd like to describe
      * @param string   $viewType  type of view
      */
-    public function getViewForResources(array $resources, string $viewType): ExtendedGraph;
+    public function getViewForResources(array $resources, $viewType): ExtendedGraph;
 
     /**
      * Get views based on a pattern-match $filter.
@@ -55,17 +55,21 @@ interface IDriver
      * @param array  $filter   pattern to match to select views
      * @param string $viewType type of view
      */
-    public function getViews(array $filter, string $viewType): ExtendedGraph;
+    public function getViews(array $filter, $viewType): ExtendedGraph;
 
     /**
      * Returns the etag of a resource, useful for caching.
+     *
+     * @param string      $resource
+     * @param string|null $context
      */
-    public function getETag(string $resource, ?string $context = null): string;
+    public function getETag($resource, $context = null): string;
 
     /**
      * Select data in a tabular format.
      *
-     * @param array $fields array of fields, in the same format as prescribed by MongoPHP
+     * @param array       $fields  array of fields, in the same format as prescribed by MongoPHP
+     * @param string|null $context
      */
     public function select(
         array $query,
@@ -73,14 +77,16 @@ interface IDriver
         ?array $sortBy = null,
         ?int $limit = null,
         ?int $offset = 0,
-        ?string $context = null
+        $context = null
     ): array;
 
     /**
      * Select data from a table.
+     *
+     * @param string $tableType
      */
     public function getTableRows(
-        string $tableType,
+        $tableType,
         array $filter = [],
         ?array $sortBy = [],
         ?int $offset = 0,
@@ -88,23 +94,31 @@ interface IDriver
         array $options = []
     ): array;
 
-    public function getDistinctTableColumnValues(string $tableType, string $fieldName, array $filter = []): array;
+    /**
+     * @param string $tableType
+     * @param string $fieldName
+     */
+    public function getDistinctTableColumnValues($tableType, $fieldName, array $filter = []): array;
 
     /**
      * Get a count of resources matching the pattern in $query. Optionally group counts by specifying a $groupBy predicate.
      *
-     * @param int|null $ttl acceptable time to live if you're willing to accept a cached version of this request
+     * @param string|null $groupBy
+     * @param int|null    $ttl     acceptable time to live if you're willing to accept a cached version of this request
      *
      * @return array|int multidimensional array with int values if grouped by, otherwise int
      */
-    public function getCount(array $query, ?string $groupBy = null, ?int $ttl = null);
+    public function getCount(array $query, $groupBy = null, ?int $ttl = null);
 
     /**
      * Save the changes between $oldGraph -> $newGraph.
      *
+     * @param string|null $context
+     * @param string|null $description
+     *
      * @return bool true or throws exception on error
      */
-    public function saveChanges(ExtendedGraph $oldGraph, ExtendedGraph $newGraph, ?string $context = null, ?string $description = null): bool;
+    public function saveChanges(ExtendedGraph $oldGraph, ExtendedGraph $newGraph, $context = null, $description = null): bool;
 
     /**
      * Register an event hook, which will be executed when the event fires.
@@ -125,9 +139,13 @@ interface IDriver
     /**
      * Generates table rows.
      *
+     * @param string      $tableType
+     * @param string|null $resource
+     * @param string|null $context
+     *
      * @deprecated calling save will generate table rows - this method seems to be only used in tests and does not belong on the interface
      */
-    public function generateTableRows(string $tableType, ?string $resource = null, ?string $context = null): void;
+    public function generateTableRows($tableType, $resource = null, $context = null): void;
 
     /**
      * Submits search params to configured search provider
@@ -161,16 +179,19 @@ interface IDriver
      *
      * @return array of locked documents
      */
-    public function getLockedDocuments(?string $fromDateTime = null, ?string $tillDateTime = null): array;
+    public function getLockedDocuments($fromDateTime = null, $tillDateTime = null): array;
 
     /**
      * Remove any inert locks left by a given transaction.
      *
      * @deprecated this is a feature of the mongo implementation - this method will move from the interface to the mongo-specific Driver class soon
      *
+     * @param string $transaction_id
+     * @param string $reason
+     *
      * @return bool true or throws exception on error
      */
-    public function removeInertLocks(string $transaction_id, string $reason): bool;
+    public function removeInertLocks($transaction_id, $reason): bool;
 
     // END Deprecated methods that will be removed in 1.x.x
 }

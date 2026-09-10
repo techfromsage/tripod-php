@@ -193,8 +193,11 @@ class ChangeSet extends ExtendedGraph
      *
      * @author Keith
      */
-    public function addT(string $s, string $p, $o, $o_type = 'bnode'): void
+    public function addT($s, $p, $o, $o_type = 'bnode'): void
     {
+        $s = TypeUtil::ensureArgIsString(1, $s);
+        $p = TypeUtil::ensureArgIsString(2, $p);
+
         if (is_array($o) && isset($o[0]['type'])) {
             foreach ($o as $obj) {
                 $this->addT($s, $p, $obj);

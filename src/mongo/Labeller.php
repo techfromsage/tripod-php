@@ -6,6 +6,7 @@ namespace Tripod\Mongo;
 
 use Tripod\Config;
 use Tripod\Exceptions\LabellerException;
+use Tripod\TypeUtil;
 
 class Labeller extends \Tripod\Labeller
 {
@@ -61,12 +62,16 @@ class Labeller extends \Tripod\Labeller
     /**
      * Unlike the base labeller this never returns null: unresolvable qnames (and null input) throw instead.
      *
+     * @param string|null $qName the QName to convert
+     *
      * @return ($qName is null ? null : string)
      *
      * @throws LabellerException
      */
-    public function qname_to_uri(?string $qName): ?string
+    public function qname_to_uri($qName): ?string
     {
+        $qName = TypeUtil::ensureArgIsStringIsOrNull(1, $qName);
+
         $retVal = parent::qname_to_uri($qName);
         if (empty($retVal)) {
             throw new LabellerException($qName);
